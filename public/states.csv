@@ -1,0 +1,5039 @@
+name,country_id
+Badakhshan,1
+Badghis,1
+Baghlan,1
+Balkh,1
+Bamyan,1
+Daykundi,1
+Farah,1
+Faryab,1
+Ghazni,1
+Ghōr,1
+Helmand,1
+Herat,1
+Jowzjan,1
+Kabul,1
+Kandahar,1
+Kapisa,1
+Khost,1
+Kunar,1
+Kunduz Province,1
+Laghman,1
+Logar,1
+Nangarhar,1
+Nimruz,1
+Nuristan,1
+Paktia,1
+Paktika,1
+Panjshir,1
+Parwan,1
+Samangan,1
+Sar-e Pol,1
+Takhar,1
+Urozgan,1
+Zabul,1
+Brändö,2
+Eckerö,2
+Finström,2
+Föglö,2
+Geta,2
+Hammarland,2
+Jomala,2
+Kökar,2
+Kumlinge,2
+Lemland,2
+Lumparland,2
+Mariehamn,2
+Saltvik,2
+Sottunga,2
+Sund,2
+Vårdö,2
+Berat,3
+Berat,3
+Bulqizë,3
+Delvinë,3
+Devoll,3
+Dibër,3
+Dibër,3
+Durrës,3
+Durrës,3
+Elbasan,3
+Fier,3
+Fier,3
+Gjirokastër,3
+Gjirokastër,3
+Gramsh,3
+Has,3
+Kavajë,3
+Kolonjë,3
+Korçë,3
+Korçë,3
+Krujë,3
+Kuçovë,3
+Kukës,3
+Kukës,3
+Kurbin,3
+Lezhë,3
+Lezhë,3
+Librazhd,3
+Lushnjë,3
+Malësi e Madhe,3
+Mallakastër,3
+Mat,3
+Mirditë,3
+Peqin,3
+Përmet,3
+Pogradec,3
+Pukë,3
+Sarandë,3
+Shkodër,3
+Shkodër,3
+Skrapar,3
+Tepelenë,3
+Tirana,3
+Tirana,3
+Tropojë,3
+Vlorë,3
+Vlorë,3
+Adrar,4
+Aïn Defla,4
+Aïn Témouchent,4
+Algiers,4
+Annaba,4
+Batna,4
+Béchar,4
+Béjaïa,4
+Béni Abbès,4
+Biskra,4
+Blida,4
+Bordj Baji Mokhtar,4
+Bordj Bou Arréridj,4
+Bouïra,4
+Boumerdès,4
+Chlef,4
+Constantine,4
+Djanet,4
+Djelfa,4
+El Bayadh,4
+El M'ghair,4
+El Menia,4
+El Oued,4
+El Tarf,4
+Ghardaïa,4
+Guelma,4
+Illizi,4
+In Guezzam,4
+In Salah,4
+Jijel,4
+Khenchela,4
+Laghouat,4
+M'Sila,4
+Mascara,4
+Médéa,4
+Mila,4
+Mostaganem,4
+Naama,4
+Oran,4
+Ouargla,4
+Ouled Djellal,4
+Oum El Bouaghi,4
+Relizane,4
+Saïda,4
+Sétif,4
+Sidi Bel Abbès,4
+Skikda,4
+Souk Ahras,4
+Tamanghasset,4
+Tébessa,4
+Tiaret,4
+Timimoun,4
+Tindouf,4
+Tipasa,4
+Tissemsilt,4
+Tizi Ouzou,4
+Tlemcen,4
+Touggourt,4
+Andorra la Vella,6
+Canillo,6
+Encamp,6
+Escaldes-Engordany,6
+La Massana,6
+Ordino,6
+Sant Julià de Lòria,6
+Bengo,7
+Benguela,7
+Bié,7
+Cabinda,7
+Cuando Cubango,7
+Cuanza,7
+Cuanza Norte,7
+Cunene,7
+Huambo,7
+Huíla,7
+Luanda,7
+Lunda Norte,7
+Lunda Sul,7
+Malanje,7
+Moxico,7
+Uíge,7
+Zaire,7
+Blowing Point,8
+East End,8
+George Hill,8
+Island Harbour,8
+North Hill,8
+North Side,8
+Sandy Ground,8
+Sandy Hill,8
+South Hill,8
+Stoney Ground,8
+The Farrington,8
+The Quarter,8
+The Valley,8
+West End,8
+Barbuda,10
+Redonda,10
+Saint George,10
+Saint John,10
+Saint Mary,10
+Saint Paul,10
+Saint Peter,10
+Saint Philip,10
+Buenos Aires,11
+Catamarca,11
+Chaco,11
+Chubut,11
+Ciudad Autónoma de Buenos Aires,11
+Córdoba,11
+Corrientes,11
+Entre Ríos,11
+Formosa,11
+Jujuy,11
+La Pampa,11
+La Rioja,11
+Mendoza,11
+Misiones,11
+Neuquén,11
+Río Negro,11
+Salta,11
+San Juan,11
+San Luis,11
+Santa Cruz,11
+Santa Fe,11
+Santiago del Estero,11
+Tierra del Fuego,11
+Tucumán,11
+Aragatsotn,12
+Ararat,12
+Armavir,12
+Gegharkunik,12
+Kotayk,12
+Lori,12
+Shirak,12
+Syunik,12
+Tavush,12
+Vayots Dzor,12
+Yerevan,12
+Noord,13
+Oranjestad East,13
+Oranjestad West,13
+Paradera,13
+San Nicolaas Noord,13
+San Nicolaas Zuid,13
+Santa Cruz,13
+Savaneta,13
+Australian Capital Territory,14
+New South Wales,14
+Northern Territory,14
+Queensland,14
+South Australia,14
+Tasmania,14
+Victoria,14
+Western Australia,14
+Burgenland,15
+Carinthia,15
+Lower Austria,15
+Salzburg,15
+Styria,15
+Tyrol,15
+Upper Austria,15
+Vienna,15
+Vorarlberg,15
+Absheron,16
+Agdam,16
+Agdash,16
+Aghjabadi,16
+Agstafa,16
+Agsu,16
+Astara,16
+Babek,16
+Baku,16
+Balakan,16
+Barda,16
+Beylagan,16
+Bilasuvar,16
+Dashkasan,16
+Fizuli,16
+Ganja,16
+Gədəbəy,16
+Gobustan,16
+Goranboy,16
+Goychay,16
+Goygol,16
+Hajigabul,16
+Imishli,16
+Ismailli,16
+Jabrayil,16
+Jalilabad,16
+Julfa,16
+Kalbajar,16
+Kangarli,16
+Khachmaz,16
+Khizi,16
+Khojali,16
+Kurdamir,16
+Lachin,16
+Lankaran,16
+Lankaran,16
+Lerik,16
+Martuni,16
+Masally,16
+Mingachevir,16
+Nakhchivan,16
+Neftchala,16
+Oghuz,16
+Ordubad,16
+Qabala,16
+Qakh,16
+Qazakh,16
+Quba,16
+Qubadli,16
+Qusar,16
+Saatly,16
+Sabirabad,16
+Sadarak,16
+Salyan,16
+Samukh,16
+Shabran,16
+Shahbuz,16
+Shaki,16
+Shaki,16
+Shamakhi,16
+Shamkir,16
+Sharur,16
+Shirvan,16
+Shusha,16
+Siazan,16
+Sumqayit,16
+Tartar,16
+Tovuz,16
+Ujar,16
+Yardymli,16
+Yevlakh,16
+Yevlakh,16
+Zangilan,16
+Zaqatala,16
+Zardab,16
+Capital,18
+Central,18
+Muharraq,18
+Northern,18
+Southern,18
+Barisal ,19
+Chittagong ,19
+Dhaka ,19
+Khulna ,19
+Mymensingh ,19
+Rajshahi ,19
+Rangpur ,19
+Sylhet ,19
+Christ Church,20
+Saint Andrew,20
+Saint George,20
+Saint James,20
+Saint John,20
+Saint Joseph,20
+Saint Lucy,20
+Saint Michael,20
+Saint Peter,20
+Saint Philip,20
+Saint Thomas,20
+Brest,21
+Gomel,21
+Grodno,21
+Minsk,21
+Minsk,21
+Mogilev,21
+Vitebsk,21
+Antwerp,22
+Brussels-Capital ,22
+East Flanders,22
+Flanders,22
+Flemish Brabant,22
+Hainaut,22
+Liège,22
+Limburg,22
+Luxembourg,22
+Namur,22
+Wallonia,22
+Walloon Brabant,22
+West Flanders,22
+Belize,23
+Cayo,23
+Corozal,23
+Orange Walk,23
+Stann Creek,23
+Toledo,23
+Alibori,24
+Atakora,24
+Atlantique,24
+Borgou,24
+Collines,24
+Donga,24
+Kouffo,24
+Littoral,24
+Mono,24
+Ouémé,24
+Plateau,24
+Zou,24
+Devonshire,25
+Hamilton,25
+Paget,25
+Pembroke,25
+Saint George's,25
+Sandys,25
+Smith's,25
+Southampton,25
+Warwick,25
+Bumthang ,26
+Chukha ,26
+Dagana ,26
+Gasa ,26
+Haa ,26
+Lhuntse ,26
+Mongar ,26
+Paro ,26
+Pemagatshel ,26
+Punakha ,26
+Samdrup Jongkhar ,26
+Samtse ,26
+Sarpang ,26
+Thimphu ,26
+"Trashi Yangtse	",26
+Trashigang ,26
+Trongsa ,26
+Tsirang ,26
+Wangdue Phodrang ,26
+Zhemgang ,26
+Beni,27
+Chuquisaca,27
+Cochabamba,27
+La Paz,27
+Oruro,27
+Pando,27
+Potosí,27
+Santa Cruz,27
+Tarija,27
+Bonaire,155
+Saba,155
+Sint Eustatius,155
+Bosnian Podrinje,28
+Brčko,28
+Canton 10,28
+Central Bosnia,28
+Federation of Bosnia and Herzegovina,28
+Herzegovina-Neretva,28
+Posavina,28
+Republika Srpska,28
+Sarajevo,28
+Tuzla,28
+Una-Sana,28
+West Herzegovina,28
+Zenica-Doboj,28
+Central,29
+Ghanzi,29
+Kgalagadi,29
+Kgatleng,29
+Kweneng,29
+Ngamiland,29
+North-East,29
+North-West,29
+South-East,29
+Southern,29
+Acre,31
+Alagoas,31
+Amapá,31
+Amazonas,31
+Bahia,31
+Ceará,31
+Distrito Federal,31
+Espírito Santo,31
+Goiás,31
+Maranhão,31
+Mato Grosso,31
+Mato Grosso do Sul,31
+Minas Gerais,31
+Pará,31
+Paraíba,31
+Paraná,31
+Pernambuco,31
+Piauí,31
+Rio de Janeiro,31
+Rio Grande do Norte,31
+Rio Grande do Sul,31
+Rondônia,31
+Roraima,31
+Santa Catarina,31
+São Paulo,31
+Sergipe,31
+Tocantins,31
+Belait,33
+Brunei-Muara,33
+Temburong,33
+Tutong,33
+Blagoevgrad,34
+Burgas,34
+Dobrich,34
+Gabrovo,34
+Haskovo,34
+Kardzhali,34
+Kyustendil,34
+Lovech,34
+Montana,34
+Pazardzhik,34
+Pernik,34
+Pleven,34
+Plovdiv,34
+Razgrad,34
+Ruse,34
+Shumen,34
+Silistra,34
+Sliven,34
+Smolyan,34
+Sofia,34
+Sofia City,34
+Stara Zagora,34
+Targovishte,34
+Varna,34
+Veliko Tarnovo,34
+Vidin,34
+Vratsa,34
+Yambol,34
+Balé,35
+Bam,35
+Banwa,35
+Bazèga,35
+Boucle du Mouhoun,35
+Bougouriba,35
+Boulgou,35
+Cascades,35
+Centre,35
+Centre-Est,35
+Centre-Nord,35
+Centre-Ouest,35
+Centre-Sud,35
+Comoé,35
+Est,35
+Ganzourgou,35
+Gnagna,35
+Gourma,35
+Hauts-Bassins,35
+Houet,35
+Ioba,35
+Kadiogo,35
+Kénédougou,35
+Komondjari,35
+Kompienga,35
+Kossi,35
+Koulpélogo,35
+Kouritenga,35
+Kourwéogo,35
+Léraba,35
+Loroum,35
+Mouhoun,35
+Nahouri,35
+Namentenga,35
+Nayala,35
+Nord,35
+Noumbiel,35
+Oubritenga,35
+Oudalan,35
+Passoré,35
+Plateau-Central,35
+Poni,35
+Sahel,35
+Sanguié,35
+Sanmatenga,35
+Séno,35
+Sissili,35
+Soum,35
+Sourou,35
+Sud-Ouest,35
+Tapoa,35
+Tuy,35
+Yagha,35
+Yatenga,35
+Ziro,35
+Zondoma,35
+Zoundwéogo,35
+Bubanza,36
+Bujumbura Mairie,36
+Bujumbura Rural,36
+Bururi,36
+Cankuzo,36
+Cibitoke,36
+Gitega,36
+Karuzi,36
+Kayanza,36
+Kirundo,36
+Makamba,36
+Muramvya,36
+Muyinga,36
+Mwaro,36
+Ngozi,36
+Rumonge,36
+Rutana,36
+Ruyigi,36
+Banteay Meanchey,37
+Battambang,37
+Kampong Cham,37
+Kampong Chhnang,37
+Kampong Speu,37
+Kampong Thom,37
+Kampot,37
+Kandal,37
+Kep,37
+Koh Kong,37
+Kratie,37
+Mondulkiri,37
+Oddar Meanchey,37
+Pailin,37
+Phnom Penh,37
+Preah Vihear,37
+Prey Veng,37
+Pursat,37
+Ratanakiri,37
+Siem Reap,37
+Sihanoukville,37
+Stung Treng,37
+Svay Rieng,37
+Takeo,37
+Adamawa,38
+Centre,38
+East,38
+Far North,38
+Littoral,38
+North,38
+Northwest,38
+South,38
+Southwest,38
+West,38
+Alberta,39
+British Columbia,39
+Manitoba,39
+New Brunswick,39
+Newfoundland and Labrador,39
+Northwest Territories,39
+Nova Scotia,39
+Nunavut,39
+Ontario,39
+Prince Edward Island,39
+Quebec,39
+Saskatchewan,39
+Yukon,39
+Barlavento Islands,40
+Boa Vista,40
+Brava,40
+Maio,40
+Mosteiros,40
+Paul,40
+Porto Novo,40
+Praia,40
+Ribeira Brava,40
+Ribeira Grande,40
+Ribeira Grande de Santiago,40
+Sal,40
+Santa Catarina,40
+Santa Catarina do Fogo,40
+Santa Cruz,40
+São Domingos,40
+São Filipe,40
+São Lourenço dos Órgãos,40
+São Miguel,40
+São Vicente,40
+Sotavento Islands,40
+Tarrafal,40
+Tarrafal de São Nicolau,40
+Cayman Brac,41
+Grand Cayman,41
+Little Cayman,41
+Bamingui-Bangoran,42
+Bangui,42
+Basse-Kotto,42
+Haut-Mbomou,42
+Haute-Kotto,42
+Kémo,42
+Lobaye,42
+Mambéré-Kadéï,42
+Mbomou,42
+Nana-Grébizi,42
+Nana-Mambéré,42
+Ombella-M'Poko,42
+Ouaka,42
+Ouham,42
+Ouham-Pendé,42
+Sangha-Mbaéré,42
+Vakaga,42
+Bahr el Gazel,43
+Batha,43
+Borkou,43
+Chari-Baguirmi,43
+Ennedi-Est,43
+Ennedi-Ouest,43
+Guéra,43
+Hadjer-Lamis,43
+Kanem,43
+Lac,43
+Logone Occidental,43
+Logone Oriental,43
+Mandoul,43
+Mayo-Kebbi Est,43
+Mayo-Kebbi Ouest,43
+Moyen-Chari,43
+N'Djamena,43
+Ouaddaï,43
+Salamat,43
+Sila,43
+Tandjilé,43
+Tibesti,43
+Wadi Fira,43
+Aisén del General Carlos Ibañez del Campo,44
+Antofagasta,44
+Arica y Parinacota,44
+Atacama,44
+Biobío,44
+Coquimbo,44
+La Araucanía,44
+Libertador General Bernardo O'Higgins,44
+Los Lagos,44
+Los Ríos,44
+Magallanes y de la Antártica Chilena,44
+Maule,44
+Ñuble,44
+Región Metropolitana de Santiago,44
+Tarapacá,44
+Valparaíso,44
+Anhui,45
+Beijing,45
+Chongqing,45
+Fujian,45
+Gansu,45
+Guangdong,45
+Guangxi Zhuang,45
+Guizhou,45
+Hainan,45
+Hebei,45
+Heilongjiang,45
+Henan,45
+Hong Kong SAR,45
+Hubei,45
+Hunan,45
+Inner Mongolia,45
+Jiangsu,45
+Jiangxi,45
+Jilin,45
+Liaoning,45
+Macau SAR,45
+Ningxia Huizu,45
+Qinghai,45
+Shaanxi,45
+Shandong,45
+Shanghai,45
+Shanxi,45
+Sichuan,45
+Taiwan,45
+Tianjin,45
+Xinjiang,45
+Xizang,45
+Yunnan,45
+Zhejiang,45
+Amazonas,48
+Antioquia,48
+Arauca,48
+Atlántico,48
+Bogotá D.C.,48
+Bolívar,48
+Boyacá,48
+Caldas,48
+Caquetá,48
+Casanare,48
+Cauca,48
+Cesar,48
+Chocó,48
+Córdoba,48
+Cundinamarca,48
+Guainía,48
+Guaviare,48
+Huila,48
+La Guajira,48
+Magdalena,48
+Meta,48
+Nariño,48
+Norte de Santander,48
+Putumayo,48
+Quindío,48
+Risaralda,48
+"San Andrés, Providencia y Santa Catalina",48
+Santander,48
+Sucre,48
+Tolima,48
+Valle del Cauca,48
+Vaupés,48
+Vichada,48
+Anjouan,49
+Grande Comore,49
+Mohéli,49
+Bouenza,50
+Brazzaville,50
+Cuvette,50
+Cuvette-Ouest,50
+Kouilou,50
+Lékoumou,50
+Likouala,50
+Niari,50
+Plateaux,50
+Pointe-Noire,50
+Pool,50
+Sangha,50
+Alajuela,53
+Cartago,53
+Guanacaste,53
+Heredia,53
+Limón,53
+Puntarenas,53
+San José,53
+Abidjan,54
+Agnéby,54
+Bafing,54
+Bas-Sassandra,54
+Bas-Sassandra,54
+Comoé,54
+Denguélé,54
+Denguélé,54
+Dix-Huit Montagnes,54
+Fromager,54
+Gôh-Djiboua,54
+Haut-Sassandra,54
+Lacs,54
+Lacs,54
+Lagunes,54
+Lagunes,54
+Marahoué,54
+Montagnes,54
+Moyen-Cavally,54
+Moyen-Comoé,54
+N'zi-Comoé,54
+Sassandra-Marahoué,54
+Savanes,54
+Sud-Bandama,54
+Sud-Comoé,54
+Vallée du Bandama,54
+Vallée du Bandama,54
+Woroba,54
+Worodougou,54
+Yamoussoukro,54
+Zanzan,54
+Bjelovar-Bilogora,55
+Brod-Posavina,55
+Dubrovnik-Neretva,55
+Istria,55
+Karlovac,55
+Koprivnica-Križevci,55
+Krapina-Zagorje,55
+Lika-Senj,55
+Međimurje,55
+Osijek-Baranja,55
+Požega-Slavonia,55
+Primorje-Gorski Kotar,55
+Šibenik-Knin,55
+Sisak-Moslavina,55
+Split-Dalmatia,55
+Varaždin,55
+Virovitica-Podravina,55
+Vukovar-Syrmia,55
+Zadar,55
+Zagreb,55
+Zagreb,55
+Artemisa,56
+Camagüey,56
+Ciego de Ávila,56
+Cienfuegos,56
+Granma,56
+Guantánamo,56
+Havana,56
+Holguín,56
+Isla de la Juventud,56
+Las Tunas,56
+Matanzas,56
+Mayabeque,56
+Pinar del Río,56
+Sancti Spíritus,56
+Santiago de Cuba,56
+Villa Clara,56
+Famagusta (Mağusa),57
+Kyrenia (Keryneia),57
+Larnaca (Larnaka),57
+Limassol (Leymasun),57
+Nicosia (Lefkoşa),57
+Paphos (Pafos),57
+Benešov,58
+Beroun,58
+Blansko,58
+Břeclav,58
+Brno-město,58
+Brno-venkov,58
+Bruntál,58
+Česká Lípa,58
+České Budějovice,58
+Český Krumlov,58
+Cheb,58
+Chomutov,58
+Chrudim,58
+Děčín,58
+Domažlice,58
+Frýdek-Místek,58
+Havlíčkův Brod,58
+Hodonín,58
+Hradec Králové,58
+Jablonec nad Nisou,58
+Jeseník,58
+Jičín,58
+Jihlava,58
+Jihočeský kraj,58
+Jihomoravský kraj,58
+Jindřichův Hradec,58
+Karlovarský kraj,58
+Karlovy Vary,58
+Karviná,58
+Kladno,58
+Klatovy,58
+Kolín,58
+Kraj Vysočina,58
+Královéhradecký kraj,58
+Kroměříž,58
+Kutná Hora,58
+Liberec,58
+Liberecký kraj,58
+Litoměřice,58
+Louny,58
+Mělník,58
+Mladá Boleslav,58
+Moravskoslezský kraj,58
+Most,58
+Náchod,58
+Nový Jičín,58
+Nymburk,58
+Olomouc,58
+Olomoucký kraj,58
+Opava,58
+Ostrava-město,58
+Pardubice,58
+Pardubický kraj,58
+Pelhřimov,58
+Písek,58
+Plzeň-jih,58
+Plzeň-město,58
+Plzeň-sever,58
+Plzeňský kraj,58
+Prachatice,58
+Praha-východ,58
+Praha-západ,58
+"Praha, Hlavní město",58
+Přerov,58
+Příbram,58
+Prostějov,58
+Rakovník,58
+Rokycany,58
+Rychnov nad Kněžnou,58
+Semily,58
+Sokolov,58
+Strakonice,58
+Středočeský kraj,58
+Šumperk,58
+Svitavy,58
+Tábor,58
+Tachov,58
+Teplice,58
+Třebíč,58
+Trutnov,58
+Uherské Hradiště,58
+Ústecký kraj,58
+Ústí nad Labem,58
+Ústí nad Orlicí,58
+Vsetín,58
+Vyškov,58
+Žďár nad Sázavou,58
+Zlín,58
+Zlínský kraj,58
+Znojmo,58
+Bas-Uélé,51
+Équateur,51
+Haut-Katanga,51
+Haut-Lomami,51
+Haut-Uélé,51
+Ituri,51
+Kasaï,51
+Kasaï Central,51
+Kasaï Oriental,51
+Kinshasa,51
+Kongo Central,51
+Kwango,51
+Kwilu,51
+Lomami,51
+Lualaba,51
+Mai-Ndombe,51
+Maniema,51
+Mongala,51
+Nord-Kivu,51
+Nord-Ubangi,51
+Sankuru,51
+Sud-Kivu,51
+Sud-Ubangi,51
+Tanganyika,51
+Tshopo,51
+Tshuapa,51
+Central Denmark,59
+Denmark,59
+North Denmark,59
+Southern Denmark,59
+Zealand,59
+Ali Sabieh,60
+Arta,60
+Dikhil,60
+Djibouti,60
+Obock,60
+Tadjourah,60
+Saint Andrew,61
+Saint David,61
+Saint George,61
+Saint John,61
+Saint Joseph,61
+Saint Luke,61
+Saint Mark,61
+Saint Patrick,61
+Saint Paul,61
+Saint Peter,61
+Azua,62
+Baoruco,62
+Barahona,62
+Dajabón,62
+Distrito Nacional,62
+Duarte,62
+El Seibo,62
+Espaillat,62
+Hato Mayor,62
+Hermanas Mirabal,62
+Independencia,62
+La Altagracia,62
+La Romana,62
+La Vega,62
+María Trinidad Sánchez,62
+Monseñor Nouel,62
+Monte Cristi,62
+Monte Plata,62
+Pedernales,62
+Peravia,62
+Puerto Plata,62
+Samaná,62
+San Cristóbal,62
+San José de Ocoa,62
+San Juan,62
+San Pedro de Macorís,62
+Sánchez Ramírez,62
+Santiago,62
+Santiago Rodríguez,62
+Santo Domingo,62
+Valverde,62
+Azuay,64
+Bolívar,64
+Cañar,64
+Carchi,64
+Chimborazo,64
+Cotopaxi,64
+El Oro,64
+Esmeraldas,64
+Galápagos,64
+Guayas,64
+Imbabura,64
+Loja,64
+Los Ríos,64
+Manabí,64
+Morona-Santiago,64
+Napo,64
+Orellana,64
+Pastaza,64
+Pichincha,64
+Santa Elena,64
+Santo Domingo de los Tsáchilas,64
+Sucumbíos,64
+Tungurahua,64
+Zamora Chinchipe,64
+Alexandria,65
+Aswan,65
+Asyut,65
+Beheira,65
+Beni Suef,65
+Cairo,65
+Dakahlia,65
+Damietta,65
+Faiyum,65
+Gharbia,65
+Giza,65
+Ismailia,65
+Kafr el-Sheikh,65
+Luxor,65
+Matrouh,65
+Minya,65
+Monufia,65
+New Valley,65
+North Sinai,65
+Port Said,65
+Qalyubia,65
+Qena,65
+Red Sea,65
+Sharqia,65
+Sohag,65
+South Sinai,65
+Suez,65
+Ahuachapán,66
+Cabañas,66
+Chalatenango,66
+Cuscatlán,66
+La Libertad,66
+La Paz,66
+La Unión ,66
+Morazán,66
+San Miguel,66
+San Salvador,66
+San Vicente,66
+Santa Ana,66
+Sonsonate,66
+Usulután,66
+Annobón,67
+Bioko Norte,67
+Bioko Sur,67
+Centro Sur,67
+Insular,67
+Kié-Ntem,67
+Litoral,67
+Río Muni,67
+Wele-Nzas,67
+Anseba,68
+Debub,68
+Gash-Barka,68
+Maekel,68
+Northern Red Sea,68
+Southern Red Sea,68
+Harju,69
+Hiiu,69
+Ida-Viru,69
+Järva,69
+Jõgeva,69
+Lääne,69
+Lääne-Viru,69
+Pärnu,69
+Põlva,69
+Rapla,69
+Saare,69
+Tartu,69
+Valga,69
+Viljandi,69
+Võru,69
+Hhohho,212
+Lubombo,212
+Manzini,212
+Shiselweni,212
+Addis Ababa,70
+Afar,70
+Amhara,70
+Benishangul-Gumuz,70
+Dire Dawa,70
+Gambela,70
+Harari,70
+Oromia,70
+Somali,70
+"Southern Nations, Nationalities, and Peoples'",70
+Tigray,70
+Eysturoy,72
+Northern Isles,72
+Sandoy,72
+Streymoy,72
+Suðuroy,72
+Vágar,72
+Ba,73
+Bua,73
+Cakaudrove,73
+Central,73
+Eastern,73
+Kadavu,73
+Lau,73
+Lomaiviti,73
+Macuata,73
+Nadroga-Navosa,73
+Naitasiri,73
+Namosi,73
+Northern,73
+Ra,73
+Rewa,73
+Rotuma,73
+Serua,73
+Tailevu,73
+Western,73
+Åland Islands,74
+Central Finland,74
+Central Ostrobothnia,74
+Finland Proper,74
+Kainuu,74
+Kymenlaakso,74
+Lapland,74
+North Karelia,74
+Northern Ostrobothnia,74
+Northern Savonia,74
+Ostrobothnia,74
+Päijänne Tavastia,74
+Pirkanmaa,74
+Satakunta,74
+South Karelia,74
+Southern Ostrobothnia,74
+Southern Savonia,74
+Tavastia Proper,74
+Uusimaa,74
+Ain,75
+Aisne,75
+Allier,75
+Alpes-de-Haute-Provence,75
+Alpes-Maritimes,75
+Alsace,75
+Ardèche,75
+Ardennes,75
+Ariège,75
+Aube,75
+Aude,75
+Auvergne-Rhône-Alpes,75
+Aveyron,75
+Bas-Rhin,75
+Bouches-du-Rhône,75
+Bourgogne-Franche-Comté,75
+Bretagne,75
+Calvados,75
+Cantal,75
+Centre-Val de Loire,75
+Charente,75
+Charente-Maritime,75
+Cher,75
+Clipperton,75
+Corrèze,75
+Corse,75
+Corse-du-Sud,75
+Côte-d'Or,75
+Côtes-d'Armor,75
+Creuse,75
+Deux-Sèvres,75
+Dordogne,75
+Doubs,75
+Drôme,75
+Essonne,75
+Eure,75
+Eure-et-Loir,75
+Finistère,75
+French Guiana,75
+French Polynesia,75
+French Southern and Antarctic Lands,75
+Gard,75
+Gers,75
+Gironde,75
+Grand-Est,75
+Guadeloupe,75
+Haut-Rhin,75
+Haute-Corse,75
+Haute-Garonne,75
+Haute-Loire,75
+Haute-Marne,75
+Haute-Saône,75
+Haute-Savoie,75
+Haute-Vienne,75
+Hautes-Alpes,75
+Hautes-Pyrénées,75
+Hauts-de-France,75
+Hauts-de-Seine,75
+Hérault,75
+Île-de-France,75
+Ille-et-Vilaine,75
+Indre,75
+Indre-et-Loire,75
+Isère,75
+Jura,75
+La Réunion,75
+Landes,75
+Loir-et-Cher,75
+Loire,75
+Loire-Atlantique,75
+Loiret,75
+Lot,75
+Lot-et-Garonne,75
+Lozère,75
+Maine-et-Loire,75
+Manche,75
+Marne,75
+Martinique,75
+Mayenne,75
+Mayotte,75
+Métropole de Lyon,75
+Meurthe-et-Moselle,75
+Meuse,75
+Morbihan,75
+Moselle,75
+Nièvre,75
+Nord,75
+Normandie,75
+Nouvelle-Aquitaine,75
+Occitanie,75
+Oise,75
+Orne,75
+Paris,75
+Pas-de-Calais,75
+Pays-de-la-Loire,75
+Provence-Alpes-Côte-d’Azur,75
+Puy-de-Dôme,75
+Pyrénées-Atlantiques,75
+Pyrénées-Orientales,75
+Rhône,75
+Saint Pierre and Miquelon,75
+Saint-Barthélemy,75
+Saint-Martin,75
+Saône-et-Loire,75
+Sarthe,75
+Savoie,75
+Seine-et-Marne,75
+Seine-Maritime,75
+Seine-Saint-Denis,75
+Somme,75
+Tarn,75
+Tarn-et-Garonne,75
+Territoire de Belfort,75
+Val-d'Oise,75
+Val-de-Marne,75
+Var,75
+Vaucluse,75
+Vendée,75
+Vienne,75
+Vosges,75
+Wallis and Futuna,75
+Yonne,75
+Yvelines,75
+Estuaire,79
+Haut-Ogooué,79
+Moyen-Ogooué,79
+Ngounié,79
+Nyanga,79
+Ogooué-Ivindo,79
+Ogooué-Lolo,79
+Ogooué-Maritime,79
+Woleu-Ntem,79
+Abkhazia,81
+Adjara,81
+Guria,81
+Imereti,81
+Kakheti,81
+Khelvachauri,81
+Kvemo Kartli,81
+Mtskheta-Mtianeti,81
+Racha-Lechkhumi and Kvemo Svaneti,81
+Samegrelo-Zemo Svaneti,81
+Samtskhe-Javakheti,81
+Senaki,81
+Shida Kartli,81
+Tbilisi,81
+Baden-Württemberg,82
+Bavaria,82
+Berlin,82
+Brandenburg,82
+Bremen,82
+Hamburg,82
+Hessen,82
+Lower Saxony,82
+Mecklenburg-Vorpommern,82
+North Rhine-Westphalia,82
+Rhineland-Palatinate,82
+Saarland,82
+Saxony,82
+Saxony-Anhalt,82
+Schleswig-Holstein,82
+Thuringia,82
+Ahafo,83
+Ashanti,83
+Bono,83
+Bono East,83
+Central,83
+Eastern,83
+Greater Accra,83
+North East,83
+Northern,83
+Oti,83
+Savannah,83
+Upper East,83
+Upper West,83
+Volta,83
+Western,83
+Western North,83
+Achaea,85
+Aetolia-Acarnania,85
+Arcadia,85
+Argolis,85
+Attica,85
+Boeotia,85
+Central Greece,85
+Central Macedonia,85
+Chania,85
+Corfu,85
+Corinthia,85
+Crete,85
+Drama,85
+East Attica,85
+East Macedonia and Thrace,85
+Epirus,85
+Euboea,85
+Grevena,85
+Imathia ,85
+Ioannina,85
+Ionian Islands,85
+Karditsa,85
+Kastoria,85
+Kefalonia,85
+Kilkis,85
+Kozani,85
+Laconia,85
+Larissa,85
+Lefkada,85
+Pella,85
+Peloponnese,85
+Phthiotis,85
+Preveza,85
+Serres,85
+South Aegean,85
+Thessaloniki,85
+West Greece,85
+West Macedonia,85
+Carriacou,87
+Saint Andrew,87
+Saint David,87
+Saint George,87
+Saint John,87
+Saint Mark,87
+Saint Patrick,87
+Agana Heights,89
+Asan-Maina,89
+Barrigada,89
+Chalan Pago-Ordot,89
+Dededo,89
+Hågat,89
+Hagåtña,89
+Inarajan (Inalåhan),89
+Mangilao,89
+Merizo (Malesso),89
+Mongmong-Toto-Maite,89
+Piti,89
+Santa Rita (Sånta Rita-Sumai),89
+Sinajana,89
+Talofofo (Talo'fo'fo),89
+Tamuning,89
+Umatac (Humåtak),89
+Yigo,89
+Yona,89
+Alta Verapaz ,90
+Baja Verapaz ,90
+Chimaltenango ,90
+Chiquimula ,90
+El Progreso ,90
+Escuintla ,90
+Guatemala ,90
+Huehuetenango ,90
+Izabal ,90
+Jalapa ,90
+Jutiapa ,90
+Petén ,90
+Quetzaltenango ,90
+Quiché ,90
+Retalhuleu ,90
+Sacatepéquez ,90
+San Marcos ,90
+Santa Rosa ,90
+Sololá ,90
+Suchitepéquez ,90
+Totonicapán ,90
+Zacapa,90
+Beyla,92
+Boffa,92
+Boké,92
+Boké,92
+Conakry,92
+Coyah,92
+Dabola,92
+Dalaba,92
+Dinguiraye,92
+Dubréka,92
+Faranah,92
+Forécariah,92
+Fria,92
+Gaoual,92
+Guéckédou,92
+Kankan,92
+Kankan,92
+Kérouané,92
+Kindia,92
+Kindia,92
+Kissidougou,92
+Koubia,92
+Koundara,92
+Kouroussa,92
+Labé,92
+Labé,92
+Lélouma,92
+Lola,92
+Macenta,92
+Mali,92
+Mamou,92
+Mamou,92
+Mandiana,92
+Nzérékoré,92
+Nzérékoré,92
+Pita,92
+Siguiri,92
+Télimélé,92
+Tougué,92
+Yomou,92
+Bafatá,93
+Biombo,93
+Bolama,93
+Cacheu,93
+Gabú,93
+Leste,93
+Norte,93
+Oio,93
+Quinara,93
+Sul,93
+Tombali,93
+Barima-Waini,94
+Cuyuni-Mazaruni,94
+Demerara-Mahaica,94
+East Berbice-Corentyne,94
+Essequibo Islands-West Demerara,94
+Mahaica-Berbice,94
+Pomeroon-Supenaam,94
+Potaro-Siparuni,94
+Upper Demerara-Berbice,94
+Upper Takutu-Upper Essequibo,94
+Artibonite,95
+Centre,95
+Grand'Anse,95
+Nippes,95
+Nord,95
+Nord-Est,95
+Nord-Ouest,95
+Ouest,95
+Sud,95
+Sud-Est,95
+Atlántida,97
+Bay Islands,97
+Choluteca,97
+Colón,97
+Comayagua,97
+Copán,97
+Cortés,97
+El Paraíso,97
+Francisco Morazán,97
+Gracias a Dios,97
+Intibucá,97
+La Paz,97
+Lempira,97
+Ocotepeque,97
+Olancho,97
+Santa Bárbara,97
+Valle,97
+Yoro,97
+Central and Western,98
+Eastern,98
+Islands,98
+Kowloon City,98
+Kwai Tsing,98
+Kwun Tong,98
+North,98
+Sai Kung,98
+Sha Tin,98
+Sham Shui Po,98
+Southern,98
+Tai Po,98
+Tsuen Wan,98
+Tuen Mun,98
+Wan Chai,98
+Wong Tai Sin,98
+Yau Tsim Mong,98
+Yuen Long,98
+Bács-Kiskun,99
+Baranya,99
+Békés,99
+Békéscsaba,99
+Borsod-Abaúj-Zemplén,99
+Budapest,99
+Csongrád County,99
+Debrecen,99
+Dunaújváros,99
+Eger,99
+Érd,99
+Fejér County,99
+Győr,99
+Győr-Moson-Sopron County,99
+Hajdú-Bihar County,99
+Heves County,99
+Hódmezővásárhely,99
+Jász-Nagykun-Szolnok County,99
+Kaposvár,99
+Kecskemét,99
+Komárom-Esztergom,99
+Miskolc,99
+Nagykanizsa,99
+Nógrád County,99
+Nyíregyháza,99
+Pécs,99
+Pest County,99
+Salgótarján,99
+Somogy County,99
+Sopron,99
+Szabolcs-Szatmár-Bereg County,99
+Szeged,99
+Székesfehérvár,99
+Szekszárd,99
+Szolnok,99
+Szombathely,99
+Tatabánya,99
+Tolna County,99
+Vas County,99
+Veszprém,99
+Veszprém County,99
+Zala County,99
+Zalaegerszeg,99
+Capital,100
+Eastern,100
+Northeastern,100
+Northwestern,100
+Southern,100
+Southern Peninsula,100
+Western,100
+Westfjords,100
+Andaman and Nicobar Islands,101
+Andhra Pradesh,101
+Arunachal Pradesh,101
+Assam,101
+Bihar,101
+Chandigarh,101
+Chhattisgarh,101
+Dadra and Nagar Haveli and Daman and Diu,101
+Delhi,101
+Goa,101
+Gujarat,101
+Haryana,101
+Himachal Pradesh,101
+Jammu and Kashmir,101
+Jharkhand,101
+Karnataka,101
+Kerala,101
+Ladakh,101
+Lakshadweep,101
+Madhya Pradesh,101
+Maharashtra,101
+Manipur,101
+Meghalaya,101
+Mizoram,101
+Nagaland,101
+Odisha,101
+Puducherry,101
+Punjab,101
+Rajasthan,101
+Sikkim,101
+Tamil Nadu,101
+Telangana,101
+Tripura,101
+Uttar Pradesh,101
+Uttarakhand,101
+West Bengal,101
+Aceh,102
+Bali,102
+Banten,102
+Bengkulu,102
+DI Yogyakarta,102
+DKI Jakarta,102
+Gorontalo,102
+Jambi,102
+Jawa Barat,102
+Jawa Tengah,102
+Jawa Timur,102
+Kalimantan Barat,102
+Kalimantan Selatan,102
+Kalimantan Tengah,102
+Kalimantan Timur,102
+Kalimantan Utara,102
+Kepulauan Bangka Belitung,102
+Kepulauan Riau,102
+Lampung,102
+Maluku,102
+Maluku Utara,102
+Nusa Tenggara Barat,102
+Nusa Tenggara Timur,102
+Papua,102
+Papua Barat,102
+Papua Barat Daya,102
+Papua Pegunungan,102
+Papua Selatan,102
+Papua Tengah,102
+Riau,102
+Sulawesi Barat,102
+Sulawesi Selatan,102
+Sulawesi Tengah,102
+Sulawesi Tenggara,102
+Sulawesi Utara,102
+Sumatera Barat,102
+Sumatera Selatan,102
+Sumatera Utara,102
+Alborz,103
+Ardabil,103
+Bushehr,103
+Chaharmahal and Bakhtiari,103
+East Azerbaijan,103
+Fars,103
+Gilan,103
+Golestan,103
+Hamadan,103
+Hormozgan,103
+Ilam,103
+Isfahan,103
+Kerman,103
+Kermanshah,103
+Khuzestan,103
+Kohgiluyeh and Boyer-Ahmad,103
+Kurdistan,103
+Lorestan,103
+Markazi,103
+Mazandaran,103
+North Khorasan,103
+Qazvin,103
+Qom,103
+Razavi Khorasan,103
+Semnan,103
+Sistan and Baluchestan,103
+South Khorasan,103
+Tehran,103
+West Azarbaijan,103
+Yazd,103
+Zanjan,103
+Al Anbar,104
+Al Muthanna,104
+Al-Qādisiyyah,104
+Babylon,104
+Baghdad,104
+Basra,104
+Dhi Qar,104
+Diyala,104
+Dohuk,104
+Erbil,104
+Karbala,104
+Kirkuk,104
+Maysan,104
+Najaf,104
+Nineveh,104
+Saladin,104
+Sulaymaniyah,104
+Wasit,104
+Carlow,105
+Cavan,105
+Clare,105
+Connacht,105
+Cork,105
+Donegal,105
+Dublin,105
+Galway,105
+Kerry,105
+Kildare,105
+Kilkenny,105
+Laois,105
+Leinster,105
+Limerick,105
+Longford,105
+Louth,105
+Mayo,105
+Meath,105
+Monaghan,105
+Munster,105
+Offaly,105
+Roscommon,105
+Sligo,105
+Tipperary,105
+Ulster,105
+Waterford,105
+Westmeath,105
+Wexford,105
+Wicklow,105
+Central,106
+Haifa,106
+Jerusalem,106
+Northern,106
+Southern,106
+Tel Aviv,106
+Abruzzo,107
+Agrigento,107
+Alessandria,107
+Ancona,107
+Aosta Valley,107
+Apulia,107
+Ascoli Piceno,107
+Asti,107
+Avellino,107
+Barletta-Andria-Trani,107
+Basilicata,107
+Belluno,107
+Benevento,107
+Bergamo,107
+Biella,107
+Brescia,107
+Brindisi,107
+Calabria,107
+Caltanissetta,107
+Campania,107
+Campobasso,107
+Caserta,107
+Catanzaro,107
+Chieti,107
+Como,107
+Cosenza,107
+Cremona,107
+Crotone,107
+Cuneo,107
+Emilia-Romagna,107
+Enna,107
+Fermo,107
+Ferrara,107
+Foggia,107
+Forlì-Cesena,107
+Friuli–Venezia Giulia,107
+Frosinone,107
+Gorizia,107
+Grosseto,107
+Imperia,107
+Isernia,107
+L'Aquila,107
+La Spezia,107
+Latina,107
+Lazio,107
+Lecce,107
+Lecco,107
+Liguria,107
+Livorno,107
+Lodi,107
+Lombardy,107
+Lucca,107
+Macerata,107
+Mantua,107
+Marche,107
+Massa and Carrara,107
+Matera,107
+Medio Campidano,107
+Modena,107
+Molise,107
+Monza and Brianza,107
+Novara,107
+Nuoro,107
+Oristano,107
+Padua,107
+Palermo,107
+Parma,107
+Pavia,107
+Perugia,107
+Pesaro and Urbino,107
+Pescara,107
+Piacenza,107
+Piedmont,107
+Pisa,107
+Pistoia,107
+Pordenone,107
+Potenza,107
+Prato,107
+Ragusa,107
+Ravenna,107
+Reggio Emilia,107
+Rieti,107
+Rimini,107
+Rovigo,107
+Salerno,107
+Sardinia,107
+Sassari,107
+Savona,107
+Sicily,107
+Siena,107
+Siracusa,107
+Sondrio,107
+South Sardinia,107
+Taranto,107
+Teramo,107
+Terni,107
+Trapani,107
+Trentino-South Tyrol,107
+Treviso,107
+Trieste,107
+Tuscany,107
+Udine,107
+Umbria,107
+Varese,107
+Veneto,107
+Verbano-Cusio-Ossola,107
+Vercelli,107
+Verona,107
+Vibo Valentia,107
+Vicenza,107
+Viterbo,107
+Clarendon,108
+Hanover,108
+Kingston,108
+Manchester,108
+Portland,108
+Saint Andrew,108
+Saint Ann,108
+Saint Catherine,108
+Saint Elizabeth,108
+Saint James,108
+Saint Mary,108
+Saint Thomas,108
+Trelawny,108
+Westmoreland,108
+Aichi,109
+Akita,109
+Aomori,109
+Chiba,109
+Ehime,109
+Fukui,109
+Fukuoka,109
+Fukushima,109
+Gifu,109
+Gunma,109
+Hiroshima,109
+Hokkaidō,109
+Hyōgo,109
+Ibaraki,109
+Ishikawa,109
+Iwate,109
+Kagawa,109
+Kagoshima,109
+Kanagawa,109
+Kōchi,109
+Kumamoto,109
+Kyōto,109
+Mie,109
+Miyagi,109
+Miyazaki,109
+Nagano,109
+Nagasaki,109
+Nara,109
+Niigata,109
+Ōita,109
+Okayama,109
+Okinawa,109
+Ōsaka,109
+Saga,109
+Saitama,109
+Shiga,109
+Shimane,109
+Shizuoka,109
+Tochigi,109
+Tokushima,109
+Tokyo,109
+Tottori,109
+Toyama,109
+Wakayama,109
+Yamagata,109
+Yamaguchi,109
+Yamanashi,109
+Grouville,110
+St Brelade,110
+St Clement,110
+St Helier,110
+St John,110
+St Lawrence,110
+St Martin,110
+St Mary,110
+St Ouen,110
+St Peter,110
+St Saviour,110
+Trinity,110
+Ajloun,111
+Amman,111
+Aqaba,111
+Balqa,111
+Irbid,111
+Jerash,111
+Karak,111
+Ma'an,111
+Madaba,111
+Mafraq,111
+Tafilah,111
+Zarqa,111
+Akmola,112
+Aktobe,112
+Almaty,112
+Almaty,112
+Astana,112
+Atyrau,112
+Baikonur,112
+East Kazakhstan,112
+Jambyl,112
+Karaganda,112
+Kostanay,112
+Kyzylorda,112
+Mangystau,112
+North Kazakhstan,112
+Pavlodar,112
+Turkestan,112
+West Kazakhstan,112
+Baringo,113
+Bomet,113
+Bungoma,113
+Busia,113
+Elgeyo-Marakwet,113
+Embu,113
+Garissa,113
+Homa Bay,113
+Isiolo,113
+Kajiado,113
+Kakamega,113
+Kericho,113
+Kiambu,113
+Kilifi,113
+Kirinyaga,113
+Kisii,113
+Kisumu,113
+Kitui,113
+Kwale,113
+Laikipia,113
+Lamu,113
+Machakos,113
+Makueni,113
+Mandera,113
+Marsabit,113
+Meru,113
+Migori,113
+Mombasa,113
+Murang'a,113
+Nairobi City,113
+Nakuru,113
+Nandi,113
+Narok,113
+Nyamira,113
+Nyandarua,113
+Nyeri,113
+Samburu,113
+Siaya,113
+Taita–Taveta,113
+Tana River,113
+Tharaka-Nithi,113
+Trans Nzoia,113
+Turkana,113
+Uasin Gishu,113
+Vihiga,113
+Wajir,113
+West Pokot,113
+Gilbert,114
+Line,114
+Phoenix,114
+Ferizaj,248
+Gjakove,248
+Gjilan,248
+Mitrovica,248
+Peja,248
+Pristina,248
+Prizren,248
+Al Ahmadi,117
+Al Farwaniyah,117
+Al Jahra,117
+Capital,117
+Hawalli,117
+Mubarak Al-Kabeer,117
+Batken,118
+Bishkek,118
+Chuy,118
+Issyk-Kul,118
+Jalal-Abad,118
+Naryn,118
+Osh,118
+Osh,118
+Talas,118
+Attapeu,119
+Bokeo,119
+Bolikhamsai,119
+Champasak,119
+Houaphanh,119
+Khammouane,119
+Luang Namtha,119
+Luang Prabang,119
+Oudomxay,119
+Phongsaly,119
+Sainyabuli,119
+Salavan,119
+Savannakhet,119
+Sekong,119
+Vientiane,119
+Vientiane,119
+Xaisomboun,119
+Xiangkhouang,119
+Ādaži,120
+Aizkraukle,120
+Alūksne,120
+Augšdaugava,120
+Balvi,120
+Bauska,120
+Cēsis,120
+Daugavpils,120
+Dienvidkurzemes,120
+Dobele,120
+Gulbene,120
+Jēkabpils,120
+Jelgava,120
+Jelgava,120
+Jūrmala,120
+Ķekava,120
+Krāslava,120
+Kuldīga,120
+Liepāja,120
+Limbaži,120
+Līvāni,120
+Ludza,120
+Madona,120
+Mārupe,120
+Ogre,120
+Olaine,120
+Preiļi,120
+Rēzekne,120
+Rēzekne,120
+Riga,120
+Ropaži,120
+Salaspils,120
+Saldus,120
+Saulkrasti,120
+Sigulda,120
+Smiltene,120
+Talsi,120
+Tukums,120
+Valka,120
+Valmiera,120
+Varakļāni,120
+Ventspils,120
+Ventspils,120
+Akkar,121
+Baalbek-Hermel,121
+Beirut,121
+Beqaa,121
+Mount Lebanon,121
+Nabatieh,121
+North,121
+South,121
+Berea,122
+Butha-Buthe,122
+Leribe,122
+Mafeteng,122
+Maseru,122
+Mohale's Hoek,122
+Mokhotlong,122
+Qacha's Nek,122
+Quthing,122
+Thaba-Tseka,122
+Bomi,123
+Bong,123
+Gbarpolu,123
+Grand Bassa,123
+Grand Cape Mount,123
+Grand Gedeh,123
+Grand Kru,123
+Lofa,123
+Margibi,123
+Maryland,123
+Montserrado,123
+Nimba,123
+River Cess,123
+River Gee,123
+Sinoe,123
+Al Wahat,124
+Benghazi,124
+Derna,124
+Ghat,124
+Jabal al Akhdar,124
+Jabal al Gharbi,124
+Jafara,124
+Jufra,124
+Kufra,124
+Marj,124
+Misrata,124
+Murqub,124
+Murzuq,124
+Nalut,124
+Nuqat al Khams,124
+Sabha,124
+Sirte,124
+Tripoli,124
+Wadi al Hayaa,124
+Wadi al Shatii,124
+Zawiya,124
+Balzers,125
+Eschen,125
+Gamprin,125
+Mauren,125
+Planken,125
+Ruggell,125
+Schaan,125
+Schellenberg,125
+Triesen,125
+Triesenberg,125
+Vaduz,125
+Akmenė,126
+Alytus,126
+Alytus,126
+Alytus,126
+Birštonas,126
+Biržai,126
+Druskininkai,126
+Elektrėnai,126
+Ignalina,126
+Jonava,126
+Joniškis,126
+Jurbarkas,126
+Kaišiadorys,126
+Kalvarija,126
+Kaunas,126
+Kaunas,126
+Kaunas,126
+Kazlų Rūda,126
+Kėdainiai,126
+Kelmė,126
+Klaipėda,126
+Klaipeda,126
+Klaipėda,126
+Kretinga,126
+Kupiškis,126
+Lazdijai,126
+Marijampolė,126
+Marijampolė,126
+Mažeikiai,126
+Molėtai,126
+Neringa,126
+Pagėgiai,126
+Pakruojis,126
+Palanga,126
+Panevėžys,126
+Panevėžys,126
+Panevėžys,126
+Pasvalys,126
+Plungė,126
+Prienai,126
+Radviliškis,126
+Raseiniai,126
+Rietavas,126
+Rokiškis,126
+Šakiai,126
+Šalčininkai,126
+Šiauliai,126
+Šiauliai,126
+Šiauliai,126
+Šilalė ,126
+Šilutė,126
+Širvintos,126
+Skuodas,126
+Švenčionys,126
+Tauragė,126
+Tauragė,126
+Telšiai,126
+Telšiai,126
+Trakai,126
+Ukmergė,126
+Utena,126
+Utena,126
+Varėna,126
+Vilkaviškis,126
+Vilnius,126
+Vilnius,126
+Vilnius,126
+Visaginas,126
+Zarasai,126
+Capellen,127
+Clervaux,127
+Diekirch,127
+Echternach,127
+Esch-sur-Alzette,127
+Grevenmacher,127
+Luxembourg ,127
+Mersch,127
+Redange,127
+Remich,127
+Vianden,127
+Wiltz,127
+Antananarivo,130
+Antsiranana,130
+Fianarantsoa,130
+Mahajanga,130
+Toamasina,130
+Toliara,130
+Balaka,131
+Blantyre,131
+Central,131
+Chikwawa,131
+Chiradzulu,131
+Chitipa,131
+Dedza,131
+Dowa,131
+Karonga,131
+Kasungu,131
+Likoma,131
+Lilongwe,131
+Machinga,131
+Mangochi,131
+Mchinji,131
+Mulanje,131
+Mwanza,131
+Mzimba,131
+Nkhata Bay,131
+Nkhotakota,131
+Northern,131
+Nsanje,131
+Ntcheu,131
+Ntchisi,131
+Phalombe,131
+Rumphi,131
+Salima,131
+Southern,131
+Thyolo,131
+Zomba,131
+Johor,132
+Kedah,132
+Kelantan,132
+Kuala Lumpur,132
+Labuan,132
+Malacca,132
+Negeri Sembilan,132
+Pahang,132
+Penang,132
+Perak,132
+Perlis,132
+Putrajaya,132
+Sabah,132
+Sarawak,132
+Selangor,132
+Terengganu,132
+Addu,133
+Alif Alif,133
+Alif Dhaal,133
+Central,133
+Dhaalu,133
+Faafu,133
+Gaafu Alif,133
+Gaafu Dhaalu,133
+Gnaviyani,133
+Haa Alif,133
+Haa Dhaalu,133
+Kaafu,133
+Laamu,133
+Lhaviyani,133
+Malé,133
+Meemu,133
+Noonu,133
+North Central,133
+Raa,133
+Shaviyani,133
+South,133
+South Central,133
+Thaa,133
+Upper South,133
+Vaavu,133
+Bamako,134
+Gao,134
+Kayes,134
+Kidal,134
+Koulikoro,134
+Ménaka,134
+Mopti,134
+Ségou,134
+Sikasso,134
+Taoudénit,134
+Tombouctou,134
+Attard,135
+Balzan,135
+Birgu,135
+Birkirkara,135
+Birżebbuġa,135
+Cospicua,135
+Dingli,135
+Fgura,135
+Floriana,135
+Fontana,135
+Għajnsielem,135
+Għarb,135
+Għargħur,135
+Għasri,135
+Għaxaq,135
+Gudja,135
+Gżira,135
+Ħamrun,135
+Iklin,135
+Kalkara,135
+Kerċem,135
+Kirkop,135
+Lija,135
+Luqa,135
+Marsa,135
+Marsaskala,135
+Marsaxlokk,135
+Mdina,135
+Mellieħa,135
+Mġarr,135
+Mosta,135
+Mqabba,135
+Msida,135
+Mtarfa,135
+Munxar,135
+Nadur,135
+Naxxar,135
+Paola,135
+Pembroke,135
+Pietà,135
+Qala,135
+Qormi,135
+Qrendi,135
+Rabat,135
+San Ġwann,135
+San Lawrenz,135
+Sannat,135
+Santa Luċija,135
+Santa Venera,135
+Senglea,135
+Siġġiewi,135
+Sliema,135
+St. Julian's,135
+St. Paul's Bay,135
+Swieqi,135
+Ta' Xbiex,135
+Tarxien,135
+Valletta,135
+Victoria,135
+Xagħra,135
+Xewkija,135
+Xgħajra,135
+Żabbar,135
+Żebbuġ Gozo,135
+Żebbuġ Malta,135
+Żejtun,135
+Żurrieq,135
+Ayre,136
+Garff,136
+Glenfaba,136
+Michael,136
+Middle,136
+Rushen,136
+Ralik,137
+Ratak,137
+Adrar,139
+Assaba,139
+Brakna,139
+Dakhlet Nouadhibou,139
+Gorgol,139
+Guidimaka,139
+Hodh Ech Chargui,139
+Hodh El Gharbi,139
+Inchiri,139
+Nouakchott-Nord,139
+Nouakchott-Ouest,139
+Nouakchott-Sud,139
+Tagant,139
+Tiris Zemmour,139
+Trarza,139
+Agalega Islands,140
+Black River,140
+Flacq,140
+Grand Port,140
+Moka,140
+Pamplemousses,140
+Plaines Wilhems,140
+Port Louis,140
+Rivière du Rempart,140
+Rodrigues Island,140
+Saint Brandon Islands,140
+Savanne,140
+Aguascalientes,142
+Baja California,142
+Baja California Sur,142
+Campeche,142
+Chiapas,142
+Chihuahua,142
+Ciudad de México,142
+Coahuila de Zaragoza,142
+Colima,142
+Durango,142
+Estado de México,142
+Guanajuato,142
+Guerrero,142
+Hidalgo,142
+Jalisco,142
+Michoacán de Ocampo,142
+Morelos,142
+Nayarit,142
+Nuevo León,142
+Oaxaca,142
+Puebla,142
+Querétaro,142
+Quintana Roo,142
+San Luis Potosí,142
+Sinaloa,142
+Sonora,142
+Tabasco,142
+Tamaulipas,142
+Tlaxcala,142
+Veracruz de Ignacio de la Llave,142
+Yucatán,142
+Zacatecas,142
+Chuuk,143
+Kosrae,143
+Pohnpei,143
+Yap,143
+Anenii Noi,144
+Bălți,144
+Basarabeasca,144
+Bender,144
+Briceni,144
+Cahul,144
+Călărași,144
+Cantemir,144
+Căușeni,144
+Chișinău,144
+Cimișlia,144
+Criuleni,144
+Dondușeni,144
+Drochia,144
+Dubăsari,144
+Edineț,144
+Fălești,144
+Florești,144
+Gagauzia,144
+Glodeni,144
+Hîncești,144
+Ialoveni,144
+Nisporeni,144
+Ocnița,144
+Orhei,144
+Rezina,144
+Rîșcani,144
+Sîngerei,144
+Șoldănești,144
+Soroca,144
+Ștefan Vodă,144
+Strășeni,144
+Taraclia,144
+Telenești,144
+Transnistria,144
+Ungheni,144
+La Colle,145
+La Condamine,145
+Moneghetti,145
+Arkhangai,146
+Bayan-Ölgii,146
+Bayankhongor,146
+Bulgan,146
+Darkhan-Uul,146
+Dornod,146
+Dornogovi,146
+Dundgovi,146
+Govi-Altai,146
+Govisümber,146
+Khentii,146
+Khovd,146
+Khövsgöl,146
+Ömnögovi,146
+Orkhon,146
+Övörkhangai,146
+Selenge,146
+Sükhbaatar,146
+Töv,146
+Uvs,146
+Zavkhan,146
+Andrijevica,147
+Bar,147
+Berane,147
+Bijelo Polje,147
+Budva,147
+Danilovgrad,147
+Gusinje,147
+Kolašin,147
+Kotor,147
+Mojkovac,147
+Nikšić,147
+Old Royal Capital Cetinje,147
+Petnjica,147
+Plav,147
+Pljevlja,147
+Plužine,147
+Podgorica,147
+Rožaje,147
+Šavnik,147
+Tivat,147
+Ulcinj,147
+Žabljak,147
+Agadir-Ida-Ou-Tanane,149
+Al Haouz,149
+Al Hoceïma,149
+Aousserd (EH),149
+Assa-Zag (EH-partial),149
+Azilal,149
+Béni Mellal,149
+Béni Mellal-Khénifra,149
+Benslimane,149
+Berkane,149
+Berrechid,149
+Boujdour (EH),149
+Boulemane,149
+Casablanca,149
+Casablanca-Settat,149
+Chefchaouen,149
+Chichaoua,149
+Chtouka-Ait Baha,149
+Dakhla-Oued Ed-Dahab (EH),149
+Drâa-Tafilalet,149
+Driouch,149
+El Hajeb,149
+El Jadida,149
+El Kelâa des Sraghna,149
+Errachidia,149
+Es-Semara (EH-partial),149
+Essaouira,149
+Fahs-Anjra,149
+Fès,149
+Fès-Meknès,149
+Figuig,149
+Fquih Ben Salah,149
+Guelmim,149
+Guelmim-Oued Noun (EH-partial),149
+Guercif,149
+Ifrane,149
+Inezgane-Ait Melloul,149
+Jerada,149
+Kénitra,149
+Khémisset,149
+Khénifra,149
+Khouribga,149
+L'Oriental,149
+Laâyoune (EH),149
+Laâyoune-Sakia El Hamra (EH-partial),149
+Larache,149
+M’diq-Fnideq,149
+Marrakech,149
+Marrakesh-Safi,149
+Médiouna,149
+Meknès,149
+Midelt,149
+Mohammadia,149
+Moulay Yacoub,149
+Nador,149
+Nouaceur,149
+Ouarzazate,149
+Oued Ed-Dahab (EH),149
+Ouezzane,149
+Oujda-Angad,149
+Rabat,149
+Rabat-Salé-Kénitra,149
+Rehamna,149
+Safi,149
+Salé,149
+Sefrou,149
+Settat,149
+Sidi Bennour,149
+Sidi Ifni,149
+Sidi Kacem,149
+Sidi Slimane,149
+Skhirate-Témara,149
+Souss-Massa,149
+Tan-Tan (EH-partial),149
+Tanger-Assilah,149
+Tanger-Tétouan-Al Hoceïma,149
+Taounate,149
+Taourirt,149
+Tarfaya (EH-partial),149
+Taroudannt,149
+Tata,149
+Taza,149
+Tétouan,149
+Tinghir,149
+Tiznit,149
+Youssoufia,149
+Zagora,149
+Cabo Delgado,150
+Gaza,150
+Inhambane,150
+Manica,150
+Maputo,150
+Maputo,150
+Nampula,150
+Niassa,150
+Sofala,150
+Tete,150
+Zambezia,150
+Ayeyarwady,151
+Bago,151
+Chin,151
+Kachin,151
+Kayah,151
+Kayin,151
+Magway,151
+Mandalay,151
+Mon State,151
+Naypyidaw,151
+Rakhine,151
+Sagaing,151
+Shan,151
+Tanintharyi,151
+Yangon,151
+Erongo,152
+Hardap,152
+Karas,152
+Kavango East,152
+Kavango West,152
+Khomas,152
+Kunene,152
+Ohangwena,152
+Omaheke,152
+Omusati,152
+Oshana,152
+Oshikoto,152
+Otjozondjupa,152
+Zambezi,152
+Aiwo,153
+Anabar,153
+Anetan,153
+Anibare,153
+Baiti,153
+Boe,153
+Buada,153
+Denigomodu,153
+Ewa,153
+Ijuw,153
+Meneng,153
+Nibok,153
+Uaboe,153
+Yaren,153
+Bagmati,154
+Gandaki,154
+Karnali,154
+Koshi,154
+Lumbini,154
+Madhesh,154
+Sudurpashchim,154
+Bonaire,156
+Drenthe,156
+Flevoland,156
+Friesland,156
+Gelderland,156
+Groningen,156
+Limburg,156
+North Brabant,156
+North Holland,156
+Overijssel,156
+Saba,156
+Sint Eustatius,156
+South Holland,156
+Utrecht,156
+Zeeland,156
+Loyalty Islands Province,157
+North Province,157
+South Province,157
+Auckland,158
+Bay of Plenty,158
+Canterbury,158
+Chatham Islands,158
+Gisborne,158
+Hawke's Bay,158
+Manawatu-Wanganui,158
+Marlborough,158
+Nelson,158
+Northland,158
+Otago,158
+Southland,158
+Taranaki,158
+Tasman,158
+Waikato,158
+Wellington,158
+West Coast,158
+Boaco,159
+Carazo,159
+Chinandega,159
+Chontales,159
+Estelí,159
+Granada,159
+Jinotega,159
+León,159
+Madriz,159
+Managua,159
+Masaya,159
+Matagalpa,159
+North Caribbean Coast,159
+Nueva Segovia,159
+Río San Juan,159
+Rivas,159
+South Caribbean Coast,159
+Agadez,160
+Diffa,160
+Dosso,160
+Maradi,160
+Tahoua,160
+Tillabéri,160
+Zinder,160
+Abia,161
+Abuja Federal Capital Territory,161
+Adamawa,161
+Akwa Ibom,161
+Anambra,161
+Bauchi,161
+Bayelsa,161
+Benue,161
+Borno,161
+Cross River,161
+Delta,161
+Ebonyi,161
+Edo,161
+Ekiti,161
+Enugu,161
+Gombe,161
+Imo,161
+Jigawa,161
+Kaduna,161
+Kano,161
+Katsina,161
+Kebbi,161
+Kogi,161
+Kwara,161
+Lagos,161
+Nasarawa,161
+Niger,161
+Ogun,161
+Ondo,161
+Osun,161
+Oyo,161
+Plateau,161
+Rivers,161
+Sokoto,161
+Taraba,161
+Yobe,161
+Zamfara,161
+Chagang,115
+Kangwon,115
+North Hamgyong,115
+North Hwanghae,115
+North Pyongan,115
+Pyongyang,115
+Rason,115
+Ryanggang,115
+South Hamgyong,115
+South Hwanghae,115
+South Pyongan,115
+Aerodrom,129
+Aračinovo,129
+Berovo,129
+Bitola,129
+Bogdanci,129
+Bogovinje,129
+Bosilovo,129
+Brvenica,129
+Butel,129
+Čair,129
+Čaška,129
+Centar,129
+Centar Župa,129
+Češinovo-Obleševo,129
+Čučer-Sandevo,129
+Debarca,129
+Delčevo,129
+Demir Hisar,129
+Demir Kapija,129
+Dojran,129
+Dolneni,129
+Drugovo,129
+Gazi Baba,129
+Gevgelija,129
+Gjorče Petrov,129
+Gostivar,129
+Gradsko,129
+Greater Skopje,129
+Ilinden,129
+Jegunovce,129
+Karbinci,129
+Karpoš,129
+Kavadarci,129
+Kičevo,129
+Kisela Voda,129
+Kočani,129
+Konče,129
+Kratovo,129
+Kriva Palanka,129
+Krivogaštani,129
+Kruševo,129
+Kumanovo,129
+Lipkovo,129
+Lozovo,129
+Makedonska Kamenica,129
+Makedonski Brod,129
+Mavrovo and Rostuša,129
+Mogila,129
+Negotino,129
+Novaci,129
+Novo Selo,129
+Ohrid,129
+Oslomej ,129
+Pehčevo,129
+Petrovec,129
+Plasnica,129
+Prilep,129
+Probištip,129
+Radoviš,129
+Rankovce,129
+Resen,129
+Rosoman,129
+Saraj,129
+Sopište,129
+Staro Nagoričane,129
+Štip,129
+Struga,129
+Strumica,129
+Studeničani,129
+Šuto Orizari,129
+Sveti Nikole,129
+Tearce,129
+Tetovo,129
+Valandovo,129
+Vasilevo,129
+Veles,129
+Vevčani,129
+Vinica,129
+Vraneštica,129
+Vrapčište,129
+Zajas,129
+Zelenikovo,129
+Želino,129
+Zrnovci,129
+Agder,165
+Innlandet,165
+Jan Mayen,165
+Møre og Romsdal,165
+Nordland,165
+Oslo,165
+Rogaland,165
+Svalbard,165
+Troms og Finnmark,165
+Trøndelag,165
+Vestfold og Telemark,165
+Vestland,165
+Viken,165
+Ad Dakhiliyah,166
+Ad Dhahirah,166
+Al Batinah North,166
+Al Batinah Region,166
+Al Batinah South,166
+Al Buraimi,166
+Al Wusta,166
+Ash Sharqiyah North,166
+Ash Sharqiyah Region,166
+Ash Sharqiyah South,166
+Dhofar,166
+Musandam,166
+Muscat,166
+Azad Kashmir,167
+Balochistan,167
+Federally Administered Tribal Areas,167
+Gilgit-Baltistan,167
+Islamabad,167
+Khyber Pakhtunkhwa,167
+Punjab,167
+Sindh,167
+Aimeliik,168
+Airai,168
+Angaur,168
+Hatohobei,168
+Kayangel,168
+Koror,168
+Melekeok,168
+Ngaraard,168
+Ngarchelong,168
+Ngardmau,168
+Ngatpang,168
+Ngchesar,168
+Ngeremlengui,168
+Ngiwal,168
+Peleliu,168
+Sonsorol,168
+Bethlehem,169
+Deir El Balah,169
+Gaza,169
+Hebron,169
+Jenin,169
+Jericho ,169
+Jerusalem (Quds),169
+Khan Yunis,169
+Nablus,169
+North Gaza,169
+Qalqilya,169
+Rafah,169
+Ramallah,169
+Salfit,169
+Tubas,169
+Tulkarm,169
+Bocas del Toro,170
+Chiriquí Province,170
+Coclé,170
+Colón,170
+Darién,170
+Emberá-Wounaan Comarca,170
+Guna,170
+Herrera,170
+Los Santos,170
+Ngöbe-Buglé Comarca,170
+Panamá,170
+Panamá Oeste,170
+Veraguas,170
+Bougainville,171
+Central,171
+Chimbu,171
+East New Britain,171
+East Sepik,171
+Eastern Highlands,171
+Enga,171
+Gulf,171
+Hela,171
+Jiwaka,171
+Madang,171
+Manus,171
+Milne Bay,171
+Morobe,171
+New Ireland,171
+Oro,171
+Port Moresby,171
+Sandaun,171
+Southern Highlands,171
+West New Britain,171
+Western,171
+Western Highlands,171
+Alto Paraguay,172
+Alto Paraná,172
+Amambay,172
+Asuncion,172
+Boquerón,172
+Caaguazú,172
+Caazapá,172
+Canindeyú,172
+Central,172
+Concepción,172
+Cordillera,172
+Guairá,172
+Itapúa,172
+Misiones,172
+Ñeembucú,172
+Paraguarí,172
+Presidente Hayes,172
+San Pedro,172
+Amazonas,173
+Áncash,173
+Apurímac,173
+Arequipa,173
+Ayacucho,173
+Cajamarca,173
+Callao,173
+Cusco,173
+Huancavelica,173
+Huanuco,173
+Ica,173
+Junín,173
+La Libertad,173
+Lambayeque,173
+Lima,173
+Loreto,173
+Madre de Dios,173
+Moquegua,173
+Pasco,173
+Piura,173
+Puno,173
+San Martín,173
+Tacna,173
+Tumbes,173
+Ucayali,173
+Abra,174
+Agusan del Norte,174
+Agusan del Sur,174
+Aklan,174
+Albay,174
+Antique,174
+Apayao,174
+Aurora,174
+Autonomous Region in Muslim Mindanao,174
+Basilan,174
+Bataan,174
+Batanes,174
+Batangas,174
+Benguet,174
+Bicol,174
+Biliran,174
+Bohol,174
+Bukidnon,174
+Bulacan,174
+Cagayan,174
+Cagayan Valley,174
+Calabarzon,174
+Camarines Norte,174
+Camarines Sur,174
+Camiguin,174
+Capiz,174
+Caraga,174
+Catanduanes,174
+Cavite,174
+Cebu,174
+Central Luzon,174
+Central Visayas,174
+Compostela Valley,174
+Cordillera Administrative,174
+Cotabato,174
+Davao,174
+Davao del Norte,174
+Davao del Sur,174
+Davao Occidental,174
+Davao Oriental,174
+Dinagat Islands,174
+Eastern Samar,174
+Eastern Visayas,174
+Guimaras,174
+Ifugao,174
+Ilocos,174
+Ilocos Norte,174
+Ilocos Sur,174
+Iloilo,174
+Isabela,174
+Kalinga,174
+La Union,174
+Laguna,174
+Lanao del Norte,174
+Lanao del Sur,174
+Leyte,174
+Maguindanao,174
+Marinduque,174
+Masbate,174
+Metro Manila,174
+Metro Manila(National Capital Region),174
+Mimaropa,174
+Misamis Occidental,174
+Misamis Oriental,174
+Mountain Province,174
+Negros Occidental,174
+Negros Oriental,174
+Northern Mindanao,174
+Northern Samar,174
+Nueva Ecija,174
+Nueva Vizcaya,174
+Occidental Mindoro,174
+Oriental Mindoro,174
+Palawan,174
+Pampanga,174
+Pangasinan,174
+Quezon,174
+Quirino,174
+Rizal,174
+Romblon,174
+Sarangani,174
+Siquijor,174
+Soccsksargen,174
+Sorsogon,174
+South Cotabato,174
+Southern Leyte,174
+Sultan Kudarat,174
+Sulu,174
+Surigao del Norte,174
+Surigao del Sur,174
+Tarlac,174
+Tawi-Tawi,174
+Western Samar,174
+Western Visayas,174
+Zambales,174
+Zamboanga del Norte,174
+Zamboanga del Sur,174
+Zamboanga Peninsula,174
+Zamboanga Sibugay,174
+Greater Poland,176
+Holy Cross,176
+Kuyavia-Pomerania,176
+Lesser Poland,176
+Lower Silesia,176
+Lublin,176
+Lubusz,176
+Łódź,176
+Mazovia,176
+Podlaskie,176
+Pomerania,176
+Silesia,176
+Subcarpathia,176
+Upper Silesia,176
+Warmia-Masuria,176
+West Pomerania,176
+Açores,177
+Aveiro,177
+Beja,177
+Braga,177
+Bragança,177
+Castelo Branco,177
+Coimbra,177
+Évora,177
+Faro,177
+Guarda,177
+Leiria,177
+Lisbon,177
+Madeira,177
+Portalegre,177
+Porto,177
+Santarém,177
+Setúbal,177
+Viana do Castelo,177
+Vila Real,177
+Viseu,177
+Adjuntas,178
+Aguada,178
+Aguadilla,178
+Aguas Buenas,178
+Aibonito,178
+Añasco,178
+Arecibo,178
+Arecibo,178
+Arroyo,178
+Barceloneta,178
+Barranquitas,178
+Bayamon,178
+Bayamón,178
+Cabo Rojo,178
+Caguas,178
+Caguas,178
+Camuy,178
+Canóvanas,178
+Carolina,178
+Carolina,178
+Cataño,178
+Cayey,178
+Ceiba,178
+Ciales,178
+Cidra,178
+Coamo,178
+Comerío,178
+Corozal,178
+Culebra,178
+Dorado,178
+Fajardo,178
+Florida,178
+Guánica,178
+Guayama,178
+Guayanilla,178
+Guaynabo,178
+Guaynabo,178
+Gurabo,178
+Hatillo,178
+Hormigueros,178
+Humacao,178
+Isabela,178
+Jayuya,178
+Juana Díaz,178
+Juncos,178
+Lajas,178
+Lares,178
+Las Marías,178
+Las Piedras,178
+Loíza,178
+Luquillo,178
+Manatí,178
+Maricao,178
+Maunabo,178
+Mayagüez,178
+Mayagüez,178
+Moca,178
+Morovis,178
+Naguabo,178
+Naranjito,178
+Orocovis,178
+Patillas,178
+Peñuelas,178
+Ponce,178
+Ponce,178
+Quebradillas,178
+Rincón,178
+Río Grande,178
+Sabana Grande,178
+Salinas,178
+San Germán,178
+San Juan,178
+San Juan,178
+San Lorenzo,178
+San Sebastián,178
+Santa Isabel,178
+Toa Alta,178
+Toa Baja,178
+Toa Baja,178
+Trujillo Alto,178
+Trujillo Alto,178
+Utuado,178
+Vega Alta,178
+Vega Baja,178
+Vieques,178
+Villalba,178
+Yabucoa,178
+Yauco,178
+Al Daayen,179
+Al Khor,179
+Al Rayyan,179
+Al Wakrah,179
+Al-Shahaniya,179
+Doha,179
+Madinat ash Shamal,179
+Umm Salal,179
+Alba,181
+Arad,181
+Arges,181
+Bacău,181
+Bihor,181
+Bistrița-Năsăud,181
+Botoșani,181
+Braila,181
+Brașov,181
+Bucharest,181
+Buzău,181
+Călărași,181
+Caraș-Severin,181
+Cluj,181
+Constanța,181
+Covasna,181
+Dâmbovița,181
+Dolj,181
+Galați,181
+Giurgiu,181
+Gorj,181
+Harghita,181
+Hunedoara,181
+Ialomița,181
+Iași,181
+Ilfov,181
+Maramureș,181
+Mehedinți,181
+Mureș,181
+Neamț,181
+Olt,181
+Prahova,181
+Sălaj,181
+Satu Mare,181
+Sibiu,181
+Suceava,181
+Teleorman,181
+Timiș,181
+Tulcea,181
+Vâlcea,181
+Vaslui,181
+Vrancea,181
+Adygea,182
+Altai,182
+Altai,182
+Amur,182
+Arkhangelsk,182
+Astrakhan,182
+Bashkortostan,182
+Belgorod,182
+Bryansk,182
+Buryatia,182
+Chechen,182
+Chelyabinsk,182
+Chukotka,182
+Chuvash,182
+Dagestan,182
+Ingushetia,182
+Irkutsk,182
+Ivanovo,182
+Jewish,182
+Kabardino-Balkar,182
+Kaliningrad,182
+Kalmykia,182
+Kaluga,182
+Kamchatka,182
+Karachay-Cherkess,182
+Karelia,182
+Kemerovo,182
+Khabarovsk,182
+Khakassia,182
+Khanty-Mansi,182
+Kirov,182
+Komi,182
+Kostroma,182
+Krasnodar,182
+Krasnoyarsk,182
+Kurgan,182
+Kursk,182
+Leningrad,182
+Lipetsk,182
+Magadan,182
+Mari El,182
+Mordovia,182
+Moscow,182
+Moscow,182
+Murmansk,182
+Nenets,182
+Nizhny Novgorod,182
+North Ossetia-Alania,182
+Novgorod,182
+Novosibirsk,182
+Omsk,182
+Orenburg,182
+Oryol,182
+Penza,182
+Perm,182
+Primorsky,182
+Pskov,182
+Rostov,182
+Ryazan,182
+Saint Petersburg,182
+Sakha,182
+Sakhalin,182
+Samara,182
+Saratov,182
+Smolensk,182
+Stavropol,182
+Sverdlovsk,182
+Tambov,182
+Tatarstan,182
+Tomsk,182
+Tula,182
+Tuva,182
+Tver,182
+Tyumen,182
+Udmurt,182
+Ulyanovsk,182
+Vladimir,182
+Volgograd Oblast,182
+Vologda,182
+Voronezh,182
+Yamalo-Nenets,182
+Yaroslavl,182
+Zabaykalsky,182
+Eastern,183
+Kigali,183
+Northern,183
+Southern,183
+Western,183
+Christ Church Nichola Town,185
+Nevis,185
+Saint Anne Sandy Point,185
+Saint George Gingerland,185
+Saint James Windward,185
+Saint John Capisterre,185
+Saint John Figtree,185
+Saint Kitts,185
+Saint Mary Cayon,185
+Saint Paul Capisterre,185
+Saint Paul Charlestown,185
+Saint Peter Basseterre,185
+Saint Thomas Lowland,185
+Saint Thomas Middle Island,185
+Trinity Palmetto Point,185
+Anse la Raye,186
+Canaries,186
+Castries,186
+Choiseul,186
+Dauphin,186
+Dennery,186
+Gros Islet,186
+Laborie,186
+Micoud,186
+Praslin,186
+Soufrière,186
+Vieux Fort,186
+Charlotte,188
+Grenadines,188
+Saint Andrew,188
+Saint David,188
+Saint George,188
+Saint Patrick,188
+A'ana,191
+Aiga-i-le-Tai,191
+Atua,191
+Fa'asaleleaga,191
+Gaga'emauga,191
+Gaga'ifomauga,191
+Palauli,191
+Satupa'itea,191
+Tuamasaga,191
+Va'a-o-Fonoti,191
+Vaisigano,191
+Acquaviva,192
+Borgo Maggiore,192
+Chiesanuova,192
+Domagnano,192
+Faetano,192
+Fiorentino,192
+Montegiardino,192
+San Marino,192
+Serravalle,192
+Príncipe,193
+São Tomé,193
+'Asir,194
+Al Bahah,194
+Al Jawf,194
+Al Madinah,194
+Al-Qassim,194
+Eastern Province,194
+Ha'il,194
+Jizan,194
+Makkah,194
+Najran,194
+Northern Borders,194
+Riyadh,194
+Tabuk,194
+Dakar,195
+Diourbel Region,195
+Fatick,195
+Kaffrine,195
+Kaolack,195
+Kédougou,195
+Kolda,195
+Louga,195
+Matam,195
+Saint-Louis,195
+Sédhiou,195
+Tambacounda Region,195
+Thiès Region,195
+Ziguinchor,195
+Belgrade,196
+Bor,196
+Braničevo,196
+Central Banat,196
+Jablanica,196
+Kolubara,196
+Mačva,196
+Moravica,196
+Nišava,196
+North Bačka,196
+North Banat,196
+Pčinja,196
+Pirot,196
+Podunavlje,196
+Pomoravlje,196
+Rasina,196
+Raška,196
+South Bačka,196
+South Banat,196
+Srem,196
+Šumadija,196
+Toplica,196
+Vojvodina,196
+West Bačka,196
+Zaječar,196
+Zlatibor,196
+Anse Boileau,197
+Anse Royale,197
+Anse-aux-Pins,197
+Au Cap,197
+Baie Lazare,197
+Baie Sainte Anne,197
+Beau Vallon,197
+Bel Air,197
+Bel Ombre,197
+Cascade,197
+Glacis,197
+Grand'Anse Mahé,197
+Grand'Anse Praslin,197
+La Digue,197
+La Rivière Anglaise,197
+Les Mamelles,197
+Mont Buxton,197
+Mont Fleuri,197
+Plaisance,197
+Pointe La Rue,197
+Port Glaud,197
+Roche Caiman,197
+Saint Louis,197
+Takamaka,197
+Eastern,198
+Northern,198
+Southern,198
+Western,198
+Central Singapore,199
+North East,199
+North West,199
+South East,199
+South West,199
+Banská Bystrica,200
+Bratislava,200
+Košice,200
+Nitra,200
+Prešov,200
+Trenčín,200
+Trnava,200
+Žilina,200
+Ajdovščina,201
+Ankaran,201
+Apače,201
+Beltinci,201
+Benedikt,201
+Bistrica ob Sotli,201
+Bled,201
+Bloke,201
+Bohinj,201
+Borovnica,201
+Bovec,201
+Braslovče,201
+Brda,201
+Brežice,201
+Brezovica,201
+Cankova,201
+Celje,201
+Cerklje na Gorenjskem,201
+Cerknica,201
+Cerkno,201
+Cerkvenjak,201
+Cirkulane,201
+Črenšovci,201
+Črna na Koroškem,201
+Črnomelj,201
+Destrnik,201
+Divača,201
+Dobje,201
+Dobrepolje,201
+Dobrna,201
+Dobrova–Polhov Gradec,201
+Dobrovnik,201
+Dol pri Ljubljani,201
+Dolenjske Toplice,201
+Domžale,201
+Dornava,201
+Dravograd,201
+Duplek,201
+Gorenja Vas–Poljane,201
+Gorišnica,201
+Gorje,201
+Gornja Radgona,201
+Gornji Grad,201
+Gornji Petrovci,201
+Grad,201
+Grosuplje,201
+Hajdina,201
+Hoče–Slivnica,201
+Hodoš,201
+Horjul,201
+Hrastnik,201
+Hrpelje–Kozina,201
+Idrija,201
+Ig,201
+Ilirska Bistrica,201
+Ivančna Gorica,201
+Izola,201
+Jesenice,201
+Jezersko,201
+Juršinci,201
+Kamnik,201
+Kanal ob Soči,201
+Kidričevo,201
+Kobarid,201
+Kobilje,201
+Kočevje,201
+Komen,201
+Komenda,201
+Koper,201
+Kostanjevica na Krki,201
+Kostel,201
+Kozje,201
+Kranj,201
+Kranjska Gora,201
+Križevci,201
+Krško,201
+Kungota,201
+Kuzma,201
+Laško,201
+Lenart,201
+Lendava,201
+Litija,201
+Ljubljana,201
+Ljubno,201
+Ljutomer,201
+Log–Dragomer,201
+Logatec,201
+Loška Dolina,201
+Loški Potok,201
+Lovrenc na Pohorju,201
+Luče,201
+Lukovica,201
+Majšperk,201
+Makole,201
+Maribor,201
+Markovci,201
+Medvode,201
+Mengeš,201
+Metlika,201
+Mežica,201
+Miklavž na Dravskem Polju,201
+Miren–Kostanjevica,201
+Mirna,201
+Mirna Peč,201
+Mislinja,201
+Mokronog–Trebelno,201
+Moravče,201
+Moravske Toplice,201
+Mozirje,201
+Murska Sobota,201
+Muta,201
+Naklo,201
+Nazarje,201
+Nova Gorica,201
+Novo Mesto,201
+Odranci,201
+Oplotnica,201
+Ormož,201
+Osilnica,201
+Pesnica,201
+Piran,201
+Pivka,201
+Podčetrtek,201
+Podlehnik,201
+Podvelka,201
+Poljčane,201
+Polzela,201
+Postojna,201
+Prebold,201
+Preddvor,201
+Prevalje,201
+Ptuj,201
+Puconci,201
+Rače–Fram,201
+Radeče,201
+Radenci,201
+Radlje ob Dravi,201
+Radovljica,201
+Ravne na Koroškem,201
+Razkrižje,201
+Rečica ob Savinji,201
+Renče–Vogrsko,201
+Ribnica,201
+Ribnica na Pohorju,201
+Rogaška Slatina,201
+Rogašovci,201
+Rogatec,201
+Ruše,201
+Šalovci,201
+Selnica ob Dravi,201
+Semič,201
+Šempeter–Vrtojba,201
+Šenčur,201
+Šentilj,201
+Šentjernej,201
+Šentjur,201
+Šentrupert,201
+Sevnica,201
+Sežana,201
+Škocjan,201
+Škofja Loka,201
+Škofljica,201
+Slovenj Gradec,201
+Slovenska Bistrica,201
+Slovenske Konjice,201
+Šmarje pri Jelšah,201
+Šmarješke Toplice,201
+Šmartno ob Paki,201
+Šmartno pri Litiji,201
+Sodražica,201
+Solčava,201
+Šoštanj,201
+Središče ob Dravi,201
+Starše,201
+Štore,201
+Straža,201
+Sveta Ana,201
+Sveta Trojica v Slovenskih Goricah,201
+Sveti Andraž v Slovenskih Goricah,201
+Sveti Jurij ob Ščavnici,201
+Sveti Jurij v Slovenskih Goricah,201
+Sveti Tomaž,201
+Tabor,201
+Tišina,201
+Tolmin,201
+Trbovlje,201
+Trebnje,201
+Trnovska Vas,201
+Tržič,201
+Trzin,201
+Turnišče,201
+Velika Polana,201
+Velike Lašče,201
+Veržej,201
+Videm,201
+Vipava,201
+Vitanje,201
+Vodice,201
+Vojnik,201
+Vransko,201
+Vrhnika,201
+Vuzenica,201
+Zagorje ob Savi,201
+Žalec,201
+Zavrč,201
+Železniki,201
+Žetale,201
+Žiri,201
+Žirovnica,201
+Zreče,201
+Žužemberk,201
+Central,202
+Choiseul,202
+Guadalcanal,202
+Honiara,202
+Isabel,202
+Makira-Ulawa,202
+Malaita,202
+Rennell and Bellona,202
+Temotu,202
+Western,202
+Awdal,203
+Bakool,203
+Banaadir,203
+Bari,203
+Bay,203
+Galguduud,203
+Gedo,203
+Hiran,203
+Lower Juba,203
+Lower Shebelle,203
+Middle Juba,203
+Middle Shebelle,203
+Mudug,203
+Nugal,203
+Sanaag,203
+Togdheer,203
+Eastern Cape,204
+Free State,204
+Gauteng,204
+KwaZulu-Natal,204
+Limpopo,204
+Mpumalanga,204
+North West,204
+Northern Cape,204
+Western Cape,204
+Busan,116
+Daegu,116
+Daejeon,116
+Gangwon,116
+Gwangju,116
+Gyeonggi,116
+Incheon,116
+Jeju,116
+North Chungcheong,116
+North Gyeongsang,116
+North Jeolla,116
+Sejong City,116
+Seoul,116
+South Chungcheong,116
+South Gyeongsang,116
+South Jeolla,116
+Ulsan,116
+Central Equatoria,206
+Eastern Equatoria,206
+Jonglei State,206
+Lakes,206
+Northern Bahr el Ghazal,206
+Unity,206
+Upper Nile,206
+Warrap,206
+Western Bahr el Ghazal,206
+Western Equatoria,206
+A Coruña,207
+Albacete,207
+Alicante,207
+Almeria,207
+Andalusia,207
+Araba,207
+Aragon,207
+Asturias,207
+Asturias,207
+Ávila,207
+Badajoz,207
+Balearic Islands,207
+Barcelona,207
+Basque Country,207
+Bizkaia,207
+Burgos,207
+Caceres,207
+Cádiz,207
+Canary Islands,207
+Cantabria,207
+Cantabria,207
+Castellón,207
+Castile and Leon,207
+Castilla-La Mancha,207
+Catalonia,207
+Ceuta,207
+Ciudad Real,207
+Community of Madrid,207
+Córdoba,207
+Cuenca,207
+Estremadura,207
+Galicia,207
+Gipuzkoa,207
+Girona,207
+Granada,207
+Guadalajara,207
+Huelva,207
+Huesca,207
+Islas Baleares,207
+Jaén,207
+La Rioja,207
+La Rioja,207
+Las Palmas,207
+León,207
+Lleida,207
+Lugo,207
+Madrid,207
+Málaga,207
+Melilla,207
+Murcia,207
+Navarra,207
+Navarre,207
+Ourense,207
+Palencia,207
+Pontevedra,207
+Region of Murcia,207
+Salamanca,207
+Santa Cruz de Tenerife,207
+Segovia,207
+Sevilla,207
+Soria,207
+Tarragona,207
+Teruel,207
+Toledo,207
+Valencia,207
+Valencian Community,207
+Valladolid,207
+Zamora,207
+Zaragoza,207
+Ampara,208
+Anuradhapura,208
+Badulla,208
+Batticaloa,208
+Central,208
+Colombo,208
+Eastern,208
+Galle,208
+Gampaha,208
+Hambantota,208
+Jaffna,208
+Kalutara,208
+Kandy,208
+Kegalle,208
+Kilinochchi,208
+Mannar,208
+Matale,208
+Matara,208
+Monaragala,208
+Mullaitivu,208
+North Central,208
+North Western,208
+Northern,208
+Nuwara Eliya,208
+Polonnaruwa,208
+Puttalam,208
+Ratnapura,208
+Sabaragamuwa,208
+Southern,208
+Trincomalee,208
+Uva,208
+Vavuniya,208
+Western,208
+Al Jazirah,209
+Al Qadarif,209
+Blue Nile,209
+Central Darfur,209
+East Darfur,209
+Kassala,209
+Khartoum,209
+North Darfur,209
+North Kordofan,209
+Northern,209
+Red Sea,209
+River Nile,209
+Sennar,209
+South Darfur,209
+South Kordofan,209
+West Darfur,209
+West Kordofan,209
+White Nile,209
+Brokopondo,210
+Commewijne,210
+Coronie,210
+Marowijne,210
+Nickerie,210
+Para,210
+Paramaribo,210
+Saramacca,210
+Sipaliwini,210
+Wanica,210
+Blekinge,213
+Dalarna,213
+Gävleborg,213
+Gotland,213
+Halland,213
+Jämtland,213
+Jönköping,213
+Kalmar,213
+Kronoberg,213
+Norrbotten,213
+Örebro,213
+Östergötland,213
+Skåne,213
+Södermanland,213
+Stockholm,213
+Uppsala,213
+Värmland,213
+Västerbotten,213
+Västernorrland,213
+Västmanland,213
+Västra Götaland,213
+Aargau,214
+Appenzell Ausserrhoden,214
+Appenzell Innerrhoden,214
+Basel-Land,214
+Basel-Stadt,214
+Bern,214
+Fribourg,214
+Geneva,214
+Glarus,214
+Graubünden,214
+Jura,214
+Lucerne,214
+Neuchâtel,214
+Nidwalden,214
+Obwalden,214
+Schaffhausen,214
+Schwyz,214
+Solothurn,214
+St. Gallen,214
+Thurgau,214
+Ticino,214
+Uri,214
+Valais,214
+Vaud,214
+Zug,214
+Zürich,214
+Al-Hasakah,215
+Al-Raqqah,215
+Aleppo,215
+As-Suwayda,215
+Damascus,215
+Daraa,215
+Deir ez-Zor,215
+Hama,215
+Homs,215
+Idlib,215
+Latakia,215
+Quneitra,215
+Rif Dimashq,215
+Tartus,215
+Changhua,216
+Chiayi,216
+Chiayi,216
+Hsinchu,216
+Hsinchu,216
+Hualien,216
+Kaohsiung,216
+Keelung,216
+Kinmen,216
+Lienchiang,216
+Miaoli,216
+Nantou,216
+New Taipei,216
+Penghu,216
+Pingtung,216
+Taichung,216
+Tainan,216
+Taipei,216
+Taitung,216
+Taoyuan,216
+Yilan,216
+Yunlin,216
+Gorno-Badakhshan,217
+Khatlon,217
+Nohiyahoi Tobei Jumhurí ,217
+Sughd ,217
+Arusha,218
+Dar es Salaam,218
+Dodoma,218
+Geita,218
+Iringa,218
+Kagera,218
+Katavi,218
+Kigoma,218
+Kilimanjaro,218
+Lindi,218
+Manyara,218
+Mara,218
+Mbeya,218
+Morogoro,218
+Mtwara,218
+Mwanza,218
+Njombe,218
+Pemba North,218
+Pemba South,218
+Pwani,218
+Rukwa,218
+Ruvuma,218
+Shinyanga,218
+Simiyu,218
+Singida,218
+Songwe,218
+Tabora,218
+Tanga,218
+Zanzibar North,218
+Zanzibar South,218
+Zanzibar West,218
+Amnat Charoen,219
+Ang Thong,219
+Bangkok,219
+Bueng Kan,219
+Buri Ram,219
+Chachoengsao,219
+Chai Nat,219
+Chaiyaphum,219
+Chanthaburi,219
+Chiang Mai,219
+Chiang Rai,219
+Chon Buri,219
+Chumphon,219
+Kalasin,219
+Kamphaeng Phet,219
+Kanchanaburi,219
+Khon Kaen,219
+Krabi,219
+Lampang,219
+Lamphun,219
+Loei,219
+Lop Buri,219
+Mae Hong Son,219
+Maha Sarakham,219
+Mukdahan,219
+Nakhon Nayok,219
+Nakhon Pathom,219
+Nakhon Phanom,219
+Nakhon Ratchasima,219
+Nakhon Sawan,219
+Nakhon Si Thammarat,219
+Nan,219
+Narathiwat,219
+Nong Bua Lam Phu,219
+Nong Khai,219
+Nonthaburi,219
+Pathum Thani,219
+Pattani,219
+Pattaya,219
+Phangnga,219
+Phatthalung,219
+Phayao,219
+Phetchabun,219
+Phetchaburi,219
+Phichit,219
+Phitsanulok,219
+Phra Nakhon Si Ayutthaya,219
+Phrae,219
+Phuket,219
+Prachin Buri,219
+Prachuap Khiri Khan,219
+Ranong,219
+Ratchaburi,219
+Rayong,219
+Roi Et,219
+Sa Kaeo,219
+Sakon Nakhon,219
+Samut Prakan,219
+Samut Sakhon,219
+Samut Songkhram,219
+Saraburi,219
+Satun,219
+Si Sa Ket,219
+Sing Buri,219
+Songkhla,219
+Sukhothai,219
+Suphan Buri,219
+Surat Thani,219
+Surin,219
+Tak,219
+Trang,219
+Trat,219
+Ubon Ratchathani,219
+Udon Thani,219
+Uthai Thani,219
+Uttaradit,219
+Yala,219
+Yasothon,219
+Acklins,17
+Acklins and Crooked Islands,17
+Berry Islands,17
+Bimini,17
+Black Point,17
+Cat Island,17
+Central Abaco,17
+Central Andros,17
+Central Eleuthera,17
+Crooked Island,17
+East Grand Bahama,17
+Exuma,17
+Freeport,17
+Fresh Creek,17
+Governor's Harbour,17
+Grand Cay,17
+Green Turtle Cay,17
+Harbour Island,17
+High Rock,17
+Hope Town,17
+Inagua,17
+Kemps Bay,17
+Long Island,17
+Mangrove Cay,17
+Marsh Harbour,17
+Mayaguana,17
+New Providence,17
+Nichollstown and Berry Islands,17
+North Abaco,17
+North Andros,17
+North Eleuthera,17
+Ragged Island,17
+Rock Sound,17
+Rum Cay,17
+San Salvador and Rum Cay,17
+San Salvador Island,17
+Sandy Point,17
+South Abaco,17
+South Andros,17
+South Eleuthera,17
+Spanish Wells,17
+West Grand Bahama,17
+Banjul,80
+Central River,80
+Lower River,80
+North Bank,80
+Upper River,80
+West Coast,80
+Aileu,63
+Ainaro,63
+Baucau,63
+Bobonaro,63
+Cova Lima,63
+Dili,63
+Ermera,63
+Lautém,63
+Liquiçá,63
+Manatuto,63
+Manufahi,63
+Viqueque,63
+Centrale,220
+Kara,220
+Maritime,220
+Plateaux,220
+Savanes,220
+Haʻapai,222
+ʻEua,222
+Niuas,222
+Tongatapu,222
+Vavaʻu,222
+Arima,223
+Chaguanas,223
+Couva-Tabaquite-Talparo,223
+Diego Martin,223
+Eastern Tobago,223
+Penal-Debe,223
+Point Fortin,223
+Port of Spain,223
+Princes Town,223
+Rio Claro-Mayaro,223
+San Fernando,223
+San Juan-Laventille,223
+Sangre Grande,223
+Siparia,223
+Tunapuna-Piarco,223
+Western Tobago,223
+Ariana,224
+Béja,224
+Ben Arous,224
+Bizerte,224
+Gabès,224
+Gafsa,224
+Jendouba,224
+Kairouan,224
+Kasserine,224
+Kebili,224
+Kef,224
+Mahdia,224
+Manouba,224
+Medenine,224
+Monastir,224
+Nabeul,224
+Sfax,224
+Sidi Bouzid,224
+Siliana,224
+Sousse,224
+Tataouine,224
+Tozeur,224
+Tunis,224
+Zaghouan,224
+Adana,225
+Adıyaman,225
+Afyonkarahisar,225
+Ağrı,225
+Aksaray,225
+Amasya,225
+Ankara,225
+Antalya,225
+Ardahan,225
+Artvin,225
+Aydın,225
+Balıkesir,225
+Bartın,225
+Batman,225
+Bayburt,225
+Bilecik,225
+Bingöl,225
+Bitlis,225
+Bolu,225
+Burdur,225
+Bursa,225
+Çanakkale,225
+Çankırı,225
+Çorum,225
+Denizli,225
+Diyarbakır,225
+Düzce,225
+Edirne,225
+Elazığ,225
+Erzincan,225
+Erzurum,225
+Eskişehir,225
+Gaziantep,225
+Giresun,225
+Gümüşhane,225
+Hakkâri,225
+Hatay,225
+Iğdır,225
+Isparta,225
+İstanbul,225
+İzmir,225
+Kahramanmaraş,225
+Karabük,225
+Karaman,225
+Kars,225
+Kastamonu,225
+Kayseri,225
+Kilis,225
+Kırıkkale,225
+Kırklareli,225
+Kırşehir,225
+Kocaeli,225
+Konya,225
+Kütahya,225
+Malatya,225
+Manisa,225
+Mardin,225
+Mersin,225
+Muğla,225
+Muş,225
+Nevşehir,225
+Niğde,225
+Ordu,225
+Osmaniye,225
+Rize,225
+Sakarya,225
+Samsun,225
+Şanlıurfa,225
+Siirt,225
+Sinop,225
+Sivas,225
+Şırnak,225
+Tekirdağ,225
+Tokat,225
+Trabzon,225
+Tunceli,225
+Uşak,225
+Van,225
+Yalova,225
+Yozgat,225
+Zonguldak,225
+Ahal,226
+Ashgabat,226
+Balkan,226
+Daşoguz,226
+Lebap,226
+Mary,226
+Funafuti,228
+Nanumanga,228
+Nanumea,228
+Niutao Island Council,228
+Nui,228
+Nukufetau,228
+Nukulaelae,228
+Vaitupu,228
+Abim,229
+Adjumani,229
+Agago,229
+Alebtong,229
+Amolatar,229
+Amudat,229
+Amuria,229
+Amuru,229
+Apac,229
+Arua,229
+Budaka,229
+Bududa,229
+Bugiri,229
+Buhweju,229
+Buikwe,229
+Bukedea,229
+Bukomansimbi,229
+Bukwo,229
+Bulambuli,229
+Buliisa,229
+Bundibugyo,229
+Bunyangabu,229
+Bushenyi,229
+Busia,229
+Butaleja,229
+Butambala,229
+Butebo,229
+Buvuma,229
+Buyende,229
+Central,229
+Dokolo,229
+Eastern,229
+Gomba,229
+Gulu,229
+Ibanda,229
+Iganga,229
+Isingiro,229
+Jinja,229
+Kaabong,229
+Kabale,229
+Kabarole,229
+Kaberamaido,229
+Kagadi,229
+Kakumiro,229
+Kalangala,229
+Kaliro,229
+Kalungu,229
+Kampala,229
+Kamuli,229
+Kamwenge,229
+Kanungu,229
+Kapchorwa,229
+Kasese,229
+Katakwi,229
+Kayunga,229
+Kibaale,229
+Kiboga,229
+Kibuku,229
+Kiruhura,229
+Kiryandongo,229
+Kisoro,229
+Kitgum,229
+Koboko,229
+Kole,229
+Kotido,229
+Kumi,229
+Kween,229
+Kyankwanzi,229
+Kyegegwa,229
+Kyenjojo,229
+Kyotera,229
+Lamwo,229
+Lira,229
+Luuka,229
+Luwero,229
+Lwengo,229
+Lyantonde,229
+Manafwa,229
+Maracha,229
+Masaka,229
+Masindi,229
+Mayuge,229
+Mbale,229
+Mbarara,229
+Mitooma,229
+Mityana,229
+Moroto,229
+Moyo,229
+Mpigi,229
+Mubende,229
+Mukono,229
+Nakapiripirit,229
+Nakaseke,229
+Nakasongola,229
+Namayingo,229
+Namisindwa,229
+Namutumba,229
+Napak,229
+Nebbi,229
+Ngora,229
+Northern,229
+Ntoroko,229
+Ntungamo,229
+Nwoya,229
+Omoro,229
+Otuke,229
+Oyam,229
+Pader,229
+Pakwach,229
+Pallisa,229
+Rakai,229
+Rubanda,229
+Rubirizi,229
+Rukiga,229
+Rukungiri,229
+Sembabule,229
+Serere,229
+Sheema,229
+Sironko,229
+Soroti,229
+Tororo,229
+Wakiso,229
+Western,229
+Yumbe,229
+Zombo,229
+Autonomous Republic of Crimea,230
+Cherkaska oblast,230
+Chernihivska oblast,230
+Chernivetska oblast,230
+Dnipropetrovska oblast,230
+Donetska oblast,230
+Ivano-Frankivska oblast,230
+Kharkivska oblast,230
+Khersonska oblast,230
+Khmelnytska oblast,230
+Kirovohradska oblast,230
+Kyiv,230
+Kyivska oblast,230
+Luhanska oblast,230
+Lvivska oblast,230
+Mykolaivska oblast,230
+Odeska oblast,230
+Poltavska oblast,230
+Rivnenska oblast,230
+Sevastopol,230
+Sumska oblast,230
+Ternopilska oblast,230
+Vinnytska oblast,230
+Volynska oblast,230
+Zakarpatska Oblast,230
+Zaporizka oblast,230
+Zhytomyrska oblast,230
+Abu Dhabi,231
+Ajman,231
+Dubai,231
+Fujairah,231
+Ras al-Khaimah,231
+Sharjah,231
+Umm al-Quwain,231
+Aberdeen,232
+Aberdeenshire,232
+Angus,232
+Antrim,232
+Antrim and Newtownabbey,232
+Ards,232
+Ards and North Down,232
+Argyll and Bute,232
+Armagh,232
+"Armagh, Banbridge and Craigavon",232
+Ascension Island,232
+Ballymena,232
+Ballymoney,232
+Banbridge,232
+Barking and Dagenham,232
+Barnet,232
+Barnsley,232
+Bath and North East Somerset,232
+Bedford,232
+Belfast,232
+Bexley,232
+Birmingham,232
+Blackburn with Darwen,232
+Blackpool,232
+Blaenau Gwent,232
+Bolton,232
+Bournemouth,232
+Bracknell Forest,232
+Bradford,232
+Brent,232
+Bridgend,232
+Brighton and Hove,232
+Bristol,232
+Bromley,232
+Buckinghamshire,232
+Bury,232
+Caerphilly,232
+Calderdale,232
+Cambridgeshire,232
+Camden,232
+Cardiff,232
+Carmarthenshire,232
+Carrickfergus,232
+Castlereagh,232
+Causeway Coast and Glens,232
+Central Bedfordshire,232
+Ceredigion,232
+Cheshire East,232
+Cheshire West and Chester,232
+City of Kingston upon Hull,232
+City of Southampton,232
+Clackmannanshire,232
+Coleraine,232
+Conwy,232
+Cookstown,232
+Cornwall,232
+Coventry,232
+Craigavon,232
+Croydon,232
+Cumbria,232
+Darlington,232
+Denbighshire,232
+Derby,232
+Derbyshire,232
+Derry,232
+Derry City and Strabane,232
+Devon,232
+Doncaster,232
+Dorset,232
+Down District Council,232
+Dudley,232
+Dumfries and Galloway,232
+Dundee,232
+Dungannon and South Tyrone,232
+Durham,232
+Ealing,232
+East Ayrshire,232
+East Dunbartonshire,232
+East Lothian,232
+East Renfrewshire,232
+East Riding of Yorkshire,232
+East Sussex,232
+Edinburgh,232
+Enfield,232
+England,232
+Essex,232
+Falkirk,232
+Fermanagh,232
+Fermanagh and Omagh,232
+Fife,232
+Flintshire,232
+Gateshead,232
+Glasgow,232
+Gloucestershire,232
+Greenwich,232
+Gwynedd,232
+Hackney,232
+Halton,232
+Hammersmith and Fulham,232
+Hampshire,232
+Haringey,232
+Harrow,232
+Hartlepool,232
+Havering,232
+Herefordshire,232
+Hertfordshire,232
+Highland,232
+Hillingdon,232
+Hounslow,232
+Inverclyde,232
+Isle of Wight,232
+Isles of Scilly,232
+Islington,232
+Kensington and Chelsea,232
+Kent,232
+Kingston upon Thames,232
+Kirklees,232
+Knowsley,232
+Lambeth,232
+Lancashire,232
+Larne,232
+Leeds,232
+Leicester,232
+Leicestershire,232
+Lewisham,232
+Limavady,232
+Lincolnshire,232
+Lisburn,232
+Lisburn and Castlereagh,232
+Liverpool,232
+London,232
+Magherafelt,232
+Manchester,232
+Medway,232
+Merthyr Tydfil,232
+Merton,232
+Mid and East Antrim,232
+Mid Ulster,232
+Middlesbrough,232
+Midlothian,232
+Milton Keynes,232
+Monmouthshire,232
+Moray,232
+Moyle,232
+Neath Port Talbot,232
+Newcastle upon Tyne,232
+Newham,232
+Newport,232
+Newry and Mourne,232
+"Newry, Mourne and Down",232
+Newtownabbey,232
+Norfolk,232
+North Ayrshire,232
+North Down,232
+North East Lincolnshire,232
+North Lanarkshire,232
+North Lincolnshire,232
+North Somerset,232
+North Tyneside,232
+North Yorkshire,232
+Northamptonshire,232
+Northern Ireland,232
+Northumberland,232
+Nottingham,232
+Nottinghamshire,232
+Oldham,232
+Omagh,232
+Orkney Islands,232
+Outer Hebrides,232
+Oxfordshire,232
+Pembrokeshire,232
+Perth and Kinross,232
+Peterborough,232
+Plymouth,232
+Poole,232
+Portsmouth,232
+Powys,232
+Reading,232
+Redbridge,232
+Redcar and Cleveland,232
+Renfrewshire,232
+Rhondda Cynon Taf,232
+Richmond upon Thames,232
+Rochdale,232
+Rotherham,232
+Rutland,232
+Saint Helena,232
+Salford,232
+Sandwell,232
+Scotland,232
+Scottish Borders,232
+Sefton,232
+Sheffield,232
+Shetland Islands,232
+Shropshire,232
+Slough,232
+Solihull,232
+Somerset,232
+South Ayrshire,232
+South Gloucestershire,232
+South Lanarkshire,232
+South Tyneside,232
+Southend-on-Sea,232
+Southwark,232
+St Helens,232
+Staffordshire,232
+Stirling,232
+Stockport,232
+Stockton-on-Tees,232
+Stoke-on-Trent,232
+Strabane,232
+Suffolk,232
+Sunderland,232
+Surrey,232
+Sutton,232
+Swansea,232
+Swindon,232
+Tameside,232
+Telford and Wrekin,232
+Thurrock,232
+Torbay,232
+Torfaen,232
+Tower Hamlets,232
+Trafford,232
+United Kingdom,232
+Vale of Glamorgan,232
+Wakefield,232
+Wales,232
+Walsall,232
+Waltham Forest,232
+Wandsworth,232
+Warrington,232
+Warwickshire,232
+West Berkshire,232
+West Dunbartonshire,232
+West Lothian,232
+West Sussex,232
+Westminster,232
+Wigan,232
+Wiltshire,232
+Windsor and Maidenhead,232
+Wirral,232
+Wokingham,232
+Wolverhampton,232
+Worcestershire,232
+Wrexham,232
+York,232
+Alabama,233
+Alaska,233
+American Samoa,233
+Arizona,233
+Arkansas,233
+Baker Island,233
+California,233
+Colorado,233
+Connecticut,233
+Delaware,233
+District of Columbia,233
+Florida,233
+Georgia,233
+Guam,233
+Hawaii,233
+Howland Island,233
+Idaho,233
+Illinois,233
+Indiana,233
+Iowa,233
+Jarvis Island,233
+Johnston Atoll,233
+Kansas,233
+Kentucky,233
+Kingman Reef,233
+Louisiana,233
+Maine,233
+Maryland,233
+Massachusetts,233
+Michigan,233
+Midway Atoll,233
+Minnesota,233
+Mississippi,233
+Missouri,233
+Montana,233
+Navassa Island,233
+Nebraska,233
+Nevada,233
+New Hampshire,233
+New Jersey,233
+New Mexico,233
+New York,233
+North Carolina,233
+North Dakota,233
+Northern Mariana Islands,233
+Ohio,233
+Oklahoma,233
+Oregon,233
+Palmyra Atoll,233
+Pennsylvania,233
+Puerto Rico,233
+Rhode Island,233
+South Carolina,233
+South Dakota,233
+Tennessee,233
+Texas,233
+United States Minor Outlying Islands,233
+United States Virgin Islands,233
+Utah,233
+Vermont,233
+Virginia,233
+Wake Island,233
+Washington,233
+West Virginia,233
+Wisconsin,233
+Wyoming,233
+Baker Island,234
+Howland Island,234
+Jarvis Island,234
+Johnston Atoll,234
+Kingman Reef,234
+Midway Islands,234
+Navassa Island,234
+Palmyra Atoll,234
+Wake Island,234
+Artigas,235
+Canelones,235
+Cerro Largo,235
+Colonia,235
+Durazno,235
+Flores,235
+Florida,235
+Lavalleja,235
+Maldonado,235
+Montevideo,235
+Paysandú,235
+Río Negro,235
+Rivera,235
+Rocha,235
+Salto,235
+San José,235
+Soriano,235
+Tacuarembó,235
+Treinta y Tres,235
+Andijan,236
+Bukhara,236
+Fergana,236
+Jizzakh,236
+Karakalpakstan,236
+Namangan,236
+Navoiy,236
+Qashqadaryo,236
+Samarqand,236
+Sirdaryo,236
+Surxondaryo,236
+Tashkent,236
+Tashkent,236
+Xorazm,236
+Malampa,237
+Penama,237
+Sanma,237
+Shefa,237
+Tafea,237
+Torba,237
+Amazonas,239
+Anzoátegui,239
+Apure,239
+Aragua,239
+Barinas,239
+Bolívar,239
+Carabobo,239
+Cojedes,239
+Delta Amacuro,239
+Distrito Capital,239
+Falcón,239
+Guárico,239
+La Guaira,239
+Lara,239
+Mérida,239
+Miranda,239
+Monagas,239
+Nueva Esparta,239
+Portuguesa,239
+Sucre,239
+Táchira,239
+Trujillo,239
+Venezuela,239
+Yaracuy,239
+Zulia,239
+An Giang,240
+Bà Rịa-Vũng Tàu,240
+Bắc Giang,240
+Bắc Kạn,240
+Bạc Liêu,240
+Bắc Ninh,240
+Bến Tre,240
+Bình Dương,240
+Bình Định,240
+Bình Phước,240
+Bình Thuận,240
+Cà Mau,240
+Cần Thơ,240
+Cao Bằng,240
+Đà Nẵng,240
+Đắk Lắk,240
+Đắk Nông,240
+Điện Biên,240
+Đồng Nai,240
+Đồng Tháp,240
+Gia Lai,240
+Hà Giang,240
+Hà Nam,240
+Hà Nội,240
+Hà Tĩnh,240
+Hải Dương,240
+Hải Phòng,240
+Hậu Giang,240
+Hồ Chí Minh,240
+Hòa Bình,240
+Hưng Yên,240
+Khánh Hòa,240
+Kiên Giang,240
+Kon Tum,240
+Lai Châu,240
+Lâm Đồng,240
+Lạng Sơn,240
+Lào Cai,240
+Long An,240
+Nam Định,240
+Nghệ An,240
+Ninh Bình,240
+Ninh Thuận,240
+Phú Thọ,240
+Phú Yên,240
+Quảng Bình,240
+Quảng Nam,240
+Quảng Ngãi,240
+Quảng Ninh,240
+Quảng Trị,240
+Sóc Trăng,240
+Sơn La,240
+Tây Ninh,240
+Thái Bình,240
+Thái Nguyên,240
+Thanh Hóa,240
+Thừa Thiên-Huế,240
+Tiền Giang,240
+Trà Vinh,240
+Tuyên Quang,240
+Vĩnh Long,240
+Vĩnh Phúc,240
+Yên Bái,240
+Saint Croix,242
+Saint John,242
+Saint Thomas,242
+'Adan,245
+'Amran,245
+Abyan,245
+Al Bayda',245
+Al Hudaydah,245
+Al Jawf,245
+Al Mahrah,245
+Al Mahwit,245
+Amanat Al Asimah,245
+Dhamar,245
+Hadhramaut,245
+Hajjah,245
+Ibb,245
+Lahij,245
+Ma'rib,245
+Raymah,245
+Saada,245
+Sana'a,245
+Shabwah,245
+Socotra,245
+Ta'izz,245
+Central,246
+Copperbelt,246
+Eastern,246
+Luapula,246
+Lusaka,246
+Muchinga,246
+Northern,246
+Northwestern,246
+Southern,246
+Western,246
+Bulawayo,247
+Harare,247
+Manicaland,247
+Mashonaland Central,247
+Mashonaland East,247
+Mashonaland West,247
+Masvingo,247
+Matabeleland North,247
+Matabeleland South,247
+Midlands,247

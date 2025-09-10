@@ -1,0 +1,124 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+body {
+    font-size: 1rem;
+    font-style: normal;
+    font-weight: 400;
+    height: 100%;
+    letter-spacing: 0.56px;
+    overflow-x: hidden;
+}
+ul,
+ol {
+    list-style: none;
+}
+
+/* Header css start here */
+.main-header {
+    box-shadow: rgba(14, 63, 126, 0.04) 0px 0px 0px 1px, 
+    rgba(42, 51, 69, 0.04) 0px 1px 1px -0.5px, 
+    rgba(42, 51, 70, 0.04) 0px 3px 3px -1.5px, 
+    rgba(42, 51, 70, 0.04) 0px 6px 6px -3px, 
+    rgba(14, 63, 126, 0.04) 0px 12px 12px -6px, 
+    rgba(14, 63, 126, 0.04) 0px 24px 24px -12px;
+}
+
+.main-header-topBar {
+    background: #192f60;
+    height: 35px;
+}
+
+.date-time {
+    color: #FFF;
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 36px;
+    text-transform: capitalize;
+    align-content: center;
+}
+
+.logo-img {
+    max-width: 250px;
+    width: auto;
+    height: 60px;
+}
+/* Header css ends here */
+
+
+/* Footer css start here */
+.ism-footer {
+  background-color: #192f60;
+}
+.ism-footer h5 {
+    color: #fff;
+    font-size: 1.25rem;
+    font-style: normal;
+    font-weight: 600;
+    margin-bottom: 1.5rem;
+    margin-top: 1.5rem;
+}
+.ism-footer h4 {
+    color: #fff;
+    font-size: 1rem;
+    font-weight: 600;
+}
+footer ul {
+    padding: 0;
+    margin: 0;
+}
+
+footer ul li {
+    margin-bottom: 0.75rem;
+    overflow-wrap: anywhere;
+}
+
+footer ul li a {
+    align-items: center;
+    color: #FFF;
+    font-size: 1rem;
+    font-style: normal;
+    font-weight: 500;
+    line-height: 28px;
+}
+.footer-iframe{
+    background: #fff;
+    height: 350px;
+    border-radius: 8px;
+}
+.footer-list-icon{
+    border-radius: 50%;
+    height: 40px; 
+    width: 40px; 
+}
+.scanner-image{
+    height: 175px;
+    width: auto;
+    border-radius: 8px;
+}
+/* Footer css ends here */
+
+
+/* Responsive Media Queries */
+@media (max-width: 992px) {
+    .logo-img {
+        max-width: 130px;
+        height: auto;
+    }
+}
+
+@media (max-width: 768px) {
+    .logo-img {
+        max-width: 110px;
+        height: auto;
+    }
+}
+
+@media (max-width: 576px) {
+    .logo-img {
+        max-width: 80px;
+        height: auto;
+    }
+}

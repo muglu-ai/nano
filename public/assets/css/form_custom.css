@@ -1,0 +1,38 @@
+*{
+    font-size: 15px !important; /* Adjust the font size as needed */
+}
+.form-label  {
+    font-size: 14px !important; /* Adjust the font size as needed */
+    /*font-weight: 500 !important; !* Adjust the font weight as needed *!*/
+    color: #000000 !important; /* Adjust the color as needed */
+}
+
+/*.multisteps-form__content label {*/
+/*    color: #0a91ff !important; !* Replace #yourColorCode with the desired color code *!*/
+/*}*/
+
+.multisteps-form__content .form-check-label {
+    color: #000000 !important; /* Replace #yourColorCode with the desired color code */
+}
+
+.multisteps-form__content label{
+    color: #000000 !important; /* Replace #yourColorCode with the desired color code */
+}
+
+.table th{
+    font-size: 12px !important; /* Adjust the font size as needed */
+    /*font-weight: 500 !important; !* Adjust the font weight as needed *!*/
+    color: #000000 !important; /* Adjust the color as needed */
+}
+.text-sm{
+    color: #000000 !important;
+    font-weight: 500 !important;
+}
+.td .text-sm {
+    color: #000000 !important;
+    font-weight: 500 !important;
+}
+.form-check-input radio {
+    margin-top: 10px !important;
+}
+
