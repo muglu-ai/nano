@@ -1,0 +1,817 @@
+<?php
+
+use App\Http\Controllers\AdminController;
+use App\Http\Controllers\ApplicationController;
+use App\Http\Controllers\ApiRelayController;
+use App\Http\Controllers\AttendeeController;
+use App\Http\Controllers\AuthController;
+use App\Http\Controllers\CoExhibitUser;
+use App\Http\Controllers\CoExhibitorController;
+use App\Http\Controllers\DocumentsContoller;
+use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\ExhibitorController;
+use App\Http\Controllers\ExhibitorInfoController;
+use App\Http\Controllers\ExtraRequirementController;
+use App\Http\Controllers\ExportController;
+use App\Http\Controllers\FileUploadController;
+use App\Http\Controllers\ForgotPasswordController;
+use App\Http\Controllers\GeoController;
+use App\Http\Controllers\IntegrationAPIController;
+use App\Http\Controllers\InvoicesController;
+use App\Http\Controllers\MailController;
+use App\Http\Controllers\MeetingRoomAdminController;
+use App\Http\Controllers\MeetingRoomBookingController;
+use App\Http\Controllers\MisController;
+use App\Http\Controllers\NewMisController;
+use App\Http\Controllers\OTPController;
+use App\Http\Controllers\PassesController;
+use App\Http\Controllers\PayPalController;
+use App\Http\Controllers\PaymentController;
+use App\Http\Controllers\PaymentGatewayController;
+use App\Http\Controllers\PaymentReceiptController;
+use App\Http\Controllers\SalesController;
+use App\Http\Controllers\SponsorController;
+use App\Http\Controllers\SponsorshipController;
+use App\Http\Middleware\Auth;
+use App\Http\Middleware\CheckUser;
+use App\Http\Middleware\CoExhibitorMiddleware;
+use App\Http\Middleware\SharedMiddleware;
+use App\Mail\AttendeeConfirmationMail;
+use App\Mail\CoExhibitorInvoiceMail;
+use App\Mail\DisclaimerMail;
+use App\Mail\ExhibitorMail;
+use App\Mail\InvoiceMailView;
+use App\Mail\InviteMail;
+use App\Mail\MeetingRoomInvoice;
+use App\Mail\Onboarding;
+use App\Mail\SendOtpMail;
+use App\Mail\UpdateMailer;
+use App\Models\Application;
+use App\Models\Attendee;
+use App\Models\ComplimentaryDelegate;
+use Illuminate\Support\Facades\Crypt;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Route;
+use Mews\Captcha\Facades\Captcha;
+
+
+//Exhibitor Controller
+Route::get('dashboard', [DashboardController::class, 'exhibitorDashboard'])->name('user.dashboard')->middleware(CheckUser::class);
+
+Route::get('send-participation-email', [ExhibitorController::class, 'attendeeEmailSent'])->name('send.participation.email')->middleware(Auth::class);
+//get the complimentary delegates list
+Route::get('/exhibitor/list/{type}', [ExhibitorController::class, 'list'])->name('exhibition.list')->middleware(CheckUser::class); //invite delegates to the event
+Route::get('/exhibitor/list2/{type}', [ExhibitorController::class, 'list2'])->name('exhibition.list')->middleware(CheckUser::class); //invite delegates to the event
+Route::post('/invite', [ExhibitorController::class, 'invite'])->name('exhibition.invite')->middleware(SharedMiddleware::class);
+Route::post('/accept-coex-terms', [ExhibitorController::class, 'acceptTerms'])->name('coex.acceptTerms')->middleware(CheckUser::class);
+//get the invited delegates form the exhibitor controller
+Route::get('/invited/{token}/', [ExhibitorController::class, 'invited'])->name('exhibition.invited');
+Route::get('/invited/inaugural/{token}/', [ExhibitorController::class, 'invited_test'])->name('exhibition.invited.inaugural');
+//invited submit inviteeSubmitted from exhibitor controller
+Route::post('/invite/submit', [ExhibitorController::class, 'inviteeSubmitted'])->name('exhibition.invitee.submit');
+Route::post('inaugural/invite/submit', [ExhibitorController::class, 'inauguralInviteeSubmitted'])->name('inaugural.invitee.submit');
+Route::post('/add', [ExhibitorController::class, 'add'])->name('exhibition.invite')->middleware(SharedMiddleware::class);
+Route::get('/invited/inaugural/thank-you/{token}', [ExhibitorController::class, 'inauguralInviteeSubmittedThankYou'])->name('inaugural.invitee.thankyou');
+Route::get('receipt', [ExhibitorController::class, 'invoices'])->name('exhibitor.invoices')->middleware(CheckUser::class);
+Route::patch('fasciaUpdate', [DashboardController::class, 'updateFasciaName'])->name('user.fascia.update')->middleware(CheckUser::class);
+
+
+
+Route::get('e-visitor-guide', function (){
+    return view('e-visitor-guide.index');
+});
+
+Route::get('send-sample-data', [ApiRelayController::class, 'testSampleEnqueue'])->name('send.sample.data');
+//api test 
+Route::get('/send-data/{unique_id}', [ApiRelayController::class, 'sendDataToApi']);
+Route::get('/send-data2/{unique_id}', [ApiRelayController::class, 'sendDataToApiNew']);
+Route::get('bulk-send', [ApiRelayController::class, 'sendAllAttendeesToApi'])->name('bulk.send.api');
+Route::get('bulk-send-exhibitor', [ApiRelayController::class, 'sendAllComplimentaryDelegatesToApi'])->name('bulk.send.api.exhibitor');
+Route::get('bulk-send-stall', [ApiRelayController::class, 'sendAllStallManningsToApi2'])->name('bulk.send.api.stall');
+Route::get('/relay/help-tool', [ApiRelayController::class, 'enqueueToHelpTool']);
+Route::get('/relay/help-tool/{id}', [ApiRelayController::class, 'status']);
+
+
+
+Route::middleware(['auth'])->group(function () {
+    Route::get('/file-upload', [FileUploadController::class, 'show'])->name('file.upload.form');
+    Route::post('/file-upload', [FileUploadController::class, 'upload'])->name('file.upload');
+});
+
+//get meeting room invoice with meeting_id as parameter
+Route::get('/meeting-room-invoice/{meeting_id}', function ($meeting_id) {
+    $invoiceMail = new MeetingRoomInvoice($meeting_id);
+    return $invoiceMail->render();
+})->name('meeting.room.invoice');
+
+
+Route::get('/send-exhibitor-confirmation/{id}', function ($id) {
+
+    // dd('id: ' . $id);
+    // Fetch attendee data by $id (replace with your actual logic)
+    $attendee = \App\Models\ComplimentaryDelegate::where('unique_id', $id)->first();
+
+if (!$attendee) {
+    $attendee = \App\Models\StallManning::where('unique_id', $id)->first();
+}
+
+if (!$attendee) {
+    // Optionally, redirect back with error or abort(404)
+    return redirect()->back()->with('error', 'Attendee not found.');
+}
+
+
+    $data = [
+        'unique_id' => $attendee['unique_id'],
+        'email' => $attendee['email'],
+        'name' => $attendee['first_name'] . ' ' . $attendee['middle_name'] . ' ' . $attendee['last_name'],
+        'ticket_type' => 'Visitor',
+        'mobile' => $attendee['mobile'],
+        'company_name' => $attendee['company']
+    ?? $attendee['organisation_name']
+    ?? '-',
+'designation' => $attendee['designation']
+    ?? $attendee['job_title']
+    ?? '-',
+        'registration_date' => now()->format('Y-m-d'),
+        'registration_type' => $attendee['registration_type'] === 'Online' ? 1 : 0,
+        'id_card_number' => $attendee['id_card_number'] ?? 'N/A',
+        'id_card_type' => $attendee['id_card_type'] ?? 'N/A',
+        'dates' => 'All Days', // Assuming all days for simplicity
+    ];
+
+    // dd($data);
+
+    Mail::to($data['email'])
+    // ->cc('vanessa.kim@teradyne.com')
+    ->bcc(['test.interlinks@gmail.com'])
+    ->queue(new ExhibitorMail($data));
+// echo "Exhibitor confirmation mail sent successfully to " . $data['email'];
+// exit;
+    return redirect()->back();
+})->name('mail.exhibitor_confirmation')->middleware(Auth::class);
+
+Route::get('/send-invite-mail-custom', function (Request $request) {
+    // $companyName = $request->query('company');
+    // $inviteType = $request->query('invite_type');
+    // $email = $request->query('email');
+    // $token = $request->query('token');
+
+    $email = "mai-takagi@ckd.co.jp";
+    $token = "qOrTWFLHiwsHa3STODfeaBAaqhMK00iY";
+    $inviteType = "Exhibitor";
+    $companyName = "CKD Corporation";
+    if (!$companyName || !$inviteType || !$email || !$token) {
+        return response()->json(['status' => 'failed', 'message' => 'Missing required parameters.'], 400);
+    }
+
+    try {
+        // Mail::to($email)->queue(new InviteMail($companyName, $inviteType, $token));
+        return response()->json(['status' => 'success', 'message' => 'Invite mail queued.']);
+    } catch (\Exception $e) {
+        \Log::error('Failed to queue invite mail: ' . $e->getMessage());
+        return response()->json(['status' => 'failed', 'message' => 'Failed to queue invite mail.'], 500);
+    }
+})->name('send.invite.mail-custom');
+
+//return view with random otp in constructor 
+Route::get('/send-otps', function () {
+    $otp = rand(100000, 999999);
+    $email = 'manishk_sharma@outlook.com';
+    $sendOtpMail = new SendOtpMail($otp);
+    //send the otp mail
+    try {
+        // Mail::to($email)->send($sendOtpMail);
+        // Log the success message
+        Log::info('OTP email sent successfully to ' . $email);
+    } catch (\Exception $e) {
+        // Log the error message
+        Log::error('Failed to send OTP email: ' . $e->getMessage());
+        return response()->json(['status' => 'failed', 'message' => 'Failed to send OTP email.'], 500);
+    }
+    //return the rendered email view
+    return $sendOtpMail->render();
+})->name('send.otps');
+
+//use Onboarding Class to view the email using the route 
+Route::get('/onboarding-email', function () {
+    $email = 'user@example.com';
+    $company = 'Interlinks';
+    $onboardingEmail = new Onboarding($email, $company);
+
+    return $onboardingEmail->render();
+})->name('onboarding.email');
+
+//send 
+Route::get('/send-attendee-confirmation/{id}', function ($id) {
+    // Fetch attendee data by $id (replace with your actual logic)
+    $attendee = \App\Models\Attendee::where('unique_id', $id)->firstOrFail();
+
+    $data = [
+        'unique_id' => $attendee['unique_id'],
+        'email' => $attendee['email'],
+        'name' => $attendee['first_name'] . ' ' . $attendee['middle_name'] . ' ' . $attendee['last_name'],
+        'ticket_type' => 'Visitor',
+        'mobile' => $attendee['mobile'],
+        'company_name' => $attendee['company'] ?? '-',
+        'designation' => $attendee['designation'] ?? '-',
+        'registration_date' => now()->format('Y-m-d'),
+        'registration_type' => $attendee['registration_type'] === 'Online' ? 1 : 0,
+        'id_card_number' => $attendee['id_card_number'] ?? 'N/A',
+        'id_card_type' => $attendee['id_card_type'] ?? 'N/A',
+        'dates' => is_array($attendee['event_days'])
+            ? implode(', ', $attendee['event_days'])
+            : implode(', ', json_decode($attendee['event_days'], true) ?? []),
+    ];
+
+    Mail::bcc(['test.interlinks@gmail.com'])
+        ->queue(new AttendeeConfirmationMail($data));
+
+    return redirect()->back();
+})->name('mail.attendee_confirmation')->middleware(Auth::class);
+
+
+
+//give new InvoiceMail($application_id) to view the email using the route
+Route::get('/receipt/{application_id}', function ($application_id) {
+    $invoiceMail = new InvoiceMailView($application_id);
+    return $invoiceMail->render();
+})->name('invoice.mail.view');
+
+Route::get('/receipt/coexh/{application_id}', function ($application_id) {
+    $invoiceMail = new CoExhibitorInvoiceMail($application_id);
+    return $invoiceMail->render();
+})->name('co-invoice.mail.view');
+
+
+/*
+ * Visitor Controller
+ * AttendeeController Routes
+ * */
+//test-visitor-email by id viewAttendeeDetails($id) from attendee controller
+Route::get('/test-visitor-email/{id}', [AttendeeController::class, 'viewAttendeeDetails'])->name('test.visitor.email');
+Route::get('/test-exhibitor-email/{id}', [AttendeeController::class, 'viewAttendeeDetailsExhibitor'])->name('test.exhibitor.email');
+Route::get('/visitor-pdf/{id}', [AttendeeController::class, 'viewAttendeeDetailsPdf'])->name('visitor.pdf');
+Route::get('/exhibitor-pdf/{id}', [AttendeeController::class, 'viewAttendeeDetailsPdfExhibitor'])->name('exhibitor.pdf');
+Route::get('/visitor/registration', [AttendeeController::class, 'showForm'])->name('visitor.register.form');
+Route::get('/visitor/registration2', [AttendeeController::class, 'showForm2'])->name('visitor.register.form2');
+Route::post('/visitor/registration', [AttendeeController::class, 'visitor_reg'])->name('visitor_register');
+Route::get('/thank-you', function () {
+    return view('attendee.thank-you');
+})->name('thank-you');
+
+Route::get('/visitor/thankyou/{id}', [AttendeeController::class, 'thankyou'])->name('visitor_thankyou');
+
+Route::get('admin_attendee_list', [AttendeeController::class, 'listAttendees'])->name('visitor.list')->middleware(Auth::class);
+Route::get('exhibitor_list', [AttendeeController::class, 'listExhibitor'])->name('exhibitor.list')->middleware(Auth::class);
+Route::get('export-exhibitor', [AttendeeController::class, 'exportExhibitor'])->name('export.exhibitor')->middleware(Auth::class);
+
+/*
+* Visitor Attendee Controller Admin Routes
+*/
+Route::get('export_stall_invoices', [ExportController::class, 'export_stall_invoices'])->name('export.stall_invoices')->middleware(Auth::class);
+
+Route::get('registration-analytics', [AttendeeController::class, 'dashboard'])->name('registration.analytics')->middleware(Auth::class);
+Route::get('registration-matrix', [AttendeeController::class, 'jobsMatrix'])->name('registration.matrix')->middleware(Auth::class);
+Route::post('/attendees/mass-approve', [AttendeeController::class, 'massApprove'])->name('attendees.mass.approve')->middleware(Auth::class);
+Route::post('/exhibitor/mass-approve', [AttendeeController::class, 'ExhibitormassApprove'])->name('exhibitor.mass.approve')->middleware(Auth::class);
+Route::get('export-attendees', [AttendeeController::class, 'export'])->name('export.list')->middleware(Auth::class);
+Route::post('approve-attendee', [AttendeeController::class, 'approveInauguralSession'])->name('approve.attendee')->middleware(Auth::class);
+Route::get('viewAttendeeDetails/{id}', [AttendeeController::class, 'viewAttendee'])->name('view.attendee.details')->middleware(Auth::class);
+Route::patch('/attendee/{unique_id}/update', [AttendeeController::class, 'update'])->name('attendee.update');
+
+/*
+* Visitor Controller Routes Ends
+*/
+
+
+/*
+ * Application Controller Routes
+ * */
+Route::get('/onboard/{id}', [ApplicationController::class, 'OnboardingEmail'])->name('OnboardingEmail');
+Route::patch('logo_link', [ApplicationController::class, 'saveLogoLink'])->name('user.logo.update')->middleware(SharedMiddleware::class);
+Route::get('/{event}/onboarding', [ApplicationController::class, 'showForm2'])->name('exhibitor_application');
+
+//download application form
+Route::get('/download-application-form', [ApplicationController::class, 'exportPDF'])->name('download.application.form')->middleware(CheckUser::class);
+Route::match(['post', 'get'], '/application/exhibitor', [ApplicationController::class, 'showForm'])->name('application.exhibitor')->middleware(CheckUser::class);
+//Route::match(['get'],'exhibitor/application', [ApplicationController::class, 'showForm'])->name('application.exhibitor')->middleware(CheckUser::class);
+Route::post('/exhibitor/application', [ApplicationController::class, 'submitForm'])->name('application.exhibitor.submit')->middleware(CheckUser::class);
+Route::get('apply', [ApplicationController::class, 'apply'])->name('application.show')->middleware(CheckUser::class);
+Route::get('apply_new2', [ApplicationController::class, 'apply_spon'])->name('application.show2')->middleware(CheckUser::class);
+Route::post('apply', [ApplicationController::class, 'apply_store'])->name('event-participation.store');
+
+//terms and conditions page
+Route::get('terms', [ApplicationController::class, 'terms'])->name('terms')->middleware(CheckUser::class);
+//terms_store
+Route::post('terms', [ApplicationController::class, 'terms_store'])->name('terms.store');
+
+// get preview from preview function of application controller
+Route::get('preview', [ApplicationController::class, 'preview'])->name('application.preview')->middleware(CheckUser::class);
+// route to updated the submitted form with name final
+Route::post('final', [ApplicationController::class, 'final'])->name('application.final');
+// Route::match(['post', 'get'], '/proforma/{application_id}', [ApplicationController::class, 'invoice'])->name('invoice-details')->middleware(CheckUser::class); //Route::view('/users/list', 'admin.user')->name('users.list')->middleware(Auth::class);
+Route::get('application-info', [ApplicationController::class, 'applicationInfo'])->name('application.info')->middleware(CheckUser::class);
+Route::get('/{event}/onboarding', [ApplicationController::class, 'showForm2'])->name('new_form')->middleware(CheckUser::class);
+Route::get('apply_new', [ApplicationController::class, 'apply_new'])->name('apply_new')->middleware(CheckUser::class);
+Route::post('/get-sqm-options', [ApplicationController::class, 'getSQMOptions']);
+
+//get country code from applicationController
+Route::post('/get-country-code', [ApplicationController::class, 'getCountryCode']);
+/*
+ * Application Admin Routes
+ * */
+Route::get('/download-application-form-admin', [ApplicationController::class, 'exportPDF_admin'])
+    ->name('download.application.form.admin')->middleware(Auth::class);
+Route::get('submit_admin', [ApplicationController::class, 'final_admin'])->name('application.final_admin')->middleware(Auth::class);
+
+
+/*
+Application Controller Routes Ends
+*/
+
+/*
+ * Meeting Room Controller Routes
+ * */
+// Add routes for MeetingRoomBookingController
+Route::get('/meeting-rooms', [MeetingRoomBookingController::class, 'index'])->name('meeting_rooms.index')->middleware(CheckUser::class);
+Route::get('/meeting-rooms/availability', [MeetingRoomBookingController::class, 'check'])->name('meeting-rooms.availability')->middleware(CheckUser::class);
+Route::post('/meeting-rooms/book', [MeetingRoomBookingController::class, 'book'])->name('meeting_rooms.book')->middleware(CheckUser::class);
+Route::get('/meeting-rooms/mybookings', [MeetingRoomBookingController::class, 'myBookings'])->name('meeting_rooms.mybook')->middleware(CheckUser::class);
+
+/* Meeting room Admin Routes
+*/
+//rout get with index function MeetingRoomAdminController meeting-rooms/bookings with auth middleware
+Route::get('/meeting-rooms/admin/bookings', [MeetingRoomAdminController::class, 'index'])->name('meeting_rooms.admin.index')->middleware(Auth::class);
+//post method to mark a booking as paid
+Route::post('/meeting-rooms/admin/mark-paid', [MeetingRoomAdminController::class, 'markAsPaid'])->name('meeting_rooms.admin.mark_paid')->middleware(Auth::class);
+
+
+/*
+Meeting Room Controller Routes Ends
+*/
+
+/*
+ * Extra Requirement Controller Routes
+ */
+Route::post('/extra-requirements/upload-tax-invoice/{order}', [ExtraRequirementController::class, 'uploadTaxInvoice'])->name('extra_requirements.upload_tax_invoice')->middleware('auth');
+Route::get('extra_requirements/list', [ExtraRequirementController::class, 'list'])->name('extra_requirements.list')->middleware(SharedMiddleware::class);
+Route::post('extra_requirements', [ExtraRequirementController::class, 'store'])->name('extra_requirements.store')->middleware(SharedMiddleware::class);
+Route::get('exhibitor/orders', [ExtraRequirementController::class, 'userOrders'])->name('exhibitor.orders')->middleware(SharedMiddleware::class);
+
+Route::post('extraRequirements/billing', [ExtraRequirementController::class, 'updateBillingDetails'])->name('extra_requirements.billing');
+Route::post('exhibitor/orders/delete', [ExtraRequirementController::class, 'deleteOrder'])
+    ->name('exhibitor.orders.delete')->middleware(SharedMiddleware::class);
+//get method for extra requirements from extra requirement controller with index function
+Route::get('extra_requirements', [ExtraRequirementController::class, 'index'])->name('extra_requirements.index');
+
+Route::post('/lead-retrieval/add-user-file', [ExtraRequirementController::class, 'addLeadRetrievalUserToFile'])
+    ->name('lead-retrieval.add-user-file')->middleware(SharedMiddleware::class);
+Route::get('/lead-retrieval/users-file/{orderId}', [ExtraRequirementController::class, 'getLeadRetrievalUsersFromFile'])
+    ->name('lead-retrieval.users-file')->middleware(SharedMiddleware::class);
+
+
+
+/* Extra Requirement Controller Admin Routes
+*/
+Route::get('extra_requirements/analytics', [ExtraRequirementController::class, 'analytics'])->name('extra.analytics')->middleware(Auth::class);
+Route::get('requirements/order', [ExtraRequirementController::class, 'allOrders'])->name('extra_requirements.admin')->middleware(Auth::class);
+Route::get('requirements/leadRetrieval', [ExtraRequirementController::class, 'allLeadRetrieval'])
+    ->name('extra_requirements.admin.leadRetrieval')->middleware(Auth::class);
+Route::post('/mark-as-delivered', [ExtraRequirementController::class, 'markAsDelivered'])->name('requirement.delivered')->middleware(Auth::class);
+Route::get('/admin/extra_requirement', [ExtraRequirementController::class, 'showExtrarequirement'])
+    ->name('extra_requirements.admin.show')->middleware(Auth::class);
+Route::get('/download/extra-requirements/{invoice_id}', [PaymentGatewayController::class, 'downloadInvoicePdf'])->name('download.extra-requirements')->middleware(SharedMiddleware::class);
+Route::get('/receipt/extra-requirements/{invoice_id}', [PaymentGatewayController::class, 'downloadInvoicePdf'])->name('receipt.extra-requirements')->middleware(Auth::class);
+
+/* Extra Requirement Controller Routes Ends
+*/
+
+
+//give a test route to view the email from paymentGatewayController function as showInvoiceEmail with invoice_id as parameters and get method
+Route::get('/extra-requirements/{invoice_id}', [PaymentGatewayController::class, 'showInvoiceEmail'])->name('extra-requirements.email');
+
+
+Route::get('{event}/sponsorship', [SponsorshipController::class, 'new'])->name('sponsorship')->middleware(CheckUser::class);
+
+// Route to reload the captcha image via AJAX
+Route::get('/reload-captcha', function () {
+    return response()->json(['captcha' => captcha_img()]);
+})->name('captcha.reload');
+
+
+
+
+/*
+    * Passes Controller Admin Routes
+    * */
+Route::get('/passes-allocation', [PassesController::class, 'passesAllocation'])->name('passes.allocation')->middleware(Auth::class);
+Route::post('/update-passes-allocation', [PassesController::class, 'updatePassesAllocation'])->name('passes.update-allocation')->middleware(Auth::class);
+Route::post('/auto-allocate-passes', [PassesController::class, 'autoAllocatePasses'])->name('passes.auto-allocate')->middleware(Auth::class);
+
+
+Route::get('exhibitor/stallmanning', [PassesController::class, 'StallManning'])->name('admin.stall-manning')->middleware(Auth::class);
+Route::get('exhibitor/inaugural', [PassesController::class, 'Inaugural'])->name('admin.inaugural')->middleware(Auth::class);
+Route::get('exhibitor/remove/{id}', [PassesController::class, 'deleteVisitor'])->name('admin.remove')->middleware(Auth::class);
+Route::get('visitor/remove/{id}', [PassesController::class, 'deleteVisitor2'])->name('admin.remove.attendee')->middleware(Auth::class);
+
+Route::get('exhibitor/stallmanning/export', [PassesController::class, 'exportPasses'])->name('passes.export')->middleware(Auth::class);
+
+/* Passes Controller Admin Routes Ends
+*/
+/*
+    * MIS Controller Admin Routes
+    * */
+
+Route::post('export-logo', [MisController::class, 'exportFasciaAndLogo'])->name('export.fasciaLogo')->middleware(Auth::class);
+Route::post('export-fascia', [MisController::class, 'exportFasciaName'])->name('export.fascia')->middleware(Auth::class);
+Route::get('active-users-analytics', [MisController::class, 'activeUsersAnalytics'])->name('active.users.analytics')->middleware(Auth::class);
+Route::get('/admin/analytics/export', [MisController::class, 'exportUsers'])->name('admin.analytics.export')->middleware(Auth::class);
+Route::get('/import_states', [MisController::class, 'getCountryAndState']);
+Route::post('/get-states', [MisController::class, 'getStates'])->name('get.states');
+
+Route::get('active-users-analytics2', [NewMisController::class, 'activeUsersAnalytics'])->name('active.users.analytics2')->middleware(Auth::class);
+Route::get('/admin/analytics/export2', [NewMisController::class, 'exportUsers'])->name('admin.analytics.export2')->middleware(Auth::class);
+/* MIS Controller Admin Routes Ends
+*/
+Route::post('/add-tds-amount', [InvoicesController::class, 'addTdsAmount'])->name('invoices.add-tds')->middleware(Auth::class);
+/*
+ * Test Routes
+ * */
+
+Route::get('/pgway', function () {
+    return view('pgway.create-order');
+});
+
+
+Route::match(['get', 'post'], '/ccavResponseHandler', function () {
+    return request()->all();
+});
+
+/* Test Routes Ends
+*/
+
+Route::get('/send-invoice/{invoiceId}/{email}', function ($invoiceId, $email) {
+    return app()->call('App\Http\Controllers\PaymentGatewayController@sendInvoice', [
+        'invoiceId' => $invoiceId,
+        'toEmail' => $email
+    ]);
+});
+
+
+/* Payment Gateway Routes
+* PayPalController Routes
+*/
+
+Route::get('/payment/{id}', [PayPalController::class, 'showPaymentForm'])->name('paypal.form');
+// Route::get('/payment/{id}', [PayPalController::class, 'showPaymentForm2'])->name('paypal.form');
+Route::get('/payment/{id}', [PayPalController::class, 'showPaymentForm'])->name('paypal.form');
+Route::post('/paypal/create', [PayPalController::class, 'createOrder'])->name('paypal.create');
+Route::post('/paypal/create-order', [PayPalController::class, 'createOrder']);
+Route::post('/paypal/capture-order/{orderId}', [PayPalController::class, 'captureOrder']);
+Route::get('/paypal/success', [PayPalController::class, 'success'])->name('paypal.success');
+Route::get('/paypal/cancel', [PayPalController::class, 'cancel'])->name('paypal.cancel');
+Route::get('/paypal/webhook', [PayPalController::class, 'webhook'])->withoutMiddleware([\App\Http\Middleware\VerifyCsrfToken::class]);
+
+
+/* Payment Gateway CCAvenue Routes
+*/
+Route::post('/payment/ccavenue/{id}', [PaymentGatewayController::class, 'ccAvenuePayment']);
+Route::post('/payment/ccavenue-success', [PaymentGatewayController::class, 'ccAvenueSuccess'])->withoutMiddleware([\App\Http\Middleware\VerifyCsrfToken::class]);
+
+/* Payment Gateway Routes Ends
+*/
+
+
+/* CoExhibitor Controller Routes
+* */
+//co exhibitor dashboard
+Route::get('/co-exhibitor', [CoExhibitorController::class, 'user_list'])->name('co_exhibitor')->middleware(CheckUser::class);
+Route::get('/co-exhibitor/dashboard', [CoExhibitUser::class, 'index'])->name('dashboard.co-exhibitor')->middleware(CoExhibitorMiddleware::class);
+Route::get('/co-exhibitor/passes', [CoExhibitUser::class, 'passes'])->name('co-exhibitor.passes')->middleware(CoExhibitorMiddleware::class);
+Route::get('/co-exhibitor/inaugural', [CoExhibitUser::class, 'inauguralPasses'])->name('co-exhibitor.inauguralPasses')->middleware(CoExhibitorMiddleware::class);
+Route::get('/co-exhibitor/email-view', [CoExhibitorController::class, 'emailView'])->name('co_exhibitor.email_view');
+//route get the exhibitor co-exhibitor list
+
+Route::post('/co-exhibitor/store', [CoExhibitorController::class, 'store'])->name('co_exhibitor.store')->middleware(CheckUser::class);
+
+/* CoExhibitor Controller Admin Routes
+*/
+Route::post('/co-exhibitor/approve/{id}', [CoExhibitorController::class, 'approve'])->name('co_exhibitor.approve')->middleware(Auth::class);
+
+Route::post('/co-exhibitor/reject/{id}', [CoExhibitorController::class, 'reject'])->name('co_exhibitor.reject')->middleware(Auth::class);
+
+Route::get('/co-exhibitors', [CoExhibitorController::class, 'index'])->name('co_exhibitors')->middleware(Auth::class);
+Route::get('/co-exhibitors/uplo', [CoExhibitorController::class, 'createCoExhibitor'])->name('co_exhibitors.upload')->middleware(Auth::class);
+
+/* CoExhibitor Controller Routes Ends
+*/
+
+/* Admin Controller Routes
+* */
+Route::get('/application-list/', [AdminController::class, 'index'])->name('application.lists')->middleware(Auth::class);;
+Route::get('/copy-application/', [AdminController::class, 'copy'])->name('application.copy')->middleware(Auth::class);;
+Route::get('/application-list/{status}', [AdminController::class, 'index'])->name('application.list')->middleware(Auth::class);
+Route::get('/application-detail', [DashboardController::class, 'applicantDetails'])->name('application.show.admin')->middleware(Auth::class);
+Route::get('/price', [AdminController::class, 'price'])->name('price')->middleware(Auth::class);
+//approve application
+Route::post('/approve/{id}', [AdminController::class, 'approve'])->name('approve')->middleware(Auth::class);
+//route get invoice list from dashboard controller invoiceDetails function
+Route::get('/invoice-list', [DashboardController::class, 'invoiceDetails'])->name('invoice.list')->middleware(Auth::class);
+Route::view('/users/list', 'admin.users')->name('users.list')->middleware(Auth::class);
+Route::get('/get-users', [AdminController::class, 'getUsers'])->middleware(Auth::class);
+///post application/submit-endpoint to submit the application
+Route::post('/application/submit', [AdminController::class, 'approve'])->name('approve.submit')->middleware(Auth::class);
+Route::get('/application/submit/test', [AdminController::class, 'approve_test'])->name('approve.submit.test')->middleware(Auth::class);
+Route::post('/sponsorship/submit', [SponsorController::class, 'approve'])->name('sponsorship.submit')->middleware(Auth::class);
+Route::post('/application/reject', [AdminController::class, 'reject'])->name('reject.submit')->middleware(Auth::class);
+Route::post('/application/submitback', [AdminController::class, 'submission_back'])->name('submit.back')->middleware(Auth::class);
+Route::post('/sponsorship/reject', [AdminController::class, 'sponsorship_reject'])->name('sponsorship.reject')->middleware(Auth::class);
+Route::get('/get-users', [AdminController::class, 'getUsers'])->middleware(Auth::class);
+//Exhibitor Admin Routes
+Route::get('applicationView', [AdminController::class, 'applicationView'])->name('application.view')->middleware(Auth::class);
+Route::put('/application/update/{id}', [AdminController::class, 'applicationUpdate'])->name('application.update')->middleware(Auth::class);
+//Admin Sponsorship Route
+Route::get('/sponsorship-list/', [AdminController::class, 'sponsorApplicationList'])->name('sponsorship.lists')->middleware(Auth::class);;
+Route::get('/sponsorship-list/{status}', [AdminController::class, 'sponsorApplicationList'])->name('sponsorship.list')->middleware(Auth::class);
+//verify the membership by admin /membership/verify
+Route::post('membership/verify', [AdminController::class, 'verifyMembership'])->name('membership.verify')->middleware(Auth::class);
+///membership/reject
+Route::post('membership/reject', [AdminController::class, 'unverifyMembership'])->name('membership.reject')->middleware(Auth::class);
+Route::get('onboarding-test', [AdminController::class, 'sendOnboardingEmail'])->name('onboarding.test');
+
+/* Admin Controller Routes Ends
+* */
+
+/*
+ * Sales Controller Routes
+ * */
+Route::get('/sales', [SalesController::class, 'index'])->name('sales.index')->middleware(Auth::class);
+
+
+/*
+  SponsorController Routes
+*/
+Route::get('/sponsor/create_new', [SponsorController::class, 'create'])->name('sponsor.create_new')->middleware(Auth::class);
+Route::get('/sponsor/add', [SponsorController::class, 'add'])->name('sponsor.add')->middleware(Auth::class);
+Route::get('/sponsor/{id}/update', [SponsorController::class, 'sponsor_update'])->name('sponsor.update')->middleware(Auth::class);
+Route::post('/sponsor/store', [SponsorController::class, 'create'])->name('sponsor_item.store')->middleware(Auth::class);
+Route::post('/sponsor-items/store', [SponsorController::class, 'item_store'])->name('sponsor_items.store')->middleware(Auth::class);
+Route::put('/sponsor-items/{id}/update', [SponsorController::class, 'item_update'])->name('sponsor_items.update')->middleware(Auth::class);
+//put to update the sponsor items to inactive
+Route::put('/sponsor-items/{id}/inactive', [SponsorController::class, 'item_inactive'])->name('sponsor_items.inactive')->middleware(Auth::class);
+
+/*
+ * Document Controller Routes
+ * */
+Route::get('invitation-letter', [DocumentsContoller::class, 'invitation'])->name('invitation.letter')->middleware(SharedMiddleware::class);
+Route::get('transport-letter', [DocumentsContoller::class, 'transport_letter'])->name('transport.letter')->middleware(SharedMiddleware::class);
+Route::get('exhibitor-manual', [DocumentsContoller::class, 'exhibitor_manual'])->name('exhibitor_manual')->middleware(SharedMiddleware::class);
+Route::get('portal-guide', [DocumentsContoller::class, 'exhibitor_guide'])->name('exhibitor_guide')->middleware(SharedMiddleware::class);
+Route::get('faqs', [DocumentsContoller::class, 'faqs'])->name('faqs')->middleware(SharedMiddleware::class);
+Route::get('participation-letter', [DashboardController::class, 'participantDetails'])->name('participation.letter')->middleware(CheckUser::class);
+
+/* Document Controller Routes Ends
+*/
+
+/*
+ * Payment Receipt Controller Routes
+ * */
+Route::post('upload-receipt', [PaymentReceiptController::class, 'uploadReceipt'])->name('upload.receipt')->middleware(Auth::class);
+Route::get('upload-receipt_test', [PaymentReceiptController::class, 'uploadReceipt_test'])->name('upload.receipt.test')->middleware(Auth::class);
+Route::post('upload-receipt-user', [PaymentReceiptController::class, 'uploadReceipt_user'])->name('upload.receipt_user')->middleware(CheckUser::class);
+Route::post('upload-receipt-extra', [PaymentReceiptController::class, 'uploadReceipt_extra'])->name('upload.receipt_extra')->middleware(SharedMiddleware::class);
+
+/* Payment Receipt Controller Routes Ends
+*/
+
+/*
+ * Invoice Controller Routes
+ * */
+
+Route::get('/invoice', [InvoicesController::class, 'index'])->name('invoice.list')->middleware(Auth::class);
+//get the invoice details from invoice controller with view function as get method
+
+Route::get('/invoice/{id}', [InvoicesController::class, 'show'])->name('invoice.show')->middleware(Auth::class);
+
+
+/*
+* Sponsorship Controller
+*/
+Route::get('/{event}/sponsorship_test', [SponsorController::class, 'new_up'])->name('list_sponsorship_test')->middleware(CheckUser::class);
+Route::get('/{event}/sponsorship_new', [SponsorshipController::class, 'listing'])->name('list_sponsorship_new')->middleware(CheckUser::class);
+Route::get('/{event}/sponsorship_state', [SponsorshipController::class, 'listing_state'])->name('list_sponsorship_new')->middleware(CheckUser::class);
+Route::post('/submit_sponsor', [SponsorshipController::class, 'store'])->name('sponsor.store')->middleware(CheckUser::class);
+Route::get('/sponsor/preview', [SponsorshipController::class, 'confirmation'])->name('sponsor.review')->middleware(CheckUser::class);
+//delete sponsor application with post method
+Route::post('/sponsor/delete', [SponsorshipController::class, 'delete'])->name('sponsor.delete')->middleware(CheckUser::class);
+//submit the application with post method
+Route::post('/sponsor/submit', [SponsorController::class, 'submit'])->name('sponsor.submit')->middleware(CheckUser::class);
+Route::get('review_sponsor', [SponsorController::class, 'review'])->name('review.sponsor')->middleware(CheckUser::class);
+
+
+//Sponsorship Admin routes
+Route::view('/sponsorship/list', 'sponsor.applications')->name('users.list')->middleware(Auth::class);
+Route::get('/sponsors_list', [SponsorController::class, 'get_applications'])->middleware(Auth::class);
+//approve-sponsorship
+Route::post('approve-sponsorship', [SponsorController::class, 'approve'])->name('approve.sponsorship')->middleware(Auth::class);
+
+/*
+ * Export Controller Routes
+ * */
+
+Route::get('export_users', [ExportController::class, 'export_users'])->name('export.users')->middleware(Auth::class);
+Route::get('export_applications', [ExportController::class, 'export_applications'])->name('export.applications')->middleware(Auth::class);
+Route::get('export_approved_applications', [ExportController::class, 'export_approved_applications'])->name('export.app.applications')->middleware(Auth::class);
+Route::get('export_sponsorships', [ExportController::class, 'export_sponsorship_applications'])->name('export.sponsorships')->middleware(Auth::class);
+Route::get('export_requirements', [ExportController::class, 'extra_requirements_export'])->name('export.requirements')->middleware(Auth::class);
+Route::get('export_lead_retrieval', [ExportController::class, 'export_lead_retrieval'])->name('export.lead_retrieval')->middleware(Auth::class);
+/* Export Controller Routes Ends
+*/
+
+/*
+ * Mail Controller Routes
+ * */
+//Mail Controller
+//return view with route mail test from MailController
+Route::get('/mail-test', [MailController::class, 'reminderExhibitors'])->name('mail.test');
+Route::get('/mail-test2', [MailController::class, 'reminderVenue'])->name('mail.test2');
+Route::get('/send-email', [MailController::class, 'thankYouMail'])->name('send.email');
+// inactive users reminder
+Route::get('/inactive-users-reminder', [MailController::class, 'inactiveUsersReminder'])->name('inactive.users.reminder')->middleware(Auth::class);
+
+
+
+Route::get('/terms-conditions', function () {
+    return view('applications.tc');
+})->name('terms-conditions');
+
+Route::get('/invoice/details', [InvoicesController::class, 'view'])->name('invoice.details');
+
+Route::get('/', function () {
+    return redirect()->route('login');
+});
+Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
+
+
+
+Route::get('register', [AuthController::class, 'showRegistrationForm'])->name('register.form');
+Route::post('register', [AuthController::class, 'register'])->name('register');
+
+
+Route::post('/login', [AuthController::class, 'login'])->name('login.process');
+
+//forget password
+
+Route::get('forgot-password', [ForgotPasswordController::class, 'showForgotPasswordForm'])->name('forgot.password');
+Route::post('forgot-password', [ForgotPasswordController::class, 'sendResetLink'])->name('forgot.password.submit');
+//reset password
+Route::get('reset-password/{token}/{email}', [ForgotPasswordController::class, 'showResetPasswordForm'])->name('reset.password');
+Route::post('reset-password', [ForgotPasswordController::class, 'resetPassword'])->name('reset.password.submit');
+
+//verify account with get method
+Route::get('verify-account/{token}', [AuthController::class, 'verifyAccount'])->name('auth.verify');
+
+
+Route::middleware(['auth', 'role:sponsor'])->group(function () {
+    Route::get('/sponsor/dashboard', fn() => view('sponsor.dashboard'))->name('dashboard.sponsor');
+});
+
+Route::middleware(['auth', 'role:admin'])->group(function () {
+    Route::get('/admin/dashboard_old', [DashboardController::class, 'exhibitorDashboard'])->name('dashboard.admin');
+});
+Route::middleware(['auth', 'role:admin'])->group(function () {
+    Route::get('/admin/dashboard', [DashboardController::class, 'exhibitorDashboard_new'])->name('dashboard.admin');
+});
+
+//logout
+
+
+
+Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
+
+Route::get('/event-list', [AuthController::class, 'showEvents'])->name('event.list')->middleware(CheckUser::class);
+//invoice details
+
+
+//Payment routes
+Route::match(['post', 'get'], '/payment', [PaymentController::class, 'showOrder'])->name('payment')->middleware(CheckUser::class);
+Route::post('/payment/success', [PaymentController::class, 'completeOrder'])->name('payment_success')->middleware(Auth::class);
+//partial amount payment
+Route::post('/payment/partial', [PaymentController::class, 'partialPayment'])->name('payment.partial')->middleware(CheckUser::class);
+Route::post('/payment/full', [PaymentController::class, 'fullPayment'])->name('payment.full')->middleware(CheckUser::class);
+//payment verified from payment gateway
+Route::match(['post', 'get'], '/payment/verify', [PaymentController::class, 'Successpayment'])->name('payment.verify')->middleware(CheckUser::class);
+
+
+
+//exhibitor Dashboard
+
+Route::get('/invited/', function () {
+    return redirect('invited/not-found');
+})->name('exhibition.invited2');
+//get /invited/inaugural/thank-you/{token} from exhibitor controller
+
+//application_info
+//invitaion letter
+//participation letteer
+//invoices list
+//Upload payemnt receipt
+
+//get the application info
+
+//dynamic event application
+
+//Exhibitor Info Routes
+Route::get('/exhibitor-info', [ExhibitorInfoController::class, 'showForm'])->name('exhibitor.info')->middleware(CheckUser::class);
+//post the exhibitor info
+Route::post('/exhibitor-info', [ExhibitorInfoController::class, 'storeExhibitor'])->name('exhibitor.info.submit')->middleware(CheckUser::class);
+
+//product-add route
+Route::get('/product-add', [ExhibitorInfoController::class, 'showProductForm'])->name('product.add')->middleware(CheckUser::class);
+Route::post('/product-add', [ExhibitorInfoController::class, 'productStore'])->name('product.store')->middleware(CheckUser::class);
+
+
+
+
+
+
+
+
+
+
+//store the sponsorship submission
+
+
+Route::get('review_new', function () {
+    return view('applications.preview_new');
+});
+
+//verify paymnent route with post method
+Route::post('verify-payment', [PaymentController::class, 'verifyPayment'])->name('verify.payment')->middleware(Auth::class);
+Route::post('verify-extra-payment', [PaymentController::class, 'verifyExtraPayment'])->name('verify.extra-payment')->middleware(Auth::class);
+
+
+//review_sponsor with class name review from SponsorController
+
+
+
+//Invoices and Payments  routes
+
+
+
+
+
+
+
+
+//sales controller
+
+
+//Extra Requirement Controller
+
+
+//route to export data
+
+
+
+
+
+
+
+
+Route::get('/download-invoice', [InvoicesController::class, 'generatePDF'])->name('download.invoice');
+
+
+
+
+
+
+Route::prefix('api')->group(function () {
+    Route::get('/countries', [GeoController::class, 'countries']);
+    Route::get('/states/{country}', [GeoController::class, 'states']);
+    Route::get('/cities/{country}/{state}', [GeoController::class, 'cities']);
+});
+Route::post('/otp/send', [OTPController::class, 'sendOtp']);
+Route::post('/otp/verify', [OTPController::class, 'verifyOtp']);
+
+Route::get('/send-invite-mail-custom', function () {
+    $coExhibitorco_exhibitor_id = "SI25-COEXH-4DFF7E"; // Replace with actual co-exhibitor ID
+    Mail::bcc(['semiconindia@semi.org'])
+        ->send(new CoExhibitorInvoiceMail($coExhibitorco_exhibitor_id));
+});
+
+
+// Lead Retrieval user storage in JSON file
+
+
+
+Route::get('/integration/attendees', [IntegrationAPIController::class, 'getAttendees'])->name('integration.attendees');
+Route::get('/integration/stall-manning', [IntegrationAPIController::class, 'getStallManning'])->name('integration.stall-manning');
+Route::get('/integration/complimentary-delegates', [IntegrationAPIController::class, 'getComplimentaryDelegates'])->name('integration.complimentary-delegates');
+
+
+
+
