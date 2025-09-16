@@ -67,27 +67,29 @@
                         </div>
                     </div>
                 </div>
-                <div class="col-xl-3 col-sm-6 mb-xl-0 mb-4 mt-2 "  >
-                    <div class="card custom-card" >
-                        <div class="card-header p-2 ps-3 custom-card">
-                            <div class="d-flex justify-content-between">
-                                <div>
-                                    <p class="text-lg mb-0 text-capitalize text-dark">Payment Receipt Uploaded</p>
-                                    <h4 class="mb-0">{{ $analytics['payments'][0] ?? 0 }}</h4>
-                                </div>
-                                <div
-                                    class="icon icon-md icon-shape bg-gradient-dark shadow-dark shadow text-center border-radius-lg">
-                                    <i class="material-symbols-rounded opacity-10">person</i>
-                                </div>
-                            </div>
-                        </div>
-                        <hr class="dark horizontal my-0">
-                        <div class="card-footer p-2 ps-3">
-                            <p class="mb-0 text-lg"><a href="/invoice"><span class="text-success font-weight-bolder">Click here </span></a>for
-                                more info.</p>
-                        </div>
-                    </div>
-                </div>
+
+{{--                <div class="col-xl-3 col-sm-6 mb-xl-0 mb-4 mt-2 "  >--}}
+{{--                    <div class="card custom-card" >--}}
+{{--                        <div class="card-header p-2 ps-3 custom-card">--}}
+{{--                            <div class="d-flex justify-content-between">--}}
+{{--                                <div>--}}
+{{--                                    <p class="text-lg mb-0 text-capitalize text-dark">Payment Receipt Uploaded</p>--}}
+{{--                                    <h4 class="mb-0">{{ $analytics['payments'][0] ?? 0 }}</h4>--}}
+{{--                                </div>--}}
+{{--                                <div--}}
+{{--                                    class="icon icon-md icon-shape bg-gradient-dark shadow-dark shadow text-center border-radius-lg">--}}
+{{--                                    <i class="material-symbols-rounded opacity-10">person</i>--}}
+{{--                                </div>--}}
+{{--                            </div>--}}
+{{--                        </div>--}}
+{{--                        <hr class="dark horizontal my-0">--}}
+{{--                        <div class="card-footer p-2 ps-3">--}}
+{{--                            <p class="mb-0 text-lg"><a href="/invoice"><span class="text-success font-weight-bolder">Click here </span></a>for--}}
+{{--                                more info.</p>--}}
+{{--                        </div>--}}
+{{--                    </div>--}}
+{{--                </div>--}}
+
             </div>
 
 

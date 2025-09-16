@@ -21,8 +21,8 @@ class SalesController extends Controller
     {
         //2025-02-03 10:22:56
         $startDate = Carbon::parse('2025-02-03 00:00:00');
-        $endDate = Carbon::parse('2025-09-03 23:59:59');
-        $invoices = Invoice::whereBetween('created_at', [$startDate, $endDate])->get();
+        $endDate = Carbon::parse(config(constant('EVENT_DATE_END')))->endOfDay();
+        $invoices = Invoice::get();
 
         //get the currency
         $currency = 'INR';

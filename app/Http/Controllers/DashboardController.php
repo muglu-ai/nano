@@ -182,9 +182,11 @@ class DashboardController extends Controller
                 ->whereNull('s.application_id') // Exclude applications present in sponsorships
                 ->groupBy('c.id')
                 ->having('total_sqm', '>', 0)
+
                 ->orderByDesc('total_companies')
                 ->get();
 
+//            dd($applicationsByCountry);
             // Count total unique countries with submitted applications (excluding sponsorships)
             $totalCountries = DB::table('applications as a')
                 ->leftJoin('sponsorships as s', 'a.id', '=', 's.application_id') // Ensure exclusion
@@ -205,7 +207,7 @@ class DashboardController extends Controller
                 ")
                 ->where('a.submission_status', 'submitted')
                 ->whereNull('s.application_id') // Exclude applications in sponsorships
-                ->whereRaw("CAST(a.interested_sqm AS UNSIGNED) > 0") // Exclude zero sqm values
+                ->whereRaw("CAST(a.interested_sqm AS UNSIGNED) > 0 AND a.interested_sqm IS NOT NULL AND a.interested_sqm != ''") // Exclude zero and empty sqm values
                 ->first();
 
             $approvedApplicationsByCountry = DB::table('applications as a')
@@ -243,8 +245,14 @@ class DashboardController extends Controller
                 ")
                 ->where('a.submission_status', 'approved') // Only approved applications
                 ->whereNull('s.application_id') // Exclude applications in sponsorships
-                ->whereRaw("CAST(a.allocated_sqm AS UNSIGNED) > 0") // Exclude zero sqm values
+                ->whereRaw("a.allocated_sqm IS NOT NULL") // Exclude null and zero sqm values
                 ->first();
+
+            // give me sql query for the above query
+
+
+
+//            dd($approvedIndiaInternationalStats);
 
             //count the CoExhibitors where status pending
             $coExhibitorCount = CoExhibitor::where('status', 'pending')->count();

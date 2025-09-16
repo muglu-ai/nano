@@ -1,5 +1,5 @@
 @extends('layouts.users')
-@section('title', $slug)
+@section('title', $slug ?? '')
 @section('content')
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/css/intlTelInput.min.css" />
 
@@ -26,13 +26,9 @@
     </style>
 
     @php
-
         //if exhibitorInfo is filled then set the css value to is-filled
-        if ($exhibitorInfo->fascia_name ?? '' != '') {
-            $cssClass = 'is-filled';
-        } else {
-            $cssClass = '';
-        }
+        $fasciaName = $exhibitorInfo->fascia_name ?? '';
+        $cssClass = $fasciaName !== '' ? 'is-filled' : '';
 
         //break down the name into salutation, first and last name
         $contactPerson = $exhibitorInfo->contact_person ?? '';
@@ -40,15 +36,14 @@
         $firstName = '';
         $lastName = '';
 
-        if ($contactPerson) {
+        if (!empty($contactPerson)) {
             // Match salutation (ends with a dot), first name, last name
             if (preg_match('/^([A-Za-z\.]+)\s+([^\s]+)\s*(.*)$/', $contactPerson, $matches)) {
-                $salutation = trim($matches[1]);
-                $firstName = trim($matches[2]);
-                $lastName = trim($matches[3]);
+                $salutation = trim($matches[1] ?? '');
+                $firstName = trim($matches[2] ?? '');
+                $lastName = trim($matches[3] ?? '');
             }
         }
-
     @endphp
 
     <div class="container mt-4">
@@ -68,14 +63,14 @@
                                 <div class="col-sm-6">
                                     <div class="input-group input-group-dynamic is-filled">
                                         <label class="form-label custom-label">Company Name</label>
-                                        <input class="form-control" type="text" value="{{ $application->company_name }}"
+                                        <input class="form-control" type="text" value="{{ $application->company_name ?? '' }}"
                                             readonly>
                                     </div>
                                 </div>
                                 <div class="col-sm-6 mt-3 mt-sm-0">
                                     <div class="input-group input-group-dynamic is-filled">
                                         <label class="form-label">Booth Number</label>
-                                        <input class="form-control" type="text" value="{{ $application->stallNumber }}"
+                                        <input class="form-control" type="text" value="{{ $application->stallNumber ?? '' }}"
                                             readonly>
                                     </div>
                                 </div>
@@ -86,7 +81,7 @@
                                     <div class="input-group input-group-dynamic {{ $cssClass }}">
                                         <label class="form-label">Fascia Name</label>
                                         <input class="form-control" type="text" name="fascia_name"
-                                            value="{{ $exhibitorInfo->fascia_name ?? '' }}" required>
+                                            value="{{ $fasciaName }}" required>
                                     </div>
                                 </div>
                             </div>
@@ -98,7 +93,8 @@
                                             <div class="input-group input-group-dynamic is-filled">
                                                 <label class="form-label">Salutation</label>
                                                 <select class="form-control" name="salutation" required>
-                                                    <option value="" disabled selected>Select</option>
+                                                    <option value="" disabled {{ empty($salutation) ? 'selected' : '' }}>Select
+                                                    </option>
                                                     <option value="Mr." {{ $salutation == 'Mr.' ? 'selected' : '' }}>Mr.
                                                     </option>
                                                     <option value="Ms." {{ $salutation == 'Ms.' ? 'selected' : '' }}>Ms.
@@ -132,7 +128,7 @@
                                     <div class="input-group input-group-dynamic {{ $cssClass }}">
                                         <label class="form-label">Email Address</label>
                                         <input class="form-control" type="email" name="email"
-                                            value="{{ $exhibitorInfo->email }}" required>
+                                            value="{{ $exhibitorInfo->email ?? '' }}" required>
                                     </div>
                                 </div>
                             </div>
@@ -142,14 +138,9 @@
                                     <div class="input-group input-group-dynamic is-filled {{ $cssClass }}">
                                         <label class="form-label">Phone Number</label>
                                         <input id="phone" class="form-control" type="tel" name="phone"
-                                            value="{{ $exhibitorInfo->phone }}" required>
+                                            value="{{ $exhibitorInfo->phone ?? '' }}" required>
                                     </div>
                                 </div>
-
-
-
-
-
                                 <div class="col-sm-6 mt-3 mt-sm-0">
                                     <div class="input-group input-group-dynamic is-filled {{ $cssClass }}">
                                         <label class="form-label">Upload Logo</label>
@@ -171,7 +162,7 @@
                                     <label class="form-label">Company Description</label>
                                     <div class="input-group input-group-dynamic is-filled">
                                         <textarea class="form-control" name="description" id="description" rows="3" maxlength="750" required
-                                            oninput="updateCharCount()"> {{ $exhibitorInfo->description }}</textarea>
+                                            oninput="updateCharCount()">{{ trim($exhibitorInfo->description ?? '') }}</textarea>
                                     </div>
                                     <small id="charCount" class="text-muted">0 / 750 characters</small>
                                 </div>
@@ -185,14 +176,14 @@
                                     <div class="input-group input-group-dynamic {{ $cssClass }} ">
                                         <label class="form-label">LinkedIn</label>
                                         <input class="form-control" type="url" name="linkedin"
-                                            value="{{ $exhibitorInfo->linkedin }}">
+                                            value="{{ $exhibitorInfo->linkedin ?? '' }}">
                                     </div>
                                 </div>
                                 <div class="col-sm-6 mt-3 mt-sm-0">
                                     <div class="input-group input-group-dynamic {{ $cssClass }}">
                                         <label class="form-label">Instagram</label>
                                         <input class="form-control" type="url" name="instagram"
-                                            value="{{ $exhibitorInfo->instagram }}">
+                                            value="{{ $exhibitorInfo->instagram ?? '' }}">
                                     </div>
                                 </div>
                             </div>
@@ -202,14 +193,14 @@
                                     <div class="input-group input-group-dynamic {{ $cssClass }}">
                                         <label class="form-label">Facebook</label>
                                         <input class="form-control" type="url" name="facebook"
-                                            value="{{ $exhibitorInfo->facebook }}">
+                                            value="{{ $exhibitorInfo->facebook ?? '' }}">
                                     </div>
                                 </div>
                                 <div class="col-sm-6 mt-3 mt-sm-0">
                                     <div class="input-group input-group-dynamic {{ $cssClass }}">
                                         <label class="form-label">YouTube</label>
                                         <input class="form-control" type="url" name="youtube"
-                                            value="{{ $exhibitorInfo->youtube }}">
+                                            value="{{ $exhibitorInfo->youtube ?? '' }}">
                                     </div>
                                 </div>
                             </div>
@@ -254,8 +245,6 @@
         });
     </script>
 
-
-
     <script>
         document.addEventListener("DOMContentLoaded", function() {
             const phoneInput = document.querySelector("#phone");
@@ -278,7 +267,7 @@
 
                 // Set number if available
                 @if (!empty($exhibitorInfo->phone))
-                    const serverPhone = "{{ $exhibitorInfo->phone }}";
+                    const serverPhone = "{{ $exhibitorInfo->phone ?? '' }}";
                     if (serverPhone.startsWith('+')) {
                         iti.setNumber(serverPhone);
                     } else {
@@ -307,6 +296,20 @@
                 // Set the final phone value in +<country_code><number> format
                 phoneInput.value = fullNumber;
             });
+        });
+    </script>
+
+    <script>
+        // Remove the placeholder value from phone input every 10 seconds
+        function clearPhonePlaceholder() {
+            const phoneInput = document.querySelector("#phone");
+            if (phoneInput) {
+                phoneInput.setAttribute("placeholder", "");
+            }
+        }
+        window.addEventListener("load", function() {
+            clearPhonePlaceholder();
+            setInterval(clearPhonePlaceholder, 10);
         });
     </script>
 @endsection

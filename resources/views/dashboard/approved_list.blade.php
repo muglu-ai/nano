@@ -129,19 +129,21 @@
                                     @endphp
                                     {{--                                    {{ $status }}--}}
                                     {{--                                    <th>Application No</th>--}}
+                                    {{ //registration date }}
+                                     <th class="text-uppercase text-white text-wrap">Registration Date</th>
                                     <th class="text-uppercase text-white text-wrap">Company Name</th>
-                                    <th class="text-uppercase text-white text-wrap text-start">Country</th>
-                                    <th class="text-uppercase text-white text-wrap">Allocated Booth Size (in sqm) </th>
+{{--                                    <th class="text-uppercase text-white text-wrap text-start">Country</th>--}}
+{{--                                    <th class="text-uppercase text-white text-wrap">Allocated Booth Size (in sqm) </th>--}}
                                      <th class="text-uppercase  text-xs font-weight-bolder text-white" style="max-width: 180px;">
                                         <div class="d-flex flex-column " >
                                             <span class=" text-uppercase text-dark text-white">Stall Type   </span>
 
-                                            <p class="text-xs text-uppercase  mb-0 text-dark text-white">Preferred Location</p>
+                                            <p class="text-xs text-uppercase  mb-0 text-dark text-white">Stall Size</p>
                                         </div>
                                     </th>
                                     {{-- <th class="text-uppercase text-white text-wrap">Preferred Location</th>
                                     <th class="text-uppercase text-white text-wrap">Stall Type</th> --}}
-                                    <th class="text-uppercase text-white text-wrap">Semi Member</th>
+{{--                                    <th class="text-uppercase text-white text-wrap">Semi Member</th>--}}
                                     <th class="text-uppercase text-white text-wrap">Booth Number</th>
                                     <th class="text-uppercase  text-xs font-weight-bolder text-white" style="max-width: 180px;">
                                         <div class="d-flex flex-column " >
@@ -191,30 +193,30 @@
                                         <tr>
                                             <td class="custom-td" style="min-width: 80px; word-wrap: break-word;">
                                                 <div class="d-flex flex-column" style="word-break: break-word; overflow-wrap: break-word; white-space: normal; max-width: 150px;">
-                                                    <p class="mb-0 text-md text-dark"> <a class="text-md text-info " href="{{ route('application.view', ['application_id' => $application->application_id]) }}">
+                                                    <p class="mb-0 text-md text-dark"> <a class="text-md text-info " target="_blank" href="{{ route('application.view', ['application_id' => $application->application_id]) }}">
                                                         {{ $application->company_name }}
                                                         </a>
                                                     </p>
                                                 </div>
                                             </td>
-                                            <td class="custom-td text-start">
-                                                <div class="d-flex px-2 py-1 text-start">
-                                                    <div class="d-flex flex-column"  >
-                                                        <p class="mb-0 text-md text-dark text-start" >{{ $application->country->name }}</p>
-                                                    </div>
-                                                </div>
-                                            </td>
-                                            <td class="text-start custom-td">
-                                                <div class="d-flex px-2 py-1 text-start">
-                                                    <div class="d-flex flex-column">
-                                                        <p class="mb-0 text-md text-dark">{{ $application->allocated_sqm}}</p>
-                                                    </div>
-                                                </div>
-                                            </td>
+{{--                                            <td class="custom-td text-start">--}}
+{{--                                                <div class="d-flex px-2 py-1 text-start">--}}
+{{--                                                    <div class="d-flex flex-column"  >--}}
+{{--                                                        <p class="mb-0 text-md text-dark text-start" >{{ $application->country->name }}</p>--}}
+{{--                                                    </div>--}}
+{{--                                                </div>--}}
+{{--                                            </td>--}}
+{{--                                            <td class="text-start custom-td">--}}
+{{--                                                <div class="d-flex px-2 py-1 text-start">--}}
+{{--                                                    <div class="d-flex flex-column">--}}
+{{--                                                        <p class="mb-0 text-md text-dark">{{ $application->allocated_sqm}}</p>--}}
+{{--                                                    </div>--}}
+{{--                                                </div>--}}
+{{--                                            </td>--}}
                                             <td class="custom-td">
                                                 <div class="d-flex flex-column text-start" style="word-break: break-word; overflow-wrap: break-word; white-space: normal; max-width: 200px;" >
                                                     <p class="mb-0 text-md text-dark">{{ $application->stall_category ?? 'N/A' }} </p>
-                                                    <p class="text-md text-secondary mb-0">{{  $application->pref_location }}</p>
+                                                    <p class="text-md text-secondary mb-0">{{  $application->allocated_sqm }}</p>
                                                 </div>
                                             </td>
                                             {{-- <td class="custom-td">
@@ -240,19 +242,7 @@
                                                 </div>
                                             </td> --}}
 
-                                            <td class="custom-td">
-                                                <div class="d-flex flex-column" style="word-break: break-word; overflow-wrap: break-word; white-space: normal; max-width: 200px;" >
-                                                    <p class="mb-0 text-md text-dark">{{ $application->semi_member == 1 ? 'Y' : 'N' }}</p>
-                                                    @if(($application->semi_member == 1))
-                                                        <p class="text-md text-secondary mb-0">{{ $application->semi_memberID }}</p>
-                                                        @if($application->membership_verified == 1)
-                                                            <i class="material-symbols-rounded text-success" data-bs-toggle="tooltip" data-bs-original-title="Membership Verified">verified</i>
-                                                        @else
-                                                            <i class="material-symbols-rounded text-danger" data-bs-toggle="tooltip" data-bs-original-title="Membership Not Verified">cancel</i>
-                                                        @endif
-                                                    @endif
-                                                </div>
-                                            </td>
+
 
                                             <td class="custom-td">
                                                 <div class="d-flex px-2 py-1">

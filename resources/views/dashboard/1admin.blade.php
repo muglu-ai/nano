@@ -106,7 +106,10 @@
                         </div>
                     </div>
                 </div>
-
+                @php
+                    $hide = false;
+                @endphp
+                @if(!$hide)
                 <div class="col-xl-4 col-sm-6 mb-xl-0 mb-4 ">
                     <div class="card">
                         <div class="card-header p-2 ps-3">
@@ -123,12 +126,13 @@
                         </div>
                         <hr class="dark horizontal my-0">
                         <div class="card-footer p-2 ps-3">
-                            <p class="mb-0 text-sm"><a href="/application-list/in-progress"><span
+                            <p class="mb-0 text-sm"><a href="{{ route('application.list', ['status' => 'in-progress']) }}"><span
                                         class="text-success font-weight-bolder"> Click here</span> </a>for more info.
                             </p>
                         </div>
                     </div>
                 </div>
+                @endif
                 <div class="col-xl-4 col-sm-6 mb-xl-0 mb-4 ">
                     <div class="card">
                         <div class="card-header p-2 ps-3">
@@ -145,19 +149,21 @@
                         </div>
                         <hr class="dark horizontal my-0">
                         <div class="card-footer p-2 ps-3">
-                            <p class="mb-0 text-sm"><a href="/application-list/submitted"><span
-                                        class="text-success font-weight-bolder">Click here </span> </a>for more info.
+                            <p class="mb-0 text-sm"><a href="{{ route('application.list', ['status' => 'submitted']) }}">
+                                    <span class="text-success font-weight-bolder">Click here </span>
+                                </a>for more info.
                             </p>
                         </div>
                     </div>
                 </div>
+
                 <div class="col-xl-4 col-sm-6 mb-xl-0 mb-4 mt-2  mb-3">
                     <div class="card">
                         <div class="card-header p-2 ps-3">
                             <div class="d-flex justify-content-between">
                                 <div>
                                     <p class="text-m mb-0 text-capitalize font-weight-black font-weight-bold">Total Approved Application</p>
-                                    <h4 class="mb-0 mt-1">{{ $analytics['applicationsByStatus']['approved'] ?? 0 }}</h4>
+                                    <h4 class="mb-0 mt-1">{{ $analytics['applicationsByStatus']['Approved'] ?? 0 }}</h4>
                                 </div>
                                 <div
                                     class="icon icon-md icon-shape bg-gradient-dark shadow-dark shadow text-center border-radius-lg">
@@ -173,12 +179,14 @@
                         </div>
                     </div>
                 </div>
+
+                @if(!$hide)
                 <div class="col-xl-4 col-sm-6 mb-xl-0 mb-4 mt-2  mb-3">
                     <div class="card">
                         <div class="card-header p-2 ps-3">
                             <div class="d-flex justify-content-between">
                                 <div>
-                                    <p class="text-m mb-0 text-capitalize font-weight-black font-weight-bold">Total Rejected Application</p>
+                                    <p class="text-m mb-0 text-capitalize font-weight-black font-weight-bold">Total Rejecteds Application</p>
                                     <h4 class="mb-0 mt-1">{{ $analytics['applicationsByStatus']['rejected'] ?? 0 }}</h4>
                                 </div>
                                 <div
@@ -195,6 +203,7 @@
                         </div>
                     </div>
                 </div>
+                @endif
             </div>
             <hr class="dark horizontal my-0">
 

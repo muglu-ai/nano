@@ -1,5 +1,5 @@
 @extends('layouts.auth_new')
-@section('title', 'SEMICON India 2025')
+@section('title', 'Forget Password - ' . config('constants.EVENT_NAME') . ' ' . config('constants.EVENT_YEAR'))
 @section('content')
     <div class="container mb-4">
         <div class="row mt-lg-n12 mt-md-n12 mt-n12 justify-content-center">
@@ -38,11 +38,11 @@
                     <div class="card-footer text-center pt-0 px-lg-2 px-1">
                         <p class="mb-4 text-sm mx-auto">
                             Don't have an account?
-                            <a href="/register" class="text-success text-gradient font-weight-bold">Sign up</a>
+                            <a href="{{route('register.form')}}" class="text-success text-gradient font-weight-bold">Sign up</a>
                         </p>
                         <p class="mb-4 text-sm mx-auto">
 
-                            <a href="/login" class="text-success text-gradient font-weight-bold">Login</a>
+                            <a href="{{route('login')}}" class="text-success text-gradient font-weight-bold">Login</a>
                         </p>
                     </div>
                 </div>

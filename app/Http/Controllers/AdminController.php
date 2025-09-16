@@ -127,7 +127,7 @@ class AdminController extends Controller
                 ->get();
 
             //can i get the query log for this query from $appliications
-            Log::info('Applications Query Log', DB::getQueryLog());
+            //Log::info('Applications Query Log', DB::getQueryLog());
         } else {
             $applications = Application::with('eventContact')
                 ->orderBy('submission_date', 'desc') // or 'asc' for ascending order
@@ -147,8 +147,8 @@ class AdminController extends Controller
             // dd($applications);
             //total revenue from all approved applications from price field in invoice table
             $totalRevenue = Invoice::where('type', 'Stall Booking')
-    ->whereIn('payment_status', ['paid', 'unpaid'])
-    ->sum('price');
+                            ->whereIn('payment_status', ['paid', 'unpaid'])
+                            ->sum('price');
 
             return view('dashboard.approved_list', compact('applications', 'slug', 'totalRevenue'));
         }

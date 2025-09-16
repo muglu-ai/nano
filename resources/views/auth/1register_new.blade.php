@@ -10,7 +10,7 @@
     <title>SEMICON India 2025</title>
     <link
         rel="icon"
-        href="https://www.semiconindia.org/themes/custom/semicon/favicon.ico"
+        href="https://www.bengalurutechsummit.com/favicon-16x16.png"
         type="image/vnd.microsoft.icon"
     />
     <!--     Fonts and icons     -->

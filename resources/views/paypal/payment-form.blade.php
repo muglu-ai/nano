@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>@yield('title', 'SEMICON India 2025 - Checkout')</title>
-    <link rel="icon" href="https://www.semiconindia.org/themes/custom/semicon/favicon.ico"
+    <link rel="icon" href="https://www.bengalurutechsummit.com/favicon-16x16.png"
         type="image/vnd.microsoft.icon" />
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">

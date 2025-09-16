@@ -10,7 +10,6 @@ class Payment extends Model
     use HasFactory;
 
     protected $fillable = [
-
         'invoice_id',
         'order_id',
         'payment_method',
@@ -28,7 +27,6 @@ class Payment extends Model
         'verified_by',
         'verified_at',
         'remarks',
-
     ];
 
     public function invoice()

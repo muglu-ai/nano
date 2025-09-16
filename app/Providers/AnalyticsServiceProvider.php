@@ -26,8 +26,8 @@ class AnalyticsServiceProvider extends ServiceProvider
                 'totalInvoices' => Invoice::count(),
                 'applicationsByStatus' => Application::select('submission_status', \DB::raw('count(*) as count'))
                     ->where('application_type', 'exhibitor')
-                    ->where('interested_sqm', '!=', 0)
-                    ->where('company_name', '!=', 'SCI Knowledge Interlinks Pvt. Ltd.')
+//                    ->where('interested_sqm', '!=', 0)
+//                    ->where('company_name', '!=', 'SCI Knowledge Interlinks Pvt. Ltd.')
                     ->groupBy('submission_status')
                     ->pluck('count', 'submission_status')
                     ->toArray(),

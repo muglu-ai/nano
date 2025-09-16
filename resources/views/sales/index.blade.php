@@ -86,17 +86,17 @@
                             <thead class="thead-light table-dark">
                             <tr>
                                 <th class="text-left text-uppercase">Invoice No</th>
-                                <th class="text-left text-uppercase">Application No</th>
+                                <th class="text-left text-uppercase">Invoice Type</th>
                                 <th class="text-left text-uppercase">Amount</th>
                                 <th class="text-left text-uppercase text-center">Status</th>
-                                <th class="text-left text-uppercase">Due Date</th>
+                                <th class="text-left text-uppercase">Date</th>
                             </tr>
                             </thead>
                             <tbody>
                             @foreach ($invoices as $invoice)
                                 <tr>
                                     <td class="text-dark text-md">{{ $invoice->invoice_no }}</td>
-                                    <td class=" text-dark text-md">{{ $invoice->application_no }}</td>
+                                    <td class=" text-dark text-md">{{ $invoice->type }}</td>
                                     <td class=" text-dark text-md">{{$invoice->currency}} {{ number_format($invoice->total_final_price, 2) }}</td>
                                     <td class=" text-dark text-md"><span class=" badge d-block w-90 bg-{{ $invoice->payment_status == 'paid' ? 'success' : 'danger' }}">{{ ucfirst($invoice->payment_status) }}</span></td>
                                     <td class=" text-dark text-md">{{ $invoice->payment_due_date }}</td>

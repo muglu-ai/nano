@@ -16,6 +16,7 @@ use App\Http\Controllers\ExportController;
 use App\Http\Controllers\FileUploadController;
 use App\Http\Controllers\ForgotPasswordController;
 use App\Http\Controllers\GeoController;
+use App\Http\Controllers\ImportData;
 use App\Http\Controllers\IntegrationAPIController;
 use App\Http\Controllers\InvoicesController;
 use App\Http\Controllers\MailController;
@@ -643,19 +644,36 @@ Route::get('/send-email', [MailController::class, 'thankYouMail'])->name('send.e
 Route::get('/inactive-users-reminder', [MailController::class, 'inactiveUsersReminder'])->name('inactive.users.reminder')->middleware(Auth::class);
 
 
+/*
+ * Exhibitor Info Routes
+ * */
+//Exhibitor Info Routes
+Route::get('/exhibitor-info', [ExhibitorInfoController::class, 'showForm'])->name('exhibitor.info')->middleware(CheckUser::class);
+//post the exhibitor info
+Route::post('/exhibitor-info', [ExhibitorInfoController::class, 'storeExhibitor'])->name('exhibitor.info.submit')->middleware(CheckUser::class);
 
+//product-add route
+Route::get('/product-add', [ExhibitorInfoController::class, 'showProductForm'])->name('product.add')->middleware(CheckUser::class);
+Route::post('/product-add', [ExhibitorInfoController::class, 'productStore'])->name('product.store')->middleware(CheckUser::class);
+
+
+//terms and conditions route
 Route::get('/terms-conditions', function () {
     return view('applications.tc');
 })->name('terms-conditions');
+
 
 Route::get('/invoice/details', [InvoicesController::class, 'view'])->name('invoice.details');
 
 Route::get('/', function () {
     return redirect()->route('login');
 });
+
+
+/*
+ * Auth Routes
+ * */
 Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
-
-
 
 Route::get('register', [AuthController::class, 'showRegistrationForm'])->name('register.form');
 Route::post('register', [AuthController::class, 'register'])->name('register');
@@ -674,6 +692,14 @@ Route::post('reset-password', [ForgotPasswordController::class, 'resetPassword']
 //verify account with get method
 Route::get('verify-account/{token}', [AuthController::class, 'verifyAccount'])->name('auth.verify');
 
+/*
+ * Auth Routes Ends
+ * */
+
+/*
+ * Import data from the old system
+ * */
+Route::get('/import-users', [ImportData::class, 'importUsers'])->name('import.users')->middleware(Auth::class);
 
 Route::middleware(['auth', 'role:sponsor'])->group(function () {
     Route::get('/sponsor/dashboard', fn() => view('sponsor.dashboard'))->name('dashboard.sponsor');
@@ -714,24 +740,7 @@ Route::get('/invited/', function () {
 })->name('exhibition.invited2');
 //get /invited/inaugural/thank-you/{token} from exhibitor controller
 
-//application_info
-//invitaion letter
-//participation letteer
-//invoices list
-//Upload payemnt receipt
 
-//get the application info
-
-//dynamic event application
-
-//Exhibitor Info Routes
-Route::get('/exhibitor-info', [ExhibitorInfoController::class, 'showForm'])->name('exhibitor.info')->middleware(CheckUser::class);
-//post the exhibitor info
-Route::post('/exhibitor-info', [ExhibitorInfoController::class, 'storeExhibitor'])->name('exhibitor.info.submit')->middleware(CheckUser::class);
-
-//product-add route
-Route::get('/product-add', [ExhibitorInfoController::class, 'showProductForm'])->name('product.add')->middleware(CheckUser::class);
-Route::post('/product-add', [ExhibitorInfoController::class, 'productStore'])->name('product.store')->middleware(CheckUser::class);
 
 
 
@@ -753,40 +762,7 @@ Route::get('review_new', function () {
 Route::post('verify-payment', [PaymentController::class, 'verifyPayment'])->name('verify.payment')->middleware(Auth::class);
 Route::post('verify-extra-payment', [PaymentController::class, 'verifyExtraPayment'])->name('verify.extra-payment')->middleware(Auth::class);
 
-
-//review_sponsor with class name review from SponsorController
-
-
-
-//Invoices and Payments  routes
-
-
-
-
-
-
-
-
-//sales controller
-
-
-//Extra Requirement Controller
-
-
-//route to export data
-
-
-
-
-
-
-
-
 Route::get('/download-invoice', [InvoicesController::class, 'generatePDF'])->name('download.invoice');
-
-
-
-
 
 
 Route::prefix('api')->group(function () {
@@ -813,5 +789,10 @@ Route::get('/integration/stall-manning', [IntegrationAPIController::class, 'getS
 Route::get('/integration/complimentary-delegates', [IntegrationAPIController::class, 'getComplimentaryDelegates'])->name('integration.complimentary-delegates');
 
 
-
+/*
+ * Route to test out the blade flag from outhrbox/blade-flag package
+ * */
+Route::get('/feature-test', function () {
+    return view('feature-test');
+})->name('feature.test');
 

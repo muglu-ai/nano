@@ -30,6 +30,7 @@ class Application extends Model
         'participated_previous',
         'semi_member',
         'stall_category',
+        'boothDescription',
         'booth_count',
         'payment_currency',
         'status',
@@ -61,6 +62,7 @@ class Application extends Model
         'sponsorship_count',
         'application_type',
         'sector_id',
+        'subSector',
         'rejection_reason',
         'rejected_date',
         'stallNumber',
@@ -75,6 +77,9 @@ class Application extends Model
         'fascia_name',
         'logo_link', // New field for logo link
         'userActive',
+        'companyYears',
+        'salesPerson',
+        'exhibitorType',
 
     ];
 

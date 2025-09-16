@@ -42,7 +42,7 @@ class SubmissionMail extends Mailable
 
     public function build()
     {
-        return $this->subject('Thank for Submission for Application at SEMICON India 2025')
+        return $this->subject('Thank for Submission for Application at . '.config(constant('EVENT_NAME')))
             ->view('emails.submission')
             ->with('data', $this->data);
     }

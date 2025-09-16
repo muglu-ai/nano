@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
  <link rel="apple-touch-icon" sizes="76x76" href="../../assets/img/apple-icon.png">
-    <link rel="icon" href="https://www.semiconindia.org/themes/custom/semicon/favicon.ico"
+    <link rel="icon" href="https://www.bengalurutechsummit.com/favicon-16x16.png"
         type="image/vnd.microsoft.icon" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>SEMICON India 2025 - Visitor Guide</title>
