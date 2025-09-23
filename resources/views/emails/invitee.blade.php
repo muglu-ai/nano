@@ -19,24 +19,9 @@
                         <td align="center" style="padding-bottom: 30px;">
                             <table cellpadding="0" cellspacing="0" border="0" style="margin: 0 auto;">
                                 <tr>
-                                    
-                                    <td style="width: 25%; padding: 0 5px; text-align: center;">
-                                        <img src="{{ config('constants.HOSTED_URL') }}/asset/img/logos/meity-logo.png?height=80&width=120"
-                                            alt="MeitY Logo" style="max-height: 60px; max-width: 100px; width: 100%; height: auto; display: block; margin: 0 auto;">
-                                    </td>
-                                    <td style="width: 25%; padding: 0 5px; text-align: center;">
-                                        <img src="{{ config('constants.HOSTED_URL') }}/asset/img/logos/ism_logo.png?height=80&width=120"
-                                            alt="ISM Logo" style="max-height: 60px; max-width: 100px; width: 100%; height: auto; display: block; margin: 0 auto;">
-                                    </td>
-                                    <td style="width: 25%; padding: 0 5px; text-align: center;">
-                                        <img src="{{ config('constants.HOSTED_URL') }}/asset/img/logos/DIC_Logo.webp?height=80&width=120"
-                                            alt="DIC Logo" style="max-height: 60px; max-width: 100px; width: 100%; height: auto; display: block; margin: 0 auto;">
-                                    </td>
-                                    <td style="width: 25%; padding: 0 5px; text-align: center;">
-                                        <img src="{{ config('constants.HOSTED_URL') }}/asset/img/logos/SEMI_IESA_logo.png?height=80&width=120"
-                                            alt="SEMI IESA Logo" style="max-height: 60px; max-width: 100px; width: 100%; height: auto; display: block; margin: 0 auto;">
-                                    </td>
-                                    
+                                    <div style="width: 25%; display: flex; justify-content: center; align-items: center;">
+                                        <img src="{{ config('constants.event_logo') }}" alt="{{ config('constants.event_logo') }}">
+                                    </div>
                                 </tr>
                             </table>
                         </td>
@@ -48,7 +33,7 @@
                         <td style="background-color: #ffffff; padding: 30px 20px;">
                             @if ($delegateType != 'delegate')
                                 <h2 style="color: #1e293b; margin-bottom: 20px; font-size: 24px; text-align: center;">
-                                    You're Invited to SEMICON India 2025!</h2>
+                                    You're Invited to {{ config('constants.EVENT_NAME') }} {{ config('constants.EVENT_YEAR') }}!</h2>
 
 
                                 <p style="color: #475569; line-height: 1.6; margin-bottom: 15px; font-size: 16px;">
@@ -56,15 +41,7 @@
                                 </p>
 
                                 <p style="color: #475569; line-height: 1.6; margin-bottom: 15px; font-size: 16px;">
-                                    <strong>{{ $companyName }}</strong> has invited you to participate in SEMICON India
-                                    2025.
-                                </p>
-                            @endif
-                            @if ($delegateType == 'delegate')
-                                <p style="color: #475569; line-height: 1.6; margin-bottom: 15px; font-size: 16px;">
-                                    Dear Invitee, <br>
-                                    Please complete your registration for SEMICON India 2025 by filling out the form to
-                                    participate in the SEMICON Inaugural.
+                                    <strong>{{ $companyName }}</strong> has invited you to participate in {{ config('constants.EVENT_NAME') }} {{ config('constants.EVENT_YEAR') }}.
                                 </p>
                             @endif
                             @php
@@ -88,19 +65,9 @@
                             @php
                                 $email =
                                     $delegateType == 'delegate'
-                                        ? 'visitsemiconindia@semi.org'
-                                        : 'semiconindia@semi.org';
+                                        ? config('constants.organizer.email')
+                                        : config('constants.organizer.email');
                             @endphp
-
-                            @if ($delegateType == 'delegate')
-                                <p
-                                    style="color: #b91c1c; background-color: #fef2f2; border-left: 4px solid #b91c1c; padding: 12px 16px; margin-bottom: 20px; font-size: 15px;">
-                                    <strong>Note:</strong> Kindly note that participation (in-person) in the Inaugural
-                                    event is subject to final confirmation and will be informed separately from 3rd week
-                                    of August onwards.
-                                </p>
-                            @endif
-
 
                             <p
                                 style="color: #475569; line-height: 1.6; font-size: 16px; border-top: 1px solid #e2e8f0; padding-top: 20px;">
@@ -114,10 +81,10 @@
                     <tr>
                         <td style="background-color: #1e293b; color: white; padding: 20px; text-align: center;">
                             <p style="margin: 0 0 10px 0; font-size: 14px;">
-                                SEMICON India 2025. All rights reserved.
+                                {{ config('constants.EVENT_NAME') }} {{ config('constants.EVENT_YEAR') }}. All rights reserved.
                             </p>
                             <p style="margin: 0; font-size: 14px;">
-                                <a href="https://www.semiconindia.org/"
+                                <a href="{{ config('constants.EVENT_WEBSITE') }}"
                                     style="color: white; text-decoration: underline;">Visit our website</a>
                             </p>
                         </td>

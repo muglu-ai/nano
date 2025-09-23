@@ -1,11 +1,10 @@
 <?php
 
 
-
 namespace App\Http\Controllers;
 
 
-
+use App\Models\Application;
 use Illuminate\Http\Request;
 
 use App\Models\Attendee;
@@ -40,24 +39,24 @@ use Dompdf\Dompdf;
 
 use App\Models\ComplimentaryDelegate;
 
-use App\Models\StallManning; // Assuming StallManning is the
+use App\Models\StallManning;
 
-use App\Mail\AttendeeApprovalMail; // Assuming this is the mail class for attendee approval
+// Assuming StallManning is the
 
-use App\Exports\ExhibitorInauguralExport; // Assuming this is the export class for exhibitor inaugural
+use App\Mail\AttendeeApprovalMail;
+
+// Assuming this is the mail class for attendee approval
+
+use App\Exports\ExhibitorInauguralExport;
+
+// Assuming this is the export class for exhibitor inaugural
 
 use Illuminate\Support\Collection;
 
 use Maatwebsite\Excel\Excel as ExcelFormat;
 
 
-
-//pdf 
-
-
-
-
-
+//pdf
 
 
 class AttendeeController extends Controller
@@ -65,9 +64,7 @@ class AttendeeController extends Controller
 {
 
 
-
     protected $captchaService;
-
 
 
     public function __construct(CaptchaService $captchaService)
@@ -107,11 +104,9 @@ class AttendeeController extends Controller
     {
 
 
-
         // Generate the CAPTCHA SVG
 
         $captchaSvg = $this->captchaService->generate();
-
 
 
         $maxAttendees = config('constants.max_attendees');
@@ -125,7 +120,6 @@ class AttendeeController extends Controller
         }, $natureOfBusiness);
 
 
-
         // $maxAttendees = 5;
 
         $productCategories = config('constants.product_categories');
@@ -133,7 +127,6 @@ class AttendeeController extends Controller
         $jobFunctions = config('constants.job_functions');
 
         $countries = Country::all();
-
 
 
         return view('attendee.register', compact(
@@ -159,11 +152,9 @@ class AttendeeController extends Controller
     {
 
 
-
         // Generate the CAPTCHA SVG
 
         $captchaSvg = $this->captchaService->generate();
-
 
 
         $maxAttendees = config('constants.max_attendees');
@@ -177,7 +168,6 @@ class AttendeeController extends Controller
         }, $natureOfBusiness);
 
 
-
         // $maxAttendees = 5;
 
         $productCategories = config('constants.product_categories');
@@ -185,7 +175,6 @@ class AttendeeController extends Controller
         $jobFunctions = config('constants.job_functions');
 
         $countries = Country::all();
-
 
 
         return view('attendee.register_new', compact(
@@ -207,15 +196,9 @@ class AttendeeController extends Controller
     }
 
 
-
-
-
-
-
     public function visitor_reg(Request $request)
 
     {
-
 
 
         Log::info('Visitor registration started', [
@@ -223,7 +206,6 @@ class AttendeeController extends Controller
             'request_data' => $request->all(),
 
         ]);
-
 
 
         // Validate the incoming request
@@ -253,7 +235,6 @@ class AttendeeController extends Controller
         ]);
 
 
-
         // if ($validator->fails()) {
 
         //     if ($validator->errors()->has('captcha')) {
@@ -267,13 +248,10 @@ class AttendeeController extends Controller
         // }
 
 
-
         // $validated = $validator->validated();
 
 
-
         $attendees = $request->input('attendees');
-
 
 
         // Google reCAPTCHA check
@@ -285,11 +263,9 @@ class AttendeeController extends Controller
         // $recaptchaUrl = 'https://www.google.com/recaptcha/api/siteverify';
 
 
-
         // $recaptchaResponse = file_get_contents($recaptchaUrl . '?secret=' . $recaptchaSecret . '&response=' . $recaptchaResponse);
 
         // $recaptchaResponseKeys = json_decode($recaptchaResponse, true);
-
 
 
         // if (!$recaptchaResponseKeys['success']) {
@@ -299,9 +275,7 @@ class AttendeeController extends Controller
         // }
 
 
-
-        // 
-
+        //
 
 
         $maxAttendees = 1;
@@ -313,11 +287,7 @@ class AttendeeController extends Controller
         }
 
 
-
         foreach ($attendees as $index => $attendee) {
-
-
-
 
 
             $validator = Validator::make($attendee, [
@@ -436,7 +406,7 @@ class AttendeeController extends Controller
 
                 'profile_picture' => 'nullable|image|mimes:jpeg,png,jpg|max:1024', // 1MB max size
 
-                'id_card_type'  => 'nullable|string|max:50',
+                'id_card_type' => 'nullable|string|max:50',
 
                 'id_card_number' => 'nullable|string|max:20',
 
@@ -483,9 +453,6 @@ class AttendeeController extends Controller
             ]);
 
 
-
-
-
             if ($validator->fails()) {
 
                 // Retain all submitted data using withInput
@@ -493,7 +460,6 @@ class AttendeeController extends Controller
                 return redirect()->back()->withErrors($validator)->withInput();
 
             }
-
 
 
             // Generate unique ID
@@ -505,7 +471,6 @@ class AttendeeController extends Controller
             } while (Attendee::where('unique_id', $uniqueId)->exists());
 
 
-
             // Upload profile picture if exists
 
             if ($request->hasFile('attendees.' . $index . '.profile_picture')) {
@@ -515,7 +480,6 @@ class AttendeeController extends Controller
                 $extension = strtolower($profilePicture->getClientOriginalExtension());
 
 
-
                 // Double-check file type
 
                 if (!in_array($extension, ['jpeg', 'jpg', 'png'])) {
@@ -523,7 +487,6 @@ class AttendeeController extends Controller
                     return redirect()->back()->withErrors(['profile_picture' => 'Only JPEG, JPG and PNG files are allowed.'])->withInput();
 
                 }
-
 
 
                 $profilePicturePath = $profilePicture->storeAs(
@@ -549,25 +512,17 @@ class AttendeeController extends Controller
             //\QrCode::size(200)->format('png')->generate($uniqueId, $qrCodePath);
 
 
-
             //$qrCodePath = str_replace(public_path(), 'https://portal.semiconindia.org', $qrCodePath);
-
 
 
             $qrCodePath = null;
 
 
-
-
-
             // check if the user otp is verified or not from the  OTP model and email of the user
 
             $otpVerified = OTP::where('identifier', $attendee['email'])
-
                 ->where('verified', true)
-
                 ->exists();
-
 
 
             if (!$otpVerified) {
@@ -577,19 +532,12 @@ class AttendeeController extends Controller
             }
 
 
-
             //var_dump($attendee['event_days']);
-
-
-
 
 
             // dd($attendee);
 
             // die();
-
-
-
 
 
             // Save attendee
@@ -665,7 +613,6 @@ class AttendeeController extends Controller
             ]);
 
 
-
             // Send email
 
             $data = [
@@ -701,21 +648,17 @@ class AttendeeController extends Controller
                     : implode(', ', json_decode($attendee['event_days'], true) ?? []),
 
 
-
             ];
 
             $apiRelayController = new \App\Http\Controllers\ApiRelayController();
-                $apiRelayController->sendDataToApiNew($uniqueId);
+            $apiRelayController->sendDataToApiNew($uniqueId);
 
 
             Mail::to($attendee['email'])
-
                 ->bcc(['test.interlinks@gmail.com'])
-
                 ->queue(new AttendeeConfirmationMail($data));
 
         }
-
 
 
         return redirect()->route('visitor_thankyou', ['id' => $uniqueId]);
@@ -723,15 +666,11 @@ class AttendeeController extends Controller
     }
 
 
-
-
-
     public function thankyou($id)
 
     {
 
         $attendee = Attendee::where('unique_id', $id)->firstOrFail();
-
 
 
         return view('attendee.thankyou', [
@@ -743,7 +682,6 @@ class AttendeeController extends Controller
         ]);
 
     }
-
 
 
     //makee a private function to validatee the admin user
@@ -773,7 +711,6 @@ class AttendeeController extends Controller
     }
 
 
-
     ///list of all attendees to admin
 
     public function listAttendees(Request $request)
@@ -785,9 +722,7 @@ class AttendeeController extends Controller
         $this->validateAdminUser();
 
 
-
         $attendees = Attendee::query();
-
 
 
         if ($request->has('search')) {
@@ -797,13 +732,9 @@ class AttendeeController extends Controller
             $attendees->where(function ($query) use ($search) {
 
                 $query->where('first_name', 'like', "%$search%")
-
                     ->orWhere('last_name', 'like', "%$search%")
-
                     ->orWhere('email', 'like', "%$search%")
-
                     ->orWhere('company', 'like', "%$search%")
-
                     ->orWhere('unique_id', 'like', "%$search%");
 
             });
@@ -811,11 +742,9 @@ class AttendeeController extends Controller
         }
 
 
-
         $attendees = $attendees->paginate(20);
 
         $slug = "Attendee List";
-
 
 
         return view('attendee.attendee_list', compact('attendees', 'slug'));
@@ -825,7 +754,6 @@ class AttendeeController extends Controller
     public function export()
 
     {
-
 
 
         ini_set('memory_limit', '-1');
@@ -849,9 +777,6 @@ class AttendeeController extends Controller
         ]);
 
 
-
-
-
         //get the status from the request
 
         // Validate the status
@@ -865,7 +790,6 @@ class AttendeeController extends Controller
         }
 
 
-
         $filename = 'attendees_' . $status . '_' . now()->format('Y_m_d_H_i_s') . '.xlsx';
 
         return Excel::download(new AttendeesExport($status), 'attendees.csv', ExcelFormat::CSV, [
@@ -877,17 +801,11 @@ class AttendeeController extends Controller
     }
 
 
-
-
-
     public function exportExhibitor()
 
     {
 
         $this->validateAdminUser();
-
-
-
 
 
         $status = request()->input('status', 'all');
@@ -905,13 +823,6 @@ class AttendeeController extends Controller
         }
 
 
-
-
-
-
-
-
-
         // Log into useractivity channel
 
         Log::channel('useractivity')->info('Exporting attendees', [
@@ -927,9 +838,7 @@ class AttendeeController extends Controller
         ]);
 
 
-
         // dd('Exporting attendees with status: ' . $status);
-
 
 
         $filename = 'Exhibitor_Inaugural' . $status . '_' . now()->format('Y_m_d_H_i_s') . '.xlsx';
@@ -939,7 +848,6 @@ class AttendeeController extends Controller
     }
 
 
-
     // MAKE a function to view the attendee details from emailer view
 
     public function viewAttendeeDetailsOld($id)
@@ -947,13 +855,10 @@ class AttendeeController extends Controller
     {
 
 
-
         $attendee = Attendee::where('unique_id', $id)->firstOrFail();
 
 
-
         // Render the email view to get the HTML content
-
 
 
         $data = [
@@ -981,25 +886,17 @@ class AttendeeController extends Controller
         ];
 
 
-
         // dd($data);
-
 
 
         $emailContent = view('mail.attendee_confirmation', ['data' => $data])->render();
 
 
-
         return response($emailContent)
-
             ->header('Content-Type', 'text/html')
-
             ->header('Content-Disposition', 'inline; filename="attendee_details.html"');
 
     }
-
-
-
 
 
     public function viewAttendeeDetailsExhibitor($id)
@@ -1007,11 +904,9 @@ class AttendeeController extends Controller
     {
 
 
-
         $attendee = null;
 
         $company_name = null;
-
 
 
         if (str_starts_with($id, 'SEMI25VI_')) {
@@ -1045,7 +940,6 @@ class AttendeeController extends Controller
         }
 
 
-
         if (!$attendee) {
 
             abort(404, 'Attendee not found');
@@ -1053,17 +947,10 @@ class AttendeeController extends Controller
         }
 
 
-
         //dd($attendee);
 
 
-
-
-
-
-
         // Render the email view to get the HTML content
-
 
 
         $data = [
@@ -1093,19 +980,14 @@ class AttendeeController extends Controller
         ];
 
 
-
         // dd($data);
-
 
 
         $emailContent = view('mail.visitor_confirmation', ['data' => $data])->render();
 
 
-
         return response($emailContent)
-
             ->header('Content-Type', 'text/html')
-
             ->header('Content-Disposition', 'inline; filename="attendee_details.html"');
 
     }
@@ -1117,7 +999,6 @@ class AttendeeController extends Controller
     {
 
         $attendee = Attendee::where('unique_id', $id)->firstOrFail();
-
 
 
         $data = [
@@ -1155,11 +1036,7 @@ class AttendeeController extends Controller
         ];
 
 
-
         $dompdf = new Dompdf();
-
-
-
 
 
         // Render the PDF view
@@ -1171,13 +1048,9 @@ class AttendeeController extends Controller
         //set top margin to 0
 
 
-
-
-
         //$dompdf->setPaper('A3', 'portrait'); // Set paper size and orientation
 
         //margin top 0
-
 
 
         $dompdf->loadHtml($html);
@@ -1197,26 +1070,18 @@ class AttendeeController extends Controller
     }
 
     public function viewAttendeeDetailsPdfExhibitor($id)
-
     {
+        $attendee = ComplimentaryDelegate::where('unique_id', $id)->first();
 
-        $attendee = null;
+        if ($attendee) {
 
-        $company_name = null;
+            $company_name = $attendee->company ?? $attendee->organisation_name ?? 'N/A';
+
+        }
 
 
+        if (is_null($attendee)) {
 
-        if (str_starts_with($id, 'SEMI25VI_')) {
-
-            $attendee = ComplimentaryDelegate::where('unique_id', $id)->first();
-
-            if ($attendee) {
-
-                $company_name = $attendee->company ?? $attendee->organisation_name ?? 'N/A';
-
-            }
-
-        } else if (str_starts_with($id, 'SEMI25VIE')) {
 
             $attendee = StallManning::where('unique_id', $id)->first();
 
@@ -1233,38 +1098,71 @@ class AttendeeController extends Controller
                 }
 
             }
-
         }
-
 
 
         if (!$attendee) {
-
             abort(404, 'Attendee not found');
-
         }
 
+        // if exhibition_participant_id from attendee then get the application_id from exhibition_participants table and then get the company name from applications table
+        // $company_name = null;
+        $data['address'] = '';
+        $data['city'] = '';
+        $data['state'] = '';
+        $data['country'] = '';
+        $data['postalCode'] = '';
+
+         if ($attendee->exhibition_participant_id) {
+             $applicationId = DB::table('exhibition_participants')
+                 ->where('id', $attendee->exhibition_participant_id)
+                 ->value('application_id');
+
+                if ($applicationId) {
+                    //companyName,
+                   $application = Application::find($applicationId);
+                    $company_name = $application->company_name ?? 'N/A';
+                    $address = $application->address ?? '';
+                    if ($application->address_line_2) {
+                        $address .= ', ' . $application->address_line_2;
+                    }
+                    $city = $application->city_id ?? '';
+                    $state = $application->state->name ?? '';
+                    $country = $application->country->name ?? '';
+                    $postalCode = $application->postal_code ?? '';
+
+                    $data['company_name'] = $company_name;
+                    $data['address'] = $address;
+                    $data['city'] = $city;
+                    $data['state'] = $state;
+                    $data['country'] = $country;
+                    $data['postalCode'] = $postalCode;
 
 
+                }
+
+         }
 
 
-        // dd($attendee);
+//         dd($attendee);
 
         //$attendee = ComplimentaryDelegate::where('unique_id', $id)->firstOrFail();
-
-
-
-
-
-
-
         $attendee->event_days = json_encode(["All"]);
 
 
 
-        $data = [
 
-            'name' => trim($attendee->first_name . ' ' . ($attendee->middle_name ?? '') . ' ' . $attendee->last_name),
+        $data = array_merge($data, [
+
+            'fullName' => trim($attendee->first_name . ' ' . ($attendee->middle_name ?? '') . ' ' . $attendee->last_name),
+
+            'title' => $attendee->title ?? '',
+
+            'first_name' => $attendee->first_name ?? '',
+
+            'last_name' => $attendee->last_name ?? '',
+
+            'middle_name' => $attendee->middle_name ?? '',
 
             'company_name' => $company_name,
 
@@ -1274,9 +1172,12 @@ class AttendeeController extends Controller
 
             'qr_code_path' => $attendee->qr_code_path,
 
+
+
             'unique_id' => $attendee->unique_id,
 
-            'ticket_type' => $attendee->badge_category ?? 'Visitor',
+            'pinNo' => $attendee->pinNo ?? 'N/A',
+            'ticket_type' => $attendee->ticketType,
 
             'designation' => $attendee->designation ?? $attendee->job_title,
 
@@ -1294,34 +1195,30 @@ class AttendeeController extends Controller
 
                 : implode(', ', json_decode($attendee->event_days, true) ?? []),
 
-            'type' => str_starts_with($id, 'SEMI25VIE-') ? 'Exhibitor' : 'Inaugural Passes',
+            'type' => $attendee->ticketType,
+        ]);
 
-        ];
-
-
-
-        $dompdf = new Dompdf();
+//        dd($data);
 
 
-
+//        $dompdf = new Dompdf();
 
 
         // Render the PDF view
 
-        $html = view('mail.inaugural_email_pdf', ['data' => $data])->render();
+        $html = view('mail.ExhibitorRegMail', ['data' => $data])->render();
 
+        echo $html;
+        exit;
+//
         $dompdf->set_option('isRemoteEnabled', true); // Allow loading images from remote URLs
 
         //set top margin to 0
 
 
-
-
-
-        //$dompdf->setPaper('A3', 'portrait'); // Set paper size and orientation
+        $dompdf->setPaper('A3', 'portrait'); // Set paper size and orientation
 
         //margin top 0
-
 
 
         $dompdf->loadHtml($html);
@@ -1339,11 +1236,6 @@ class AttendeeController extends Controller
         ]);
 
     }
-
-
-
-
-
 
 
     public function dashboard_old()
@@ -1369,35 +1261,25 @@ class AttendeeController extends Controller
         }
 
 
-
         // Calculate total attendees first
 
         $totalAttendees = Attendee::count();
 
 
-
         // 1. Daily Registration Count
 
         $dailyRegistrations = Attendee::selectRaw('DATE(created_at) as date, COUNT(*) as count')
-
             ->groupBy('date')
-
             ->orderBy('date')
-
             ->get();
-
 
 
         // 2. Country Breakdown
 
         $countryStats = Attendee::with('countryRelation')
-
             ->selectRaw('country, COUNT(*) as count')
-
             ->groupBy('country')
-
             ->get()
-
             ->map(function ($item) use ($totalAttendees) {
 
                 return [
@@ -1413,7 +1295,6 @@ class AttendeeController extends Controller
             });
 
 
-
         // 3. Inauguration Session Stats
 
         $inauguralStats = [
@@ -1425,7 +1306,6 @@ class AttendeeController extends Controller
             'percentage' => $totalAttendees > 0 ? round((Attendee::where('inaugural_session', true)->count() / $totalAttendees) * 100, 2) : 0
 
         ];
-
 
 
         // 4. Sector/Business Nature Breakdown - Fixed to handle JSON arrays
@@ -1453,9 +1333,7 @@ class AttendeeController extends Controller
         });
 
 
-
         $sectorStats = $sectors->countBy()
-
             ->map(function ($count, $sector) use ($totalAttendees) {
 
                 return [
@@ -1469,11 +1347,8 @@ class AttendeeController extends Controller
                 ];
 
             })
-
             ->sortByDesc('count')
-
             ->values();
-
 
 
         // Summary Statistics
@@ -1489,7 +1364,6 @@ class AttendeeController extends Controller
             'inauguration_applicants' => $inauguralStats['applied']
 
         ];
-
 
 
         // Format data for charts
@@ -1511,9 +1385,7 @@ class AttendeeController extends Controller
         ];
 
 
-
         // dd( $chartData, $summary, $countryStats, $inauguralStats, $sectorStats);
-
 
 
         return view('attendee.dashboard', compact(
@@ -1531,7 +1403,6 @@ class AttendeeController extends Controller
         ));
 
     }
-
 
 
     public function dashboard()
@@ -1557,35 +1428,25 @@ class AttendeeController extends Controller
         }
 
 
-
         // Calculate total attendees first
 
         $totalAttendees = Attendee::count();
 
 
-
         // 1. Daily Registration Count
 
         $dailyRegistrations = Attendee::selectRaw('DATE(created_at) as date, COUNT(*) as count')
-
             ->groupBy('date')
-
             ->orderBy('date')
-
             ->get();
-
 
 
         // 2. Country Breakdown
 
         $countryStats = Attendee::with('countryRelation')
-
             ->selectRaw('country, COUNT(*) as count')
-
             ->groupBy('country')
-
             ->get()
-
             ->map(function ($item) use ($totalAttendees) {
 
                 return [
@@ -1601,7 +1462,6 @@ class AttendeeController extends Controller
             });
 
 
-
         // 3. Inauguration Session Stats
 
         $inauguralStats = [
@@ -1613,7 +1473,6 @@ class AttendeeController extends Controller
             'percentage' => $totalAttendees > 0 ? round((Attendee::where('inaugural_session', true)->count() / $totalAttendees) * 100, 2) : 0
 
         ];
-
 
 
         // 4. Sector/Business Nature Breakdown - Fixed to handle JSON arrays
@@ -1641,9 +1500,7 @@ class AttendeeController extends Controller
         });
 
 
-
         $sectorStats = $sectors->countBy()
-
             ->map(function ($count, $sector) use ($totalAttendees) {
 
                 return [
@@ -1657,71 +1514,57 @@ class AttendeeController extends Controller
                 ];
 
             })
-
             ->sortByDesc('count')
-
             ->values();
-
 
 
         // 5. Job Category Breakdown
 
         $jobCategoryStats = Attendee::select('job_category')
-
             ->whereNotNull('job_category')
-
             ->groupBy('job_category')
-
             ->selectRaw('job_category, COUNT(*) as count')
-
             ->get();
-
 
 
         // 6. Job Subcategory Breakdown
 
         $jobSubcategoryStats = Attendee::select('job_subcategory', 'job_category')
+            ->whereNotNull('job_subcategory')
+            ->get()
+            ->groupBy(function ($item) {
 
-    ->whereNotNull('job_subcategory')
+                // If subcategory is 'Others', return 'Category - Others'
 
-    ->get()
+                if (trim(strtolower($item->job_subcategory)) === 'others' && !empty($item->job_category)) {
 
-    ->groupBy(function ($item) {
+                    return $item->job_category . ' - Others';
 
-        // If subcategory is 'Others', return 'Category - Others'
+                }
 
-        if (trim(strtolower($item->job_subcategory)) === 'others' && !empty($item->job_category)) {
+                return $item->job_subcategory;
 
-            return $item->job_category . ' - Others';
+            })
+            ->map(function ($group) {
 
-        }
+                return [
 
-        return $item->job_subcategory;
+                    'count' => $group->count(),
 
-    })
+                    'labels' => $group->first()->job_subcategory,
 
-    ->map(function ($group) {
+                    'job_category' => $group->first()->job_category,
 
-        return [
+                    'job_subcategory' => $group->first()->job_subcategory === 'Others' && $group->first()->job_category
 
-            'count' => $group->count(),
+                        ? $group->first()->job_category . ' - Others'
 
-            'labels' => $group->first()->job_subcategory,
+                        : $group->first()->job_subcategory,
 
-            'job_category' => $group->first()->job_category,
+                ];
 
-            'job_subcategory' => $group->first()->job_subcategory === 'Others' && $group->first()->job_category
-
-                ? $group->first()->job_category . ' - Others'
-
-                : $group->first()->job_subcategory,
-
-        ];
-
-    })
-
-    ->values();
-
+            })
+            ->values();
 
 
         // Summary Statistics
@@ -1737,7 +1580,6 @@ class AttendeeController extends Controller
             'inauguration_applicants' => $inauguralStats['applied']
 
         ];
-
 
 
         // Format data for charts
@@ -1767,7 +1609,6 @@ class AttendeeController extends Controller
         ];
 
 
-
         return view('attendee.dashboard', compact(
 
             'chartData',
@@ -1789,17 +1630,11 @@ class AttendeeController extends Controller
     }
 
 
-
-
-
     //approve the attendee for inaugural session
 
     public function approveInauguralSession(Request $request)
 
     {
-
-
-
 
 
         //dd($request->all());
@@ -1819,7 +1654,6 @@ class AttendeeController extends Controller
         $attendee = Attendee::where('unique_id', $request->input('unique_id'))->firstOrFail();
 
 
-
         //dd($attendee);
 
         //update the status of the attendee
@@ -1827,8 +1661,7 @@ class AttendeeController extends Controller
         $attendee->status = $request->input('status');
 
 
-
-        // approved json into approvedHistory 
+        // approved json into approvedHistory
 
         if ($attendee->status === 'approved') {
 
@@ -1880,9 +1713,9 @@ class AttendeeController extends Controller
 
                 " . ($data['status'] === 'approved'
 
-            ? 'Please bring this email and your QR code to the event for entry.'
+                ? 'Please bring this email and your QR code to the event for entry.'
 
-            : 'If you have any questions, please contact the event team.') . "
+                : 'If you have any questions, please contact the event team.') . "
 
             </p>
 
@@ -1895,15 +1728,11 @@ class AttendeeController extends Controller
             //->to($data['email'])
 
             $message
-
                 ->bcc(['test.interlinks@gmail.com'])
-
                 ->subject('Inaugural Session Status')
-
                 ->html($html);
 
         });
-
 
 
         //return back with success message
@@ -1911,7 +1740,6 @@ class AttendeeController extends Controller
         return redirect()->back()->with('success', 'Inaugural session status updated successfully.');
 
     }
-
 
 
     // view individual attendee details
@@ -1931,7 +1759,6 @@ class AttendeeController extends Controller
         }
 
 
-
         // Render the attendee details view
 
         return view('attendee.attendeeView', [
@@ -1941,7 +1768,6 @@ class AttendeeController extends Controller
         ]);
 
     }
-
 
 
     public function viewAttendee($id)
@@ -1961,7 +1787,6 @@ class AttendeeController extends Controller
         }
 
 
-
         // Check if the user is authenticated and has the right role
 
         if (!auth()->check() || auth()->user()->role !== 'admin') {
@@ -1969,7 +1794,6 @@ class AttendeeController extends Controller
             return redirect()->back()->withErrors(['error' => 'You do not have permission to access this page.']);
 
         }
-
 
 
         // Render the attendee details view
@@ -1985,19 +1809,11 @@ class AttendeeController extends Controller
     }
 
 
-
-
-
-
-
-
-
     public function update(Request $request, $unique_id)
 
     {
 
         $attendee = Attendee::where('unique_id', $unique_id)->firstOrFail();
-
 
 
         // Only allow admin
@@ -2007,7 +1823,6 @@ class AttendeeController extends Controller
             abort(403);
 
         }
-
 
 
         $request->validate([
@@ -2020,16 +1835,14 @@ class AttendeeController extends Controller
 
             'profile_picture' => 'nullable|image|mimes:jpeg,png,jpg|max:1024',
 
-             'event_days' => 'nullable|array',
+            'event_days' => 'nullable|array',
 
-             // 1MB max size
+            // 1MB max size
 
         ]);
 
 
-
-        $data = $request->only(['company', 'id_card_type', 'id_card_number','event_days']);
-
+        $data = $request->only(['company', 'id_card_type', 'id_card_number', 'event_days']);
 
 
         // Handle profile picture upload
@@ -2045,7 +1858,6 @@ class AttendeeController extends Controller
         }
 
 
-
         $admin = auth()->user();
 
         $timestamp = now()->format('Y-m-d H:i:s');
@@ -2053,7 +1865,6 @@ class AttendeeController extends Controller
         $ip = $request->ip();
 
         $logEntry = "{$admin->name} ({$admin->email}) IP: {$ip} at {$timestamp}";
-
 
 
         // Merge with existing logs
@@ -2069,17 +1880,12 @@ class AttendeeController extends Controller
         // dd($data);
 
 
-
         $attendee->update($data);
-
 
 
         return redirect()->back()->with('success', 'Attendee details updated successfully.');
 
     }
-
-
-
 
 
     public function listExhibitor(Request $request)
@@ -2091,9 +1897,7 @@ class AttendeeController extends Controller
         $this->validateAdminUser();
 
 
-
         $attendees = ComplimentaryDelegate::whereNotNull('first_name');
-
 
 
         if ($request->has('search')) {
@@ -2103,13 +1907,9 @@ class AttendeeController extends Controller
             $attendees->where(function ($query) use ($search) {
 
                 $query->where('first_name', 'like', "%$search%")
-
                     ->orWhere('last_name', 'like', "%$search%")
-
                     ->orWhere('email', 'like', "%$search%")
-
                     ->orWhere('organisation_name', 'like', "%$search%")
-
                     ->orWhere('unique_id', 'like', "%$search%");
 
             });
@@ -2117,9 +1917,7 @@ class AttendeeController extends Controller
         }
 
 
-
         // dd($attendees);
-
 
 
         $attendees = $attendees->paginate(50);
@@ -2127,11 +1925,9 @@ class AttendeeController extends Controller
         $slug = "Exhibitor Inaugural List";
 
 
-
         return view('attendee.exhibitor_list', compact('attendees', 'slug'));
 
     }
-
 
 
     public function massApprove(Request $request)
@@ -2139,25 +1935,17 @@ class AttendeeController extends Controller
     {
 
 
-
-
-
         $ids = explode(',', $request->input('selected_ids'));
 
         // $ids = [194, 195, 196];
 
 
-
-
-
         $attendees = Attendee::whereIn('id', $ids)->get();
-
 
 
         foreach ($attendees as $attendee) {
 
             // $attendee->inauguralConfirmation = 1;
-
 
 
             $attendee->approvedHistory = json_encode([
@@ -2171,11 +1959,9 @@ class AttendeeController extends Controller
             ]);
 
 
-
             $attendee->inauguralConfirmation = true;
 
             $attendee->save();
-
 
 
             $data = [
@@ -2191,7 +1977,6 @@ class AttendeeController extends Controller
             ];
 
 
-
             $html = "
 
             <p>Dear {$data['name']},</p>
@@ -2202,32 +1987,26 @@ class AttendeeController extends Controller
 
             <p>" . ($attendee->status === 'approved'
 
-                ? 'Please bring this email and your QR code to the event for entry.'
+                    ? 'Please bring this email and your QR code to the event for entry.'
 
-                : 'If you have any questions, please contact the event team.') . "</p>
+                    : 'If you have any questions, please contact the event team.') . "</p>
 
             <p>Best regards,<br>SEMICON India Team</p>
 
         ";
 
 
-
             // Dispatch to queue
 
             Mail::to('test.interlinks@gmail.com')
-
                 ->queue(new AttendeeApprovalMail($data));
 
         }
 
 
-
         return back()->with('success', 'Selected attendees approved and emails queued.');
 
     }
-
-
-
 
 
     public function ExhibitormassApprove(Request $request)
@@ -2237,19 +2016,15 @@ class AttendeeController extends Controller
         $ids = explode(',', $request->input('selected_ids'));
 
 
-
         // dd($ids);
-
 
 
         $attendees = ComplimentaryDelegate::whereIn('id', $ids)->get();
 
 
-
         foreach ($attendees as $attendee) {
 
             // $attendee->inauguralConfirmation = 1;
-
 
 
             $attendee->approvedHistory = json_encode([
@@ -2263,11 +2038,9 @@ class AttendeeController extends Controller
             ]);
 
 
-
             $attendee->inauguralConfirmation = true;
 
             $attendee->save();
-
 
 
             $data = [
@@ -2285,7 +2058,6 @@ class AttendeeController extends Controller
             try {
 
                 Mail::to('test.interlinks@gmail.com')
-
                     ->queue(new AttendeeApprovalMail($data));
 
             } catch (\Exception $e) {
@@ -2301,9 +2073,7 @@ class AttendeeController extends Controller
             }
 
 
-
             // dd($data);
-
 
 
             $html = "
@@ -2316,14 +2086,13 @@ class AttendeeController extends Controller
 
             <p>" . ($attendee->status === 'approved'
 
-                ? 'Please bring this email and your QR code to the event for entry.'
+                    ? 'Please bring this email and your QR code to the event for entry.'
 
-                : 'If you have any questions, please contact the event team.') . "</p>
+                    : 'If you have any questions, please contact the event team.') . "</p>
 
             <p>Best regards,<br>SEMICON India Team</p>
 
         ";
-
 
 
             // Dispatch to queue
@@ -2335,23 +2104,15 @@ class AttendeeController extends Controller
         }
 
 
-
         return back()->with('success', 'Selected attendees approved and emails queued.');
 
     }
 
 
-
-
-
     /**
-
      * Display the jobs matrix report.
-
      *
-
      * @return \Illuminate\View\View
-
      */
 
     public function jobsMatrix2()
@@ -2359,85 +2120,73 @@ class AttendeeController extends Controller
     {
 
 
-
         // dd('This feature is temporarily disabled. Please contact support for more information.');
 
         // 1) Subcategory-level counts
 
         $rows = Attendee::query()
-
             ->selectRaw('job_category, job_subcategory,
 
                          COUNT(*) AS cnt,
 
                          SUM(CASE WHEN inaugural_session = 1 THEN 1 ELSE 0 END) AS inaug_cnt')
-
             ->groupBy('job_category', 'job_subcategory')
-
             ->orderBy('job_category')
-
             ->orderBy('job_subcategory')
-
             ->get();
 
 
+        $exhibitorPasses = StallManning::whereNotNull('unique_id')->count();            // Exhibitor passes
 
-            $exhibitorPasses        = StallManning::whereNotNull('unique_id')->count();            // Exhibitor passes
-
-            $exhibitorInaugPasses   = ComplimentaryDelegate::whereNotNull('unique_id')->count();   // Exhibitor inaugural passes
-
+        $exhibitorInaugPasses = ComplimentaryDelegate::whereNotNull('unique_id')->count();   // Exhibitor inaugural passes
 
 
-            // dd($rows);
-
+        // dd($rows);
 
 
         // 2) Group by category and compute category totals + rowspans
 
         $grouped = $rows->groupBy('job_category')->map(function (Collection $items) {
 
-            $categoryTotal = (int) $items->sum('cnt');
+            $categoryTotal = (int)$items->sum('cnt');
 
-            $inaugTotal    = (int) $items->sum('inaug_cnt'); // if you also want category inaug total
+            $inaugTotal = (int)$items->sum('inaug_cnt'); // if you also want category inaug total
 
             return [
 
                 'rowspan' => $items->count(),
 
-                'total'   => $categoryTotal,
+                'total' => $categoryTotal,
 
                 'inaug_total' => $inaugTotal,
 
-                'items'   => $items->values(),
+                'items' => $items->values(),
 
             ];
 
         });
 
 
-
         // 3) Grand total
 
-        $grandTotal = (int) $rows->sum('cnt');
-
+        $grandTotal = (int)$rows->sum('cnt');
 
 
         // 4) Optional: background colors per category (match your design)
 
         $bgMap = [
 
-            'Academic'   => '#fde9e0',
+            'Academic' => '#fde9e0',
 
             'Government' => '#e4eef8',
 
-            'Industry'   => '#f4f8e8',
+            'Industry' => '#f4f8e8',
 
-            'Media'      => '#efe6d8',
+            'Media' => '#efe6d8',
 
-            'Others'     => '#e7e2e2',
+            'Others' => '#e7e2e2',
 
         ];
-
 
 
         return view('attendee.jobs-matrix', compact('grouped', 'grandTotal', 'bgMap'));
@@ -2445,146 +2194,132 @@ class AttendeeController extends Controller
     }
 
 
-
     public function jobsMatrix()
 
-{
+    {
 
-    // 1) Subcategory-level counts from Attendees
+        // 1) Subcategory-level counts from Attendees
 
-    $rows = Attendee::query()
-
-        ->selectRaw('job_category, job_subcategory,
+        $rows = Attendee::query()
+            ->selectRaw('job_category, job_subcategory,
 
                      COUNT(*) AS cnt,
 
                      SUM(CASE WHEN inaugural_session = 1 THEN 1 ELSE 0 END) AS inaug_cnt')
-
-        ->groupBy('job_category', 'job_subcategory')
-
-        ->orderBy('job_category')
-
-        ->orderBy('job_subcategory')
-
-        ->get();
+            ->groupBy('job_category', 'job_subcategory')
+            ->orderBy('job_category')
+            ->orderBy('job_subcategory')
+            ->get();
 
 
+        // 2) Exhibitor data
 
-    // 2) Exhibitor data
+        $exhibitorPasses = StallManning::whereNotNull('unique_id')->count();
 
-    $exhibitorPasses      = StallManning::whereNotNull('unique_id')->count();
-
-    $exhibitorInaugPasses = ComplimentaryDelegate::whereNotNull('unique_id')->count();
-
+        $exhibitorInaugPasses = ComplimentaryDelegate::whereNotNull('unique_id')->count();
 
 
-    // 3) Add Exhibitor rows
+        // 3) Add Exhibitor rows
 
-    $extra = collect([
+        $extra = collect([
 
-        (object) [
+            (object)[
 
-            'job_category'    => 'Exhibitor',
+                'job_category' => 'Exhibitor',
 
-            'job_subcategory' => 'Exhibitor Passes',
+                'job_subcategory' => 'Exhibitor Passes',
 
-            'cnt'             => (int) $exhibitorPasses,
+                'cnt' => (int)$exhibitorPasses,
 
-            'inaug_cnt'       => (int) $exhibitorInaugPasses,
+                'inaug_cnt' => (int)$exhibitorInaugPasses,
 
-        ],
+            ],
 
-        // (object) [
+            // (object) [
 
-        //     'job_category'    => 'Exhibitor',
+            //     'job_category'    => 'Exhibitor',
 
-        //     'job_subcategory' => 'Exhibitor Inaugural Passes',
+            //     'job_subcategory' => 'Exhibitor Inaugural Passes',
 
-        //     'cnt'             => 0,
+            //     'cnt'             => 0,
 
-        //     'inaug_cnt'       => (int) $exhibitorInaugPasses,
+            //     'inaug_cnt'       => (int) $exhibitorInaugPasses,
 
-        // ],
+            // ],
 
-    ]);
-
-
-
-    $rows = $rows->concat($extra);
+        ]);
 
 
+        $rows = $rows->concat($extra);
 
-    // 4) Group by category
 
-    $grouped = $rows->groupBy('job_category')->map(function (Collection $items, $category) {
+        // 4) Group by category
 
-        // Normal categories → only sum cnt
+        $grouped = $rows->groupBy('job_category')->map(function (Collection $items, $category) {
 
-        if ($category !== 'Exhibitor') {
+            // Normal categories → only sum cnt
+
+            if ($category !== 'Exhibitor') {
+
+                return [
+
+                    'rowspan' => $items->count(),
+
+                    'total' => (int)$items->sum('cnt'),
+
+                    'inaug_total' => (int)$items->sum('inaug_cnt'),
+
+                    'items' => $items->values(),
+
+                ];
+
+            }
+
+
+            // Exhibitor → sum of cnt + inaug_cnt
 
             return [
 
-                'rowspan'     => $items->count(),
+                'rowspan' => $items->count(),
 
-                'total'       => (int) $items->sum('cnt'),
+                'total' => (int)($items->sum('cnt') + $items->sum('inaug_cnt')),
 
-                'inaug_total' => (int) $items->sum('inaug_cnt'),
+                'inaug_total' => (int)$items->sum('inaug_cnt'),
 
-                'items'       => $items->values(),
+                'items' => $items->values(),
 
             ];
 
-        }
+        });
 
 
+        // 5) Grand total (normal categories cnt + exhibitor total including inaug)
 
-        // Exhibitor → sum of cnt + inaug_cnt
+        $grandTotal = $grouped->sum('total');
 
-        return [
 
-            'rowspan'     => $items->count(),
+        // 6) Background colors
 
-            'total'       => (int) ($items->sum('cnt') + $items->sum('inaug_cnt')),
+        $bgMap = [
 
-            'inaug_total' => (int) $items->sum('inaug_cnt'),
+            'Academic' => '#fde9e0',
 
-            'items'       => $items->values(),
+            'Government' => '#e4eef8',
+
+            'Industry' => '#f4f8e8',
+
+            'Media' => '#efe6d8',
+
+            'Others' => '#e7e2e2',
+
+            'Exhibitor' => '#fff2cc',
 
         ];
 
-    });
 
+        return view('attendee.jobs-matrix', compact('grouped', 'grandTotal', 'bgMap'));
 
-
-    // 5) Grand total (normal categories cnt + exhibitor total including inaug)
-
-    $grandTotal = $grouped->sum('total');
-
-
-
-    // 6) Background colors
-
-    $bgMap = [
-
-        'Academic'   => '#fde9e0',
-
-        'Government' => '#e4eef8',
-
-        'Industry'   => '#f4f8e8',
-
-        'Media'      => '#efe6d8',
-
-        'Others'     => '#e7e2e2',
-
-        'Exhibitor'  => '#fff2cc',
-
-    ];
-
-
-
-    return view('attendee.jobs-matrix', compact('grouped', 'grandTotal', 'bgMap'));
-
-}
+    }
 
 }
 

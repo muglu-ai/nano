@@ -1,5 +1,5 @@
 @extends('layouts.users')
-@section('title', $slug)
+@section('title', Str::contains(Str::lower($ticketName), 'pass') ? $ticketName . ' List' : $ticketName . ' Passes List')
 @section('content')
     <!-- intlTelInput Plugin -->
     @php
@@ -8,6 +8,11 @@
         } elseif ($slug == 'Stall Manning') {
             $link = 'stall_manning';
         }
+
+        // get the actual
+
+
+
     @endphp
 
     <style>
@@ -69,7 +74,7 @@
         .iti__flag-container {
             height: 50px;
         }
-        
+
         .invite-link {
             background: linear-gradient(45deg, #ff6b6b, #ff8e53);
             color: white !important;
@@ -81,7 +86,7 @@
             transition: all 0.3s ease;
             box-shadow: 0 2px 8px rgba(255, 107, 107, 0.3);
         }
-        
+
         .invite-link:hover {
             background: linear-gradient(45deg, #ff5252, #ff7043);
             color: white !important;
@@ -89,7 +94,7 @@
             box-shadow: 0 4px 12px rgba(255, 107, 107, 0.4);
             text-decoration: none;
         }
-        
+
         .invite-note {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
@@ -98,12 +103,12 @@
             margin-bottom: 20px;
             box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
         }
-        
+
         .invite-note .note-icon {
             font-size: 1.2em;
             margin-right: 8px;
         }
-        
+
         .guide-box {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
@@ -113,7 +118,7 @@
             overflow: hidden;
             border: 1px solid rgba(255, 255, 255, 0.1);
         }
-        
+
         .guide-header {
             background: rgba(255, 255, 255, 0.15);
             padding: 15px 20px;
@@ -122,25 +127,25 @@
             align-items: center;
             gap: 10px;
         }
-        
+
         .guide-icon {
             font-size: 1.5em;
         }
-        
+
         .guide-content {
             padding: 20px;
         }
-        
+
         .guide-content ol {
             margin: 0;
             padding-left: 20px;
         }
-        
+
         .guide-content li {
             margin-bottom: 12px;
             line-height: 1.6;
         }
-        
+
         .guide-highlight {
             background: rgba(255, 255, 255, 0.25);
             padding: 4px 8px;
@@ -149,7 +154,7 @@
             border: 1px solid rgba(255, 255, 255, 0.4);
             color: #2d3748;
         }
-        
+
         .guide-tip {
             background: rgba(255, 255, 255, 0.2);
             padding: 15px;
@@ -160,19 +165,24 @@
             align-items: center;
             gap: 10px;
         }
-        
+
         .tip-icon {
             font-size: 1.2em;
         }
+
+        .hidden {
+            display: none;
+        }
     </style>
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', function () {
             const tableBody = document.querySelector('#datatable-basic tbody');
             const perPageSelector = document.querySelector('#perPage');
             const paginationContainer = document.querySelector('.pagination-container');
             let sortField = 'first_name'; // Default sorting by first_name
             let sortDirection = 'asc';
             let perPage = 10;
+
             async function fetchUsers(page = 1) {
                 console.log(`Fetching users for page: ${page}`);
                 try {
@@ -190,6 +200,7 @@
                     console.error('Error fetching users:', error);
                 }
             }
+
             // <td class="text-sm font-weight-normal">
             //     <button class="btn btn-sm btn-primary" onclick="showConfirmationModal('${user.email}', '${user.first_name}')">Status</button>
             // </td>
@@ -197,7 +208,7 @@
                 tableBody.innerHTML = '';
                 users.forEach(user => {
                     let nameCell;
-                    
+
                     // Check if name is empty or null
                     if (!user.first_name && !user.last_name) {
                         // If name is empty/null and user has token, create hyperlink
@@ -212,11 +223,11 @@
                             `<a href="/exhibitor-pdf/${user.unique_id}" target="_blank">${user.first_name} ${user.last_name || ''}</a>` :
                             `${user.first_name} ${user.last_name || ''}`;
                     }
-                    
-                    const emailCell = user.token ? 
-                        `<a href="/invited/inaugural/${user.token}/" target="_blank" class="invite-link">${user.email || 'N/A'}</a>` : 
+
+                    const emailCell = user.token ?
+                        `<a href="/invited/inaugural/${user.token}/" target="_blank" class="invite-link">${user.email || 'N/A'}</a>` :
                         `${user.email || 'N/A'}`;
-                    
+
                     const row = `
             <tr>
                 <td class="text-sm font-weight-normal">${nameCell}</td>
@@ -241,7 +252,7 @@
 
                 // Add click listeners to pagination buttons
                 document.querySelectorAll('.pagination-container button').forEach(button => {
-                    button.addEventListener('click', function() {
+                    button.addEventListener('click', function () {
                         fetchUsers(this.dataset.page);
                     });
                 });
@@ -249,7 +260,7 @@
 
             // Sorting headers
             document.querySelectorAll('.thead-light th').forEach(header => {
-                header.addEventListener('click', function() {
+                header.addEventListener('click', function () {
                     const field = this.dataset.sort;
                     if (field) {
                         sortField = field;
@@ -260,7 +271,7 @@
             });
 
             // Per page selector
-            perPageSelector.addEventListener('change', function() {
+            perPageSelector.addEventListener('change', function () {
                 perPage = this.value;
                 fetchUsers();
             });
@@ -270,20 +281,23 @@
         });
     </script>
     @php
-        $extractedData = $data->map(function ($item) {
-            return [
-                'first_name' => $item->first_name,
-                'last_name' => $item->last_name,
-                'email' => $item->email,
-                'job_title' => $item->job_title,
-                'mobile' => $item->mobile,
-                'organisation_name' => $item->organisation_name,
-                'token' => $item->token,
-                'unique_id' => $item->unique_id,
-            ];
-        });
-        // dd($extractedData);
+        $extractedData = collect();
+        if (!empty($data) && $data->count() > 0) {
+            $extractedData = $data->map(function ($item) {
+                return [
+                    'first_name' => $item->first_name,
+                    'last_name' => $item->last_name,
+                    'email' => $item->email,
+                    'job_title' => $item->job_title,
+                    'mobile' => $item->mobile,
+                    'organisation_name' => $item->organisation_name,
+                    'token' => $item->token,
+                    'unique_id' => $item->unique_id,
+                ];
+            });
+        }
     @endphp
+
     @php
         $allocationName = 'Allocated';
         if ($slug == 'Inaugural Passes') {
@@ -291,13 +305,13 @@
         }
     @endphp
 
-    @if ($slug == 'Inaugural Passes')
-        <div style="margin-top:5px; background: linear-gradient(90deg, #2196f3 0%, #21cbf3 100%); color: #0d2235; border-radius: 8px; padding: 16px 24px; margin-bottom: 18px; font-size: 1.08rem; font-weight: 500; box-shadow: 0 2px 8px rgba(33, 203, 243, 0.08); border-left: 6px solid #1976d2;">
-            <span style="font-weight: bold;">Kindly note:</span>
-            Registrations for the Inaugural Session will remain open until
-            <span style="font-weight: bold; color: #0d47a1;">27-08-2025 05:00 PM</span>.
-        </div>
-    @endif
+    {{--    @if ($slug == 'Inaugural Passes')--}}
+    {{--        <div style="margin-top:5px; background: linear-gradient(90deg, #2196f3 0%, #21cbf3 100%); color: #0d2235; border-radius: 8px; padding: 16px 24px; margin-bottom: 18px; font-size: 1.08rem; font-weight: 500; box-shadow: 0 2px 8px rgba(33, 203, 243, 0.08); border-left: 6px solid #1976d2;">--}}
+    {{--            <span style="font-weight: bold;">Kindly note:</span>--}}
+    {{--            Registrations for the Inaugural Session will remain open until--}}
+    {{--            <span style="font-weight: bold; color: #0d47a1;">27-08-2025 05:00 PM</span>.--}}
+    {{--        </div>--}}
+    {{--    @endif--}}
     <div class="container-fluid py-2">
         <div class="row mt-4">
             <div class="col-12">
@@ -313,51 +327,37 @@
                         <div class="d-flex justify-content-between align-items-center">
                             <div>
                                 <span class="badge bg-info">{{ $allocationName }}:
-                                    @if ($slug == 'Inaugural Passes')
-                                        {{ $count['complimentary_delegate_count'] ?? 0 }}
-                                    @elseif($slug == 'Stall Manning')
-                                        {{ $count['stall_manning_count'] ?? 0 }}
-                                    @endif
+                                    {{$allocated}}
 
                                 </span>
                                 <span class="badge bg-success">Used:
-                                    @if ($slug == 'Inaugural Passes')
-                                        {{ $used['complimentary_delegates'] ?? 0 }}
-                                    @elseif($slug == 'Stall Manning')
-                                        {{ $used['stall_manning'] ?? 0 }}
-                                    @endif
+                                    {{$usedCount}}
                                 </span>
                             </div>
                             <div class="text-end">
 
                                 @if($slug == 'Inaugural Passes')
-                                @php $button = 'Invite / Add'; @endphp
-                                @elseif($slug == 'Stall Manning')
-                                @php $button = 'Invite'; @endphp
+                                    @php $button = 'Invite / Add'; @endphp
+                                @else
+                                    @php $button = 'Invite'; @endphp
                                 @endif
 
-                                @if (
-    $slug != 'Inaugural Passes' &&
-    !(
-        ($slug == 'Inaugural Passes' &&
-            isset($count['complimentary_delegate_count'], $used['complimentary_delegates']) &&
-            $used['complimentary_delegates'] >= $count['complimentary_delegate_count']) ||
-        ($slug == 'Stall Manning' &&
-            isset($count['stall_manning_count'], $used['stall_manning']) &&
-            $used['stall_manning'] >= $count['stall_manning_count'])
-    )
-)
-    <button type="button" class="btn btn-primary"
-        onclick="openInviteModal('{{ $slug }}')">{{ $button }}</button>
-    <button type="button" class="btn btn-secondary"
-        onclick="openAddModal('{{ $slug }}')">Add</button>
-@endif
+                                    @if (
+                                            isset($allocated, $usedCount) &&
+                                            $usedCount < $allocated
+                                        )
+                                        <button type="button" class="btn btn-primary"
+                                                onclick="openInviteModal('{{ $slug }}')">{{ $button }}</button>
+                                        <button type="button" class="btn btn-secondary"
+                                                onclick="openAddModal('{{ $slug }}')">Add
+                                        </button>
+                                    @endif
                             </div>
                         </div>
                     </div>
 
                     {{-- show a guide only for Inaugural Passes to first add an email then you can fill out the information on their behalf as well --}}
-                    
+
                     @if($slug == 'Inaugural Passes')
                         <div class="guide-box">
                             <div class="guide-header">
@@ -366,85 +366,105 @@
                             </div>
                             <div class="guide-content">
                                 <ol>
-                                    <li><strong>Step 1:</strong> Click the <span class="guide-highlight">"{{$button}}"</span> button above to invite someone via email</li>
-                                    <li><strong>Step 2:</strong> Once invited, their email will appear in the table below</li>
-                                    <li><strong>Step 3:</strong> Click on their <span class="guide-highlight">📧 Invite Link</span> or <span class="guide-highlight">Email</span> to fill out their information on their behalf</li>
-                                    <li><strong>Step 4:</strong> After completing the form, their name will appear in the table</li>
+                                    <li><strong>Step 1:</strong> Click the <span
+                                                class="guide-highlight">"{{$button}}"</span> button above to invite
+                                        someone via email
+                                    </li>
+                                    <li><strong>Step 2:</strong> Once invited, their email will appear in the table
+                                        below
+                                    </li>
+                                    <li><strong>Step 3:</strong> Click on their <span class="guide-highlight">📧 Invite Link</span>
+                                        or <span class="guide-highlight">Email</span> to fill out their information on
+                                        their behalf
+                                    </li>
+                                    <li><strong>Step 4:</strong> After completing the form, their name will appear in
+                                        the table
+                                    </li>
                                 </ol>
                             </div>
                         </div>
                     @endif
-                    
+
                     @if($extractedData->where('token', '!=', null)->where('first_name', null)->count() > 0)
 
                         <div class="invite-note">
                             <span class="note-icon">💡</span>
-                            <strong>Action Required:</strong> Some users have been invited but haven't completed their details yet. 
-                            Click on the <span class="invite-link" style="padding: 2px 8px; font-size: 0.9em;">📧 Invite Link</span> 
-                            or <span class="invite-link" style="padding: 2px 8px; font-size: 0.9em;">Email</span> 
+                            <strong>Action Required:</strong> Some users have been invited but haven't completed their
+                            details yet.
+                            Click on the <span class="invite-link" style="padding: 2px 8px; font-size: 0.9em;">📧 Invite Link</span>
+                            or <span class="invite-link" style="padding: 2px 8px; font-size: 0.9em;">Email</span>
                             to help them complete their registration.
                         </div>
                     @endif
-                    
+
                     <div class="table-responsive">
                         <table class="table table-flush" id="datatable-basic">
                             <thead class="thead-light">
-                                <tr>
-                                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7"
-                                        data-sort="first_name">Name</th>
-                                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7"
-                                        data-sort="email">Email</th>
-                                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7"
-                                        data-sort="role">Job title</th>
-                                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7"
-                                        data-sort="created_at">Mobile No</th>
-                                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7"
-                                        data-sort="created_at">Organisation Name</th>
-                                </tr>
+                            <tr>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7"
+                                    data-sort="first_name">Name
+                                </th>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7"
+                                    data-sort="email">Email
+                                </th>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7"
+                                    data-sort="role">Job title
+                                </th>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7"
+                                    data-sort="created_at">Mobile No
+                                </th>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7"
+                                    data-sort="created_at">Organisation Name
+                                </th>
+                            </tr>
                             </thead>
                             <tbody>
-                                @foreach ($extractedData as $item)
-                                    <tr>
-                                        <td class="text-sm font-weight-normal">
-                                            @if (!empty($item['first_name']) || !empty($item['last_name']))
-                                                @if (!empty($item['unique_id']))
-                                                    <a href="{{ route('exhibitor.pdf', ['id' => $item['unique_id']]) }}"
-                                                        target="_blank">
-                                                        {{ $item['first_name'] }} {{ $item['last_name'] }}
-                                                    </a>
-                                                @else
+                            @foreach ($extractedData as $item)
+                                <tr>
+                                    <td class="text-sm font-weight-normal">
+                                        @if (!empty($item['first_name']) || !empty($item['last_name']))
+                                            @if (!empty($item['unique_id']))
+                                                <a href="{{ route('exhibitor.pdf', ['id' => $item['unique_id']]) }}"
+                                                   target="_blank">
                                                     {{ $item['first_name'] }} {{ $item['last_name'] }}
-                                                @endif
+                                                </a>
                                             @else
-                                                @if (!empty($item['token']))
-                                                    @if($slug == 'Inaugural Passes')
-                                                        <a href="{{ route('exhibition.invited.inaugural', ['token' => $item['token']]) }}" target="_blank" class="invite-link">📧 Invite Link</a>
-                                                    @else
-                                                        <a href="{{ route('exhibition.invited', ['token' => $item['token']]) }}" target="_blank" class="invite-link">📧 Invite Link</a>
-                                                    @endif
-                                                @else
-                                                    N/A
-                                                @endif
+                                                {{ $item['first_name'] }} {{ $item['last_name'] }}
                                             @endif
-                                        </td>
-                                        <td class="text-sm font-weight-normal">
-                                            @if (!empty($item['token']) && empty($item['first_name']))
+                                        @else
+                                            @if (!empty($item['token']))
                                                 @if($slug == 'Inaugural Passes')
-                                                    <a href="{{ route('exhibition.invited.inaugural', ['token' => $item['token']]) }}" target="_blank" class="invite-link">{{ $item['email'] }}</a>
+                                                    <a href="{{ route('exhibition.invited.inaugural', ['token' => $item['token']]) }}"
+                                                       target="_blank" class="invite-link">📧 Invite Link</a>
                                                 @else
-                                                    <a href="{{ route('exhibition.invited', ['token' => $item['token']]) }}" target="_blank" class="invite-link">{{ $item['email'] }}</a>
+                                                    <a href="{{ route('exhibition.invited', ['token' => $item['token']]) }}"
+                                                       target="_blank" class="invite-link">📧 Invite Link</a>
                                                 @endif
                                             @else
-                                                {{ $item['email'] }}
+                                                N/A
                                             @endif
-                                        </td>
-                                        <td class="text-sm font-weight-normal">{{ $item['job_title'] }}</td>
-                                        <td class="text-sm font-weight-normal">{{ $item['mobile'] }}</td>
-                                        <td class="text-sm font-weight-normal">
-                                            {{ $item['organisation_name'] ?: $companyName }}</td>
+                                        @endif
+                                    </td>
+                                    <td class="text-sm font-weight-normal">
+                                        @if (!empty($item['token']) && empty($item['first_name']))
+                                            @if($slug == 'Inaugural Passes')
+                                                <a href="{{ route('exhibition.invited.inaugural', ['token' => $item['token']]) }}"
+                                                   target="_blank" class="invite-link">{{ $item['email'] }}</a>
+                                            @else
+                                                <a href="{{ route('exhibition.invited', ['token' => $item['token']]) }}"
+                                                   target="_blank" class="invite-link">{{ $item['email'] }}</a>
+                                            @endif
+                                        @else
+                                            {{ $item['email'] }}
+                                        @endif
+                                    </td>
+                                    <td class="text-sm font-weight-normal">{{ $item['job_title'] }}</td>
+                                    <td class="text-sm font-weight-normal">{{ $item['mobile'] }}</td>
+                                    <td class="text-sm font-weight-normal">
+                                        {{ $item['organisation_name'] ?: $companyName }}</td>
 
-                                    </tr>
-                                @endforeach
+                                </tr>
+                            @endforeach
                             </tbody>
                         </table>
                     </div>
@@ -454,26 +474,33 @@
         </div>
         @if ($slug == 'Inaugural Passes')
             <div class="alert alert-warning mt-3" role="alert">
-                <strong>Note:</strong> Kindly note that participation (in-person) in the Inaugural event is subject to final
+                <strong>Note:</strong> Kindly note that participation (in-person) in the Inaugural event is subject to
+                final
                 confirmation and will be informed separately from 3rd week of August onwards.
             </div>
         @endif
 
     </div>
 
-    @if ($slug == 'Inaugural Passes')
-        @php
+    @php
+        if ($ticketName == 'Inaugural Passes') {
             $input_type = 'delegate';
             $input_type2 = 'delegate';
-        @endphp
-    @elseif($slug == 'Stall Manning')
-        @php
+        } elseif ($ticketName == 'Stall Manning') {
             $input_type = 'exhibitor';
             $input_type2 = 'exhibitor';
-        @endphp
-    @endif
+        }
+        else {
+            // Handle dynamic ticket types based on slug
+            $input_type = Str::slug($slug, '_');
+            $input_type2 = Str::slug($slug, '_');
+            $input_type = $input_type2 = $ticketId;
+        }
+        // // For Add Modal
+//    @dd($ticketName, $input_type, $input_type2)
+    @endphp
 
-    <!-- Invite Modal -->
+            <!-- Invite Modal -->
 
     <div class="modal fade" id="inviteModal" tabindex="-1" aria-labelledby="inviteModalLabel" aria-hidden="true">
         <div class="modal-dialog">
@@ -504,7 +531,7 @@
             <div class="modal-dialog">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h5 class="modal-title" id="addModalLabel">Add {{ $slug }}</h5>
+                        <h5 class="modal-title" id="addModalLabel">Add {{ $ticketName }}</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
@@ -512,31 +539,37 @@
                             <input type="hidden" id="csrfToken" name="_token" value="{{ csrf_token() }}">
                             <input type="hidden" name="invite_type" id="inviteType2" value="{{ $input_type }}">
                             <div class="mb-3">
-                                <label for="name" class="form-label">Name</label>
+                                <label for="name" class="form-label">Name <span class="red-label">*</span> </label>
                                 <input type="text" class="form-control" id="name" required>
                             </div>
                             <div class="mb-3">
-                                <label for="email" class="form-label">Email</label>
+                                <label for="email" class="form-label">Email <span class="red-label">*</span></label>
                                 <input type="email" class="form-control" id="email" required>
                             </div>
                             <div class="mb-3">
-                                <label for="phone" class="form-label">Phone</label>
+                                <label for="phone" class="form-label">Phone <span class="red-label">*</span></label>
                                 <input type="tel" class="form-control" id="phone" required>
                                 <input type="hidden" id="fullPhoneNumber" name="fullPhoneNumber">
                             </div>
                             <div class="mb-3">
-                                <label for="organisationName" class="form-label">Organisation Name</label>
+                                <label for="organisationName" class="form-label">Organisation Name <span
+                                            class="red-label">*</span> </label>
                                 <input type="text" class="form-control" id="organisationName" name="organisationName"
-                                    value="{{ $companyName }}" required>
+                                       value="{{ $companyName }}" required>
                             </div>
                             <div class="mb-3">
-                                <label for="jobTitle" class="form-label">Job Title</label>
+                                <label for="jobTitle" class="form-label">Job Title <span
+                                            class="red-label">*</span></label>
                                 <input type="text" class="form-control" id="jobTitle" required>
                             </div>
-                            <div class="row mb-3">
+
+                            {{-- add address, city, state, country, pincode --}}
+                            {{--                            --}}{{-- <div class="mb-3">--}}
+
+                            <div class="row mb-3 hidden">
                                 <div class="col-md-6">
                                     <label for="idCardType" class="form-label">ID Card Type</label>
-                                    <select class="form-control" id="idCardType" required>
+                                    <select class="form-control" id="idCardType">
                                         <option value="">Select ID Card Type</option>
                                         <option value="Aadhar Card">Aadhar Card</option>
                                         <option value="Pan Card">PAN Card</option>
@@ -547,10 +580,10 @@
                                 </div>
                                 <div class="col-md-6">
                                     <label for="idCardNumber" class="form-label">ID Card Number</label>
-                                    <input type="text" class="form-control" id="idCardNumber" required>
+                                    <input type="text" class="form-control" id="idCardNumber">
                                 </div>
                             </div>
-                            <button type="submit" class="btn btn-secondary">Add {{ $slug }}</button>
+                            <button type="submit" class="btn btn-secondary">Add {{ $ticketName }}</button>
                         </form>
                     </div>
                 </div>
@@ -560,16 +593,12 @@
 
 
     <script>
-        $(document).ready(function() {
+        $(document).ready(function () {
             var input = document.querySelector("#phone");
             var iti = window.intlTelInput(input, {
-                initialCountry: "auto",
-                geoIpLookup: function(callback) {
-                    $.get("https://ipinfo.io", function() {}, "jsonp").always(function(resp) {
-                        var countryCode = resp && resp.country ? resp.country : "us";
-                        console.log("Country Code:", countryCode);
-                        callback(countryCode);
-                    });
+                initialCountry: "in",
+                geoIpLookup: function (callback) {
+                    callback("in");
                 },
                 separateDialCode: true,
                 utilsScript: "https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/js/utils.js",
@@ -588,7 +617,7 @@
                 if (iti.isValidNumber()) {
                     var formattedNumber = `+${countryData.dialCode}-${nationalNumber}`; // Add separator '-'
                     $("#fullPhoneNumber").val(formattedNumber);
-                    console.log("Updated Full Phone Number:", formattedNumber);
+                    // console.log("Updated Full Phone Number:", formattedNumber);
                 } else {
                     $("#fullPhoneNumber").val(""); // Reset if invalid
                 }
@@ -599,7 +628,7 @@
             $(".iti__country-list li").on("click", updatePhoneNumber); // Ensure update on country change
 
             // Ensure phone number is valid before form submission
-            $("#addForm").on("submit", function(event) {
+            $("#addForm").on("submit", function (event) {
                 event.preventDefault();
 
                 updatePhoneNumber(); // Ensure latest value before submit
@@ -616,16 +645,16 @@
                 formData.append('email', document.getElementById('email').value);
                 formData.append('phone', fullPhoneNumber);
                 formData.append('jobTitle', document.getElementById('jobTitle').value);
-                formData.append('idCardType', document.getElementById('idCardType').value);
-                formData.append('idCardNumber', document.getElementById('idCardNumber').value);
+                // formData.append('idCardType', document.getElementById('idCardType').value);
+                // formData.append('idCardNumber', document.getElementById('idCardNumber').value);
                 formData.append('invite_type', document.getElementById('inviteType2').value);
                 formData.append('organisationName', document.getElementById('organisationName').value);
 
-                fetch('/add', {
-                        method: 'POST',
-                        body: formData
+                fetch('{{ route('exhibition.invite') }}', {
+                    method: 'POST',
+                    body: formData
 
-                    })
+                })
                     .then(response => response.json())
                     .then(data => {
                         if (data.error) {
@@ -649,10 +678,10 @@
     </script>
 
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', function () {
             var phoneInput = document.getElementById('phone');
             if (phoneInput) {
-                setTimeout(function() {
+                setTimeout(function () {
                     phoneInput.removeAttribute('placeholder');
                 }, 100);
             }
@@ -672,7 +701,7 @@
             addModal.show();
         }
 
-        document.getElementById('inviteForm').addEventListener('submit', function(event) {
+        document.getElementById('inviteForm').addEventListener('submit', function (event) {
             event.preventDefault();
 
             const formData = {
@@ -682,13 +711,13 @@
             };
 
             fetch('/invite', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': formData._token
-                    },
-                    body: JSON.stringify(formData)
-                })
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': formData._token
+                },
+                body: JSON.stringify(formData)
+            })
                 .then(response => response.json())
                 .then(data => {
                     if (data.error) {
@@ -708,11 +737,11 @@
     </script>
 
     <script>
-        $(document).ready(function() {
+        $(document).ready(function () {
             var modal = bootstrap.Modal.getInstance(document.getElementById('addModal'));
 
             // Reset form fields when modal is closed
-            $('#addModal').on('hidden.bs.modal', function() {
+            $('#addModal').on('hidden.bs.modal', function () {
                 $('#addForm')[0].reset();
                 document.getElementById('jobTitle').value = '';
                 document.getElementById('idCardType').value = '';
@@ -721,7 +750,5 @@
             });
         });
     </script>
-
-
 
 @endsection

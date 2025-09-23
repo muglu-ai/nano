@@ -9,6 +9,7 @@ use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
 
+
 class InviteMail extends Mailable
 {
     use Queueable, SerializesModels;
@@ -31,9 +32,11 @@ class InviteMail extends Mailable
      */   
     public function envelope(): Envelope
     {
+        $eventName = config('constants.EVENT_NAME');
+        $eventYear = config('constants.EVENT_YEAR');
         $subject = match($this->delegateType) {
-            'delegate' => 'Registration Form to participate in SEMICON India 2025 (2nd-4th Sept 2025)',
-            default => 'Invitation to Participate in SEMICON India 2025'
+            'delegate' => 'Registration Form to participate in ' . $eventName . ' ' . $eventYear,
+            default => 'Invitation to Participate in ' . $eventName . ' ' . $eventYear
         };
         
         return new Envelope(

@@ -129,7 +129,7 @@
                                     @endphp
                                     {{--                                    {{ $status }}--}}
                                     {{--                                    <th>Application No</th>--}}
-                                    {{ //registration date }}
+
                                      <th class="text-uppercase text-white text-wrap">Registration Date</th>
                                     <th class="text-uppercase text-white text-wrap">Company Name</th>
 {{--                                    <th class="text-uppercase text-white text-wrap text-start">Country</th>--}}
@@ -144,7 +144,7 @@
                                     {{-- <th class="text-uppercase text-white text-wrap">Preferred Location</th>
                                     <th class="text-uppercase text-white text-wrap">Stall Type</th> --}}
 {{--                                    <th class="text-uppercase text-white text-wrap">Semi Member</th>--}}
-                                    <th class="text-uppercase text-white text-wrap">Booth Number</th>
+{{--                                    <th class="text-uppercase text-white text-wrap">Booth Number</th>--}}
                                     <th class="text-uppercase  text-xs font-weight-bolder text-white" style="max-width: 180px;">
                                         <div class="d-flex flex-column " >
                                             <span class=" text-uppercase text-dark text-white">Contact Name   </span>
@@ -158,7 +158,7 @@
                                             <p class="text-xs  mb-0 text-dark text-white">Contact No</p>
                                         </div>
                                     </th>
-                                     <th  class=" text-uppercase text-start text-white text-wrap">Date of Submission</th>
+{{--                                     <th  class=" text-uppercase text-start text-white text-wrap">Date of Submission</th>--}}
                                     <th class="text-uppercase  text-xs font-weight-bolder ">
                                         <div class="d-flex flex-column ">
                                             <h6 class="mb-0  text-white">Price</h6>
@@ -191,6 +191,11 @@
                                         {{--                                        @dd($application->invoice->amount, $application->invoice->amount_paid) --}}
 {{--                                        @dd($application->invoices, $application->id)--}}
                                         <tr>
+                                            {{-- Add registration date --}}
+                                            <td class="align-left custom-td  text-md">
+                                                <span
+                                                    class="text-md text-dark">{{ $application->approved_date ? \Carbon\Carbon::parse($application->approved_date)->format('d M, Y') : '' }}</span>
+                                            </td>
                                             <td class="custom-td" style="min-width: 80px; word-wrap: break-word;">
                                                 <div class="d-flex flex-column" style="word-break: break-word; overflow-wrap: break-word; white-space: normal; max-width: 150px;">
                                                     <p class="mb-0 text-md text-dark"> <a class="text-md text-info " target="_blank" href="{{ route('application.view', ['application_id' => $application->application_id]) }}">
@@ -244,13 +249,13 @@
 
 
 
-                                            <td class="custom-td">
-                                                <div class="d-flex px-2 py-1">
-                                                    <div class="d-flex flex-column" >
-                                                        <p class="mb-0 text-md text-dark">{{ $application->stallNumber}}</p>
-                                                    </div>
-                                                </div>
-                                            </td>
+{{--                                            <td class="custom-td">--}}
+{{--                                                <div class="d-flex px-2 py-1">--}}
+{{--                                                    <div class="d-flex flex-column" >--}}
+{{--                                                        <p class="mb-0 text-md text-dark">{{ $application->stallNumber}}</p>--}}
+{{--                                                    </div>--}}
+{{--                                                </div>--}}
+{{--                                            </td>--}}
                                             <td class="custom-td">
                                                 <div class="d-flex flex-column text-start" style="word-break: break-word; overflow-wrap: break-word; white-space: normal; max-width: 200px;" >
                                                     <p class="mb-0 text-md text-dark">{{ $application->eventContact->first_name }} {{ $application->eventContact->last_name }}</p>
@@ -262,10 +267,10 @@
                                                 <p class="text-md text-secondary mb-0 text-dark">{{ $application->eventContact->email }}</p>
                                                 <p class="text-secondary text-md font-weight-bold">{{ $application->eventContact->contact_number }}</p>
                                             </td>
-                                             <td class="align-left custom-td  text-md">
-                                                <span
-                                                    class="text-md text-dark">{{ $application->submission_date ?? '' }}</span>
-                                            </td>
+{{--                                             <td class="align-left custom-td  text-md">--}}
+{{--                                                <span--}}
+{{--                                                    class="text-md text-dark">{{ $application->submission_date ?? '' }}</span>--}}
+{{--                                            </td>--}}
 {{--                                            @dd($application->invoice->amount, $application->invoice->amount_paid,$application->invoice->id )--}}
 {{--                                            <td class="align-middle  text-md">--}}
 {{--                                                <span--}}

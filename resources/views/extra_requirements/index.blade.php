@@ -12,6 +12,15 @@
                             <div class="d-flex justify-content-between w-100">
                                 <h5 class="mb-4">Extra Requirements Page</h5>
                             </div>
+
+                            @if(config('constants.EXTRA_REQUIREMENTS_ACTIVE') == false)
+
+                                <div class="alert alert-warning text-center my-4">
+                                    Coming Soon
+                                </div>
+                            @else
+
+
                             {{-- <div class="alert alert-info mb-4" role="alert">
                                     <ul class="mb-0" style="color: #fff;">
 
@@ -172,6 +181,8 @@
                             </div>
 
                         </div>
+
+                        @endif
                     </div>
                 </div>
             </div>
@@ -181,7 +192,7 @@
     <!-- jQuery and SweetAlert JS -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-
+    @if(config('constants.EXTRA_REQUIREMENTS_ACTIVE') == true)
     <script>
         $(document).ready(function() {
             function getSelectedItems() {
@@ -314,4 +325,6 @@
             });
         });
     </script>
+    @endif
+
 @endsection

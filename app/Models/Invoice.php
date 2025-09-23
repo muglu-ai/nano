@@ -85,4 +85,12 @@ class Invoice extends Model
     {
         return $this->hasMany(RequirementsOrder::class, 'invoice_id', 'id');
     }
+
+    //payment where invoice type =Stall Booking then get the latest payment which status is successful
+    public function stallBookingPayment()
+    {
+        return $this->hasOne(Payment::class)->where('status', 'Successful')->whereHas('invoice', function ($query) {
+            $query->where('type', 'Stall Booking');
+        })->latestOfMany();
+    }
 }

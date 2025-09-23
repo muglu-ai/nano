@@ -147,8 +147,8 @@ class AdminController extends Controller
             // dd($applications);
             //total revenue from all approved applications from price field in invoice table
             $totalRevenue = Invoice::where('type', 'Stall Booking')
-                            ->whereIn('payment_status', ['paid', 'unpaid'])
-                            ->sum('price');
+                            ->whereIn('payment_status', ['paid'])
+                            ->sum('total_final_price');
 
             return view('dashboard.approved_list', compact('applications', 'slug', 'totalRevenue'));
         }

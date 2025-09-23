@@ -23,16 +23,16 @@ class StallManning extends Model
         'mobile',
         'job_title',
         'organisation_name',
+        'ticketType',
         'token',
         'id_type',
         'id_no',
         'confirmedCategory',
-        'regId',
+        'pinNo',
         'api_sent',
         'api_response',
         'api_data',
         'emailSent',
-    
     ];
 
     protected $appends = ['company_name', 'full_name'];

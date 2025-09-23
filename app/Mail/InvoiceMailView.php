@@ -45,19 +45,21 @@ class InvoiceMailView extends Mailable
         $this->data = [
             'applicationID' => $application->application_id ?? 'N/A',
             'exhibitor_name' => $application->company_name ?? 'N/A',
-            'approval_date' => $application->approved_date ?? 'N/A',
+            'approval_date' => isset($application->approved_date) ? date('d-m-Y', strtotime($application->approved_date)) : 'N/A',
             'registrationType' => $registrationType ?? 'N/A',
             'BillingName' => $billing->contact_name ?? 'N/A',
             'invoiceID' => $invoice->invoice_no ?? 'N/A',
             'GSTIN' => $application->gst_no ?? 'N/A',
             'amount' => $invoice->amount ?? 'N/A',
+            //processing charge
+            'processingCharge' => $invoice->processing_charges ?? 'N/A',
             'dueDate' => $invoice->payment_due_date ?? 'N/A',
             'paymentStatus' => $invoice->payment_status ?? 'N/A',
             'billingDate' => $invoice->created_at->format('Y-m-d') ?? 'N/A',
             'DueDate' => $invoice->payment_due_date ?? 'N/A',
             'currency' => $application->payment_currency ?? 'N/A',
             'BillingCompanyName' => $billing->billing_company ?? 'N/A',
-            'BillingAddress' => $billing->address ?? 'N/A',
+//            'BillingAddress' => $billing->address ?? 'N/A',
             'BillingCity' => $billing->city_id ?? 'N/A',
             'BillingState' => $billing->state->name ?? 'N/A',
             'BillingCountry' => $billing->country->name ?? 'N/A',
@@ -80,9 +82,19 @@ class InvoiceMailView extends Mailable
             'pref_location' => $application->pref_location ?? 'N/A',
             'amount_paid' => $invoice->amount_paid ?? 'N/A',
 
+            'transactionId' => $invoice->stallBookingPayment->transaction_id ?? 'N/A' ,
+            // modify the address by if BillingCity is found in BillingAddress then replace it with empty string
+            // Optimize address by removing city, state, and country names if found in BillingAddress
+            'BillingAddress' => str_ireplace(
+                [$billing->city_id, $billing->state->name, $billing->country->name],
+                '',
+                $billing->address
+            ),
+            'pinNo' => $invoice->pin_no ?? 'N/A',
+            'subSector' => $application->subSector ?? 'N/A',
 
         ];
-        //dd($this->data);
+//        dd($this->data);
     }
 
     public function build()

@@ -6,6 +6,7 @@ use App\Mail\InviteMail;
 use App\Models\Application;
 use App\Models\Invoice;
 use App\Models\Payment;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -17,9 +18,11 @@ use App\Models\ComplimentaryDelegate;
 use App\Models\StallManning;
 use App\Mail\ExhibitorMail;
 use Illuminate\Validation\Rule;
-use App\Controllers\ApiRelayController;
+use App\Http\Controllers\ApiRelayController;
 use App\Mail\InauguralMail;
 use App\Services\EmailService;
+use App\Models\Ticket;
+use NunoMaduro\Collision\Adapters\Phpunit\ConfigureIO;
 
 class ExhibitorController extends Controller
 {
@@ -75,12 +78,35 @@ class ExhibitorController extends Controller
             $exhibitionParticipant = \App\Models\ExhibitionParticipant::where('coExhibitor_id', $coExhibitorId)->first();
         }
 
+        // The ticketAllocation field contains a JSON string like {"1": 5, "2": 3, "3": 0}, where keys are ticket IDs and values are counts.
+        // To process it, decode the JSON, then for each ticketId, fetch the Ticket model and add the count to a result array with ticket type and count.
+
+        $ticketAllocationResult = [];
+        if ($exhibitionParticipant && !empty($exhibitionParticipant->ticketAllocation)) {
+            $ticketAllocations = json_decode($exhibitionParticipant->ticketAllocation, true);
+
+            if (is_array($ticketAllocations)) {
+                foreach ($ticketAllocations as $ticketId => $count) {
+                    // Fetch the Ticket model, handle missing ticket gracefully
+                    $ticket = Ticket::find($ticketId);
+                    $ticketType = $ticket ? $ticket->ticket_type : 'Unknown';
+
+                    $ticketAllocationResult[] = [
+                        'ticket_id' => $ticketId,
+                        'ticket_type' => $ticketType,
+                        'count' => $count,
+                        'slug' => Str::slug($ticket->ticket_type, '-'),
+                    ];
+                }
+            }
+        }
 
 
         $count = [
             'stall_manning_count' => $exhibitionParticipant ? $exhibitionParticipant->stall_manning_count : 0,
             'complimentary_delegate_count' => $exhibitionParticipant ? $exhibitionParticipant->complimentary_delegate_count : 0,
             'application' => $application_id,
+            'ticket_allocation' => $ticketAllocationResult,
             'exhibition_participant_id' => $exhibitionParticipant ? $exhibitionParticipant->id : null,
         ];
 
@@ -158,47 +184,82 @@ class ExhibitorController extends Controller
         //get the user application id
         $application = Application::where('user_id', auth()->user()->id)
             ->where('submission_status', 'approved')
-            // ->whereHas('invoices.payments', function ($query) {
-            //     $query->where('status', 'successful');
-            // })
             ->first();
 
-        //if no application then redirect to /dashboard
         if (!$application) {
             return redirect('/dashboard');
         }
 
+        $sortField = $request->input('sort', 'first_name');
+        $sortDirection = $request->input('direction', 'asc');
+        $perPage = $request->input('per_page', 50);
 
-        $sortField = $request->input('sort', 'first_name'); // Default sort by 'name'
-        $sortDirection = $request->input('direction', 'asc'); // Default sort 'asc'
-        $perPage = $request->input('per_page', 50); // Default 10 items per page
-
+        // Default data and slug
+        $data = [];
+        $slug = $type;
+        $used = $this->usedcount();
+        $ticketId = null;
 
         if ($type == 'inaugural_passes') {
-            $slug = 'Inaugural Passes';
+            $ticketName = 'Inaugural Passes';
+            $slug = 'inaugural_passes';
+            $allocated = $count['complimentary_delegate_count'] ?? 0;
+            $usedCount = $used['complimentary_delegates'] ?? 0;
+
+            $ticketId = $slug;
+
             $data = DB::table('complimentary_delegates')
-                ->where('exhibition_participant_id', $this->checkCount()['exhibition_participant_id'])
+                ->where('exhibition_participant_id', $count['exhibition_participant_id'])
                 ->orderBy($sortField, $sortDirection)
                 ->paginate($perPage);
         } elseif ($type == 'stall_manning') {
-            $slug = 'Stall Manning';
+            $slug = 'stall_manning';
+            $ticketId = 11;
+            $ticketName = 'Stall Manning';
+            $allocated = $count['stall_manning_count'] ?? 0;
+            $usedCount = $used['stall_manning'] ?? 0;
             $data = DB::table('stall_manning')
-                ->where('exhibition_participant_id', $this->checkCount()['exhibition_participant_id'])
+                ->where('exhibition_participant_id', $count['exhibition_participant_id'])
                 ->orderBy($sortField, $sortDirection)
                 ->paginate($perPage);
         } else {
-            return response()->json(['error' => 'Invalid type'], 400);
+            // Check for custom ticket type by slug
+            $ticket = collect($count['ticket_allocation'] ?? [])->firstWhere('slug', $type);
+
+            //dd($ticket);
+            if ($ticket) {
+                $slug = $ticket['slug'];
+                $ticketName = $ticket['ticket_type'];
+                $allocated = $ticket['count'];
+                $ticketId = $ticket['ticket_id'];
+                $usedCount = DB::table('complimentary_delegates')
+                    ->where('exhibition_participant_id', $count['exhibition_participant_id'])
+                    ->where('ticketType', $ticket['ticket_type'])
+                    ->count();
+
+                $data = DB::table('complimentary_delegates')
+                    ->where('exhibition_participant_id', $count['exhibition_participant_id'])
+                    ->where('ticketType', $ticket['ticket_type'])
+                    ->orderBy($sortField, $sortDirection)
+                    ->paginate($perPage);
+                // If you have a table for custom tickets, fetch data here. Otherwise, show empty or message.
+                // Example: $data = DB::table('custom_ticket_table')->where(...)->paginate($perPage);
+                //                $data = [];
+            } else {
+                return response()->json(['error' => 'Invalid type'], 400);
+            }
         }
 
-        // Check if it's an API request
         if ($request->wantsJson()) {
             return response()->json($data);
         }
-        $count = $this->checkCount();
-        $used = $this->usedcount();
+
+        //dd($data);
+
+
         $companyName = $application ? $application->company_name : null;
 
-        return view('exhibitor.delegates_list', compact('data', 'slug', 'count', 'used', 'companyName'));
+        return view('exhibitor.delegates_list', compact('data', 'slug', 'count', 'used', 'companyName', 'ticketName', 'allocated', 'usedCount', 'ticketId'));
     }
     public function list2(Request $request, $type)
     {
@@ -256,7 +317,7 @@ class ExhibitorController extends Controller
     public function invite2(Request $request)
     {
         $this->__Construct();
-        Log::info($request->all());
+
 
         $validatedData = $request->validate([
             'invite_type' => 'required|in:delegate,exhibitor',
@@ -330,25 +391,35 @@ class ExhibitorController extends Controller
 
         try {
 
+            //if the invite_type and if it is other than delegate or exhibitor then get the ticket id from the ticket table
+            $this->__Construct();
+            $ticketId = $request->invite_type;
+
+            if (!in_array($ticketId, ['delegate', 'exhibitor'])) {
+                // Assume invite_type is a slug for a custom ticket
+                $ticket = Ticket::find($ticketId);
+                if (!$ticket) {
+                    return response()->json(['error' => 'Invalid ticket type'], 400);
+                }
+                $ticketId = $ticket->ticket_type;
+            }
+
+            Log::info('Ticket Type: ' . $ticketId);
+
+
             // Validate request and return JSON error messages
             $validatedData = $request->validate([
-                'invite_type' => 'required|in:delegate,exhibitor',
+                'invite_type' => 'required',
                 'email' => [
                     'required',
                     // 'email',
-                    // 'unique:complimentary_delegates,email',
-                    // 'unique:stall_manning,email',
-                    'email',
-                    Rule::unique(
-                        $request->invite_type === 'delegate' ? 'complimentary_delegates' : 'stall_manning',
-                        'email'
-                    ),
-
-                    $request->invite_type === 'delegate'
-                        ? Rule::unique('attendees', 'email')
-                        : null,
+                    'unique:complimentary_delegates,email',
+                    'unique:stall_manning,email',
+                    //                    'email',
                 ],
             ]);
+
+
 
             // Fetch counts
             $count = $this->checkCount();
@@ -366,7 +437,7 @@ class ExhibitorController extends Controller
                 }
 
                 // Generate token and insert
-                $token = Str::random(32);
+                $token = Str::random(length: 32);
                 DB::table('complimentary_delegates')->insert([
                     'email' => $request->email,
                     'exhibition_participant_id' => $participantId,
@@ -413,7 +484,7 @@ class ExhibitorController extends Controller
                     'created_at' => now(),
                     'updated_at' => now(),
                 ]);
-                Log::info("Invitation mail sent queue 7");
+
                 // Find the exhibition_participant_id from the complimentary_delegates or stall_manning table
                 $exhibitionParticipantId = $participantId;
 
@@ -428,6 +499,59 @@ class ExhibitorController extends Controller
 
 
                 return response()->json(['message' => 'Invitation sent successfully!']);
+            }
+
+
+            // handle for other than delegate and exhibitor ticket type
+            if ($request->invite_type != 'delegate' && $request->invite_type != 'exhibitor') {
+
+                $ticketAllocation  = $count['ticket_allocation'];
+
+
+                $ticket = collect($ticketAllocation)->firstWhere('ticket_id', $request->invite_type);
+
+                if ($ticket) {
+                    $allocatedCount = $ticket['count'];
+                    $usedCount = DB::table('complimentary_delegates')
+                        ->where('exhibition_participant_id', $participantId)
+                        ->where('ticketType', $ticketId ?? $request->invite_type)
+                        ->count();
+
+                    //
+
+                    Log::info('Ticket Type ' . $request->invite_type . 'Used count: ' . $usedCount . ', Allocated count: ' . $allocatedCount);
+
+                    if ($usedCount >= $allocatedCount) {
+                        // Handle limit reached (e.g., return error)
+                        return response()->json(['error' => 'You have reached the maximum limit for this ticket type'], 422);
+                    }
+                    // Proceed with invite logic
+                } else {
+                    return response()->json(['error' => 'Invalid ticket type'], 400);
+                }
+            
+                $token = Str::random(length: 32);
+                DB::table('complimentary_delegates')->insert([
+                    'email' => $request->email,
+                    'exhibition_participant_id' => $participantId,
+                    'token' => $token,
+                    'ticketType' => $ticketId,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+
+                $companyName = Application::whereHas('exhibitionParticipant', function ($query) use ($participantId) {
+                    $query->where('id', $participantId);
+                })->value('company_name');
+
+
+               
+
+                Mail::to($request->email)->send(new InviteMail($companyName, $request->invite_type, $token));
+
+
+                return response()->json(['message' => 'Invitation sent successfully!']);
+            
             }
 
             return response()->json(['error' => 'Invalid request'], 400);
@@ -585,14 +709,15 @@ class ExhibitorController extends Controller
             ->where('token', $request->token)
             ->first();
 
-            $uniqueId = "";
-            do {
-                    $randomNumber = rand(3200, 9999);
-                    $regId = 'EXAT' . $randomNumber;
-                } while (DB::table('stall_manning')->where('regId', $regId)->exists());
+        $uniqueId = "";
+        // do {
+        //         $randomNumber = rand(3200, 9999);
+        //         $regId = 'EXAT' . $randomNumber;
+        //     } while (DB::table('stall_manning')->where('pinNo', $regId)->exists());
 
         if ($complimentaryDelegate) {
             $uniqueId = $this->generateUniqueId();
+            $pinNo = $this->generateCompPinNo();
 
             DB::table('complimentary_delegates')
                 ->where('token', $request->token)
@@ -602,12 +727,16 @@ class ExhibitorController extends Controller
                     'mobile' => $request->fullPhoneNumber,
                     'job_title' => $request->jobTitle,
                     'organisation_name' => $request->organisationName,
+
                     'token' => null,
+                    'pinNo' => $pinNo,
                     'updated_at' => now(),
                 ]);
         }
         if ($stallManning) {
+            $email = $stallManning->email;
             $uniqueId = $this->generateStallManningUniqueId();
+            $pinNo = $this->generateCompPinNo();
             DB::table('stall_manning')
                 ->where('token', $request->token)
                 ->update([
@@ -617,8 +746,8 @@ class ExhibitorController extends Controller
                     'job_title' => $request->jobTitle,
                     'organisation_name' => $request->organisationName,
                     'token' => null,
-                    'regId' => $regId,
-                    'api_sent' => 1,
+                    'pinNo' => $pinNo,
+                    'api_sent' => 0,
                     'updated_at' => now(),
                 ]);
         }
@@ -626,57 +755,83 @@ class ExhibitorController extends Controller
 
 
 
-        $email = $stallManning->email;
+        $email = $stallManning->email ?? $complimentaryDelegate->email;
 
         //send data to api
-         $apiRelayController = new \App\Http\Controllers\ApiRelayController();
-                $apiRelayController->sendDataToApi($uniqueId);
+        //  $apiRelayController = new \App\Http\Controllers\ApiRelayController();
+        //         $apiRelayController->sendDataToApi($uniqueId);
 
-        
+
         //send an email to the invitee with the token and link as Route::get('/invited/{token}/', [ExhibitorController::class, 'invited'])->name('exhibition.invited');
         $data = [
-                'name' => trim($request->name ),
-                'company_name' => $request->organisationName,
-                'email' => $email,
-                'mobile' => $request->fullPhoneNumber,
-                // 'qr_code_path' => $attendee->qr_code_path,
-                'unique_id' => $uniqueId,
-                'ticket_type' => 'Exhibitor',
-                'designation' => $request->jobTitle ?? '-',
-                'registration_date' => $request->created_at,
-                'registration_type' => 'Exhibitor',
-            ];
+            'name' => trim($request->name),
+            'company_name' => $request->organisationName,
+            'email' => $email,
+            'mobile' => $request->fullPhoneNumber,
+            // 'qr_code_path' => $attendee->qr_code_path,
+            'unique_id' => $uniqueId,
+            'ticket_type' => 'Exhibitor',
+            'designation' => $request->jobTitle ?? '-',
+            'registration_date' => $request->created_at,
+            'registration_type' => 'Exhibitor',
+        ];
 
-            // Send the email
+        // Send the email
+        if (!empty($email)) {
             Mail::to($email)
-            ->bcc('test.interlinks@gmail.com')
-            ->send(new ExhibitorMail($data));
+                ->bcc('test.interlinks@gmail.com')
+                ->send(new ExhibitorMail($data));
+        }
         //redirect to the invited with message of successful submission route('exhibition.invited', ['token' => $token]) with token as success
         return redirect()->route('exhibition.invited', ['token' => 'success']);
     }
 
-    //visitoruniqu ID generate  from the complimentary_delegates table unique_id column and attendees table unique_id column
     public function generateUniqueId()
     {
         do {
-            $uniqueId = strtoupper('SEMI25VI_' . Str::random(5));
+            $uniqueId = config('constants.COMPLIMENTARY_REG_ID_PREFIX') . '-' . Str::random(5);
             $existsInAttendees = DB::table('attendees')->where('unique_id', $uniqueId)->exists();
             $existsInComplimentary = DB::table('complimentary_delegates')->where('unique_id', $uniqueId)->exists();
-        } while ($existsInAttendees || $existsInComplimentary);
+            $existsInStallManning = DB::table('stall_manning')->where('unique_id', $uniqueId)->exists();
+        } while ($existsInAttendees || $existsInComplimentary || $existsInStallManning);
 
-        return $uniqueId;
+        return strtoupper($uniqueId);
     }
 
-    //generate unique ID for stallmanning SEMI25VIE_
     public function generateStallManningUniqueId()
     {
         do {
-            $uniqueId = strtoupper('SEMI25VIE_' . Str::random(5));
+            $uniqueId = config('constants.COMPLIMENTARY_REG_ID_PREFIX') . '-' . Str::random(5);
+            $existsInAttendees = DB::table('attendees')->where('unique_id', $uniqueId)->exists();
+            $existsInComplimentary = DB::table('complimentary_delegates')->where('unique_id', $uniqueId)->exists();
             $existsInStallManning = DB::table('stall_manning')->where('unique_id', $uniqueId)->exists();
+        } while ($existsInStallManning || $existsInAttendees || $existsInComplimentary);
+
+        return strtoupper($uniqueId);
+    }
+
+    //GENERATE PIN NO FROM VALIDATING THE regId
+    public function generateCompPinNo()
+    {
+        do {
+            $pinNo = config('constants.CONFIRMATION_ID_PREFIX_EXH') . '-' . str::random(5); // Generate a random 6-digit number
+            $existsInStallManning = DB::table('stall_manning')->where('pinNo', $pinNo)->exists();
         } while ($existsInStallManning);
 
-        return $uniqueId;
+        return strtoupper($pinNo);
     }
+
+    //generate pinNo for complimentary delegates
+    public function generateCompDelPinNo()
+    {
+        do {
+            $pinNo = config('constants.DELEGATE_ID_PREFIX') . '-' . str::random(5); // Generate a random 6-digit number
+            $existsInComplimentary = DB::table('complimentary_delegates')->where('pinNo', $pinNo)->exists();
+        } while ($existsInComplimentary);
+
+        return strtoupper($pinNo);
+    }
+
 
 
 
@@ -684,6 +839,8 @@ class ExhibitorController extends Controller
     {
         // dd($request->all());
         try {
+
+
             $validatedData = $request->validate([
                 'token' => [
                     'required',
@@ -834,6 +991,76 @@ class ExhibitorController extends Controller
         return view('exhibitor.inaugural_thank_you', compact('attendee'));
     }
 
+
+    //passes analytics to user how much allocated in different categories and how much used
+    //and how many are remaining
+    /**
+     * @return JsonResponse
+     */
+    public function analytics(){
+        $this->__Construct();
+        $count = $this->checkCount();
+        $used = $this->usedcount();
+
+        $complimentaryAllocated = $count['complimentary_delegate_count'] ?? 0;
+        $complimentaryUsed = $used['used_complimentary_delegates'] ?? 0;
+        $stallAllocated = $count['stall_manning_count'] ?? 0;
+        $exhibitionParticipantId = $count['exhibition_participant_id'] ?? null;
+
+        // Always get used stall manning count from DB
+        $stallUsed = 0;
+        if ($exhibitionParticipantId !== null) {
+            $stallUsed = DB::table('stall_manning')
+                ->where('exhibition_participant_id', $exhibitionParticipantId)
+                ->count();
+        }
+
+        $ticketAlloc = $count['ticket_allocation'] ?? [];
+
+        $analytics = [
+            'complimentary_delegate_count' => [
+                'allocated' => $complimentaryAllocated,
+                'used' => $complimentaryUsed,
+                'remaining' => $complimentaryAllocated - $complimentaryUsed,
+            ],
+            'stall_manning_count' => [
+                'allocated' => $stallAllocated,
+                'used' => $stallUsed,
+                'remaining' => $stallAllocated - $stallUsed,
+            ],
+            'ticket_allocation' => [],
+        ];
+
+        if (is_array($ticketAlloc)) {
+            foreach ($ticketAlloc as $ticket) {
+                $ticketId = $ticket['ticket_id'] ?? null;
+                $allocated = $ticket['count'] ?? 0;
+                $ticketName = null;
+                if ($ticketId !== null) {
+                    $ticketModel = \App\Models\Ticket::find($ticketId);
+                    $ticketName = $ticketModel ? $ticketModel->ticket_type : null;
+                }
+                $usedCount = 0;
+                if ($ticketName !== null && $exhibitionParticipantId !== null) {
+                    $usedCount = DB::table('complimentary_delegates')
+                        ->where('exhibition_participant_id', $exhibitionParticipantId)
+                        ->where('ticketType', $ticketName)
+                        ->count();
+                }
+                $analytics['ticket_allocation'][] = [
+                    'ticket_id' => $ticketId,
+                    'ticket_name' => $ticketName,
+                    'allocated' => $allocated,
+                    'used' => $usedCount,
+                    'remaining' => $allocated - $usedCount,
+                ];
+            }
+        }
+
+        return response()->json($analytics);
+
+    }
+
     public function add(Request $request)
     {
 
@@ -847,25 +1074,37 @@ class ExhibitorController extends Controller
              * invite_type : document.getElementById('inviteType2').value
              */
 
+            if (!in_array($request->invite_type, ['delegate', 'exhibitor'])) {
+                // Assume invite_type is a slug for a custom ticket
+                $ticket = \App\Models\Ticket::where('id', $request->invite_type)->first();
+                if (!$ticket) {
+                    return response()->json(['error' => 'Invalid ticket type'], 400);
+                }
+                $ticketId = $ticket->ticket_type;
+            } elseif (in_array($request->invite_type, ['delegate', 'exhibitor'])) {
+                // For 'delegate' or 'exhibitor', set ticketId to invite_type for validation
+                $ticketId = $request->invite_type;
+            } else {
+                return response()->json(['error' => 'Invalid ticket type'], 400);
+            }
+
             #Log::info($request->all());
             // Validate request and return JSON error messages
             $validatedData = $request->validate([
-                'invite_type' => 'required|in:delegate,exhibitor',
+                'invite_type' => 'required',
                 'email' => [
                     'required',
                     'email',
-                    'unique:stall_manning,email',
+                    'unique:complimentary_delegates,email',
                     // 'unique:attendees,email',
                 ],
                 'name' => 'required',
                 'phone' => 'required',
                 'jobTitle' => 'required',
                 'organisationName' => 'nullable|string|max:255',
-                'idCardType' => 'required|string|max:255',
-                'idCardNumber' => 'required|string|max:255',
+                'idCardType' => 'nullable|string|max:255',
+                'idCardNumber' => 'nullable|string|max:255',
             ]);
-
-            //Log::info('Invite Request Data', $request->all());
 
 
             // Fetch counts
@@ -882,7 +1121,7 @@ class ExhibitorController extends Controller
                 }
 
                 // Generate token and insert
-                $token = Str::random(32);
+                $token = (string) Str::uuid();
                 DB::table('complimentary_delegates')->insert([
 
                     'email' => $request->email,
@@ -891,7 +1130,6 @@ class ExhibitorController extends Controller
                     'mobile' => $request->phone,
                     'job_title' => $request->jobTitle,
                     'organisation_name' => $request->organisationName,
-
                     'created_at' => now(),
                     'updated_at' => now(),
                 ]);
@@ -907,13 +1145,12 @@ class ExhibitorController extends Controller
                 if ($countStallManning >= $count['stall_manning_count']) {
                     return response()->json(['error' => 'You have reached the maximum limit of stall manning'], 422);
                 }
-
-                Log::info('Invite Request Data for Exhibitor', $request->all());
                 $uniqueId = $this->generateStallManningUniqueId();
-                do {
-                    $randomNumber = rand(3200, 9999);
-                    $regId = 'EXAT' . $randomNumber;
-                } while (DB::table('stall_manning')->where('regId', $regId)->exists());
+                $pinNo = $this->generateCompPinNo();
+                // do {
+                //     $randomNumber = rand(3200, 9999);
+                //     $regId = $this->generateCompPinNo() . $randomNumber;
+                // } while (DB::table('stall_manning')->where('pinNo', $regId)->exists());
 
                 // Generate token and insert
                 $token = Str::random(32);
@@ -930,38 +1167,76 @@ class ExhibitorController extends Controller
                     'id_type' => $request->idCardType,
                     'created_at' => now(),
                     'updated_at' => now(),
-                    'regId' => $regId,
+                    'pinNo' => $pinNo,
+                    'ticketType' => $ticketId ?? $request->invite_type,
                 ]);
 
-
-                //send to api 
-                $apiRelayController = new \App\Http\Controllers\ApiRelayController();
-                $apiRelayController->sendDataToApi($uniqueId);
-
-
-                $attendee = StallManning::where('unique_id', $uniqueId)->first();
+                $attendee = StallManning::where('unique_id', $uniqueId)->first(['first_name', 'last_name', 'organisation_name', 'email', 'mobile', 'unique_id', 'job_title', 'created_at', 'id_no', 'id_type']);
 
                 $data = [
-                    'name' => trim($attendee->first_name . ' ' . $attendee->last_name),
+                    'name' => trim($attendee->first_name . ' ' . ($attendee->last_name ?? '')),
                     'company_name' => $attendee->organisation_name,
                     'email' => $attendee->email,
                     'mobile' => $attendee->mobile,
                     'unique_id' => $attendee->unique_id,
                     'registration_type' => 'Exhibitor',
                     'designation' => $attendee->job_title,
-                    'registration_date' => $attendee->created_at->format('Y-m-d'),
-                    'registration_type' => 'Exhibitor',
+                    'registration_date' => $attendee->created_at ? $attendee->created_at->format('Y-m-d') : null,
                     'id_card_number' => $attendee->id_no,
                     'id_card_type' => $attendee->id_type,
-                    'dates' => 'All', // Assuming dates are not applicable for stall manning
-                    'type' => 'Exhibitor',
+                    'dates' => 'All',
+                    'type' => $attendee->ticketType ?? 'Exhibitor',
                 ];
                 Mail::to($attendee->email)
                     ->bcc('test.interlinks@gmail.com')
                     ->queue(new ExhibitorMail($data));
 
                 return response()->json(['message' => 'Exhibitor Delegate added  successfully!']);
+            } else {
+
+                //check the count of ticket allocation from the exhibition table
+                $ticketAllocation  = $count['ticket_allocation'];
+
+
+                $ticket = collect($ticketAllocation)->firstWhere('ticket_id', $request->invite_type);
+
+                if ($ticket) {
+                    $allocatedCount = $ticket['count'];
+                    $usedCount = DB::table('complimentary_delegates')
+                        ->where('exhibition_participant_id', $participantId)
+                        ->where('ticketType', $ticketId ?? $request->invite_type)
+                        ->count();
+
+                    //
+
+                    Log::info('Ticket Type ' . $request->invite_type . 'Used count: ' . $usedCount . ', Allocated count: ' . $allocatedCount);
+
+                    if ($usedCount >= $allocatedCount) {
+                        // Handle limit reached (e.g., return error)
+                        return response()->json(['error' => 'You have reached the maximum limit for this ticket type'], 422);
+                    }
+                    // Proceed with invite logic
+                } else {
+                    return response()->json(['error' => 'Invalid ticket type'], 400);
+                }
+
+                DB::table('complimentary_delegates')->insert([
+                    'unique_id' => strtoupper($this->generateUniqueId()),
+                    'pinNo' => strtoupper($this->generateCompPinNo()),
+                    'ticketType' => $ticketId ?? $request->invite_type,
+                    'email' => $request->email,
+                    'exhibition_participant_id' => $participantId,
+                    'first_name' => $request->name,
+                    'mobile' => $request->phone,
+                    'job_title' => $request->jobTitle,
+                    'organisation_name' => $request->organisationName,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+
+                return response()->json(['message' => 'Pass Information received successfully!'], 200);
             }
+
 
             return response()->json(['error' => 'Invalid request'], 400);
         } catch (\Illuminate\Validation\ValidationException $e) {
@@ -1032,19 +1307,19 @@ class ExhibitorController extends Controller
         return view('applications.invoices', compact('invoices', 'application', 'payments'));
     }
 
-            /**
-             * Send SEMICON India 2025 email in batches of 500.
-             *
-             * @param array  $recipients  Array of recipient email addresses.
-             * @param string $subject     Subject of the email.
-             * @param string $attachment  (Optional) Full path to attachment file.
-             */
-            function sendSemiconEmail(array $recipients, string $subject = 'Important Information – SEMICON India 2025', string $attachment = null)
-            {
-                // Set max execution time to 0 (unlimited) or adjust as needed
-                ini_set('max_execution_time', 0);
+    /**
+     * Send SEMICON India 2025 email in batches of 500.
+     *
+     * @param array  $recipients  Array of recipient email addresses.
+     * @param string $subject     Subject of the email.
+     * @param string $attachment  (Optional) Full path to attachment file.
+     */
+    function sendSemiconEmail(array $recipients, string $subject = 'Important Information – SEMICON India 2025', string $attachment = null)
+    {
+        // Set max execution time to 0 (unlimited) or adjust as needed
+        ini_set('max_execution_time', 0);
 
-                $emailBody = <<<HTML
+        $emailBody = <<<HTML
             <p>Dear Participant,</p>
 
             <p>Thank you for your interest in <strong>SEMICON India 2025</strong>, scheduled for <strong>2nd–4th September 2025</strong>. Entry passes (e-Badges) are now being issued.</p>
@@ -1076,106 +1351,107 @@ class ExhibitorController extends Controller
             SEMICON India Team</p>
             HTML;
 
-                // Split recipients into batches of 500
-                $chunks = array_chunk($recipients, 500);
+        // Split recipients into batches of 500
+        $chunks = array_chunk($recipients, 500);
 
-                foreach ($chunks as $batch) {
-                    try {
-                        Mail::send([], [], function ($message) use ($batch, $subject, $emailBody, $attachment) {
-                            $message->to($batch)
-                                ->subject($subject)
-                                ->html($emailBody);
+        foreach ($chunks as $batch) {
+            try {
+                Mail::send([], [], function ($message) use ($batch, $subject, $emailBody, $attachment) {
+                    $message->to($batch)
+                        ->subject($subject)
+                        ->html($emailBody);
 
-                            // if ($attachment && file_exists($attachment)) {
-                            //     $message->attach($attachment);
-                            // }
-                        });
+                    // if ($attachment && file_exists($attachment)) {
+                    //     $message->attach($attachment);
+                    // }
+                });
 
-                        echo "Batch of " . count($batch) . " emails sent successfully.\n";
-                    } catch (\Throwable $e) {
-                        echo "Error sending batch: " . $e->getMessage() . "\n";
-                    }
-                    // Optional: sleep for a few seconds to avoid rate-limits
-                    sleep(2);
-                }
+                echo "Batch of " . count($batch) . " emails sent successfully.\n";
+            } catch (\Throwable $e) {
+                echo "Error sending batch: " . $e->getMessage() . "\n";
             }
+            // Optional: sleep for a few seconds to avoid rate-limits
+            sleep(2);
+        }
+    }
 
-            public function sendShuttleEmail(Request $request)
-            {
-                
-
-            ini_set('max_execution_time', 0);
-               //get all the emails from the stall_manning and complimentary_delegates table where first_name is not null and email is not null
-                $emailsStallManning = DB::table('stall_manning')
-                    ->whereNotNull('first_name')
-                    ->whereNotNull('email')
-                    ->pluck('email')
-                    ->toArray();
-                
-                $emailsComplimentaryDelegates = DB::table('complimentary_delegates')
-                    ->whereNotNull('first_name')
-                    ->whereNotNull('email')
-                    ->pluck('email')
-                    ->toArray();
-
-                    //mark them as emailSent =1 
-                DB::table('stall_manning')
-                    ->whereNotNull('first_name')
-                    ->whereNotNull('email')
-                    ->update(['emailSent' => 1, 'updated_at' => now()]);
-
-                DB::table('complimentary_delegates')
-                    ->whereNotNull('first_name')
-                    ->whereNotNull('email')
-                    ->update(['emailSent' => 1, 'updated_at' => now()]);
+    public function sendShuttleEmail(Request $request)
+    {
 
 
-                $emails = array_merge($emailsStallManning, $emailsComplimentaryDelegates);
+        ini_set('max_execution_time', 0);
+        //get all the emails from the stall_manning and complimentary_delegates table where first_name is not null and email is not null
+        $emailsStallManning = DB::table('stall_manning')
+            ->whereNotNull('first_name')
+            ->whereNotNull('email')
+            ->pluck('email')
+            ->toArray();
 
-                // Send the emails
-                
-                    $this->sendSemiconEmail($emails, 'Important Information on Entry Passes & Access for SEMICON India 2025');
-                
+        $emailsComplimentaryDelegates = DB::table('complimentary_delegates')
+            ->whereNotNull('first_name')
+            ->whereNotNull('email')
+            ->pluck('email')
+            ->toArray();
 
-                // Path to the attachment file
-                // $attachmentPath = storage_path('pdf/Semicon-2025-Shuttle_Plan.pdf');
+        //mark them as emailSent =1 
+        DB::table('stall_manning')
+            ->whereNotNull('first_name')
+            ->whereNotNull('email')
+            ->update(['emailSent' => 1, 'updated_at' => now()]);
 
-                // Call the function to send emails in batches
-                
+        DB::table('complimentary_delegates')
+            ->whereNotNull('first_name')
+            ->whereNotNull('email')
+            ->update(['emailSent' => 1, 'updated_at' => now()]);
 
-                return response()->json(['message' => 'Emails are being sent in batches.']);
+
+        $emails = array_merge($emailsStallManning, $emailsComplimentaryDelegates);
+
+        // Send the emails
+
+        $this->sendSemiconEmail($emails, 'Important Information on Entry Passes & Access for SEMICON India 2025');
+
+
+        // Path to the attachment file
+        // $attachmentPath = storage_path('pdf/Semicon-2025-Shuttle_Plan.pdf');
+
+        // Call the function to send emails in batches
+
+
+        return response()->json(['message' => 'Emails are being sent in batches.']);
+    }
+
+    //select all email from stall_manning where emailSent is null or 0 and first_name is not null and email is not null
+    public function emailSent(Request $request)
+    {
+        $emails = DB::table('complimentary_delegates')
+            ->where(function ($query) {
+                $query->whereNull('emailSent')
+                    ->orWhere('emailSent', 0);
+            })
+            ->whereNotNull('first_name')
+            ->whereNotNull('email')
+            ->pluck('email');
+
+        //mark them as emailSent =1 and sleep for 1 second after every 100 updates
+        $count = 0;
+        foreach ($emails as $email) {
+            DB::table('complimentary_delegates')->where('email', $email)->update(['emailSent' => 1]);
+            $count++;
+
+            if ($count % 100 === 0) {
+                sleep(1);
             }
+        }
 
-        //select all email from stall_manning where emailSent is null or 0 and first_name is not null and email is not null
-            public function emailSent(Request $request){
-                $emails = DB::table('complimentary_delegates')
-                    ->where(function ($query) {
-                        $query->whereNull('emailSent')
-                            ->orWhere('emailSent', 0);
-                    })
-                    ->whereNotNull('first_name')
-                    ->whereNotNull('email')
-                    ->pluck('email');
-                
-                //mark them as emailSent =1 and sleep for 1 second after every 100 updates
-                $count = 0;
-                foreach ($emails as $email) {
-                    DB::table('complimentary_delegates')->where('email', $email)->update(['emailSent' => 1]);
-                    $count++;
+        $emails = array_values(array_filter($emails->toArray(), function ($email) {
+            return filter_var($email, FILTER_VALIDATE_EMAIL);
+        }));
 
-                    if ($count % 100 === 0) {
-                        sleep(1);
-                    }
-                }
+        $subject = 'Important Information on Entry Passes & Access for SEMICON India 2025';
 
-                $emails = array_values(array_filter($emails->toArray(), function ($email) {
-                    return filter_var($email, FILTER_VALIDATE_EMAIL);
-                }));
-
-                $subject = 'Important Information on Entry Passes & Access for SEMICON India 2025';
-
-            // Single source of truth for the email body
-            $emailBody = 
+        // Single source of truth for the email body
+        $emailBody =
             <<<HTML
                     <p>Dear Participant,</p>
 
@@ -1209,53 +1485,54 @@ class ExhibitorController extends Controller
                     HTML;
 
         // Convert the collection to an array and filter out invalid emails
-                // $emails = array_values(array_filter($emails->toArray(), function ($email) {
-                //     return filter_var($email, FILTER_VALIDATE_EMAIL);
-                // }));
-                // send email to all the emails in bcc with with this subject and email body
-                Mail::send([], [], function ($message) use ($emails, $subject, $emailBody) {
-                    $message->bcc($emails)
-                            ->subject($subject)
-                                ->html($emailBody);
-                });
+        // $emails = array_values(array_filter($emails->toArray(), function ($email) {
+        //     return filter_var($email, FILTER_VALIDATE_EMAIL);
+        // }));
+        // send email to all the emails in bcc with with this subject and email body
+        Mail::send([], [], function ($message) use ($emails, $subject, $emailBody) {
+            $message->bcc($emails)
+                ->subject($subject)
+                ->html($emailBody);
+        });
 
-                // Mark emails as sent
-                foreach ($emails as $email) {
-                    DB::table('complimentary_delegates')->where('email', $email)->update(['emailSent' => 1]);
-                }
+        // Mark emails as sent
+        foreach ($emails as $email) {
+            DB::table('complimentary_delegates')->where('email', $email)->update(['emailSent' => 1]);
+        }
 
-                return response()->json($emails);
+        return response()->json($emails);
+    }
+
+
+    //select from attendee table where emailSent is null or 0 and first_name is not null and email is not null
+    //send first 5000 emails in bcc with subject and email body and mark them as emailSent =1 and sleep for 1 second after every 100 updates
+    public function attendeeEmailSent(Request $request)
+    {
+        $emails = DB::table('attendees')
+            ->where(function ($query) {
+                $query->whereNull('emailSent')
+                    ->orWhere('emailSent', 0);
+            })
+            ->whereNotNull('first_name')
+            ->whereNotNull('email')
+            ->pluck('email')
+            ->take(5000);
+
+        //mark them as emailSent =1 and sleep for 1 second after every 100 updates
+        $count = 0;
+        foreach ($emails as $email) {
+            DB::table('attendees')->where('email', $email)->update(['emailSent' => 1]);
+            $count++;
+
+            if ($count % 100 === 0) {
+                sleep(1);
             }
+        }
 
+        $subject = 'Important Information on Entry Passes & Access for SEMICON India 2025';
 
-            //select from attendee table where emailSent is null or 0 and first_name is not null and email is not null
-            //send first 5000 emails in bcc with subject and email body and mark them as emailSent =1 and sleep for 1 second after every 100 updates
-            public function attendeeEmailSent(Request $request){
-                $emails = DB::table('attendees')
-                    ->where(function ($query) {
-                        $query->whereNull('emailSent')
-                            ->orWhere('emailSent', 0);
-                    })
-                    ->whereNotNull('first_name')
-                    ->whereNotNull('email')
-                    ->pluck('email')
-                    ->take(5000);
-                
-                //mark them as emailSent =1 and sleep for 1 second after every 100 updates
-                $count = 0;
-                foreach ($emails as $email) {
-                    DB::table('attendees')->where('email', $email)->update(['emailSent' => 1]);
-                    $count++;
-
-                    if ($count % 100 === 0) {
-                        sleep(1);
-                    }
-                }
-
-                $subject = 'Important Information on Entry Passes & Access for SEMICON India 2025';
-
-            // Single source of truth for the email body
-            $emailBody = <<<HTML
+        // Single source of truth for the email body
+        $emailBody = <<<HTML
         <p>Dear Participant,</p>
 
         <p>Thank you for your interest in <strong>SEMICON India 2025</strong>, scheduled for <strong>2nd–4th September 2025</strong>. Entry passes (e-Badges) are now being issued.</p>
@@ -1306,13 +1583,11 @@ class ExhibitorController extends Controller
                 exit;
             } catch (\Exception $e) {
                 // Optionally log the error or handle failed emails
-                \Log::error("Failed to queue email to $email: " . $e->getMessage());
+                Log::error("Failed to queue email to $email: " . $e->getMessage());
             }
         }
 
         //retunr that all mails are sent
         return response()->json(['message' => 'Emails are being sent in batches.']);
     }
-
-
 }

@@ -53,20 +53,38 @@
 
         {{-- Top Row of Info Cards --}}
         <div class="row mb-4">
+            {{-- Exhibitor Name Card --}}
             <div class="col-lg-4 col-md-12 mb-4 mb-lg-0">
                 <div class="card shadow-sm h-100">
                     <div class="card-body d-flex align-items-center">
                         <div class="me-3 d-flex align-items-center justify-content-center"
-                             style="width:56px; height:56px; background:linear-gradient(135deg,#ff416c,#ff4b2b); border-radius:50%;">
-                            <i class="fa-solid fa-ticket fa-2x text-white"></i>
+                             style="width:56px; height:56px; background:linear-gradient(135deg,#11998e,#38ef7d); border-radius:50%;">
+                            <i class="fa-solid fa-building fa-2x text-white"></i>
                         </div>
                         <div>
-                            <h6 class="mb-1">Booth Number</h6>
-                            <span class="fw-bold fs-5">{{ $application->stallNumber ?? 'N/A' }}</span>
+                            <h6 class="mb-1">Exhibitor Name</h6>
+                            <span class="fw-bold fs-5">{{ $application->company_name ?? 'N/A' }}</span>
                         </div>
                     </div>
                 </div>
             </div>
+            {{-- if stallNumber is null or empty hide the card --}}
+            @if(!empty($application->stallNumber))
+                <div class="col-lg-4 col-md-12 mb-4 mb-lg-0">
+                    <div class="card shadow-sm h-100">
+                        <div class="card-body d-flex align-items-center">
+                            <div class="me-3 d-flex align-items-center justify-content-center"
+                                 style="width:56px; height:56px; background:linear-gradient(135deg,#ff416c,#ff4b2b); border-radius:50%;">
+                                <i class="fa-solid fa-ticket fa-2x text-white"></i>
+                            </div>
+                            <div>
+                                <h6 class="mb-1">Booth Number</h6>
+                                <span class="fw-bold fs-5">{{ $application->stallNumber ?? 'N/A' }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            @endif
             <div class="col-lg-4 col-md-12 mb-4 mb-lg-0">
                 <div class="card shadow-sm h-100">
                     <div class="card-body d-flex align-items-center">
@@ -83,20 +101,20 @@
                 </div>
             </div>
 
-{{--            <div class="col-lg-4 col-md-12">--}}
-{{--                <div class="card shadow-sm h-100">--}}
-{{--                    <div class="card-body d-flex align-items-center">--}}
-{{--                        <div class="me-3 d-flex align-items-center justify-content-center"--}}
-{{--                             style="width:56px; height:56px; background:linear-gradient(135deg,#43e97b,#38f9d7); border-radius:50%;">--}}
-{{--                            <i class="fa-solid fa-location-dot fa-2x text-white"></i>--}}
-{{--                        </div>--}}
-{{--                        <div>--}}
-{{--                            <h6 class="mb-1">Preferred Location</h6>--}}
-{{--                            <span class="fw-bold fs-5">{{ $application->pref_location ?? 'N/A' }}</span>--}}
-{{--                        </div>--}}
-{{--                    </div>--}}
-{{--                </div>--}}
-{{--            </div>--}}
+            {{--            <div class="col-lg-4 col-md-12">--}}
+            {{--                <div class="card shadow-sm h-100">--}}
+            {{--                    <div class="card-body d-flex align-items-center">--}}
+            {{--                        <div class="me-3 d-flex align-items-center justify-content-center"--}}
+            {{--                             style="width:56px; height:56px; background:linear-gradient(135deg,#43e97b,#38f9d7); border-radius:50%;">--}}
+            {{--                            <i class="fa-solid fa-location-dot fa-2x text-white"></i>--}}
+            {{--                        </div>--}}
+            {{--                        <div>--}}
+            {{--                            <h6 class="mb-1">Preferred Location</h6>--}}
+            {{--                            <span class="fw-bold fs-5">{{ $application->pref_location ?? 'N/A' }}</span>--}}
+            {{--                        </div>--}}
+            {{--                    </div>--}}
+            {{--                </div>--}}
+            {{--            </div>--}}
 
         </div>
 
@@ -156,13 +174,22 @@
             @endif
 
 
+            {{-- add a headline with passes on top of the cards and also give a id that will be called from dfferent passes
+            --}}
+
+            <div class="col-12 mb-3" id="passes">
+                <h5 class="font-weight-bolder">Your Allocated Passes</h5>
+                <hr>
+            </div>
+
+
             <div class="col-xl-3 col-sm-6 mb-4">
-                <div class="card">
+                <div class="card h-100" style="min-height: 70px; min-width: 100%;">
                     <div class="card-header d-flex justify-content-between align-items-center">
                         <div>
-                            <p class="text-sm mb-0 text-capitalize">Total Exhibitor Passes Allocated</p>
-                            <h4 class="mb-0"><a
-                                        href="exhibitor/list/stall_manning">{{ $exhibitionParticipant['stall_manning_count'] ?? 0 }}</a>
+                            <p class="text-m mb-0 text-bold text-capitalize">Exhibitor Passes Allocated</p>
+                            <h4 class="mb-0">
+                                <a href="{{ route('exhibition.list', ['type' => 'stall_manning']) }}">{{ $exhibitionParticipant['stall_manning_count'] ?? 0 }}</a>
                             </h4>
                         </div>
                         <div class="icon icon-md icon-shape bg-gradient-dark text-center border-radius-lg">
@@ -170,7 +197,7 @@
                         </div>
                     </div>
                     <div class="card-footer">
-                        <p class="mb-0 text-sm"><a href="exhibitor/list/stall_manning"
+                        <p class="mb-0 text-sm"><a href="{{ route('exhibition.list', ['type' => 'stall_manning']) }}"
                                                    class="text-success font-weight-bolder">Click here</a> for Exhibitor
                             Registration.</p>
                     </div>
@@ -178,13 +205,14 @@
             </div>
 
 
+            @if(($exhibitionParticipant['complimentary_delegate_count'] ?? 0) > 0)
             <div class="col-xl-3 col-sm-6 mb-4">
-                <div class="card">
+                <div class="card h-100" style="min-height: 90px; min-width: 100%;">
                     <div class="card-header d-flex justify-content-between align-items-center">
                         <div>
-                            <p class="text-sm mb-0 text-capitalize">Total Inaugural Passes Allocated</p>
-                            <h4 class="mb-0"><a
-                                        href="exhibitor/list/inaugural_passes">{{ $exhibitionParticipant['complimentary_delegate_count'] ?? 0 }}</a>
+                            <p class="text-m mb-0 text-bold text-capitalize">Total Inaugural Passes Allocated</p>
+                            <h4 class="mb-0">
+                                <a href="{{ route('exhibition.list', ['type' => 'inaugural_passes']) }}">{{ $exhibitionParticipant['complimentary_delegate_count'] }}</a>
                             </h4>
                         </div>
                         <div class="icon icon-md icon-shape bg-gradient-dark text-center border-radius-lg">
@@ -192,13 +220,43 @@
                         </div>
                     </div>
                     <div class="card-footer">
-                        <p class="mb-0 text-sm"><a href="exhibitor/list/inaugural_passes"
-                                                   class="text-success font-weight-bolder">Click here</a> for Inaugural
-                            Registration.</p>
+                        <p class="mb-0 text-sm">
+                            <a href="{{ route('exhibition.list', ['type' => 'inaugural_passes']) }}" class="text-success font-weight-bolder">Click here</a> for Inaugural Registration.
+                        </p>
                     </div>
                 </div>
             </div>
+            @endif
+
+            {{-- if $ticketDetails is not null and array items count as not 0 then make card with 0.name passes --}}
+            @foreach($ticketDetails ?? [] as $ticket)
+                @if(($ticket['count'] ?? 0) > 0)
+                    <div class="col-xl-3 col-sm-6 mb-4">
+                        <div class="card h-80" style="min-height: 70px; min-width: 100%;">
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <div>
+                                    <p class="text-m mb-0 text-bold text-capitalize">
+                                        {{ Str::contains(Str::lower($ticket['name']), 'pass') ? $ticket['name'] : $ticket['name'] . ' Passes' }} Allocated
+                                    </p>
+                                    <h4 class="mb-0">{{ $ticket['count'] }}</h4>
+                                </div>
+                                <div class="icon icon-md icon-shape bg-gradient-info text-center border-radius-lg">
+                                    <i class="fa-solid fa-ticket opacity-10"></i>
+                                </div>
+                            </div>
+                            <div class="card-footer">
+                                <p class="mb-0 text-sm">
+                                    <a href="{{ route('exhibition.list', ['type' => $ticket['slug'] ?? $ticket['name']]) }}" class="text-success font-weight-bolder">Click here</a> for {{$ticket['name']}} Registration.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                @endif
+            @endforeach
         </div>
+
+        @php
+            /*
 
         <div class="col-xl-6 col-sm-6 mb-4">
             <div class="card">
@@ -245,24 +303,9 @@
                 </div>
             </div>
         </div>
+            */
+        @endphp
 
-        @if($application->sponsorships()->exists())
-            <div class="alert alert-info mt-4"
-                 style="font-size:1.08rem; border-radius:1rem; background:linear-gradient(90deg,#e0eafc,#cfdef3); color:#222;">
-                <strong>Dear Sponsor(s),</strong><br>
-                We invite you to register participants from your organization as visitors for SEMICON INDIA 2025 by
-                using the link below:<br><br>
-                <span class="fw-semibold">🔗 Visitor Registration Link:</span> <a
-                        href="https://portal.semiconindia.org/visitor/registration" target="_blank"
-                        class="text-primary text-decoration-underline">https://portal.semiconindia.org/visitor/registration</a><br><br>
-                While registering, participants may also express their interest in attending the Inaugural Program by
-                selecting the checkbox that says: <span class="fw-semibold">“Participate (In-person) in SEMICON Inaugural event on 2nd Sept.”</span><br>
-                <span class="text-danger">Please note that inaugural registration is subject to approval by the ISM team.</span><br><br>
-                For any questions or need assistance with registration, feel free to contact us on : <a
-                        href="mailto:semiconindia@semi.org" class="text-primary">semiconindia@semi.org</a>
-            </div>
-        @endif
 
-    </div>
     </div>
 @endsection

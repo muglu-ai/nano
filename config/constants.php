@@ -1,39 +1,43 @@
 <?php
 
-define('MAIL_FROM_NAME', 'Bengaluru Tech Summit 2025');
-define('APP_NAME', 'Bengaluru Tech Summit 2025');
-define('APP_NAME_SHORT', 'BTS 2025');
-define('EVENT_NAME', 'Bengaluru Tech Summit');
-define('EVENT_YEAR', '2025');
-define('SHORT_NAME', 'BTS');
-define('EVENT_WEBSITE', 'https://www.bengalurutechsummit.com');
+const MAIL_FROM_NAME = 'Bengaluru Tech Summit 2025';
+const APP_NAME = 'Bengaluru Tech Summit 2025';
+const APP_NAME_SHORT = 'BTS 2025';
+const EVENT_NAME = 'Bengaluru Tech Summit';
+const EVENT_YEAR = '2025';
+const SHORT_NAME = 'BTS';
+const EVENT_WEBSITE = 'https://www.bengalurutechsummit.com';
 //event dates
-define('EVENT_DATE_START', '19-11-2025');
-define('EVENT_DATE_END', '21-11-2025');
-define('EVENT_VENUE', 'Bengaluru International Exhibition Centre (BIEC), Bengaluru, India');
+const EVENT_DATE_START = '19-11-2025';
+const EVENT_DATE_END = '21-11-2025';
+const EVENT_VENUE = 'Bengaluru International Exhibition Centre (BIEC), Bengaluru, India';
 
-define('APP_URL', 'http://127.0.0.1:8000');
-define('SHELL_SCHEME_RATE', 13000); // per sqm
-define('RAW_SPACE_RATE', 12000); // per sqm
-define('IND_PROCESSING_CHARGE', 3); // 5% processing fee for National payments
-define('INT_PROCESSING_CHARGE', 9); // 9% processing fee for International payments
-define('GST_RATE', 18); // GST rate for India
-define('SOC_LINKEDIN', 'https://in.linkedin.com/company/bengaluru-tech-summit');
-define('SOC_TWITTER', 'https://twitter.com/blrtechsummit');
-define('SOC_FACEBOOK', 'https://www.facebook.com/BengaluruTechSummit');
-define('SOC_INSTAGRAM', 'https://www.instagram.com/blrtechsummit/');
-define('SOC_YOUTUBE', 'https://www.youtube.com/@bengalurutechsummit/streams');
-define('ORGANIZER_NAME', 'MM Activ Sci-Tech Communications');
-define('ORGANIZER_ADDRESS', 'No.11/3, NITON, Block C, 2nd Floor, Palace Road, Bengaluru - 560001, Karnataka, India');
-define('FAVICON_APPLE', 'https://www.bengalurutechsummit.com/apple-touch-icon.png');
-define('FAVICON', 'https://www.bengalurutechsummit.com/favicon-32x32.png');
-define('FAVICON_16', 'https://www.bengalurutechsummit.com/favicon-16x16.png');
-define('ORGANIZER_PHONE', '+91-8069328400');
-define('ORGANIZER_EMAIL', 'enquiry@bengalurutechsummit.com');
-define('ORGANIZER_WEBSITE', 'https://mmactiv.in/');
-define('ORGANIZER_LOGO', 'https://www.mmactiv.in/images/mma.jpg');
-define('EVENT_LOGO', 'https://bengalurutechsummit.com/web/it_forms/images/logo2.png');
+const APP_URL = 'http://127.0.0.1:8000';
+const SHELL_SCHEME_RATE = 13000; // per sqm
+const RAW_SPACE_RATE = 12000; // per sqm
+const IND_PROCESSING_CHARGE = 3; // 5% processing fee for National payments
+const INT_PROCESSING_CHARGE = 9; // 9% processing fee for International payments
+const GST_RATE = 18; // GST rate for India
+const SOC_LINKEDIN = 'https://in.linkedin.com/company/bengaluru-tech-summit';
+const SOC_TWITTER = 'https://twitter.com/blrtechsummit';
+const SOC_FACEBOOK = 'https://www.facebook.com/BengaluruTechSummit';
+const SOC_INSTAGRAM = 'https://www.instagram.com/blrtechsummit/';
+const SOC_YOUTUBE = 'https://www.youtube.com/@bengalurutechsummit/streams';
+const ORGANIZER_NAME = 'MM Activ Sci-Tech Communications';
+define('ORGANIZER_ADDRESS', !empty($_ENV['ORGANIZER_ADDRESS'])
+    ? $_ENV['ORGANIZER_ADDRESS']
+    : 'No.11/3, NITON, <br> Block C, 2nd Floor, <br> Palace Road, Bengaluru - 560001, Karnataka, India');
+const FAVICON_APPLE = 'https://www.bengalurutechsummit.com/apple-touch-icon.png';
+const FAVICON = 'https://www.bengalurutechsummit.com/favicon-32x32.png';
+const FAVICON_16 = 'https://www.bengalurutechsummit.com/favicon-16x16.png';
+const ORGANIZER_PHONE = '+91-8069328400';
+const ORGANIZER_EMAIL = 'enquiry@bengalurutechsummit.com';
+const ORGANIZER_WEBSITE = 'https://mmactiv.in/';
+const ORGANIZER_LOGO = 'https://www.mmactiv.in/images/mma.jpg';
+const EVENT_LOGO = 'https://bengalurutechsummit.com/web/it_forms/images/logo2.png';
+const EVENT_FAVICON = 'https://www.bengalurutechsummit.com/favicon-16x16.png';
 
+const EXTRA_REQUIREMENTS_ACTIVE = false; //true or false
 
 
 
@@ -46,11 +50,15 @@ return [
     'EVENT_DATE_END' => EVENT_DATE_END,
     'EVENT_VENUE' => EVENT_VENUE,
     'EVENT_WEBSITE' => EVENT_WEBSITE,
-    'APP_URL' => EVENT_WEBSITE . '/app',
+    'APP_URL' => EVENT_WEBSITE . '/portal',
     'APP_NAME' => APP_NAME,
     'APP_NAME_SHORT' => SHORT_NAME,
     'APPLICATION_ID_PREFIX' => 'TIN-BTS-2025-EXH-',
     'SPONSORSHIP_ID_PREFIX' => 'TIN-BTS-2025-SPONSOR-',
+    'COMPLIMENTARY_REG_ID_PREFIX' => 'TIN-' . SHORT_NAME . EVENT_YEAR . '-EXHC',
+    'CONFIRMATION_ID_PREFIX_EXH' => 'PIN-' . SHORT_NAME . EVENT_YEAR . '-EXHC',
+    'DELEGATE_ID_PREFIX' => 'TIN-' . SHORT_NAME . EVENT_YEAR,
+
     'FAVICON' => FAVICON,
     'FAVICON_APPLE' => FAVICON_APPLE,
     'FAVICON_16' => FAVICON_16,
@@ -61,6 +69,7 @@ return [
         'instagram' => SOC_INSTAGRAM,
         'youtube' => SOC_YOUTUBE,
     ],
+    'EVENT_FAVICON' => EVENT_FAVICON,
     'TERMS_URL' => 'https://www.bengalurutechsummit.com/privacy-policy.php',
     //Database connection
     'DB_HOST' => 'localhost',
@@ -89,20 +98,13 @@ return [
     'PAYPAL_CURRENCY' => "USD",
     'PAYPAL_MODE' => "LIVE", // Can be either 'sandbox' or 'live'
     'INT_PROCESSING_CHARGE' => INT_PROCESSING_CHARGE, // 9% processing fee for International payments
-
-
-
+    'EXTRA_REQUIREMENTS_ACTIVE' => EXTRA_REQUIREMENTS_ACTIVE,
     // CCAVENUE Configuration
     'CCAVENUE_ACCESS_CODE' => "AVAX60MC26BE01XAEB",
     'CCAVENUE_WORKING_KEY' => "DBBE266B02508AF7118D4A2598763D69",
     'CCAVENUE_MERCHANT_ID' => "7700",
     'CCAVENUE_REDIRECT_URL' => APP_URL . "/payment/ccavenue-success",
     'IND_PROCESSING_CHARGE' => IND_PROCESSING_CHARGE, // 3% processing fee for National payments
-
-
-
-
-
     'GSTIN' => '29AABCM2615H1ZM',
     'PAN'   => 'AABCS1234A',
     'CIN'  => 'U12345DL2025PTC123456',

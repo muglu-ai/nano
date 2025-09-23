@@ -9,6 +9,9 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use App\Models\CoExhibitor;
+use App\Models\Payment;
+use App\Models\Ticket;
+use Illuminate\Support\Str;
 
 class DashboardController extends Controller
 {
@@ -21,7 +24,7 @@ class DashboardController extends Controller
         }
     }
 
-    // make a function check if the user is exhibitor and atleast once application is approved and payment is successful
+    // make a function check if the user is exhibitor and least once application is approved and payment is successful
     private function isExhibitorWithApprovedApplication()
     {
         $user = auth()->user();
@@ -110,8 +113,43 @@ class DashboardController extends Controller
             $application = Application::where('user_id', auth()->id())->first();
             //get the exhibitor and delegate count from the exhibitionParticipation table where application id is same as the application id
             $exhibitionParticipant = ExhibitionParticipant::where('application_id', $applicationId)->first();
+            // get the ticketAllocation value from the exhibitionParticipant table and get the ticket details from the tickets table with id and count from the ticketAllocation value
+            try {
+                $ticketAllocation = $exhibitionParticipant->ticketAllocation;
 
-            return view('dashboard.index', compact('exhibitionParticipant', 'application'));
+                if ($ticketAllocation) {
+                    $ticketIds = json_decode($ticketAllocation, true);
+                    if (!is_array($ticketIds)) {
+                        throw new \Exception('Invalid ticket allocation format.');
+                    }
+                    $tickets = Ticket::whereIn('id', array_keys($ticketIds))->get();
+                } else {
+                    $tickets = collect();
+                    $ticketIds = [];
+                }
+
+                //make as json with ticket name and count
+                $ticketDetails = $tickets->map(function ($ticket) use ($ticketIds) {
+                    return [
+                        'name' => $ticket->ticket_type,
+                        'count' => isset($ticketIds[$ticket->id]) ? $ticketIds[$ticket->id] : 0,
+                        'slug' => Str::slug($ticket->ticket_type, '-'),
+                    ];
+                });
+            } catch (\Exception $e) {
+                $ticketDetails = collect();
+                // Optionally log the error: \Log::error($e->getMessage());
+            }
+
+            // whatever their in $ticketDetails ticketType and count pass it to view so that the card can be shown in dashboard dynamically
+            // also generate the slug of it
+
+
+
+//             dd($ticketDetails)   ;
+
+
+            return view('dashboard.index', compact('exhibitionParticipant', 'application', 'ticketDetails'));
             return view('dashboard.index');
         } elseif ($user->role == 'admin') {
             $analytics = app('analytics');

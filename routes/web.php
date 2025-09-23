@@ -64,7 +64,7 @@ Route::get('dashboard', [DashboardController::class, 'exhibitorDashboard'])->nam
 Route::get('send-participation-email', [ExhibitorController::class, 'attendeeEmailSent'])->name('send.participation.email')->middleware(Auth::class);
 //get the complimentary delegates list
 Route::get('/exhibitor/list/{type}', [ExhibitorController::class, 'list'])->name('exhibition.list')->middleware(CheckUser::class); //invite delegates to the event
-Route::get('/exhibitor/list2/{type}', [ExhibitorController::class, 'list2'])->name('exhibition.list')->middleware(CheckUser::class); //invite delegates to the event
+Route::get('/exhibitor/list2/{type}', [ExhibitorController::class, 'list2'])->name('exhibition2.list')->middleware(CheckUser::class); //invite delegates to the event
 Route::post('/invite', [ExhibitorController::class, 'invite'])->name('exhibition.invite')->middleware(SharedMiddleware::class);
 Route::post('/accept-coex-terms', [ExhibitorController::class, 'acceptTerms'])->name('coex.acceptTerms')->middleware(CheckUser::class);
 //get the invited delegates form the exhibitor controller
@@ -77,8 +77,12 @@ Route::post('/add', [ExhibitorController::class, 'add'])->name('exhibition.invit
 Route::get('/invited/inaugural/thank-you/{token}', [ExhibitorController::class, 'inauguralInviteeSubmittedThankYou'])->name('inaugural.invitee.thankyou');
 Route::get('receipt', [ExhibitorController::class, 'invoices'])->name('exhibitor.invoices')->middleware(CheckUser::class);
 Route::patch('fasciaUpdate', [DashboardController::class, 'updateFasciaName'])->name('user.fascia.update')->middleware(CheckUser::class);
+Route::get('passes', [ExhibitorController::class, 'analytics'])->name('exhibitor.passes')->middleware(CheckUser::class);
+// return view from email.exhibitor.registrationEmail
+Route::get('email/exhibitor/registration', function () {
 
-
+    return view('emails.exhibitor.registrationEmail');
+});
 
 Route::get('e-visitor-guide', function (){
     return view('e-visitor-guide.index');

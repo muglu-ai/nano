@@ -4,8 +4,15 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/css/intlTelInput.min.css" />
 
     <style>
+        .red-label {
+            color: red;
+        }
         .custom-label {
             font-size: 1rem !important;
+        }
+
+        .form-label{
+            font-size: 0.9rem !important;
         }
 
         @media (max-width: 767.98px) {
@@ -14,9 +21,14 @@
             }
         }
 
+        .input-group.input-group-dynamic.is-filled .form-label, .input-group.input-group-dynamic.is-focused .form-label, .input-group.input-group-static.is-filled .form-label, .input-group.input-group-static.is-focused .form-label {
+            font-size: 1rem !important;
+            padding-bottom: 150px !important;
+        }
+
         @media (min-width: 768px) {
             .custom-height {
-                height: 850px;
+                height: 950px;
             }
         }
 
@@ -62,24 +74,24 @@
                             <div class="row mt-5">
                                 <div class="col-sm-6">
                                     <div class="input-group input-group-dynamic is-filled">
-                                        <label class="form-label custom-label">Company Name</label>
+                                        <label class="form-label custom-label">Company Name <span class="red-label">*</span> </label>
                                         <input class="form-control" type="text" value="{{ $application->company_name ?? '' }}"
                                             readonly>
                                     </div>
                                 </div>
-                                <div class="col-sm-6 mt-3 mt-sm-0">
-                                    <div class="input-group input-group-dynamic is-filled">
-                                        <label class="form-label">Booth Number</label>
-                                        <input class="form-control" type="text" value="{{ $application->stallNumber ?? '' }}"
-                                            readonly>
-                                    </div>
-                                </div>
+{{--                                <div class="col-sm-6 mt-3 mt-sm-0">--}}
+{{--                                    <div class="input-group input-group-dynamic is-filled">--}}
+{{--                                        <label class="form-label">Booth Number <span class="red-label">*</span></label>--}}
+{{--                                        <input class="form-control" type="text" value="{{ $application->stallNumber ?? '' }}"--}}
+{{--                                            readonly>--}}
+{{--                                    </div>--}}
+{{--                                </div>--}}
                             </div>
 
                             <div class="row mt-5">
                                 <div class="col-sm-6">
                                     <div class="input-group input-group-dynamic {{ $cssClass }}">
-                                        <label class="form-label">Fascia Name</label>
+                                        <label class="form-label">Fascia Name <span class="red-label">*</span> </label>
                                         <input class="form-control" type="text" name="fascia_name"
                                             value="{{ $fasciaName }}" required>
                                     </div>
@@ -91,7 +103,7 @@
                                     <div class="row">
                                         <div class="col-4 pe-1">
                                             <div class="input-group input-group-dynamic is-filled">
-                                                <label class="form-label">Salutation</label>
+                                                <label class="form-label">Salutation <span class="red-label">*</span> </label>
                                                 <select class="form-control" name="salutation" required>
                                                     <option value="" disabled {{ empty($salutation) ? 'selected' : '' }}>Select
                                                     </option>
@@ -110,14 +122,14 @@
                                         </div>
                                         <div class="col-4 px-1">
                                             <div class="input-group input-group-dynamic {{ $cssClass }}">
-                                                <label class="form-label">First Name</label>
+                                                <label class="form-label">First Name <span class="red-label">*</span> </label>
                                                 <input class="form-control" type="text" name="contact_first_name"
                                                     value="{{ $firstName }}" required>
                                             </div>
                                         </div>
                                         <div class="col-4 ps-1">
                                             <div class="input-group input-group-dynamic {{ $cssClass }}">
-                                                <label class="form-label">Last Name</label>
+                                                <label class="form-label">Last Name <span class="red-label">*</span> </label>
                                                 <input class="form-control" type="text" name="contact_last_name"
                                                     value="{{ $lastName }}" required>
                                             </div>
@@ -126,7 +138,7 @@
                                 </div>
                                 <div class="col-sm-6 mt-3 mt-sm-0">
                                     <div class="input-group input-group-dynamic {{ $cssClass }}">
-                                        <label class="form-label">Email Address</label>
+                                        <label class="form-label">Email Address <span class="red-label">*</span></label>
                                         <input class="form-control" type="email" name="email"
                                             value="{{ $exhibitorInfo->email ?? '' }}" required>
                                     </div>
@@ -136,14 +148,14 @@
                             <div class="row mt-5">
                                 <div class="col-sm-6">
                                     <div class="input-group input-group-dynamic is-filled {{ $cssClass }}">
-                                        <label class="form-label">Phone Number</label>
+                                        <label class="form-label">Phone Number <span class="red-label">*</span></label>
                                         <input id="phone" class="form-control" type="tel" name="phone"
                                             value="{{ $exhibitorInfo->phone ?? '' }}" required>
                                     </div>
                                 </div>
                                 <div class="col-sm-6 mt-3 mt-sm-0">
                                     <div class="input-group input-group-dynamic is-filled {{ $cssClass }}">
-                                        <label class="form-label">Upload Logo</label>
+                                        <label class="form-label">Upload Logo <span class="red-label">*</span> </label>
                                         <input class="form-control" type="file" name="logo" accept="image/*"
                                             @if (!empty($exhibitorInfo->logo)) @else required @endif>
                                         @if (!empty($exhibitorInfo->logo))
@@ -159,7 +171,7 @@
 
                             <div class="row mt-5">
                                 <div class="col-12">
-                                    <label class="form-label">Company Description</label>
+                                    <label class="form-label">Company Description <span class="red-label">*</span> </label>
                                     <div class="input-group input-group-dynamic is-filled">
                                         <textarea class="form-control" name="description" id="description" rows="3" maxlength="750" required
                                             oninput="updateCharCount()">{{ trim($exhibitorInfo->description ?? '') }}</textarea>
@@ -169,7 +181,20 @@
                             </div>
 
 
+
+
                             <hr class="my-4">
+
+                            {{-- Website and Social Media Links --}}
+                            <div class="row">
+                                <div class="col-sm-6">
+                                    <div class="input-group input-group-dynamic {{ $cssClass }}">
+                                        <label class="form-label">Website <span class="red-label">*</span></label>
+                                        <input class="form-control" type="url" name="website"
+                                            value="{{ $exhibitorInfo->website ?? '' }}">
+                                    </div>
+                                </div>
+                            </div>
 
                             <div class="row mt-5">
                                 <div class="col-sm-6">
@@ -284,7 +309,7 @@
 
             form.addEventListener('submit', function(e) {
                 const fullNumber = iti.getNumber();
-                console.log('Full number:', fullNumber);
+                // console.log('Full number:', fullNumber);
 
                 if (!fullNumber || !fullNumber.startsWith('+')) {
                     e.preventDefault();

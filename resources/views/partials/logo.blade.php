@@ -30,7 +30,7 @@
 </style>
 
 <div class="logo-container">
-    <img src="https://bengalurutechsummit.com/web/it_forms/images/logo2.png" alt="Bengaluru Tech Summit 2025 Logo">
+    <img src="{{ config('constants.event_logo') }}" alt="{{ config('constants.event_logo') }}">
 {{--    <img src="{{ asset('asset/img/logos/SEMI_IESA_logo.png') }}" alt="SEMI IESA Logo">--}}
 {{--    <img src="{{ asset('asset/img/logos/meity-logo.png') }}" alt="MeitY Logo">--}}
 {{--    <img src="{{ asset('asset/img/logos/ism_logo.png') }}" alt="ISM Logo">--}}

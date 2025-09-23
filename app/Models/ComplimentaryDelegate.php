@@ -12,6 +12,7 @@ class ComplimentaryDelegate extends Model
 
     protected $fillable = [
         'exhibition_participant_id',
+        'ticketType',
         'title',
         'first_name',
         'middle_name',
@@ -32,7 +33,7 @@ class ComplimentaryDelegate extends Model
         'id_no',
         'profile_pic',
         'unique_id',
-        'regId',
+        'pinNo',
         'api_sent',
         'api_response',
         'api_data',

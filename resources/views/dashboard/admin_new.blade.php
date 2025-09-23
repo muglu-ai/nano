@@ -361,6 +361,7 @@
                 </div>
                 <hr class="dark horizontal my-0">
 
+                {{--
                 <div class="ms-3 mt-2">
                     <p class="font-weight-bolder">
                         Sponsorship
@@ -484,6 +485,8 @@
                         </div>
                     </div>
                 </div>
+                --}}
+
                 <div class="ms-3 mt-2">
                     <p class="font-weight-bolder">
                         Statistics

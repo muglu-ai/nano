@@ -1,6 +1,9 @@
 @extends('layouts.users')
 @section('title', 'Application Info')
 @section('content')
+    @php
+        $hide = true;
+    @endphp
     <div class="container-fluid py-2">
         <div class="row">
             <div class="col-12">
@@ -82,6 +85,8 @@
                                 <p class="form-control-plaintext mb-0"><a href="{{ $application->website }}" target="_blank" style="color: blue;">{{ $application->website }}</a></p>
                             </div>
                         </div>
+
+                        @if($hide == false)
                         <div class="row mt-3">
                             <div class="col-md-4">
                                 <label for="main_product_category" class="form-label fw-bold text-nowrap">Main Product Category:</label>
@@ -100,6 +105,7 @@
                                 </p>
                             </div>
                         </div>
+                        @endif
                     </div>
                 </div>
             </div>
@@ -111,10 +117,12 @@
                     </div>
                     <div class="card-body">
                         <div class="row mt-3">
+                            @if(!empty($application->stallNumber))
                             <div class="col-md-4">
                                 <label class="form-label fw-bold text-nowrap">Booth Number:</label>
                                 <p class="form-control-plaintext mb-0">{{ $application->stallNumber ?? '-' }}</p>
                             </div>
+                            @endif
                             <div class="col-md-4">
                                 <label class="form-label fw-bold text-nowrap">Allocated Size:</label>
                                 <p class="form-control-plaintext mb-0">{{ $application->allocated_sqm ?? '-' }} SQM</p>
@@ -123,6 +131,8 @@
                                 <label class="form-label fw-bold text-nowrap">Stall Type:</label>
                                 <p class="form-control-plaintext mb-0">{{ $application->stall_category ?? '-' }}</p>
                             </div>
+
+                            @if($hide == false)
                             <div class="col-md-4">
                                 <label class="form-label fw-bold text-nowrap">Semi Member:</label>
                                 <p class="form-control-plaintext mb-0">
@@ -139,6 +149,7 @@
                                     {{ $application->pref_location ?? '-' }}
                                 </p>
                             </div>
+                                @endif
                         </div>
                     </div>
                 </div>
