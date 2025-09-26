@@ -86,15 +86,14 @@
                                                 <div class="p-3 bg-opacity-10 me-3">
                                                     <i class="fas fa-ticket-alt text-success"></i>
                                                 </div>
-                                                <h6 class="card-subtitle fw-bold text-success mb-0">Inaugural
-                                                    Passes</h6>
+                                                <h6 class="card-subtitle fw-bold text-success mb-0">Complimentary Passes</h6>
                                             </div>
                                             <h2 class="card-title display-6 fw-bold mb-0">{{ number_format($inauguralApplied) }}</h2>
-                                            <p class="text-muted small mt-1 mb-0">Total passes applied</p>
-                                            <a href="{{ route('exhibitor.list') }}"
-                                               class="btn btn-outline-success btn-sm w-100">
-                                                View List
-                                            </a>
+{{--                                            <p class="text-muted small mt-1 mb-0">Total passes applied</p>--}}
+{{--                                            <a href="{{ route('exhibitor.list') }}"--}}
+{{--                                               class="btn btn-outline-success btn-sm w-100">--}}
+{{--                                                View List--}}
+{{--                                            </a>--}}
                                         </div>
                                     </div>
                                 </div>
