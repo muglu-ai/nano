@@ -19,14 +19,14 @@
 
         @media (max-width: 767.98px) {
             .custom-height {
-                height: 1150px;
+                height: 1250px;
             }
         }
 
 
         @media (min-width: 768px) {
             .custom-height {
-                height: 950px;
+                height: 1000px;
             }
         }
 
@@ -137,7 +137,7 @@
                             </div>
 
                             <div class="row mt-5">
-                                <div class="col-sm-6">
+                                <div class="col-sm-12">
                                     <div class="row">
                                         <div class="col-4 pe-1">
                                             <div class="input-group input-group-dynamic is-filled">
@@ -308,12 +308,13 @@
             if (!phoneInput) return;
             var form = phoneInput.closest('form');
             var iti;
+
             function initializePhoneInput() {
                 if (iti) return; // Prevent double init
                 iti = window.intlTelInput(phoneInput, {
                     initialCountry: "auto",
                     utilsScript: "https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/js/utils.js",
-                    geoIpLookup: function(callback) {
+                    geoIpLookup: function (callback) {
                         fetch('https://ipapi.co/json')
                             .then(res => res.json())
                             .then(data => callback(data.country_code))
@@ -332,11 +333,12 @@
                 }
                 @endif
             }
+
             // Wait for utilsScript to be loaded
             if (typeof window.intlTelInputUtils !== 'undefined') {
                 initializePhoneInput();
             } else {
-                phoneInput.addEventListener('focus', initializePhoneInput, { once: true });
+                phoneInput.addEventListener('focus', initializePhoneInput, {once: true});
             }
             form.addEventListener('submit', function (e) {
                 if (!iti) initializePhoneInput();
