@@ -511,7 +511,7 @@
                     // On agree, generate PDF and submit
                     window.FoxfordPDFGenerator.generate({
                         html: htmlContent,
-                        format: 'A5',
+                        format: 'A4',
                         orientation: 'portrait',
                     }).then(pdfBlob => {
                         // Optionally, show PDF in new tab for confirmation
