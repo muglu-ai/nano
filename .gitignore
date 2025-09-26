@@ -21,3 +21,9 @@ yarn-error.log
 /.nova
 /.vscode
 /.zed
+/*.zip
+
+/analytics.php
+/btsPortalChanges/index.php
+/btsPortalChanges/public/index.php
+/btsPortalChanges/.htaccess

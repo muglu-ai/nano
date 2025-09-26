@@ -62,6 +62,7 @@
         'sponsorship.lists',
         'co_exhibitors',
         'application.list',
+        'application.lists',
 
         // add more route names to hide as needed
     ];
@@ -294,7 +295,7 @@
 
                 <li class="nav-item">
                     <a href="{{ route('admin.complimentary.delegate') }}" class="nav-link text-dark">
-                        <i class="fa-solid fa-passport"></i>
+                        <i class="fa-solid fa-gift"></i>
                         <span class="nav-link-text ms-1 ps-1 text-dark">Complimentary Passes</span>
                     </a>
                 </li>
