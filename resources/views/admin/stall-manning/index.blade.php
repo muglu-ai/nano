@@ -54,16 +54,17 @@
                                     </div>
                                 </div>
                                 @if(($totalEntries - $inauguralApplied) > 0)
-                                <div class="col-md-3">
-                                    <div class="card border-0 shadow-sm h-100">
-                                        <div class="card-body p-4">
-                                            <div class="d-flex align-items-center mb-3">
-                                                <h6 class="card-subtitle fw-bold text-success mb-0">Exhibitor Passes </h6>
+                                    <div class="col-md-3">
+                                        <div class="card border-0 shadow-sm h-100">
+                                            <div class="card-body p-4">
+                                                <div class="d-flex align-items-center mb-3">
+                                                    <h6 class="card-subtitle fw-bold text-success mb-0">Exhibitor
+                                                        Passes </h6>
+                                                </div>
+                                                <h2 class="card-title display-6 fw-bold mb-0">{{ number_format($totalEntries - $inauguralApplied) }} </h2>
                                             </div>
-                                            <h2 class="card-title display-6 fw-bold mb-0">{{ number_format($totalEntries - $inauguralApplied) }} </h2>
                                         </div>
                                     </div>
-                                </div>
                                 @endif
                                 <div class="col-md-3">
                                     <div class="card border-0 shadow-sm h-100">
@@ -79,25 +80,25 @@
                                         </div>
                                     </div>
                                 </div>
-                                <div class="col-md-3">
-                                    <div class="card border-0 shadow-sm h-100">
-                                        <div class="card-body p-4">
-                                            <div class="d-flex align-items-center mb-3">
-                                                <div class="p-3 bg-opacity-10 me-3">
-                                                    <i class="fas fa-ticket-alt text-success"></i>
+
+                                @if($inauguralApplied > 0)
+                                    <div class="col-md-3">
+                                        <div class="card border-0 shadow-sm h-100">
+                                            <div class="card-body p-4">
+                                                <div class="d-flex align-items-center mb-3">
+                                                    <div class="p-3 bg-opacity-10 me-3">
+                                                        <i class="fas fa-ticket-alt text-success"></i>
+                                                    </div>
+                                                    <h6 class="card-subtitle fw-bold text-success mb-0">Complimentary
+                                                        Passes</h6>
                                                 </div>
-                                                <h6 class="card-subtitle fw-bold text-success mb-0">Complimentary Passes</h6>
+                                                <h2 class="card-title display-6 fw-bold mb-0">{{ number_format($inauguralApplied) }}</h2>
+                                                {{-- <p class="text-muted small mt-1 mb-0">Total passes applied</p> --}}
+                                                {{-- <a href="{{ route('exhibitor.list') }}" class="btn btn-outline-success btn-sm w-100">View List</a> --}}
                                             </div>
-                                            <h2 class="card-title display-6 fw-bold mb-0">{{ number_format($inauguralApplied) }}</h2>
-{{--                                            <p class="text-muted small mt-1 mb-0">Total passes applied</p>--}}
-{{--                                            <a href="{{ route('exhibitor.list') }}"--}}
-{{--                                               class="btn btn-outline-success btn-sm w-100">--}}
-{{--                                                View List--}}
-{{--                                            </a>--}}
                                         </div>
                                     </div>
-                                </div>
-
+                                @endif
                                 {{-- <div class="col-md-3">
                                 <div class="card border-0 shadow-sm h-100">
                                     <div class="card-body p-4">
@@ -114,8 +115,6 @@
                             </div>
                         </div>
                     </div>
-                    </header>
-
                     <!-- Results Table -->
                     <div class="card mt-4">
                         <div class="card-body">
