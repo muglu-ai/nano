@@ -244,8 +244,11 @@
                                 <div class="col-12">
                                     <label class="form-label ">Address <span class="red-label">*</span></label>
                                     <div class="input-group input-group-dynamic is-filled">
-                                        <textarea class="form-control" name="address" rows="2" required>{{ $exhibitorInfo->address ?? '' }}</textarea>
+                                        <textarea class="form-control" name="address" rows="2" required>{{ $application->full_address ?? '' }}</textarea>
                                     </div>
+
+                                    {{-- Please check the Address Properly because it can't be changed again--}}
+                                    <small class="text-muted">Please check the Address properly because it can't be changed again.</small>
                                 </div>
                             </div>
 
