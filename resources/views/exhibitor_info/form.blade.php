@@ -55,6 +55,43 @@
         }
     @endphp
 
+    {{-- Highlight a note over here by saying once updated cannot be changed--}}
+    <div class="container mt-4">
+        @if (session('success'))
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                {{ session('success') }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        @endif
+
+        @if (session('error'))
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                {{ session('error') }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        @endif
+
+        @if ($errors->any())
+            <div class="alert alert-danger">
+                <ul class="mb-0">
+                    @foreach ($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
+            </div>
+        @endif
+    </div>
+
+    {{-- Kindly fill the below details. Once submitted cannot be changed. --}}
+
+    <div class="container mt-2">
+        <div class="alert alert-info" role="alert">
+            <strong>Note:</strong> Kindly fill the below details. Once submitted cannot be changed.
+        </div>
+    </div>
+
+
+
     <div class="container mt-4">
         <div class="card">
             <div class="card-body">
