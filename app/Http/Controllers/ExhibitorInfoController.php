@@ -186,7 +186,7 @@ class ExhibitorInfoController extends Controller
         // $exhibitor = ExhibitorInfo::create($data);
 
         //redirect back with thank you for filling out the exhibitor directory fields
-        return redirect()->route('exhibitor.form')->with('success', 'Thank you for filling out the exhibitor directory information.');
+        return redirect()->route('exhibitor.info')->with('success', 'Thank you for filling out the exhibitor directory information.');
 
 
         return redirect()->route('exhibitor.products', $exhibitor->id);
