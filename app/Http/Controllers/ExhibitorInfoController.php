@@ -118,7 +118,7 @@ class ExhibitorInfoController extends Controller
         $city = $application->city_id ?? '';
         $state = ($application->state && isset($application->state->name)) ? $application->state->name : '';
         $country = ($application->country && isset($application->country->name)) ? $application->country->name : '';
-        $zip = $application->zip ?? '';
+        $zip = $application->postal_code ?? '';
         $application->full_address = $add1 . ', ' . $city . ', ' . $state . ', ' . $country . ', ' . $zip;
 
         //changes in backend
@@ -184,6 +184,10 @@ class ExhibitorInfoController extends Controller
 
 
         // $exhibitor = ExhibitorInfo::create($data);
+
+        //redirect back with thank you for filling out the exhibitor directory fields
+        return redirect()->route('exhibitor.form')->with('success', 'Thank you for filling out the exhibitor directory information.');
+
 
         return redirect()->route('exhibitor.products', $exhibitor->id);
     }
