@@ -131,17 +131,13 @@
                                     </tr>
                                 @else
                                     @foreach ($applications as $application)
-
                                         <tr>
                                             <td class="custom-td" style="min-width: 10px; word-wrap: break-word;">
-                                                <span
-                                                        class="text-md text-dark">{{ $application->created_at ?? '' }}</span>
+                                                <span class="text-md text-dark">{{ $application->created_at ?? '' }}</span>
                                             </td>
                                             <td class="custom-td" style="min-width: 80px; word-wrap: break-word;">
-                                                <div class="d-flex flex-column"
-                                                     style="word-break: break-word; overflow-wrap: break-word; white-space: normal; max-width: 150px;">
-                                                    <p class="mb-0 text-md text-dark"><a class="text-md text-info "
-                                                                                         href="{{ route('application.view', ['application_id' => $application->application_id]) }}">
+                                                <div class="d-flex flex-column" style="word-break: break-word; overflow-wrap: break-word; white-space: normal; max-width: 150px;">
+                                                    <p class="mb-0 text-md text-dark"><a class="text-md text-info " href="{{ route('application.view', ['application_id' => $application->application_id]) }}">
                                                             {{ $application->company_name ?? '' }}
                                                         </a>
                                                     </p>
@@ -201,8 +197,7 @@
 {{--                                                </div>--}}
 {{--                                            </td>--}}
                                             <td class=" custom-td">
-                                                <div class="d-flex flex-column "
-                                                     style="word-break: break-word; overflow-wrap: break-word; white-space: normal; max-width: 180px;">
+                                                <div class="d-flex flex-column " style="word-break: break-word; overflow-wrap: break-word; white-space: normal; max-width: 180px;">
                                                     <p class="mb-0 text-md text-dark">{{ $application->eventContact->first_name ?? '' }} {{ $application->eventContact->last_name ?? '' }}</p>
                                                     <p class="text-md text-secondary mb-0">{{  $application->eventContact->job_title ?? '' }}</p>
                                                 </div>
@@ -232,48 +227,21 @@
                                                     {{ $paymentStatus }}
                                                 </span>
                                             </td>
-                                            @if($application->submission_status != 'in progress')
-                                                <td class="text-md align-content-start ">
+                                            <!-- Always output Action column, even if empty, to keep alignment -->
+                                            <td class="text-md align-content-start ">
+                                                @if($application->submission_status != 'in progress')
                                                     <div class="d-flex flex-column align-content-start">
-{{--                                                        <button type="submit" data-bs-toggle="tooltip"--}}
-{{--                                                                data-bs-original-title="Follow Up Application"--}}
-{{--                                                                style="border:none; background:none; padding:0; margin-top: 5px;"--}}
-{{--                                                                class="align-content-start"--}}
-{{--                                                                onclick="showModifiedModal('{{ $application->id }}', '{{ $application->stall_category }}', {{ $application->interested_sqm }}, {{ $application->interested_sqm }}, '{{ $application->pref_location }}', '{{ $application->stall_category }}')">--}}
-{{--                                                            <i class="fa-solid fa-person-walking "></i> Follow Up--}}
-{{--                                                        </button>--}}
-                                                        <button type="submit" data-bs-toggle="tooltip"
-                                                                data-bs-original-title="View Application"
-                                                                style="border:none; background:none; padding:0; margin-top: 5px; padding-right: 30px; gap:5px;"
-                                                                onclick="window.location.href='{{ route('application.view', ['application_id' => $application->application_id]) }}'">
+                                                        <button type="submit" data-bs-toggle="tooltip" data-bs-original-title="View Application" style="border:none; background:none; padding:0; margin-top: 5px; padding-right: 30px; gap:5px;" onclick="window.location.href='{{ route('application.view', ['application_id' => $application->application_id]) }}'">
                                                             <i class="material-symbols-rounded text-secondary position-relative text-lg">visibility</i>
                                                             View
                                                         </button>
-
-                                                        @if($application->submission_status == 'submitted')
-                                                            <button type="submit" data-bs-toggle="tooltip"
-                                                                    data-bs-original-title="Verify Membership"
-                                                                    style="border:none; background:none; padding:0; margin-top: 5px; padding-right: 30px; gap:5px;"
-                                                                    onclick="verifyMembership('{{ $application->application_id }}', '{{ $application->semi_memberID }}')">
-                                                                <i class="material-symbols-rounded text-secondary position-relative text-lg">verified</i>
-                                                                Verify Membership
-                                                            </button>
-                                                        @endif
                                                     </div>
-                                                </td>
-                                            @else
-                                                <td>
-                                                    <button type="submit" data-bs-toggle="tooltip"
-                                                            data-bs-original-title="Send Reminder"
-                                                            style="border:none; background:none; padding:0;"
-                                                            onclick="sendReminder('{{ $application->application_id }}','{{$application->billingDetail->email}}', 'reminder')">
-                                                        <i class="material-symbols-rounded text-secondary position-relative text-lg">notifications</i>Send
-                                                        Reminder
+                                                @else
+                                                    <button type="submit" data-bs-toggle="tooltip" data-bs-original-title="Send Reminder" style="border:none; background:none; padding:0;" onclick="sendReminder('{{ $application->application_id }}','{{$application->billingDetail->email}}', 'reminder')">
+                                                        <i class="material-symbols-rounded text-secondary position-relative text-lg">notifications</i>Send Reminder
                                                     </button>
-                                                </td>
-                                            @endif
-
-
+                                                @endif
+                                            </td>
                                         </tr>
                                     @endforeach
                                 @endif
