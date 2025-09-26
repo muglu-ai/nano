@@ -39,8 +39,8 @@
 <nav class="navbar navbar-expand-lg position-absolute top-0 z-index-3 w-100 shadow-none my-3 navbar-transparent mt-4">
     <div class="container">
         <a class="navbar-brand ms-2 d-flex flex-column align-items-center" href="/">
-            <img src="{{ config('constants.event_logo') }}" alt="Event Logo" class="mb-1" style="max-height: 60px;">
-            <span style="color: #000;">{{config('constants.EVENT_NAME')}} {{config('constants.EVENT_YEAR')}}</span>
+{{--            <img src="{{ config('constants.event_logo') }}" alt="Event Logo" class="mb-1" style="max-height: 60px;">--}}
+{{--            <span style="color: #000;">{{config('constants.EVENT_NAME')}} {{config('constants.EVENT_YEAR')}}</span>--}}
         </a>
     </div>
 </nav>
@@ -66,10 +66,10 @@
             <!-- Black Vertical Separator -->
             <div class="separator d-none d-md-block"></div>
 
-            <div class="col-12 col-md-3 text-center d-flex justify-content-center align-items-center">
-                <a href="{{config('constants.APP_URL')}}/terms-conditions" class="nav-link text-white">Terms &
-                    Conditions</a>
-            </div>
+{{--            <div class="col-12 col-md-3 text-center d-flex justify-content-center align-items-center">--}}
+{{--                <a href="{{config('constants.APP_URL')}}/terms-conditions" class="nav-link text-white">Terms &--}}
+{{--                    Conditions</a>--}}
+{{--            </div>--}}
 
             <!-- Black Vertical Separator -->
             <div class="separator d-none d-md-block"></div>

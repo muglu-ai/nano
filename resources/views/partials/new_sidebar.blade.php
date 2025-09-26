@@ -85,7 +85,7 @@
                 </ul>
             </li>
             <li class="nav-item">
-                <a href="/sales" class="nav-link text-dark "
+                <a href="{{ route('sales') }}" class="nav-link text-dark "
                    aria-controls="pagesExamples" role="button" aria-expanded="false">
                     <i class="fa-solid fa-chart-line"></i>
                     <span class="nav-link-text ms-1 ps-1 text-dark ">Sales</span>
@@ -93,7 +93,7 @@
             </li>
 
             <li class="nav-item">
-                <a href="/users/list" class="nav-link text-dark "
+                <a href="{{ route('users.list') }}" class="nav-link text-dark "
                    aria-controls="pagesExamples" role="button" aria-expanded="false">
                     <i class="fa-regular fa-user"></i>
                     <span class="nav-link-text ms-1 ps-1">Users</span>

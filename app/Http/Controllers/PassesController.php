@@ -24,10 +24,8 @@ use App\Models\AttendeeLog;
 use App\Models\Attendee;
 
 
-
 class PassesController extends Controller
 {
-
 
 
     //get all the exhibitor passes from the StallManning model for the admin
@@ -56,22 +54,22 @@ class PassesController extends Controller
         $stallManningCount = $stallManningQuery->count();
 
 
-
         // Get ComplimentaryDelegate entries and add pass type
         $complimentaryQuery = ComplimentaryDelegate::select(
-                'id',
-                'unique_id',
-                'exhibition_participant_id',
-                'first_name',
-                'middle_name',
-                'last_name',
-                'email',
-                'mobile',
-                'organisation_name',
-                'created_at',
-                'updated_at',
-                DB::raw("'Inaugural' as pass_type")
-            )
+            'id',
+            'unique_id',
+            'exhibition_participant_id',
+            'first_name',
+            'middle_name',
+            'last_name',
+            'email',
+            'mobile',
+            'organisation_name',
+            'created_at',
+            'updated_at',
+            'ticketType as pass_type'
+
+        )
             ->with(['exhibitionParticipant.application', 'exhibitionParticipant.coExhibitor'])
             ->whereNotNull('first_name')
             ->whereRaw("TRIM(first_name) != ''");
@@ -125,26 +123,121 @@ class PassesController extends Controller
 
         return view('admin.stall-manning.index', compact('stallManningList', 'totalCompanyCount', 'inauguralApplied', 'totalEntries', 'slug'));
     }
-    
+
+    public function Complimentary(Request $request)
+    {
+
+        $slug = "Exhibitor Passes";
+        // Get StallManning entries and add pass type
+        $stallManningQuery = StallManning::select(
+            'id',
+            'unique_id',
+            'exhibition_participant_id',
+            'first_name',
+            'middle_name',
+            'last_name',
+            'email',
+            'mobile',
+            'organisation_name',
+            'created_at',
+            'updated_at',
+            DB::raw("'Exhibitor' as pass_type")
+        )
+            ->with(['exhibitionParticipant.application', 'exhibitionParticipant.coExhibitor'])
+            ->whereNotNull('first_name')
+            ->where('first_name', '!=', '');
+        $stallManningCount = $stallManningQuery->count();
+
+
+        // Get ComplimentaryDelegate entries and add pass type
+        $complimentaryQuery = ComplimentaryDelegate::select(
+            'id',
+            'unique_id',
+            'exhibition_participant_id',
+            'first_name',
+            'middle_name',
+            'last_name',
+            'email',
+            'mobile',
+            'organisation_name',
+            'created_at',
+            'updated_at',
+            'ticketType as pass_type'
+
+        )
+            ->with(['exhibitionParticipant.application', 'exhibitionParticipant.coExhibitor'])
+            ->whereNotNull('first_name')
+            ->whereRaw("TRIM(first_name) != ''");
+
+
+        $complimentaryCount = $complimentaryQuery->count();
+        // Handle search functionality
+        if ($request->has('search')) {
+            $searchTerm = trim($request->search);
+            $stallManningQuery->where(function ($q) use ($searchTerm) {
+                $q->where('first_name', 'like', "%{$searchTerm}%")
+                    ->orWhere('unique_id', 'like', "%{$searchTerm}%")
+                    ->orWhere('email', 'like', "%{$searchTerm}%")
+                    ->orWhere('mobile', 'like', "%{$searchTerm}%")
+                    ->orWhere('organisation_name', 'like', "%{$searchTerm}%");
+            });
+            $complimentaryQuery->where(function ($q) use ($searchTerm) {
+                $q->where('first_name', 'like', "%{$searchTerm}%")
+                    ->orWhere('unique_id', 'like', "%{$searchTerm}%")
+                    ->orWhere('email', 'like', "%{$searchTerm}%")
+                    ->orWhere('mobile', 'like', "%{$searchTerm}%")
+                    ->orWhere('organisation_name', 'like', "%{$searchTerm}%");
+            });
+        }
+
+        // Merge the two queries using union
+        $query = $stallManningQuery->union($complimentaryQuery);
+
+        // $inauguralApplied = ComplimentaryDelegate::whereHas('exhibitionParticipant.application', function ($q) {
+        //     $q->whereNotNull('first_name')->where('first_name', '!=', '');
+        // })->count();
+        $complimentaryCount = (clone $complimentaryQuery)->count();
+
+        $inauguralApplied = $complimentaryCount;
+
+        $totalCompanyCount = ExhibitionParticipant::has('stallManning')->count();
+
+        //dd($stallManningQuery->count(), $complimentaryQuery->count());
+
+        // Note: count() after union is not reliable, so you may need to use get()->count()
+        $totalEntries = $complimentaryCount + $stallManningCount;
+
+        // Get paginated results
+        $stallManningList = DB::table(DB::raw("({$query->toSql()}) as sub"))
+            ->mergeBindings($query->getQuery())
+            ->paginate(50);
+
+        // Get paginated results
+        $stallManningList = $query->paginate(50);
+
+
+        return view('admin.stall-manning.index', compact('stallManningList', 'totalCompanyCount', 'inauguralApplied', 'totalEntries', 'slug'));
+    }
+
     public function Inaugural(Request $request)
     {
         $slug = "Inaugural Passes";
 
         // Base query for complimentary delegates
         $complimentaryBase = ComplimentaryDelegate::select(
-                'id',
-                'exhibition_participant_id',
-                'unique_id',
-                'first_name',
-                'middle_name',
-                'last_name',
-                'email',
-                'mobile',
-                'organisation_name',
-                'created_at',
-                'updated_at',
-                DB::raw("'Inaugural' as pass_type")
-            )
+            'id',
+            'exhibition_participant_id',
+            'unique_id',
+            'first_name',
+            'middle_name',
+            'last_name',
+            'email',
+            'mobile',
+            'organisation_name',
+            'created_at',
+            'updated_at',
+            DB::raw("'Inaugural' as pass_type")
+        )
             ->with(['exhibitionParticipant.application', 'exhibitionParticipant.coExhibitor'])
             ->whereNotNull('first_name')
             ->whereRaw("TRIM(first_name) != ''");
@@ -155,11 +248,9 @@ class PassesController extends Controller
             $complimentaryBase->where(function ($q) use ($searchTerm) {
                 $q->where('first_name', 'like', "%{$searchTerm}%")
                     ->orWhere('unique_id', 'like', "%{$searchTerm}%")
-                    
-                    
-                ->orWhere('email', 'like', "%{$searchTerm}%")
-                ->orWhere('mobile', 'like', "%{$searchTerm}%")
-                ->orWhere('organisation_name', 'like', "%{$searchTerm}%");
+                    ->orWhere('email', 'like', "%{$searchTerm}%")
+                    ->orWhere('mobile', 'like', "%{$searchTerm}%")
+                    ->orWhere('organisation_name', 'like', "%{$searchTerm}%");
             });
         }
 
@@ -195,7 +286,6 @@ class PassesController extends Controller
             'slug'
         ));
     }
-
 
 
     public function exportPasses(Request $request)
@@ -244,7 +334,7 @@ class PassesController extends Controller
         //         'Organisation' => $row->organisation_name,
         //         // 'ID Type' => $row->id_type ?? 'N/A',
         //         // 'ID Number' => $row->id_no ?? 'N/A',
-                
+
         //     ]);
         // }
 
@@ -257,14 +347,17 @@ class PassesController extends Controller
 
             //log which user is downloading the file
             protected $data;
+
             public function __construct($data)
             {
                 $this->data = $data;
             }
+
             public function collection()
             {
                 return $this->data;
             }
+
             public function headings(): array
             {
                 return [
@@ -324,17 +417,17 @@ class PassesController extends Controller
             // Handle not found, e.g. throw 404 or redirect with error
             abort(404, 'Attendee not found.');
         }
-                // Copy to log table
-                AttendeeLog::create([
-                    'attendee_id' => $attendee->id,
-                    'name'        => $attendee->first_name,
-                    'email'       => $attendee->email,
-                    'data'        => json_encode($attendee->toArray()), // backup full row
-                    'deleted_at'  => now(),
-                ]);
+        // Copy to log table
+        AttendeeLog::create([
+            'attendee_id' => $attendee->id,
+            'name' => $attendee->first_name,
+            'email' => $attendee->email,
+            'data' => json_encode($attendee->toArray()), // backup full row
+            'deleted_at' => now(),
+        ]);
 
-                // Delete from main table
-                $attendee->delete();
+        // Delete from main table
+        $attendee->delete();
 
         return redirect()->back()->with('success', 'Visitor deleted & copied to log.');
     }
@@ -351,17 +444,17 @@ class PassesController extends Controller
             // Handle not found, e.g. throw 404 or redirect with error
             abort(404, 'Attendee not found.');
         }
-                // Copy to log table
-                AttendeeLog::create([
-                    'attendee_id' => $attendee->id,
-                    'name'        => $attendee->first_name,
-                    'email'       => $attendee->email,
-                    'data'        => json_encode($attendee->toArray()), // backup full row
-                    'deleted_at'  => now(),
-                ]);
+        // Copy to log table
+        AttendeeLog::create([
+            'attendee_id' => $attendee->id,
+            'name' => $attendee->first_name,
+            'email' => $attendee->email,
+            'data' => json_encode($attendee->toArray()), // backup full row
+            'deleted_at' => now(),
+        ]);
 
-                // Delete from main table
-                $attendee->delete();
+        // Delete from main table
+        $attendee->delete();
 
         return redirect()->back()->with('success', 'Visitor deleted & copied to log.');
     }

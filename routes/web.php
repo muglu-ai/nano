@@ -417,7 +417,11 @@ Route::post('/update-passes-allocation', [PassesController::class, 'updatePasses
 Route::post('/auto-allocate-passes', [PassesController::class, 'autoAllocatePasses'])->name('passes.auto-allocate')->middleware(Auth::class);
 
 
+Route::get('exhibitor/combine', [PassesController::class, 'CombinePasses'])->name('admin.passes.combine')->middleware(Auth::class);
 Route::get('exhibitor/stallmanning', [PassesController::class, 'StallManning'])->name('admin.stall-manning')->middleware(Auth::class);
+Route::get('exhibitor/complimentary', [PassesController::class, 'Complimentary'])->name('admin.complimentary.delegate')->middleware(Auth::class);
+
+
 Route::get('exhibitor/inaugural', [PassesController::class, 'Inaugural'])->name('admin.inaugural')->middleware(Auth::class);
 Route::get('exhibitor/remove/{id}', [PassesController::class, 'deleteVisitor'])->name('admin.remove')->middleware(Auth::class);
 Route::get('visitor/remove/{id}', [PassesController::class, 'deleteVisitor2'])->name('admin.remove.attendee')->middleware(Auth::class);
@@ -573,7 +577,7 @@ Route::put('/sponsor-items/{id}/inactive', [SponsorController::class, 'item_inac
  * */
 Route::get('invitation-letter', [DocumentsContoller::class, 'invitation'])->name('invitation.letter')->middleware(SharedMiddleware::class);
 Route::get('transport-letter', [DocumentsContoller::class, 'transport_letter'])->name('transport.letter')->middleware(SharedMiddleware::class);
-Route::get('exhibitor-manual', [DocumentsContoller::class, 'exhibitor_manual'])->name('exhibitor_manual')->middleware(SharedMiddleware::class);
+        Route::get('exhibitor-manual', [DocumentsContoller::class, 'exhibitor_manual'])->name('exhibitor_manual')->middleware(SharedMiddleware::class);
 Route::get('portal-guide', [DocumentsContoller::class, 'exhibitor_guide'])->name('exhibitor_guide')->middleware(SharedMiddleware::class);
 Route::get('faqs', [DocumentsContoller::class, 'faqs'])->name('faqs')->middleware(SharedMiddleware::class);
 Route::get('participation-letter', [DashboardController::class, 'participantDetails'])->name('participation.letter')->middleware(CheckUser::class);
@@ -618,7 +622,7 @@ Route::get('review_sponsor', [SponsorController::class, 'review'])->name('review
 
 
 //Sponsorship Admin routes
-Route::view('/sponsorship/list', 'sponsor.applications')->name('users.list')->middleware(Auth::class);
+Route::view('/sponsorship/list', 'sponsor.applications')->name('sponsor.list')->middleware(Auth::class);
 Route::get('/sponsors_list', [SponsorController::class, 'get_applications'])->middleware(Auth::class);
 //approve-sponsorship
 Route::post('approve-sponsorship', [SponsorController::class, 'approve'])->name('approve.sponsorship')->middleware(Auth::class);

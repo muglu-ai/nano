@@ -18,6 +18,8 @@
     <!-- Nucleo Icons -->
     <link href="{{ asset('asset/css/nucleo-icons.css') }}" rel="stylesheet"/>
     <link href="{{ asset('asset/css/nucleo-svg.css') }}" rel="stylesheet"/>
+    <link href="{{ asset('public/asset/css/nucleo-icons.css') }}" rel="stylesheet"/>
+    <link href="{{ asset('public/asset/css/nucleo-svg.css') }}" rel="stylesheet"/>
     <!-- Font Awesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.1/css/all.min.css"
           integrity="sha512-5Hs3dF2AEPkpNAR7UiOHba+lRSJNeM2ECkwxUIxC1Q/FLycGTbNapWXB4tP889k5T5Ju8fs4b1P5z/iB4nMfSQ=="
@@ -26,12 +28,14 @@
     <link rel="stylesheet"
           href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0"/>
     <!-- CSS Files -->
+    <link id="pagestyle" href="{{ asset('public/asset/css/material-dashboard.min.css?v=3.1.0') }}" rel="stylesheet"/>
     <link id="pagestyle" href="{{ asset('asset/css/material-dashboard.min.css?v=3.1.0') }}" rel="stylesheet"/>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/js/intlTelInput.min.js"></script>
     <link rel="stylesheet"
           href="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/css/intlTelInput.min.css"/>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
     <link rel="stylesheet" href="{{ asset('assets/css/custom.css') }}"/>
+    <link rel="stylesheet" href="{{ asset('public/assets/css/custom.css') }}"/>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <!-- Anti-flicker snippet (recommended)  -->
     <style>
@@ -120,10 +124,15 @@
 <script src="{{ asset('asset/js/core/bootstrap.min.js') }}"></script>
 <script src="{{ asset('asset/js/plugins/perfect-scrollbar.min.js') }}"></script>
 <script src="{{ asset('asset/js/plugins/smooth-scrollbar.min.js') }}"></script>
+<script src="{{ asset('public/asset/js/core/popper.min.js') }}"></script>
+<script src="{{ asset('public/asset/js/core/bootstrap.min.js') }}"></script>
+<script src="{{ asset('public/asset/js/plugins/perfect-scrollbar.min.js') }}"></script>
+<script src="{{ asset('public/asset/js/plugins/smooth-scrollbar.min.js') }}"></script>
 
 
 <!--   Core JS Files   -->
 
+<script src="{{ asset('public/asset/js/core/datatables.js') }}"></script>
 <script src="{{ asset('asset/js/core/datatables.js') }}"></script>
 
 <script>
@@ -174,6 +183,7 @@
 <!-- Github buttons -->
 <script async defer src="https://buttons.github.io/buttons.js"></script>
 <!-- Control Center for Material Dashboard: parallax effects, scripts for the example pages etc -->
+<script src="{{ asset('public/asset/js/material-dashboard.min.js?v=3.1.0') }}"></script>
 <script src="{{ asset('asset/js/material-dashboard.min.js?v=3.1.0') }}"></script>
 <script defer src="https://static.cloudflareinsights.com/beacon.min.js/vcd15cbe7772f49c399c6a5babf22c1241717689176015"
         integrity="sha512-ZpsOmlRQV6y907TI0dKBHq9Md29nnaEIPlkf84rnaERnq6zvWvPUqr2ft8M1aS28oN72PdrCzSjY4U6VaAw1EQ=="

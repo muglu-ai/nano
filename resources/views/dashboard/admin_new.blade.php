@@ -2,7 +2,7 @@
 @section('title', 'Dashboard')
 @section('content')
     @php
-    $hide = true;
+        $hide = true;
     @endphp
     <style>
         .card {
@@ -83,7 +83,8 @@
                                                 <div class="card-footer p-2 ps-3">
                                                     <p class="mb-0 text-sm">
                                                         <a href="{{ route('active.users.analytics') }}"
-                                                        <span class="text-warning font-weight-bolder">Click Here</span> </a> —
+                                                        <span class="text-warning font-weight-bolder">Click Here</span> </a>
+                                                        —
                                                         for more information.
                                                     </p>
                                                 </div>
@@ -104,125 +105,126 @@
                         </div>
 
                         @if($hide == false)
-                        <div class="col-xl-4 col-sm-6 mb-xl-0 mb-4 mt-2">
-                            <div class="card">
-                                <div class="card-header p-2 ps-3">
-                                    <div class="d-flex justify-content-between">
-                                        <div>
-                                            <p class="text-m mb-0 text-capitalize font-weight-black font-weight-bold">
-                                                Payment Receipt Uploaded</p>
-                                            <h4 class="mb-0 mt-1">{{ $analytics['payments'][0] ?? 0 }}</h4>
-                                        </div>
-                                        <div
-                                                class="icon icon-md icon-shape bg-gradient-dark shadow-dark shadow text-center border-radius-lg">
-                                            <i class="material-symbols-rounded opacity-10">person</i>
+                            <div class="col-xl-4 col-sm-6 mb-xl-0 mb-4 mt-2">
+                                <div class="card">
+                                    <div class="card-header p-2 ps-3">
+                                        <div class="d-flex justify-content-between">
+                                            <div>
+                                                <p class="text-m mb-0 text-capitalize font-weight-black font-weight-bold">
+                                                    Payment Receipt Uploaded</p>
+                                                <h4 class="mb-0 mt-1">{{ $analytics['payments'][0] ?? 0 }}</h4>
+                                            </div>
+                                            <div
+                                                    class="icon icon-md icon-shape bg-gradient-dark shadow-dark shadow text-center border-radius-lg">
+                                                <i class="material-symbols-rounded opacity-10">person</i>
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
-                                <hr class="dark horizontal my-0">
-                                <div class="card-footer p-2 ps-3">
-                                    <p class="mb-0 text-sm"><a href="/invoice"><span
-                                                    class="text-success font-weight-bolder">Click here </span></a>for
-                                        more info.</p>
+                                    <hr class="dark horizontal my-0">
+                                    <div class="card-footer p-2 ps-3">
+                                        <p class="mb-0 text-sm"><a href="{{route('invoice.list')}}"><span
+                                                        class="text-success font-weight-bolder">Click here </span></a>for
+                                            more info.</p>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
 
-                        <div class="col-xl-4 col-sm-6 mb-xl-0 mb-4 mt-2">
-                            <div class="card">
-                                <div class="card-header p-2 ps-3">
-                                    <div class="d-flex justify-content-between align-items-center">
-                                        <div>
-                                            <p class="mb-0 text-capitalize font-weight-bold" style="font-size: 1rem;">
-                                                Co-Exhibitor Applications Awaiting Approval
-                                            </p>
-                                            <h4 class="mb-0 mt-1">
-                                                <span class="text-warning">{{ $coExhibitorCount ?? 0 }}</span>
-                                                /
-                                                <span class="text-success">{{ $approvedCoexhibitorCount }}</span>
-                                            </h4>
-                                        </div>
-                                        <div
-                                                class="icon icon-md icon-shape bg-gradient-warning shadow text-center border-radius-lg">
-                                            <i class="fa-solid fa-user-clock opacity-10"></i>
+                            <div class="col-xl-4 col-sm-6 mb-xl-0 mb-4 mt-2">
+                                <div class="card">
+                                    <div class="card-header p-2 ps-3">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <div>
+                                                <p class="mb-0 text-capitalize font-weight-bold"
+                                                   style="font-size: 1rem;">
+                                                    Co-Exhibitor Applications Awaiting Approval
+                                                </p>
+                                                <h4 class="mb-0 mt-1">
+                                                    <span class="text-warning">{{ $coExhibitorCount ?? 0 }}</span>
+                                                    /
+                                                    <span class="text-success">{{ $approvedCoexhibitorCount }}</span>
+                                                </h4>
+                                            </div>
+                                            <div
+                                                    class="icon icon-md icon-shape bg-gradient-warning shadow text-center border-radius-lg">
+                                                <i class="fa-solid fa-user-clock opacity-10"></i>
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
-                                <hr class="dark horizontal my-0">
-                                <div class="card-footer p-2 ps-3">
-                                    <p class="mb-0 text-sm">
-                                        <a href="{{ route('co_exhibitors') }}"
-                                        <span class="text-warning font-weight-bolder">Pending review</span> </a> — Click
-                                        here for more information.
-                                    </p>
+                                    <hr class="dark horizontal my-0">
+                                    <div class="card-footer p-2 ps-3">
+                                        <p class="mb-0 text-sm">
+                                            <a href="{{ route('co_exhibitors') }}"
+                                            <span class="text-warning font-weight-bolder">Pending review</span> </a> —
+                                            Click
+                                            here for more information.
+                                        </p>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
 
                         @endif
                     </div>
                 </div>
                 @if($hide == false)
-                <div class="col-md-6">
-                    <div class="row mb-3">
-                        <div class="col-xl-6 col-sm-6 mb-xl-0 mb-4 mt-2">
-                            <div class="card">
-                                <div class="card-header p-2 ps-3">
-                                    <div class="d-flex justify-content-between">
-                                        <div>
-                                            <p class="text-m mb-0 text-capitalize font-weight-black font-weight-bold">
-                                                Requested SQM Sum</p>
-                                            <h4 class="mb-0 mt-1">{{ $analytics['req_sqm_sum'] . ' SQM' ?? 0 }}</h4>
-                                        </div>
-                                        <div
-                                                class="icon icon-md icon-shape bg-gradient-dark shadow-dark shadow text-center border-radius-lg">
-                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
-                                                 fill="currentColor" class="bi bi-archive" viewBox="0 0 16 16"
-                                                 style="color: #FFFFFF; margin-top: 15px;">
-                                                <path
-                                                        d="M0 2a1 1 0 0 1 1-1h14a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1v7.5a2.5 2.5 0 0 1-2.5 2.5h-9A2.5 2.5 0 0 1 1 12.5V5a1 1 0 0 1-1-1zm2 3v7.5A1.5 1.5 0 0 0 3.5 14h9a1.5 1.5 0 0 0 1.5-1.5V5zm13-3H1v2h14zM5 7.5a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 0 1h-5a.5.5 0 0 1-.5-.5"/>
-                                            </svg>
+                    <div class="col-md-6">
+                        <div class="row mb-3">
+                            <div class="col-xl-6 col-sm-6 mb-xl-0 mb-4 mt-2">
+                                <div class="card">
+                                    <div class="card-header p-2 ps-3">
+                                        <div class="d-flex justify-content-between">
+                                            <div>
+                                                <p class="text-m mb-0 text-capitalize font-weight-black font-weight-bold">
+                                                    Requested SQM Sum</p>
+                                                <h4 class="mb-0 mt-1">{{ $analytics['req_sqm_sum'] . ' SQM' ?? 0 }}</h4>
+                                            </div>
+                                            <div
+                                                    class="icon icon-md icon-shape bg-gradient-dark shadow-dark shadow text-center border-radius-lg">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
+                                                     fill="currentColor" class="bi bi-archive" viewBox="0 0 16 16"
+                                                     style="color: #FFFFFF; margin-top: 15px;">
+                                                    <path
+                                                            d="M0 2a1 1 0 0 1 1-1h14a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1v7.5a2.5 2.5 0 0 1-2.5 2.5h-9A2.5 2.5 0 0 1 1 12.5V5a1 1 0 0 1-1-1zm2 3v7.5A1.5 1.5 0 0 0 3.5 14h9a1.5 1.5 0 0 0 1.5-1.5V5zm13-3H1v2h14zM5 7.5a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 0 1h-5a.5.5 0 0 1-.5-.5"/>
+                                                </svg>
+                                            </div>
                                         </div>
                                     </div>
+                                    {{--                        <hr class="dark horizontal my-0"> --}}
+                                    {{--                        <div class="card-footer p-2 ps-3"> --}}
+                                    {{--                            <p class="mb-0 text-sm"><a href="/users/list"><span class="text-success font-weight-bolder">Click here </span></a>for --}}
+                                    {{--                                more info.</p> --}}
+                                    {{--                        </div> --}}
                                 </div>
-                                {{--                        <hr class="dark horizontal my-0"> --}}
-                                {{--                        <div class="card-footer p-2 ps-3"> --}}
-                                {{--                            <p class="mb-0 text-sm"><a href="/users/list"><span class="text-success font-weight-bolder">Click here </span></a>for --}}
-                                {{--                                more info.</p> --}}
-                                {{--                        </div> --}}
                             </div>
-                        </div>
-                        <div class="col-xl-6 col-sm-6 mb-xl-0 mb-4 mt-2">
-                            <div class="card">
-                                <div class="card-header p-2 ps-3">
-                                    <div class="d-flex justify-content-between">
-                                        <div>
-                                            <p class="text-m mb-0 text-capitalize font-weight-black font-weight-bold">
-                                                Approved SQM Sum</p>
-                                            <h4 class="mb-0 mt-1">{{ $analytics['approved_sqm_sum'] . ' SQM' ?? 0 }}</h4>
-                                        </div>
-                                        <div
-                                                class="icon icon-md icon-shape bg-gradient-dark shadow-dark shadow text-center border-radius-lg">
-                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
-                                                 fill="currentColor" class="bi bi-archive-fill" viewBox="0 0 16 16"
-                                                 style="color: #FFFFFF; margin-top: 15px;">
-                                                <path
-                                                        d="M12.643 15C13.979 15 15 13.845 15 12.5V5H1v7.5C1 13.845 2.021 15 3.357 15zM5.5 7h5a.5.5 0 0 1 0 1h-5a.5.5 0 0 1 0-1M.8 1a.8.8 0 0 0-.8.8V3a.8.8 0 0 0 .8.8h14.4A.8.8 0 0 0 16 3V1.8a.8.8 0 0 0-.8-.8z"/>
-                                            </svg>
+                            <div class="col-xl-6 col-sm-6 mb-xl-0 mb-4 mt-2">
+                                <div class="card">
+                                    <div class="card-header p-2 ps-3">
+                                        <div class="d-flex justify-content-between">
+                                            <div>
+                                                <p class="text-m mb-0 text-capitalize font-weight-black font-weight-bold">
+                                                    Approved SQM Sum</p>
+                                                <h4 class="mb-0 mt-1">{{ $analytics['approved_sqm_sum'] . ' SQM' ?? 0 }}</h4>
+                                            </div>
+                                            <div
+                                                    class="icon icon-md icon-shape bg-gradient-dark shadow-dark shadow text-center border-radius-lg">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
+                                                     fill="currentColor" class="bi bi-archive-fill" viewBox="0 0 16 16"
+                                                     style="color: #FFFFFF; margin-top: 15px;">
+                                                    <path
+                                                            d="M12.643 15C13.979 15 15 13.845 15 12.5V5H1v7.5C1 13.845 2.021 15 3.357 15zM5.5 7h5a.5.5 0 0 1 0 1h-5a.5.5 0 0 1 0-1M.8 1a.8.8 0 0 0-.8.8V3a.8.8 0 0 0 .8.8h14.4A.8.8 0 0 0 16 3V1.8a.8.8 0 0 0-.8-.8z"/>
+                                                </svg>
+                                            </div>
                                         </div>
                                     </div>
+                                    {{--                        <hr class="dark horizontal my-0"> --}}
+                                    {{--                        <div class="card-footer p-2 ps-3"> --}}
+                                    {{--                            <p class="mb-0 text-sm"><a href="/invoice"><span class="text-success font-weight-bolder">Click here </span></a>for --}}
+                                    {{--                                more info.</p> --}}
+                                    {{--                        </div> --}}
                                 </div>
-                                {{--                        <hr class="dark horizontal my-0"> --}}
-                                {{--                        <div class="card-footer p-2 ps-3"> --}}
-                                {{--                            <p class="mb-0 text-sm"><a href="/invoice"><span class="text-success font-weight-bolder">Click here </span></a>for --}}
-                                {{--                                more info.</p> --}}
-                                {{--                        </div> --}}
                             </div>
                         </div>
                     </div>
-                </div>
                 @endif
-
 
 
                 <hr class="dark horizontal my-0">
@@ -258,30 +260,32 @@
                         </div>
                     </div>
                     @if($hide == false)
-                    <div class="col-xl-4 col-sm-6 mb-xl-0 mb-4 ">
-                        <div class="card">
-                            <div class="card-header p-2 ps-3">
-                                <div class="d-flex justify-content-between">
-                                    <div>
-                                        <p class="text-m mb-0 text-capitalize font-weight-black font-weight-bold">Total
-                                            Initiated</p>
-                                        <h4 class="mb-0 mt-1">{{ $analytics['applicationsByStatus']['in progress'] ?? 0 }}</h4>
-                                    </div>
-                                    <div
-                                            class="icon icon-md icon-shape bg-gradient-dark shadow-dark shadow text-center border-radius-lg">
-                                        <i class="material-symbols-rounded opacity-10">person</i>
+                        <div class="col-xl-4 col-sm-6 mb-xl-0 mb-4 ">
+                            <div class="card">
+                                <div class="card-header p-2 ps-3">
+                                    <div class="d-flex justify-content-between">
+                                        <div>
+                                            <p class="text-m mb-0 text-capitalize font-weight-black font-weight-bold">
+                                                Total
+                                                Initiated</p>
+                                            <h4 class="mb-0 mt-1">{{ $analytics['applicationsByStatus']['in progress'] ?? 0 }}</h4>
+                                        </div>
+                                        <div
+                                                class="icon icon-md icon-shape bg-gradient-dark shadow-dark shadow text-center border-radius-lg">
+                                            <i class="material-symbols-rounded opacity-10">person</i>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                            <hr class="dark horizontal my-0">
-                            <div class="card-footer p-2 ps-3">
-                                <p class="mb-0 text-sm"><a href="/application-list/in-progress"><span
-                                                class="text-success font-weight-bolder"> Click here</span> </a>for more
-                                    info.
-                                </p>
+                                <hr class="dark horizontal my-0">
+                                <div class="card-footer p-2 ps-3">
+                                    <p class="mb-0 text-sm"><a href="{{ route('application.list', ['status' => 'in-progress']) }}"><span
+                                                    class="text-success font-weight-bolder"> Click here</span> </a>for
+                                        more
+                                        info.
+                                    </p>
+                                </div>
                             </div>
                         </div>
-                    </div>
 
                     @endif
                     <div class="col-xl-4 col-sm-6 mb-xl-0 mb-4 ">
@@ -301,7 +305,7 @@
                             </div>
                             <hr class="dark horizontal my-0">
                             <div class="card-footer p-2 ps-3">
-                                <p class="mb-0 text-sm"><a href="/application-list/submitted"><span
+                                <p class="mb-0 text-sm"><a href="{{ route('application.list', ['status' => 'submitted']) }}"><span
                                                 class="text-success font-weight-bolder">Click here </span> </a>for more
                                     info.
                                 </p>
@@ -325,7 +329,7 @@
                             </div>
                             <hr class="dark horizontal my-0">
                             <div class="card-footer p-2 ps-3">
-                                <p class="mb-0 text-sm"><a href="/application-list/approved"
+                                <p class="mb-0 text-sm"><a href="{{ route('application.list', ['status' => 'approved']) }}"
                                                            class="text-success font-weight-bolder">Click here</a> for
                                     more
                                     info.</p>
@@ -333,30 +337,32 @@
                         </div>
                     </div>
                     @if($hide == false)
-                    <div class="col-xl-4 col-sm-6 mb-xl-0 mb-4 mt-2  mb-3">
-                        <div class="card">
-                            <div class="card-header p-2 ps-3">
-                                <div class="d-flex justify-content-between">
-                                    <div>
-                                        <p class="text-m mb-0 text-capitalize font-weight-black font-weight-bold">Total
-                                            Rejected Application</p>
-                                        <h4 class="mb-0 mt-1">{{ $analytics['applicationsByStatus']['rejected'] ?? 0 }}</h4>
-                                    </div>
-                                    <div
-                                            class="icon icon-md icon-shape bg-gradient-dark shadow-dark shadow text-center border-radius-lg">
-                                        <i class="material-symbols-rounded opacity-10">weekend</i>
+                        <div class="col-xl-4 col-sm-6 mb-xl-0 mb-4 mt-2  mb-3">
+                            <div class="card">
+                                <div class="card-header p-2 ps-3">
+                                    <div class="d-flex justify-content-between">
+                                        <div>
+                                            <p class="text-m mb-0 text-capitalize font-weight-black font-weight-bold">
+                                                Total
+                                                Rejected Application</p>
+                                            <h4 class="mb-0 mt-1">{{ $analytics['applicationsByStatus']['rejected'] ?? 0 }}</h4>
+                                        </div>
+                                        <div
+                                                class="icon icon-md icon-shape bg-gradient-dark shadow-dark shadow text-center border-radius-lg">
+                                            <i class="material-symbols-rounded opacity-10">weekend</i>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                            <hr class="dark horizontal my-0">
-                            <div class="card-footer p-2 ps-3">
-                                <p class="mb-0 text-sm"><a href="/application-list/rejected"
-                                                           class="text-success font-weight-bolder">Click here</a> for
-                                    more
-                                    info.</p>
+                                <hr class="dark horizontal my-0">
+                                <div class="card-footer p-2 ps-3">
+                                    <p class="mb-0 text-sm"><a href="{{ route('application.list', ['status' => 'rejected']) }}"
+                                                               class="text-success font-weight-bolder">Click here</a>
+                                        for
+                                        more
+                                        info.</p>
+                                </div>
                             </div>
                         </div>
-                    </div>
                     @endif
                 </div>
                 <hr class="dark horizontal my-0">

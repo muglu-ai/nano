@@ -23,7 +23,10 @@
 
         .input-group.input-group-dynamic.is-filled .form-label, .input-group.input-group-dynamic.is-focused .form-label, .input-group.input-group-static.is-filled .form-label, .input-group.input-group-static.is-focused .form-label {
             font-size: 1rem !important;
-            padding-bottom: 150px !important;
+
+        }
+        .form-control{
+            margin-bottom: 15px !important;
         }
 
         @media (min-width: 768px) {

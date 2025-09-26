@@ -118,7 +118,7 @@
                         </div>
                         <hr class="dark horizontal my-0">
                         <div class="card-footer p-2 ps-3">
-                            <p class="mb-0><a href="{{route('application.lists')}}"
+                            <p class="mb-0><a href="{{ route('application.lists') }} "
                                                        class="text-success font-weight-bolder">Click here</a> for more
                                 info.</p>
                         </div>

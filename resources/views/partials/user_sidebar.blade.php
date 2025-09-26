@@ -1,3 +1,19 @@
+<style>
+    /* Place in your main CSS file */
+    .sidenav .nav-link i,
+    .sidenav .nav-link .material-symbols-rounded {
+        margin-left: 0 !important;
+        padding-left: 0 !important;
+        min-width: 24px; /* Ensures alignment */
+        text-align: left;
+        display: inline-block;
+        vertical-align: middle;
+    }
+    .sidenav .nav-link {
+        display: flex;
+        align-items: center;
+    }
+</style>
 <aside class="sidenav navbar navbar-vertical navbar-expand-xs border-radius-lg fixed-start ms-2  bg-white my-2"
        id="sidenav-main">
     <div class="sidenav-header">
@@ -5,7 +21,8 @@
            aria-hidden="true" id="iconSidenav"></i>
         <a class="navbar-brand px-4 py-3 m-0" href="{{config('constants.EVENT_WEBSITE')}}" target="_blank">
             <span class="ms-1 text-m text-dark text-bold"
-                  style="display: block;">{{config('constants.event_name')}}</span>
+                  style="display: block;">{{config('constants.event_name')}} <br>
+                {{config('constants.EVENT_YEAR')}} </span>
         </a>
     </div>
     <hr class="horizontal dark mt-0 mb-2">
@@ -56,7 +73,7 @@
                 <a data-bs-toggle="collapse" href="#documentsDropdown" class="nav-link text-dark"
                    aria-controls="documentsDropdown" role="button" aria-expanded="false">
                     <i class="fa-solid fa-file"></i>
-                    <span class="sidenav-normal ms-1 ps-1">Download Documents</span>
+                    <span class="sidenav-normal ms-1 ps-1">Important Documents</span>
                 </a>
                 <div class="collapse" id="documentsDropdown">
                     <ul class="nav">
@@ -66,24 +83,29 @@
                                 <span class="sidenav-normal ms-1 ps-1">Exhibitor Manual</span>
                             </a>
                         </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" href="{{ route('faqs') }}">
-                                <span class="sidenav-mini-icon"> F </span>
-                                <span class="sidenav-normal ms-1 ps-1">FAQs</span>
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" href="{{ route('transport.letter') }}">
-                                <span class="sidenav-mini-icon"> T </span>
-                                <span class="sidenav-normal ms-1 ps-1">Transport Letter</span>
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" href="{{ route('invitation.letter') }}">
-                                <span class="sidenav-mini-icon"> P </span>
-                                <span class="sidenav-normal ms-1 ps-1">Participation Letter</span>
-                            </a>
-                        </li>
+
+                        {{--                        <li class="nav-item">--}}
+                        {{--                            <a class="nav-link text-dark" href="{{ route('faqs') }}">--}}
+                        {{--                                <span class="sidenav-mini-icon"> F </span>--}}
+                        {{--                                <span class="sidenav-normal ms-1 ps-1">FAQs</span>--}}
+                        {{--                            </a>--}}
+                        {{--                        </li>--}}
+
+                        {{--                        <li class="nav-item">--}}
+                        {{--                            <a class="nav-link text-dark" href="{{ route('transport.letter') }}">--}}
+                        {{--                                <span class="sidenav-mini-icon"> T </span>--}}
+                        {{--                                <span class="sidenav-normal ms-1 ps-1">Transport Letter</span>--}}
+                        {{--                            </a>--}}
+                        {{--                        </li>--}}
+
+
+                        {{--                        <li class="nav-item">--}}
+                        {{--                            <a class="nav-link text-dark" href="{{ route('invitation.letter') }}">--}}
+                        {{--                                <span class="sidenav-mini-icon"> P </span>--}}
+                        {{--                                <span class="sidenav-normal ms-1 ps-1">Participation Letter</span>--}}
+                        {{--                            </a>--}}
+                        {{--                        </li>--}}
+
                         <li class="nav-item">
                             <a class="nav-link text-dark" href="{{ route('exhibitor_guide') }}">
                                 <span class="sidenav-mini-icon"> P </span>
@@ -166,10 +188,10 @@
             </li>
             <hr class="horizontal dark mt-0">
             <li class="nav-item">
-                <a data-bs-toggle="collapse" href="#requirements" class="nav-link" aria-controls="requirements"
-                   role="button" aria-expanded="true"
-                   style="background: linear-gradient(to right, #4a90e2, #67b8f7); border-radius: 8px; margin: 5px 10px; box-shadow: 0 2px 5px rgba(74, 144, 226, 0.3);">
-                    <i class="fa-solid fa-clipboard-list" style="color: #ffffff;"></i>
+                <a  href="{{ route('extra_requirements.index') }}" class="nav-link" aria-controls="requirements"
+                    role="button" aria-expanded="true"
+                >
+                    <i class="fa-solid fa-cart-shopping ms-2" style="color: #0a0a0a;"></i>
                     <span class="nav-link-text ms-1 ps-1" style="color: #050505; font-weight: 600;">
                         Extra Requirements
 
@@ -235,57 +257,30 @@
 
         {{-- Apply for sponsorships --}}
         {{-- Apply for sponsorships --}}
-        @php
-            // Only show for selected users
-            $sponsorshipUsers = [87, 146, 322, 646];
-            $route = null;
-            if (Auth::check() && isset(Auth::user()->id)) {
-                switch (Auth::user()->id) {
-                    case 87:
-                    case 146:
-                    case 322:
-                    case 111:
-                    case 321:
-                    case 370:
-                    case 383:
-                    case 418:
-                    case 493:
-                    case 581:
-                    case 613:
-                    case 862:
-                    case 237:
-                    case 863:
-                    case 581:
-                    case 345:
-                   case 388:
-                    case 863:
-                    case 371:
-                    case 506:
-                    case 874:
-                    case 374:
-                    case 586:
-                    case 574:
-                    case 889:
-                case 361:
-                        $route = '/semicon-2025/sponsorship_new';
-                        break;
-                    case 780:
-                    case 519:
-                    case 646:
-                        $route = '/semicon-2025/sponsorship_state';
-                        break;
-                }
-            }
-        @endphp
+        {{--        @php--}}
+        {{--            // Only show for selected users--}}
+        {{--            $sponsorshipUsers = [87, 146, 322, 646];--}}
+        {{--            $route = null;--}}
+        {{--            if (Auth::check() && isset(Auth::user()->id)) {--}}
+        {{--                switch (Auth::user()->id) {--}}
+        {{--                    case 87:--}}
+        {{--                    case 146:--}}
 
-        @if($route)
-            <div class="mt-3 mb-2 px-3">
-                <a href="{{ $route }}" class="btn btn-warning w-100" style="font-weight:600;">
-                    <i class="fa-solid fa-hand-holding-heart me-2"></i>
-                    Apply for Sponsorship
-                </a>
-            </div>
-        @endif
+        {{--                    case 646:--}}
+        {{--                        $route = '/semicon-2025/sponsorship_state';--}}
+        {{--                        break;--}}
+        {{--                }--}}
+        {{--            }--}}
+        {{--        @endphp--}}
+
+        {{--        @if($route)--}}
+        {{--            <div class="mt-3 mb-2 px-3">--}}
+        {{--                <a href="{{ $route }}" class="btn btn-warning w-100" style="font-weight:600;">--}}
+        {{--                    <i class="fa-solid fa-hand-holding-heart me-2"></i>--}}
+        {{--                    Apply for Sponsorship--}}
+        {{--                </a>--}}
+        {{--            </div>--}}
+        {{--        @endif--}}
 
     </div>
     {{--    <div class="mt-auto"> --}}

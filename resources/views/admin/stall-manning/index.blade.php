@@ -1,10 +1,10 @@
 @extends('layouts.dashboard')
 @section('title', $slug)
 @section('content')
-@php
-    $route = ($slug === 'Inaugural Passes') ? 'admin.inaugural' : 'admin.stall-manning';
+    @php
+        $route = ($slug === 'Inaugural Passes') ? 'admin.inaugural' : 'admin.stall-manning';
 
-@endphp
+    @endphp
     <div class="container-fluid py-4">
         <div class="row">
             <div class="col-12">
@@ -14,7 +14,7 @@
                             <h1 class="h3 mb-0">{{ $slug }}</h1>
                             <p class="text-muted small">Manage and monitor all {{ $slug }} entries</p>
                         </div>
-                         <div class="btn-group">
+                        <div class="btn-group">
                             {{-- <button type="button" onclick="window.print()" class="btn btn-outline-secondary">
                                 <i class="fas fa-print me-2"></i>
                                 Print List
@@ -25,11 +25,11 @@
                             </button>
 
                             <script>
-                            function exportToExcel() {
-                                window.location.href = "{{ route('passes.export') }}";
-                            }
+                                function exportToExcel() {
+                                    window.location.href = "{{ route('passes.export') }}";
+                                }
                             </script>
-                        </div> 
+                        </div>
                     </div>
 
                     <!-- Search Form with Stats -->
@@ -53,17 +53,18 @@
                                         </div>
                                     </div>
                                 </div>
-                                 <div class="col-md-3">
-                                <div class="card border-0 shadow-sm h-100">
-                                    <div class="card-body p-4">
-                                        <div class="d-flex align-items-center mb-3">
-                                           
-                                            <h6 class="card-subtitle fw-bold text-success mb-0">Exhibitor Passes </h6>
+                                <div class="col-md-3">
+                                    <div class="card border-0 shadow-sm h-100">
+                                        <div class="card-body p-4">
+                                            <div class="d-flex align-items-center mb-3">
+
+                                                <h6 class="card-subtitle fw-bold text-success mb-0">Exhibitor
+                                                    Passes </h6>
+                                            </div>
+                                            <h2 class="card-title display-6 fw-bold mb-0">{{ number_format($totalEntries - $inauguralApplied) }} </h2>
                                         </div>
-                                        <h2 class="card-title display-6 fw-bold mb-0">{{ number_format($totalEntries - $inauguralApplied) }} </h2>
                                     </div>
                                 </div>
-                            </div>
                                 <div class="col-md-3">
                                     <div class="card border-0 shadow-sm h-100">
                                         <div class="card-body p-4">
@@ -85,13 +86,15 @@
                                                 <div class="p-3 bg-opacity-10 me-3">
                                                     <i class="fas fa-ticket-alt text-success"></i>
                                                 </div>
-                                                <h6 class="card-subtitle fw-bold text-success mb-0">Inaugural Passes</h6>
+                                                <h6 class="card-subtitle fw-bold text-success mb-0">Inaugural
+                                                    Passes</h6>
                                             </div>
                                             <h2 class="card-title display-6 fw-bold mb-0">{{ number_format($inauguralApplied) }}</h2>
                                             <p class="text-muted small mt-1 mb-0">Total passes applied</p>
-                                             <a href="{{ route('exhibitor.list') }}" class="btn btn-outline-success btn-sm w-100">
-                View List
-            </a>
+                                            <a href="{{ route('exhibitor.list') }}"
+                                               class="btn btn-outline-success btn-sm w-100">
+                                                View List
+                                            </a>
                                         </div>
                                     </div>
                                 </div>
@@ -127,12 +130,12 @@
                                             <i class="fas fa-search text-muted"></i>
                                         </span>
                                         <input type="text"
-                                            name="search"
-                                            id="searchInput"
-                                            class="form-control border-start-0 ps-0"
-                                            placeholder="Search by name, email, phone or company"
-                                            value="{{ request('search') }}"
-                                            style="border-radius: 0 8px 8px 0;">
+                                               name="search"
+                                               id="searchInput"
+                                               class="form-control border-start-0 ps-0"
+                                               placeholder="Search by name, email, phone or company"
+                                               value="{{ request('search') }}"
+                                               style="border-radius: 0 8px 8px 0;">
                                     </div>
                                 </form>
                             </div>
@@ -145,83 +148,83 @@
             </div>
 
             @push('scripts')
-            <script>
-                $(document).ready(function() {
-                    let searchTimer;
-                    let currentRequest = null;
+                <script>
+                    $(document).ready(function () {
+                        let searchTimer;
+                        let currentRequest = null;
 
-                    $('#searchInput').on('input', function() {
-                        clearTimeout(searchTimer);
+                        $('#searchInput').on('input', function () {
+                            clearTimeout(searchTimer);
 
-                        searchTimer = setTimeout(() => {
-                            const searchQuery = $(this).val();
+                            searchTimer = setTimeout(() => {
+                                const searchQuery = $(this).val();
 
-                            // Abort previous request if it exists
-                            if (currentRequest) {
-                                currentRequest.abort();
-                            }
+                                // Abort previous request if it exists
+                                if (currentRequest) {
+                                    currentRequest.abort();
+                                }
 
-                            // Start new request
-                            currentRequest = $.ajax({
+                                // Start new request
+                                currentRequest = $.ajax({
+                                    url: "{{ route('admin.stall-manning') }}",
+                                    method: 'GET',
+                                    data: {
+                                        search: searchQuery,
+                                        ajax: true
+                                    },
+                                    beforeSend: function () {
+                                        $('#searchResults').addClass('opacity-50');
+                                    },
+                                    success: function (response) {
+                                        $('#searchResults').html(response);
+
+                                        // Update URL with search parameter
+                                        const url = new URL(window.location);
+                                        if (searchQuery) {
+                                            url.searchParams.set('search', searchQuery);
+                                        } else {
+                                            url.searchParams.delete('search');
+                                        }
+                                        window.history.pushState({}, '', url);
+                                    },
+                                    error: function () {
+                                        // Handle error if needed
+                                    },
+                                    complete: function () {
+                                        $('#searchResults').removeClass('opacity-50');
+                                        currentRequest = null;
+                                    }
+                                });
+                            }, 300); // 300ms delay to prevent too many requests
+                        });
+
+                        // Handle pagination clicks
+                        $(document).on('click', '.pagination a', function (e) {
+                            e.preventDefault();
+                            let page = $(this).attr('href').split('page=')[1];
+                            let searchQuery = $('#searchInput').val();
+
+                            $.ajax({
                                 url: "{{ route('admin.stall-manning') }}",
                                 method: 'GET',
                                 data: {
                                     search: searchQuery,
+                                    page: page,
                                     ajax: true
                                 },
-                                beforeSend: function() {
+                                beforeSend: function () {
                                     $('#searchResults').addClass('opacity-50');
                                 },
-                                success: function(response) {
+                                success: function (response) {
                                     $('#searchResults').html(response);
-
-                                    // Update URL with search parameter
-                                    const url = new URL(window.location);
-                                    if (searchQuery) {
-                                        url.searchParams.set('search', searchQuery);
-                                    } else {
-                                        url.searchParams.delete('search');
-                                    }
-                                    window.history.pushState({}, '', url);
+                                    window.scrollTo(0, 0);
                                 },
-                                error: function() {
-                                    // Handle error if needed
-                                },
-                                complete: function() {
+                                complete: function () {
                                     $('#searchResults').removeClass('opacity-50');
-                                    currentRequest = null;
                                 }
                             });
-                        }, 300); // 300ms delay to prevent too many requests
-                    });
-
-                    // Handle pagination clicks
-                    $(document).on('click', '.pagination a', function(e) {
-                        e.preventDefault();
-                        let page = $(this).attr('href').split('page=')[1];
-                        let searchQuery = $('#searchInput').val();
-
-                        $.ajax({
-                            url: "{{ route('admin.stall-manning') }}",
-                            method: 'GET',
-                            data: {
-                                search: searchQuery,
-                                page: page,
-                                ajax: true
-                            },
-                            beforeSend: function() {
-                                $('#searchResults').addClass('opacity-50');
-                            },
-                            success: function(response) {
-                                $('#searchResults').html(response);
-                                window.scrollTo(0, 0);
-                            },
-                            complete: function() {
-                                $('#searchResults').removeClass('opacity-50');
-                            }
                         });
                     });
-                });
-            </script>
-            @endpush
-        @endsection
+                </script>
+    @endpush
+@endsection
