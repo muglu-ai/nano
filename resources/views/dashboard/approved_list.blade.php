@@ -299,15 +299,15 @@
                                                         <button type="submit" data-bs-toggle="tooltip"
                                                                 data-bs-original-title="View Application"
                                                                 style="border:none; background:none; padding:0; margin-top: 5px;"
-                                                                onclick="window.location.href='/applicationView?application_id={{ $application->application_id }}'">
+                                                                onclick="window.location.href='{{ route('application.view', ['application_id' => $application->application_id]) }}'">
                                                             <i class="material-symbols-rounded text-secondary position-relative text-lg">visibility</i>View
                                                         </button>
-                                                        <button type="submit" data-bs-toggle="tooltip"
-                                                                data-bs-original-title="Send Reminder"
-                                                                style="border:none; background:none; padding:0; margin-top: 5px;"
-                                                                onclick="sendReminder('{{ $application->application_id }}', '{{ $application->eventContact->email }}')">
-                                                            <i class="material-symbols-rounded text-secondary position-relative text-lg">notifications</i>Send Reminder
-                                                        </button>
+{{--                                                        <button type="submit" data-bs-toggle="tooltip"--}}
+{{--                                                                data-bs-original-title="Send Reminder"--}}
+{{--                                                                style="border:none; background:none; padding:0; margin-top: 5px;"--}}
+{{--                                                                onclick="sendReminder('{{ $application->application_id }}', '{{ $application->eventContact->email }}')">--}}
+{{--                                                            <i class="material-symbols-rounded text-secondary position-relative text-lg">notifications</i>Send Reminder--}}
+{{--                                                        </button>--}}
 {{--                                                        <button type="submit" data-bs-toggle="tooltip"--}}
 {{--                                                                data-bs-original-title="Delete Application"--}}
 {{--                                                                style="border:none; background:none; padding:0; margin-top: 5px;"--}}

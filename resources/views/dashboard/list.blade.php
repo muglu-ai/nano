@@ -235,17 +235,17 @@
                                             @if($application->submission_status != 'in progress')
                                                 <td class="text-md align-content-start ">
                                                     <div class="d-flex flex-column align-content-start">
-                                                        <button type="submit" data-bs-toggle="tooltip"
-                                                                data-bs-original-title="Follow Up Application"
-                                                                style="border:none; background:none; padding:0; margin-top: 5px;"
-                                                                class="align-content-start"
-                                                                onclick="showModifiedModal('{{ $application->id }}', '{{ $application->stall_category }}', {{ $application->interested_sqm }}, {{ $application->interested_sqm }}, '{{ $application->pref_location }}', '{{ $application->stall_category }}')">
-                                                            <i class="fa-solid fa-person-walking "></i> Follow Up
-                                                        </button>
+{{--                                                        <button type="submit" data-bs-toggle="tooltip"--}}
+{{--                                                                data-bs-original-title="Follow Up Application"--}}
+{{--                                                                style="border:none; background:none; padding:0; margin-top: 5px;"--}}
+{{--                                                                class="align-content-start"--}}
+{{--                                                                onclick="showModifiedModal('{{ $application->id }}', '{{ $application->stall_category }}', {{ $application->interested_sqm }}, {{ $application->interested_sqm }}, '{{ $application->pref_location }}', '{{ $application->stall_category }}')">--}}
+{{--                                                            <i class="fa-solid fa-person-walking "></i> Follow Up--}}
+{{--                                                        </button>--}}
                                                         <button type="submit" data-bs-toggle="tooltip"
                                                                 data-bs-original-title="View Application"
                                                                 style="border:none; background:none; padding:0; margin-top: 5px; padding-right: 30px; gap:5px;"
-                                                                onclick="window.location.href='/applicationView?application_id={{ $application->application_id }}'">
+                                                                onclick="window.location.href='{{ route('application.view', ['application_id' => $application->application_id]) }}'">
                                                             <i class="material-symbols-rounded text-secondary position-relative text-lg">visibility</i>
                                                             View
                                                         </button>
