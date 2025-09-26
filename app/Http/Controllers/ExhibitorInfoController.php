@@ -114,14 +114,12 @@ class ExhibitorInfoController extends Controller
 
         // check if the user is 
         $application = Application::findOrFail($applicationId);
-        $add1 = $application->address;
-        $city = $application->city_id;
-        $state = $application->state_id->name;
-        $country = $application->country_id->name;
-        $zip = $application->zip;
+        $add1 = $application->address ?? '';
+        $city = $application->city_id ?? '';
+        $state = ($application->state && isset($application->state->name)) ? $application->state->name : '';
+        $country = ($application->country && isset($application->country->name)) ? $application->country->name : '';
+        $zip = $application->zip ?? '';
         $application->full_address = $add1 . ', ' . $city . ', ' . $state . ', ' . $country . ', ' . $zip;
-
-        dd($application->full_address);
 
         //changes in backend
 
