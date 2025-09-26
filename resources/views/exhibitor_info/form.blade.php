@@ -180,20 +180,23 @@
                                         </div>
                                     </div>
                                 </div>
-                                <div class="col-sm-6 mt-3 mt-sm-0">
-                                    <div class="input-group input-group-dynamic {{ $cssClass }}">
-                                        <label class="form-label">Email Address <span class="red-label">*</span></label>
-                                        <input class="form-control" type="email" name="email"
-                                               value="{{ $exhibitorInfo->email ?? '' }}" required>
-                                    </div>
-                                </div>
+
                             </div>
                             <div class="row mt-5">
+
                                 <div class="col-sm-6">
                                     <div class="input-group input-group-dynamic {{ $cssClass }}">
                                         <label class="form-label">Designation <span class="red-label">*</span></label>
                                         <input class="form-control" type="text" name="designation"
                                                value="{{ $exhibitorInfo->designation ?? '' }}" required>
+                                    </div>
+                                </div>
+
+                                <div class="col-sm-6 mt-3 mt-sm-0">
+                                    <div class="input-group input-group-dynamic {{ $cssClass }}">
+                                        <label class="form-label">Email Address <span class="red-label">*</span></label>
+                                        <input class="form-control" type="email" name="email"
+                                               value="{{ $exhibitorInfo->email ?? '' }}" required>
                                     </div>
                                 </div>
                             </div>
