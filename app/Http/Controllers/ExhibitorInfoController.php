@@ -110,8 +110,22 @@ class ExhibitorInfoController extends Controller
 
 
 
+
+
         // check if the user is 
         $application = Application::findOrFail($applicationId);
+        $add1 = $application->address;
+        $city = $application->city_id;
+        $state = $application->state_id->name;
+        $country = $application->country_id->name;
+        $zip = $application->zip;
+        $application->full_address = $add1 . ', ' . $city . ', ' . $state . ', ' . $country . ', ' . $zip;
+
+        dd($application->full_address);
+
+
+
+
         $slug = "Exhibitor Directory Information";
 
         //find the exhibitor info from exhibitor_info table where application_id is application id

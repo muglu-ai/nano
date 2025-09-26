@@ -239,6 +239,19 @@
                             </div>
 
 
+                            {{-- make a address field that will fetch the details from the $exhibitorInfo->address --}}
+                            <div class="row mt-5">
+                                <div class="col-12">
+                                    <label class="form-label ">Address <span class="red-label">*</span></label>
+                                    <div class="input-group input-group-dynamic is-filled">
+                                        <textarea class="form-control" name="address" rows="2" required>{{ $exhibitorInfo->address ?? '' }}</textarea>
+                                    </div>
+                                </div>
+                            </div>
+
+
+
+
                             <hr class="my-4">
 
                             {{-- Website and Social Media Links --}}
