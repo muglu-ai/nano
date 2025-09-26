@@ -295,7 +295,7 @@
 
                 <li class="nav-item">
                     <a href="{{ route('admin.complimentary.delegate') }}" class="nav-link text-dark">
-                        <i class="fa-solid fa-gift"></i>
+                        <i class="fa-solid fa-ticket"></i>
                         <span class="nav-link-text ms-1 ps-1 text-dark">Complimentary Passes</span>
                     </a>
                 </li>
@@ -320,12 +320,7 @@
                                     <span class="sidenav-normal ms-1 ps-1 text-dark">List</span>
                                 </a>
                             </li>
-                            <li class="nav-item">
-                                <a href="{{ route('exhibitor.list') }}" class="nav-link text-dark">
-                                    <i class="fa-solid fa-ticket"></i>
-                                    <span class="nav-link-text ms-1 ps-1 text-dark">Exhibitor Inaugural Passes</span>
-                                </a>
-                            </li>
+
 
                         </ul>
                     </div>

@@ -53,18 +53,18 @@
                                         </div>
                                     </div>
                                 </div>
+                                @if(($totalEntries - $inauguralApplied) > 0)
                                 <div class="col-md-3">
                                     <div class="card border-0 shadow-sm h-100">
                                         <div class="card-body p-4">
                                             <div class="d-flex align-items-center mb-3">
-
-                                                <h6 class="card-subtitle fw-bold text-success mb-0">Exhibitor
-                                                    Passes </h6>
+                                                <h6 class="card-subtitle fw-bold text-success mb-0">Exhibitor Passes </h6>
                                             </div>
                                             <h2 class="card-title display-6 fw-bold mb-0">{{ number_format($totalEntries - $inauguralApplied) }} </h2>
                                         </div>
                                     </div>
                                 </div>
+                                @endif
                                 <div class="col-md-3">
                                     <div class="card border-0 shadow-sm h-100">
                                         <div class="card-body p-4">
