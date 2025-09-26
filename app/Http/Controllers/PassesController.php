@@ -28,8 +28,7 @@ class PassesController extends Controller
 {
 
 
-    //get all the exhibitor passes from the StallManning model for the admin
-    public function StallManning(Request $request)
+    public function CombinePasses(Request $request)
     {
 
         $slug = "Exhibitor Passes";
@@ -122,6 +121,58 @@ class PassesController extends Controller
 
 
         return view('admin.stall-manning.index', compact('stallManningList', 'totalCompanyCount', 'inauguralApplied', 'totalEntries', 'slug'));
+    }
+    //get all the exhibitor passes from the StallManning model for the admin
+    public function StallManning(Request $request)
+    {
+        $slug = "Exhibitor Passes";
+
+        // Get StallManning entries and add pass type
+        $stallManningQuery = StallManning::select(
+            'id',
+            'unique_id',
+            'exhibition_participant_id',
+            'first_name',
+            'middle_name',
+            'last_name',
+            'email',
+            'mobile',
+            'organisation_name',
+            'created_at',
+            'updated_at',
+            DB::raw("'Exhibitor' as pass_type")
+        )
+            ->with(['exhibitionParticipant.application', 'exhibitionParticipant.coExhibitor'])
+            ->whereNotNull('first_name')
+            ->where('first_name', '!=', '');
+
+        // Handle search functionality
+        if ($request->has('search')) {
+            $searchTerm = trim($request->search);
+            $stallManningQuery->where(function ($q) use ($searchTerm) {
+                $q->where('first_name', 'like', "%{$searchTerm}%")
+                    ->orWhere('unique_id', 'like', "%{$searchTerm}%")
+                    ->orWhere('email', 'like', "%{$searchTerm}%")
+                    ->orWhere('mobile', 'like', "%{$searchTerm}%")
+                    ->orWhere('organisation_name', 'like', "%{$searchTerm}%");
+            });
+        }
+
+        $stallManningCount = (clone $stallManningQuery)->count();
+        $inauguralApplied = 0;
+        $totalCompanyCount = ExhibitionParticipant::has('stallManning')->count();
+        $totalEntries = $stallManningCount;
+
+        // Get paginated results
+        $stallManningList = $stallManningQuery->paginate(50);
+
+        return view('admin.stall-manning.index', compact(
+            'stallManningList',
+            'totalCompanyCount',
+            'inauguralApplied',
+            'totalEntries',
+            'slug'
+        ));
     }
 
     public function Complimentary(Request $request)

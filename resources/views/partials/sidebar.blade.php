@@ -284,6 +284,7 @@
                 </li>
                 @endif
                 <!-- Exhibitors Passes -->
+
                 <li class="nav-item">
                     <a href="{{ route('admin.stall-manning') }}" class="nav-link text-dark">
                         <i class="fa-solid fa-passport"></i>
@@ -291,6 +292,12 @@
                     </a>
                 </li>
 
+                <li class="nav-item">
+                    <a href="{{ route('admin.complimentary.delegate') }}" class="nav-link text-dark">
+                        <i class="fa-solid fa-passport"></i>
+                        <span class="nav-link-text ms-1 ps-1 text-dark">Complimentary Passes</span>
+                    </a>
+                </li>
 
                 <li class="nav-item">
                     <a data-bs-toggle="collapse" href="#visitors" class="nav-link text-dark"
