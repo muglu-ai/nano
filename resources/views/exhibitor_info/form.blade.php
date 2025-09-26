@@ -193,8 +193,8 @@
                                 <div class="col-sm-6">
                                     <div class="input-group input-group-dynamic is-filled {{ $cssClass }}">
                                         <label class="form-label">Phone Number <span class="red-label">*</span></label>
-                                        <input id="phone" class="form-control" type="tel" name="phone"
-                                               value="{{ $exhibitorInfo->phone ?? '' }}" required>
+                                        <input id="phone" class="form-control iti" type="tel" name="phone"
+                                               value="{{ $exhibitorInfo->phone ?? '' }}" required autocomplete="off">
                                     </div>
                                 </div>
                                 <div class="col-sm-6 mt-3 mt-sm-0">
@@ -291,6 +291,56 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/js/intlTelInput.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/js/utils.js"></script>
     <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            var phoneInput = document.querySelector("#phone");
+            if (!phoneInput) return;
+            var form = phoneInput.closest('form');
+            var iti;
+            function initializePhoneInput() {
+                if (iti) return; // Prevent double init
+                iti = window.intlTelInput(phoneInput, {
+                    initialCountry: "auto",
+                    utilsScript: "https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/js/utils.js",
+                    geoIpLookup: function(callback) {
+                        fetch('https://ipapi.co/json')
+                            .then(res => res.json())
+                            .then(data => callback(data.country_code))
+                            .catch(() => callback('IN'));
+                    },
+                    separateDialCode: true,
+                    nationalMode: false,
+                });
+                // Set number if available
+                @if (!empty($exhibitorInfo->phone))
+                var serverPhone = "{{ $exhibitorInfo->phone ?? '' }}";
+                if (serverPhone.startsWith('+')) {
+                    iti.setNumber(serverPhone);
+                } else {
+                    phoneInput.value = serverPhone;
+                }
+                @endif
+            }
+            // Wait for utilsScript to be loaded
+            if (typeof window.intlTelInputUtils !== 'undefined') {
+                initializePhoneInput();
+            } else {
+                phoneInput.addEventListener('focus', initializePhoneInput, { once: true });
+            }
+            form.addEventListener('submit', function (e) {
+                if (!iti) initializePhoneInput();
+                var fullNumber = iti.getNumber();
+                if (!fullNumber || !fullNumber.startsWith('+')) {
+                    e.preventDefault();
+                    alert('Please enter a valid phone number with country code.');
+                    phoneInput.focus();
+                    return false;
+                }
+                phoneInput.value = fullNumber;
+            });
+        });
+    </script>
+
+    <script>
         function updateCharCount() {
             const textarea = document.getElementById('description');
             const charCount = document.getElementById('charCount');
@@ -314,60 +364,6 @@
             const textarea = document.getElementById('description');
             textarea.addEventListener('input', validateDescriptionLength);
             validateDescriptionLength();
-        });
-    </script>
-
-    <script>
-        document.addEventListener("DOMContentLoaded", function () {
-            const phoneInput = document.querySelector("#phone");
-            const form = phoneInput.closest('form');
-            let iti;
-
-            function initializePhoneInput() {
-                iti = window.intlTelInput(phoneInput, {
-                    initialCountry: "auto",
-                    utilsScript: "https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/js/utils.js",
-                    geoIpLookup: function(callback) {
-                        fetch('https://ipapi.co/json')
-                            .then(res => res.json())
-                            .then(data => callback(data.country_code))
-                            .catch(() => callback('IN'));
-                    },
-                    separateDialCode: true,
-                    nationalMode: false,
-                });
-
-                // Set number if available
-                @if (!empty($exhibitorInfo->phone))
-                const serverPhone = "{{ $exhibitorInfo->phone ?? '' }}";
-                if (serverPhone.startsWith('+')) {
-                    iti.setNumber(serverPhone);
-                } else {
-                    phoneInput.value = serverPhone;
-                }
-                @endif
-            }
-
-            if (window.intlTelInput) {
-                initializePhoneInput();
-            } else {
-                phoneInput.addEventListener('load', initializePhoneInput);
-            }
-
-            form.addEventListener('submit', function (e) {
-                const fullNumber = iti.getNumber();
-                // console.log('Full number:', fullNumber);
-
-                if (!fullNumber || !fullNumber.startsWith('+')) {
-                    e.preventDefault();
-                    alert('Please enter a valid phone number with country code.');
-                    phoneInput.focus();
-                    return false;
-                }
-
-                // Set the final phone value in +<country_code><number> format
-                phoneInput.value = fullNumber;
-            });
         });
     </script>
 
