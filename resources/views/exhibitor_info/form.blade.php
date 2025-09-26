@@ -330,7 +330,7 @@
                     geoIpLookup: function (callback) {
                         fetch('https://ipapi.co/json')
                             .then(res => res.json())
-                            .then(data => callback(data.country_code))
+                            .then data => callback(data.country_code))
                             .catch(() => callback('IN'));
                     },
                     separateDialCode: true,
@@ -398,25 +398,43 @@
             return data;
         }
 
-        // Render HTML preview for A5 PDF
+        // Render HTML preview for A5 PDF with header image and improved layout
         function renderDirectoryPreview(data) {
             return `
-                <div style="width: 420px; height: 595px; font-family: Arial, sans-serif; padding: 24px; box-sizing: border-box;">
-                    <h2 style='margin-bottom: 8px;'>${data.fascia_name || ''}</h2>
-                    <p style='margin: 0 0 8px 0;'><strong>Company:</strong> ${data['company_name'] || ''}</p>
-                    <p style='margin: 0 0 8px 0;'><strong>Contact:</strong> ${data.salutation || ''} ${data.contact_first_name || ''} ${data.contact_last_name || ''}</p>
-                    <p style='margin: 0 0 8px 0;'><strong>Email:</strong> ${data.email || ''}</p>
-                    <p style='margin: 0 0 8px 0;'><strong>Phone:</strong> ${data.phone || ''}</p>
-                    <p style='margin: 0 0 8px 0;'><strong>Website:</strong> ${data.website || ''}</p>
-                    <p style='margin: 0 0 8px 0;'><strong>Description:</strong><br>${(data.description || '').replace(/\n/g, '<br>')}</p>
-                    <div style='margin-top: 12px;'>
-                        <strong>Socials:</strong>
-                        <ul style='margin: 0; padding-left: 18px;'>
-                            ${data.linkedin ? `<li>LinkedIn: ${data.linkedin}</li>` : ''}
-                            ${data.instagram ? `<li>Instagram: ${data.instagram}</li>` : ''}
-                            ${data.facebook ? `<li>Facebook: ${data.facebook}</li>` : ''}
-                            ${data.youtube ? `<li>YouTube: ${data.youtube}</li>` : ''}
-                        </ul>
+                <div style="width: 420px; height: 595px; font-family: Arial, sans-serif; padding: 32px 24px 24px 24px; box-sizing: border-box; background: #fff;">
+                    <div style='text-align:center;margin-bottom:18px;'>
+                        <img src="https://bengalurutechsummit.com/exhibitor_directory_logo.png" alt="Exhibitor Directory" style="max-width: 260px; max-height: 60px; display:block; margin:0 auto 8px auto;" />
+                    </div>
+                    <h2 style='margin-bottom: 18px; text-align:center; font-size: 1.3rem; letter-spacing: 1px; font-weight: bold;'>${data.fascia_name || ''}</h2>
+                    <table style="width:100%; font-size: 1rem; border-collapse: collapse; margin-bottom: 10px;">
+                        <tr>
+                            <td style="vertical-align:top; width:110px;"><strong>Contact<br>Person:</strong></td>
+                            <td>${data.salutation || ''} ${data.contact_first_name || ''} ${data.contact_last_name || ''}</td>
+                        </tr>
+                        <tr>
+                            <td style="vertical-align:top;"><strong>Designation:</strong></td>
+                            <td>${data.designation || ''}</td>
+                        </tr>
+                        <tr>
+                            <td style="vertical-align:top;"><strong>Mobile:</strong></td>
+                            <td>${data.phone || ''}</td>
+                        </tr>
+                        <tr>
+                            <td style="vertical-align:top;"><strong>Email:</strong></td>
+                            <td>${data.email || ''}</td>
+                        </tr>
+                        <tr>
+                            <td style="vertical-align:top;"><strong>Address:</strong></td>
+                            <td>${data.address || ''}</td>
+                        </tr>
+                        <tr>
+                            <td style="vertical-align:top;"><strong>Website:</strong></td>
+                            <td>${data.website || ''}</td>
+                        </tr>
+                    </table>
+                    <div style="margin-bottom: 6px;"><strong>Profile:</strong></div>
+                    <div style="font-size:0.97rem; text-align:justify; line-height:1.5;">
+                        ${(data.description || '').replace(/\n/g, '<br>')}
                     </div>
                 </div>
             `;
