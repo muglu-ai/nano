@@ -178,29 +178,9 @@ class PassesController extends Controller
     public function Complimentary(Request $request)
     {
 
-        $slug = "Exhibitor Passes";
+        $slug = "Complimentary Passes";
         // Get StallManning entries and add pass type
-        $stallManningQuery = StallManning::select(
-            'id',
-            'unique_id',
-            'exhibition_participant_id',
-            'first_name',
-            'middle_name',
-            'last_name',
-            'email',
-            'mobile',
-            'organisation_name',
-            'created_at',
-            'updated_at',
-            DB::raw("'Exhibitor' as pass_type")
-        )
-            ->with(['exhibitionParticipant.application', 'exhibitionParticipant.coExhibitor'])
-            ->whereNotNull('first_name')
-            ->where('first_name', '!=', '');
-        $stallManningCount = $stallManningQuery->count();
-
-
-        // Get ComplimentaryDelegate entries and add pass type
+        // Only ComplimentaryDelegate entries
         $complimentaryQuery = ComplimentaryDelegate::select(
             'id',
             'unique_id',
@@ -214,24 +194,14 @@ class PassesController extends Controller
             'created_at',
             'updated_at',
             'ticketType as pass_type'
-
         )
             ->with(['exhibitionParticipant.application', 'exhibitionParticipant.coExhibitor'])
             ->whereNotNull('first_name')
             ->whereRaw("TRIM(first_name) != ''");
 
 
-        $complimentaryCount = $complimentaryQuery->count();
-        // Handle search functionality
         if ($request->has('search')) {
             $searchTerm = trim($request->search);
-            $stallManningQuery->where(function ($q) use ($searchTerm) {
-                $q->where('first_name', 'like', "%{$searchTerm}%")
-                    ->orWhere('unique_id', 'like', "%{$searchTerm}%")
-                    ->orWhere('email', 'like', "%{$searchTerm}%")
-                    ->orWhere('mobile', 'like', "%{$searchTerm}%")
-                    ->orWhere('organisation_name', 'like', "%{$searchTerm}%");
-            });
             $complimentaryQuery->where(function ($q) use ($searchTerm) {
                 $q->where('first_name', 'like', "%{$searchTerm}%")
                     ->orWhere('unique_id', 'like', "%{$searchTerm}%")
@@ -241,35 +211,26 @@ class PassesController extends Controller
             });
         }
 
-        // Merge the two queries using union
-        $query = $stallManningQuery->union($complimentaryQuery);
-
-        // $inauguralApplied = ComplimentaryDelegate::whereHas('exhibitionParticipant.application', function ($q) {
-        //     $q->whereNotNull('first_name')->where('first_name', '!=', '');
-        // })->count();
         $complimentaryCount = (clone $complimentaryQuery)->count();
-
         $inauguralApplied = $complimentaryCount;
-
         $totalCompanyCount = ExhibitionParticipant::has('stallManning')->count();
-
-        //dd($stallManningQuery->count(), $complimentaryQuery->count());
-
-        // Note: count() after union is not reliable, so you may need to use get()->count()
-        $totalEntries = $complimentaryCount + $stallManningCount;
+        $stallManningCount = 0;
+        $totalEntries = $complimentaryCount;
 
         // Get paginated results
-        $stallManningList = DB::table(DB::raw("({$query->toSql()}) as sub"))
-            ->mergeBindings($query->getQuery())
-            ->paginate(50);
+        $stallManningList = $complimentaryQuery->paginate(50);
 
-        // Get paginated results
-        $stallManningList = $query->paginate(50);
+        return view('admin.stall-manning.index', compact(
+            'stallManningList',
+            'totalCompanyCount',
+            'inauguralApplied',
+            'totalEntries',
+            'slug'
+        ));
 
 
         return view('admin.stall-manning.index', compact('stallManningList', 'totalCompanyCount', 'inauguralApplied', 'totalEntries', 'slug'));
     }
-
     public function Inaugural(Request $request)
     {
         $slug = "Inaugural Passes";
