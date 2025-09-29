@@ -208,6 +208,8 @@ class DashboardController extends Controller
             $exhibitionParticipant = ExhibitionParticipant::where('application_id', $applicationId)->first();
             $directoryFilled = ExhibitorInfo::where('application_id', $applicationId)->exists();
 
+            dd($directoryFilled);
+
 
             return view('dashboard.index', compact('exhibitionParticipant', 'application', 'directoryFilled'));
             return view('dashboard.index');

@@ -296,9 +296,9 @@
                     </div>
                     <div class="card-footer">
                         @if($directoryFilled)
-                            <p class="mb-0 text-sm"><a href="{{ route('user.directory.edit') }}" class="text-info font-weight-bolder">Click to edit</a></p>
+                            <p class="mb-0 text-sm"><a href="" class="text-info font-weight-bolder">Click to edit</a></p>
                         @else
-                            <p class="mb-0 text-sm"><a href="{{ route('user.directory.edit') }}" class="text-danger font-weight-bolder">Click to complete your directory listing</a></p>
+                            <p class="mb-0 text-sm"><a href="" class="text-danger font-weight-bolder">Click to complete your directory listing</a></p>
                         @endif
                     </div>
                 </div>
