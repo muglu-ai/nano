@@ -42,10 +42,12 @@
                                 <label for="pan_no" class="form-label fw-bold text-nowrap">PAN Number:</label>
                                 <p class="form-control-plaintext mb-0">{{ $application->pan_no }}</p>
                             </div>
-                            <div class="col-md-4">
-                                <label for="tan_no" class="form-label fw-bold text-nowrap">TAN Number:</label>
-                                <p class="form-control-plaintext mb-0">{{ $application->tan_no }}</p>
-                            </div>
+                            @if(!empty($application->tan_no))
+                                <div class="col-md-4">
+                                    <label for="tan_no" class="form-label fw-bold text-nowrap">TAN Number:</label>
+                                    <p class="form-control-plaintext mb-0">{{ $application->tan_no }}</p>
+                                </div>
+                            @endif
                         </div>
                         <div class="row mt-3">
                             <div class="col-md-4">
