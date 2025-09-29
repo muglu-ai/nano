@@ -148,15 +148,18 @@ class DashboardController extends Controller
                 // Optionally log the error: \Log::error($e->getMessage());
             }
 
+            //
+
             // whatever their in $ticketDetails ticketType and count pass it to view so that the card can be shown in dashboard dynamically
             // also generate the slug of it
 
+            $directoryFilled = ExhibitorInfo::where('application_id', $applicationId)->exists();
 
 
 //             dd($ticketDetails)   ;
 
 
-            return view('dashboard.index', compact('exhibitionParticipant', 'application', 'ticketDetails'));
+            return view('dashboard.index', compact('exhibitionParticipant', 'application', 'ticketDetails', 'directoryFilled'));
             return view('dashboard.index');
         } elseif ($user->role == 'admin') {
             $analytics = app('analytics');
@@ -208,7 +211,7 @@ class DashboardController extends Controller
             $exhibitionParticipant = ExhibitionParticipant::where('application_id', $applicationId)->first();
             $directoryFilled = ExhibitorInfo::where('application_id', $applicationId)->exists();
 
-            dd($directoryFilled);
+//            dd($directoryFilled);
 
 
             return view('dashboard.index', compact('exhibitionParticipant', 'application', 'directoryFilled'));
