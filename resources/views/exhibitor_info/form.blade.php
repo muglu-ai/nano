@@ -19,14 +19,14 @@
 
         @media (max-width: 767.98px) {
             .custom-height {
-                height: 1250px;
+                height: 1650px;
             }
         }
 
 
         @media (min-width: 768px) {
             .custom-height {
-                height: 1000px;
+                height: 1250px;
             }
         }
 
