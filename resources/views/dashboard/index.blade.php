@@ -1,7 +1,9 @@
 @extends('layouts.users')
 @section('title', 'Dashboard')
 @section('content')
-
+    @php
+        use Illuminate\Support\Str;
+    @endphp
     <style>
         /* Style the fascia name input and button for a more modern look */
         #fascia_name {
@@ -93,9 +95,20 @@
                             <i class="fa-solid fa-store fa-2x text-white"></i>
                         </div>
                         <div>
-                            <h6 class="mb-1">Stall Type / Size</h6>
-                            <span class="fw-bold fs-5">{{ $application->stall_category ?? 'N/A' }} /
-                            {{ $application->allocated_sqm ?? 'N/A' }} SQM</span>
+
+                            <h6 class="mb-1">
+                                @if(Str::contains($application->stall_category ?? '', 'Startup Booth'))
+                                    Stall Type
+                                @else
+                                    Stall Type / Size
+                                @endif
+                            </h6>
+                          <span class="fw-bold fs-5">
+                                {{ $application->stall_category ?? 'N/A' }}
+                                @if(!Str::contains($application->stall_category ?? '', 'Startup Booth'))
+                                    / {{ $application->allocated_sqm ?? 'N/A' }} SQM
+                                @endif
+                            </span>
                         </div>
                     </div>
                 </div>
