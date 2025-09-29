@@ -61,11 +61,7 @@
 </style>
 
 <div class="logo-container">
-    <img src="{{ asset('asset/img/logos/SEMI_IESA_logo.png') }}" alt="SEMI IESA Logo">
-    <img src="{{ asset('asset/img/logos/meity-logo.png') }}" alt="MeitY Logo">
-    <img src="{{ asset('asset/img/logos/ism_logo.png') }}" alt="ISM Logo">
-    
-    <img  src="{{ asset('asset/img/logos/DIC_Logo.webp') }}" alt="Digital India Logo">
+    <img src="{{ config('constants.event_logo') }}" alt="{{ config('constants.event_logo') }}">
 </div>
         {{-- <a class="navbar-brand px-4 py-3 m-0 pb-0 abc" href="#">
             <img src="/asset/img/logos/logo.png" alt="Logo" width="160" class="img-fluid">

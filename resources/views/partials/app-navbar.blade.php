@@ -114,40 +114,14 @@
     }
 </style>
 @php
+/*
 //make a switch case for the route if the user->id is 87 or 146
 if (!Auth::check() || !isset(Auth::user()->id)) {
     $route = '/semicon-2025/sponsorship';
 } else {
     switch (Auth::user()->id) {
         case 87:
-        case 146:
-        case 322:
-        case 111:
-        case 321:
-        case 370:
-        case 383:
-        case 418:
-        case 493:
-        case 506:
-        case 581:
-        case 613:
-        case 862:
-        case 237:
-        case 863:
-        case 581:
-        case 345:
-        case 863:
-        case 371:
-        case 874:
-        case 388:
-        case 374:
-        case 586:
-        case 574:
-        case 361:
-        case 889:
-        case 416:
-        case 927:
-        case 883:
+
             case 931:
             $route = '/semicon-2025/sponsorship_new';
             break;
@@ -165,6 +139,7 @@ if (!Auth::check() || !isset(Auth::user()->id)) {
             break;
     }
 }
+*/
 
 @endphp
 <nav class="navbar navbar-main navbar-expand-lg position-sticky mt-2 top-1 px-0 py-1 mx-3 shadow-none border-radius-lg z-index-sticky"
@@ -175,17 +150,17 @@ if (!Auth::check() || !isset(Auth::user()->id)) {
         <div class="d-flex justify-content-between align-items-center w-100 flex-wrap">
             <!-- Left: Onboarding & Sponsorship Buttons -->
             <div class="d-flex align-items-center">
-                <a href="/semicon-2025/onboarding" class="btn btn-primary me-2 bold-text">Onboarding</a>
-                <a href="{{ $route }}" class="btn btn-secondary bold-text">Sponsorship</a>
+                <a href="" class="btn btn-primary me-2 bold-text">Onboarding</a>
+                <a href="" class="btn btn-secondary bold-text">Sponsorship</a>
             </div>
 
             <!-- Center: Logos -->
             <div class="d-flex align-items-center flex-grow-1 justify-content-center">
                 <div class="logo-container">
-                    <img src="{{ asset('asset/img/logos/SEMI_IESA_logo.png') }}" alt="SEMI IESA Logo">
-                    <img src="{{ asset('asset/img/logos/meity-logo.png') }}" alt="MeitY Logo">
-                    <img src="{{ asset('asset/img/logos/ism_logo.png') }}" alt="ISM Logo">
-                    <img src="{{ asset('asset/img/logos/DIC_Logo.webp') }}" alt="Digital India Logo">
+{{--                    <img src="{{ asset('asset/img/logos/SEMI_IESA_logo.png') }}" alt="SEMI IESA Logo">--}}
+{{--                    <img src="{{ asset('asset/img/logos/meity-logo.png') }}" alt="MeitY Logo">--}}
+{{--                    <img src="{{ asset('asset/img/logos/ism_logo.png') }}" alt="ISM Logo">--}}
+{{--                    <img src="{{ asset('asset/img/logos/DIC_Logo.webp') }}" alt="Digital India Logo">--}}
                 </div>
             </div>
 

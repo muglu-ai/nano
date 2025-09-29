@@ -52,7 +52,6 @@
     </div>
     @yield('content')
 
-
 </main>
 
 <footer class="footer py-3 w-100 mt-3">
