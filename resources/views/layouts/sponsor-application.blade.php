@@ -6,30 +6,28 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
     <link rel="icon" href="https://www.bengalurutechsummit.com/favicon-16x16.png" type="image/vnd.microsoft.icon" />
     <title>
-        @yield('title' , 'SEMICON India 2025')
+        {{ config('constants.EVENT_NAME') . ' ' . config('constants.EVENT_YEAR') . ' Admin Panel' }}
     </title>
-
-
-
-    <link rel="stylesheet" href="/assets/css/form_custom.css">
     <!--     Fonts and icons     -->
     <link rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css?family=Inter:300,400,500,600,700,900" />
-    <!-- Nucleo Icons -->
-    <link href="/asset/css/nucleo-icons.css" rel="stylesheet" />
-    <link href="/asset/css//nucleo-svg.css" rel="stylesheet" />
+
     <!-- Font Awesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.1/css/all.min.css" integrity="sha512-5Hs3dF2AEPkpNAR7UiOHba+lRSJNeM2ECkwxUIxC1Q/FLycGTbNapWXB4tP889k5T5Ju8fs4b1P5z/iB4nMfSQ==" crossorigin="anonymous" referrerpolicy="no-referrer">
     <!-- Material Icons -->
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0" />
     <!-- CSS Files -->
-    <link id="pagestyle" href="/asset/css/material-dashboard.min.css?v=3.1.0" rel="stylesheet" />
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link id="pagestyle" href="{{ asset('asset/css/material-dashboard.min.css?v=3.1.0') }}" rel="stylesheet" />
+    <link id="pagestyle" href="{{ asset('public/asset/css/material-dashboard.min.css?v=3.1.0') }}" rel="stylesheet" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/js/intlTelInput.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/css/intlTelInput.min.css" />
+    <link rel="stylesheet" href="{{ asset('assets/css/custom.css') }}" />
+    <link rel="stylesheet" href="{{ asset('public/assets/css/custom.css') }}" />
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-
     <!-- Anti-flicker snippet (recommended)  -->
     <style>
         .async-hide {
@@ -207,15 +205,21 @@
 
 
 <!--   Core JS Files   -->
-<script src="/asset/js/core/popper.min.js"></script>
-<script src="/asset/js/core/bootstrap.min.js"></script>
-<script src="/asset/js/plugins/perfect-scrollbar.min.js"></script>
-<script src="/asset/js/plugins/smooth-scrollbar.min.js"></script>
-<script src="/asset/js/plugins/choices.min.js"></script>
-<script src="/asset/js/plugins/dropzone.min.js"></script>
-<script src="/assets/js/plugins/quill.min.js"></script>
-<script src="/assets/plugins/multistep-form.js"></script>
-<script src="/asset/js/plugins/choices.min.js"></script>
+<script src="{{ asset('asset/js/core/popper.min.js') }}"></script>
+<script src="{{ asset('public/asset/js/core/popper.min.js') }}"></script>
+<script src="{{ asset('asset/js/core/bootstrap.min.js') }}"></script>
+<script src="{{ asset('public/asset/js/core/bootstrap.min.js') }}"></script>
+<script src="{{ asset('asset/js/plugins/perfect-scrollbar.min.js') }}"></script>
+<script src="{{ asset('public/asset/js/plugins/perfect-scrollbar.min.js') }}"></script>
+<script src="{{ asset('asset/js/plugins/smooth-scrollbar.min.js') }}"></script>
+<script src="{{ asset('public/asset/js/plugins/smooth-scrollbar.min.js') }}"></script>
+<!-- Kanban scripts -->
+<script src="{{ asset('asset/js/plugins/dragula/dragula.min.js') }}"></script>
+<script src="{{ asset('public/asset/js/plugins/dragula/dragula.min.js') }}"></script>
+<script src="{{ asset('asset/js/plugins/jkanban/jkanban.min.js') }}"></script>
+<script src="{{ asset('public/asset/js/plugins/jkanban/jkanban.min.js') }}"></script>
+
+
 <script>
     if (document.getElementById('edit-deschiption')) {
         var quill = new Quill('#edit-deschiption', {
@@ -342,7 +346,8 @@
 <!-- Github buttons -->
 <script async defer src="https://buttons.github.io/buttons.js"></script>
 <!-- Control Center for Material Dashboard: parallax effects, scripts for the example pages etc -->
-<script src="/asset/js/material-dashboard.min.js?v=3.1.0"></script>
+<script src="{{ asset('asset/js/core/datatables.js') }}"></script>
+<script src="{{ asset('public/asset/js/core/datatables.js') }}"></script>
 </body>
 
 </html>
