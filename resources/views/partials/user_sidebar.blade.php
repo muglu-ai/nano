@@ -152,7 +152,7 @@
 
             {{--            </li>--}}
             <li class="nav-item mt-3">
-                <h6 class="ps-3  ms-2 text-uppercase text-xs font-weight-bolder text-dark">Passes</h6>
+                <h6 class="ps-3  ms-2 text-uppercase text-xs font-weight-bolder text-dark">Registrations</h6>
             </li>
             <li class="nav-item">
                 <a data-bs-toggle="" href="{{route('user.dashboard')}}#passes" class="nav-link"
@@ -160,7 +160,7 @@
                    role="button" aria-expanded="false">
                     <i class="fa-solid fa-ticket" style="color: #0a0a0a"></i>
                     <span class="nav-link-text ms-1 ps-1" style="color: #090909; font-weight: 600;">
-                        Passes
+                        Registrations
                     </span>
                 </a>
                 {{--                <div class="collapse" id="pagesExamples">--}}
