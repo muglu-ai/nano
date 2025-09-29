@@ -116,20 +116,20 @@
                 </div>
             </li>
             <hr class="horizontal dark mt-0">
-            <li class="nav-item">
-                <ul class="nav ">
-                    <li class="nav-item">
-                        @php
-                            $active1 = route('exhibitor.invoices') ? 'active' : '';
-                        @endphp
-                        <a class="nav-link text-dark " href="{{ route('exhibitor.invoices') }}">
-                            <i class="fa-solid fa-file-invoice"></i>
-                            <span class="sidenav-normal  ms-1  ps-1">Receipts</span>
-                        </a>
-                    </li>
-                </ul>
+{{--            <li class="nav-item">--}}
+{{--                <ul class="nav ">--}}
+{{--                    <li class="nav-item">--}}
+{{--                        @php--}}
+{{--                            $active1 = route('exhibitor.invoices') ? 'active' : '';--}}
+{{--                        @endphp--}}
+{{--                        <a class="nav-link text-dark " href="{{ route('exhibitor.invoices') }}">--}}
+{{--                            <i class="fa-solid fa-file-invoice"></i>--}}
+{{--                            <span class="sidenav-normal  ms-1  ps-1">Receipts</span>--}}
+{{--                        </a>--}}
+{{--                    </li>--}}
+{{--                </ul>--}}
 
-            </li>
+{{--            </li>--}}
 
             <li class="nav-item">
                 <a class="nav-link text-dark" href="{{ route('exhibitor.info') }}">
