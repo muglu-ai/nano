@@ -57,7 +57,8 @@ use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Route;
 use Mews\Captcha\Facades\Captcha;
 
-
+Route::get('/{event}/onboarding', [ApplicationController::class, 'showForm2'])->name('event.onboarding')->middleware(CheckUser::class);
+Route::get('/{event}/onboarding', [ApplicationController::class, 'showForm2'])->name('new_form')->middleware(CheckUser::class);
 //Exhibitor Controller
 Route::get('dashboard', [DashboardController::class, 'exhibitorDashboard'])->name('user.dashboard')->middleware(CheckUser::class);
 
@@ -297,7 +298,6 @@ Route::patch('/attendee/{unique_id}/update', [AttendeeController::class, 'update
  * */
 Route::get('/onboard/{id}', [ApplicationController::class, 'OnboardingEmail'])->name('OnboardingEmail');
 Route::patch('logo_link', [ApplicationController::class, 'saveLogoLink'])->name('user.logo.update')->middleware(SharedMiddleware::class);
-Route::get('/{event}/onboarding', [ApplicationController::class, 'showForm2'])->name('exhibitor_application');
 
 //download application form
 Route::get('/download-application-form', [ApplicationController::class, 'exportPDF'])->name('download.application.form')->middleware(CheckUser::class);

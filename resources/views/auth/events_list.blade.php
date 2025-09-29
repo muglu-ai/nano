@@ -67,7 +67,7 @@
                                     $dashboard = null;
                                     $buttonText = 'Apply';
                                     $buttonClass = 'bg-gradient-dark';
-                                    $buttonLink = route('event.onboarding', ['slug' => $event->slug]);
+                                    $buttonLink = route('new_form', ['event' => $event->slug ?? '']);
                                 }
                             @endphp
 
