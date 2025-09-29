@@ -65,6 +65,9 @@
                                     $buttonLink = $isApproved ? route('preview') : route('event.onboarding', ['slug' => $event->slug]);
                                 } catch (\Exception $e) {
                                     $dashboard = null;
+                                    $buttonText = 'Apply';
+                                    $buttonClass = 'bg-gradient-dark';
+                                    $buttonLink = route('event.onboarding', ['slug' => $event->slug]);
                                 }
                             @endphp
 
