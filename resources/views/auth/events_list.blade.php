@@ -62,7 +62,7 @@
                                     // Set button attributes
                                     $buttonClass = $applicationExists ? 'btn-success' : 'bg-gradient-dark';
                                     $buttonText = $applicationExists ? 'Continue booking' : 'Apply';
-                                    $buttonLink = $isApproved ? '/preview' : "/{$event->slug}/onboarding";
+                                    $buttonLink = $isApproved ? route('preview') : route('event.onboarding', ['slug' => $event->slug]);
                                 } catch (\Exception $e) {
                                     $dashboard = null;
                                 }
