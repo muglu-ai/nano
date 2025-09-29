@@ -123,10 +123,12 @@
                                 <p class="form-control-plaintext mb-0">{{ $application->stallNumber ?? '-' }}</p>
                             </div>
                             @endif
-                            <div class="col-md-4">
-                                <label class="form-label fw-bold text-nowrap">Allocated Size:</label>
-                                <p class="form-control-plaintext mb-0">{{ $application->allocated_sqm ?? '-' }} SQM</p>
-                            </div>
+                            @if($application->stall_category !== 'Startup Booth')
+                                <div class="col-md-4">
+                                    <label class="form-label fw-bold text-nowrap">Allocated Size:</label>
+                                    <p class="form-control-plaintext mb-0">{{ $application->allocated_sqm ?? '-' }} SQM</p>
+                                </div>
+                            @endif
                             <div class="col-md-4">
                                 <label class="form-label fw-bold text-nowrap">Stall Type:</label>
                                 <p class="form-control-plaintext mb-0">{{ $application->stall_category ?? '-' }}</p>
