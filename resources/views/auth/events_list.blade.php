@@ -78,9 +78,9 @@
                                     </a>
                                 @endif
 
-                                <a href="{{ $buttonLink }}" class="btn {{ $buttonClass }} ms-2 me-3">
-                                    <i class="material-symbols-rounded text-white text-lg "></i>{{ $buttonText }}
-                                </a>
+{{--                                <a href="{{ $buttonLink }}" class="btn {{ $buttonClass }} ms-2 me-3">--}}
+{{--                                    <i class="material-symbols-rounded text-white text-lg "></i>{{ $buttonText }}--}}
+{{--                                </a>--}}
                             </div>
                         </div>
                     </div>

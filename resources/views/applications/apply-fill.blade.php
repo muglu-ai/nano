@@ -69,7 +69,7 @@
                                     <!-- Participation Type -->
                                     <div class="col m12">
                                         <label for="participation_type">Please select an option of your participation in
-                                            SEMICON India</label>
+                                            {{config('constants.EVENT_NAME')}}</label>
                                         <div
                                             style="display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-left: 5px;">
                                             @foreach($participation_type as $type => $status)
