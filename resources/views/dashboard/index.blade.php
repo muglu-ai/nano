@@ -268,6 +268,45 @@
             @endforeach
         </div>
 
+        {{--Third row to display the action items -- }}
+        {{--
+        //if the $directoryFilled is true then show the card with green tick else show the card with red cross
+        --}}
+
+        <div class="row mt-4">
+            <div class="col-12 mb-3" id="action-items">
+                <h5 class="font-weight-bolder">Your Action Items</h5>
+                <hr>
+            </div>
+
+            <div class="col-xl-3 col-sm-6 mb-4">
+                <div class="card h-100" style="min-height: 70px; min-width: 100%;">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <div>
+                            <p class="text-m mb-0 text-bold text-capitalize">Directory Listing</p>
+                            @if($directoryFilled)
+                                <h4 class="mb-0 text-success"><i class="fa-solid fa-check-circle me-2"></i>Completed</h4>
+                            @else
+                                <h4 class="mb-0 text-danger"><i class="fa-solid fa-xmark-circle me-2"></i>Pending</h4>
+                            @endif
+                        </div>
+                        <div class="icon icon-md icon-shape bg-gradient-dark text-center border-radius-lg">
+                            <i class="fa-solid fa-list opacity-10"></i>
+                        </div>
+                    </div>
+                    <div class="card-footer">
+                        @if($directoryFilled)
+                            <p class="mb-0 text-sm"><a href="{{ route('user.directory.edit') }}" class="text-info font-weight-bolder">Click to edit</a></p>
+                        @else
+                            <p class="mb-0 text-sm"><a href="{{ route('user.directory.edit') }}" class="text-danger font-weight-bolder">Click to complete your directory listing</a></p>
+                        @endif
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+
         @php
             /*
 

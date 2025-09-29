@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Application;
 use App\Models\ExhibitionParticipant;
+use App\Models\ExhibitorInfo;
 use App\Models\Invoice;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -205,8 +206,10 @@ class DashboardController extends Controller
             $application = Application::where('user_id', auth()->id())->first();
             //get the exhibitor and delegate count from the exhibitionParticipation table where application id is same as the application id
             $exhibitionParticipant = ExhibitionParticipant::where('application_id', $applicationId)->first();
+            $directoryFilled = ExhibitorInfo::where('application_id', $applicationId)->exists();
 
-            return view('dashboard.index', compact('exhibitionParticipant', 'application'));
+
+            return view('dashboard.index', compact('exhibitionParticipant', 'application', 'directoryFilled'));
             return view('dashboard.index');
         } elseif ($user->role == 'admin') {
             $analytics = app('analytics');

@@ -302,12 +302,18 @@
                                 </div>
                             </div>
 
+                            @if(!empty($exhibitorInfo->id))
+                                <div class="alert alert-info mt-4" role="alert">
+                                    You have already submitted your exhibitor information. To make changes, please
+                                    contact support.
+                                </div>
+                            @else
                             <div class="button-row d-flex mt-4">
                                 <button class="btn bg-gradient-dark ms-auto mb-0" type="submit"
                                         title="Save">Submit
                                 </button>
                             </div>
-
+                            @endif
                         </div>
                     </div>
                 </form>
