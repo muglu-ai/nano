@@ -755,6 +755,7 @@ class ApplicationController extends Controller
 
     public function apply()
     {
+        return redirect()->route('event.list');
         $this->__construct();
         //if already filled the form then show the form with the filled data
         $application = Application::where('user_id', auth()->id())->latest()->first();
@@ -788,6 +789,7 @@ class ApplicationController extends Controller
     }
     public function apply_spon()
     {
+        return redirect()->route('event.list');
         $this->__construct();
         //if already filled the form then show the form with the filled data
         $application = Application::where('user_id', auth()->id())->latest()->first();
@@ -819,6 +821,7 @@ class ApplicationController extends Controller
     }
     public function apply_new()
     {
+        return redirect()->route('event.list');
         $this->__construct();
         //if already filled the form then show the form with the filled data
         $application = Application::where('user_id', auth()->id())->latest()->first();
@@ -902,6 +905,7 @@ class ApplicationController extends Controller
     //terms and conditions with I acknowledge that I have read the above terms and condition carefully.* checkbox
     public function terms()
     {
+        return redirect()->route('event.list');
         $this->__construct();
         $application = Application::where('user_id', auth()->id())->latest()->first();
         return view('applications.terms_new', compact('application'));
@@ -910,6 +914,7 @@ class ApplicationController extends Controller
     //terms and conditions with I acknowledge that I have read the above terms and condition carefully.* checkbox
     public function terms_store(Request $request)
     {
+        return redirect()->route('event.list');
         $this->__construct();
         $validatedData = $request->validate([
             'terms_accepted' => 'accepted',
@@ -931,6 +936,7 @@ class ApplicationController extends Controller
     //preview of everything filled by the user.
     public function preview()
     {
+        return redirect()->route('event.list');
         $this->__construct();
         //if user is not logged in then redirect to login page
 
@@ -966,6 +972,8 @@ class ApplicationController extends Controller
     //final
     public function final(Request $request)
     {
+        //redirect to event.list
+        return redirect()->route('event.list');
         $this->__construct();
         $application = Application::where('user_id', auth()->id())->latest()->first();
 
@@ -1156,6 +1164,9 @@ class ApplicationController extends Controller
     //export pdf of the application
     public function exportPDF(Request $request)
     {
+
+        //redirect to event.list
+        return redirect()->route('event.list');
         $this->__construct();
         //get the application id from the auth user 
         //get auth user id
@@ -1185,6 +1196,7 @@ class ApplicationController extends Controller
     }
     public function exportPDF_admin(Request $request)
     {
+
         $this->__construct();
         //get the application id from the auth user 
         //get auth user id
