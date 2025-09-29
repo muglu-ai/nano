@@ -32,7 +32,10 @@ class DashboardController extends Controller
             // change this to cheeck just for approved application 
             $application = Application::where('user_id', $user->id)
                 ->where('submission_status', 'approved')
-                ->where('allocated_sqm', '>', 0)
+                ->where(function ($query) {
+                    $query->where('allocated_sqm', '>', 0)
+                          ->orWhere('allocated_sqm', '=', 'Startup Booth');
+                })
                 ->first();
 
             //verified if the application has invoices with successful payments
@@ -95,7 +98,10 @@ class DashboardController extends Controller
         if ($user->role == 'exhibitor') {
             $application = Application::where('user_id', auth()->user()->id)
                 ->where('submission_status', 'approved')
-                ->where('allocated_sqm', '>', 0)
+                ->where(function ($query) {
+                    $query->where('allocated_sqm', '>', 0)
+                        ->orWhere('allocated_sqm', '=', 'Startup Booth');
+                })
 
                 // ->whereHas('invoices.payments', function ($query) {
                 //     $query->where('status', 'successful');
@@ -178,7 +184,10 @@ class DashboardController extends Controller
         if ($user->role == 'exhibitor') {
             $application = Application::where('user_id', auth()->user()->id)
                 ->where('submission_status', 'approved')
-                ->where('allocated_sqm', '>', 0)
+                ->where(function ($query) {
+                    $query->where('allocated_sqm', '>', 0)
+                        ->orWhere('allocated_sqm', '=', 'Startup Booth');
+                })
 
                 // ->whereHas('invoices.payments', function ($query) {
                 //     $query->where('status', 'successful');

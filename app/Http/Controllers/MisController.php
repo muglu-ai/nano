@@ -18,12 +18,12 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 
 
-
 class MisController extends Controller
 {
 
 
-    public function count(){
+    public function count()
+    {
         $extraOrderUserIds = RequirementsOrder::distinct()->pluck('user_id')->toArray();
 
         // Passes Used User IDs
@@ -58,7 +58,10 @@ class MisController extends Controller
 
         $paidPartialUserIds = User::whereHas('applications', function ($q) {
             $q->where('submission_status', 'approved')
-            ->where('allocated_sqm', '>', 0);
+                ->where(function ($query) {
+                    $query->where('allocated_sqm', '>', 0)
+                        ->orWhere('allocated_sqm', '=', 'Startup Booth');
+                });
         })->pluck('id')->toArray();
 
         // Active Users
@@ -79,7 +82,7 @@ class MisController extends Controller
         $inactiveUserIds = array_diff($notActiveCriteriaUserIds, $activeUserIds);
 
         return [
-            'active_count'   => count($activeUserIds),
+            'active_count' => count($activeUserIds),
             'inactive_count' => count($inactiveUserIds),
         ];
     }
@@ -102,7 +105,6 @@ class MisController extends Controller
         $validated = $request->validate([
             'country_id' => 'required|integer',
         ]);
-
 
 
         $states = State::where('country_id', $request->country_id)->get();
@@ -179,8 +181,10 @@ class MisController extends Controller
         // })->count();
         $usersWithPaidApps = \App\Models\User::whereHas('applications', function ($q) {
             $q->where('submission_status', 'approved')
-            ->where('allocated_sqm', '>', 0)
-            ;
+                ->where(function ($query) {
+                    $query->where('allocated_sqm', '>', 0)
+                        ->orWhere('allocated_sqm', '=', 'Startup Booth');
+                });
         })->count();
         // Count approved co-exhibitors with paid/partial invoices
         // $coExhibitorPaidCount = \App\Models\CoExhibitor::where('status', 'approved')->count();
@@ -224,9 +228,6 @@ class MisController extends Controller
         $logoCount = $this->getApplicationsWithLogo();
 
         // dd("Fascia Name: $fasciaName, Logo Count: $logoCount");
-
-
-
 
 
         return view('admin.activeUserAnalytics', [
@@ -346,9 +347,9 @@ class MisController extends Controller
 
                 $participant = $mainApp->exhibitionParticipant;
                 if ($participant && (
-                    ($participant->stallManning && $participant->stallManning->count() > 0)
-                    || ($participant->complimentaryDelegates && $participant->complimentaryDelegates->count() > 0)
-                )) {
+                        ($participant->stallManning && $participant->stallManning->count() > 0)
+                        || ($participant->complimentaryDelegates && $participant->complimentaryDelegates->count() > 0)
+                    )) {
                     $passesUsed = 'Yes';
                 }
             }
@@ -357,7 +358,7 @@ class MisController extends Controller
                 $passesUsed = 'Yes';
             }
 
-            $extraOrder    = in_array($user->id, $extraOrderUserIds) ? 'Yes' : 'No';
+            $extraOrder = in_array($user->id, $extraOrderUserIds) ? 'Yes' : 'No';
             $hasInvitation = in_array($user->id, $invitationLetterUserIds) ? 'Yes' : 'No';
 
             //if $company is N/A then try to search CoExhibitor model with email 
@@ -372,15 +373,15 @@ class MisController extends Controller
             }
 
             $rows[] = [
-                'Company Name'               => $company,
-                'Registered User'            => $user->name,
-                'Registered Email'           => $user->email,
-                'Contact Person Name'        => $contactName,
-                'Contact Email'              => $contactEmail,
-                'Contact Phone'              => $contactPhone,
-                'Extra Item Order Placed'    => $extraOrder,
-                'Invitation Letter Issued'   => $hasInvitation,
-                'Passes Claimed'             => $passesUsed
+                'Company Name' => $company,
+                'Registered User' => $user->name,
+                'Registered Email' => $user->email,
+                'Contact Person Name' => $contactName,
+                'Contact Email' => $contactEmail,
+                'Contact Phone' => $contactPhone,
+                'Extra Item Order Placed' => $extraOrder,
+                'Invitation Letter Issued' => $hasInvitation,
+                'Passes Claimed' => $passesUsed
             ];
         }
 
@@ -389,14 +390,17 @@ class MisController extends Controller
 
         return Excel::download(new class($rows) implements \Maatwebsite\Excel\Concerns\FromArray, \Maatwebsite\Excel\Concerns\WithHeadings {
             private $rows;
+
             public function __construct($rows)
             {
                 $this->rows = $rows;
             }
+
             public function array(): array
             {
                 return $this->rows;
             }
+
             public function headings(): array
             {
                 return [
@@ -453,9 +457,12 @@ class MisController extends Controller
         // })->pluck('id')->toArray();
 
         $paidPartialUserIds = User::whereHas('applications', function ($q) {
-    $q->where('submission_status', 'approved')
-    ->where('allocated_sqm', '>', 0)    ;
-})->pluck('id')->toArray();
+            $q->where('submission_status', 'approved')
+                ->where(function ($query) {
+                    $query->where('allocated_sqm', '>', 0)
+                        ->orWhere('allocated_sqm', '=', 'Startup Booth');
+                });
+        })->pluck('id')->toArray();
 
         // "Dashboard Active" users (as before)
         $activeUserIds = array_unique(array_merge(
@@ -531,9 +538,9 @@ class MisController extends Controller
                 }
                 $participant = $mainApp->exhibitionParticipant;
                 if ($participant && (
-                    ($participant->stallManning && $participant->stallManning->count() > 0)
-                    || ($participant->complimentaryDelegates && $participant->complimentaryDelegates->count() > 0)
-                )) {
+                        ($participant->stallManning && $participant->stallManning->count() > 0)
+                        || ($participant->complimentaryDelegates && $participant->complimentaryDelegates->count() > 0)
+                    )) {
                     $passesUsed = 'Yes';
                 }
             }
@@ -541,7 +548,7 @@ class MisController extends Controller
                 $passesUsed = 'Yes';
             }
 
-            $extraOrder    = in_array($user->id, $extraOrderUserIds) ? 'Yes' : 'No';
+            $extraOrder = in_array($user->id, $extraOrderUserIds) ? 'Yes' : 'No';
             $hasInvitation = in_array($user->id, $invitationLetterUserIds) ? 'Yes' : 'No';
 
             if ($company === 'N/A') {
@@ -557,18 +564,17 @@ class MisController extends Controller
             }
 
             $rows[] = [
-                'Company Name'               => $company,
-                'Registered User'            => $user->name,
-                'Registered Email'           => $user->email,
-                'Contact Person Name'        => $contactName,
-                'Contact Email'              => $contactEmail,
-                'Contact Phone'              => $contactPhone,
-                'Extra Item Order Placed'    => $extraOrder,
-                'Invitation Letter Issued'   => $hasInvitation,
-                'Passes Claimed'             => $passesUsed
+                'Company Name' => $company,
+                'Registered User' => $user->name,
+                'Registered Email' => $user->email,
+                'Contact Person Name' => $contactName,
+                'Contact Email' => $contactEmail,
+                'Contact Phone' => $contactPhone,
+                'Extra Item Order Placed' => $extraOrder,
+                'Invitation Letter Issued' => $hasInvitation,
+                'Passes Claimed' => $passesUsed
             ];
         }
-
 
 
         $filename = $type . '_users_export_' . date('Ymd_His') . '.csv';
@@ -590,14 +596,17 @@ class MisController extends Controller
 
         return Excel::download(new class($rows) implements \Maatwebsite\Excel\Concerns\FromArray, \Maatwebsite\Excel\Concerns\WithHeadings {
             private $rows;
+
             public function __construct($rows)
             {
                 $this->rows = $rows;
             }
+
             public function array(): array
             {
                 return $this->rows;
             }
+
             public function headings(): array
             {
                 return [
@@ -641,13 +650,15 @@ class MisController extends Controller
 
         $paidPartialUserIds = User::whereHas('applications', function ($q) {
             $q->where('submission_status', 'approved')
-            //     ->whereHas('invoices', function ($iq) {
-            //         $iq->where('type', 'Stall Booking')
-            //             ->whereIn('payment_status', ['paid', 'partial']);
-            //     }
-            // )
-            ->where('allocated_sqm', '>', 0)
-            ;
+                //     ->whereHas('invoices', function ($iq) {
+                //         $iq->where('type', 'Stall Booking')
+                //             ->whereIn('payment_status', ['paid', 'partial']);
+                //     }
+                // )
+                ->where(function ($query) {
+                    $query->where('allocated_sqm', '>', 0)
+                        ->orWhere('allocated_sqm', '=', 'Startup Booth');
+                });
         })->pluck('id')->toArray();
 
         $activeUserIds = array_unique(array_merge(
@@ -667,6 +678,7 @@ class MisController extends Controller
             'inactiveCount' => count($inactiveUserIds),
         ];
     }
+
     // get the application stall_category count for Bare Space and Shell Scheme from application table
     public function getStallCategoryCounts()
     {
@@ -686,6 +698,7 @@ class MisController extends Controller
             'shell_scheme_count' => $stallCategoryCounts['Shell Scheme'] ?? 0,
         ];
     }
+
     // get how many stall_category = Shell Scheme have filled the fascia_name and how many have not filled it
     public function getFasciaNameCounts()
     {
@@ -754,14 +767,17 @@ class MisController extends Controller
         ]);
         return Excel::download(new class($rows) implements \Maatwebsite\Excel\Concerns\FromArray, \Maatwebsite\Excel\Concerns\WithHeadings {
             private $rows;
+
             public function __construct($rows)
             {
                 $this->rows = $rows;
             }
+
             public function array(): array
             {
                 return $this->rows;
             }
+
             public function headings(): array
             {
                 return [
@@ -803,14 +819,17 @@ class MisController extends Controller
         ]);
         return Excel::download(new class($rows) implements \Maatwebsite\Excel\Concerns\FromArray, \Maatwebsite\Excel\Concerns\WithHeadings {
             private $rows;
+
             public function __construct($rows)
             {
                 $this->rows = $rows;
             }
+
             public function array(): array
             {
                 return $this->rows;
             }
+
             public function headings(): array
             {
                 return [

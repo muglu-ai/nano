@@ -39,7 +39,10 @@
                                     // Fetch the application with conditions
                                     $dashboard = App\Models\Application::hasApplication($userId, $eventId)
                                         ->where('submission_status', 'approved')
-                                        ->where('allocated_sqm', '>', 0)
+                                        ->where(function ($query) {
+                                            $query->where('allocated_sqm', '>', 0)
+                                                  ->orWhere('allocated_sqm', '=', 'Startup Booth');
+                                        })
                                         ->first();
                                         // ->whereHas('invoice', function($query) {
                                         //    $query->where('type', 'Stall Booking')

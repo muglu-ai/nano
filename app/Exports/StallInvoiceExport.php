@@ -15,7 +15,10 @@ class StallInvoiceExport implements FromCollection, WithHeadings
     public function collection()
     {
         $applications = Application::where('submission_status', 'approved')
-            ->where('allocated_sqm', '>', 0)
+            ->where(function ($query) {
+                $query->where('allocated_sqm', '>', 0)
+                    ->orWhere('allocated_sqm', '=', 'Startup Booth');
+            })
             ->get();
 
         $rows = [];

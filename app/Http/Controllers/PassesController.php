@@ -485,7 +485,10 @@ class PassesController extends Controller
             // Query for approved applications with passes allocation
             $query = Application::with(['exhibitionParticipant', 'user', 'billingDetail'])
                 ->where('submission_status', 'approved')
-                ->where('allocated_sqm', '>', 0)
+                ->where(function ($query) {
+                    $query->where('allocated_sqm', '>', 0)
+                        ->orWhere('allocated_sqm', '=', 'Startup Booth');
+                })
                 ->whereHas('exhibitionParticipant', function ($ep) {
                     $ep->where(function ($inner) {
                         $inner->where('stall_manning_count', '>', 0)
