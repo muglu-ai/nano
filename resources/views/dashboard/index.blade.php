@@ -191,7 +191,7 @@
             --}}
 
             <div class="col-12 mb-3" id="passes">
-                <h5 class="font-weight-bolder">Your Allocated Passes</h5>
+                <h5 class="font-weight-bolder">Your Registration Passes</h5>
                 <hr>
             </div>
 
