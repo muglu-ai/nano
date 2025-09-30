@@ -209,7 +209,7 @@
                                                value="{{ $exhibitorInfo->phone ?? '' }}" required autocomplete="off">
                                     </div>
                                 </div>
-                                @if (empty($exhibitorInfo->submission_status == 1))
+                                @if (empty($exhibitorInfo) || empty($exhibitorInfo->submission_status) || $exhibitorInfo->submission_status == 0)
                                     <div class="col-sm-6 mt-3 mt-sm-0">
                                         <div class="input-group input-group-dynamic is-filled {{ $cssClass }}">
                                             <label class="form-label">Upload Logo <span class="red-label">*</span>
