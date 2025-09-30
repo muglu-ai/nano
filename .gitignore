@@ -28,3 +28,5 @@ yarn-error.log
 /btsPortalChanges/public/index.php
 /btsPortalChanges/.htaccess
 /2.env
+laravel.log
+/*.log
