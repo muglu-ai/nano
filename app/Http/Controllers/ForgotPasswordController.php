@@ -42,6 +42,12 @@ class ForgotPasswordController extends Controller
     public function showResetPasswordForm($token, $email)
     {
 
+        //check if the token and email are valid
+        $user = User::where('email', $email)->first();
+        if (!$user || !Hash::check($token, $user->password_reset_token) || Carbon::now()->gt($user->password_reset_expires_at)) {
+            return redirect('/forgot-password')->withErrors(['token' => 'Invalid or expired token. Please request a new password reset link.']);
+        }
+
         //get the email from the token and pass it to the view
         return view('auth.reset-password', compact('token', 'email'));
     }

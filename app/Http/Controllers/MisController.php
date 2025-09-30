@@ -60,7 +60,9 @@ class MisController extends Controller
             $q->where('submission_status', 'approved')
                 ->where(function ($query) {
                     $query->where('allocated_sqm', '>', 0)
-                        ->orWhere('allocated_sqm', '=', 'Startup Booth');
+                        ->orWhere('allocated_sqm', '=', 'Startup Booth')
+                        ->orWhere('allocated_sqm', '=', 'Booth / POD')
+                    ;
                 });
         })->pluck('id')->toArray();
 
@@ -183,7 +185,9 @@ class MisController extends Controller
             $q->where('submission_status', 'approved')
                 ->where(function ($query) {
                     $query->where('allocated_sqm', '>', 0)
-                        ->orWhere('allocated_sqm', '=', 'Startup Booth');
+                        ->orWhere('allocated_sqm', '=', 'Startup Booth')
+                        ->orWhere('allocated_sqm', '=', 'Booth / POD')
+                    ;
                 });
         })->count();
         // Count approved co-exhibitors with paid/partial invoices
@@ -460,7 +464,10 @@ class MisController extends Controller
             $q->where('submission_status', 'approved')
                 ->where(function ($query) {
                     $query->where('allocated_sqm', '>', 0)
-                        ->orWhere('allocated_sqm', '=', 'Startup Booth');
+                        ->orWhere('allocated_sqm', '=', 'Startup Booth')
+                        ->orWhere('allocated_sqm', '=', 'Booth / POD')
+
+                    ;
                 });
         })->pluck('id')->toArray();
 
@@ -657,7 +664,10 @@ class MisController extends Controller
                 // )
                 ->where(function ($query) {
                     $query->where('allocated_sqm', '>', 0)
-                        ->orWhere('allocated_sqm', '=', 'Startup Booth');
+                        ->orWhere('allocated_sqm', '=', 'Startup Booth')
+                        ->orWhere('allocated_sqm', '=', 'Booth / POD')
+
+                    ;
                 });
         })->pluck('id')->toArray();
 

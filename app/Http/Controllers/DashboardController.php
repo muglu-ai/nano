@@ -35,7 +35,9 @@ class DashboardController extends Controller
                 ->where('submission_status', 'approved')
                 ->where(function ($query) {
                     $query->where('allocated_sqm', '>', 0)
-                          ->orWhere('allocated_sqm', '=', 'Startup Booth');
+                          ->orWhere('allocated_sqm', '=', 'Startup Booth')
+                        ->orWhere('allocated_sqm', '=', 'Booth / POD')
+                    ;
                 })
                 ->first();
 
@@ -101,7 +103,9 @@ class DashboardController extends Controller
                 ->where('submission_status', 'approved')
                 ->where(function ($query) {
                     $query->where('allocated_sqm', '>', 0)
-                        ->orWhere('allocated_sqm', '=', 'Startup Booth');
+                        ->orWhere('allocated_sqm', '=', 'Startup Booth')
+                        ->orWhere('allocated_sqm', '=', 'Booth / POD')
+                    ;
                 })
 
                 // ->whereHas('invoices.payments', function ($query) {
@@ -185,12 +189,15 @@ class DashboardController extends Controller
         if (!auth()->check()) {
             return redirect('/login');
         }
+
+        //dd($user->role);
         if ($user->role == 'exhibitor') {
             $application = Application::where('user_id', auth()->user()->id)
                 ->where('submission_status', 'approved')
                 ->where(function ($query) {
                     $query->where('allocated_sqm', '>', 0)
-                        ->orWhere('allocated_sqm', '=', 'Startup Booth');
+                        ->orWhere('allocated_sqm', '=', 'Startup Booth')
+                        ->orWhere('allocated_sqm', '=', 'Booth / POD');
                 })
 
                 // ->whereHas('invoices.payments', function ($query) {

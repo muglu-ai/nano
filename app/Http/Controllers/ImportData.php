@@ -2,11 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\ExhibitionParticipant;
 use Illuminate\Http\Request;
 use mysqli;
 use DB;
 use App\Models\User;
-//use application model
 use App\Models\Application;
 use Illuminate\Support\Facades\Hash;
 use App\Models\EventContact;
@@ -15,14 +15,11 @@ use App\Models\Invoice;
 use App\Models\Payment;
 use App\Models\Sector;
 
-
 class ImportData extends Controller
 {
-
-    //create a db connection function
+    // Remote DB connection
     public function dbConnection()
     {
-        // Database connection logic here
         $host = "95.216.2.164";
         $username = "btsblnl265_asd1d_bengaluruite";
         $password = "Disl#vhfj#Af#DhW65";
@@ -35,278 +32,256 @@ class ImportData extends Controller
         return $connection;
     }
 
-    //
     public function importUsers(Request $request)
     {
-
-
-        // run a query to fetch data from the remote database
         $connection = $this->dbConnection();
 
-        //select * from the it_2025_exhibitors_dir_payment_tbl where payment_status is 'Paid'
-        $query = "SELECT * FROM it_2025_exhibitors_dir_payment_tbl";
-        $result = $connection->query
-        ($query);
+        $query = "SELECT * FROM it_2025_exhibitors_dir_payment_tbl where pay_status = 'PAID' and srno =212";
+        $result = $connection->query($query);
         $data = [];
-        if ($result->num_rows > 0) {
-            while ($row = $result->fetch_assoc()) {
-                $data[] = $row;
-            }
+        while ($row = $result->fetch_assoc()) {
+            $data[] = $row;
         }
-
-
-
         $connection->close();
 
-        //create a user for each row in the data array
+        //print_r($data);
+
         foreach ($data as $row) {
 
-            $name = $row['cp_title']. ' '. $row['cp_fname'] . ' ' . $row['cp_lname'];
-            $email = $row['cp_email'];
-            $mobile = $row['cp_mobile'];
-            //get the country code out of the mobile number 91-9573600744
-            $countryCode = explode('-', $mobile)[0];
-            $mobile = explode('-', $mobile)[1];
-            //remove the country code from the mobile number
-            //check if user already exists
-            //clean the company name from &amp; to &
-            $row['exhibitor_name'] = str_replace('&amp;', '&', $row['exhibitor_name']);
-            //clean Chadha &amp;amp;amp; Chadha IP Law firm to Chadha & Chadha IP Law firm
-            $row['exhibitor_name'] = str_replace('amp;', '&', $row['exhibitor_name']);
-            //clean website from &amp; to &
-            $row['website'] = str_replace('&amp;', '&', $row['website']);
-            //clean   from the company name
-            $row['exhibitor_name'] = str_replace(' ', ' ', $row['exhibitor_name']);
+            //dd($row);
 
-            //clean addr1 from &amp; to &
-            $row['addr1'] = str_replace('&amp;', '&', $row['addr1']);
-            //clean cp_desig from &amp; to &
-            $row['cp_desig'] = str_replace('&amp;', '&', $row['cp_desig']);
+            /** ---------------------------
+             * Step 1: Normalize & Prepare $command
+             * ----------------------------*/
+            $command = [];
 
-            $existingUser = User::where('email', $email)->first();
-            if ($existingUser) {
-                //skip that row and continue
-                continue;
+            $command['contact_person'] = trim($row['cp_fname'] . ' ' . $row['cp_lname']);
+            $command['email'] = $row['cp_email'];
+
+            // Mobile split (91-9573600744)
+            $mobileSplit = explode('-', $row['cp_mobile']);
+            $command['country_code'] = $mobileSplit[0] ?? null;
+            $command['phone'] = $mobileSplit[1] ?? $row['cp_mobile'];
+
+            // Clean company name & fields
+            $command['company'] = $this->cleanString($row['exhibitor_name']);
+            $command['website'] = $this->cleanString($row['website']);
+            $command['address'] = $this->cleanString($row['addr1']);
+            $command['designation'] = $this->cleanString($row['cp_desig']);
+
+            // Ensure website starts with https
+            if (!str_starts_with($command['website'], 'http')) {
+                $command['website'] = 'https://' . $command['website'];
             }
 
-            else {
+            // Lookup foreign keys
+            $command['sector_id'] = Sector::where('name', $row['sector'])->value('id');
+            $command['state_id']  = DB::table('states')->where('name', $row['state'])->value('id');
+            $command['country_id'] = DB::table('countries')->where('name', $row['country'])->value('id');
+
+            // Random password
+            $command['password_plain'] = substr(str_shuffle('abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'), 0, 8);
+            $command['password_hashed'] = Hash::make($command['password_plain']);
+
+            // Stall category
+            if (str_contains($row['booth_area'], 'Shell')) {
+                $command['stall_category'] = 'Shell Scheme';
+            } elseif (str_contains($row['booth_area'], 'Raw')) {
+                $command['stall_category'] = 'Raw Space';
+            } else {
+                $command['stall_category'] = 'Startup Booth';
+            }
+
+            $command['row'] = $row; // keep raw row for fallback
+
+            /** ---------------------------
+             * Step 2: Check existing user
+             * ----------------------------*/
+            $user = User::where('email', $command['email'])->first();
+
+            if ($user) {
+                echo "User with email {$command['email']} already exists. Updating...\n";
+            } else {
+                /** ---------------------------
+                 * Step 3: Create User
+                 * ----------------------------*/
+                $user = User::create([
+                    'name' => $command['contact_person'],
+                    'email' => $command['email'],
+                    'password' => $command['password_hashed'],
+                    'simplePass' => $command['password_plain'],
+                    'role' => 'exhibitor',
+                    'phone' => $command['phone'],
+                    'email_verified_at' => now(),
+                ]);
+                echo "Created user: {$user->email} with password: {$command['password_plain']}\n";
+            }
 
 
-                $user = new User();
-                //name as cp_fname + cp_lname
-                $row ['contact_person'] = $row['cp_fname'] . ' ' . $row['cp_lname'];
+            /** ---------------------------
+             * Step 4: Create Application
+             * ----------------------------*/
+            $application = Application::updateOrCreate(
+                ['user_id' => $user->id],
+                [
+                'user_id' => $user->id,
+                'company_name' => $command['company'],
+                'website' => $command['website'],
+                'address' => $command['address'],
+                'city_id' => $row['city'],
+                'companyYears' => $row['company_years'] ?? null,
+                'certificate' => $row['ci_certf'],
+                'sector_id' => $command['sector_id'],
+                'subSector' => $row['subsector'],
+                'event_id' => 1,
+                'stall_category' => $command['stall_category'],
+                'exhibitorType' => $row['promocode'],
+                'application_id' => $row['tin_no'],
+                'interested_sqm' => $row['booth_size'],
+                'allocated_sqm' => $row['booth_size'],
+                'state_id' => $command['state_id'] ?? $row['state'],
+                'country_id' => $command['country_id'] ?? $row['country'],
+                'headquarters_country_id' => $command['country_id'] ?? $row['country'],
+                'postal_code' => $row['zip'],
+                'gst_no' => $row['gst_number'],
+                'pan_no' => $row['pan_number'],
+                'company_email' => $command['email'],
+                'gst_compliance' => !empty($row['gst_number']) ? 1 : 0,
+                'submission_status' => ($row['approval_status'] == 'Approved' || $row['pay_status'] == 'Paid') ? 'approved' : 'pending',
+                'approved_date' => ($row['approval_status'] == 'Approved' || $row['pay_status'] == 'Paid') ? $row['reg_date'] : null,
+                'assoc_mem' => $row['user_type'],
+                'boothDescription' => $row['booth_area'],
+                'participation_type' => 'Onsite',
+                'region' => ($command['country_id'] == 101 ? 'India' : 'International'),
+                'approved_by' => $row['approved_by'],
+            ]);
+            $application->save();
 
-                $user->name = $row['contact_person'];
-                $user->email = $email;
-                //generate a random password
-                $randomPassword = substr(str_shuffle('abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'), 0, 8);
+            echo "Created application for user: {$user->email}\n";
+            /** ---------------------------
+             * Step 5: Billing Details
+             * ----------------------------*/
+            BillingDetail::updateOrCreate(
+                ['application_id' => $application->id],
+                [
+                    'billing_company' => $command['company'],
+                    'contact_name' => $command['contact_person'],
+                    'email' => $command['email'],
+                    'phone' => $command['phone'],
+                    'address' => $command['address'],
+                    'city_id' => $row['city'],
+                    'state_id' => $command['state_id'],
+                    'country_id' => $command['country_id'],
+                    'postal_code' => $row['zip'],
+                ]
+            );
 
-                $user->password = Hash::make($randomPassword);
-                $user->simplePass = $randomPassword;
-                $user->role = 'exhibitor';
-                $user->phone = $mobile;
-                $user->email_verified_at = now();
-                $user->save();
+            echo "Created billing details for application ID: {$application->id}\n";
 
-                //create an application for the user
-                $application = new Application();
-                $application->user_id = $user->id;
-                $application->company_name = $row['exhibitor_name'];
-                //if website does not start with http then add http:// to the website
-                if (!str_starts_with($row['website'], 'http')) {
-                    $row['website'] = 'https://' . $row['website'];
-                }
-                $application->website = $row['website'];
-                $application->address = $row['addr1'];
-                $application->city_id = $row['city'];
-                $application->companyYears = !empty($row['company_years']) ? $row['company_years'] : null;
-                $application->certificate = $row['ci_certf'];
+            /** ---------------------------
+             * Step 6: Event Contact
+             * ----------------------------*/
+            EventContact::updateOrCreate(
+                ['application_id' => $application->id],
+                [
+                    'salutation' => $row['cp_title'],
+                    'first_name' => $row['cp_fname'],
+                    'last_name' => $row['cp_lname'],
+                    'email' => $command['email'],
+                    'contact_number' => $row['cp_mobile'],
+                    'job_title' => $command['designation'],
+                ]
+            );
 
-                //get the sector id from the sectors table where name = sector
-                $sector = Sector::where('name', $row['sector'])->first();
-                if ($sector) {
-                    $application->sector_id = json_encode($sector->id);
-                }
-//                $application->sector_id = $row['sector'];
-                $application->subSector = $row['subsector'];
-                $application->event_id = 1;
+            echo "Created event contact for application ID: {$application->id}\n";
 
-                //if booth_area contains Shell then stall_type is Shell
-                // if booth_area contains Raw then stall_type is Raw
-                // if Booth / POD then stall_type is Startup
-                if (str_contains($row['booth_area'], 'Shell')) {
-                    $application->stall_category = 'Shell Scheme';
-                } elseif (str_contains($row['booth_area'], 'Raw')) {
-                    $application->stall_category = 'Raw Space';
+            /** ---------------------------
+             * Step 7: Invoice
+             * ----------------------------*/
+            $invoice = Invoice::updateOrCreate(
+                ['application_id' => $application->id],
+                [
+                    'payment_due_date' => date('Y-m-d', strtotime($row['reg_date'] . ' +30 days')),
+                    'amount' => $row['total'],
+                    'currency' => ($row['curr'] == 'Indian' ? 'INR' : 'USD'),
+                    'payment_status' => ($row['pay_status'] == 'Paid' ? 'paid' : 'unpaid'),
+                    'type' => 'Stall Booking',
+                    'rate' => $row['selection_amt'],
+                    'gst' => $row['tax'],
+                    'processing_chargesRate' => $row['processing_charge_per'],
+                    'processing_charges' => $row['processing_charge'],
+                    'total_final_price' => $row['total'],
+                    'amount_paid' => $row['total_amt_received'] ?? 0,
+                    'invoice_no' => $row['tin_no'],
+                    'pin_no' => $row['pin_no'],
+                ]
+            );
+
+            echo "Created invoice ID: {$invoice->id} for application ID: {$application->id}\n";
+
+            /** ---------------------------
+             * Step 8: Payment (if paid)
+             * ----------------------------*/
+            if ($row['pay_status'] == 'Paid') {
+                Payment::create([
+                    'invoice_id' => $invoice->id,
+                    'order_id' => $row['pg_paymentid'] ?? null,
+                    'payment_method' => 'CCAvenue',
+                    'amount' => $row['total_amt_received'] ?? null,
+                    'amount_paid' => $row['total_amt_received'] ?? null,
+                    'transaction_id' => $row['pg_trackid'] ?? null,
+                    'payment_date' => date('Y-m-d H:i:s', strtotime($row['pg_postdate'])),
+                    'currency' => $invoice->currency,
+                    'status' => 'successful',
+                    'user_id' => $user->id,
+                ]);
+
+
+
+                /*
+                 * If Exhibitor Type is 'Startup Booth' then stall manning count = 2 and ticket allocation = '{"2": 1 }'
+                 * If booth size is 9sqm then stall manning count = 2 and ticket allocation = '{"2": 1 }'
+                 * If booth size is 18sqm then stall manning count = 4 and ticket allocation = '{"2": 2 }'
+                 * If booth size is 36sqm then stall manning count = 8 and ticket allocation = '{"2": 4 }'
+                 * */
+                if ($command['stall_category'] === 'Startup Booth' || (int)$row['booth_size'] <= 9) {
+                    $stallManningCount = 2;
+                    $ticketAllocation = '{"2": 1 }';
+                } elseif ((int)$row['booth_size'] > 9 && (int)$row['booth_size'] <= 18) {
+                    $stallManningCount = 4;
+                    $ticketAllocation = '{"2": 2 }';
+                } elseif ((int)$row['booth_size'] > 18 && (int)$row['booth_size'] <= 36) {
+                    $stallManningCount = 8;
+                    $ticketAllocation = '{"2": 4 }';
                 } else {
-                    $application->stall_category = 'Startup Booth';
-                }
-                $application->exhibitorType = $row['promocode'];
-
-                $application->application_id = $row['tin_no'];
-
-                // interested_sqm as Booth / POD value
-                $application->interested_sqm = $row['booth_size'];
-                $application->allocated_sqm = $row['booth_size'];
-
-
-
-                //find the state name from the state code
-                $state = strtolower($row['state']);
-                $stateName = DB::table('states')->where('name', $row['state'])->value('id');
-                $row['state'] = $stateName ? $stateName : $row['state'];
-
-                $application->state_id = $row['state'];
-                //country id from countries table
-                $country = strtolower($row['country']);
-                $countryId = DB::table('countries')->where('name', $row['country'])->value('id');
-                $row['country'] = $countryId ? $countryId : $row['country'];
-
-                //dd($countryId, $stateName, $row['country'], $row['state']);
-                $application->country_id = $row['country'];
-                $application->headquarters_country_id = $row['country'];
-                $application->postal_code = $row['zip'];
-                $application->gst_no = $row['gst_number'];
-                $application->pan_no = $row['pan_number'];
-                $application->company_email = $email;
-
-                //if gst_number is not null then gst_compliance = 1
-                if ($row['gst_number'] != null) {
-                    $application->gst_compliance = 1;
-                } else {
-                    $application->gst_compliance = 0;
-                }
-                //set application status to approved
-                // if row approval_status Approved then status is approved else pending
-                if ($row['approval_status'] == 'Approved') {
-                    $application->submission_status = 'approved';
-                    //get the approved date from the reg_date field
-                    $application->approved_date = $row['reg_date'];
-                } else {
-                    $application->submission_status = 'pending';
-                }
-
-                // if pay_status is paid then submission_status is approved
-                if ($row['pay_status'] == 'Paid') {
-                    $application->submission_status = 'approved';
-                    //get the approved date from the reg_date field
-                    $application->approved_date = $row['reg_date'];
-                }
-                //assoc_mem from user_type
-                $application->assoc_mem = $row['user_type'];
-
-                //
-                $application->boothDescription = $row['booth_area'];
-
-                $application->participation_type = 'Onsite';
-                //if country is india then region is india else international
-
-                $application->region = $countryId == 101 ? 'India' : 'International';
-
-                $application->approved_by = $row['approved_by'];
-                $application->save();
-
-                //create a billing detail for the user
-                $billingDetail = new BillingDetail();
-                $billingDetail->application_id = $application->id;
-                $billingDetail->billing_company = $row['exhibitor_name'];
-                $billingDetail->contact_name = $row['contact_person'];
-                $billingDetail->email = $email;
-                $billingDetail->phone = $mobile;
-                $billingDetail->address = $row['addr1'];
-                $billingDetail->city_id = $row['city'];
-                $billingDetail->state_id = $stateName;
-                $billingDetail->country_id = $countryId;
-                $billingDetail->postal_code = $row['zip'];
-                $billingDetail->save();
-
-                //create an event contact for the user
-                $eventContact = new EventContact();
-                $eventContact->application_id = $application->id;
-                //salutation
-                $eventContact->salutation = $row['cp_title'];
-                $eventContact->first_name = $row['cp_fname'];
-                $eventContact->last_name = $row['cp_lname'];
-                $eventContact->email = $email;
-                $eventContact->contact_number = $row['cp_mobile'];
-                //can we clean CEO &amp;amp; Founder to CEO & Founder
-                $row['cp_desig'] = str_replace('&amp;', '&', $row['cp_desig']);
-                $eventContact->job_title = $row['cp_desig'];
-                $eventContact->save();
-
-
-                //create invoice entry in the invoices table
-                $invoice = new Invoice();
-//                $invoice->user_id = $user->id;
-                $invoice->application_id = $application->id;
-                $invoice->payment_due_date = date('Y-m-d', strtotime($row['reg_date']. ' + 30 days'));
-                $invoice->amount = $row['total'];
-                // if curr is Indian then currency is INR else USD
-                if ($row['curr'] == 'Indian') {
-                    $invoice->currency = 'INR';
-                } else {
-                    $invoice->currency = 'USD';
+                    $stallManningCount = 2;
+                    $ticketAllocation = '{"2": 1 }';
                 }
 
 
-                //if not paid then unpaid
-                $payStatus = $row['pay_status'];
-                if ($payStatus == 'Paid') {
-                    $invoice->payment_status = 'paid';
-                } else {
-                    $invoice->payment_status = 'unpaid';
-                }
-                //type as exhibition
-                $invoice->type = 'Stall Booking';
-                //rate as selection_amt
-                $invoice->rate = $row['selection_amt'];
-                //gst as gst_amt
-                $invoice->gst = $row['tax'];
-                $invoice->processing_chargesRate = $row['processing_charge_per'];
-                $invoice->processing_charges = $row['processing_charge'];
-                $invoice->total_final_price = $row['total'];
-                $invoice->amount_paid = !empty($row['total_amt_received']) ? $row['total_amt_received'] : 0;
-                $invoice->invoice_no = $row['tin_no'];
-                $invoice->pin_no = $row['pin_no'];
-                $invoice->save();
-
-                //if payment status is paid then create a payment entry
-                if ($payStatus == 'Paid') {
-                    //create a payment entry in the payments table
-                    $payment = new Payment();
-                    $payment->invoice_id = $invoice->id;
-                    $payment->order_id = $row['pg_paymentid'] ?? null;
-                    $payment->payment_method = 'CCAvenue';
-                    $payment->amount = $row['total_amt_received'] ?? null;
-                    $payment->amount_paid = $row['total_amt_received'] ?? null;
-                    $payment->transaction_id = $row['pg_trackid'] ?? null;
-                    //payment_date from pg_postdate field
-                    $payment->payment_date = date('Y-m-d H:i:s', strtotime($row['pg_postdate']));
-                    $payment->currency = $invoice->currency;
-                    $payment->status = 'successful';
-                    $payment->user_id = $user->id;
-                    $payment->save();
-                }
+                //create a ExhibitionParticipation entry
+                ExhibitionParticipant::updateOrCreate(
+                    ['application_id' => $application->id],
+                    [
+                        'stall_manning_count' => $stallManningCount,
+                        'ticketAllocation' => $ticketAllocation,
+                    ]
+                );
 
 
 
-
-
-
-
-
-
-
+                echo "Created payment for application ID: {$application->id}\n";
             }
         }
 
-
-        // Return the fetched data as a JSON response
-         return response()->json($data);
-
-
-
-        // Handle the import logic here
         return response()->json(['message' => 'Data imported successfully']);
+    }
+
+    private function cleanString($value)
+    {
+        if (!$value) return $value;
+        $value = str_replace(['&amp;', 'amp;'], '&', $value);
+        $value = str_replace(' ', ' ', $value); // invisible space
+        return trim($value);
     }
 }

@@ -209,20 +209,26 @@
                                                value="{{ $exhibitorInfo->phone ?? '' }}" required autocomplete="off">
                                     </div>
                                 </div>
-                                <div class="col-sm-6 mt-3 mt-sm-0">
-                                    <div class="input-group input-group-dynamic is-filled {{ $cssClass }}">
-                                        <label class="form-label">Upload Logo <span class="red-label">*</span> </label>
-                                        <input class="form-control" type="file" name="logo" accept="image/*"
-                                               @if (!empty($exhibitorInfo->logo)) @else required @endif>
-                                        @if (!empty($exhibitorInfo->logo))
+                                @if (empty($exhibitorInfo->submission_status == 1))
+                                    <div class="col-sm-6 mt-3 mt-sm-0">
+                                        <div class="input-group input-group-dynamic is-filled {{ $cssClass }}">
+                                            <label class="form-label">Upload Logo <span class="red-label">*</span>
+                                            </label>
+                                            <input class="form-control" type="file" name="logo" accept="image/*"
+                                                   required>
+                                        </div>
+                                    </div>
+                                @else
+                                    <div class="col-sm-6 mt-3 mt-sm-0">
+                                        <div class="input-group input-group-dynamic is-filled {{ $cssClass }}">
                                             <div class="mt-2">
                                                 <img src="{{ asset('storage/' . $exhibitorInfo->logo) }}"
                                                      alt="Uploaded Logo" style="max-height: 60px;">
-                                                <small class="text-success d-block">Logo already uploaded.</small>
+                                                <small class="text-success d-block">Your uploaded logo.</small>
                                             </div>
-                                        @endif
+                                        </div>
                                     </div>
-                                </div>
+                                @endif
                             </div>
 
                             <div class="row mt-5">
@@ -244,15 +250,15 @@
                                 <div class="col-12">
                                     <label class="form-label ">Address <span class="red-label">*</span></label>
                                     <div class="input-group input-group-dynamic is-filled">
-                                        <textarea class="form-control" name="address" rows="2" required>{{ $application->full_address ?? '' }}</textarea>
+                                        <textarea class="form-control" name="address" rows="2"
+                                                  required>{{ $application->full_address ?? '' }}</textarea>
                                     </div>
 
                                     {{-- Please check the Address Properly because it can't be changed again--}}
-                                    <small class="text-muted">Please check the Address properly because it can't be changed again.</small>
+                                    <small class="text-muted">Please check the Address properly because it can't be
+                                        changed again.</small>
                                 </div>
                             </div>
-
-
 
 
                             <hr class="my-4">
@@ -302,17 +308,16 @@
                                 </div>
                             </div>
 
-                            @if(!empty($exhibitorInfo->id))
+                            @if(!empty($exhibitorInfo->submission_status == 1))
                                 <div class="alert alert-info mt-4" role="alert">
-                                    You have already submitted your exhibitor information. To make changes, please
-                                    contact support.
+                                    You have already submitted your exhibitor information.
                                 </div>
                             @else
-                            <div class="button-row d-flex mt-4">
-                                <button class="btn bg-gradient-dark ms-auto mb-0" type="submit"
-                                        title="Save">Submit
-                                </button>
-                            </div>
+                                <div class="button-row d-flex mt-4">
+                                    <button class="btn bg-gradient-dark ms-auto mb-0" type="submit"
+                                            title="Save">Submit
+                                    </button>
+                                </div>
                             @endif
                         </div>
                     </div>

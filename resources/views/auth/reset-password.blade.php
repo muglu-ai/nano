@@ -13,6 +13,13 @@
                     </div>
                     <div class="card-body">
 
+
+                        @if ($invalid ?? false)
+                            <div class="p-4 mb-4 text-red-700 bg-red-100 rounded">
+                                {{ session('error') }}
+                            </div>
+                        @else
+
                         <form method="POST" action="{{route('reset.password.submit')}}" role="form" class="text-start">
                             @csrf
                             @if ($errors->any())
@@ -20,6 +27,7 @@
                                     {{ $errors->first() }}
                                 </div>
                             @endif
+
                             @if (session('message'))
                                 <div class="p-4 mb-4 text-green-700 bg-green-100 rounded">
                                     {{ session('message') }}
@@ -44,12 +52,15 @@
                                 </button>
                             </div>
                         </form>
+                        @endif
                     </div>
                     <div class="card-footer text-center pt-0 px-lg-2 px-1">
+                        @if (now()->lt(\Carbon\Carbon::parse(config('constants.LATE_REGISTRATION_DEADLINE'))))
                         <p class="mb-4 text-sm mx-auto">
                             Don't have an account?
                             <a href="{{route('register.form')}}" class="text-success text-gradient font-weight-bold">Sign up</a>
                         </p>
+                        @endif
                     </div>
                 </div>
             </div>

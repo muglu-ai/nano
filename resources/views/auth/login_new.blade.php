@@ -43,10 +43,13 @@
                     </form>
                 </div>
                 <div class="card-footer text-center pt-0 px-lg-2 px-1">
-                    <p class="mb-1 text-sm mx-auto">
-                        Don't have an account?
-                        <a href="{{route('register.form')}}" class="text-success text-gradient font-weight-bold">Sign up</a>
-                    </p>
+
+                    @if (now()->lt(\Carbon\Carbon::parse(config('constants.LATE_REGISTRATION_DEADLINE'))))
+                        <p class="mb-1 text-sm mx-auto">
+                            Don't have an account?
+                            <a href="{{ route('register.form') }}" class="text-success text-gradient font-weight-bold">Sign up</a>
+                        </p>
+                    @endif
                     <p class="mb-4 text-sm mx-auto">
 
                         <a href="{{route('forgot.password')}}" class="text-success text-gradient font-weight-bold">Forgot Password?</a>

@@ -10,7 +10,9 @@ class ExhibitorInfo extends Model
 
     protected $fillable = [
         'application_id', 'contact_person', 'email', 'phone','fascia_name',
-        'logo', 'description', 'linkedin', 'instagram', 'facebook', 'youtube', 'website','address', 'designation'
+        'logo', 'description', 'linkedin', 'instagram', 'facebook', 'youtube', 'website','address', 'designation',
+        'submission_status'
+
     ];
 
     public function application()

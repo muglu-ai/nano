@@ -487,7 +487,9 @@ class PassesController extends Controller
                 ->where('submission_status', 'approved')
                 ->where(function ($query) {
                     $query->where('allocated_sqm', '>', 0)
-                        ->orWhere('allocated_sqm', '=', 'Startup Booth');
+                        ->orWhere('allocated_sqm', '=', 'Startup Booth')
+                        ->orWhere('allocated_sqm', '=', 'Booth / POD')
+                    ;
                 })
                 ->whereHas('exhibitionParticipant', function ($ep) {
                     $ep->where(function ($inner) {

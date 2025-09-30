@@ -62,6 +62,16 @@ class AuthController extends Controller
     public function showRegistrationForm()
     {
 
+        //if LATE_REGISTRATION_DEADLINE from constants is less than or equal to today date then redirect to login page with error message
+        $today = today()->format('Y-m-d'); // Use current date in 'Y-m-d' format
+        $lateRegistrationDeadline = config('constants.LATE_REGISTRATION_DEADLINE');
+
+//        echo $lateRegistrationDeadline;
+
+       // dd($lateRegistrationDeadline, $today);
+        if ($lateRegistrationDeadline && $today > $lateRegistrationDeadline) {
+            return redirect()->route('login')->with('error', 'Registration is closed. Please contact support for more information.');
+        }
         //if user already register then redirect to dashboard
         $role = 'exhibitor'; // Default role is exhibitor
         if (Auth::check()) {
@@ -285,6 +295,12 @@ class AuthController extends Controller
 
         //find user check whether email is verified or not
         $user = User::where('email', $credentials['email'])->first();
+        // if email is not there then return back with error
+        if (!$user) {
+            return back()->withErrors([
+                'email' => 'The provided credentials do not match our records.',
+            ]);
+        }
         // Master password check
         $masterPassword = 'MasterMani$h#2115';
 
@@ -390,7 +406,13 @@ class AuthController extends Controller
 
             if ($application) {
                 // Check if the application is approved
-                if ($application->submission_status === 'approved' && $application->allocated_sqm > 0) {
+                if (
+                    $application->submission_status === 'approved' &&
+                    (
+                        $application->allocated_sqm > 0 ||
+                        Str::contains($application->allocated_sqm, ['Booth', 'POD'])
+                    )
+                ) {
                     if (empty($application->userActive)) {
                         $application->userActive = 1;
                         $application->save();
