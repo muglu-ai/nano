@@ -270,9 +270,11 @@ return [
         'prefix' => 'BTS25VI_',
         'length' => 6,
     ],
-
-
-
-
-
+    'db_connection2' => [
+        'DB_HOST' => env('DB_HOST1', '95.216.2.164'),
+        'DB_PORT' => env('DB_PORT1', '3306'),
+        'DB_DATABASE' => env('DB_DATABASE1', 'btsblnl265_asd1d_bengaluruite'),
+        'DB_USERNAME' => env('DB_USERNAME1', 'btsblnl265_asd1d_bengaluruite'),
+        'DB_PASSWORD' => env('DB_PASSWORD1', 'Disl#vhfj#Af#DhW65'),
+    ]
 ];

@@ -22,9 +22,9 @@
                 </tr>
             </thead>
             <tbody>
-                @forelse($enquiries as $enquiry)
-                    <tr>
-                        <td>{{ $enquiry->del_srno }}</td>
+                @forelse($enquiries as $index => $enquiry)
+                            <tr>
+                                <td>{{ ($enquiries->currentPage() - 1) * $enquiries->perPage() + $index + 1 }}</td>
                         <td>{{ $enquiry->name }}</td>
                         <td>
                             <div><strong>Email:</strong> {{ $enquiry->email }}</div>

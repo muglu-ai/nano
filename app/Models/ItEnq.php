@@ -6,6 +6,8 @@ use Illuminate\Database\Eloquent\Model;
 
 class ItEnq extends Model
 {
+
+    protected $connection = 'db_connection2';
     protected $table = 'it_enq_table';
     protected $primaryKey = 'del_srno';
     public $incrementing = true;
