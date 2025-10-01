@@ -2321,5 +2321,162 @@ class AttendeeController extends Controller
 
     }
 
+    // make a controller which takes registration count in different categories from stall_manning table as Exhibitor Registration 
+    // from complimentary_delegates  take the category from ticketType and give the count of it as Complimentary Registration
+    // give the total of both as Total Registration
+    // give the percentage of each category as a percentage of total registration
+    // give the percentage of each category as a percentage of total registration
+
+    public function registrationCount()
+    {
+        // Stall Manning = Exhibitor Passes (count all stall manning records)
+        $exhibitorPasses = StallManning::count();
+        
+        // Complimentary Delegates - group by ticketType from ComplimentaryDelegate model
+        $complimentaryBreakdown = ComplimentaryDelegate::selectRaw('ticketType, COUNT(*) as count')
+            ->whereNotNull('ticketType')
+            ->where('ticketType', '!=', '')
+            ->groupBy('ticketType')
+            ->get()
+            ->keyBy('ticketType');
+        
+        $totalComplimentaryDelegates = $complimentaryBreakdown->sum('count');
+        
+        // Total registration is only from actual consumed records
+        $totalRegistration = $exhibitorPasses + $totalComplimentaryDelegates;
+        
+        // All ticket types come from actual records (StallManning + ComplimentaryDelegate)
+        $allTicketTypes = collect();
+        
+        // Add complimentary delegates by ticket type
+        foreach ($complimentaryBreakdown as $ticketType => $data) {
+            $allTicketTypes->put($ticketType, ($allTicketTypes->get($ticketType, 0) + $data->count));
+        }
+        
+        // Add exhibitor passes by ticket type (if StallManning has ticketType)
+        $stallManningBreakdown = StallManning::selectRaw('ticketType, COUNT(*) as count')
+            ->whereNotNull('ticketType')
+            ->where('ticketType', '!=', '')
+            ->groupBy('ticketType')
+            ->get()
+            ->keyBy('ticketType');
+        
+        foreach ($stallManningBreakdown as $ticketType => $data) {
+            $allTicketTypes->put($ticketType, ($allTicketTypes->get($ticketType, 0) + $data->count));
+        }
+
+        // Debug: Let's see what we're getting from each source
+       
+        
+        $ticketAllocations = 0;
+        $ticketBreakdown = collect();
+        
+        return view('attendee.registration-count', compact(
+            'exhibitorPasses', 
+            'totalComplimentaryDelegates', 
+            'complimentaryBreakdown',
+            'stallManningBreakdown',
+            'ticketAllocations',
+            'ticketBreakdown',
+            'allTicketTypes',
+            'totalRegistration'
+        ));
+    }
+
+    /**
+     * Get registration count data as JSON for AJAX updates
+     */
+    public function getRegistrationCountData()
+    {
+        // Stall Manning = Exhibitor Passes (count all stall manning records)
+        $exhibitorPasses = StallManning::count();
+        
+        // Complimentary Delegates - group by ticketType from ComplimentaryDelegate model
+        $complimentaryBreakdown = ComplimentaryDelegate::selectRaw('ticketType, COUNT(*) as count')
+            ->whereNotNull('ticketType')
+            ->where('ticketType', '!=', '')
+            ->groupBy('ticketType')
+            ->get()
+            ->keyBy('ticketType');
+        
+        $totalComplimentaryDelegates = $complimentaryBreakdown->sum('count');
+        
+        // Add exhibitor passes by ticket type (if StallManning has ticketType)
+        $stallManningBreakdown = StallManning::selectRaw('ticketType, COUNT(*) as count')
+            ->whereNotNull('ticketType')
+            ->where('ticketType', '!=', '')
+            ->groupBy('ticketType')
+            ->get()
+            ->keyBy('ticketType');
+        
+        // Ticket Allocations from ExhibitionParticipant (separate from complimentary delegates)
+        $ticketAllocations = \App\Models\ExhibitionParticipant::whereNotNull('ticketAllocation')
+            ->where('ticketAllocation', '!=', '')
+            ->get()
+            ->sum(function($participant) {
+                $allocations = json_decode($participant->ticketAllocation, true) ?? [];
+                return array_sum($allocations);
+            });
+        
+        // Get detailed breakdown by ticket type from ExhibitionParticipant
+        $ticketBreakdown = \App\Models\ExhibitionParticipant::whereNotNull('ticketAllocation')
+            ->where('ticketAllocation', '!=', '')
+            ->get()
+            ->flatMap(function($participant) {
+                $allocations = json_decode($participant->ticketAllocation, true) ?? [];
+                $breakdown = [];
+                foreach ($allocations as $ticketId => $count) {
+                    if ($count > 0) {
+                        $ticket = \App\Models\Ticket::find($ticketId);
+                        if ($ticket) {
+                            $breakdown[] = [
+                                'ticket_type' => $ticket->ticket_type,
+                                'count' => $count
+                            ];
+                        }
+                    }
+                }
+                return $breakdown;
+            })
+            ->groupBy('ticket_type')
+            ->map(function($group) {
+                return $group->sum('count');
+            });
+        
+        // Combine all ticket types (exhibitor passes + complimentary + ticket allocations)
+        $allTicketTypes = collect();
+        
+        // Add exhibitor passes by ticket type
+        foreach ($stallManningBreakdown as $ticketType => $data) {
+            $allTicketTypes->put($ticketType, ($allTicketTypes->get($ticketType, 0) + $data->count));
+        }
+        
+        // Add complimentary delegates by ticket type
+        foreach ($complimentaryBreakdown as $ticketType => $data) {
+            $allTicketTypes->put($ticketType, ($allTicketTypes->get($ticketType, 0) + $data->count));
+        }
+        
+        // Add ticket allocations by ticket type
+        foreach ($ticketBreakdown as $ticketType => $count) {
+            $allTicketTypes->put($ticketType, ($allTicketTypes->get($ticketType, 0) + $count));
+        }
+        
+        $totalRegistration = $exhibitorPasses + $totalComplimentaryDelegates + $ticketAllocations;
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'exhibitor_passes' => $exhibitorPasses,
+                'complimentary_delegates' => $totalComplimentaryDelegates,
+                'complimentary_breakdown' => $complimentaryBreakdown,
+                'stall_manning_breakdown' => $stallManningBreakdown,
+                'ticket_allocations' => $ticketAllocations,
+                'ticket_breakdown' => $ticketBreakdown,
+                'all_ticket_types' => $allTicketTypes,
+                'total_registration' => $totalRegistration,
+                'last_updated' => now()->format('M d, Y \a\t h:i A')
+            ]
+        ]);
+    }
 }
 

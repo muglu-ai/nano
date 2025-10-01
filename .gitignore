@@ -30,3 +30,5 @@ yarn-error.log
 /2.env
 laravel.log
 /*.log
+/storage/logs/laravel.log
+/storage/logs/*.log

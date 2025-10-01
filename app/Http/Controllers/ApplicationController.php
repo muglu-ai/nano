@@ -122,7 +122,7 @@ class ApplicationController extends Controller
             return redirect()->back()->withErrors(['error' => 'No valid email found to send onboarding message.']);
         }
 
-        $url = "https://portal.semiconindia.org/";
+        $url = config('APP_URL');
         $c_name = $companyName;
 
 
@@ -986,7 +986,10 @@ class ApplicationController extends Controller
         $emails = ['test.interlinks@gmail.com'];
 
         // Send email to admin and organisers using BCC
-        Mail::to('semiconindia@semi.org')->bcc($emails)->send(new AdminApplicationSubmitted($application));
+        $adminEmails = config('constants.admin_emails.to');
+
+
+        Mail::to($adminEmails)->bcc($emails)->send(new AdminApplicationSubmitted($application));
 
         $userEmails = [
             $application->eventContact->email,
@@ -1042,9 +1045,10 @@ class ApplicationController extends Controller
         // Get the admin email (replace with your actual admin email)
         //semiconindia@semi.org
         $emails = ['test.interlinks@gmail.com'];
+        $adminEmails = config('constants.admin_emails.to');
 
         // Send email to admin and organisers using BCC
-        Mail::to('semiconindia@semi.org')->bcc($emails)->send(new AdminApplicationSubmitted($application));
+        Mail::to($adminEmails)->bcc($emails)->send(new AdminApplicationSubmitted($application));
 
         $userEmails = [
             $application->eventContact->email,
@@ -1189,8 +1193,13 @@ class ApplicationController extends Controller
         //download the pdf with name $application->company_name.pdf
 
         $timestamp = now()->format('Ymd_His');
-        return $pdf->download(str_replace(' ', '_', $application->company_name) . '_-SEMICON_2025_' . $timestamp . '.pdf');
-
+        return $pdf->download(
+            str_replace(' ', '_', $application->company_name)
+            . '_-' . config('constants.SHORT_NAME')
+            . '_' . $application->event->event_year
+            . '_' . $timestamp
+            . '.pdf'
+        );
         //dd($invoice);
         return view('export.application_export', compact('application', 'productCategories', 'sectors'));
     }
@@ -1221,12 +1230,27 @@ class ApplicationController extends Controller
         $sectors = Sector::select('id', 'name')->get();
 
 
+
+        //return view from export.application_export with compact application, productCategories, sectors
+        // dd($application, $productCategories, $sectors);
+        //echo view('export.application_export', compact('application', 'productCategories', 'sectors'));
+//exit;
+
+        //let the images direct path visible in the pdf
+         $pdf = PDF::setOptions(['isRemoteEnabled' => true])->loadView('export.application_export', compact('application', 'productCategories', 'sectors'));
+
         //export this view into pdf
-        $pdf = PDF::loadView('export.application_export', compact('application', 'productCategories', 'sectors'));
+//        $pdf = PDF::loadView('export.application_export', compact('application', 'productCategories', 'sectors'));
         //download the pdf with name $application->company_name.pdf
 
         $timestamp = now()->format('Ymd_His');
-        return $pdf->download(str_replace(' ', '_', $application->company_name) . '_-SEMICON_2025_' . $timestamp . '.pdf');
+
+
+        //view the pdf in browser
+        //return $pdf->stream(str_replace(' ', '_', $application->company_name) . '_-' . config('constants.SHORT_NAME') . '_' . $application->event->event_year . '_' . $timestamp . '.pdf');
+        //
+
+        return $pdf->download(str_replace(' ', '_', $application->company_name) . '_-' . config('constants.SHORT_NAME') . '_' . $application->event->event_year . '_' . $timestamp . '.pdf');
 
         //dd($invoice);
         return view('export.application_export', compact('application', 'productCategories', 'sectors'));
