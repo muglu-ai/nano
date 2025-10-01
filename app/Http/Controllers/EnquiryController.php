@@ -14,7 +14,7 @@ class EnquiryController extends Controller
     {
         $search = $request->get('search', '');
         $perPage = $request->get('per_page', 15);
-        $query = ItEnq::query();
+       $query = ItEnq::where('event_year', now()->year);
 
         if ($search) {
             $query->where(function ($q) use ($search) {
