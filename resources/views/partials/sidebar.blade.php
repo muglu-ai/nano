@@ -63,6 +63,7 @@
         'co_exhibitors',
         'application.list',
         'application.lists',
+        'visitor.analytics',
 
         // add more route names to hide as needed
     ];
@@ -286,20 +287,32 @@
                 @endif
                 <!-- Exhibitors Passes -->
 
+                {{--
+                 Add Exhibitors Complimentary Allocation with route as passes.allocation
+                 --}}
+                <li class="nav-item">
+                    <a href="{{ route('passes.allocation') }}" class="nav-link text-dark " aria-controls="pagesExamples"
+                       role="button" aria-expanded="false">
+                        <i class="fa-solid fa-gift"></i>
+                        <span class="nav-link-text ms-1 ps-1 text-dark ">Exhibitors Complimentary Passes Allocation</span>
+                    </a>
+                </li>
+
                 <li class="nav-item">
                     <a href="{{ route('admin.stall-manning') }}" class="nav-link text-dark">
                         <i class="fa-solid fa-passport"></i>
-                        <span class="nav-link-text ms-1 ps-1 text-dark">Exhibitors Passes</span>
+                        <span class="nav-link-text ms-1 ps-1 text-dark">Exhibitors Registration</span>
                     </a>
                 </li>
 
                 <li class="nav-item">
                     <a href="{{ route('admin.complimentary.delegate') }}" class="nav-link text-dark">
                         <i class="fa-solid fa-ticket"></i>
-                        <span class="nav-link-text ms-1 ps-1 text-dark">Complimentary Passes</span>
+                        <span class="nav-link-text ms-1 ps-1 text-dark">Complimentary Registration</span>
                     </a>
                 </li>
 
+                @if(!in_array('visitor.analytics', $hiddenRoutes))
                 <li class="nav-item">
                     <a data-bs-toggle="collapse" href="#visitors" class="nav-link text-dark"
                        aria-controls="visitors" role="button" aria-expanded="false">
@@ -325,9 +338,10 @@
                         </ul>
                     </div>
                 </li>
+                @endif
 
                 <li class="nav-item">
-                    <a class="nav-link text-dark" href="{{ route('registration.matrix') }}">
+                    <a class="nav-link text-dark" href="{{ route('registration.count') }}">
                         <i class="fa-solid fa-table"></i>
                         <span class="nav-link-text ms-1 ps-1 text-dark">Registration Matrix</span>
                     </a>
@@ -397,7 +411,7 @@
                         </ul>
                     </div>
                 <li class="nav-item">
-                    <a class="nav-link text-dark" href="{{ route('registration.matrix') }}">
+                    <a class="nav-link text-dark" href="{{ route('registration.count') }}">
                         <i class="fa-solid fa-table"></i>
                         <span class="nav-link-text ms-1 ps-1 text-dark">Registration Matrix</span>
                     </a>

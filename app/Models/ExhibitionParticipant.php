@@ -4,6 +4,8 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use App\Models\Application;
+use App\Models\Ticket;
 
 class ExhibitionParticipant extends Model
 {
@@ -25,6 +27,26 @@ class ExhibitionParticipant extends Model
     public function complimentaryDelegates()
     {
         return $this->hasMany(ComplimentaryDelegate::class);
+    }
+
+    // make a function where it passes the ticketAllocation with ticketname and count of it > 0
+    //
+    public function tickets()
+    {
+        $tickets = [];
+        $allocations = json_decode($this->ticketAllocation, true) ?? [];
+        foreach ($allocations as $ticketId => $count) {
+            if ($count > 0) {
+                $ticket = Ticket::find($ticketId);
+                if ($ticket) {
+                    $tickets[] = [
+                        'name' => $ticket->ticket_type,
+                        'count' => $count,
+                    ];
+                }
+            }
+        }
+        return $tickets;
     }
     //now even coexhibitors can be allocated the bagde count 
     public function coExhibitor()

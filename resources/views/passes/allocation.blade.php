@@ -145,6 +145,45 @@
         font-weight: 600;
     }
     
+    /* Ticket Allocations Styling */
+    .ticket-allocations {
+        max-width: 300px;
+        min-width: 150px;
+    }
+    
+    .ticket-item {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        margin-bottom: 3px;
+    }
+    
+    .ticket-item .badge {
+        font-size: 0.75rem;
+        padding: 4px 8px;
+        white-space: nowrap;
+    }
+    
+    .ticket-item .badge.bg-info {
+        background-color: #17a2b8 !important;
+        color: white;
+        min-width: 80px;
+        text-align: center;
+    }
+    
+    .ticket-item .badge.bg-secondary {
+        background-color: #6c757d !important;
+        color: white;
+        min-width: 30px;
+        text-align: center;
+    }
+    
+    /* Ensure ticket allocation column has enough space */
+    .table td:nth-child(5) {
+        min-width: 200px;
+        max-width: 300px;
+    }
+    
     /* Sortable Table Headers */
     .sortable-header {
         cursor: pointer;
@@ -217,11 +256,11 @@
                      <h4 class="mb-1">Passes Allocation - All</h4>
                      <p class="text-muted mb-0">View approved exhibitors who need passes allocated</p>
                  </div>
-                <div>
+                {{-- <div>
                     <a href="{{ route('invoice.list') }}" class="btn btn-outline-primary">
                         <i class="fas fa-arrow-left me-2"></i>Back to Invoices
                     </a>
-                </div>
+                </div> --}}
             </div>
 
                          <!-- Search Box -->
@@ -252,26 +291,32 @@
             </div>
 
                          <!-- Statistics Cards -->
-             {{-- <div class="row stats-cards">
-                 <div class="col-md-4">
+             <div class="row stats-cards">
+                 <div class="col-md-3">
                      <div class="stat-card">
                          <div class="stat-number">{{ $totalStats['total_exhibitors'] }}</div>
-                         <div class="stat-label">Exhibitors Without Passes</div>
+                         <div class="stat-label">Total Exhibitors</div>
                      </div>
                  </div>
-                 <div class="col-md-4">
+                 <div class="col-md-3">
                      <div class="stat-card">
                          <div class="stat-number">{{ $totalStats['total_stall_manning'] }}</div>
-                         <div class="stat-label">Missing Exhibitor Passes</div>
+                         <div class="stat-label">Exhibitor Passes</div>
                      </div>
                  </div>
-                 <div class="col-md-4">
+                 {{-- <div class="col-md-3">
                      <div class="stat-card">
                          <div class="stat-number">{{ $totalStats['total_complimentary_delegates'] }}</div>
-                         <div class="stat-label">Missing Inaugural Passes</div>
+                         <div class="stat-label">Complimentary Passes</div>
+                     </div>
+                 </div> --}}
+                 <div class="col-md-3">
+                     <div class="stat-card">
+                         <div class="stat-number">{{ $totalStats['total_ticket_allocations'] }}</div>
+                         <div class="stat-label">Complimentary Passes</div>
                      </div>
                  </div>
-             </div> --}}
+             </div>
 
             <!-- Results Table -->
             <div class="table-container">
@@ -298,18 +343,19 @@
                                             <span class="sort-spinner"></span>
                                         @endif
                                     </th>
-                                    <th class="sortable-header" data-sort="complimentary_delegate_count" data-order="{{ request('sort') == 'complimentary_delegate_count' ? request('order') : '' }}" style="white-space: normal;">
-                                        Inaugural Passes Allocated
+                                    {{-- <th class="sortable-header" data-sort="complimentary_delegate_count" data-order="{{ request('sort') == 'complimentary_delegate_count' ? request('order') : '' }}" style="white-space: normal;">
+                                        Complimentary Passes Allocated
                                         @if(request('sort') == 'complimentary_delegate_count')
                                             <span class="sort-spinner"></span>
                                         @endif
-                                    </th>
-                                    {{-- <th class="sortable-header" data-sort="total_passes" data-order="{{ request('sort') == 'total_passes' ? request('order') : '' }}" style="white-space: normal;">
+                                    </th> --}}
+                                    <th style="white-space: normal;">Complimentary Passes</th>
+                                    <th class="sortable-header" data-sort="total_passes" data-order="{{ request('sort') == 'total_passes' ? request('order') : '' }}" style="white-space: normal;">
                                         Total Passes
                                         @if(request('sort') == 'total_passes')
                                             <span class="sort-spinner"></span>
                                         @endif
-                                    </th> --}}
+                                    </th>
                                     <th style="white-space: normal;">Actions</th>
                                 </tr>
                             </thead>
@@ -351,24 +397,52 @@
                                                 <span class="text-muted">0</span>
                                             @endif
                                         </td>
-                                        <td>
+                                        {{-- <td>
                                             @if($application->exhibitionParticipant && $application->exhibitionParticipant->complimentary_delegate_count > 0)
                                                 <span class="pass-count">{{ $application->exhibitionParticipant->complimentary_delegate_count }}</span>
                                             @else
                                                 <span class="text-muted">0</span>
                                             @endif
+                                        </td> --}}
+                                        <td>
+                                            @if($application->exhibitionParticipant)
+                                                @php
+                                                    $tickets = $application->exhibitionParticipant->tickets();
+                                                    // Debug: Let's see what we're getting
+                                                    // dd($tickets, $application->exhibitionParticipant->ticketAllocation);
+                                                @endphp
+                                                @if(count($tickets) > 0)
+                                                    <div class="ticket-allocations">
+                                                        @foreach($tickets as $ticket)
+                                                            <div class="ticket-item mb-1">
+                                                                <span class="badge bg-info me-1" style="min-width: 80px; display: inline-block;">{{ $ticket['name'] ?? 'Unknown Ticket' }}</span>
+                                                                <span class="badge bg-secondary">{{ $ticket['count'] ?? 0 }}</span>
+                                                            </div>
+                                                        @endforeach
+                                                    </div>
+                                                @else
+                                                    <span class="text-muted">No tickets allocated</span>
+                                                @endif
+                                            @else
+                                                <span class="text-muted">N/A</span>
+                                            @endif
                                         </td>
-                                        {{-- <td>
+                                        <td>
                                             @php
                                                 $stallManning = $application->exhibitionParticipant->stall_manning_count ?? 0;
                                                 $complimentary = $application->exhibitionParticipant->complimentary_delegate_count ?? 0;
-                                                $total = $stallManning + $complimentary;
+                                                $ticketTotal = 0;
+                                                if($application->exhibitionParticipant) {
+                                                    $tickets = $application->exhibitionParticipant->tickets();
+                                                    $ticketTotal = collect($tickets)->sum('count');
+                                                }
+                                                $total = $stallManning + $complimentary + $ticketTotal;
                                             @endphp
-                                                                                         <span class="badge bg-success fs-6">{{ $total }}</span>
-                                         </td> --}}
-                                         <td>
+                                            <span class="badge bg-success fs-6">{{ $total }}</span>
+                                        </td>
+                                        <td>
                                              <div class="btn-group" role="group">
-                                                 <button type="button" class="btn btn-sm btn-primary" onclick="openUpdateModal({{ $application->id }}, '{{ $application->company_name }}', {{ $application->exhibitionParticipant->stall_manning_count ?? 0 }}, {{ $application->exhibitionParticipant->complimentary_delegate_count ?? 0 }})">
+                                                 <button type="button" class="btn btn-sm btn-primary" onclick="openUpdateModal({{ $application->id }}, '{{ $application->company_name }}', {{ $application->exhibitionParticipant->stall_manning_count ?? 0 }}, {{ $application->exhibitionParticipant->complimentary_delegate_count ?? 0 }}, '{{ $application->exhibitionParticipant->ticketAllocation ?? '{}' }}')">
                                                      <i class="fas fa-edit"></i> Update
                                                  </button>
                                                  {{-- <button type="button" class="btn btn-sm btn-success" onclick="autoAllocatePasses({{ $application->id }}, '{{ $application->company_name }}')">
@@ -446,10 +520,41 @@
                          <div class="form-text">Enter the number of exhibitor passes to allocate</div>
                      </div>
                      
-                     <div class="mb-3">
+                     {{-- <div class="mb-3">
                          <label for="updateComplimentary" class="form-label">Inaugural Passes Allocated</label>
                          <input type="number" class="form-control" id="updateComplimentary" name="complimentary_delegate_count" min="0" required>
                          <div class="form-text">Enter the number of inaugural passes to allocate</div>
+                     </div> --}}
+                     
+                     <div class="mb-3">
+                         <label class="form-label">Ticket Allocations</label>
+                         <div id="ticketAllocations">
+                             @if($availableTickets && count($availableTickets) > 0)
+                                 @foreach($availableTickets as $ticket)
+                                     <div class="row mb-2 ticket-allocation-row">
+                                         <div class="col-md-6">
+                                             <label class="form-label">{{ $ticket->ticket_type }}</label>
+                                         </div>
+                                         <div class="col-md-6">
+                                             <input type="number" 
+                                                    class="form-control ticket-count" 
+                                                    name="ticket_allocations[{{ $ticket->id }}]" 
+                                                    id="ticket_{{ $ticket->id }}" 
+                                                    min="0" 
+                                                    value="0"
+                                                    data-ticket-id="{{ $ticket->id }}"
+                                                    data-ticket-name="{{ $ticket->ticket_type }}">
+                                         </div>
+                                     </div>
+                                 @endforeach
+                             @else
+                                 <div class="alert alert-warning">
+                                     <i class="fas fa-exclamation-triangle me-2"></i>
+                                     No tickets are currently available. Please contact the administrator to add ticket types.
+                                 </div>
+                             @endif
+                         </div>
+                         <div class="form-text">Enter the number of tickets to allocate for each category</div>
                      </div>
                      
                      <div class="mb-3">
@@ -472,6 +577,15 @@ document.addEventListener('DOMContentLoaded', function() {
     // Auto-submit form when per_page changes
     document.querySelector('select[name="per_page"]').addEventListener('change', function() {
         this.form.submit();
+    });
+    
+    // Add event listeners for ticket count inputs
+    document.addEventListener('input', function(e) {
+        if (e.target.classList.contains('ticket-count') || 
+            e.target.id === 'updateStallManning' || 
+            e.target.id === 'updateComplimentary') {
+            updateTotalPasses();
+        }
     });
     
     // Clear search functionality
@@ -565,11 +679,27 @@ document.addEventListener('DOMContentLoaded', function() {
  });
 
  // Passes Allocation Functions
- function openUpdateModal(applicationId, companyName, stallManningCount, complimentaryCount) {
+ function openUpdateModal(applicationId, companyName, stallManningCount, complimentaryCount, ticketAllocation) {
      document.getElementById('updateApplicationId').value = applicationId;
      document.getElementById('updateCompanyName').value = companyName;
      document.getElementById('updateStallManning').value = stallManningCount;
      document.getElementById('updateComplimentary').value = complimentaryCount;
+     
+     // Parse and populate ticket allocations
+     try {
+         const allocations = JSON.parse(ticketAllocation);
+         document.querySelectorAll('.ticket-count').forEach(input => {
+             const ticketId = input.dataset.ticketId;
+             input.value = allocations[ticketId] || 0;
+         });
+     } catch (e) {
+         console.error('Error parsing ticket allocation:', e);
+         // Reset all ticket counts to 0
+         document.querySelectorAll('.ticket-count').forEach(input => {
+             input.value = 0;
+         });
+     }
+     
      updateTotalPasses();
      
      const modal = new bootstrap.Modal(document.getElementById('updatePassesModal'));
@@ -579,7 +709,15 @@ document.addEventListener('DOMContentLoaded', function() {
  function updateTotalPasses() {
      const stallManning = parseInt(document.getElementById('updateStallManning').value) || 0;
      const complimentary = parseInt(document.getElementById('updateComplimentary').value) || 0;
-     document.getElementById('updateTotalPasses').value = stallManning + complimentary;
+     
+     // Calculate total ticket allocations
+     let ticketTotal = 0;
+     document.querySelectorAll('.ticket-count').forEach(input => {
+         ticketTotal += parseInt(input.value) || 0;
+     });
+     
+     const total = stallManning + complimentary + ticketTotal;
+     document.getElementById('updateTotalPasses').value = total;
  }
 
  function updatePassesAllocation() {

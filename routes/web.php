@@ -56,6 +56,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Route;
 use Mews\Captcha\Facades\Captcha;
+use App\Http\Controllers\EnquiryController;
 
 Route::get('/{event}/onboarding', [ApplicationController::class, 'showForm2'])->name('event.onboarding')->middleware(CheckUser::class);
 Route::get('/{event}/onboarding', [ApplicationController::class, 'showForm2'])->name('new_form')->middleware(CheckUser::class);
@@ -787,20 +788,8 @@ Route::get('/send-invite-mail-custom', function () {
         ->send(new CoExhibitorInvoiceMail($coExhibitorco_exhibitor_id));
 });
 
+Route::get('enquiries', [EnquiryController::class, 'index'])->name('enquiries.index');
 
-// Lead Retrieval user storage in JSON file
-
-
-
-Route::get('/integration/attendees', [IntegrationAPIController::class, 'getAttendees'])->name('integration.attendees');
-Route::get('/integration/stall-manning', [IntegrationAPIController::class, 'getStallManning'])->name('integration.stall-manning');
-Route::get('/integration/complimentary-delegates', [IntegrationAPIController::class, 'getComplimentaryDelegates'])->name('integration.complimentary-delegates');
-
-
-/*
- * Route to test out the blade flag from outhrbox/blade-flag package
- * */
-Route::get('/feature-test', function () {
-    return view('feature-test');
-})->name('feature.test');
-
+// Registration Count Dashboard
+Route::get('/registration-count', [AttendeeController::class, 'registrationCount'])->name('registration.count')->middleware(Auth::class);
+Route::get('/api/registration-count-data', [AttendeeController::class, 'getRegistrationCountData'])->name('api.registration.count')->middleware(Auth::class);
