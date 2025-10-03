@@ -59,7 +59,7 @@ return [
     'EVENT_DATE_END' => EVENT_DATE_END,
     'EVENT_VENUE' => EVENT_VENUE,
     'EVENT_WEBSITE' => EVENT_WEBSITE,
-    'APP_URL' => EVENT_WEBSITE . '/portal',
+    'APP_URL' => EVENT_WEBSITE . '/portal-git',
     'APP_NAME' => APP_NAME,
     'APP_NAME_SHORT' => SHORT_NAME,
     'APPLICATION_ID_PREFIX' => 'TIN-BTS-2025-EXH-',
