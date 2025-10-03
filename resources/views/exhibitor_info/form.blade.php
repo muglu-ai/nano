@@ -308,7 +308,7 @@
                                 </div>
                             </div>
 
-                            @if (empty($exhibitorInfo) || empty($exhibitorInfo->submission_status) || $exhibitorInfo->submission_status == 0)
+                            @if (empty($exhibitorInfo) || empty($exhibitorInfo->submission_status) || $exhibitorInfo->submission_status != 0)
                                 <div class="alert alert-info mt-4" role="alert">
                                     You have already submitted your exhibitor information.
                                 </div>
