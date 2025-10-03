@@ -18,7 +18,7 @@
             </div>
         @else
             <div class="alert alert-warning">
-                PDF file not found.
+                Coming Soon...
             </div>
         @endif
     </div>
