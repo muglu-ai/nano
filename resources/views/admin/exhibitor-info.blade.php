@@ -1347,7 +1347,7 @@ function editExhibitor(exhibitorId) {
     showEditLoading();
     $('#editExhibitorModal').modal('show');
 
-    // Fetch exhibitor data for editing
+    // Fetch exhibitor data for editing #155724
     fetch("{{ route('api.exhibitor.edit', ':id') }}".replace(':id', exhibitorId))
         .then(response => response.json())
         .then(data => {
