@@ -798,9 +798,9 @@ Route::get('/download-invoice', [InvoicesController::class, 'generatePDF'])->nam
 
 
 Route::prefix('api')->group(function () {
-    Route::get('/countries', [GeoController::class, 'countries']);
-    Route::get('/states/{country}', [GeoController::class, 'states']);
-    Route::get('/cities/{country}/{state}', [GeoController::class, 'cities']);
+    Route::get('/countries', [GeoController::class, 'countries'])->name('api.countries');
+    Route::get('/states/{country}', [GeoController::class, 'states'])->name('api.states');
+    Route::get('/cities/{country}/{state}', [GeoController::class, 'cities'])->name('api.cities');
 });
 Route::post('/otp/send', [OTPController::class, 'sendOtp']);
 Route::post('/otp/verify', [OTPController::class, 'verifyOtp']);

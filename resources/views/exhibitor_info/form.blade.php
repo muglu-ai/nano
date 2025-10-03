@@ -99,7 +99,10 @@
 
                     <!-- Panel: Exhibitor Basic Information -->
                     <div class="multisteps-form__panel border-radius-xl bg-white js-active" data-animation="FadeIn">
-                        <h5 class="font-weight-bolder mb-0">Exhibitor Information</h5>
+                        <h5 class="font-weight-bolder mb-0">Exhibitor
+                            Directory @if($application->assoc_mem == 'Startup Exhibitor')
+                                - Startup Innovation Zone
+                            @endif</h5>
                         <p class="mb-5 text-sm">Prefilled details & mandatory exhibitor inputs</p>
                         <p class="mb-3">
               <span class="badge text-bg-warning text-dark">
@@ -107,32 +110,63 @@
               </span>
                         </p>
                         <div class="multisteps-form__content">
+                            @if($application->assoc_mem != 'Startup Exhibitor')
+                                <div class="row mt-5">
+                                    <div class="col-sm-12">
+                                        <div class="input-group input-group-dynamic is-filled">
+                                            <label class="form-label custom-label">Select Category
+                                                <span class="red-label">*</span>
+                                            </label>
+                                            <select class="form-control" name="category" required>
+                                                <option value=""
+                                                        disabled {{ empty($application->category) ? 'selected' : '' }}>
+                                                    Select
+                                                </option>
+                                                <option value="Exhibitor" {{ $application->category == 'Exhibitor' ? 'selected' : '' }}>
+                                                    Exhibitor
+                                                </option>
+                                                <option value="Sponsor" {{ $application->category == 'Sponsor' ? 'selected' : '' }}>
+                                                    Sponsor
+                                                </option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                            @endif
                             <div class="row mt-5">
+
+
                                 <div class="col-sm-6">
                                     <div class="input-group input-group-dynamic is-filled">
-                                        <label class="form-label custom-label">Company Name <span
+                                        <label class="form-label custom-label">Name of the Exhibitor (Organisation Name)
+                                            <span
                                                     class="red-label">*</span> </label>
                                         <input class="form-control" type="text"
                                                value="{{ $application->company_name ?? '' }}"
                                                readonly>
                                     </div>
                                 </div>
-                                {{--                                <div class="col-sm-6 mt-3 mt-sm-0">--}}
-                                {{--                                    <div class="input-group input-group-dynamic is-filled">--}}
-                                {{--                                        <label class="form-label">Booth Number <span class="red-label">*</span></label>--}}
-                                {{--                                        <input class="form-control" type="text" value="{{ $application->stallNumber ?? '' }}"--}}
-                                {{--                                            readonly>--}}
-                                {{--                                    </div>--}}
-                                {{--                                </div>--}}
+                                <div class="col-sm-6 mt-3 mt-sm-0">
+                                    <div class="input-group input-group-dynamic is-filled">
+                                        <label class="form-label">Booth Number</label>
+                                        <input class="form-control" type="text"
+                                               value="{{ $application->stallNumber ?? '' }}"
+                                               readonly>
+                                    </div>
+                                </div>
                             </div>
 
                             <div class="row mt-5">
                                 <div class="col-sm-6">
                                     <div class="input-group input-group-dynamic {{ $cssClass }}">
-                                        <label class="form-label">Fascia Name <span class="red-label">*</span> </label>
+                                        <label class="form-label">Name for Fascia (Fascia name will be written on Stall)
+                                            <span class="red-label">*</span> </label>
                                         <input class="form-control" type="text" name="fascia_name"
                                                value="{{ $fasciaName }}" required>
                                     </div>
+
+                                    <small class="text-muted">Note: For Shell scheme stall only.</small>
+
                                 </div>
                             </div>
 
@@ -141,7 +175,8 @@
                                     <div class="row">
                                         <div class="col-4 pe-1">
                                             <div class="input-group input-group-dynamic is-filled">
-                                                <label class="form-label">Salutation <span class="red-label">*</span>
+                                                <label class="form-label">Contact Person Salutation <span
+                                                            class="red-label">*</span>
                                                 </label>
                                                 <select class="form-control" name="salutation" required>
                                                     <option value=""
@@ -164,7 +199,8 @@
                                         </div>
                                         <div class="col-4 px-1">
                                             <div class="input-group input-group-dynamic {{ $cssClass }}">
-                                                <label class="form-label">First Name <span class="red-label">*</span>
+                                                <label class="form-label"> Contact Person First Name <span
+                                                            class="red-label">*</span>
                                                 </label>
                                                 <input class="form-control" type="text" name="contact_first_name"
                                                        value="{{ $firstName }}" required>
@@ -172,7 +208,8 @@
                                         </div>
                                         <div class="col-4 ps-1">
                                             <div class="input-group input-group-dynamic {{ $cssClass }}">
-                                                <label class="form-label">Last Name <span class="red-label">*</span>
+                                                <label class="form-label">Contact Person Last Name <span
+                                                            class="red-label">*</span>
                                                 </label>
                                                 <input class="form-control" type="text" name="contact_last_name"
                                                        value="{{ $lastName }}" required>
@@ -186,52 +223,177 @@
 
                                 <div class="col-sm-6">
                                     <div class="input-group input-group-dynamic {{ $cssClass }}">
-                                        <label class="form-label">Designation <span class="red-label">*</span></label>
+                                        <label class="form-label">Contact Person Designation <span
+                                                    class="red-label">*</span></label>
                                         <input class="form-control" type="text" name="designation"
                                                value="{{ $exhibitorInfo->designation ?? '' }}" required>
                                     </div>
                                 </div>
 
+
+                            </div>
+
+                            <div class="row mt-5">
+                                <div class="col-12">
+                                    <label class="form-label ">Organisation Address <span
+                                                class="red-label">*</span></label>
+                                    <div class="input-group input-group-dynamic is-filled">
+                                        <textarea class="form-control" name="address" rows="2"
+                                                  required>{{ $application->full_address ?? '' }}</textarea>
+                                    </div>
+
+                                    {{-- Please check the Address Properly because it can't be changed again--}}
+                                    <small class="text-muted">Note: Do not enter city, state, country, or ZIP code in
+                                        the text area. Please use the following designated fields provided for these
+                                        details.</small>
+                                </div>
+                            </div>
+
+
+                            <div class="row mt-5">
+                                <div class="col-sm-3">
+                                    <div class="input-group input-group-dynamic is-filled">
+                                        <label class="form-label">Country <span class="red-label">*</span></label>
+                                        <select class="form-control" name="country" id="countrySelect" required>
+                                            <option value="">Select Country</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div class="col-sm-3">
+                                    <div class="input-group input-group-dynamic is-filled">
+                                        <label class="form-label">State <span class="red-label">*</span></label>
+                                        <select class="form-control" name="state" id="stateSelect" required>
+                                            <option value="">Select State</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div class="col-sm-3">
+                                    <div class="input-group input-group-dynamic is-filled">
+                                        <label class="form-label">City <span class="red-label">*</span></label>
+                                        <input class="form-control" type="text" name="city"
+                                               value="{{ $exhibitorInfo->city ?? '' }}" required>
+                                    </div>
+                                </div>
+
+                                <div class="col-sm-3">
+                                    <div class="input-group input-group-dynamic is-filled">
+                                        <label class="form-label">Zip Code <span class="red-label">*</span></label>
+                                        <input class="form-control" type="text" name="zip_code"
+                                               value="{{ $exhibitorInfo->zip_code ?? '' }}" required>
+                                    </div>
+                                </div>
+                            </div>
+                            <script>
+                            document.addEventListener('DOMContentLoaded', function () {
+                                const countrySelect = document.getElementById('countrySelect');
+                                const stateSelect = document.getElementById('stateSelect');
+                                const selectedCountry = "{{ $exhibitorInfo->country ?? '' }}";
+                                const selectedState = "{{ $exhibitorInfo->state ?? '' }}";
+
+                                // Fetch countries
+                                fetch("{{ route('api.countries') }}")
+                                    .then(res => res.json())
+                                    .then(countries => {
+                                        countries.forEach(country => {
+                                            const opt = document.createElement('option');
+                                            opt.value = country.iso2;
+                                            opt.textContent = country.name;
+                                            if (country.name === selectedCountry || country.iso2 === selectedCountry) opt.selected = true;
+                                            countrySelect.appendChild(opt);
+                                        });
+                                        if (selectedCountry) {
+                                            loadStates(selectedCountry);
+                                        }
+                                    });
+
+                                countrySelect.addEventListener('change', function () {
+                                    loadStates(this.value);
+                                });
+
+                                function loadStates(countryIso) {
+                                    stateSelect.innerHTML = '<option value="">Select State</option>';
+                                    if (!countryIso) return;
+                                    fetch(`{{ url('/api/states') }}/${countryIso}`)
+                                        .then(res => res.json())
+                                        .then(states => {
+                                            states.forEach(state => {
+                                                const opt = document.createElement('option');
+                                                opt.value = state.name;
+                                                opt.textContent = state.name;
+                                                if (state.name === selectedState) opt.selected = true;
+                                                stateSelect.appendChild(opt);
+                                            });
+                                        });
+                                }
+                            });
+                            </script>
+
+                            <div class="row mt-5">
                                 <div class="col-sm-6 mt-3 mt-sm-0">
                                     <div class="input-group input-group-dynamic {{ $cssClass }}">
-                                        <label class="form-label">Email Address <span class="red-label">*</span></label>
+                                        <label class="form-label">Contact Email Address <span
+                                                    class="red-label">*</span></label>
                                         <input class="form-control" type="email" name="email"
                                                value="{{ $exhibitorInfo->email ?? '' }}" required>
                                     </div>
                                 </div>
-                            </div>
-
-                            <div class="row mt-5">
                                 <div class="col-sm-6">
                                     <div class="input-group input-group-dynamic is-filled {{ $cssClass }}">
-                                        <label class="form-label">Phone Number <span class="red-label">*</span></label>
+                                        <label class="form-label">Mobile Number <span class="red-label">*</span></label>
                                         <input id="phone" class="form-control iti" type="tel" name="phone"
                                                value="{{ $exhibitorInfo->phone ?? '' }}" required autocomplete="off">
                                     </div>
                                 </div>
-                                @if (empty($exhibitorInfo) || empty($exhibitorInfo->submission_status) || $exhibitorInfo->submission_status == 0)
-                                    <div class="col-sm-6 mt-3 mt-sm-0">
-                                        <div class="input-group input-group-dynamic is-filled {{ $cssClass }}">
-                                            <label class="form-label">Upload Logo <span class="red-label">*</span>
-                                            </label>
-                                            <input class="form-control" type="file" name="logo" accept="image/*"
-                                                   required>
-                                        </div>
-                                    </div>
-                                @else
-                                    <div class="col-sm-6 mt-3 mt-sm-0">
-                                        <div class="input-group input-group-dynamic is-filled {{ $cssClass }}">
-                                            <div class="mt-2">
-                                                <img src="{{ asset('storage/' . $exhibitorInfo->logo) }}"
-                                                     alt="Uploaded Logo" style="max-height: 60px;">
-                                                <small class="text-success d-block">Your uploaded logo.</small>
-                                            </div>
-                                        </div>
-                                    </div>
-                                @endif
+
                             </div>
 
-                            <div class="row mt-5">
+                                <div class="row mt-5">
+                                    <div class="col-sm-6">
+                                        <div class="input-group input-group-dynamic is-filled {{ $cssClass }}">
+                                            <label class="form-label">Mobile Number <span class="red-label">*</span></label>
+                                            <input id="telPhone" class="form-control iti" type="tel" name="telPhone"
+                                                   value="{{ $exhibitorInfo->telPhone ?? '' }}" required autocomplete="off">
+                                        </div>
+                                    </div>
+
+                                    <div class="col-sm-6">
+                                        <div class="input-group input-group-dynamic {{ $cssClass }}">
+                                            <label class="form-label">Website <span class="red-label">*</span></label>
+                                            <input class="form-control" type="url" name="website"
+                                                   value="{{ $exhibitorInfo->website ?? '' }}">
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="row mt-5">
+                                    @if (empty($exhibitorInfo) || empty($exhibitorInfo->submission_status) || $exhibitorInfo->submission_status == 0)
+                                        <div class="col-sm-6 mt-3 mt-sm-0">
+                                            <div class="input-group input-group-dynamic is-filled {{ $cssClass }}">
+                                                <label class="form-label">Upload Logo <span class="red-label">*</span>
+                                                </label>
+                                                <input class="form-control" type="file" name="logo" accept="image/*"
+                                                       required>
+                                            </div>
+                                            <small class="text-muted">Note: Image dimension should be 200px (width) x 125px (height), size less than 100KB. Allowed formats: JPG, JPEG, PNG only.</small>
+                                        </div>
+                                    @else
+                                        <div class="col-sm-6 mt-3 mt-sm-0">
+                                            <div class="input-group input-group-dynamic is-filled {{ $cssClass }}">
+                                                <div class="mt-2">
+                                                    <img src="{{ asset('storage/' . $exhibitorInfo->logo) }}"
+                                                         alt="Uploaded Logo" style="max-height: 60px;">
+                                                    <small class="text-success d-block">Your uploaded logo.</small>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    @endif
+                                </div>
+
+
+
+                                <div class="row mt-5">
                                 <div class="col-12">
                                     <label class="form-label">Company Description <span class="red-label">*</span>
                                     </label>
@@ -241,38 +403,20 @@
                                                   oninput="updateCharCount()">{{ trim($exhibitorInfo->description ?? '') }}</textarea>
                                     </div>
                                     <small id="charCount" class="text-muted">0 / 750 characters</small>
+
+
                                 </div>
                             </div>
+
 
 
                             {{-- make a address field that will fetch the details from the $exhibitorInfo->address --}}
-                            <div class="row mt-5">
-                                <div class="col-12">
-                                    <label class="form-label ">Address <span class="red-label">*</span></label>
-                                    <div class="input-group input-group-dynamic is-filled">
-                                        <textarea class="form-control" name="address" rows="2"
-                                                  required>{{ $application->full_address ?? '' }}</textarea>
-                                    </div>
-
-                                    {{-- Please check the Address Properly because it can't be changed again--}}
-                                    <small class="text-muted">Please check the Address properly because it can't be
-                                        changed again.</small>
-                                </div>
-                            </div>
 
 
                             <hr class="my-4">
 
                             {{-- Website and Social Media Links --}}
-                            <div class="row">
-                                <div class="col-sm-6">
-                                    <div class="input-group input-group-dynamic {{ $cssClass }}">
-                                        <label class="form-label">Website <span class="red-label">*</span></label>
-                                        <input class="form-control" type="url" name="website"
-                                               value="{{ $exhibitorInfo->website ?? '' }}">
-                                    </div>
-                                </div>
-                            </div>
+
 
                             <div class="row mt-5">
                                 <div class="col-sm-6">
@@ -308,15 +452,17 @@
                                 </div>
                             </div>
 
-                            @if (empty($exhibitorInfo) || empty($exhibitorInfo->submission_status) || $exhibitorInfo->submission_status != 0)
-                                <div class="alert alert-info mt-4" role="alert">
-                                    You have already submitted your exhibitor information.
-                                </div>
-                            @else
+
+                            @if (empty($exhibitorInfo) || empty($exhibitorInfo->submission_status) || $exhibitorInfo->submission_status == 0)
                                 <div class="button-row d-flex mt-4">
                                     <button class="btn bg-gradient-dark ms-auto mb-0" type="submit"
                                             title="Save">Submit
                                     </button>
+                                </div>
+
+                            @else
+                                <div class="alert alert-info mt-4" role="alert">
+                                    You have already submitted your exhibitor information.
                                 </div>
                             @endif
                         </div>
@@ -329,57 +475,67 @@
     <!-- intl-tel-input JS -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/js/intlTelInput.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/js/utils.js"></script>
-    <script>
-        document.addEventListener("DOMContentLoaded", function () {
-            var phoneInput = document.querySelector("#phone");
-            if (!phoneInput) return;
-            var form = phoneInput.closest('form');
-            var iti;
+   <script>
+   document.addEventListener("DOMContentLoaded", function () {
+       var phoneInputs = document.querySelectorAll("#phone, #telPhone");
+       var itiInstances = new Map();
 
-            function initializePhoneInput() {
-                if (iti) return; // Prevent double init
-                iti = window.intlTelInput(phoneInput, {
-                    initialCountry: "auto",
-                    utilsScript: "https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/js/utils.js",
-                    geoIpLookup: function (callback) {
-                        fetch('https://ipapi.co/json')
-                            .then(res => res.json())
-                            .then(data => callback(data.country_code))
-                            .catch(() => callback('IN'));
-                    },
-                    separateDialCode: true,
-                    nationalMode: false,
-                });
-                // Set number if available
-                @if (!empty($exhibitorInfo->phone))
-                var serverPhone = "{{ $exhibitorInfo->phone ?? '' }}";
-                if (serverPhone.startsWith('+')) {
-                    iti.setNumber(serverPhone);
-                } else {
-                    phoneInput.value = serverPhone;
-                }
-                @endif
-            }
+       phoneInputs.forEach(function(phoneInput) {
+           function initializePhoneInput() {
+               if (itiInstances.has(phoneInput)) return;
+               var iti = window.intlTelInput(phoneInput, {
+                   initialCountry: "auto",
+                   utilsScript: "https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/js/utils.js",
+                   geoIpLookup: function (callback) {
+                       fetch('https://ipapi.co/json')
+                           .then(res => res.json())
+                           .then(data => callback(data.country_code))
+                           .catch(() => callback('IN'));
+                   },
+                   separateDialCode: true,
+                   nationalMode: false,
+               });
+               itiInstances.set(phoneInput, iti);
 
-            // Wait for utilsScript to be loaded
-            if (typeof window.intlTelInputUtils !== 'undefined') {
-                initializePhoneInput();
-            } else {
-                phoneInput.addEventListener('focus', initializePhoneInput, {once: true});
-            }
-            form.addEventListener('submit', function (e) {
-                if (!iti) initializePhoneInput();
-                var fullNumber = iti.getNumber();
-                if (!fullNumber || !fullNumber.startsWith('+')) {
-                    e.preventDefault();
-                    alert('Please enter a valid phone number with country code.');
-                    phoneInput.focus();
-                    return false;
-                }
-                phoneInput.value = fullNumber;
-            });
-        });
-    </script>
+               // Set number if available (only for #phone, as per original logic)
+               @if (!empty($exhibitorInfo->phone))
+               if (phoneInput.id === "phone") {
+                   var serverPhone = "{{ $exhibitorInfo->phone ?? '' }}";
+                   if (serverPhone.startsWith('+')) {
+                       iti.setNumber(serverPhone);
+                   } else {
+                       phoneInput.value = serverPhone;
+                   }
+               }
+               @endif
+           }
+
+           // Wait for utilsScript to be loaded
+           if (typeof window.intlTelInputUtils !== 'undefined') {
+               initializePhoneInput();
+           } else {
+               phoneInput.addEventListener('focus', initializePhoneInput, {once: true});
+           }
+
+           var form = phoneInput.closest('form');
+           if (form) {
+               form.addEventListener('submit', function (e) {
+                   var iti = itiInstances.get(phoneInput);
+                   if (!iti) initializePhoneInput();
+                   iti = itiInstances.get(phoneInput);
+                   var fullNumber = iti ? iti.getNumber() : phoneInput.value;
+                   if (!fullNumber || !fullNumber.startsWith('+')) {
+                       e.preventDefault();
+                       alert('Please enter a valid phone number with country code.');
+                       phoneInput.focus();
+                       return false;
+                   }
+                   phoneInput.value = fullNumber;
+               });
+           }
+       });
+   });
+   </script>
 
     <script>
         function updateCharCount() {
