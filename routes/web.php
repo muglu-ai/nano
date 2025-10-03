@@ -590,7 +590,7 @@ Route::put('/sponsor-items/{id}/inactive', [SponsorController::class, 'item_inac
  * */
 Route::get('invitation-letter', [DocumentsContoller::class, 'invitation'])->name('invitation.letter')->middleware(SharedMiddleware::class);
 Route::get('transport-letter', [DocumentsContoller::class, 'transport_letter'])->name('transport.letter')->middleware(SharedMiddleware::class);
-        Route::get('exhibitor-manual', [DocumentsContoller::class, 'exhibitor_manual'])->name('exhibitor_manual')->middleware(SharedMiddleware::class);
+Route::get('exhibitor-manual', [DocumentsContoller::class, 'exhibitor_manual'])->name('exhibitor_manual')->middleware(SharedMiddleware::class);
 Route::get('portal-guide', [DocumentsContoller::class, 'exhibitor_guide'])->name('exhibitor_guide')->middleware(SharedMiddleware::class);
 Route::get('faqs', [DocumentsContoller::class, 'faqs'])->name('faqs')->middleware(SharedMiddleware::class);
 Route::get('participation-letter', [DashboardController::class, 'participantDetails'])->name('participation.letter')->middleware(CheckUser::class);
