@@ -1342,7 +1342,7 @@ function editExhibitor(exhibitorId) {
     $('#editExhibitorModal').modal('show');
 
     // Fetch exhibitor data for editing
-    fetch(`/api/exhibitor-edit/${exhibitorId}`)
+    fetch("{{ route('api.exhibitor.edit', '') }}/" + exhibitorId)
         .then(response => response.json())
         .then(data => {
             if (data.success) {
@@ -1561,7 +1561,7 @@ function updateExhibitor(exhibitorId) {
     // Clear previous validation errors
     clearValidationErrors();
 
-    fetch(`/api/exhibitor-update/${exhibitorId}`, {
+    fetch("{{ route('api.exhibitor.update', '') }}/" + exhibitorId, {
         method: 'POST',
         body: formData,
         headers: {
