@@ -1204,7 +1204,7 @@ function viewDetails(exhibitorId) {
     $('#viewDetailsModal').modal('show');
 
     // Make AJAX call to get exhibitor details
-    fetch(`/api/exhibitor-details/${exhibitorId}`)
+    fetch("{{ route('api.exhibitor.details', ['id' => '']) }}".replace(/\/$/, '') + `/${exhibitorId}`)
         .then(response => response.json())
         .then(data => {
             if (data.success) {
