@@ -210,10 +210,14 @@ class DocumentsContoller extends Controller
         //path         public_path/assets/docs/Exhibitior-Manual-SEMICON-2025.pdf
 
         $filePath = public_path('assets/docs/Exhibitior-Manual-SEMICON-2025.pdf');
-        dd($filePath);
+       //dd($filePath);
         //return view with the file path
         if (file_exists($filePath)) {
             $filePath = str_replace(public_path(), '', $filePath);
+
+            // Convert to full URL using APP\_URL
+            $filePath = rtrim(config('constants.APP_URL'), '/') . $filePath;
+
 
             // dd($filePath);
             return view('documents.documentsView', ['pdfPath' => $filePath]);
