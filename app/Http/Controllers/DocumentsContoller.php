@@ -210,6 +210,7 @@ class DocumentsContoller extends Controller
         //path         public_path/assets/docs/Exhibitior-Manual-SEMICON-2025.pdf
 
         $filePath = public_path('assets/docs/Exhibitior-Manual-SEMICON-2025.pdf');
+        dd($filePath);
         //return view with the file path
         if (file_exists($filePath)) {
             $filePath = str_replace(public_path(), '', $filePath);
