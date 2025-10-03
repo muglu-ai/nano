@@ -127,6 +127,7 @@ class ExhibitorInfoController extends Controller
         $zip = $application->postal_code ?? '';
         $application->full_address = $add1 . ', ' . $city . ', ' . $state . ', ' . $country . ', ' . $zip;
 
+
         //changes in backend
 
 
