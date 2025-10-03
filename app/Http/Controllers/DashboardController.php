@@ -6,12 +6,14 @@ use App\Models\Application;
 use App\Models\ExhibitionParticipant;
 use App\Models\ExhibitorInfo;
 use App\Models\Invoice;
+use App\Models\StallManning;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use App\Models\CoExhibitor;
 use App\Models\Payment;
 use App\Models\Ticket;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
 class DashboardController extends Controller
@@ -149,8 +151,43 @@ class DashboardController extends Controller
                 });
             } catch (\Exception $e) {
                 $ticketDetails = collect();
-                // Optionally log the error: \Log::error($e->getMessage());
+                // Optionally log the error: \
+                Log::error($e->getMessage());
             }
+
+            // Used count of each category
+            // Get the Stall Manning Count from stall_manning table using same id
+            $stallManningCount = StallManning::where('exhibition_participant_id', $exhibitionParticipant->id)->count();
+            $ticketSummary = [];
+            foreach ($ticketDetails as $ticket) {
+                $usedCount = DB::table('complimentary_delegates')
+                    ->where('exhibition_participant_id', $exhibitionParticipant->id)
+                    ->where('ticketType', $ticket['name'])
+                    ->count();
+
+                $remainingCount = $ticket['count'] - $usedCount;
+
+                $ticketSummary[] = [
+                    'name' => $ticket['name'],
+                    'count' => $ticket['count'],
+                    'usedCount' => $usedCount,
+                    'remainingCount' => $remainingCount,
+                    'slug' => $ticket['slug'],
+                ];
+            }
+
+            //merge the stall manning count to ticket summmary with ticket type as Exhibitor
+            $ticketSummary[] = [
+                'name' => 'Exhibitor',
+                'count' => $exhibitionParticipant->stall_manning_count,
+                'usedCount' => $stallManningCount,
+                'remainingCount' => $exhibitionParticipant->stall_manning_count - $stallManningCount,
+                'slug' => 'stall_manning',
+            ];
+
+
+
+            // dd($ticketSummary);
 
             //
 
@@ -163,7 +200,7 @@ class DashboardController extends Controller
 //             dd($ticketDetails)   ;
 
 
-            return view('dashboard.index', compact('exhibitionParticipant', 'application', 'ticketDetails', 'directoryFilled'));
+            return view('dashboard.index', compact('exhibitionParticipant', 'application', 'ticketDetails', 'directoryFilled', 'ticketSummary'));
             return view('dashboard.index');
         } elseif ($user->role == 'admin') {
             $analytics = app('analytics');

@@ -71,7 +71,7 @@
                 </div>
             </div>
             {{-- if stallNumber is null or empty hide the card --}}
-            @if(!empty($application->stallNumber))
+{{--            @if(!empty($application->stallNumber))--}}
                 <div class="col-lg-4 col-md-12 mb-4 mb-lg-0">
                     <div class="card shadow-sm h-100">
                         <div class="card-body d-flex align-items-center">
@@ -81,12 +81,12 @@
                             </div>
                             <div>
                                 <h6 class="mb-1">Booth Number</h6>
-                                <span class="fw-bold fs-5">{{ $application->stallNumber ?? 'N/A' }}</span>
+                                <span class="fw-bold fs-5">{{ $application->stallNumber ?? 'Not Assigned' }}</span>
                             </div>
                         </div>
                     </div>
                 </div>
-            @endif
+{{--            @endif--}}
             <div class="col-lg-4 col-md-12 mb-4 mb-lg-0">
                 <div class="card shadow-sm h-100">
                     <div class="card-body d-flex align-items-center">
@@ -196,26 +196,30 @@
             </div>
 
 
-            <div class="col-xl-3 col-sm-6 mb-4">
-                <div class="card h-100" style="min-height: 70px; min-width: 100%;">
-                    <div class="card-header d-flex justify-content-between align-items-center">
-                        <div>
-                            <p class="text-m mb-0 text-bold text-capitalize">Exhibitor Passes Allocated</p>
-                            <h4 class="mb-0">
-                                <a href="{{ route('exhibition.list', ['type' => 'stall_manning']) }}">{{ $exhibitionParticipant['stall_manning_count'] ?? 0 }}</a>
-                            </h4>
-                        </div>
-                        <div class="icon icon-md icon-shape bg-gradient-dark text-center border-radius-lg">
-                            <i class="material-symbols-rounded opacity-10">weekend</i>
-                        </div>
-                    </div>
-                    <div class="card-footer">
-                        <p class="mb-0 text-sm"><a href="{{ route('exhibition.list', ['type' => 'stall_manning']) }}"
-                                                   class="text-success font-weight-bolder">Click here</a> for Exhibitor
-                            Registration.</p>
-                    </div>
-                </div>
-            </div>
+{{--            <div class="col-xl-3 col-sm-6 mb-4">--}}
+{{--                <div class="card h-100" style="min-height: 70px; min-width: 100%;">--}}
+{{--                    <div class="card-header d-flex justify-content-between align-items-center">--}}
+{{--                        <div>--}}
+{{--                            <p class="text-m mb-0 text-bold text-capitalize">Exhibitor Passes Allocated</p>--}}
+{{--                            <h4 class="mb-0">--}}
+
+{{--                                @php--}}
+{{--                                    $exhibitorTicket = collect($ticketSummary ?? [])->firstWhere('slug', 'stall_manning');--}}
+{{--                                @endphp--}}
+{{--                                <a href="{{ route('exhibition.list', ['type' => 'stall_manning']) }}"> {{ $exhibitorTicket['usedCount'] }}   /  {{ $exhibitionParticipant['stall_manning_count'] ?? 0 }}</a>--}}
+{{--                            </h4>--}}
+{{--                        </div>--}}
+{{--                        <div class="icon icon-md icon-shape bg-gradient-dark text-center border-radius-lg">--}}
+{{--                            <i class="material-symbols-rounded opacity-10">weekend</i>--}}
+{{--                        </div>--}}
+{{--                    </div>--}}
+{{--                    <div class="card-footer">--}}
+{{--                        <p class="mb-0 text-sm"><a href="{{ route('exhibition.list', ['type' => 'stall_manning']) }}"--}}
+{{--                                                   class="text-success font-weight-bolder">Click here</a> for Exhibitor--}}
+{{--                            Registration.</p>--}}
+{{--                    </div>--}}
+{{--                </div>--}}
+{{--            </div>--}}
 
 
             @if(($exhibitionParticipant['complimentary_delegate_count'] ?? 0) > 0)
@@ -242,7 +246,7 @@
             @endif
 
             {{-- if $ticketDetails is not null and array items count as not 0 then make card with 0.name passes --}}
-            @foreach($ticketDetails ?? [] as $ticket)
+            @foreach($ticketSummary ?? [] as $ticket)
                 @if(($ticket['count'] ?? 0) > 0)
                     <div class="col-xl-3 col-sm-6 mb-4">
                         <div class="card h-80" style="min-height: 70px; min-width: 100%;">
@@ -251,7 +255,7 @@
                                     <p class="text-m mb-0 text-bold text-capitalize">
                                         {{ Str::contains(Str::lower($ticket['name']), 'pass') ? $ticket['name'] : $ticket['name'] . ' Passes' }} Allocated
                                     </p>
-                                    <h4 class="mb-0">{{ $ticket['count'] }}</h4>
+                                    <h4 class="mb-0">{{$ticket['usedCount']}} Used / {{ $ticket['count'] }} Total</h4>
                                 </div>
                                 <div class="icon icon-md icon-shape bg-gradient-info text-center border-radius-lg">
                                     <i class="fa-solid fa-ticket opacity-10"></i>
@@ -279,28 +283,56 @@
                 <hr>
             </div>
 
-            <div class="col-xl-3 col-sm-6 mb-4">
-                <div class="card h-100" style="min-height: 70px; min-width: 100%;">
-                    <div class="card-header d-flex justify-content-between align-items-center">
-                        <div>
-                            <p class="text-m mb-0 text-bold text-capitalize">Directory Listing</p>
-                            @if($directoryFilled)
-                                <h4 class="mb-0 text-success"><i class="fa-solid fa-check-circle me-2"></i>Completed</h4>
-                            @else
-                                <h4 class="mb-0 text-danger"><i class="fa-solid fa-xmark-circle me-2"></i>Pending</h4>
-                            @endif
-                        </div>
-                        <div class="icon icon-md icon-shape bg-gradient-dark text-center border-radius-lg">
-                            <i class="fa-solid fa-list opacity-10"></i>
-                        </div>
-                    </div>
-                    <div class="card-footer">
-                        @if($directoryFilled)
-                            <p class="mb-0 text-sm"><a href="{{route('exhibitor.info')}}" class="text-info font-weight-bolder">Click to View</a></p>
-                        @else
-                            <p class="mb-0 text-sm"><a href="{{route('exhibitor.info')}}" class="text-danger font-weight-bolder">Click to complete your directory listing</a></p>
-                        @endif
-                    </div>
+           <div class="col-12 mb-4">
+                <div class="table-responsive">
+                    <table class="table table-bordered align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th colspan="1">Sr. No.</th>
+                                <th>Action Item</th>
+                                <th>Status</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+
+                                <td class="" style="column-span: 1;">#1 </td>
+                                <td class="text-capitalize">Directory Listing</td>
+                                <td>
+                                    @if($directoryFilled)
+                                        <span class="text-success"><i class="fa-solid fa-check-circle me-2"></i>Completed</span>
+                                    @else
+                                        <span class="text-danger"><i class="fa-solid fa-xmark-circle me-2"></i>Pending</span>
+                                    @endif
+                                </td>
+                                <td>
+                                    @if($directoryFilled)
+                                        <a href="{{route('exhibitor.info')}}" class="btn btn-outline-info btn-sm">View</a>
+                                    @else
+                                        <a href="{{route('exhibitor.info')}}" class="btn btn-outline-danger btn-sm">Complete Now</a>
+                                    @endif
+                                </td>
+                            </tr>
+                            {{-- Add Actions items as whichever usedCount of ticketSummary is 0 ask user to register under ticketName --}}
+                            @php $actionIndex = 2; @endphp
+                            @foreach($ticketSummary ?? [] as $ticket)
+                                @if(($ticket['usedCount'] ?? 0) == 0 && ($ticket['count'] ?? 0) > 0)
+                                    <tr>
+                                        <td class="text-capitalize">#{{ $actionIndex++ }} </td>
+
+                                        <td class="text-capitalize"> {{ Str::contains(Str::lower($ticket['name']), 'pass') ? $ticket['name'] : $ticket['name'] . ' Passes' }} Registration</td>
+                                        <td>
+                                            <span class="text-danger"><i class="fa-solid fa-xmark-circle me-2"></i>Pending</span>
+                                        </td>
+                                        <td>
+                                            <a href="{{ route('exhibition.list', ['type' => $ticket['slug'] ?? $ticket['name']]) }}" class="btn btn-outline-danger btn-sm">Register Now</a>
+                                        </td>
+                                    </tr>
+                                @endif
+                            @endforeach
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>

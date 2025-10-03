@@ -121,26 +121,23 @@
         @endif
     </div>
 
-    <footer class="footer py-4  ">
+    <footer class="footer py-4">
         <div class="container-fluid">
             <div class="row align-items-center justify-content-lg-between">
                 <div class="col-lg-12 mb-lg-0 mb-4">
                     <div class="copyright text-center text-sm text-muted text-lg-start">
                         <ul class="nav nav-footer">
-                            <li class="nav-item d-flex justify-content-between w-100">
-                                    <span class="ms-2">©
-                                        <script>
-                                            document.write(new Date().getFullYear())
-                                        </script> Copyright {{config('constants.EVENT_NAME')}}, All Rights Reserved
-                                    </span>
-                                <span class="me-2">Powered by MM Activ Sci-Tech Communications PVT. LTD.</span>
+                            <li class="nav-item d-flex justify-content-between w-100 align-items-center flex-wrap">
+                                <span class="ms-2 d-inline-flex align-items-center" style="white-space: nowrap;">
+                                    © <script>document.write(new Date().getFullYear())</script> Copyright {{ config('constants.EVENT_NAME') }}, All Rights Reserved
+                                </span>
+                                <span class="me-2 d-inline-flex align-items-center" style="white-space: nowrap;">
+                                    Powered by MM Activ Sci-Tech Communications PVT. LTD.
+                                </span>
                             </li>
-
                         </ul>
-
                     </div>
                 </div>
-
             </div>
         </div>
     </footer>

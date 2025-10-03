@@ -47,7 +47,7 @@
                     @if (now()->lt(\Carbon\Carbon::parse(config('constants.LATE_REGISTRATION_DEADLINE'))))
                         <p class="mb-1 text-sm mx-auto">
                             Don't have an account?
-                            <a href="{{ route('register.form') }}" class="text-success text-gradient font-weight-bold">Sign up</a>
+                           <a href="{{ config('constants.DEFAULT_REGISTRATION_LINK') }}" class="text-success text-gradient font-weight-bold">Sign up</a>
                         </p>
                     @endif
                     <p class="mb-4 text-sm mx-auto">
