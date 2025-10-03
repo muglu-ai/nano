@@ -64,13 +64,13 @@
             <div class="col-md-4">
                 <div class="card card-custom">
                     <div class="card-header card-header-custom">
-                        Users with Paid/Partial Invoices
+                        Total Exhibitor
                     </div>
                     <div class="card-body card-body-custom bg-pink">
                         {{ $usersWithPaidApps }}
                     </div>
                     <div class="card-footer card-footer-custom">
-                        Total Exhibitor and Co-Exhibitor Application with Paid/Partial Status
+                        Total Exhibitor
                     </div>
                 </div>
             </div>
@@ -100,7 +100,7 @@
                         {{ $uniqueExtraOrder }}
                     </div>
                     <div class="card-footer card-footer-custom">
-                        Total Unique Exhibitor and Co-Exhibitor who have ordered Extra requirements
+                        Total Unique Exhibitor who have ordered Extra requirements
                     </div>
                 </div>
             </div>

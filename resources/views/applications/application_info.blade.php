@@ -28,7 +28,7 @@
                             </div>
                             <div class="col-md-4">
                                 <label for="gst_compliance" class="form-label fw-bold text-nowrap">GST Compliance:</label>
-                                <p class="form-control-plaintext mb-0">{{ $application->gst_compliance == 1 ? 'Yes' : 'No' }}</p>
+                                <p class="form-control-plaintext mb-0">{{ $application->gst_compliance == 1 ? 'Yes' : 'Not Applicable' }}</p>
                             </div>
                             @if($application->gst_compliance == 1)
                                 <div class="col-md-4">
@@ -42,12 +42,12 @@
                                 <label for="pan_no" class="form-label fw-bold text-nowrap">PAN Number:</label>
                                 <p class="form-control-plaintext mb-0">{{ $application->pan_no }}</p>
                             </div>
-                            @if(!empty($application->tan_no))
+{{--                            @if(!empty($application->tan_no))--}}
                                 <div class="col-md-4">
                                     <label for="tan_no" class="form-label fw-bold text-nowrap">TAN Number:</label>
-                                    <p class="form-control-plaintext mb-0">{{ $application->tan_no }}</p>
+                                    <p class="form-control-plaintext mb-0">{{ $application->tan_no ?? 'Not Provided' }}</p>
                                 </div>
-                            @endif
+{{--                            @endif--}}
                         </div>
                         <div class="row mt-3">
                             <div class="col-md-4">
