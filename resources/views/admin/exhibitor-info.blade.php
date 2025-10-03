@@ -1204,18 +1204,18 @@ function viewDetails(exhibitorId) {
     $('#viewDetailsModal').modal('show');
 
     // Make AJAX call to get exhibitor details
-    fetch("{{ route('api.exhibitor.details', ['id' => '']) }}".replace(/\/$/, '') + `/${exhibitorId}`)
+    fetch("{{ route('api.exhibitor.details', ':id') }}".replace(':id', exhibitorId))
         .then(response => response.json())
         .then(data => {
             if (data.success) {
                 displayExhibitorDetails(data.data);
             } else {
-                displayError(data.message || 'Failed to load exhibitor details');
+                displayError(data.message || 'Failed to load exhibitor details', exhibitorId);
             }
         })
         .catch(error => {
             console.error('Error:', error);
-            displayError('An error occurred while loading exhibitor details');
+            displayError('An error occurred while loading exhibitor details', exhibitorId);
         });
 }
 
@@ -1322,15 +1322,21 @@ function displayExhibitorDetails(exhibitor) {
 }
 
 // Display error message
-function displayError(message) {
+function displayError(message, exhibitorId = null) {
+    const retryButton = exhibitorId ? 
+        `<button class="btn btn-primary" onclick="viewDetails(${exhibitorId})">
+            <i class="fas fa-redo me-2"></i>Try Again
+        </button>` : 
+        `<button class="btn btn-secondary" data-bs-dismiss="modal">
+            <i class="fas fa-times me-2"></i>Close
+        </button>`;
+    
     document.getElementById('modalBody').innerHTML = `
         <div class="text-center py-4">
             <i class="fas fa-exclamation-triangle text-warning fa-3x mb-3"></i>
             <h5>Error Loading Details</h5>
             <p class="text-muted">${message}</p>
-            <button class="btn btn-primary" onclick="viewDetails(${document.querySelector('[onclick*="viewDetails"]').getAttribute('onclick').match(/\d+/)[0]})">
-                <i class="fas fa-redo me-2"></i>Try Again
-            </button>
+            ${retryButton}
         </div>
     `;
 }
@@ -1342,18 +1348,18 @@ function editExhibitor(exhibitorId) {
     $('#editExhibitorModal').modal('show');
 
     // Fetch exhibitor data for editing
-    fetch("{{ route('api.exhibitor.edit', '') }}/" + exhibitorId)
+    fetch("{{ route('api.exhibitor.edit', ':id') }}".replace(':id', exhibitorId))
         .then(response => response.json())
         .then(data => {
             if (data.success) {
                 populateEditForm(data.data);
             } else {
-                showEditError(data.message || 'Failed to load exhibitor data');
+                showEditError(data.message || 'Failed to load exhibitor data', exhibitorId);
             }
         })
         .catch(error => {
             console.error('Error:', error);
-            showEditError('An error occurred while loading exhibitor data');
+            showEditError('An error occurred while loading exhibitor data', exhibitorId);
         });
 }
 
@@ -1533,16 +1539,22 @@ function populateEditForm(exhibitor) {
 }
 
 // Show edit error
-function showEditError(message) {
+function showEditError(message, exhibitorId = null) {
     const form = document.getElementById('editExhibitorForm');
+    const retryButton = exhibitorId ? 
+        `<button class="btn btn-primary" onclick="editExhibitor(${exhibitorId})">
+            <i class="fas fa-redo me-2"></i>Try Again
+        </button>` : 
+        `<button class="btn btn-secondary" data-bs-dismiss="modal">
+            <i class="fas fa-times me-2"></i>Close
+        </button>`;
+    
     form.innerHTML = `
         <div class="text-center py-4">
             <i class="fas fa-exclamation-triangle text-warning fa-3x mb-3"></i>
             <h5>Error Loading Data</h5>
             <p class="text-muted">${message}</p>
-            <button class="btn btn-primary" onclick="editExhibitor(${document.querySelector('[onclick*="editExhibitor"]').getAttribute('onclick').match(/\d+/)[0]})">
-                <i class="fas fa-redo me-2"></i>Try Again
-            </button>
+            ${retryButton}
         </div>
     `;
 }
@@ -1561,7 +1573,7 @@ function updateExhibitor(exhibitorId) {
     // Clear previous validation errors
     clearValidationErrors();
 
-    fetch("{{ route('api.exhibitor.update', '') }}/" + exhibitorId, {
+    fetch("{{ route('api.exhibitor.update', ':id') }}".replace(':id', exhibitorId), {
         method: 'POST',
         body: formData,
         headers: {
