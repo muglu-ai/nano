@@ -209,7 +209,7 @@ class DocumentsContoller extends Controller
     {
         //path         public_path/assets/docs/Exhibitior-Manual-SEMICON-2025.pdf
 
-        $filePath = public_path('assets/docs/');
+        $filePath = null;
        //dd($filePath);
         //return view with the file path
         if (file_exists($filePath)) {
@@ -223,7 +223,8 @@ class DocumentsContoller extends Controller
             return view('documents.documentsView', ['pdfPath' => $filePath]);
         } else {
             //print that it is coming soon
-
+            $$filePath = null;
+            return view('documents.documentsView', ['pdfPath' => $filePath]);
             return redirect()->route('event.list')->with('error', 'Exhibitor manual not found.');
         }
     }
