@@ -9,8 +9,16 @@
             <div class="col-12">
                 <div class="card shadow mb-4">
                     <div class="card-body">
-                        <h3 class="mb-0 h4 font-weight-bolder">Application Info</h3>
-                        <p class="mb-4">Application No: {{ $application->application_id }}</p>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h3 class="mb-0 h4 font-weight-bolder">Application Info</h3>
+                                <p class="mb-4">Application No: {{ $application->application_id }}</p>
+                            </div>
+                            <div class="col-md-6">
+                                <h3 class="mb-0 h4 font-weight-bolder">Registration Date</h3>
+                                <p class="mb-4">Date: {{ $application->approved_date ? \Carbon\Carbon::parse($application->approved_date)->format('Y-m-d') : '-' }}</p>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -84,7 +92,13 @@
                             </div>
                             <div class="col-md-4">
                                 <label for="website" class="form-label fw-bold text-nowrap">Website:</label>
-                                <p class="form-control-plaintext mb-0"><a href="{{ $application->website }}" target="_blank" style="color: blue;">{{ $application->website }}</a></p>
+                                @php
+                                    $website = $application->website;
+                                    if ($website && !preg_match('/^https?:\/\//', $website)) {
+                                        $website = 'https://' . $website;
+                                    }
+                                @endphp
+                                <p class="form-control-plaintext mb-0"><a href="{{ $website }}" target="_blank" style="color: blue;">{{ $application->website }}</a></p>
                             </div>
                         </div>
 

@@ -57,13 +57,13 @@
 <footer class="footer py-3 w-100 mt-3">
     <div class="container">
         <div class="row align-items-center text-center">
-            <div class="col-12 col-md-4 text-md-start d-flex justify-content-center justify-content-md-start align-items-center">
+            <div class="col-12 col-md-5 text-md-start d-flex justify-content-center justify-content-md-start align-items-center">
                 <p class="mb-0 text-wrap text-sm text-white">© Copyright <span
                             id="currentYear"></span> {{config('constants.EVENT_NAME')}}. All Rights Reserved.</p>
             </div>
 
             <!-- Black Vertical Separator -->
-            <div class="separator d-none d-md-block"></div>
+{{--            <div class="separator d-none d-md-block"></div>--}}
 
 {{--            <div class="col-12 col-md-3 text-center d-flex justify-content-center align-items-center">--}}
 {{--                <a href="{{config('constants.APP_URL')}}/terms-conditions" class="nav-link text-white">Terms &--}}
@@ -71,9 +71,9 @@
 {{--            </div>--}}
 
             <!-- Black Vertical Separator -->
-            <div class="separator d-none d-md-block"></div>
+            <div class="col-md-2 separator d-none d-md-block"></div>
 
-            <div class="col-12 col-md-4 text-md-end d-flex justify-content-center justify-content-md-end align-items-center">
+            <div class="col-12 col-md-5 text-md-end d-flex justify-content-center justify-content-md-end align-items-center">
                 <p class="mb-0 text-wrap text-sm text-white">Powered by MM Activ Sci-Tech Communications PVT. LTD.</p>
             </div>
         </div>

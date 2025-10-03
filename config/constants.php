@@ -39,7 +39,15 @@ const EVENT_FAVICON = 'https://www.bengalurutechsummit.com/favicon-16x16.png';
 
 const EXTRA_REQUIREMENTS_ACTIVE = false; //true or false
 
-const LATE_REGISTRATION_DEADLINE = '2024-11-24'; // last
+const LATE_REGISTRATION_DEADLINE = '2025-11-19'; // last
+
+//custom registration link for exhibitors
+const EXHIBITOR_REGISTRATION_LINK = 'https://www.bengalurutechsummit.com/web/it_forms/enquiry.php';
+
+
+
+//define("DEFAULT_REGISTRATION_LINK", route('register.form'));
+const DEFAULT_REGISTRATION_LINK = null;
 
 
 return [
@@ -61,7 +69,8 @@ return [
     'DELEGATE_ID_PREFIX' => 'TIN-' . SHORT_NAME . EVENT_YEAR,
 
     'LATE_REGISTRATION_DEADLINE' => LATE_REGISTRATION_DEADLINE,
-
+    'EXHIBITOR_REGISTRATION_LINK' => EXHIBITOR_REGISTRATION_LINK,
+    'DEFAULT_REGISTRATION_LINK' => DEFAULT_REGISTRATION_LINK ?: EXHIBITOR_REGISTRATION_LINK,
     'FAVICON' => FAVICON,
     'FAVICON_APPLE' => FAVICON_APPLE,
     'FAVICON_16' => FAVICON_16,
