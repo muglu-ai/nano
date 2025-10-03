@@ -710,7 +710,7 @@
                 _token: document.getElementById('csrfToken').value, // CSRF Token
             };
 
-            fetch('/invite', {
+            fetch("{{ route('exhibition.invite') }}", {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

@@ -50,6 +50,7 @@ use App\Mail\UpdateMailer;
 use App\Models\Application;
 use App\Models\Attendee;
 use App\Models\ComplimentaryDelegate;
+use App\Models\ExhibitorInfo;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -60,6 +61,17 @@ use App\Http\Controllers\EnquiryController;
 
 Route::get('/{event}/onboarding', [ApplicationController::class, 'showForm2'])->name('event.onboarding')->middleware(CheckUser::class);
 Route::get('/{event}/onboarding', [ApplicationController::class, 'showForm2'])->name('new_form')->middleware(CheckUser::class);
+
+
+//Route::get('/admin/exhibitor-info', function () {
+//
+//
+//    return view('admin.exhibitor-info'  ,compact('exhibitorInfo', 'analytics'));
+//})->name('home')->middleware(Auth::class);
+
+// Admin Exhibitor Information Dashboard
+
+
 //Exhibitor Controller
 Route::get('dashboard', [DashboardController::class, 'exhibitorDashboard'])->name('user.dashboard')->middleware(CheckUser::class);
 
@@ -665,6 +677,17 @@ Route::post('/exhibitor-info', [ExhibitorInfoController::class, 'storeExhibitor'
 Route::get('/product-add', [ExhibitorInfoController::class, 'showProductForm'])->name('product.add')->middleware(CheckUser::class);
 Route::post('/product-add', [ExhibitorInfoController::class, 'productStore'])->name('product.store')->middleware(CheckUser::class);
 
+/*Exhibitor Info Admin Routes
+*/
+
+Route::get('/exhibitor-info-list', [ExhibitorInfoController::class, 'listExhibitors'])->name('exhibitor.list')->middleware(Auth::class);
+
+// API endpoint for exhibitor details
+Route::get('/api/exhibitor-details/{id}', [ExhibitorInfoController::class, 'getExhibitorDetails'])->name('api.exhibitor.details')->middleware(Auth::class);
+
+// API endpoints for exhibitor editing
+Route::get('/api/exhibitor-edit/{id}', [ExhibitorInfoController::class, 'getExhibitorForEdit'])->name('api.exhibitor.edit')->middleware(Auth::class);
+Route::post('/api/exhibitor-update/{id}', [ExhibitorInfoController::class, 'updateExhibitor'])->name('api.exhibitor.update')->middleware(Auth::class);
 
 //terms and conditions route
 Route::get('/terms-conditions', function () {
