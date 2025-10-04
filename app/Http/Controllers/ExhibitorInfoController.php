@@ -126,9 +126,11 @@ class ExhibitorInfoController extends Controller
         $state = ($application->state && isset($application->state->name)) ? $application->state->name : '';
         $country = ($application->country && isset($application->country->name)) ? $application->country->name : '';
         $zip = $application->postal_code ?? '';
-        $application->full_address = $add1 . ', ' . $city . ', ' . $state . ', ' . $country . ', ' . $zip;
+        $application->full_address = $add1;
+        // $application->full_address = $add1 . ', ' . $city . ', ' . $state . ', ' . $country . ', ' . $zip;
 
-
+// 
+// 
         //changes in backend
 
 
