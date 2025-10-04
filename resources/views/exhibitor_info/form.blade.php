@@ -19,7 +19,7 @@
 
         @media (max-width: 767.98px) {
             .custom-height {
-                height: 2800px;
+                height: 2600px;
             }
         }
 
