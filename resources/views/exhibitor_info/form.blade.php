@@ -379,7 +379,7 @@
                                 <div class="col-sm-6">
                                     <label class="form-label">Telephone Number <span class="red-label">*</span></label>
                                     <div class="input-group input-group-dynamic is-filled {{ $cssClass }}">
-                                        <input id="telPhone" class="form-control iti" type="tel" name="tTelephone NumberelPhone"
+                                        <input id="telPhone" class="form-control iti" type="tel" name="telPhone"
                                             value="{{ $exhibitorInfo->telPhone ?? '' }}" required autocomplete="off">
                                     </div>
                                 </div>

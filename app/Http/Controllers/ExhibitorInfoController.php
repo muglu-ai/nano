@@ -143,7 +143,7 @@ class ExhibitorInfoController extends Controller
 
     public function storeExhibitor(Request $request)
     {
-        //dd($request->all());    
+        // dd($request->all());    
         $applicationId = $this->getApplicationId();
         // pass this application id to the request
         $request->merge(['application_id' => $applicationId]);
