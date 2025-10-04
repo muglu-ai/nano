@@ -43,7 +43,7 @@ class ExhibitorInfoController extends Controller
     }
 */
 
-// get the application id from application table where user_id is logged in user id
+    // get the application id from application table where user_id is logged in user id
     public function __construct()
     {
         $this->middleware(function ($request, $next) {
@@ -302,7 +302,7 @@ class ExhibitorInfoController extends Controller
     // make a function to work as middleware to check if the user is logged in and is admin
     public function adminMiddleware()
     {
-//        dd('admin middleware');
+        //        dd('admin middleware');
         if (!Auth::check()) {
             return redirect()->route('login')->with('error', 'Please login to continue.');
         }
@@ -379,7 +379,8 @@ class ExhibitorInfoController extends Controller
     }
 
 
-    public function allExhibitors(){
+    public function allExhibitors()
+    {
         // how to ignore the construct function in this function
 
         dd('all exhibitors');
@@ -402,7 +403,7 @@ class ExhibitorInfoController extends Controller
             ];
 
             // Filter out empty social media links
-            $socialMedia = array_filter($socialMedia, function($value) {
+            $socialMedia = array_filter($socialMedia, function ($value) {
                 return !empty($value);
             });
 
@@ -433,7 +434,6 @@ class ExhibitorInfoController extends Controller
                 'success' => true,
                 'data' => $data
             ]);
-
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
@@ -472,7 +472,6 @@ class ExhibitorInfoController extends Controller
                 'success' => true,
                 'data' => $data
             ]);
-
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
@@ -528,7 +527,6 @@ class ExhibitorInfoController extends Controller
                     'submission_status' => $exhibitor->submission_status,
                 ]
             ]);
-
         } catch (\Illuminate\Validation\ValidationException $e) {
             return response()->json([
                 'success' => false,
