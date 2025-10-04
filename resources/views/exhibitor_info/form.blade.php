@@ -35,7 +35,7 @@
 
         @media (min-width: 768px) {
             .custom-height {
-                height: 1850px;
+                height: 1900px;
             }
         }
 
