@@ -397,7 +397,7 @@
                                         </div>
                                        
                                     </div>
-                                    <small class="text-muted">Note: Image dimension should be 200px (width) x 125px
+                                    <small class="text-muted mt-3">Note: Image dimension should be 200px (width) x 125px
                                         (height), size less than 100KB. Allowed formats: JPG, JPEG, PNG only.</small>
                                 @else
                                     <div class="col-sm-6 mt-3 mt-sm-0">
