@@ -1,9 +1,7 @@
 @extends('layouts.users')
 @section('title', $slug ?? '')
 @section('content')
-    <link rel="stylesheet"
-          href="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/css/intlTelInput.min.css"/>
-
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/css/intlTelInput.min.css" />
     <style>
         .red-label {
             color: red;
@@ -15,18 +13,20 @@
 
         .form-label {
             font-size: 0.9rem !important;
+            font-weight: 500 !important;
+            color: #000000 !important;
         }
 
         @media (max-width: 767.98px) {
             .custom-height {
-                height: 1650px;
+                height: 1950px;
             }
         }
 
 
         @media (min-width: 768px) {
             .custom-height {
-                height: 1250px;
+                height: 1650px;
             }
         }
 
@@ -56,7 +56,7 @@
         }
     @endphp
 
-    {{-- Highlight a note over here by saying once updated cannot be changed--}}
+    {{-- Highlight a note over here by saying once updated cannot be changed --}}
     <div class="container mt-4">
         @if (session('success'))
             <div class="alert alert-success alert-dismissible fade show" role="alert">
@@ -93,39 +93,41 @@
         <div class="card">
             <div class="card-body">
                 <form class="multisteps-form__form custom-height" method="POST"
-                      action="{{ route('exhibitor.info.submit') }}"
-                      enctype="multipart/form-data">
+                    action="{{ route('exhibitor.info.submit') }}" enctype="multipart/form-data">
                     @csrf
 
                     <!-- Panel: Exhibitor Basic Information -->
                     <div class="multisteps-form__panel border-radius-xl bg-white js-active" data-animation="FadeIn">
                         <h5 class="font-weight-bolder mb-0">Exhibitor
-                            Directory @if($application->assoc_mem == 'Startup Exhibitor')
+                            Directory @if ($application->assoc_mem == 'Startup Exhibitor')
                                 - Startup Innovation Zone
-                            @endif</h5>
-                        <p class="mb-5 text-sm">Prefilled details & mandatory exhibitor inputs</p>
+                            @endif
+                        </h5>
+                        {{-- <p class="mb-5 text-sm">Prefilled details & mandatory exhibitor inputs</p>
                         <p class="mb-3">
-              <span class="badge text-bg-warning text-dark">
-                Note: Kindly fill the below details. Once submitted cannot be changed.
-              </span>
-                        </p>
+                            <span class="badge text-bg-warning text-dark">
+                                Note: Kindly fill the below details. Once submitted cannot be changed.
+                            </span>
+                        </p> --}}
                         <div class="multisteps-form__content">
-                            @if($application->assoc_mem != 'Startup Exhibitor')
+                            @if ($application->assoc_mem != 'Startup Exhibitor')
                                 <div class="row mt-5">
                                     <div class="col-sm-12">
                                         <div class="input-group input-group-dynamic is-filled">
-                                            <label class="form-label custom-label">Select Category
+                                            <label class="">Select Category
                                                 <span class="red-label">*</span>
                                             </label>
                                             <select class="form-control" name="category" required>
-                                                <option value=""
-                                                        disabled {{ empty($application->category) ? 'selected' : '' }}>
+                                                <option value="" disabled
+                                                    {{ empty($application->category) ? 'selected' : '' }}>
                                                     Select
                                                 </option>
-                                                <option value="Exhibitor" {{ $application->category == 'Exhibitor' ? 'selected' : '' }}>
+                                                <option value="Exhibitor"
+                                                    {{ $application->category == 'Exhibitor' ? 'selected' : '' }}>
                                                     Exhibitor
                                                 </option>
-                                                <option value="Sponsor" {{ $application->category == 'Sponsor' ? 'selected' : '' }}>
+                                                <option value="Sponsor"
+                                                    {{ $application->category == 'Sponsor' ? 'selected' : '' }}>
                                                     Sponsor
                                                 </option>
                                             </select>
@@ -137,50 +139,52 @@
 
 
                                 <div class="col-sm-6">
+                                    <label class="form-label">Name of the Exhibitor (Organisation Name)  <span class="red-label">*</span> </label>
                                     <div class="input-group input-group-dynamic is-filled">
-                                        <label class="form-label custom-label">Name of the Exhibitor (Organisation Name)
-                                            <span
-                                                    class="red-label">*</span> </label>
+                                        
+                                           
                                         <input class="form-control" type="text"
-                                               value="{{ $application->company_name ?? '' }}"
-                                               readonly>
+                                            value="{{ $application->company_name ?? '' }}" readonly>
                                     </div>
                                 </div>
                                 <div class="col-sm-6 mt-3 mt-sm-0">
+                                    <label class="form-label">Booth Number</label>
                                     <div class="input-group input-group-dynamic is-filled">
-                                        <label class="form-label">Booth Number</label>
+                                        
                                         <input class="form-control" type="text"
-                                               value="{{ $application->stallNumber ?? '' }}"
-                                               readonly>
+                                            value="{{ $application->stallNumber ?? '' }}" readonly>
                                     </div>
                                 </div>
                             </div>
 
                             <div class="row mt-5">
                                 <div class="col-sm-6">
+                                    <label class="form-label">Name for Fascia (Fascia name will be written on Stall)
+                                        <span class="red-label">*</span> </label>
                                     <div class="input-group input-group-dynamic {{ $cssClass }}">
-                                        <label class="form-label">Name for Fascia (Fascia name will be written on Stall)
-                                            <span class="red-label">*</span> </label>
+                                      
                                         <input class="form-control" type="text" name="fascia_name"
-                                               value="{{ $fasciaName }}" required>
+                                            value="{{ $fasciaName }}" required>
                                     </div>
 
-                                    <small class="text-muted">Note: For Shell scheme stall only.</small>
+                                    
 
                                 </div>
+                                <small class="text-muted mt-2" >Note: For Shell scheme stall only.</small>
                             </div>
 
                             <div class="row mt-5">
                                 <div class="col-sm-12">
                                     <div class="row">
                                         <div class="col-4 pe-1">
+                                            <label class="form-label">Contact Person Salutation <span
+                                                class="red-label">*</span>
+                                        </label>
                                             <div class="input-group input-group-dynamic is-filled">
-                                                <label class="form-label">Contact Person Salutation <span
-                                                            class="red-label">*</span>
-                                                </label>
+                                               
                                                 <select class="form-control" name="salutation" required>
-                                                    <option value=""
-                                                            disabled {{ empty($salutation) ? 'selected' : '' }}>Select
+                                                    <option value="" disabled
+                                                        {{ empty($salutation) ? 'selected' : '' }}>Select
                                                     </option>
                                                     <option value="Mr." {{ $salutation == 'Mr.' ? 'selected' : '' }}>Mr.
                                                     </option>
@@ -198,21 +202,23 @@
                                             </div>
                                         </div>
                                         <div class="col-4 px-1">
+                                            <label class="form-label"> Contact Person First Name <span
+                                                class="red-label">*</span>
+                                        </label>
                                             <div class="input-group input-group-dynamic {{ $cssClass }}">
-                                                <label class="form-label"> Contact Person First Name <span
-                                                            class="red-label">*</span>
-                                                </label>
+                                               
                                                 <input class="form-control" type="text" name="contact_first_name"
-                                                       value="{{ $firstName }}" required>
+                                                    value="{{ $firstName }}" required>
                                             </div>
                                         </div>
                                         <div class="col-4 ps-1">
+                                            <label class="form-label">Contact Person Last Name <span
+                                                class="red-label">*</span>
+                                        </label>
                                             <div class="input-group input-group-dynamic {{ $cssClass }}">
-                                                <label class="form-label">Contact Person Last Name <span
-                                                            class="red-label">*</span>
-                                                </label>
+                                               
                                                 <input class="form-control" type="text" name="contact_last_name"
-                                                       value="{{ $lastName }}" required>
+                                                    value="{{ $lastName }}" required>
                                             </div>
                                         </div>
                                     </div>
@@ -222,11 +228,12 @@
                             <div class="row mt-5">
 
                                 <div class="col-sm-6">
+                                    <label class="form-label">Contact Person Designation <span
+                                        class="red-label">*</span></label>
                                     <div class="input-group input-group-dynamic {{ $cssClass }}">
-                                        <label class="form-label">Contact Person Designation <span
-                                                    class="red-label">*</span></label>
+                                       
                                         <input class="form-control" type="text" name="designation"
-                                               value="{{ $exhibitorInfo->designation ?? '' }}" required>
+                                            value="{{ $exhibitorInfo->designation ?? '' }}" required>
                                     </div>
                                 </div>
 
@@ -236,24 +243,27 @@
                             <div class="row mt-5">
                                 <div class="col-12">
                                     <label class="form-label ">Organisation Address <span
-                                                class="red-label">*</span></label>
+                                        class="red-label">*</span></label>
+                                   
                                     <div class="input-group input-group-dynamic is-filled">
-                                        <textarea class="form-control" name="address" rows="2"
-                                                  required>{{ $application->full_address ?? '' }}</textarea>
+                                        <textarea class="form-control" name="address" rows="2" required>{{ $application->full_address ?? '' }}</textarea>
                                     </div>
 
-                                    {{-- Please check the Address Properly because it can't be changed again--}}
-                                    <small class="text-muted">Note: Do not enter city, state, country, or ZIP code in
-                                        the text area. Please use the following designated fields provided for these
-                                        details.</small>
+                                    {{-- Please check the Address Properly because it can't be changed again --}}
+                                   
                                 </div>
+                                <small class="text-muted mt-2">Note: Do not enter city, state, country, or ZIP code in
+                                    the text area. Please use the following designated fields provided for these
+                                    details.</small>
+
                             </div>
 
 
                             <div class="row mt-5">
                                 <div class="col-sm-3">
+                                    <label class="form-label">Country <span class="red-label">*</span></label>
                                     <div class="input-group input-group-dynamic is-filled">
-                                        <label class="form-label">Country <span class="red-label">*</span></label>
+                                       
                                         <select class="form-control" name="country" id="countrySelect" required>
                                             <option value="">Select Country</option>
                                         </select>
@@ -261,8 +271,9 @@
                                 </div>
 
                                 <div class="col-sm-3">
+                                    <label class="form-label">State <span class="red-label">*</span></label>
                                     <div class="input-group input-group-dynamic is-filled">
-                                        <label class="form-label">State <span class="red-label">*</span></label>
+                                      
                                         <select class="form-control" name="state" id="stateSelect" required>
                                             <option value="">Select State</option>
                                         </select>
@@ -270,139 +281,166 @@
                                 </div>
 
                                 <div class="col-sm-3">
+                                    <label class="form-label">City <span class="red-label">*</span></label>
                                     <div class="input-group input-group-dynamic is-filled">
-                                        <label class="form-label">City <span class="red-label">*</span></label>
+                                     
                                         <input class="form-control" type="text" name="city"
-                                               value="{{ $exhibitorInfo->city ?? '' }}" required>
+                                            value="{{ $exhibitorInfo->city ?? '' }}" required>
                                     </div>
                                 </div>
 
                                 <div class="col-sm-3">
+                                    <label class="form-label">Zip Code <span class="red-label">*</span></label>
                                     <div class="input-group input-group-dynamic is-filled">
-                                        <label class="form-label">Zip Code <span class="red-label">*</span></label>
+                                       
                                         <input class="form-control" type="text" name="zip_code"
-                                               value="{{ $exhibitorInfo->zip_code ?? '' }}" required>
+                                            value="{{ $exhibitorInfo->zip_code ?? '' }}" required>
                                     </div>
                                 </div>
                             </div>
                             <script>
-                            document.addEventListener('DOMContentLoaded', function () {
-                                const countrySelect = document.getElementById('countrySelect');
-                                const stateSelect = document.getElementById('stateSelect');
-                                const selectedCountry = "{{ $exhibitorInfo->country ?? '' }}";
-                                const selectedState = "{{ $exhibitorInfo->state ?? '' }}";
+                                document.addEventListener('DOMContentLoaded', function() {
+                                    const countrySelect = document.getElementById('countrySelect');
+                                    const stateSelect = document.getElementById('stateSelect');
+                                    const selectedCountry = "{{ $exhibitorInfo->country ?? '' }}";
+                                    const selectedState = "{{ $exhibitorInfo->state ?? '' }}";
 
-                                // Fetch countries
-                                fetch("{{ route('api.countries') }}")
-                                    .then(res => res.json())
-                                    .then(countries => {
-                                        countries.forEach(country => {
-                                            const opt = document.createElement('option');
-                                            opt.value = country.iso2;
-                                            opt.textContent = country.name;
-                                            if (country.name === selectedCountry || country.iso2 === selectedCountry) opt.selected = true;
-                                            countrySelect.appendChild(opt);
+                                    // Fetch countries
+                                    fetch("{{ route('api.countries') }}")
+                                        .then(res => res.json())
+                                        .then(countries => {
+                                            countries.forEach(country => {
+                                                const opt = document.createElement('option');
+                                                opt.value = country.iso2;
+                                                opt.textContent = country.name;
+                                                if (country.name === selectedCountry || country.iso2 === selectedCountry) opt
+                                                    .selected = true;
+                                                countrySelect.appendChild(opt);
+                                            });
+                                            if (selectedCountry) {
+                                                loadStates(selectedCountry);
+                                            }
                                         });
-                                        if (selectedCountry) {
-                                            loadStates(selectedCountry);
-                                        }
+
+                                    countrySelect.addEventListener('change', function() {
+                                        loadStates(this.value);
                                     });
 
-                                countrySelect.addEventListener('change', function () {
-                                    loadStates(this.value);
-                                });
-
-                                function loadStates(countryIso) {
-                                    stateSelect.innerHTML = '<option value="">Select State</option>';
-                                    if (!countryIso) return;
-                                    fetch(`{{ url('/api/states') }}/${countryIso}`)
-                                        .then(res => res.json())
-                                        .then(states => {
-                                            states.forEach(state => {
-                                                const opt = document.createElement('option');
-                                                opt.value = state.name;
-                                                opt.textContent = state.name;
-                                                if (state.name === selectedState) opt.selected = true;
-                                                stateSelect.appendChild(opt);
+                                    function loadStates(countryIso) {
+                                        stateSelect.innerHTML = '<option value="">Select State</option>';
+                                        if (!countryIso) return;
+                                        fetch(`{{ url('/api/states') }}/${countryIso}`)
+                                            .then(res => res.json())
+                                            .then(states => {
+                                                states.forEach(state => {
+                                                    const opt = document.createElement('option');
+                                                    opt.value = state.name;
+                                                    opt.textContent = state.name;
+                                                    if (state.name === selectedState) opt.selected = true;
+                                                    stateSelect.appendChild(opt);
+                                                });
                                             });
-                                        });
-                                }
-                            });
+                                    }
+                                });
                             </script>
 
                             <div class="row mt-5">
                                 <div class="col-sm-6 mt-3 mt-sm-0">
+                                    <label class="form-label">Contact Email Address <span
+                                        class="red-label">*</span></label>
                                     <div class="input-group input-group-dynamic {{ $cssClass }}">
-                                        <label class="form-label">Contact Email Address <span
-                                                    class="red-label">*</span></label>
+                                      
                                         <input class="form-control" type="email" name="email"
-                                               value="{{ $exhibitorInfo->email ?? '' }}" required>
+                                            value="{{ $exhibitorInfo->email ?? '' }}" required>
                                     </div>
                                 </div>
                                 <div class="col-sm-6">
+                                    <label class="form-label">Mobile Number <span class="red-label">*</span></label>
                                     <div class="input-group input-group-dynamic is-filled {{ $cssClass }}">
-                                        <label class="form-label">Mobile Number <span class="red-label">*</span></label>
+                                      
                                         <input id="phone" class="form-control iti" type="tel" name="phone"
-                                               value="{{ $exhibitorInfo->phone ?? '' }}" required autocomplete="off">
+                                            value="{{ $exhibitorInfo->phone ?? '' }}" required autocomplete="off">
                                     </div>
                                 </div>
 
                             </div>
 
-                                <div class="row mt-5">
-                                    <div class="col-sm-6">
+                            <div class="row mt-5">
+                                <div class="col-sm-6">
+                                    <label class="form-label">Telephone Number <span class="red-label">*</span></label>
+                                    <div class="input-group input-group-dynamic is-filled {{ $cssClass }}">
+                                      
+                                        <input id="telPhone" class="form-control iti" type="tel" name="telPhone"
+                                            value="{{ $exhibitorInfo->telPhone ?? '' }}" required autocomplete="off">
+                                    </div>
+                                </div>
+
+                                <div class="col-sm-6">
+                                    <label class="form-label">Website <span class="red-label">*</span></label>
+                                    <div class="input-group input-group-dynamic {{ $cssClass }}">
+                                    
+                                        <input class="form-control" type="url" name="website"
+                                            value="{{ $exhibitorInfo->website ?? '' }}">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row mt-5">
+                                @if (empty($exhibitorInfo) || empty($exhibitorInfo->submission_status) || $exhibitorInfo->submission_status == 0)
+                                    <div class="col-sm-6 mt-3 mt-sm-0">
+                                        <label class="form-label">Upload Logo <span class="red-label">*</span>
+                                        </label>
                                         <div class="input-group input-group-dynamic is-filled {{ $cssClass }}">
-                                            <label class="form-label">Mobile Number <span class="red-label">*</span></label>
-                                            <input id="telPhone" class="form-control iti" type="tel" name="telPhone"
-                                                   value="{{ $exhibitorInfo->telPhone ?? '' }}" required autocomplete="off">
+                                         
+                                            <input class="form-control" type="file" name="logo" accept="image/*"
+                                                required>
                                         </div>
+                                       
                                     </div>
-
-                                    <div class="col-sm-6">
-                                        <div class="input-group input-group-dynamic {{ $cssClass }}">
-                                            <label class="form-label">Website <span class="red-label">*</span></label>
-                                            <input class="form-control" type="url" name="website"
-                                                   value="{{ $exhibitorInfo->website ?? '' }}">
+                                    <small class="text-muted">Note: Image dimension should be 200px (width) x 125px
+                                        (height), size less than 100KB. Allowed formats: JPG, JPEG, PNG only.</small>
+                                @else
+                                    <div class="col-sm-6 mt-3 mt-sm-0">
+                                        <div class="input-group input-group-dynamic is-filled {{ $cssClass }}">
+                                            <div class="mt-2">
+                                                <img src="{{ asset('storage/' . $exhibitorInfo->logo) }}"
+                                                    alt="Uploaded Logo" style="max-height: 60px;">
+                                              
+                                            </div>
+                                            
                                         </div>
+                                        <small class="text-success d-block">Your uploaded logo.</small>
                                     </div>
-                                </div>
-
-                                <div class="row mt-5">
-                                    @if (empty($exhibitorInfo) || empty($exhibitorInfo->submission_status) || $exhibitorInfo->submission_status == 0)
-                                        <div class="col-sm-6 mt-3 mt-sm-0">
-                                            <div class="input-group input-group-dynamic is-filled {{ $cssClass }}">
-                                                <label class="form-label">Upload Logo <span class="red-label">*</span>
-                                                </label>
-                                                <input class="form-control" type="file" name="logo" accept="image/*"
-                                                       required>
-                                            </div>
-                                            <small class="text-muted">Note: Image dimension should be 200px (width) x 125px (height), size less than 100KB. Allowed formats: JPG, JPEG, PNG only.</small>
-                                        </div>
-                                    @else
-                                        <div class="col-sm-6 mt-3 mt-sm-0">
-                                            <div class="input-group input-group-dynamic is-filled {{ $cssClass }}">
-                                                <div class="mt-2">
-                                                    <img src="{{ asset('storage/' . $exhibitorInfo->logo) }}"
-                                                         alt="Uploaded Logo" style="max-height: 60px;">
-                                                    <small class="text-success d-block">Your uploaded logo.</small>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    @endif
-                                </div>
+                                @endif
+                            </div>
 
 
 
-                                <div class="row mt-5">
+                            <div class="row mt-5">
                                 <div class="col-12">
                                     <label class="form-label">Company Description <span class="red-label">*</span>
                                     </label>
                                     <div class="input-group input-group-dynamic is-filled">
-                                        <textarea class="form-control" name="description" id="description" rows="3"
-                                                  maxlength="750" required
-                                                  oninput="updateCharCount()">{{ trim($exhibitorInfo->description ?? '') }}</textarea>
+                                        <textarea class="form-control" name="description" id="description" rows="3" maxlength="700" required
+                                            oninput="updateCharCount()">{{ trim($exhibitorInfo->description ?? '') }}</textarea>
                                     </div>
-                                    <small id="charCount" class="text-muted">0 / 750 characters</small>
+                                    <small id="charCount" class="text-muted">0 / 700 characters</small>
+
+                                    <div class="mt-3">
+                                        <div class="">
+                                            <h6 class="mb-2"><strong>Note:</strong></h6>
+                                            <ul class="mb-2">
+                                                <li>This organisational profile will get published in Exhibitors Directory</li>
+                                                <li>Please write at least 250 characters & maximum 700 characters</li>
+                                                <li>If you're copying and pasting from an external document, make sure to press enter and then delete that blank enter line to activate profile box.</li>
+                                            </ul>
+                                            <p class="mb-0">
+                                                <strong>If you have any technical problem, please contact:</strong><br>
+                                                <strong>Name:</strong> Mr. Vivek Patil<br>
+                                                <strong>Email:</strong> support@bengalurutechsummit.com
+                                            </p>
+                                        </div>
+                                    </div>
 
 
                                 </div>
@@ -418,48 +456,51 @@
                             {{-- Website and Social Media Links --}}
 
 
-                            <div class="row mt-5">
+                            {{-- <div class="row mt-5">
                                 <div class="col-sm-6">
+                                    <label class="form-label">LinkedIn</label>
                                     <div class="input-group input-group-dynamic {{ $cssClass }} ">
-                                        <label class="form-label">LinkedIn</label>
+                                      
                                         <input class="form-control" type="url" name="linkedin"
-                                               value="{{ $exhibitorInfo->linkedin ?? '' }}">
+                                            value="{{ $exhibitorInfo->linkedin ?? '' }}">
                                     </div>
                                 </div>
                                 <div class="col-sm-6 mt-3 mt-sm-0">
+                                    <label class="form-label">Instagram</label>
                                     <div class="input-group input-group-dynamic {{ $cssClass }}">
-                                        <label class="form-label">Instagram</label>
+                                        
                                         <input class="form-control" type="url" name="instagram"
-                                               value="{{ $exhibitorInfo->instagram ?? '' }}">
+                                            value="{{ $exhibitorInfo->instagram ?? '' }}">
                                     </div>
                                 </div>
                             </div>
 
                             <div class="row mt-5">
                                 <div class="col-sm-6">
+                                    <label class="form-label">Facebook</label>
                                     <div class="input-group input-group-dynamic {{ $cssClass }}">
-                                        <label class="form-label">Facebook</label>
+                                     
                                         <input class="form-control" type="url" name="facebook"
-                                               value="{{ $exhibitorInfo->facebook ?? '' }}">
+                                            value="{{ $exhibitorInfo->facebook ?? '' }}">
                                     </div>
                                 </div>
                                 <div class="col-sm-6 mt-3 mt-sm-0">
+                                    <label class="form-label">YouTube</label>
                                     <div class="input-group input-group-dynamic {{ $cssClass }}">
-                                        <label class="form-label">YouTube</label>
+                                   
                                         <input class="form-control" type="url" name="youtube"
-                                               value="{{ $exhibitorInfo->youtube ?? '' }}">
+                                            value="{{ $exhibitorInfo->youtube ?? '' }}">
                                     </div>
                                 </div>
-                            </div>
+                            </div> --}}
 
 
                             @if (empty($exhibitorInfo) || empty($exhibitorInfo->submission_status) || $exhibitorInfo->submission_status == 0)
                                 <div class="button-row d-flex mt-4">
                                     <button class="btn bg-gradient-dark ms-auto mb-0" type="submit"
-                                            title="Save">Submit
+                                        title="Save">Submit
                                     </button>
                                 </div>
-
                             @else
                                 <div class="alert alert-info mt-4" role="alert">
                                     You have already submitted your exhibitor information.
@@ -475,73 +516,75 @@
     <!-- intl-tel-input JS -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/js/intlTelInput.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/js/utils.js"></script>
-   <script>
-   document.addEventListener("DOMContentLoaded", function () {
-       var phoneInputs = document.querySelectorAll("#phone, #telPhone");
-       var itiInstances = new Map();
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            var phoneInputs = document.querySelectorAll("#phone, #telPhone");
+            var itiInstances = new Map();
 
-       phoneInputs.forEach(function(phoneInput) {
-           function initializePhoneInput() {
-               if (itiInstances.has(phoneInput)) return;
-               var iti = window.intlTelInput(phoneInput, {
-                   initialCountry: "auto",
-                   utilsScript: "https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/js/utils.js",
-                   geoIpLookup: function (callback) {
-                       fetch('https://ipapi.co/json')
-                           .then(res => res.json())
-                           .then(data => callback(data.country_code))
-                           .catch(() => callback('IN'));
-                   },
-                   separateDialCode: true,
-                   nationalMode: false,
-               });
-               itiInstances.set(phoneInput, iti);
+            phoneInputs.forEach(function(phoneInput) {
+                function initializePhoneInput() {
+                    if (itiInstances.has(phoneInput)) return;
+                    var iti = window.intlTelInput(phoneInput, {
+                        initialCountry: "auto",
+                        utilsScript: "https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/js/utils.js",
+                        geoIpLookup: function(callback) {
+                            fetch('https://ipapi.co/json')
+                                .then(res => res.json())
+                                .then(data => callback(data.country_code))
+                                .catch(() => callback('IN'));
+                        },
+                        separateDialCode: true,
+                        nationalMode: false,
+                    });
+                    itiInstances.set(phoneInput, iti);
 
-               // Set number if available (only for #phone, as per original logic)
-               @if (!empty($exhibitorInfo->phone))
-               if (phoneInput.id === "phone") {
-                   var serverPhone = "{{ $exhibitorInfo->phone ?? '' }}";
-                   if (serverPhone.startsWith('+')) {
-                       iti.setNumber(serverPhone);
-                   } else {
-                       phoneInput.value = serverPhone;
-                   }
-               }
-               @endif
-           }
+                    // Set number if available (only for #phone, as per original logic)
+                    @if (!empty($exhibitorInfo->phone))
+                        if (phoneInput.id === "phone") {
+                            var serverPhone = "{{ $exhibitorInfo->phone ?? '' }}";
+                            if (serverPhone.startsWith('+')) {
+                                iti.setNumber(serverPhone);
+                            } else {
+                                phoneInput.value = serverPhone;
+                            }
+                        }
+                    @endif
+                }
 
-           // Wait for utilsScript to be loaded
-           if (typeof window.intlTelInputUtils !== 'undefined') {
-               initializePhoneInput();
-           } else {
-               phoneInput.addEventListener('focus', initializePhoneInput, {once: true});
-           }
+                // Wait for utilsScript to be loaded
+                if (typeof window.intlTelInputUtils !== 'undefined') {
+                    initializePhoneInput();
+                } else {
+                    phoneInput.addEventListener('focus', initializePhoneInput, {
+                        once: true
+                    });
+                }
 
-           var form = phoneInput.closest('form');
-           if (form) {
-               form.addEventListener('submit', function (e) {
-                   var iti = itiInstances.get(phoneInput);
-                   if (!iti) initializePhoneInput();
-                   iti = itiInstances.get(phoneInput);
-                   var fullNumber = iti ? iti.getNumber() : phoneInput.value;
-                   if (!fullNumber || !fullNumber.startsWith('+')) {
-                       e.preventDefault();
-                       alert('Please enter a valid phone number with country code.');
-                       phoneInput.focus();
-                       return false;
-                   }
-                   phoneInput.value = fullNumber;
-               });
-           }
-       });
-   });
-   </script>
+                var form = phoneInput.closest('form');
+                if (form) {
+                    form.addEventListener('submit', function(e) {
+                        var iti = itiInstances.get(phoneInput);
+                        if (!iti) initializePhoneInput();
+                        iti = itiInstances.get(phoneInput);
+                        var fullNumber = iti ? iti.getNumber() : phoneInput.value;
+                        if (!fullNumber || !fullNumber.startsWith('+')) {
+                            e.preventDefault();
+                            alert('Please enter a valid phone number with country code.');
+                            phoneInput.focus();
+                            return false;
+                        }
+                        phoneInput.value = fullNumber;
+                    });
+                }
+            });
+        });
+    </script>
 
     <script>
         function updateCharCount() {
             const textarea = document.getElementById('description');
             const charCount = document.getElementById('charCount');
-            charCount.textContent = `${textarea.value.length} / 750 characters`;
+            charCount.textContent = `${textarea.value.length} / 700 characters`;
         }
 
         document.addEventListener('DOMContentLoaded', updateCharCount);
@@ -557,7 +600,7 @@
             }
         }
 
-        document.addEventListener('DOMContentLoaded', function () {
+        document.addEventListener('DOMContentLoaded', function() {
             const textarea = document.getElementById('description');
             textarea.addEventListener('input', validateDescriptionLength);
             validateDescriptionLength();
@@ -565,15 +608,17 @@
     </script>
 
     <script>
-        // Remove the placeholder value from phone input every 10 seconds
+        // Remove the placeholder value from phone inputs every 10 seconds
         function clearPhonePlaceholder() {
-            const phoneInput = document.querySelector("#phone");
-            if (phoneInput) {
-                phoneInput.setAttribute("placeholder", "");
-            }
+            const phoneInputs = document.querySelectorAll("#phone, #telPhone");
+            phoneInputs.forEach(function(phoneInput) {
+                if (phoneInput) {
+                    phoneInput.setAttribute("placeholder", "");
+                }
+            });
         }
 
-        window.addEventListener("load", function () {
+        window.addEventListener("load", function() {
             clearPhonePlaceholder();
             setInterval(clearPhonePlaceholder, 10);
         });
@@ -666,18 +711,18 @@
             document.getElementById('pdfPreviewContainer').innerHTML = htmlContent;
             modal.style.display = 'flex';
             // Cancel button
-            document.getElementById('cancelPreviewBtn').onclick = function () {
+            document.getElementById('cancelPreviewBtn').onclick = function() {
                 modal.style.display = 'none';
             };
             // Agree button
-            document.getElementById('agreeAndSubmitBtn').onclick = function () {
+            document.getElementById('agreeAndSubmitBtn').onclick = function() {
                 modal.style.display = 'none';
                 if (onAgree) onAgree();
             };
         }
 
         // Intercept form submit
-        document.addEventListener('DOMContentLoaded', function () {
+        document.addEventListener('DOMContentLoaded', function() {
             const form = document.querySelector('form.multisteps-form__form');
             if (!form) return;
             // Add hidden field for company name (readonly input is not submitted)
@@ -688,7 +733,7 @@
                 companyInput.value = document.querySelector('input[readonly][value]')?.value || '';
                 form.appendChild(companyInput);
             }
-            form.addEventListener('submit', function (e) {
+            form.addEventListener('submit', function(e) {
                 e.preventDefault();
                 // Validate required fields (basic)
                 if (!form.checkValidity()) {
@@ -700,7 +745,7 @@
                 // Render preview HTML
                 const htmlContent = renderDirectoryPreview(data);
                 // Show preview modal
-                showPdfPreview(htmlContent, function () {
+                showPdfPreview(htmlContent, function() {
                     // On agree, generate PDF and submit
                     window.FoxfordPDFGenerator.generate({
                         html: htmlContent,
@@ -714,7 +759,9 @@
                         form.submit();
                     });
                 });
-            }, {once: true}); // Only intercept once to avoid double modals
+            }, {
+                once: true
+            }); // Only intercept once to avoid double modals
         });
     </script>
 @endsection
