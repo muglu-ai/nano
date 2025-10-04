@@ -19,14 +19,14 @@
 
         @media (max-width: 767.98px) {
             .custom-height {
-                height: 1950px;
+                height: 2100px;
             }
         }
 
 
         @media (min-width: 768px) {
             .custom-height {
-                height: 1650px;
+                height: 1800px;
             }
         }
 
@@ -139,10 +139,11 @@
 
 
                                 <div class="col-sm-6">
-                                    <label class="form-label">Name of the Exhibitor (Organisation Name)  <span class="red-label">*</span> </label>
+                                    <label class="form-label">Name of the Exhibitor (Organisation Name) <span
+                                            class="red-label">*</span> </label>
                                     <div class="input-group input-group-dynamic is-filled">
-                                        
-                                           
+
+
                                         <input class="form-control" type="text"
                                             value="{{ $application->company_name ?? '' }}" readonly>
                                     </div>
@@ -150,7 +151,7 @@
                                 <div class="col-sm-6 mt-3 mt-sm-0">
                                     <label class="form-label">Booth Number</label>
                                     <div class="input-group input-group-dynamic is-filled">
-                                        
+
                                         <input class="form-control" type="text"
                                             value="{{ $application->stallNumber ?? '' }}" readonly>
                                     </div>
@@ -162,15 +163,15 @@
                                     <label class="form-label">Name for Fascia (Fascia name will be written on Stall)
                                         <span class="red-label">*</span> </label>
                                     <div class="input-group input-group-dynamic {{ $cssClass }}">
-                                      
+
                                         <input class="form-control" type="text" name="fascia_name"
                                             value="{{ $fasciaName }}" required>
                                     </div>
 
-                                    
+
 
                                 </div>
-                                <small class="text-muted mt-2" >Note: For Shell scheme stall only.</small>
+                                <small class="text-muted mt-2">Note: For Shell scheme stall only.</small>
                             </div>
 
                             <div class="row mt-5">
@@ -178,10 +179,10 @@
                                     <div class="row">
                                         <div class="col-4 pe-1">
                                             <label class="form-label">Contact Person Salutation <span
-                                                class="red-label">*</span>
-                                        </label>
+                                                    class="red-label">*</span>
+                                            </label>
                                             <div class="input-group input-group-dynamic is-filled">
-                                               
+
                                                 <select class="form-control" name="salutation" required>
                                                     <option value="" disabled
                                                         {{ empty($salutation) ? 'selected' : '' }}>Select
@@ -203,20 +204,20 @@
                                         </div>
                                         <div class="col-4 px-1">
                                             <label class="form-label"> Contact Person First Name <span
-                                                class="red-label">*</span>
-                                        </label>
+                                                    class="red-label">*</span>
+                                            </label>
                                             <div class="input-group input-group-dynamic {{ $cssClass }}">
-                                               
+
                                                 <input class="form-control" type="text" name="contact_first_name"
                                                     value="{{ $firstName }}" required>
                                             </div>
                                         </div>
                                         <div class="col-4 ps-1">
                                             <label class="form-label">Contact Person Last Name <span
-                                                class="red-label">*</span>
-                                        </label>
+                                                    class="red-label">*</span>
+                                            </label>
                                             <div class="input-group input-group-dynamic {{ $cssClass }}">
-                                               
+
                                                 <input class="form-control" type="text" name="contact_last_name"
                                                     value="{{ $lastName }}" required>
                                             </div>
@@ -229,9 +230,9 @@
 
                                 <div class="col-sm-6">
                                     <label class="form-label">Contact Person Designation <span
-                                        class="red-label">*</span></label>
+                                            class="red-label">*</span></label>
                                     <div class="input-group input-group-dynamic {{ $cssClass }}">
-                                       
+
                                         <input class="form-control" type="text" name="designation"
                                             value="{{ $exhibitorInfo->designation ?? '' }}" required>
                                     </div>
@@ -243,14 +244,14 @@
                             <div class="row mt-5">
                                 <div class="col-12">
                                     <label class="form-label ">Organisation Address <span
-                                        class="red-label">*</span></label>
-                                   
+                                            class="red-label">*</span></label>
+
                                     <div class="input-group input-group-dynamic is-filled">
                                         <textarea class="form-control" name="address" rows="2" required>{{ $application->full_address ?? '' }}</textarea>
                                     </div>
 
                                     {{-- Please check the Address Properly because it can't be changed again --}}
-                                   
+
                                 </div>
                                 <small class="text-muted mt-2">Note: Do not enter city, state, country, or ZIP code in
                                     the text area. Please use the following designated fields provided for these
@@ -263,7 +264,7 @@
                                 <div class="col-sm-3">
                                     <label class="form-label">Country <span class="red-label">*</span></label>
                                     <div class="input-group input-group-dynamic is-filled">
-                                       
+
                                         <select class="form-control" name="country" id="countrySelect" required>
                                             <option value="">Select Country</option>
                                         </select>
@@ -273,7 +274,7 @@
                                 <div class="col-sm-3">
                                     <label class="form-label">State <span class="red-label">*</span></label>
                                     <div class="input-group input-group-dynamic is-filled">
-                                      
+
                                         <select class="form-control" name="state" id="stateSelect" required>
                                             <option value="">Select State</option>
                                         </select>
@@ -283,7 +284,7 @@
                                 <div class="col-sm-3">
                                     <label class="form-label">City <span class="red-label">*</span></label>
                                     <div class="input-group input-group-dynamic is-filled">
-                                     
+
                                         <input class="form-control" type="text" name="city"
                                             value="{{ $exhibitorInfo->city ?? '' }}" required>
                                     </div>
@@ -292,7 +293,7 @@
                                 <div class="col-sm-3">
                                     <label class="form-label">Zip Code <span class="red-label">*</span></label>
                                     <div class="input-group input-group-dynamic is-filled">
-                                       
+
                                         <input class="form-control" type="text" name="zip_code"
                                             value="{{ $exhibitorInfo->zip_code ?? '' }}" required>
                                     </div>
@@ -347,9 +348,9 @@
                             <div class="row mt-5">
                                 <div class="col-sm-6 mt-3 mt-sm-0">
                                     <label class="form-label">Contact Email Address <span
-                                        class="red-label">*</span></label>
+                                            class="red-label">*</span></label>
                                     <div class="input-group input-group-dynamic {{ $cssClass }}">
-                                      
+
                                         <input class="form-control" type="email" name="email"
                                             value="{{ $exhibitorInfo->email ?? '' }}" required>
                                     </div>
@@ -357,7 +358,7 @@
                                 <div class="col-sm-6">
                                     <label class="form-label">Mobile Number <span class="red-label">*</span></label>
                                     <div class="input-group input-group-dynamic is-filled {{ $cssClass }}">
-                                      
+
                                         <input id="phone" class="form-control iti" type="tel" name="phone"
                                             value="{{ $exhibitorInfo->phone ?? '' }}" required autocomplete="off">
                                     </div>
@@ -369,8 +370,7 @@
                                 <div class="col-sm-6">
                                     <label class="form-label">Telephone Number <span class="red-label">*</span></label>
                                     <div class="input-group input-group-dynamic is-filled {{ $cssClass }}">
-                                      
-                                        <input id="telPhone" class="form-control iti" type="tel" name="telPhone"
+                                        <input id="telPhone" class="form-control iti" type="tel" name="tTelephone NumberelPhone"
                                             value="{{ $exhibitorInfo->telPhone ?? '' }}" required autocomplete="off">
                                     </div>
                                 </div>
@@ -378,10 +378,13 @@
                                 <div class="col-sm-6">
                                     <label class="form-label">Website <span class="red-label">*</span></label>
                                     <div class="input-group input-group-dynamic {{ $cssClass }}">
-                                    
+
                                         <input class="form-control" type="url" name="website"
                                             value="{{ $exhibitorInfo->website ?? '' }}">
                                     </div>
+                                    <small class="text-muted mt-4" style="font-size: 0.7rem;">Note: Please enter the full
+                                        URL including http:// or https:// e.g. https://www.bengalurutechsummit.com
+                                    </small>
                                 </div>
                             </div>
 
@@ -391,11 +394,11 @@
                                         <label class="form-label">Upload Logo <span class="red-label">*</span>
                                         </label>
                                         <div class="input-group input-group-dynamic is-filled {{ $cssClass }}">
-                                         
+
                                             <input class="form-control" type="file" name="logo" accept="image/*"
                                                 required>
                                         </div>
-                                       
+
                                     </div>
                                     <small class="text-muted mt-2">Note: Image dimension should be 200px (width) x 125px
                                         (height), size less than 100KB. Allowed formats: JPG, JPEG, PNG only.</small>
@@ -405,9 +408,9 @@
                                             <div class="mt-2">
                                                 <img src="{{ asset('storage/' . $exhibitorInfo->logo) }}"
                                                     alt="Uploaded Logo" style="max-height: 60px;">
-                                              
+
                                             </div>
-                                            
+
                                         </div>
                                         <small class="text-success d-block">Your uploaded logo.</small>
                                     </div>
@@ -421,7 +424,7 @@
                                     <label class="form-label">Company Description <span class="red-label">*</span>
                                     </label>
                                     <div class="input-group input-group-dynamic is-filled">
-                                        <textarea class="form-control" name="description" id="description" rows="3" maxlength="700" required
+                                        <textarea class="form-control" name="description" id="description" rows="6" maxlength="700" required
                                             oninput="updateCharCount()">{{ trim($exhibitorInfo->description ?? '') }}</textarea>
                                     </div>
                                     <small id="charCount" class="text-muted">0 / 700 characters</small>
@@ -430,9 +433,12 @@
                                         <div class="">
                                             <h6 class="mb-2"><strong>Note:</strong></h6>
                                             <ul class="mb-2">
-                                                <li>This organisational profile will get published in Exhibitors Directory</li>
+                                                <li>This organisational profile will get published in Exhibitors Directory
+                                                </li>
                                                 <li>Please write at least 250 characters & maximum 700 characters</li>
-                                                <li>If you're copying and pasting from an external document, make sure to press enter and then delete that blank enter line to activate profile box.</li>
+                                                <li>If you're copying and pasting from an external document, make sure to
+                                                    press enter and then delete that blank enter line to activate profile
+                                                    box.</li>
                                             </ul>
                                             <p class="mb-0">
                                                 <strong>If you have any technical problem, please contact:</strong><br>
@@ -656,6 +662,10 @@
                         <tr>
                             <td style="vertical-align:top;"><strong>Mobile:</strong></td>
                             <td>${data.phone || ''}</td>
+                        </tr>
+                        <tr>
+                            <td style="vertical-align:top;"><strong>Telephone:</strong></td>
+                            <td>${data.telPhone || ''}</td>
                         </tr>
                         <tr>
                             <td style="vertical-align:top;"><strong>Email:</strong></td>

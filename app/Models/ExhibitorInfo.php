@@ -9,8 +9,26 @@ class ExhibitorInfo extends Model
     protected $table = 'exhibitors_info';
 
     protected $fillable = [
-        'application_id', 'contact_person', 'email', 'phone','fascia_name',
-        'logo', 'description', 'linkedin', 'instagram', 'facebook', 'youtube', 'website','address', 'designation',
+        'application_id',
+        'contact_person',
+        'email',
+        'phone',
+        'telPhone',
+        'fascia_name',
+        'company_name',
+        'country',
+        'state',
+        'city',
+        'zip_code',
+        'logo',
+        'description',
+        'linkedin',
+        'instagram',
+        'facebook',
+        'youtube',
+        'website',
+        'address',
+        'designation',
         'submission_status'
 
     ];
