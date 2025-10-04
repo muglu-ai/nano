@@ -23,6 +23,15 @@
             }
         }
 
+        /*
+        if screen size is less than 350px then set the height to 2800px
+        */
+        @media (max-width: 350px) {
+            .custom-height {
+                height: 2800px;
+            }
+        }
+
 
         @media (min-width: 768px) {
             .custom-height {
