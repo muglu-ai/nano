@@ -19,7 +19,7 @@
 
         @media (max-width: 767.98px) {
             .custom-height {
-                height: 2600px;
+                height: 2635px;
             }
         }
 
@@ -28,14 +28,14 @@
         */
         @media (max-width: 350px) {
             .custom-height {
-                height: 2800px;
+                height: 2835px;
             }
         }
 
 
         @media (min-width: 768px) {
             .custom-height {
-                height: 1800px;
+                height: 1835px;
             }
         }
 
@@ -181,6 +181,23 @@
 
                                 </div>
                                 <small class="text-muted mt-2">Note: For Shell scheme stall only.</small>
+                            </div>
+
+                            {{-- make a div that will show the sector --}}
+                            <div class="row mt-5">
+                                <div class="col-sm-12">
+                                    <label class="form-label">Sector <span class="red-label">*</span></label>
+                                    <div class="input-group input-group-dynamic is-filled">
+                                        <select class="form-control" name="sector" required>
+                                            <option value="" disabled {{ empty($exhibitorInfo->sector) ? 'selected' : '' }}>Select Sector</option>
+                                            @foreach($sectors as $sector)
+                                                <option value="{{ $sector['name'] }}" {{ (isset($exhibitorInfo->sector) && $exhibitorInfo->sector == $sector['name']) ? 'selected' : '' }}>
+                                                    {{ $sector['name'] }}
+                                                </option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                </div>
                             </div>
 
                             <div class="row mt-5">

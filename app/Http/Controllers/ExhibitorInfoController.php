@@ -16,6 +16,8 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\SponsorInvoiceMail;
 use Illuminate\Support\Facades\Storage;
+use App\Models\Sector;
+
 
 class ExhibitorInfoController extends Controller
 {
@@ -136,9 +138,14 @@ class ExhibitorInfoController extends Controller
 
         $slug = "Exhibitor Directory Information";
 
+        $sectors = Sector::select('id', 'name')->get()->toArray();
+
+
+        // dd($sectors);
+
         //find the exhibitor info from exhibitor_info table where application_id is application id
         $exhibitorInfo = ExhibitorInfo::where('application_id', $applicationId)->first();
-        return view('exhibitor_info.form', compact('application', 'slug', 'exhibitorInfo'));
+        return view('exhibitor_info.form', compact('application', 'slug', 'exhibitorInfo', 'sectors'));
     }
 
     public function storeExhibitor(Request $request)
@@ -152,6 +159,7 @@ class ExhibitorInfoController extends Controller
         $data = $request->validate([
             'application_id' => 'required|integer |exists:applications,id',
             'company_name' => 'required|string|max:255',
+            'sector' => 'required|string|max:255',
             'fascia_name' => 'required|string|max:255',
             'salutation' => 'required|string|max:15',
             'contact_first_name' => 'required |string|max:255',
@@ -192,6 +200,7 @@ class ExhibitorInfoController extends Controller
                 'designation' => $data['designation'],
                 'email' => $data['email'],
                 'company_name' => $data['company_name'],
+                'sector' => $data['sector'],
                 'website' => $data['website'] ?? null,
                 'phone' => $this->formatPhoneNumber($data['phone']),
                 'telPhone' => $this->formatPhoneNumber($data['telPhone']),
