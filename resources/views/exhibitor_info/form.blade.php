@@ -19,7 +19,7 @@
 
         @media (max-width: 767.98px) {
             .custom-height {
-                height: 2635px;
+                height: 2650px;
             }
         }
 
@@ -28,14 +28,14 @@
         */
         @media (max-width: 350px) {
             .custom-height {
-                height: 2835px;
+                height: 2850px;
             }
         }
 
 
         @media (min-width: 768px) {
             .custom-height {
-                height: 1835px;
+                height: 1850px;
             }
         }
 
