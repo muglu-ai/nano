@@ -16,6 +16,7 @@ class ExhibitorInfo extends Model
         'telPhone',
         'fascia_name',
         'company_name',
+        'sector',
         'country',
         'state',
         'city',
