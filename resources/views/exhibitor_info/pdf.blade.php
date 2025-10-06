@@ -48,6 +48,7 @@
             padding: 2px 4px;
             word-break: break-word;
             vertical-align: top;
+            text-align: left;
         }
         th {
             padding: 2px 4px;
