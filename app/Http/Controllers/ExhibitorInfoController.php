@@ -256,6 +256,9 @@ class ExhibitorInfoController extends Controller
     //generate PDF
     public function generatePDF()
     {
+
+        // Increase PHP memory for this request only (helps avoid memory exhausted)
+        // @ini_set('memory_limit', '512M');
         $applicationId = $this->getApplicationId();
         $exhibitorInfo = ExhibitorInfo::where('application_id', $applicationId)->first();
         $application = Application::find($applicationId);
@@ -289,13 +292,20 @@ class ExhibitorInfoController extends Controller
         // echo $html;
         // exit;
 
-        // Generate PDF
-        // allow images to be loaded
-        // Force the PDF to a single page by setting a custom page size matching the content height
-        // (100mm x 240mm as per the Blade template)
-        $pdf = Pdf::loadView('exhibitor_info.pdf', $data)
-            ->setOptions(['isRemoteEnabled' => true]);
-        $pdf->setPaper([0, 0, 283.46, 680.31], 'portrait'); // 100mm x 240mm in points
+        // Increase PHP memory for this request only (helps avoid memory exhausted)
+        @ini_set('memory_limit', '512M');
+
+        // Generate PDF with optimized options to reduce memory
+        $pdf = Pdf::setOptions([
+                'isRemoteEnabled' => true,      // allow remote images
+                'dpi' => 72,                    // lower DPI to reduce memory
+                'enable_font_subsetting' => true,
+                'defaultFont' => 'dejavu sans', // wide unicode support with subset
+                'isHtml5ParserEnabled' => true,
+            ])
+            ->loadView('exhibitor_info.pdf', $data);
+        // Custom 100mm x 240mm page size (points)
+        $pdf->setPaper([0, 0, 283.46, 680.31], 'portrait');
 
         // If inline=1, stream; else download
         if (request()->boolean('inline')) {

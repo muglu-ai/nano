@@ -60,13 +60,16 @@
         }
         .front-page img, .back-page img {
             width: 100%;
-            height: 135%;
+            height: auto; /* avoid scaling too tall to save memory */
+            max-height: 100%;
         }
         .header{
             padding-bottom: 10px;
         }
         .header img, .footer img {
             width: 100%;
+            height: auto; /* keep intrinsic ratio */
+            max-height: 120px; /* cap header image height */
         }
         .profile{
             line-height: 1.5;
