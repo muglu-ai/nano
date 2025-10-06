@@ -87,7 +87,7 @@ Route::get('/invited/inaugural/{token}/', [ExhibitorController::class, 'invited_
 //invited submit inviteeSubmitted from exhibitor controller
 Route::post('/invite/submit', [ExhibitorController::class, 'inviteeSubmitted'])->name('exhibition.invitee.submit');
 Route::post('inaugural/invite/submit', [ExhibitorController::class, 'inauguralInviteeSubmitted'])->name('inaugural.invitee.submit');
-Route::post('/add', [ExhibitorController::class, 'add'])->name('exhibition.invite')->middleware(SharedMiddleware::class);
+Route::post('/add', [ExhibitorController::class, 'add'])->name('exhibition.add')->middleware(SharedMiddleware::class);
 Route::get('/invited/inaugural/thank-you/{token}', [ExhibitorController::class, 'inauguralInviteeSubmittedThankYou'])->name('inaugural.invitee.thankyou');
 Route::get('receipt', [ExhibitorController::class, 'invoices'])->name('exhibitor.invoices')->middleware(CheckUser::class);
 Route::patch('fasciaUpdate', [DashboardController::class, 'updateFasciaName'])->name('user.fascia.update')->middleware(CheckUser::class);
