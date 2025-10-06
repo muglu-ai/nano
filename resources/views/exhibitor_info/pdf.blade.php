@@ -126,9 +126,9 @@
             /* Ensure it appears on top of other elements */
             text-align: center;
         }
-        tr{
+        tr {
             align-items: left;
-            margin-top: 2px;
+            margin-top: 8px;
         }
 
         .page-number1 {
