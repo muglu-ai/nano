@@ -12,8 +12,16 @@
                         <div class="row">
                             <div class="col-md-6">
                                 <h3 class="mb-0 h4 font-weight-bolder">Application Info</h3>
-                                <p class="mb-4">Application No: {{ $application->application_id }}</p>
+                                <p class="mb-4">TIN No: {{ $application->application_id }}</p>
                             </div>
+                            @php $invoice = $application->invoices()->latest('id')->first(); @endphp
+                            @if($invoice?->pin_no)
+                                <div class="col-md-6">
+                                    {{-- <h3 class="mb-0 h4 font-weight-bolder">PIN No</h3> --}}
+                                    <p class="mb-4">PIN No: {{ $invoice->pin_no }}</p>
+                                </div>
+                            @endif
+
                             <div class="col-md-6">
                                 <h3 class="mb-0 h4 font-weight-bolder">Registration Date</h3>
                                 <p class="mb-4">Date: {{ $application->approved_date ? \Carbon\Carbon::parse($application->approved_date)->format('Y-m-d') : '-' }}</p>
