@@ -25,6 +25,10 @@ class GeoController extends Controller
     {
         return Http::withHeaders($this->headers)->get("https://api.countrystatecity.in/v1/countries/{$country}/states")->json();
     }
+    public function statesName($country)
+    {
+        return Http::withHeaders($this->headers)->get("https://api.countrystatecity.in/v1/countries/{$country}/states")->json();
+    }
 
     public function cities($country, $state)
     {

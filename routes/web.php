@@ -670,8 +670,15 @@ Route::get('/inactive-users-reminder', [MailController::class, 'inactiveUsersRem
  * */
 //Exhibitor Info Routes
 Route::get('/exhibitor-info', [ExhibitorInfoController::class, 'showForm'])->name('exhibitor.info')->middleware(CheckUser::class);
+//show the preview page
+Route::get('/exhibitor-info-preview', [ExhibitorInfoController::class, 'showPreview'])->name('exhibitor.info.preview')->middleware(CheckUser::class);
 //post the exhibitor info
 Route::post('/exhibitor-info', [ExhibitorInfoController::class, 'storeExhibitor'])->name('exhibitor.info.submit')->middleware(CheckUser::class);
+//submit final form
+Route::post('/exhibitor-info-submit-final', [ExhibitorInfoController::class, 'submitFinalForm'])->name('exhibitor.info.submit.final')->middleware(CheckUser::class);
+//generate PDF
+Route::get('/exhibitor-info-pdf', [ExhibitorInfoController::class, 'generatePDF'])->name('exhibitor.info.pdf')->middleware(CheckUser::class);
+
 
 //product-add route
 Route::get('/product-add', [ExhibitorInfoController::class, 'showProductForm'])->name('product.add')->middleware(CheckUser::class);
