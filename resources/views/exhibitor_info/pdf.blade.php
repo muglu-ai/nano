@@ -45,15 +45,21 @@
             border-collapse: collapse;
         }
         td {
-            padding: 2px 4px;
+            padding: 0;
+        margin: 0;
+            /* padding: 2px 4px; */
             word-break: break-word;
-            vertical-align: top;
+            /* vertical-align: top; */
+            text-align: left;
         }
         th {
-            padding: 2px 4px;
+            padding: 0;
+        margin: 0;
+            /* padding: 2px 0px; */
             text-align: left;
             font-weight: bold;
-             vertical-align: top;
+            /* vertical-align: top; */
+            text-align: left;
         }
         .front-page, .back-page {
         width: 100%;
@@ -66,8 +72,15 @@
     .header{
         padding-bottom: 10px;
     }
+    .th-colon{
+        /* remove any padding or margin */
+        padding: 0;
+        margin: 0;
+        text-align: center;
+    }
     .header img, .footer img {
         width: 100%;
+        
     }
     .profile{
     line-height: 1.5;
@@ -117,22 +130,23 @@
 
             <table>
                 <tr><th>Contact </th>
-                    <th>:</th>
+                    <th class="th-colon">:</th>
+                    
                     <td>{{ trim($cpTitle . ' ' . $cpFname . ' ' . $cpLname) }}</td></tr>
                 <tr><th>Designation</th>
-                    <th>:</th>
+                    <th class="th-colon">:</th>
                     <td>{{ $designation }}</td></tr>
                 <tr><th>Mobile</th>
-                    <th>:</th>
+                    <th class="th-colon">:</th>
                     <td>{{ $mobile }}</td></tr>
                 <tr><th>E-mail</th>
-                    <th>:</th>
+                    <th class="th-colon">:</th>
                     <td>{{ $email }}</td></tr>
                 <tr><th>Address</th>
-                    <th>:</th>
+                    <th class="th-colon">:</th>
                     <td>{{ $address }}</td></tr>
                 <tr><th>Website</th>
-                    <th>:</th>
+                    <th class="th-colon">:</th>
                     <td>{{ $website }}</td></tr>
                 
                 <tr><th><br>Profile:</th>
