@@ -253,7 +253,9 @@ class DashboardController extends Controller
             $application = Application::where('user_id', auth()->id())->first();
             //get the exhibitor and delegate count from the exhibitionParticipation table where application id is same as the application id
             $exhibitionParticipant = ExhibitionParticipant::where('application_id', $applicationId)->first();
-            $directoryFilled = ExhibitorInfo::where('application_id', $applicationId)->exists();
+            $directoryFilled = ExhibitorInfo::where('application_id', $applicationId)
+                                ->where('submission_status', 1)
+                                ->exists();
 
 //            dd($directoryFilled);
 
