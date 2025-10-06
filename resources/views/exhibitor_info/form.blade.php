@@ -151,9 +151,7 @@
                                     <label class="form-label">Name of the Exhibitor (Organisation Name) <span
                                             class="red-label">*</span> </label>
                                     <div class="input-group input-group-dynamic is-filled">
-
-
-                                        <input class="form-control" type="text"
+                                        <input class="form-control" type="text" name="company_name"
                                             value="{{ $application->company_name ?? '' }}" readonly>
                                     </div>
                                 </div>
@@ -332,25 +330,37 @@
                                     const selectedCountry = "{{ $exhibitorInfo->country ?? '' }}";
                                     const selectedState = "{{ $exhibitorInfo->state ?? '' }}";
 
+                                    // Store country mapping for ISO2 lookup
+                                    let countryMap = {};
+
                                     // Fetch countries
                                     fetch("{{ route('api.countries') }}")
                                         .then(res => res.json())
                                         .then(countries => {
                                             countries.forEach(country => {
                                                 const opt = document.createElement('option');
-                                                opt.value = country.iso2;
+                                                opt.value = country.name;
                                                 opt.textContent = country.name;
-                                                if (country.name === selectedCountry || country.iso2 === selectedCountry) opt
-                                                    .selected = true;
+                                                
+                                                // Store mapping for ISO2 lookup
+                                                countryMap[country.name] = country.iso2;
+                                                
+                                                if (country.name === selectedCountry || country.iso2 === selectedCountry) {
+                                                    opt.selected = true;
+                                                }
                                                 countrySelect.appendChild(opt);
                                             });
                                             if (selectedCountry) {
-                                                loadStates(selectedCountry);
+                                                // Find the ISO2 for the selected country
+                                                const selectedCountryIso2 = countryMap[selectedCountry] || selectedCountry;
+                                                loadStates(selectedCountryIso2);
                                             }
                                         });
 
                                     countrySelect.addEventListener('change', function() {
-                                        loadStates(this.value);
+                                        const selectedCountryName = this.value;
+                                        const countryIso2 = countryMap[selectedCountryName];
+                                        loadStates(countryIso2);
                                     });
 
                                     function loadStates(countryIso) {
@@ -391,13 +401,13 @@
                                 </div>
 
                             </div>
-
+                            
                             <div class="row mt-5">
                                 <div class="col-sm-6">
-                                    <label class="form-label">Telephone Number <span class="red-label">*</span></label>
+                                    <label class="form-label">Telephone Number </label>
                                     <div class="input-group input-group-dynamic is-filled {{ $cssClass }}">
                                         <input id="telPhone" class="form-control iti" type="tel" name="telPhone"
-                                            value="{{ $exhibitorInfo->telPhone ?? '' }}" required autocomplete="off">
+                                            value="{{ $exhibitorInfo->telPhone ?? '' }}" autocomplete="off">
                                     </div>
                                 </div>
 
@@ -409,7 +419,7 @@
                                             value="{{ $exhibitorInfo->website ?? '' }}">
                                     </div>
                                     <small class="text-muted mt-4" style="font-size: 0.7rem;">Note: Please enter the full
-                                        URL including http:// or https:// e.g. https://www.bengalurutechsummit.com
+                                        URL including https:// e.g. https://www.bengalurutechsummit.com
                                     </small>
                                 </div>
                             </div>
@@ -530,10 +540,18 @@
                             @if (empty($exhibitorInfo) || empty($exhibitorInfo->submission_status) || $exhibitorInfo->submission_status == 0)
                                 <div class="button-row d-flex mt-4">
                                     <button class="btn bg-gradient-dark ms-auto mb-0" type="submit"
-                                        title="Save">Submit
+                                        title="Save">Preview
                                     </button>
                                 </div>
                             @else
+                                <div class="button-row d-flex mt-4">
+                                    <a class="btn bg-gradient-dark ms-auto mb-0" 
+                                       href="{{ route('exhibitor.info.pdf') }}" 
+                                       target="_blank"
+                                       title="Preview PDF">
+                                        Preview PDF
+                                    </a>
+                                </div>
                                 <div class="alert alert-info mt-4" role="alert">
                                     You have already submitted your exhibitor information.
                                 </div>
@@ -595,6 +613,19 @@
                 var form = phoneInput.closest('form');
                 if (form) {
                     form.addEventListener('submit', function(e) {
+                        // Skip validation for telPhone (telephone) field as it's optional
+                        if (phoneInput.id === 'telPhone') {
+                            var iti = itiInstances.get(phoneInput);
+                            if (iti && phoneInput.value.trim() !== '') {
+                                var fullNumber = iti.getNumber();
+                                if (fullNumber && fullNumber.startsWith('+')) {
+                                    phoneInput.value = fullNumber;
+                                }
+                            }
+                            return; // Skip validation for telPhone
+                        }
+                        
+                        // Apply validation only for phone (mobile) field
                         var iti = itiInstances.get(phoneInput);
                         if (!iti) initializePhoneInput();
                         iti = itiInstances.get(phoneInput);
@@ -758,46 +789,48 @@
         }
 
         // Intercept form submit
-        document.addEventListener('DOMContentLoaded', function() {
-            const form = document.querySelector('form.multisteps-form__form');
-            if (!form) return;
-            // Add hidden field for company name (readonly input is not submitted)
-            if (!form.querySelector('input[name="company_name"]')) {
-                const companyInput = document.createElement('input');
-                companyInput.type = 'hidden';
-                companyInput.name = 'company_name';
-                companyInput.value = document.querySelector('input[readonly][value]')?.value || '';
-                form.appendChild(companyInput);
-            }
-            form.addEventListener('submit', function(e) {
-                e.preventDefault();
-                // Validate required fields (basic)
-                if (!form.checkValidity()) {
-                    form.reportValidity();
-                    return;
-                }
-                // Gather data
-                const data = getFormData(form);
-                // Render preview HTML
-                const htmlContent = renderDirectoryPreview(data);
-                // Show preview modal
-                showPdfPreview(htmlContent, function() {
-                    // On agree, generate PDF and submit
-                    window.FoxfordPDFGenerator.generate({
-                        html: htmlContent,
-                        format: 'A4',
-                        orientation: 'portrait',
-                    }).then(pdfBlob => {
-                        // Optionally, show PDF in new tab for confirmation
-                        const pdfUrl = URL.createObjectURL(pdfBlob);
-                        window.open(pdfUrl, '_blank');
-                        // Actually submit the form
-                        form.submit();
-                    });
-                });
-            }, {
-                once: true
-            }); // Only intercept once to avoid double modals
-        });
+        // document.addEventListener('DOMContentLoaded', function() {
+        //     const form = document.querySelector('form.multisteps-form__form');
+        //     if (!form) return;
+        //     // Add hidden field for company name (readonly input is not submitted)
+        //     if (!form.querySelector('input[name="company_name"]')) {
+        //         const companyInput = document.createElement('input');
+        //         companyInput.type = 'hidden';
+        //         companyInput.name = 'company_name';
+        //         companyInput.value = document.querySelector('input[readonly][value]')?.value || '';
+        //         form.appendChild(companyInput);
+        //     }
+        //     form.submit();
+        // });
+        //     form.addEventListener('submit', function(e) {
+        //         e.preventDefault();
+        //         // Validate required fields (basic)
+        //         if (!form.checkValidity()) {
+        //             form.reportValidity();
+        //             return;
+        //         }
+        //         // Gather data
+        //         const data = getFormData(form);
+        //         // Render preview HTML
+        //         const htmlContent = renderDirectoryPreview(data);
+        //         // Show preview modal
+        //         showPdfPreview(htmlContent, function() {
+        //             // On agree, generate PDF and submit
+        //             window.FoxfordPDFGenerator.generate({
+        //                 html: htmlContent,
+        //                 format: 'A4',
+        //                 orientation: 'portrait',
+        //             }).then(pdfBlob => {
+        //                 // Optionally, show PDF in new tab for confirmation
+        //                 const pdfUrl = URL.createObjectURL(pdfBlob);
+        //                 window.open(pdfUrl, '_blank');
+        //                 // Actually submit the form
+        //                 form.submit();
+        //             });
+        //         });
+        //     }, {
+        //         once: true
+        //     }); // Only intercept once to avoid double modals
+        // });
     </script>
 @endsection

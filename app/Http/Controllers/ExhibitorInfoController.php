@@ -17,6 +17,7 @@ use Illuminate\Support\Facades\Mail;
 use App\Mail\SponsorInvoiceMail;
 use Illuminate\Support\Facades\Storage;
 use App\Models\Sector;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 
 class ExhibitorInfoController extends Controller
@@ -167,7 +168,7 @@ class ExhibitorInfoController extends Controller
             'designation' => 'required|string|max:255',
             'email' => 'required|email',
             'phone' => 'required|string|max:16',
-            'telPhone' => 'required|string|max:16',
+            'telPhone' => 'nullable|string|max:16',
             'description' => 'required|string|max:1000',
             'address' => 'nullable|string|max:500',
             'country' => 'required|string|max:255',
@@ -216,7 +217,7 @@ class ExhibitorInfoController extends Controller
                 'facebook' => $data['facebook'] ?? null,
                 'youtube' => $data['youtube'] ?? null,
                 'application_id' => $data['application_id'],
-                'submission_status' => 1,
+                'submission_status' => 0,
             ]
         );
 
@@ -224,8 +225,85 @@ class ExhibitorInfoController extends Controller
         //$exhibitor = ExhibitorInfo::create($data);
 
         //redirect back with thank you for filling out the exhibitor directory fields
-        return redirect()->route('exhibitor.info')->with('success', 'Thank you for filling out the exhibitor directory information.');
+        return redirect()->route('exhibitor.info.preview')->with('success', 'Thank you for filling out the exhibitor directory information. Please review the preview and submit the information.');
     }
+
+    //show the preview page
+    public function showPreview()
+    {
+        $applicationId = $this->getApplicationId();
+        $exhibitorInfo = ExhibitorInfo::where('application_id', $applicationId)->first();
+
+        $application = Application::where('id', $applicationId)->first();
+        // $applicationAssocMem = $application->assoc_mem;
+        // dd($applicationAssocMem);
+
+        $slug = "Exhibitor Directory Information - Preview";
+        return view('exhibitor_info.preview', compact('exhibitorInfo', 'slug', 'application'));
+    }
+
+    //submit final form
+    public function submitFinalForm(Request $request)
+    {
+        $applicationId = $this->getApplicationId();
+        $exhibitorInfo = ExhibitorInfo::where('application_id', $applicationId)->first();
+        $exhibitorInfo->submission_status = 1;
+        $exhibitorInfo->save();
+
+        return redirect()->route('exhibitor.info')->with('success', 'Exhibitor information submitted successfully.');
+    }
+
+    //generate PDF
+    public function generatePDF()
+    {
+        $applicationId = $this->getApplicationId();
+        $exhibitorInfo = ExhibitorInfo::where('application_id', $applicationId)->first();
+        $application = Application::find($applicationId);
+        
+        if (!$exhibitorInfo) {
+            return redirect()->route('exhibitor.info')->with('error', 'Exhibitor information not found.');
+        }
+
+        // Prepare data for PDF
+        $data = [
+            'exhibitorInfo' => $exhibitorInfo,
+            'application' => $application ?: (object)[],
+            'fasciaName' => $exhibitorInfo->fascia_name ?? '',
+            'contactPerson' => $exhibitorInfo->contact_person ?? '',
+            'salutation' => '',
+            'firstName' => '',
+            'lastName' => '',
+        ];
+
+        // Parse contact person name
+        if (!empty($data['contactPerson'])) {
+            if (preg_match('/^([A-Za-z\.]+)\s+([^\s]+)\s*(.*)$/', $data['contactPerson'], $matches)) {
+                $data['salutation'] = trim($matches[1] ?? '');
+                $data['firstName'] = trim($matches[2] ?? '');
+                $data['lastName'] = trim($matches[3] ?? '');
+            }
+        }
+
+        //render the view
+        // $html = view('exhibitor_info.pdf', $data)->render();
+        // echo $html;
+        // exit;
+
+        // Generate PDF
+        // allow images to be loaded
+        // Force the PDF to a single page by setting a custom page size matching the content height
+        // (100mm x 240mm as per the Blade template)
+        $pdf = Pdf::loadView('exhibitor_info.pdf', $data)
+            ->setOptions(['isRemoteEnabled' => true]);
+        $pdf->setPaper([0, 0, 283.46, 680.31], 'portrait'); // 100mm x 240mm in points
+
+        // If inline=1, stream; else download
+        if (request()->boolean('inline')) {
+            return $pdf->stream('exhibitor-info-' . ($application->company_name ?? 'exhibitor') . '.pdf');
+        }
+        return $pdf->stream('exhibitor-info-' . ($application->company_name ?? 'exhibitor') . '.pdf');
+    }
+
 
     public function showProductForm(Request $request)
     {
