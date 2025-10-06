@@ -194,10 +194,12 @@ class DashboardController extends Controller
             // whatever their in $ticketDetails ticketType and count pass it to view so that the card can be shown in dashboard dynamically
             // also generate the slug of it
 
-            $directoryFilled = ExhibitorInfo::where('application_id', $applicationId)->exists();
-
+            $directoryFilled = ExhibitorInfo::where('application_id', $applicationId)
+                                ->where('submission_status', 1)
+                                ->exists();
 
 //             dd($ticketDetails)   ;
+// dd($directoryFilled);
 
 
             return view('dashboard.index', compact('exhibitionParticipant', 'application', 'ticketDetails', 'directoryFilled', 'ticketSummary'));
@@ -257,7 +259,7 @@ class DashboardController extends Controller
                                 ->where('submission_status', 1)
                                 ->exists();
 
-//            dd($directoryFilled);
+        //    dd($directoryFilled);
 
 
             return view('dashboard.index', compact('exhibitionParticipant', 'application', 'directoryFilled'));
