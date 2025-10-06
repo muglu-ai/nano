@@ -126,6 +126,10 @@
             /* Ensure it appears on top of other elements */
             text-align: center;
         }
+        tr{
+            align-items: left;
+            margin-top: 2px;
+        }
 
         .page-number1 {
             text-align: center;
