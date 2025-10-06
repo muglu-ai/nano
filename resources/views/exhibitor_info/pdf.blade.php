@@ -15,6 +15,7 @@
             margin: 0;
             padding: 0;
         }
+        
         .content {
             height: 230mm; /* Available content height */
             display: flex;
@@ -52,30 +53,27 @@
             padding: 2px 4px;
             text-align: left;
             font-weight: bold;
-            vertical-align: top;
+             vertical-align: top;
         }
         .front-page, .back-page {
-            width: 100%;
-            page-break-after: always;
-        }
-        .front-page img, .back-page img {
-            width: 100%;
-            height: auto; /* avoid scaling too tall to save memory */
-            max-height: 100%;
-        }
-        .header{
-            padding-bottom: 10px;
-        }
-        .header img, .footer img {
-            width: 100%;
-            height: auto; /* keep intrinsic ratio */
-            max-height: 120px; /* cap header image height */
-        }
-        .profile{
-            line-height: 1.5;
-            text-align: justify;
-        }
-        .page-number11 {
+        width: 100%;
+        page-break-after: always;
+    }
+    .front-page img, .back-page img {
+        width: 100%;
+        height: 135%;
+    }
+    .header{
+        padding-bottom: 10px;
+    }
+    .header img, .footer img {
+        width: 100%;
+    }
+    .profile{
+    line-height: 1.5;
+    text-align: justify;
+    }
+    .page-number11 {
             position: fixed;
             bottom: 5px; /* Distance from the bottom of the page */
             left: 50%; /* Center horizontally */
@@ -84,9 +82,11 @@
             text-align: center;
         }
         .page-number1{
-            text-align:center;
-            display:block;
-            margin-top:40px;
+        text-align:center;
+        display:block;
+        margin-top:40px;
+
+
         }
     </style>
 </head>
