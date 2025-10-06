@@ -479,7 +479,7 @@
                                             <p class="mb-0">
                                                 <strong>If you have any technical problem, please contact:</strong><br>
                                                 <strong>Name:</strong> Mr. Vivek Patil<br>
-                                                <strong>Email:</strong> support@bengalurutechsummit.com
+                                                <strong>Email:</strong> info@interlinks.in
                                             </p>
                                         </div>
                                     </div>
