@@ -234,16 +234,17 @@ class DocumentsContoller extends Controller
     {
         //path         public_path/assets/docs/Exhibitor-Guide-SEMICON-2025.pdf
 
-        $filePath = public_path('assets/docs/SEMICON-Exhibitor-Portal-Guide.pdf');
+        // portal guide path = https://bengalurutechsummit.com/pdf/BTS-Exhibitor-Portal-Guide.pdf
+        $filePath = config('constants.GUIDE_LINK');
         //return view with the file path
-        if (file_exists($filePath)) {
-            $filePath = str_replace(public_path(), '', $filePath);
+        // if (file_exists($filePath)) {
+        //     //$filePath = str_replace(public_path(), '', $filePath);
 
-            // dd($filePath);
+        //     // dd($filePath);
             return view('documents.documentsView', ['pdfPath' => $filePath]);
-        } else {
-            return redirect()->route('event.list')->with('error', 'Exhibitor guide not found.');
-        }
+        // } else {
+        //     return redirect()->route('event.list')->with('error', 'Exhibitor guide not found.');
+        // }
     }
     public function faqs()
     {
