@@ -394,7 +394,15 @@
                                 <button id="closePdfModalBtn" class="btn btn-sm btn-secondary">Close</button>\
                             </div>\
                         </div>\
-                        <iframe id="pdfIframe" src="" style="flex:1; width:100%; border:0;"></iframe>\
+                        <div id="pdfLoader" style="flex:1; display:flex; align-items:center; justify-content:center; background:#f8f9fa;">\
+                            <div style="text-align:center;">\
+                                <div class="spinner-border text-primary" role="status" style="width:3rem; height:3rem;">\
+                                    <span class="visually-hidden">Loading...</span>\
+                                </div>\
+                                <div style="margin-top:1rem; color:#6c757d;">Loading PDF preview...</div>\
+                            </div>\
+                        </div>\
+                        <iframe id="pdfIframe" src="" style="flex:1; width:100%; border:0; display:none;"></iframe>\
                     </div>';
                 document.body.appendChild(modal);
                 document.getElementById('closePdfModalBtn').onclick = function(){ modal.style.display = 'none'; };
@@ -406,11 +414,28 @@
                 btn.addEventListener('click', function(){
                     var modal = ensurePdfModal();
                     var iframe = document.getElementById('pdfIframe');
+                    var loader = document.getElementById('pdfLoader');
+                    
+                    // Show loader, hide iframe
+                    loader.style.display = 'flex';
+                    iframe.style.display = 'none';
+                    
                     // Request inline stream (controller streams when inline=1)
                     iframe.src = '{{ route('exhibitor.info.pdf') }}?inline=1&ts=' + Date.now();
                     var dl = document.getElementById('downloadPdfLink');
                     dl.href = '{{ route('exhibitor.info.pdf') }}';
                     modal.style.display = 'flex';
+                    
+                    // Hide loader when PDF loads
+                    iframe.onload = function() {
+                        loader.style.display = 'none';
+                        iframe.style.display = 'block';
+                    };
+                    
+                    // Handle load error
+                    iframe.onerror = function() {
+                        loader.innerHTML = '<div style="text-align:center; color:#dc3545;"><i class="fas fa-exclamation-triangle" style="font-size:2rem; margin-bottom:1rem;"></i><div>Failed to load PDF preview</div></div>';
+                    };
                 });
             });
         })();
