@@ -44,6 +44,8 @@ const LATE_REGISTRATION_DEADLINE = '2025-11-19'; // last
 //custom registration link for exhibitors
 const EXHIBITOR_REGISTRATION_LINK = 'https://www.bengalurutechsummit.com/web/it_forms/enquiry.php';
 
+const GUIDE_LINK = 'https://bengalurutechsummit.com/pdf/BTS-Exhibitor-Portal-Guide.pdf';
+
 
 
 //define("DEFAULT_REGISTRATION_LINK", route('register.form'));
@@ -67,6 +69,7 @@ return [
     'COMPLIMENTARY_REG_ID_PREFIX' => 'TIN-' . SHORT_NAME . EVENT_YEAR . '-EXHC',
     'CONFIRMATION_ID_PREFIX_EXH' => 'PIN-' . SHORT_NAME . EVENT_YEAR . '-EXHC',
     'DELEGATE_ID_PREFIX' => 'TIN-' . SHORT_NAME . EVENT_YEAR,
+    'GUIDE_LINK' => GUIDE_LINK,
 
     'LATE_REGISTRATION_DEADLINE' => LATE_REGISTRATION_DEADLINE,
     'EXHIBITOR_REGISTRATION_LINK' => EXHIBITOR_REGISTRATION_LINK,
