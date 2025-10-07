@@ -155,14 +155,14 @@
                                             value="{{ $application->company_name ?? '' }}" readonly>
                                     </div>
                                 </div>
-                                <div class="col-sm-6 mt-3 mt-sm-0">
+                                {{-- <div class="col-sm-6 mt-3 mt-sm-0">
                                     <label class="form-label">Booth Number</label>
                                     <div class="input-group input-group-dynamic is-filled">
 
                                         <input class="form-control" type="text"
                                             value="{{ $application->stallNumber ?? '' }}" readonly>
                                     </div>
-                                </div>
+                                </div> --}}
                             </div>
 
                             <div class="row mt-5">
