@@ -147,12 +147,19 @@
                                 <p class="form-control-plaintext mb-0">{{ $application->stallNumber ?? '-' }}</p>
                             </div>
                             @endif
-                            @if($application->stall_category !== 'Startup Booth')
+                            {{-- @if($application->stall_category !== 'Startup Booth') --}}
+                            @php
+                            if($application->stall_category == 'Startup Booth'){
+                                $stallSize = 'Booth / POD';
+                            }else{
+                                $stallSize = $application->allocated_sqm ?? '-' . ' SQM';
+                            }
+                            @endphp
                                 <div class="col-md-4">
-                                    <label class="form-label fw-bold text-nowrap">Allocated Size:</label>
-                                    <p class="form-control-plaintext mb-0">{{ $application->allocated_sqm ?? '-' }} SQM</p>
+                                    <label class="form-label fw-bold text-nowrap">Stall Size:</label>
+                                    <p class="form-control-plaintext mb-0">{{ $stallSize }}</p>
                                 </div>
-                            @endif
+                            {{-- @endif --}}
                             <div class="col-md-4">
                                 <label class="form-label fw-bold text-nowrap">Stall Type:</label>
                                 <p class="form-control-plaintext mb-0">{{ $application->stall_category ?? '-' }}</p>

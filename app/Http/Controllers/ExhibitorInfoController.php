@@ -295,17 +295,23 @@ class ExhibitorInfoController extends Controller
         // Increase PHP memory for this request only (helps avoid memory exhausted)
         @ini_set('memory_limit', '512M');
 
-        // Generate PDF with optimized options to reduce memory
+        // Generate PDF with optimized options to reduce memory and limit to 1 page
         $pdf = Pdf::setOptions([
                 'isRemoteEnabled' => true,      // allow remote images
                 'dpi' => 72,                    // lower DPI to reduce memory
                 'enable_font_subsetting' => true,
                 'defaultFont' => 'dejavu sans', // wide unicode support with subset
                 'isHtml5ParserEnabled' => true,
+                'isPhpEnabled' => false,        // disable PHP for security
+                'page-break-inside' => 'avoid', // avoid page breaks inside elements
             ])
             ->loadView('exhibitor_info.pdf', $data);
         // Custom 100mm x 240mm page size (points)
         $pdf->setPaper([0, 0, 283.46, 680.31], 'portrait');
+        
+        // Force single page generation
+        $pdf->setOption('isPhpEnabled', false);
+        $pdf->setOption('page-break-inside', 'avoid');
 
         // If inline=1, stream; else download
         if (request()->boolean('inline')) {

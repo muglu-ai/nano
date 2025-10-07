@@ -135,8 +135,131 @@
             text-align: center;
             display: block;
             margin-top: 40px;
+        }
 
-
+        /* Print-specific styles */
+        @media print {
+            @page {
+                size: 100mm 240mm;
+                margin: 8mm;
+            }
+            
+            body {
+                font-size: 0.56rem;
+                line-height: 1.2;
+                color: #000;
+                background: #fff;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+            
+            .content {
+                height: 230mm;
+                display: flex;
+                flex-direction: column;
+                justify-content: space-between;
+                margin: 0 auto;
+                padding: 6px;
+            }
+            
+            .exhibitor, .exhibitor1 {
+                /* height: 50%; */
+                page-break-inside: avoid;
+                border-top: 1px solid #000;
+                padding-top: 12px;
+            }
+            
+            .exhibitor1 {
+                padding-top: 13px;
+            }
+            
+            h1 {
+                font-size: 10px;
+                text-align: center;
+                margin: 0 0 5px 0;
+                font-weight: bold;
+            }
+            
+            table {
+                width: 100%;
+                border-collapse: collapse;
+                margin: 0;
+            }
+            
+            td, th {
+                padding: 1px 2px;
+                margin: 0;
+                word-break: break-word;
+                text-align: left;
+                vertical-align: top;
+                font-size: 0.56rem;
+            }
+            
+            th {
+                font-weight: bold;
+                width: 30%;
+            }
+            
+            .th-colon {
+                width: 5%;
+                padding: 0;
+                margin: 0;
+                text-align: left;
+            }
+            
+            .profile {
+                line-height: 1.3;
+                text-align: justify;
+                font-size: 0.56rem;
+            }
+            
+            .header img {
+                width: 100%;
+                height: auto;
+                max-height: 40mm;
+            }
+            
+            .front-page, .back-page {
+                width: 100%;
+                page-break-after: always;
+            }
+            
+            .front-page img, .back-page img {
+                width: 100%;
+                height: auto;
+            }
+            
+            .page-number11 {
+                position: fixed;
+                bottom: 5px;
+                left: 50%;
+                transform: translateX(-50%);
+                z-index: 1000;
+                text-align: center;
+                font-size: 0.5rem;
+            }
+            
+            .page-number1 {
+                text-align: center;
+                display: block;
+                margin-top: 40px;
+                font-size: 0.5rem;
+            }
+            
+            tr {
+                align-items: left;
+                margin-top: 2px;
+            }
+            
+            /* Ensure proper spacing and avoid page breaks */
+            .exhibitor:last-child {
+                page-break-after: avoid;
+            }
+            
+            /* Hide any elements that shouldn't print */
+            .no-print {
+                display: none !important;
+            }
         }
     </style>
 </head>
@@ -182,47 +305,48 @@
                 <p style="text-align:center;"><em>(Startup)</em></p>
             @endif
 
-            <table>
-                <tr>
-                    <th>Contact </th>
-                    <th class="th-colon">:</th>
+            <table width="80%" style="margin: 0 auto;">
+                <tr style="line-height: 180%;">
+                    <th width="31%"  align="right" valign="top">Contact Person </th>
+                    <th width="2%" valign="top" class="th-colon">:</th>
 
-                    <td>{{ trim($cpTitle . ' ' . $cpFname . ' ' . $cpLname) }}</td>
-                </tr>
-                <tr>
-                    <th>Designation</th>
-                    <th class="th-colon">:</th>
-                    <td>{{ $designation }}</td>
-                </tr>
-                <tr>
-                    <th>Mobile</th>
-                    <th class="th-colon">:</th>
-                    <td>{{ $mobile }}</td>
-                </tr>
-                <tr>
-                    <th>E-mail</th>
-                    <th class="th-colon">:</th>
-                    <td>{{ $email }}</td>
-                </tr>
-                <tr>
-                    <th>Address</th>
-                    <th class="th-colon">:</th>
-                    <td>{{ $address }}</td>
-                </tr>
-                <tr>
-                    <th>Website</th>
-                    <th class="th-colon">:</th>
-                    <td>{{ $website }}</td>
-                </tr>
+                    <td width="77%" align="left" valign="top">{{ trim($cpTitle . ' ' . $cpFname . ' ' . $cpLname) }}</td>
+      </tr>
+                <tr style="line-height: 180%;">
+                    <th  align="right" valign="top">Designation</th>
+                    <th valign="top" class="th-colon">:</th>
+                    <td align="left" valign="top">{{ $designation }}</td>
+      </tr>
+                <tr style="line-height: 180%;">
+                    <th  align="right" valign="top">Mobile</th>
+                    <th valign="top" class="th-colon">:</th>
+                    <td align="left" valign="top">{{ $mobile }}</td>
+      </tr>
+                <tr style="line-height: 180%;">
+                    <th  align="right" valign="top">E-mail</th>
+                    <th valign="top" class="th-colon">:</th>
+                    <td align="left" valign="top">{{ $email }}</td>
+      </tr>
+                <tr style="line-height: 180%;">
+                    <th  align="right" valign="top">Address</th>
+                    <th valign="top" class="th-colon">:</th>
+                    <td align="left" valign="top">{{ $address }}</td>
+      </tr>
+                <tr style="line-height: 180%;">
+                    <th  align="right" valign="top">Website</th>
+                    <th valign="top" class="th-colon">:</th>
+                    <td align="left" valign="top">{{ $website }}</td>
+      </tr>
 
-                <tr>
-                    <th><br>Profile:</th>
-                    <th> </th>
-                </tr>
-                <tr>
+                <tr style="line-height: 180%;">
+                    <th  align="right" valign="top"><br>Profile:</th>
+                    <th align="left" valign="top"> </th>
+      </tr>
+                <tr style="line-height: 180%;">
                     <td colspan="3" class="profile">{{ $profile }}</td>
                 </tr>
-            </table>
+</table>
+            
         </div>
 
         {{-- <span class="page-number1">1</span> --}}

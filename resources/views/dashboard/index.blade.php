@@ -56,11 +56,11 @@
         {{-- Top Row of Info Cards --}}
         <div class="row mb-4">
             {{-- Exhibitor Name Card --}}
-            <div class="col-lg-4 col-md-12 mb-4 mb-lg-0">
+            <div class="col-lg-3 col-md-12 mb-4 mb-lg-0">
                 <div class="card shadow-sm h-100">
                     <div class="card-body d-flex align-items-center">
                         <div class="me-3 d-flex align-items-center justify-content-center"
-                             style="width:56px; height:56px; background:linear-gradient(135deg,#11998e,#38ef7d); border-radius:50%;">
+                            style="width:56px; height:56px; background:linear-gradient(135deg,#11998e,#38ef7d); border-radius:50%;">
                             <i class="fa-solid fa-building fa-2x text-white"></i>
                         </div>
                         <div>
@@ -71,63 +71,78 @@
                 </div>
             </div>
             {{-- if stallNumber is null or empty hide the card --}}
-{{--            @if(!empty($application->stallNumber))--}}
-                <div class="col-lg-4 col-md-12 mb-4 mb-lg-0">
-                    <div class="card shadow-sm h-100">
-                        <div class="card-body d-flex align-items-center">
-                            <div class="me-3 d-flex align-items-center justify-content-center"
-                                 style="width:56px; height:56px; background:linear-gradient(135deg,#ff416c,#ff4b2b); border-radius:50%;">
-                                <i class="fa-solid fa-ticket fa-2x text-white"></i>
-                            </div>
-                            <div>
-                                <h6 class="mb-1">Booth Number</h6>
-                                <span class="fw-bold fs-5">{{ $application->stallNumber ?? 'Not Assigned' }}</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-{{--            @endif--}}
-            <div class="col-lg-4 col-md-12 mb-4 mb-lg-0">
+            {{--            @if (!empty($application->stallNumber)) --}}
+            <div class="col-lg-3 col-md-12 mb-4 mb-lg-0">
                 <div class="card shadow-sm h-100">
                     <div class="card-body d-flex align-items-center">
                         <div class="me-3 d-flex align-items-center justify-content-center"
-                             style="width:56px; height:56px; background:linear-gradient(135deg,#36d1c4,#1e90ff); border-radius:50%;">
+                            style="width:56px; height:56px; background:linear-gradient(135deg,#ff416c,#ff4b2b); border-radius:50%;">
+                            <i class="fa-solid fa-ticket fa-2x text-white"></i>
+                        </div>
+                        <div>
+                            <h6 class="mb-1">Booth Number</h6>
+                            <span class="fw-bold fs-5">{{ $application->stallNumber ?? 'Not Assigned' }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {{--            @endif --}}
+            <div class="col-lg-3 col-md-12 mb-4 mb-lg-0">
+                <div class="card shadow-sm h-100">
+                    <div class="card-body d-flex align-items-center">
+                        <div class="me-3 d-flex align-items-center justify-content-center"
+                            style="width:56px; height:56px; background:linear-gradient(135deg,#36d1c4,#1e90ff); border-radius:50%;">
                             <i class="fa-solid fa-store fa-2x text-white"></i>
                         </div>
                         <div>
 
                             <h6 class="mb-1">
-                                @if(Str::contains($application->stall_category ?? '', 'Startup Booth'))
+                                {{-- @if (Str::contains($application->stall_category ?? '', 'Startup Booth'))
                                     Stall Type
-                                @else
-                                    Stall Type / Size
-                                @endif
+                                @else --}}
+                                    Stall Type 
+                                {{-- @endif --}}
+                                {{-- @php
+                                if($application->stall_category == 'Startup Booth'){
+                                    $stallSize = 'Booth / POD';
+                                }else{
+                                    $stallSize = $application->allocated_sqm ?? '-' . ' SQM';
+                                }
+                                @endphp --}}
                             </h6>
-                          <span class="fw-bold fs-5">
+                            <span class="fw-bold fs-5">
                                 {{ $application->stall_category ?? 'N/A' }}
-                                @if(!Str::contains($application->stall_category ?? '', 'Startup Booth'))
-                                    / {{ $application->allocated_sqm ?? 'N/A' }} SQM
-                                @endif
+                                {{-- @if (!Str::contains($application->stall_category ?? '', 'Startup Booth')) --}}
+                                {{-- <br>    
+                                 {{ $stallSize }} --}}
+                                {{-- @endif --}}
                             </span>
                         </div>
                     </div>
                 </div>
             </div>
 
-            {{--            <div class="col-lg-4 col-md-12">--}}
-            {{--                <div class="card shadow-sm h-100">--}}
-            {{--                    <div class="card-body d-flex align-items-center">--}}
-            {{--                        <div class="me-3 d-flex align-items-center justify-content-center"--}}
-            {{--                             style="width:56px; height:56px; background:linear-gradient(135deg,#43e97b,#38f9d7); border-radius:50%;">--}}
-            {{--                            <i class="fa-solid fa-location-dot fa-2x text-white"></i>--}}
-            {{--                        </div>--}}
-            {{--                        <div>--}}
-            {{--                            <h6 class="mb-1">Preferred Location</h6>--}}
-            {{--                            <span class="fw-bold fs-5">{{ $application->pref_location ?? 'N/A' }}</span>--}}
-            {{--                        </div>--}}
-            {{--                    </div>--}}
-            {{--                </div>--}}
-            {{--            </div>--}}
+             <div class="col-lg-3 col-md-12">
+                <div class="card shadow-sm h-100">
+                    <div class="card-body d-flex align-items-center">
+                        <div class="me-3 d-flex align-items-center justify-content-center"
+                            style="width:56px; height:56px; background:linear-gradient(135deg,#43e97b,#38f9d7); border-radius:50%;">
+                            <i class="fa-solid fa-location-dot fa-2x text-white"></i>
+                        </div>
+                        <div>
+                            @php
+                                if($application->stall_category == 'Startup Booth'){
+                                    $stallSize = 'Booth / POD';
+                                }else{
+                                    $stallSize = $application->allocated_sqm ?? '-' . ' SQM';
+                                }
+                                @endphp 
+                            <h6 class="mb-1">Stall Size</h6>
+                            <span class="fw-bold fs-5">{{ $stallSize }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
         </div>
 
@@ -146,13 +161,13 @@
                             <p class="card-text">Please provide the name you want to be displayed on your booth's fascia
                                 board. This will be used for printing.</p>
                             <form action="{{ route('user.fascia.update') }}" method="POST"
-                                  class="row g-3 align-items-center">
+                                class="row g-3 align-items-center">
                                 @csrf
                                 @method('PATCH')
                                 <div class="col-md-8">
                                     <label for="fascia_name" class="visually-hidden">Fascia Name</label>
                                     <input type="text" class="form-control form-control-lg" id="fascia_name"
-                                           name="fascia_name" placeholder="e.g., Your Company Name" required>
+                                        name="fascia_name" placeholder="e.g., Your Company Name" required>
                                 </div>
                                 <div class="col-md-4">
                                     <button type="submit" class="btn btn-primary w-100">Save Fascia Name</button>
@@ -196,66 +211,69 @@
             </div>
 
 
-{{--            <div class="col-xl-3 col-sm-6 mb-4">--}}
-{{--                <div class="card h-100" style="min-height: 70px; min-width: 100%;">--}}
-{{--                    <div class="card-header d-flex justify-content-between align-items-center">--}}
-{{--                        <div>--}}
-{{--                            <p class="text-m mb-0 text-bold text-capitalize">Exhibitor Passes Allocated</p>--}}
-{{--                            <h4 class="mb-0">--}}
+            {{--            <div class="col-xl-3 col-sm-6 mb-4"> --}}
+            {{--                <div class="card h-100" style="min-height: 70px; min-width: 100%;"> --}}
+            {{--                    <div class="card-header d-flex justify-content-between align-items-center"> --}}
+            {{--                        <div> --}}
+            {{--                            <p class="text-m mb-0 text-bold text-capitalize">Exhibitor Passes Allocated</p> --}}
+            {{--                            <h4 class="mb-0"> --}}
 
-{{--                                @php--}}
-{{--                                    $exhibitorTicket = collect($ticketSummary ?? [])->firstWhere('slug', 'stall_manning');--}}
-{{--                                @endphp--}}
-{{--                                <a href="{{ route('exhibition.list', ['type' => 'stall_manning']) }}"> {{ $exhibitorTicket['usedCount'] }}   /  {{ $exhibitionParticipant['stall_manning_count'] ?? 0 }}</a>--}}
-{{--                            </h4>--}}
-{{--                        </div>--}}
-{{--                        <div class="icon icon-md icon-shape bg-gradient-dark text-center border-radius-lg">--}}
-{{--                            <i class="material-symbols-rounded opacity-10">weekend</i>--}}
-{{--                        </div>--}}
-{{--                    </div>--}}
-{{--                    <div class="card-footer">--}}
-{{--                        <p class="mb-0 text-sm"><a href="{{ route('exhibition.list', ['type' => 'stall_manning']) }}"--}}
-{{--                                                   class="text-success font-weight-bolder">Click here</a> for Exhibitor--}}
-{{--                            Registration.</p>--}}
-{{--                    </div>--}}
-{{--                </div>--}}
-{{--            </div>--}}
+            {{--                                @php --}}
+            {{--                                    $exhibitorTicket = collect($ticketSummary ?? [])->firstWhere('slug', 'stall_manning'); --}}
+            {{--                                @endphp --}}
+            {{--                                <a href="{{ route('exhibition.list', ['type' => 'stall_manning']) }}"> {{ $exhibitorTicket['usedCount'] }}   /  {{ $exhibitionParticipant['stall_manning_count'] ?? 0 }}</a> --}}
+            {{--                            </h4> --}}
+            {{--                        </div> --}}
+            {{--                        <div class="icon icon-md icon-shape bg-gradient-dark text-center border-radius-lg"> --}}
+            {{--                            <i class="material-symbols-rounded opacity-10">weekend</i> --}}
+            {{--                        </div> --}}
+            {{--                    </div> --}}
+            {{--                    <div class="card-footer"> --}}
+            {{--                        <p class="mb-0 text-sm"><a href="{{ route('exhibition.list', ['type' => 'stall_manning']) }}" --}}
+            {{--                                                   class="text-success font-weight-bolder">Click here</a> for Exhibitor --}}
+            {{--                            Registration.</p> --}}
+            {{--                    </div> --}}
+            {{--                </div> --}}
+            {{--            </div> --}}
 
 
-            @if(($exhibitionParticipant['complimentary_delegate_count'] ?? 0) > 0)
-            <div class="col-xl-3 col-sm-6 mb-4">
-                <div class="card h-100" style="min-height: 90px; min-width: 100%;">
-                    <div class="card-header d-flex justify-content-between align-items-center">
-                        <div>
-                            <p class="text-m mb-0 text-bold text-capitalize">Total Inaugural Passes Allocated</p>
-                            <h4 class="mb-0">
-                                <a href="{{ route('exhibition.list', ['type' => 'inaugural_passes']) }}">{{ $exhibitionParticipant['complimentary_delegate_count'] }}</a>
-                            </h4>
+            @if (($exhibitionParticipant['complimentary_delegate_count'] ?? 0) > 0)
+                <div class="col-xl-3 col-sm-6 mb-4">
+                    <div class="card h-100" style="min-height: 90px; min-width: 100%;">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <div>
+                                <p class="text-m mb-0 text-bold text-capitalize">Total Inaugural Passes Allocated</p>
+                                <h4 class="mb-0">
+                                    <a
+                                        href="{{ route('exhibition.list', ['type' => 'inaugural_passes']) }}">{{ $exhibitionParticipant['complimentary_delegate_count'] }}</a>
+                                </h4>
+                            </div>
+                            <div class="icon icon-md icon-shape bg-gradient-dark text-center border-radius-lg">
+                                <i class="material-symbols-rounded opacity-10">weekend</i>
+                            </div>
                         </div>
-                        <div class="icon icon-md icon-shape bg-gradient-dark text-center border-radius-lg">
-                            <i class="material-symbols-rounded opacity-10">weekend</i>
+                        <div class="card-footer">
+                            <p class="mb-0 text-sm">
+                                <a href="{{ route('exhibition.list', ['type' => 'inaugural_passes']) }}"
+                                    class="text-success font-weight-bolder">Click here</a> for Inaugural Registration.
+                            </p>
                         </div>
-                    </div>
-                    <div class="card-footer">
-                        <p class="mb-0 text-sm">
-                            <a href="{{ route('exhibition.list', ['type' => 'inaugural_passes']) }}" class="text-success font-weight-bolder">Click here</a> for Inaugural Registration.
-                        </p>
                     </div>
                 </div>
-            </div>
             @endif
 
             {{-- if $ticketDetails is not null and array items count as not 0 then make card with 0.name passes --}}
-            @foreach($ticketSummary ?? [] as $ticket)
-                @if(($ticket['count'] ?? 0) > 0)
+            @foreach ($ticketSummary ?? [] as $ticket)
+                @if (($ticket['count'] ?? 0) > 0)
                     <div class="col-xl-3 col-sm-6 mb-4">
                         <div class="card h-80" style="min-height: 70px; min-width: 100%;">
                             <div class="card-header d-flex justify-content-between align-items-center">
                                 <div>
                                     <p class="text-m mb-0 text-bold text-capitalize">
-                                        {{ Str::contains(Str::lower($ticket['name']), 'pass') ? $ticket['name'] : $ticket['name'] . ' Passes' }} Allocated
+                                        {{ Str::contains(Str::lower($ticket['name']), 'pass') ? $ticket['name'] : $ticket['name'] . ' Passes' }}
+                                        Allocated
                                     </p>
-                                    <h4 class="mb-0">{{$ticket['usedCount']}} Used / {{ $ticket['count'] }} Total</h4>
+                                    <h4 class="mb-0">{{ $ticket['usedCount'] }} Used / {{ $ticket['count'] }} Total</h4>
                                 </div>
                                 <div class="icon icon-md icon-shape bg-gradient-info text-center border-radius-lg">
                                     <i class="fa-solid fa-ticket opacity-10"></i>
@@ -263,7 +281,9 @@
                             </div>
                             <div class="card-footer">
                                 <p class="mb-0 text-sm">
-                                    <a href="{{ route('exhibition.list', ['type' => $ticket['slug'] ?? $ticket['name']]) }}" class="text-success font-weight-bolder">Click here</a> for {{$ticket['name']}} Registration.
+                                    <a href="{{ route('exhibition.list', ['type' => $ticket['slug'] ?? $ticket['name']]) }}"
+                                        class="text-success font-weight-bolder">Click here</a> for {{ $ticket['name'] }}
+                                    Registration.
                                 </p>
                             </div>
                         </div>
@@ -272,7 +292,7 @@
             @endforeach
         </div>
 
-        {{--Third row to display the action items -- }}
+        {{-- Third row to display the action items -- }}
         {{--
         //if the $directoryFilled is true then show the card with green tick else show the card with red cross
         --}}
@@ -283,7 +303,7 @@
                 <hr>
             </div>
 
-           <div class="col-12 mb-4">
+            <div class="col-12 mb-4">
                 <div class="table-responsive">
                     <table class="table table-bordered align-middle mb-0">
                         <thead class="table-light">
@@ -300,33 +320,41 @@
                                 <td class="" style="column-span: 1;">#1 </td>
                                 <td class="text-capitalize">Directory Listing</td>
                                 <td>
-                                    @if($directoryFilled)
-                                        <span class="text-success"><i class="fa-solid fa-check-circle me-2"></i>Completed</span>
+                                    @if ($directoryFilled)
+                                        <span class="text-success"><i
+                                                class="fa-solid fa-check-circle me-2"></i>Completed</span>
                                     @else
-                                        <span class="text-danger"><i class="fa-solid fa-xmark-circle me-2"></i>Pending</span>
+                                        <span class="text-danger"><i
+                                                class="fa-solid fa-xmark-circle me-2"></i>Pending</span>
                                     @endif
                                 </td>
                                 <td>
-                                    @if($directoryFilled)
-                                        <a href="{{route('exhibitor.info')}}" class="btn btn-outline-info btn-sm">View</a>
+                                    @if ($directoryFilled)
+                                        <a href="{{ route('exhibitor.info') }}"
+                                            class="btn btn-outline-info btn-sm">View</a>
                                     @else
-                                        <a href="{{route('exhibitor.info')}}" class="btn btn-outline-danger btn-sm">Complete Now</a>
+                                        <a href="{{ route('exhibitor.info') }}"
+                                            class="btn btn-outline-danger btn-sm">Complete Now</a>
                                     @endif
                                 </td>
                             </tr>
                             {{-- Add Actions items as whichever usedCount of ticketSummary is 0 ask user to register under ticketName --}}
                             @php $actionIndex = 2; @endphp
-                            @foreach($ticketSummary ?? [] as $ticket)
-                                @if(($ticket['usedCount'] ?? 0) == 0 && ($ticket['count'] ?? 0) > 0)
+                            @foreach ($ticketSummary ?? [] as $ticket)
+                                @if (($ticket['usedCount'] ?? 0) == 0 && ($ticket['count'] ?? 0) > 0)
                                     <tr>
                                         <td class="text-capitalize">#{{ $actionIndex++ }} </td>
 
-                                        <td class="text-capitalize"> {{ Str::contains(Str::lower($ticket['name']), 'pass') ? $ticket['name'] : $ticket['name'] . ' Passes' }} Registration</td>
+                                        <td class="text-capitalize">
+                                            {{ Str::contains(Str::lower($ticket['name']), 'pass') ? $ticket['name'] : $ticket['name'] . ' Passes' }}
+                                            Registration</td>
                                         <td>
-                                            <span class="text-danger"><i class="fa-solid fa-xmark-circle me-2"></i>Pending</span>
+                                            <span class="text-danger"><i
+                                                    class="fa-solid fa-xmark-circle me-2"></i>Pending</span>
                                         </td>
                                         <td>
-                                            <a href="{{ route('exhibition.list', ['type' => $ticket['slug'] ?? $ticket['name']]) }}" class="btn btn-outline-danger btn-sm">Register Now</a>
+                                            <a href="{{ route('exhibition.list', ['type' => $ticket['slug'] ?? $ticket['name']]) }}"
+                                                class="btn btn-outline-danger btn-sm">Register Now</a>
                                         </td>
                                     </tr>
                                 @endif
@@ -349,7 +377,7 @@
                         <label class="form-label mb-2 text-sm text-capitalize fw-semibold" for="logo_link">Logo
                             Link</label>
                         @if (empty($application->logo_link))
-                            <form action="{{ route('user.logo.update') }}" method="POST">
+<form action="{{ route('user.logo.update') }}" method="POST">
                                 @csrf
                                 @method('PATCH')
                                 <div class="input-group">
@@ -364,14 +392,14 @@
                                     <button type="submit" class="btn btn-primary ms-2">Save Logo Link</button>
                                 </div>
                                 @if (session('logo_success'))
-                                    <div class="text-success small mt-2">{{ session('logo_success') }}</div>
-                                @endif
+<div class="text-success small mt-2">{{ session('logo_success') }}</div>
+@endif
                                 @error('logo_link')
-                                <div class="text-danger small mt-2">{{ $message }}</div>
-                                @enderror
+<div class="text-danger small mt-2">{{ $message }}</div>
+@enderror
                             </form>
-                        @else
-                            <div class="mt-2 d-flex align-items-center">
+@else
+<div class="mt-2 d-flex align-items-center">
                                 <i class="fa fa-link me-1 text-primary"></i>
                                 <a
                                         href="{{ $application->logo_link }}"
@@ -379,7 +407,7 @@
                                         class="text-primary fw-medium"
                                         style="text-decoration: underline;">View Uploaded Logo Link</a>
                             </div>
-                        @endif
+@endif
                     </div>
                     <div class="icon icon-md icon-shape bg-gradient-info text-center border-radius-lg ms-3">
                         <i class="fa-solid fa-image opacity-10"></i>
