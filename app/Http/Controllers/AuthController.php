@@ -407,11 +407,12 @@ class AuthController extends Controller
             if ($application) {
                 // Check if the application is approved
                 if (
-                    $application->submission_status === 'approved' &&
-                    (
-                        $application->allocated_sqm > 0 ||
-                        Str::contains($application->allocated_sqm, ['Booth', 'POD'])
-                    )
+                    $application->submission_status === 'approved' 
+                    // &&
+                    // (
+                    //     $application->allocated_sqm > 0 ||
+                    //     Str::contains($application->allocated_sqm, ['Booth', 'POD'])
+                    // )
                 ) {
                     if (empty($application->userActive)) {
                         $application->userActive = 1;

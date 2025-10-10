@@ -30,7 +30,8 @@ class ExhibitorInfo extends Model
         'website',
         'address',
         'designation',
-        'submission_status'
+        'submission_status',
+        'category',
 
     ];
 

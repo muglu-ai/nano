@@ -38,10 +38,17 @@
                                 <p class="text-sm mb-0 text-dark">
                                     List of all {{$slug}}.
                                 </p>
+
                             </div>
                             <div class="ms-auto my-auto mt-lg-0 mt-4">
                             </div>
                             <div class="d-flex align-items-center gap-3 flex-nowrap">
+                                @if($slug == 'Application List')
+                                {{-- Make a button to add new application --}}
+                                <a href="{{ route('application.create') }}" class="btn btn-primary">
+                                    <i class="fas fa-plus me-2"></i>Add New Application
+                                </a>
+                                @endif
                                 <form action="{{ route('export.applications') }}" method="GET"
                                       class="d-flex align-items-center gap-3">
                                     <select name="status" id="statusSelect" class="form-select" aria-label="Status"
@@ -237,7 +244,7 @@
                                                         </button>
                                                     </div>
                                                 @else
-                                                    <button type="submit" data-bs-toggle="tooltip" data-bs-original-title="Send Reminder" style="border:none; background:none; padding:0;" onclick="sendReminder('{{ $application->application_id }}','{{$application->billingDetail->email}}', 'reminder')">
+                                                    <button type="submit" data-bs-toggle="tooltip" data-bs-original-title="Send Reminder" style="border:none; background:none; padding:0;" onclick="sendReminder('{{ $application->application_id }}','{{$application->billingDetail->email ?? $application->company_email}}', 'reminder')">
                                                         <i class="material-symbols-rounded text-secondary position-relative text-lg">notifications</i>Send Reminder
                                                     </button>
                                                 @endif

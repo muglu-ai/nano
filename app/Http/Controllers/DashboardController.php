@@ -103,12 +103,12 @@ class DashboardController extends Controller
         if ($user->role == 'exhibitor') {
             $application = Application::where('user_id', auth()->user()->id)
                 ->where('submission_status', 'approved')
-                ->where(function ($query) {
-                    $query->where('allocated_sqm', '>', 0)
-                        ->orWhere('allocated_sqm', '=', 'Startup Booth')
-                        ->orWhere('allocated_sqm', '=', 'Booth / POD')
-                    ;
-                })
+                // ->where(function ($query) {
+                //     $query->where('allocated_sqm', '>', 0)
+                //         ->orWhere('allocated_sqm', '=', 'Startup Booth')
+                //         ->orWhere('allocated_sqm', '=', 'Booth / POD')
+                //     ;
+                // })
 
                 // ->whereHas('invoices.payments', function ($query) {
                 //     $query->where('status', 'successful');

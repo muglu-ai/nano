@@ -23,6 +23,7 @@ use App\Models\SecondaryEventContact;
 use Illuminate\Support\Facades\Log;
 use Barryvdh\DomPDF\Facade\Pdf;
 use App\Mail\ExhibitorPaymentConfirmation;
+use Illuminate\Support\Facades\Hash;
 
 
 class ApplicationController extends Controller
@@ -1254,5 +1255,152 @@ class ApplicationController extends Controller
 
         //dd($invoice);
         return view('export.application_export', compact('application', 'productCategories', 'sectors'));
+    }
+
+    /**
+     * Show the form for creating a new application (Admin)
+     */
+    public function create()
+    {
+        // Check if user is admin
+        if (!auth()->check() || auth()->user()->role !== 'admin') {
+            return redirect('/login')->with('error', 'Unauthorized access');
+        }
+
+        // Get necessary data for the form
+        $countries = \App\Models\Country::all();
+        $states = \App\Models\State::all();
+        $cities = array();
+        $sectors = \App\Models\Sector::all();
+        $tickets = \App\Models\Ticket::where('nationality', 'Indian')
+            ->select('id', 'ticket_type')
+            ->distinct('ticket_type')
+            ->get();
+       // dd($tickets);
+
+        return view('admin.application.create', compact('countries', 'states', 'cities', 'sectors', 'tickets'));
+    }
+
+    /**
+     * Store a newly created application (Admin)
+     */
+    public function store(Request $request)
+    {
+
+        // dd($request->all());
+        // Check if user is admin
+        if (!auth()->check() || auth()->user()->role !== 'admin') {
+            return redirect('/login')->with('error', 'Unauthorized access');
+        }
+
+        //user validation with email unique
+        $request->validate([
+            'company_email' => 'required|email|max:255|unique:users,email',
+            'company_name' => 'required|string|max:255',
+        ]);
+
+        // password generate
+        $password = substr(md5(uniqid()), 0, 10);
+
+        // Import the Hash facade at the top of your file with: use Illuminate\Support\Facades\Hash;
+
+        // password hash
+        $passwordHash = Hash::make($password);
+
+        // make user first with email and name
+        // $user = \App\Models\User::create([
+        //     'name' => $request->company_name,
+        //     'email' => $request->company_email,
+        //     'password' => $passwordHash, // Default password, user should change
+        //     'simplePass' => $password,
+        //     'role' => 'exhibitor',
+        //     'email_verified_at' => now(),
+        // ]);
+
+        // dd($user);
+
+        //generate application id
+        
+
+
+        // Get valid ticket IDs from database
+        $validTicketIds = \App\Models\Ticket::pluck('id')->toArray();
+        $ticketIdsRule = 'required|in:' . implode(',', $validTicketIds);
+
+        // Validate the request
+        $request->validate([            
+            'company_name' => 'required|string|max:255',
+            'company_email' => 'required|email|max:255',
+            'application_type' => 'required|in:exhibitor,sponsor',
+            'address' => 'nullable|string',
+            'postal_code' => 'nullable|string|max:20',
+            'city_id' => 'nullable|string|max:255',
+            'state_id' => 'nullable|exists:states,id',
+            'country_id' => 'nullable|exists:countries,id',
+            'comments' => 'nullable|string',
+            // 'stall_category' => 'required|in:Shell Scheme,Bare Space, Startup Booth',
+            // 'booth_size' => 'required|integer|min:1|max:36',
+            // 'payment_currency' => 'required|in:EUR,INR',
+            'ticket_ids' => 'required|array|min:1',
+            'ticket_ids.*' => $ticketIdsRule,
+            'ticket_counts' => 'required|array|min:1',
+            'ticket_counts.*' => 'required|integer|min:1',
+        ]);
+
+        try {
+            // Create user first
+            $user = \App\Models\User::create([
+                'name' => $request->company_name,
+                'email' => $request->company_email,
+                'password' => $passwordHash, // Default password, user should change
+                'simplePass' => $password,
+                'role' => 'exhibitor',
+                'email_verified_at' => now(),
+            ]);
+
+            // Generate unique application ID
+            $applicationId = $this->generateApplicationId();
+
+            // Create the application
+            $application = Application::create([
+                'user_id' => $user->id,
+                'company_name' => $request->company_name,
+                'company_email' => $request->company_email,
+                'status' => 'approved',
+                'application_id' => $applicationId,
+                'submission_status' => 'approved',
+                'approved_by' => auth()->user()->name,
+                'submission_date' => now(),
+                'RegSource' => 'Admin',
+                'approved_date' => now(),
+            ]);
+
+            // Create ticket allocations if provided
+            if ($request->ticket_ids && $request->ticket_counts) {
+                $ticketAllocation = [];
+                foreach ($request->ticket_ids as $index => $ticketId) {
+                    if (isset($request->ticket_counts[$index])) {
+                        $ticketAllocation[$ticketId] = (int)$request->ticket_counts[$index];
+                    }
+                }
+                
+                if (!empty($ticketAllocation)) {
+                    \App\Models\ExhibitionParticipant::create([
+                        'application_id' => $application->id,
+                        'ticketAllocation' => json_encode($ticketAllocation),
+                        'stall_manning_count' => 0,
+                        'complimentary_delegate_count' => 0,
+                    ]);
+                }
+            }
+
+            return redirect()->route('application.lists')
+                ->with('success', 'Application and user account created successfully!');
+
+        } catch (\Exception $e) {
+            return redirect()->back()
+                ->withInput()
+                ->with('error', 'Failed to create application: ' . $e->getMessage());
+        }
     }
 }

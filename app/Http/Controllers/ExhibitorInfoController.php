@@ -71,9 +71,9 @@ class ExhibitorInfoController extends Controller
 
             $applicationId = Application::where('user_id', Auth::id())
                 ->where('submission_status', 'approved')
-                ->whereHas('invoices.payments', function ($query) {
-                    $query->where('status', 'successful');
-                })
+                // ->whereHas('invoices.payments', function ($query) {
+                //     $query->where('status', 'successful');
+                // })
                 ->value('id');
 
             if (!$applicationId) {
@@ -89,17 +89,16 @@ class ExhibitorInfoController extends Controller
     {
         return Application::where('user_id', Auth::id())
             ->where('submission_status', 'approved')
-            ->whereHas('invoices.payments', function ($query) {
-                $query->where('status', 'successful');
-            })
+            // ->whereHas('invoices.payments', function ($query) {
+            //     $query->where('status', 'successful');
+            // })
             ->value('id');
     }
 
 
     public function showForm(Request $request)
     {
-
-        // dd($request->all());
+     
 
         //check user is logged in
         if (!Auth::check()) {
@@ -114,9 +113,9 @@ class ExhibitorInfoController extends Controller
         // get the application id from application table where user_id is logged in user id
         $applicationId = Application::where('user_id', Auth::id())
             ->where('submission_status', 'approved')
-            ->whereHas('invoices.payments', function ($query) {
-                $query->where('status', 'successful');
-            })
+            // ->whereHas('invoices.payments', function ($query) {
+            //     $query->where('status', 'successful');
+            // })
             ->value('id');
 
         // dd($applicationId);
@@ -124,12 +123,13 @@ class ExhibitorInfoController extends Controller
 
         // check if the user is
         $application = Application::findOrFail($applicationId);
-        $add1 = $application->address ?? '';
-        $city = $application->city_id ?? '';
+        $add1 = $application->address ?: '';
+        $city = $application->city_id ?: '';
         $state = ($application->state && isset($application->state->name)) ? $application->state->name : '';
         $country = ($application->country && isset($application->country->name)) ? $application->country->name : '';
-        $zip = $application->postal_code ?? '';
+        $zip = $application->postal_code ?: '';
         $application->full_address = $add1;
+
         // $application->full_address = $add1 . ', ' . $city . ', ' . $state . ', ' . $country . ', ' . $zip;
 
 // 
@@ -146,6 +146,14 @@ class ExhibitorInfoController extends Controller
 
         //find the exhibitor info from exhibitor_info table where application_id is application id
         $exhibitorInfo = ExhibitorInfo::where('application_id', $applicationId)->first();
+
+        //if full_address is there in ExhibitorInfo table then set the full_address to the full_address of the application
+        if (!empty($exhibitorInfo) && !empty($exhibitorInfo->address)) {
+            $application->full_address = $exhibitorInfo->address;
+        }
+
+
+
         return view('exhibitor_info.form', compact('application', 'slug', 'exhibitorInfo', 'sectors'));
     }
 
@@ -181,6 +189,7 @@ class ExhibitorInfoController extends Controller
             'instagram' => 'nullable|url',
             'facebook' => 'nullable|url',
             'youtube' => 'nullable|url',
+            'category' => 'required|string|max:255',
 
         ]);
 
@@ -196,21 +205,22 @@ class ExhibitorInfoController extends Controller
         $exhibitor = ExhibitorInfo::updateOrCreate(
             ['application_id' => $applicationId],
             [
-                'fascia_name' => $data['fascia_name'],
-                'contact_person' => $data['salutation'] . ' ' . $data['contact_first_name'] . ' ' . $data['contact_last_name'],
-                'designation' => $data['designation'],
-                'email' => $data['email'],
-                'company_name' => $data['company_name'],
-                'sector' => $data['sector'],
-                'website' => $data['website'] ?? null,
-                'phone' => $this->formatPhoneNumber($data['phone']),
-                'telPhone' => $this->formatPhoneNumber($data['telPhone']),
-                'description' => strip_tags(trim($data['description'])),
-                'address' => $data['address'],
-                'country' => $data['country'],
-                'state' => $data['state'],
-                'city' => $data['city'],
-                'zip_code' => $data['zip_code'],
+                'category' => $data['category'] ?: 'Not Provided',
+                'fascia_name' => $data['fascia_name'] ?: 'Not Provided',
+                'contact_person' => trim(($data['salutation'] ?? '') . ' ' . ($data['contact_first_name'] ?? '') . ' ' . ($data['contact_last_name'] ?? '')) ?: 'Not Provided',
+                'designation' => $data['designation'] ?: 'Not Provided',
+                'email' => $data['email'] ?: 'Not Provided',
+                'company_name' => $data['company_name'] ?: 'Not Provided',
+                'sector' => $data['sector'] ?: 'Not Provided',
+                'website' => $data['website'] ?: null,
+                'phone' => $data['phone'] ? $this->formatPhoneNumber($data['phone']) : null,
+                'telPhone' => $data['telPhone'] ? $this->formatPhoneNumber($data['telPhone']) : null,
+                'description' => $data['description'] ? strip_tags(trim($data['description'])) : 'Not Provided',
+                'address' => $data['address'] ?: 'Not Provided',
+                'country' => $data['country'] ?: 'Not Provided',
+                'state' => $data['state'] ?: 'Not Provided',
+                'city' => $data['city'] ?: 'Not Provided',
+                'zip_code' => $data['zip_code'] ?: 'Not Provided',
                 'logo' => $data['logo'] ?? (ExhibitorInfo::where('application_id', $applicationId)->value('logo')),
                 'linkedin' => $data['linkedin'] ?? null,
                 'instagram' => $data['instagram'] ?? null,
@@ -235,8 +245,15 @@ class ExhibitorInfoController extends Controller
         $exhibitorInfo = ExhibitorInfo::where('application_id', $applicationId)->first();
 
         $application = Application::where('id', $applicationId)->first();
-        // $applicationAssocMem = $application->assoc_mem;
-        // dd($applicationAssocMem);
+        
+        // Handle null cases
+        if (!$exhibitorInfo) {
+            return redirect()->route('exhibitor.info')->with('error', 'Exhibitor information not found.');
+        }
+        
+        if (!$application) {
+            return redirect()->route('exhibitor.info')->with('error', 'Application not found.');
+        }
 
         $slug = "Exhibitor Directory Information - Preview";
         return view('exhibitor_info.preview', compact('exhibitorInfo', 'slug', 'application'));
@@ -247,6 +264,11 @@ class ExhibitorInfoController extends Controller
     {
         $applicationId = $this->getApplicationId();
         $exhibitorInfo = ExhibitorInfo::where('application_id', $applicationId)->first();
+        
+        if (!$exhibitorInfo) {
+            return redirect()->route('exhibitor.info')->with('error', 'Exhibitor information not found.');
+        }
+        
         $exhibitorInfo->submission_status = 1;
         $exhibitorInfo->save();
 
@@ -271,8 +293,8 @@ class ExhibitorInfoController extends Controller
         $data = [
             'exhibitorInfo' => $exhibitorInfo,
             'application' => $application ?: (object)[],
-            'fasciaName' => $exhibitorInfo->fascia_name ?? '',
-            'contactPerson' => $exhibitorInfo->contact_person ?? '',
+            'fasciaName' => $exhibitorInfo->fascia_name ?: 'Not Provided',
+            'contactPerson' => $exhibitorInfo->contact_person ?: 'Not Provided',
             'salutation' => '',
             'firstName' => '',
             'lastName' => '',
@@ -443,9 +465,9 @@ class ExhibitorInfoController extends Controller
 
 
         $totalApplications = Application::where('submission_status', 'approved')
-            ->whereHas('invoices.payments', function ($query) {
-                $query->where('status', 'successful');
-            })
+            // ->whereHas('invoices.payments', function ($query) {
+            //     $query->where('status', 'successful');
+            // })
             ->count();
 
         // Get exhibitor info with application details

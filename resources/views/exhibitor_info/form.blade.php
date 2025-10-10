@@ -19,7 +19,7 @@
 
         @media (max-width: 767.98px) {
             .custom-height {
-                height: 2650px;
+                height: 2680px;
             }
         }
 
@@ -28,14 +28,14 @@
         */
         @media (max-width: 350px) {
             .custom-height {
-                height: 2850px;
+                height: 2880px;
             }
         }
 
 
         @media (min-width: 768px) {
             .custom-height {
-                height: 1900px;
+                height: 1950px;
             }
         }
 
@@ -123,7 +123,7 @@
                                 <div class="row mt-5">
                                     <div class="col-sm-12">
                                         <div class="input-group input-group-dynamic is-filled">
-                                            <label class="">Select Category
+                                            <label class="form-label">Select Category
                                                 <span class="red-label">*</span>
                                             </label>
                                             <select class="form-control" name="category" required>
