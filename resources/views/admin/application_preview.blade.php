@@ -71,13 +71,13 @@
                     </thead>
                     <tbody>
                     <tr>
-                        <td><input type="text" name="company_name" value="{{ $application->company_name }}"
+                        <td><input type="text" name="company_name" value="{{ $application->company_name ?: 'Not Provided' }}"
                                    class="form-control" readonly></td>
-                        <td><input type="url" name="website" value="{{ $application->website }}" class="form-control"
+                        <td><input type="url" name="website" value="{{ $application->website ?: 'Not Provided' }}" class="form-control"
                                    readonly></td>
-                        <td><input type="text" name="address" value="{{ $application->address }}" class="form-control"
+                        <td><input type="text" name="address" value="{{ $application->address ?: 'Not Provided' }}" class="form-control"
                                    readonly></td>
-                        <td><input type="text" name="postal_code" value="{{ $application->postal_code }}"
+                        <td><input type="text" name="postal_code" value="{{ $application->postal_code ?: 'Not Provided' }}"
                                    class="form-control" readonly></td>
                     </tr>
                     </tbody>
@@ -129,7 +129,7 @@
                             </select>
                         </td>
                         <td style="width: 35%;"><input type="text" name="sub_sector"
-                                                       value="{{ $application->subSector }}" class="form-control"
+                                                       value="{{ $application->subSector ?: 'Not Provided' }}" class="form-control"
                                                        readonly></td>
 
                     </tr>
@@ -153,11 +153,11 @@
                         </thead>
                         <tbody>
                         <tr>
-                            <td><input type="text" name="stall_category" value="{{ $application->stall_category }}"
+                            <td><input type="text" name="stall_category" value="{{ $application->stall_category ?: 'Not Provided' }}"
                                        class="form-control" readonly></td>
 {{--                            <td><input type="text" name="interested_sqm" value="{{ $application->interested_sqm }}"--}}
 {{--                                       class="form-control" readonly></td>--}}
-                            <td><input type="text" name="allocated_sqm" value="{{ $application->allocated_sqm }}"
+                            <td><input type="text" name="allocated_sqm" value="{{ $application->allocated_sqm ?: 'Not Provided' }}"
                                        class="form-control" readonly></td>
 {{--                            <td><input type="text" name="semi_member"--}}
 {{--                                       value="{{ $application->semi_member == 1 ? 'Yes' : 'No' }}" class="form-control"--}}
@@ -185,13 +185,13 @@
                     <tbody>
                     <tr>
                         <td><input type="text" name="event_contact_name"
-                                   value="{{ $eventContact->first_name }} {{ $eventContact->last_name }}"
+                                   value="{{ trim(($eventContact->first_name ?? '') . ' ' . ($eventContact->last_name ?? '')) ?: 'Not Provided' }}"
                                    class="form-control" readonly></td>
-                        <td><input type="text" name="event_contact_design" value="{{ $eventContact->job_title }}"
+                        <td><input type="text" name="event_contact_design" value="{{ ($eventContact->job_title ?? '') ?: 'Not Provided' }}"
                                    class="form-control" readonly></td>
-                        <td><input type="email" name="event_contact_email" value="{{ $eventContact->email }}"
+                        <td><input type="email" name="event_contact_email" value="{{ ($eventContact->email ?? '') ?: 'Not Provided' }}"
                                    class="form-control" readonly></td>
-                        <td><input type="text" name="event_contact_mobile" value="{{ $eventContact->contact_number }}"
+                        <td><input type="text" name="event_contact_mobile" value="{{ ($eventContact->contact_number ?? '') ?: 'Not Provided' }}"
                                    class="form-control" readonly></td>
                     </tr>
                     </tbody>
@@ -214,16 +214,16 @@
                         <tbody>
                         <tr>
                             <td><input type="text" name="secondary_contact_name"
-                                       value="{{ $application->secondaryEventContact->first_name }} {{ $application->secondaryEventContact->last_name }}"
+                                       value="{{ isset($application->secondaryEventContact) ? (trim(($application->secondaryEventContact->first_name ?? '') . ' ' . ($application->secondaryEventContact->last_name ?? '')) ?: 'Not Provided') : 'Not Provided' }}"
                                        class="form-control" readonly></td>
                             <td><input type="text" name="secondary_contact_design"
-                                       value="{{ $application->secondaryEventContact->job_title }}" class="form-control"
+                                       value="{{ isset($application->secondaryEventContact) ? (($application->secondaryEventContact->job_title ?? '') ?: 'Not Provided') : 'Not Provided' }}" class="form-control"
                                        readonly></td>
                             <td><input type="email" name="secondary_contact_email"
-                                       value="{{ $application->secondaryEventContact->email }}" class="form-control"
+                                       value="{{ isset($application->secondaryEventContact) ? (($application->secondaryEventContact->email ?? '') ?: 'Not Provided') : 'Not Provided' }}" class="form-control"
                                        readonly></td>
                             <td><input type="text" name="secondary_contact_mobile"
-                                       value="{{ $application->secondaryEventContact->contact_number }}"
+                                       value="{{ isset($application->secondaryEventContact) ? (($application->secondaryEventContact->contact_number ?? '') ?: 'Not Provided') : 'Not Provided' }}"
                                        class="form-control" readonly></td>
                         </tr>
                         </tbody>
@@ -247,15 +247,15 @@
                     <tr>
                         {{-- <td><input type="text" name="billing_country" value="{{ $application->country->name }}" class="form-control" readonly></td> --}}
                         <td><input type="text" name="gst_compliance"
-                                   value="{{ $application->gst_compliance == 1 ? 'Yes' : 'No' }}" class="form-control"
+                                   value="{{ is_null($application->gst_compliance) ? 'Not Provided' : ($application->gst_compliance == 1 ? 'Yes' : 'No') }}" class="form-control"
                                    readonly></td>
-                        @if($application->gst_compliance == 1)
-                            <td><input type="text" name="gst_no" value="{{ $application->gst_no }}" class="form-control"
+                        @if($application->gst_compliance === 1)
+                            <td><input type="text" name="gst_no" value="{{ $application->gst_no ?: 'Not Provided' }}" class="form-control"
                                        readonly></td>
-                            <td><input type="text" name="pan_no" value="{{ $application->pan_no }}" class="form-control"
+                            <td><input type="text" name="pan_no" value="{{ $application->pan_no ?: 'Not Provided' }}" class="form-control"
                                        readonly></td>
                         @else
-                            <td colspan="2" class="text-center">N/A</td>
+                            <td colspan="2" class="text-center">{{ is_null($application->gst_compliance) ? 'Not Provided' : 'N/A' }}</td>
                         @endif
                     </tr>
                     </tbody>
@@ -277,15 +277,15 @@
                     </thead>
                     <tbody>
                     <tr>
-                        <td><input type="text" name="billing_company" value="{{ $billingDetails->billing_company }}"
+                        <td><input type="text" name="billing_company" value="{{ ($billingDetails->billing_company ?? '') ?: 'Not Provided' }}"
                                    class="form-control" readonly></td>
-                        <td><input type="text" name="contact_name" value="{{ $billingDetails->contact_name }}"
+                        <td><input type="text" name="contact_name" value="{{ ($billingDetails->contact_name ?? '') ?: 'Not Provided' }}"
                                    class="form-control" readonly></td>
-                        <td><input type="email" name="billing_email" value="{{ $billingDetails->email }}"
+                        <td><input type="email" name="billing_email" value="{{ ($billingDetails->email ?? '') ?: 'Not Provided' }}"
                                    class="form-control" readonly></td>
-                        <td><input type="text" name="billing_phone" value="{{ $billingDetails->phone }}"
+                        <td><input type="text" name="billing_phone" value="{{ ($billingDetails->phone ?? '') ?: 'Not Provided' }}"
                                    class="form-control" readonly></td>
-                        <td><input type="text" name="billing_address" value="{{ $billingDetails->address }}"
+                        <td><input type="text" name="billing_address" value="{{ ($billingDetails->address ?? '') ?: 'Not Provided' }}"
                                    class="form-control" readonly></td>
                     </tr>
                     </tbody>
@@ -304,14 +304,18 @@
                     </thead>
                     <tbody>
                     <tr>
-                        <td><input type="text" name="billing_address" value="{{ $billingDetails->address }}"
+                        <td><input type="text" name="billing_address" value="{{ ($billingDetails->address ?? '') ?: 'Not Provided' }}"
                                    class="form-control" readonly></td>
-                        <td><input type="text" name="billing_city" value="{{ $billingDetails->city_id }}"
+                        <td><input type="text" name="billing_city" value="{{ ($billingDetails->city_id ?? '') ?: 'Not Provided' }}"
                                    class="form-control" readonly></td>
                         <td>
                             <select name="billing_state" class="form-control" readonly disabled>
+                                @if(empty($billingDetails->state_id))
+                                    <option selected>Not Provided</option>
+                                @endif
                                 @foreach($states as $state)
-                                    <option value="{{ $state->id }}" {{ $billingDetails->state_id == $state->id ? 'selected' : '' }}>
+                                    <option value="{{ $state->id  }}" {{ ($billingDetails->state_id ?? null) == $state->id ? 'selected' : '' }}>
+                                    <option value="{{ $state->id }}" {{ ($billingDetails->state_id ?? null) == $state->id ? 'selected' : 'hidden' }}>
                                         {{ $state->name }}
                                     </option>
                                 @endforeach
@@ -319,9 +323,13 @@
                         </td>
                         <td>
                             <select name="billing_country" class="form-control" readonly disabled>
+                                @if(empty($billingDetails->country_id))
+                                    <option selected>Not Provided</option>
+                                @endif
                                 @foreach($countries as $country)
-                                    <option value="{{ $country->id }}" {{ $billingDetails->country_id == $country->id ? 'selected' : '' }}>
-                                        {{ $country->name }}
+                                    <option value="{{ $country->id }}" {{ ($billingDetails->country_id ?? null) == $country->id ? 'selected' : '' }}>
+                                        <option value="{{ $country->id }}" {{ ($billingDetails->country_id ?? null) == $country->id ? 'selected' : 'hidden' }}>
+                                            {{ $country->name }}
                                     </option>
                                 @endforeach
                             </select>
@@ -342,7 +350,7 @@
         @endif
     </div>
 
-    <script>
+    <script>    
         const editButton = document.getElementById('editButton');
         const saveButton = document.getElementById('saveButton');
         const cancelButton = document.getElementById('cancelButton');

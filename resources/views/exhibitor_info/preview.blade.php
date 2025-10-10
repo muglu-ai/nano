@@ -102,6 +102,9 @@
         $applicationStallNumber = (isset($application) && is_object($application)) ? ($application->stallNumber ?? '') : '';
         $applicationFullAddress = $exhibitorInfo->address;
         $applicationCategory = (isset($application) && is_object($application)) ? ($application->category ?? '') : '';
+        if (empty($applicationCategory)) {
+            $applicationCategory = $exhibitorInfo->category ?? '';
+        }
         $applicationAssocMem = (isset($application) && is_object($application)) ? ($application->assoc_mem ?? '') : '';
         //dd($application);
     @endphp

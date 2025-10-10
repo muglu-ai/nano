@@ -39,12 +39,12 @@
                                     // Fetch the application with conditions
                                     $dashboard = App\Models\Application::hasApplication($userId, $eventId)
                                         ->where('submission_status', 'approved')
-                                        ->where(function ($query) {
-                                            $query->where('allocated_sqm', '>', 0)
-                                                  ->orWhere('allocated_sqm', '=', 'Startup Booth')
-                                                  ->orWhere('allocated_sqm', '=', 'Booth / POD')
-                                                  ;
-                                        })
+                                        // ->where(function ($query) {
+                                        //     $query->where('allocated_sqm', '>', 0)
+                                        //           ->orWhere('allocated_sqm', '=', 'Startup Booth')
+                                        //           ->orWhere('allocated_sqm', '=', 'Booth / POD')
+                                        //           ;
+                                        // })
                                         ->first();
                                         // ->whereHas('invoice', function($query) {
                                         //    $query->where('type', 'Stall Booking')
@@ -54,6 +54,7 @@
                                         //          }); 
                                         // })->first();
 
+                                        //dd($dashboard);
                                     // Check if any application exists
                                     $applicationExists = App\Models\Application::hasApplication($userId, $eventId)->exists();
 

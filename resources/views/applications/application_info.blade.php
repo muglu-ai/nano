@@ -40,63 +40,63 @@
                         <div class="row">
                             <div class="col-md-4">
                                 <label for="billing_country" class="form-label fw-bold text-nowrap">Billing Country:</label>
-                                <p class="form-control-plaintext mb-0">{{ $application->country->name }}</p>
+                                <p class="form-control-plaintext mb-0">{{ $application->country->name ?? 'Not Provided' }}</p>
                             </div>
                             <div class="col-md-4">
                                 <label for="gst_compliance" class="form-label fw-bold text-nowrap">GST Compliance:</label>
-                                <p class="form-control-plaintext mb-0">{{ $application->gst_compliance == 1 ? 'Yes' : 'Not Applicable' }}</p>
+                                <p class="form-control-plaintext mb-0">{{ is_null($application->gst_compliance) ? 'Not Provided' : ($application->gst_compliance == 1 ? 'Yes' : 'Not Applicable') }}</p>
                             </div>
                             @if($application->gst_compliance == 1)
                                 <div class="col-md-4">
                                     <label for="gst_number" class="form-label fw-bold text-nowrap">GST Number:</label>
-                                    <p class="form-control-plaintext mb-0">{{ $application->gst_no }}</p>
+                                    <p class="form-control-plaintext mb-0">{{ $application->gst_no ?: 'Not Provided' }}</p>
                                 </div>
                             @endif
                         </div>
                         <div class="row mt-3">
                             <div class="col-md-4">
                                 <label for="pan_no" class="form-label fw-bold text-nowrap">PAN Number:</label>
-                                <p class="form-control-plaintext mb-0">{{ $application->pan_no }}</p>
+                                <p class="form-control-plaintext mb-0">{{ $application->pan_no ?: 'Not Provided' }}</p>
                             </div>
 {{--                            @if(!empty($application->tan_no))--}}
                                 <div class="col-md-4">
                                     <label for="tan_no" class="form-label fw-bold text-nowrap">TAN Number:</label>
-                                    <p class="form-control-plaintext mb-0">{{ $application->tan_no ?? 'Not Provided' }}</p>
+                                    <p class="form-control-plaintext mb-0">{{ $application->tan_no ?: 'Not Provided' }}</p>
                                 </div>
 {{--                            @endif--}}
                         </div>
                         <div class="row mt-3">
                             <div class="col-md-4">
                                 <label for="company_name" class="form-label fw-bold text-nowrap">Company Name:</label>
-                                <p class="form-control-plaintext mb-0">{{ $application->company_name }}</p>
+                                <p class="form-control-plaintext mb-0">{{ $application->company_name ?: 'Not Provided' }}</p>
                             </div>
                             <div class="col-md-4">
                                 <label for="company_address" class="form-label fw-bold text-nowrap">Company Address:</label>
-                                <p class="form-control-plaintext mb-0">{{ $application->address }}</p>
+                                <p class="form-control-plaintext mb-0">{{ $application->address ?: 'Not Provided' }}</p>
                             </div>
                             <div class="col-md-4">
                                 <label for="postal_code" class="form-label fw-bold text-nowrap">Postal Code:</label>
-                                <p class="form-control-plaintext mb-0">{{ $application->postal_code }}</p>
+                                <p class="form-control-plaintext mb-0">{{ $application->postal_code ?: 'Not Provided' }}</p>
                             </div>
                         </div>
                         <div class="row mt-3">
                             <div class="col-md-4">
                                 <label for="city" class="form-label fw-bold text-nowrap">City:</label>
-                                <p class="form-control-plaintext mb-0">{{ $application->city_id }}</p>
+                                <p class="form-control-plaintext mb-0">{{ $application->city_id ?: 'Not Provided' }}</p>
                             </div>
                             <div class="col-md-4">
                                 <label for="state" class="form-label fw-bold text-nowrap">State:</label>
-                                <p class="form-control-plaintext mb-0">{{ $application->state->name }}</p>
+                                <p class="form-control-plaintext mb-0">{{ $application->state->name ?? 'Not Provided' }}</p>
                             </div>
                             <div class="col-md-4">
                                 <label for="company_contact" class="form-label fw-bold text-nowrap">Company Contact/Landline No:</label>
-                                <p class="form-control-plaintext mb-0">{{ $application->landline }}</p>
+                                <p class="form-control-plaintext mb-0">{{ $application->landline ?: 'Not Provided' }}</p>
                             </div>
                         </div>
                         <div class="row mt-3">
                             <div class="col-md-4">
                                 <label for="company_email" class="form-label fw-bold text-nowrap">Company Email:</label>
-                                <p class="form-control-plaintext mb-0">{{ $application->company_email }}</p>
+                                <p class="form-control-plaintext mb-0">{{ $application->company_email ?: 'Not Provided' }}</p>
                             </div>
                             <div class="col-md-4">
                                 <label for="website" class="form-label fw-bold text-nowrap">Website:</label>
@@ -106,7 +106,11 @@
                                         $website = 'https://' . $website;
                                     }
                                 @endphp
-                                <p class="form-control-plaintext mb-0"><a href="{{ $website }}" target="_blank" style="color: blue;">{{ $application->website }}</a></p>
+                                @if($application->website)
+                                    <p class="form-control-plaintext mb-0"><a href="{{ $website }}" target="_blank" style="color: blue;">{{ $application->website }}</a></p>
+                                @else
+                                    <p class="form-control-plaintext mb-0">Not Provided</p>
+                                @endif
                             </div>
                         </div>
 
@@ -114,17 +118,24 @@
                         <div class="row mt-3">
                             <div class="col-md-4">
                                 <label for="main_product_category" class="form-label fw-bold text-nowrap">Main Product Category:</label>
+                                @php $found = false; @endphp
                                 @foreach($productCategories as $product)
                                     @if(isset($application) && $application->main_product_category == $product->id)
                                         <p class="form-control-plaintext mb-0">{{ $product->name }}</p>
+                                        @php $found = true; @endphp
                                     @endif
                                 @endforeach
+                                @if(!$found)
+                                    <p class="form-control-plaintext mb-0">Not Provided</p>
+                                @endif
                             </div>
                             <div class="col-md-4">
                                 <label for="main_product_category" class="form-label fw-bold text-nowrap">Type of Buisness:</label>
                                 <p class="form-control-plaintext mb-0">
-                                    @if(isset($application))
+                                    @if(isset($application) && $application->type_of_business)
                                         {{ $application->type_of_business }}
+                                    @else
+                                        Not Provided
                                     @endif
                                 </p>
                             </div>
@@ -157,29 +168,29 @@
                             @endphp
                                 <div class="col-md-4">
                                     <label class="form-label fw-bold text-nowrap">Stall Size:</label>
-                                    <p class="form-control-plaintext mb-0">{{ $stallSize }}</p>
+                                    <p class="form-control-plaintext mb-0">{{ $stallSize ?: 'Not Provided' }}</p>
                                 </div>
                             {{-- @endif --}}
                             <div class="col-md-4">
                                 <label class="form-label fw-bold text-nowrap">Stall Type:</label>
-                                <p class="form-control-plaintext mb-0">{{ $application->stall_category ?? '-' }}</p>
+                                <p class="form-control-plaintext mb-0">{{ $application->stall_category ?: 'Not Provided' }}</p>
                             </div>
 
                             @if($hide == false)
                             <div class="col-md-4">
-                                <label class="form-label fw-bold text-nowrap">Semi Member:</label>
+                                <label class="form-label fw-bold text-nowrap">Member:</label>
                                 <p class="form-control-plaintext mb-0">
-                                    @if(isset($application) && $application->semi_member == 1)
-                                        Yes
+                                    @if(isset($application) && !is_null($application->semi_member))
+                                        {{ $application->semi_member == 1 ? 'Yes' : 'No' }}
                                     @else
-                                        No
+                                        Not Provided
                                     @endif
                                 </p>
                             </div>
                             <div class="col-md-4">
                                 <label class="form-label fw-bold text-nowrap">Preffered Location:</label>
                                 <p class="form-control-plaintext mb-0">
-                                    {{ $application->pref_location ?? '-' }}
+                                    {{ $application->pref_location ?: 'Not Provided' }}
                                 </p>
                             </div>
                                 @endif
@@ -197,15 +208,15 @@
                         <div class="row mt-3">
                             <div class="col-md-4">
                                 <label for="contact_title" class="form-label fw-bold text-nowrap">Name & Designation:</label>
-                                <p class="form-control-plaintext mb-0">{{ $eventContact->salutation }} {{ $eventContact->first_name }} {{ $eventContact->last_name }}, {{ $eventContact->job_title }}</p>
+                                <p class="form-control-plaintext mb-0">{{ $eventContact ? trim(($eventContact->salutation ?? '') . ' ' . ($eventContact->first_name ?? '') . ' ' . ($eventContact->last_name ?? '') . ', ' . ($eventContact->job_title ?? '')) : 'Not Provided' }}</p>
                             </div>
                             <div class="col-md-4">
                                 <label for="contact_email" class="form-label fw-bold text-nowrap">Contact Email:</label>
-                                <p class="form-control-plaintext mb-0">{{ $eventContact->email }}</p>
+                                <p class="form-control-plaintext mb-0">{{ $eventContact ? ($eventContact->email ?: 'Not Provided') : 'Not Provided' }}</p>
                             </div>
                             <div class="col-md-4">
                                 <label for="contact_number" class="form-label fw-bold text-nowrap">Mobile Number:</label>
-                                <p class="form-control-plaintext mb-0">{{ $eventContact->contact_number }}</p>
+                                <p class="form-control-plaintext mb-0">{{ $eventContact ? ($eventContact->contact_number ?: 'Not Provided') : 'Not Provided' }}</p>
                             </div>
                         </div>
                     </div>
@@ -221,39 +232,39 @@
                         <div class="row mt-3">
                             <div class="col-md-4">
                                 <label for="billing_company" class="form-label fw-bold text-nowrap">Billing Company:</label>
-                                <p class="form-control-plaintext mb-0">{{ $billingDetails->billing_company }}</p>
+                                <p class="form-control-plaintext mb-0">{{ $billingDetails ? ($billingDetails->billing_company ?: 'Not Provided') : 'Not Provided' }}</p>
                             </div>
                             <div class="col-md-4">
                                 <label for="billing_contact_name" class="form-label fw-bold text-nowrap">Contact Name:</label>
-                                <p class="form-control-plaintext mb-0">{{ $billingDetails->contact_name }}</p>
+                                <p class="form-control-plaintext mb-0">{{ $billingDetails ? ($billingDetails->contact_name ?: 'Not Provided') : 'Not Provided' }}</p>
                             </div>
                             <div class="col-md-4">
                                 <label for="billing_email" class="form-label fw-bold text-nowrap">Email:</label>
-                                <p class="form-control-plaintext mb-0">{{ $billingDetails->email }}</p>
+                                <p class="form-control-plaintext mb-0">{{ $billingDetails ? ($billingDetails->email ?: 'Not Provided') : 'Not Provided' }}</p>
                             </div>
                         </div>
                         <div class="row mt-3">
                             <div class="col-md-4">
                                 <label for="billing_phone" class="form-label fw-bold text-nowrap">Phone Number:</label>
-                                <p class="form-control-plaintext mb-0">{{ $billingDetails->phone }}</p>
+                                <p class="form-control-plaintext mb-0">{{ $billingDetails ? ($billingDetails->phone ?: 'Not Provided') : 'Not Provided' }}</p>
                             </div>
                             <div class="col-md-4">
                                 <label for="billing_address" class="form-label fw-bold text-nowrap">Billing Address:</label>
-                                <p class="form-control-plaintext mb-0">{{ $billingDetails->address }}</p>
+                                <p class="form-control-plaintext mb-0">{{ $billingDetails ? ($billingDetails->address ?: 'Not Provided') : 'Not Provided' }}</p>
                             </div>
                             <div class="col-md-4">
                                 <label for="billing_city" class="form-label fw-bold text-nowrap">Billing City:</label>
-                                <p class="form-control-plaintext mb-0">{{ $billingDetails->city_id }}</p>
+                                <p class="form-control-plaintext mb-0">{{ $billingDetails ? ($billingDetails->city_id ?: 'Not Provided') : 'Not Provided' }}</p>
                             </div>
                         </div>
                         <div class="row mt-3">
                             <div class="col-md-4">
                                 <label for="billing_postal_code" class="form-label fw-bold text-nowrap">Billing Postal Code:</label>
-                                <p class="form-control-plaintext mb-0">{{ $billingDetails->postal_code }}</p>
+                                <p class="form-control-plaintext mb-0">{{ $billingDetails ? ($billingDetails->postal_code ?: 'Not Provided') : 'Not Provided' }}</p>
                             </div>
                             <div class="col-md-4">
                                 <label for="billing_state" class="form-label fw-bold text-nowrap">State:</label>
-                                <p class="form-control-plaintext mb-0">{{ $billingDetails->state->name }}</p>
+                                <p class="form-control-plaintext mb-0">{{ $billingDetails ? ($billingDetails->state->name ?? 'Not Provided') : 'Not Provided' }}</p>
                             </div>
                         </div>
                     </div>

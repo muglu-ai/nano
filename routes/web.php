@@ -332,6 +332,8 @@ Route::get('preview', [ApplicationController::class, 'preview'])->name('applicat
 Route::post('final', [ApplicationController::class, 'final'])->name('application.final');
 // Route::match(['post', 'get'], '/proforma/{application_id}', [ApplicationController::class, 'invoice'])->name('invoice-details')->middleware(CheckUser::class); //Route::view('/users/list', 'admin.user')->name('users.list')->middleware(Auth::class);
 Route::get('application-info', [ApplicationController::class, 'applicationInfo'])->name('application.info')->middleware(CheckUser::class);
+Route::get('application/create', [ApplicationController::class, 'create'])->name('application.create')->middleware(Auth::class);
+Route::post('application/store', [ApplicationController::class, 'store'])->name('application.store')->middleware(Auth::class);
 Route::get('/{event}/onboarding', [ApplicationController::class, 'showForm2'])->name('new_form')->middleware(CheckUser::class);
 Route::get('apply_new', [ApplicationController::class, 'apply_new'])->name('apply_new')->middleware(CheckUser::class);
 Route::post('/get-sqm-options', [ApplicationController::class, 'getSQMOptions']);
