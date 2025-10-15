@@ -11,7 +11,7 @@ class EmailPreviewController extends Controller
     public function showCredentialsEmail(Request $request, $email)
     {
 
-//        dd($email);
+       dd($email);
         // Use query params or defaults for preview
         $user = User::where('email', $email)->first();
         if (!$user) {
