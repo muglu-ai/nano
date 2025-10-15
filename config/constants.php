@@ -12,7 +12,7 @@ const EVENT_DATE_START = '19-11-2025';
 const EVENT_DATE_END = '21-11-2025';
 const EVENT_VENUE = 'Bengaluru International Exhibition Centre (BIEC), Bengaluru, India';
 
-const APP_URL = 'http://127.0.0.1:8000';
+const APP_URL = 'http://bengalurutechsummit.com/portal/public';
 const SHELL_SCHEME_RATE = 13000; // per sqm
 const RAW_SPACE_RATE = 12000; // per sqm
 const IND_PROCESSING_CHARGE = 3; // 5% processing fee for National payments
