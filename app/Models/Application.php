@@ -80,7 +80,8 @@ class Application extends Model
         'companyYears',
         'salesPerson',
         'exhibitorType',
-
+        'tag',
+        'approved_by',
     ];
 
     /* Todo : Addedd the following new fields

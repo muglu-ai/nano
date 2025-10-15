@@ -36,7 +36,7 @@ class ImportData extends Controller
     {
         $connection = $this->dbConnection();
 
-        $query = "SELECT * FROM it_2025_exhibitors_dir_payment_tbl where pay_status = 'PAID' and srno =212";
+        $query = "SELECT * FROM it_2025_exhibitors_dir_payment_tbl where pay_status = 'PAID' and srno='275' limit 1";
         $result = $connection->query($query);
         $data = [];
         while ($row = $result->fetch_assoc()) {
@@ -44,11 +44,10 @@ class ImportData extends Controller
         }
         $connection->close();
 
-        //print_r($data);
-
+//        print_r($data);
         foreach ($data as $row) {
 
-            //dd($row);
+//            dd($row);
 
             /** ---------------------------
              * Step 1: Normalize & Prepare $command
@@ -68,6 +67,8 @@ class ImportData extends Controller
             $command['website'] = $this->cleanString($row['website']);
             $command['address'] = $this->cleanString($row['addr1']);
             $command['designation'] = $this->cleanString($row['cp_desig']);
+
+            //dd($command['designation']);
 
             // Ensure website starts with https
             if (!str_starts_with($command['website'], 'http')) {
@@ -154,6 +155,7 @@ class ImportData extends Controller
                 'participation_type' => 'Onsite',
                 'region' => ($command['country_id'] == 101 ? 'India' : 'International'),
                 'approved_by' => $row['approved_by'],
+                'tag' => $row['promocode'],
             ]);
             $application->save();
 
@@ -245,17 +247,17 @@ class ImportData extends Controller
                  * If booth size is 36sqm then stall manning count = 8 and ticket allocation = '{"2": 4 }'
                  * */
                 if ($command['stall_category'] === 'Startup Booth' || (int)$row['booth_size'] <= 9) {
-                    $stallManningCount = 2;
-                    $ticketAllocation = '{"2": 1 }';
+                    $stallManningCount = 0;
+                    $ticketAllocation = '{"2": 1, "11":2 }';
                 } elseif ((int)$row['booth_size'] > 9 && (int)$row['booth_size'] <= 18) {
-                    $stallManningCount = 4;
-                    $ticketAllocation = '{"2": 2 }';
+                    $stallManningCount = 0;
+                    $ticketAllocation = '{"2": 2, "11":4 }';
                 } elseif ((int)$row['booth_size'] > 18 && (int)$row['booth_size'] <= 36) {
-                    $stallManningCount = 8;
-                    $ticketAllocation = '{"2": 4 }';
+                    $stallManningCount = 0;
+                    $ticketAllocation = '{"2": 4, "11":8 }';
                 } else {
-                    $stallManningCount = 2;
-                    $ticketAllocation = '{"2": 1 }';
+                    $stallManningCount = 0;
+                    $ticketAllocation = '{"2": 1, "11":2 }';
                 }
 
 
@@ -281,6 +283,8 @@ class ImportData extends Controller
     {
         if (!$value) return $value;
         $value = str_replace(['&amp;', 'amp;'], '&', $value);
+        //if continous two & appears remove one
+        $value = preg_replace('/&{2,}/', '&', $value);
         $value = str_replace(' ', ' ', $value); // invisible space
         return trim($value);
     }

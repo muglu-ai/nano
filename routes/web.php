@@ -720,7 +720,8 @@ Route::get('register', [AuthController::class, 'showRegistrationForm'])->name('r
 Route::post('register', [AuthController::class, 'register'])->name('register');
 
 
-Route::post('/login', [AuthController::class, 'login'])->name('login.process');
+Route::post('/login', [AuthController::class, 'login'])
+    ->middleware('throttle:10,1')->name('login.process');
 
 //forget password
 
