@@ -229,8 +229,7 @@
                     <!-- Footer -->
                     <div class="foot">
                         <div style="margin-bottom:6px;">{{ config('constants.EVENT_NAME') }} {{config('constants.EVENT_YEAR')</div>
-                        <div class="small">For assistance, email <a
-                                    href="mailto:info@interlinks.in">info@interlinks.in</a></div>
+                        <div class="small">For assistance, email <a href="mailto:info@interlinks.in">info@interlinks.in</a></div>
                     </div>
                 </div>
             </td>
