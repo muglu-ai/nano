@@ -198,20 +198,24 @@
                             add team members.</p>
 
                         <div class="details" role="group" aria-label="Login credentials">
-                            <div class="row-details">
-                                <div class="row-item">
-                                    <div class="side-label">Portal URL</div>
-                                    <div class="side-value"><a href="{{ $setupProfileUrl }}" style="word-break:break-all; color:#0b69ff; text-decoration:underline;">{{ $setupProfileUrl }} </a></div>
-                                </div>
-                                <div class="row-item">
-                                    <div class="side-label">USERNAME</div>
-                                    <div class="side-value">{{ $username }}</div>
-                                </div>
-                                <div class="row-item">
-                                    <div class="side-label">PASSWORD</div>
-                                    <div class="side-value">{{ $password ?? '' }}</div>
-                                </div>
-                            </div>
+                            <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border-collapse:collapse; background:#f8fafc;">
+                                <tbody>
+                                <tr>
+                                    <td style="padding:12px 10px; font-size:12px; color:#475569; width:140px;">Portal URL</td>
+                                    <td style="padding:12px 10px; font-family:monospace; color:#0f172a; word-break:break-all;">
+                                        <a href="{{ $setupProfileUrl }}" style="color:#0b69ff; text-decoration:underline;">{{ $setupProfileUrl }}</a>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="padding:12px 10px; font-size:12px; color:#475569;">USERNAME</td>
+                                    <td style="padding:12px 10px; font-family:monospace; color:#0f172a; word-break:break-all;">{{ $username }}</td>
+                                </tr>
+                                <tr>
+                                    <td style="padding:12px 10px; font-size:12px; color:#475569;">PASSWORD</td>
+                                    <td style="padding:12px 10px; font-family:monospace; color:#0f172a; word-break:break-all;">{{ $password ?? '' }}</td>
+                                </tr>
+                                </tbody>
+                            </table>
                             <div style="text-align:center; margin-top:18px;">
                                 <a href="{{ $setupProfileUrl }}" class="cta">Portal URL</a>
                             </div>
@@ -228,7 +232,8 @@
 
                     <!-- Footer -->
                     <div class="foot">
-                        <div style="margin-bottom:6px;">{{ config('constants.EVENT_NAME') }} {{config('constants.EVENT_YEAR')</div>
+                        <div style="margin-bottom:6px;">{{ config('constants.EVENT_NAME') }} {{config('constants.EVENT_YEAR')}}
+                        </div>
                         <div class="small">For assistance, email <a href="mailto:info@interlinks.in">info@interlinks.in</a></div>
                     </div>
                 </div>
