@@ -190,7 +190,7 @@
                     <div class="content">
                         <h1>Dear {{ $name }},</h1>
 
-                        <p>Welcome to <strong>{{config('constants.EVENT_NAME')}}</strong>!</p>
+                        <p>Welcome to <strong>{{config('constants.EVENT_NAME')}} {{config('constants.EVENT_YEAR')}}</strong>!</p>
 
                         <p>We are delighted to have you onboard as an exhibitor. The Exhibitor Portal allows you to set
                             up and manage
