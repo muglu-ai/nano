@@ -58,6 +58,7 @@ use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Route;
 use Mews\Captcha\Facades\Captcha;
 use App\Http\Controllers\EnquiryController;
+use App\Http\Controllers\EmailPreviewController;
 
 Route::get('/{event}/onboarding', [ApplicationController::class, 'showForm2'])->name('event.onboarding')->middleware(CheckUser::class);
 Route::get('/{event}/onboarding', [ApplicationController::class, 'showForm2'])->name('new_form')->middleware(CheckUser::class);
@@ -826,3 +827,6 @@ Route::get('enquiries', [EnquiryController::class, 'index'])->name('enquiries.in
 // Registration Count Dashboard
 Route::get('/registration-count', [AttendeeController::class, 'registrationCount'])->name('registration.count')->middleware(Auth::class);
 Route::get('/api/registration-count-data', [AttendeeController::class, 'getRegistrationCountData'])->name('api.registration.count')->middleware(Auth::class);
+
+Route::get('/email-preview/credentials/{email}', [EmailPreviewController::class, 'showCredentialsEmail']);
+
