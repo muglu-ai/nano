@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Mail\UserCredentialsMail;
 use App\Models\ExhibitionParticipant;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Mail;
 use mysqli;
 use DB;
 use App\Models\User;
@@ -49,10 +51,15 @@ class ImportData extends Controller
         foreach ($data as $row) {
 
 //            dd($row);
+            $importSuccess = false; // Track import status for this user
 
             /** ---------------------------
              * Step 1: Normalize & Prepare $command
              * ----------------------------*/
+
+            // make and variable that say import is success or not
+            // once the variable value is changed to success then send an email to the user with their credentials
+
             $command = [];
 
             $command['contact_person'] = trim($row['cp_fname'] . ' ' . $row['cp_lname']);
@@ -274,6 +281,20 @@ class ImportData extends Controller
 
 
                 echo "Created payment for application ID: {$application->id}\n";
+                $importSuccess = true;
+                $name = $user->name;
+                $setupProfileUrl = config('app.url');
+                $username = $user->email;
+                $password = $user->simplePass;
+                // Send email with credentials
+                $email='manish.sharma@interlinks.in';
+                if ($importSuccess) {
+                    // Send email to $command['email'] with credentials
+//                    Mail::to($email)
+//                        ->bcc('test.interlinks@gmail.com')
+//                        ->queue(new UserCredentialsMail($name, $setupProfileUrl, $username, $password));
+                    // Mail::to($command['email'])->send(new UserCredentialsMail($user, $command['password_plain']));
+                }
             }
         }
 
