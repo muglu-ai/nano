@@ -3,7 +3,7 @@
 @section('content')
 <div class="container mb-4">
     <div class="row mt-lg-n12 mt-md-n12 mt-n12 justify-content-center">
-        <div class="col-xl-4 col-lg-5 col-md-7 mx-auto">
+        <div class="col-xl-4 col-lg-5 col-md-7 col-12 mx-auto">
             <div class="card mt-8">
                 <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2 mb-4">
                     <div class="bg-gradient-success shadow-success border-radius-lg py-3 pe-1 text-center py-4">
