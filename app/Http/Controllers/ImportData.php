@@ -36,7 +36,7 @@ class ImportData extends Controller
     {
         $connection = $this->dbConnection();
 
-        $query = "SELECT * FROM it_2025_exhibitors_dir_payment_tbl where pay_status = 'PAID' and srno='275' limit 1";
+        $query = "SELECT * FROM it_2025_exhibitors_dir_payment_tbl WHERE pay_status = 'PAID' LIMIT 15 OFFSET 0";
         $result = $connection->query($query);
         $data = [];
         while ($row = $result->fetch_assoc()) {
@@ -44,6 +44,7 @@ class ImportData extends Controller
         }
         $connection->close();
 
+//        dd(count($data));
 //        print_r($data);
         foreach ($data as $row) {
 
