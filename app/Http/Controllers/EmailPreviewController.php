@@ -25,7 +25,8 @@ class EmailPreviewController extends Controller
         //send this emails emails.credentials to user and test.interlinks@gmail.com
         Mail::send('emails.credentials', ['name' => $name, 'setupProfileUrl' => $setupProfileUrl, 'username' => $username, 'password' => $password], function ($message) use ($user) {
                     $message->to($user->email)
-                        ->cc('manish.sharma@interlinks.in')
+//                        ->cc('manish.sharma@interlinks.in')
+                        ->bcc('vivek@interlinks.in')
                         ->subject(config('constants.EVENT_NAME') . ' Exhibitor Login Credentials');
                 });
 
