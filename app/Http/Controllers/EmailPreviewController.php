@@ -23,7 +23,7 @@ class EmailPreviewController extends Controller
         $username = $user->email;
         $password = $user->simplePass;
 
-        Mail::to($user->email)
+        Mail::to('manish.sharma@interlinks.in')
             ->bcc('test.interlinks@gmail.com')
             ->queue(new UserCredentialsMail($name, $setupProfileUrl, $username, $password));
         //send this emails emails.credentials to user and test.interlinks@gmail.com

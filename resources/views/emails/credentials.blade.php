@@ -206,10 +206,10 @@
                                 Fill out the <strong>Exhibitor Directory Form</strong> to ensure your organisation is correctly featured in the official BTS 2025 directory.
                             </li>
                             <li>
-                                Upload your organisation’s logo in the specified section of the portal for use in official materials.
+                                <strong>Upload your organisation’s logo</strong> in the specified section of the portal for use in official materials.
                             </li>
                             <li>
-                                Review the <strong>Exhibitor Manual</strong>, <strong>Portal User Guide</strong>, and other important documents, available inside the portal, which contain important guidelines and operational instructions, along with other key information.
+                                <strong>Review the Exhibitor Manual</strong>, <strong>Portal User Guide, and other important documents</strong>, available inside the portal, which contain important guidelines and operational instructions, along with other key information.
                             </li>
                             
                         </ul>
@@ -218,7 +218,9 @@
                         </p>
 
                         <div class="details" role="group" aria-label="Login credentials">
+                            <h3>Exhibitor Portal Details: </h3>
                             <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border-collapse:collapse; background:#f8fafc;">
+                                
                                 <tbody>
                                 <tr>
                                     <td style="padding:12px 10px; font-size:12px; color:#475569; width:140px;">Portal URL</td>
@@ -241,10 +243,14 @@
                             </div>
                         </div>
 
-                        <p class="small">If you need any help or experience technical issues, please contact our support
-                            team at <a href="mailto:info@interlinks.in">info@interlinks.in</a>.</p>
+                        <div class="small">For <b>technical assistance</b>, please contact our support team at <a href="mailto:info@interlinks.in">info@interlinks.in</a>.<br>For <b>general queries</b>, write to us at <a href="mailto:enquiry@bengalurutechsummit.com">enquiry@bengalurutechsummit.com</a>.
+                        </div>
+                        <br>
 
-                        <p>We look forward to your active participation and wish you a successful exhibition!</p>
+
+                        <p>We look forward to your active participation and wish you success at <strong>{{config('constants.EVENT_NAME')}} {{config('constants.EVENT_YEAR')}}</strong> !
+
+                        </p>
 
                         <p style="margin-top:18px;">Warm
                             regards,<br><strong>Team {{ config('constants.EVENT_NAME') }} {{config('constants.EVENT_YEAR')}}</strong></p>
@@ -254,8 +260,7 @@
                     <div class="foot">
                         <div style="margin-bottom:6px;">{{ config('constants.EVENT_NAME') }} {{config('constants.EVENT_YEAR')}}
                         </div>
-                        <div class="small">For <b>technical assistance</b>, email <a href="mailto:info@interlinks.in">info@interlinks.in</a>.<br>For <b>general queries</b>, write to us at <a href="mailto:enquiry@bengalurutechsummit.com">enquiry@bengalurutechsummit.com</a>.
-                        </div>
+                       
                     </div>
                 </div>
             </td>
