@@ -30,12 +30,11 @@
             async function fetchUsers(page = 1) {
                 //console.log(`Fetching users for page: ${page}`);
                 // make this as route based as with name users.list this should be used as php  route('users.list')
-                const url ={{ route('users.list') }};
-                console.log(url);
-
+                const url = "{{ route('users.list') }}";
+                
                 try {
                     const response = await fetch(`${url}?page=${page}&sort=${sortField}&direction=${sortDirection}&per_page=${perPage}`);
-                    console.log(response);
+                    
                     const data = await response.json();
                     renderTable(data.data);
                     renderPagination(data);
