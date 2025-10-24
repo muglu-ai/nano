@@ -189,7 +189,7 @@ class ExhibitorInfoController extends Controller
             'instagram' => 'nullable|url',
             'facebook' => 'nullable|url',
             'youtube' => 'nullable|url',
-            'category' => 'required|string|max:255',
+            'category' => 'nullable|string|max:255',
 
         ]);
 
