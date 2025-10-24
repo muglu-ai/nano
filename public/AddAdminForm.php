@@ -198,10 +198,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </html>";
         
         // Send the email
-        Mail::html($emailHtml, function ($message) use ($email, $name, $eventName) {
-            $message->to($email, $name)
-                   ->subject("🔐 {$eventName} - Admin Panel Credentials");
-        });
+        // Use PHP's mail() as a fallback if Laravel's Mail::html is not working
+        try {
+            // Try Laravel's Mail::html first (setBody is not for string!)
+            \Illuminate\Support\Facades\Mail::html(
+                $emailHtml,
+                function ($message) use ($email, $name, $eventName) {
+                    $message->to($email, $name)
+                            ->subject("🔐 {$eventName} - Admin Panel Credentials");
+                }
+            );
+        } catch (\Exception $e) {
+            // Fallback to PHP mail()
+            $headers  = "MIME-Version: 1.0" . "\r\n";
+            $headers .= "Content-type:text/html;charset=UTF-8" . "\r\n";
+            $headers .= "From: no-reply@{$_SERVER['HTTP_HOST']}" . "\r\n";
+            @mail($email, "🔐 {$eventName} - Admin Panel Credentials", $emailHtml, $headers);
+        }
         
         $success = "Admin user created successfully! Credentials have been sent to {$email}";
         
