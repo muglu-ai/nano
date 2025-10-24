@@ -141,7 +141,7 @@ class ImportData extends Controller
                 'website' => $command['website'],
                 'address' => $command['address'],
                 'city_id' => $row['city'],
-                'companyYears' => $row['company_years'] ?? null,
+                'companyYears' => intval($row['company_years']) ?? null,
                 'certificate' => $row['ci_certf'],
                 'sector_id' => $command['sector_id'],
                 'subSector' => $row['subsector'],
