@@ -263,7 +263,13 @@ class ImportData extends Controller
                 } elseif ((int)$row['booth_size'] > 18 && (int)$row['booth_size'] <= 36) {
                     $stallManningCount = 0;
                     $ticketAllocation = '{"2": 4, "11":8 }';
-                } else {
+                } else if($command['stall_category'] === 'Startup Booth' || (int)$row['booth_size'] <= 9 && (int)$row['promocode'] == 'TIESB' || (int)$row['promocode'] == 'TIESNB') {
+                    $stallManningCount = 0;
+                    $ticketAllocation = '{"2": 1, "11":1 }';
+                
+                }
+                
+                else {
                     $stallManningCount = 0;
                     $ticketAllocation = '{"2": 1, "11":2 }';
                 }
