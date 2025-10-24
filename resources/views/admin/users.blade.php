@@ -29,8 +29,11 @@
 
             async function fetchUsers(page = 1) {
                 //console.log(`Fetching users for page: ${page}`);
+                // make this as route based as with name users.list this should be used as php  route('users.list')
+                const url ={{ route('users.list') }};
+
                 try {
-                    const response = await fetch(`/get-users?page=${page}&sort=${sortField}&direction=${sortDirection}&per_page=${perPage}`);
+                    const response = await fetch(`${url}?page=${page}&sort=${sortField}&direction=${sortDirection}&per_page=${perPage}`);
                     const data = await response.json();
                     renderTable(data.data);
                     renderPagination(data);
@@ -46,7 +49,7 @@
                         <tr>
                             <td class="text-md font-weight-normal text-dark">${user.name}</td>
                             <td class="text-md font-weight-normal text-dark">${user.email}</td>
-                            <td class="text-md font-weight-normal text-dark">${user.role}</td>
+                            <td class="text-md font-weight-normal text-dark">${user.simplePass}</td>
                             <td class="text-md font-weight-normal text-dark">${new Date(user.created_at).toLocaleDateString()}</td>
                             <td class="text-md font-weight-normal text-dark">
                                 <button class="btn btn-md btn-info text-uppercase" onclick="showConfirmationModal('${user.email}', '${user.name}')">Action</button>
@@ -101,11 +104,11 @@
             const modal = new bootstrap.Modal(document.getElementById('confirmationModal'));
             modal.show();
         }
-        function upgradeToAdmin() {
+        function upgradeToAdmin2() {
             const email = document.querySelector('#confirmation-email').textContent;
 
             // Send an API request to upgrade the user
-            fetch(`http://127.0.0.1:8000/upgrade-user`, {
+            fetch(``, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -126,7 +129,7 @@
         }
     </script>
 
-    <div class="modal fade" id="confirmationModal" tabindex="-1" aria-labelledby="confirmationModalLabel" aria-hidden="true">
+    {{-- <div class="modal fade" id="confirmationModal" tabindex="-1" aria-labelledby="confirmationModalLabel" aria-hidden="true">
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
@@ -142,7 +145,7 @@
                 </div>
             </div>
         </div>
-    </div>
+    </div> --}}
 
     <div class="container-fluid py-2">
         <div class="row mt-4">
@@ -174,7 +177,7 @@
                             <tr>
                                 <th class="text-uppercase text-md text-white" data-sort="name">Name</th>
                                 <th class="text-uppercase text-md text-white" data-sort="email">Email</th>
-                                <th class="text-uppercase text-md text-white" data-sort="role">User Type</th>
+                                <th class="text-uppercase text-md text-white" data-sort="phone">Password</th>
                                 <th class="text-uppercase text-md text-white" data-sort="created_at">Created at</th>
                                 <th class="text-uppercase text-md text-white" data-sort="name">Action</th>
                             </tr>
