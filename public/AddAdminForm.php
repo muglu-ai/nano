@@ -3,7 +3,6 @@ require_once '../vendor/autoload.php';
 
 use Illuminate\Support\Facades\Hash;
 use App\Models\User;
-use App\Mail\UserCredentialsMail;
 use Illuminate\Support\Facades\Mail;
 
 // Bootstrap Laravel
@@ -46,8 +45,163 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         ]);
         
         // Send credentials email
-        $setupProfileUrl = config('app.url') . '/portal/public';
-        Mail::to($email)->send(new UserCredentialsMail($name, $setupProfileUrl, $email, $password));
+        $setupProfileUrl = config('app.url') . '';
+        $eventName = config('constants.EVENT_NAME') ?? 'BTS 2025';
+        
+        $emailHtml = "
+        <!DOCTYPE html>
+        <html lang='en'>
+        <head>
+            <meta charset='UTF-8'>
+            <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+            <title>Admin Panel Credentials</title>
+            <style>
+                body {
+                    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+                    line-height: 1.6;
+                    color: #333;
+                    background-color: #f4f6f8;
+                    margin: 0;
+                    padding: 20px;
+                }
+                .container {
+                    max-width: 600px;
+                    margin: 0 auto;
+                    background: white;
+                    border-radius: 10px;
+                    overflow: hidden;
+                    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+                }
+                .header {
+                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                    color: white;
+                    padding: 30px;
+                    text-align: center;
+                }
+                .header h1 {
+                    margin: 0;
+                    font-size: 24px;
+                    font-weight: 600;
+                }
+                .content {
+                    padding: 30px;
+                }
+                .credentials-box {
+                    background: #f8f9fa;
+                    border: 2px solid #e9ecef;
+                    border-radius: 8px;
+                    padding: 20px;
+                    margin: 20px 0;
+                }
+                .credential-item {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    padding: 10px 0;
+                    border-bottom: 1px solid #e9ecef;
+                }
+                .credential-item:last-child {
+                    border-bottom: none;
+                }
+                .credential-label {
+                    font-weight: 600;
+                    color: #495057;
+                }
+                .credential-value {
+                    font-family: monospace;
+                    background: white;
+                    padding: 5px 10px;
+                    border-radius: 4px;
+                    border: 1px solid #dee2e6;
+                    color: #0f172a;
+                }
+                .login-button {
+                    display: inline-block;
+                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                    color: white;
+                    padding: 12px 24px;
+                    text-decoration: none;
+                    border-radius: 6px;
+                    font-weight: 600;
+                    margin: 20px 0;
+                }
+                .footer {
+                    background: #f8f9fa;
+                    padding: 20px;
+                    text-align: center;
+                    color: #6c757d;
+                    font-size: 14px;
+                }
+                .warning {
+                    background: #fff3cd;
+                    border: 1px solid #ffeaa7;
+                    color: #856404;
+                    padding: 15px;
+                    border-radius: 6px;
+                    margin: 20px 0;
+                }
+            </style>
+        </head>
+        <body>
+            <div class='container'>
+                <div class='header'>
+                    <h1>🔐 Admin Panel Access</h1>
+                    <p style='margin: 10px 0 0 0; opacity: 0.9;'>Your admin credentials for {$eventName}</p>
+                </div>
+                
+                <div class='content'>
+                    <h2>Hello {$name}!</h2>
+                    
+                    <p>Welcome to the <strong>{$eventName} Admin Panel</strong>! You have been granted administrative access to manage the event system.</p>
+                    
+                    <div class='credentials-box'>
+                        <h3 style='margin-top: 0; color: #495057;'>Your Login Credentials:</h3>
+                        
+                        <div class='credential-item'>
+                            <span class='credential-label'>Admin Panel URL:</span>
+                            <span class='credential-value'>{$setupProfileUrl}</span>
+                        </div>
+                        
+                        <div class='credential-item'>
+                            <span class='credential-label'>Email:</span>
+                            <span class='credential-value'>{$email}</span>
+                        </div>
+                        
+                        <div class='credential-item'>
+                            <span class='credential-label'>Password:</span>
+                            <span class='credential-value'>{$password}</span>
+                        </div>
+                    </div>
+                    
+                    <div style='text-align: center;'>
+                        <a href='{$setupProfileUrl}' class='login-button'>🚀 Login to Admin Panel</a>
+                    </div>
+                    
+                    <div class='warning'>
+                        <strong>⚠️ Important Security Notice:</strong><br>
+                        • Please change your password after first login<br>
+                        • Keep your credentials secure and confidential<br>
+                        • Do not share these credentials with unauthorized personnel
+                    </div>
+                    
+                    <p>You can now access the admin panel to manage exhibitors, applications, and other administrative tasks.</p>
+                    
+                    <p>If you have any questions or need assistance, please contact the system administrator.</p>
+                </div>
+                
+                <div class='footer'>
+                    <p><strong>{$eventName} Admin Team</strong></p>
+                    <p>This is an automated message. Please do not reply to this email.</p>
+                </div>
+            </div>
+        </body>
+        </html>";
+        
+        // Send the email
+        Mail::html($emailHtml, function ($message) use ($email, $name, $eventName) {
+            $message->to($email, $name)
+                   ->subject("🔐 {$eventName} - Admin Panel Credentials");
+        });
         
         $success = "Admin user created successfully! Credentials have been sent to {$email}";
         
