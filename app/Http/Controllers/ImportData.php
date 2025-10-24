@@ -36,6 +36,8 @@ class ImportData extends Controller
 
     public function importUsers(Request $request)
     {
+        echo "Importing users...\n";
+        exit;
         $connection = $this->dbConnection();
 
         // This query selects all columns from the exhibitors payments table (it_2025_exhibitors_dir_payment_tbl) where the pay_status is 'PAID'.
