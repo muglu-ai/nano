@@ -17,7 +17,7 @@
         
             <p>If you have any questions, please contact the event team.</p>
 
-        <p>Best regards,<br>SEMICON India Team</p>
+        
     </div>
 </body>
 </html>

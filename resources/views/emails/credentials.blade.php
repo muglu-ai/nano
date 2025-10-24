@@ -198,6 +198,7 @@
 
                         <p>
                             You can register your team members by directly entering their details or by sending them an invitation using their email address. Please ensure that each team member is registered under the correct registration category as per your entitlements. Complimentary delegates may attend the conference, and Exhibitor category is for registration of stall manning members.
+                            <br>
                             Additionally, we request you to:
                         </p>
 
