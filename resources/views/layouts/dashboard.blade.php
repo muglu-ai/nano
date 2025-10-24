@@ -132,7 +132,7 @@
                                     © <script>document.write(new Date().getFullYear())</script> Copyright {{ config('constants.EVENT_NAME') }}, All Rights Reserved
                                 </span>
                                 <span class="me-2 d-inline-flex align-items-center" style="white-space: nowrap;">
-                                    Powered by MM Activ Sci-Tech Communications PVT. LTD.
+                                    Powered by SCI Knowledge Interlinks Pvt. Ltd. (MM Activ)
                                 </span>
                             </li>
                         </ul>
