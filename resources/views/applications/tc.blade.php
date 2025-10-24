@@ -224,7 +224,7 @@
                 <div class="separator d-none d-md-block"></div>
 
                 <div class="col-12 col-md-4 text-md-end d-flex justify-content-center justify-content-md-end align-items-center">
-                    <p class="mb-0 text-wrap text-sm text-white">Powered by MM Activ Sci-Tech Communications PVT. LTD.</p>
+                    <p class="mb-0 text-wrap text-sm text-white">Powered by SCI Knowledge Interlinks Pvt. Ltd. (MM Activ)</p>
                 </div>
             </div>
         </div>
