@@ -35,7 +35,7 @@ class UserCredentialsMail extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: config('constants.EVENT_NAME') . ' Exhibitor Login Credentials',
+            subject: config('constants.EVENT_NAME') . ' Exhibitor/Sponsor Login Credentials',
         );
     }
 

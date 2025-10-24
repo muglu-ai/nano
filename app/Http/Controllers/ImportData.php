@@ -38,7 +38,9 @@ class ImportData extends Controller
     {
         $connection = $this->dbConnection();
 
-        $query = "SELECT * FROM it_2025_exhibitors_dir_payment_tbl WHERE pay_status = 'PAID' LIMIT 1 OFFSET 0";
+        // This query selects all columns from the exhibitors payments table (it_2025_exhibitors_dir_payment_tbl) where the pay_status is 'PAID'.
+        // It retrieves a maximum of 50 records, skipping the very first (OFFSET 1).
+        $query = "SELECT * FROM it_2025_exhibitors_dir_payment_tbl WHERE pay_status = 'PAID' LIMIT 49 OFFSET 1";
         $result = $connection->query($query);
         $data = [];
         while ($row = $result->fetch_assoc()) {
@@ -109,7 +111,8 @@ class ImportData extends Controller
             $user = User::where('email', $command['email'])->first();
 
             if ($user) {
-                echo "User with email {$command['email']} already exists. Updating...\n";
+                echo "User with email {$command['email']} already exists. Skipping...\n";
+                continue;
             } else {
                 /** ---------------------------
                  * Step 3: Create User
