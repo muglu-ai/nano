@@ -6,7 +6,7 @@
 @section('content')
 <style>
     .search-box {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        /* background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); */
         border-radius: 15px;
         padding: 25px;
         margin-bottom: 30px;
@@ -245,6 +245,112 @@
     @keyframes spin {
         to { transform: rotate(360deg); }
     }
+    
+    /* Modal Input Styling */
+    .modal-content {
+        border-radius: 15px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    }
+    
+    .modal-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 15px 15px 0 0;
+    }
+    
+    .modal-body {
+        padding: 30px;
+    }
+    
+    .modal-body .form-control {
+        border: 2px solid #e9ecef;
+        border-radius: 8px;
+        padding: 12px 16px;
+        font-size: 16px;
+        transition: all 0.3s ease;
+        background-color: #fff;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    
+    .modal-body .form-control:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+        outline: none;
+    }
+    
+    .modal-body .form-label {
+        font-weight: 600;
+        color: #495057;
+        margin-bottom: 8px;
+        font-size: 14px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .modal-body .form-text {
+        color: #6c757d;
+        font-size: 12px;
+        margin-top: 4px;
+    }
+    
+    .ticket-allocation-row {
+        background-color: #f8f9fa;
+        padding: 15px;
+        border-radius: 8px;
+        margin-bottom: 10px;
+        border: 1px solid #e9ecef;
+    }
+    
+    .ticket-allocation-row .form-label {
+        color: #495057;
+        font-weight: 500;
+        margin-bottom: 5px;
+    }
+    
+    .ticket-allocation-row .form-control {
+        background-color: white;
+        border: 2px solid #dee2e6;
+    }
+    
+    .ticket-allocation-row .form-control:focus {
+        border-color: #667eea;
+        background-color: white;
+    }
+    
+    .modal-footer {
+        background-color: #f8f9fa;
+        border-radius: 0 0 15px 15px;
+        padding: 20px 30px;
+    }
+    
+    .modal-footer .btn {
+        border-radius: 8px;
+        padding: 10px 20px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .modal-footer .btn-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border: none;
+    }
+    
+    .modal-footer .btn-primary:hover {
+        background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+    }
+    
+    .modal-footer .btn-secondary {
+        background-color: #6c757d;
+        border: none;
+    }
+    
+    .modal-footer .btn-secondary:hover {
+        background-color: #5a6268;
+        transform: translateY(-1px);
+    }
 </style>
 
 <div class="container-fluid py-4">
@@ -265,7 +371,7 @@
 
                          <!-- Search Box -->
              <div class="search-box">
-                 <h5><i class="fas fa-search me-2"></i>Search Exhibitors</h5>
+                 <h5 class="text-dark"><i class="fas fa-search me-2"></i>Search Exhibitors</h5>
                 <form method="GET" action="{{ route('passes.allocation') }}" class="row g-3">
                     <div class="col-md-8">
                         <input type="text" 
@@ -430,7 +536,16 @@
                                         <td>
                                             @php
                                                 $stallManning = $application->exhibitionParticipant->stall_manning_count ?? 0;
-                                                $complimentary = $application->exhibitionParticipant->complimentary_delegate_count ?? 0;
+                                                
+                                                // Calculate complimentary count from ticketAllocation JSON
+                                                $complimentary = 0;
+                                                if($application->exhibitionParticipant && $application->exhibitionParticipant->ticketAllocation) {
+                                                    $ticketAllocation = json_decode($application->exhibitionParticipant->ticketAllocation, true);
+                                                    if(is_array($ticketAllocation)) {
+                                                        $complimentary = array_sum($ticketAllocation);
+                                                    }
+                                                }
+                                                
                                                 $ticketTotal = 0;
                                                 if($application->exhibitionParticipant) {
                                                     $tickets = $application->exhibitionParticipant->tickets();
@@ -442,7 +557,7 @@
                                         </td>
                                         <td>
                                              <div class="btn-group" role="group">
-                                                 <button type="button" class="btn btn-sm btn-primary" onclick="openUpdateModal({{ $application->id }}, '{{ $application->company_name }}', {{ $application->exhibitionParticipant->stall_manning_count ?? 0 }}, {{ $application->exhibitionParticipant->complimentary_delegate_count ?? 0 }}, '{{ $application->exhibitionParticipant->ticketAllocation ?? '{}' }}')">
+                                                 <button type="button" class="btn btn-sm btn-primary" onclick="openUpdateModal({{ $application->id }}, '{{ $application->company_name }}', {{ $application->exhibitionParticipant->stall_manning_count ?? 0 }}, {{ $complimentary }}, '{{ $application->exhibitionParticipant->ticketAllocation ?? '{}' }}')">
                                                      <i class="fas fa-edit"></i> Update
                                                  </button>
                                                  {{-- <button type="button" class="btn btn-sm btn-success" onclick="autoAllocatePasses({{ $application->id }}, '{{ $application->company_name }}')">
@@ -498,7 +613,8 @@
 
  <!-- Update Passes Allocation Modal -->
  <div class="modal fade" id="updatePassesModal" tabindex="-1" aria-labelledby="updatePassesModalLabel" aria-hidden="true">
-     <div class="modal-dialog">
+
+     <div class="modal-dialog modal-dialog-centered modal-lg">
          <div class="modal-content">
              <div class="modal-header">
                  <h5 class="modal-title" id="updatePassesModalLabel">Update Passes Allocation</h5>
@@ -582,8 +698,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Add event listeners for ticket count inputs
     document.addEventListener('input', function(e) {
         if (e.target.classList.contains('ticket-count') || 
-            e.target.id === 'updateStallManning' || 
-            e.target.id === 'updateComplimentary') {
+            e.target.id === 'updateStallManning') {
             updateTotalPasses();
         }
     });
@@ -683,7 +798,6 @@ document.addEventListener('DOMContentLoaded', function() {
      document.getElementById('updateApplicationId').value = applicationId;
      document.getElementById('updateCompanyName').value = companyName;
      document.getElementById('updateStallManning').value = stallManningCount;
-     document.getElementById('updateComplimentary').value = complimentaryCount;
      
      // Parse and populate ticket allocations
      try {
@@ -708,15 +822,14 @@ document.addEventListener('DOMContentLoaded', function() {
 
  function updateTotalPasses() {
      const stallManning = parseInt(document.getElementById('updateStallManning').value) || 0;
-     const complimentary = parseInt(document.getElementById('updateComplimentary').value) || 0;
      
-     // Calculate total ticket allocations
-     let ticketTotal = 0;
+     // Calculate total ticket allocations (this becomes the complimentary count)
+     let complimentary = 0;
      document.querySelectorAll('.ticket-count').forEach(input => {
-         ticketTotal += parseInt(input.value) || 0;
+         complimentary += parseInt(input.value) || 0;
      });
      
-     const total = stallManning + complimentary + ticketTotal;
+     const total = stallManning + complimentary;
      document.getElementById('updateTotalPasses').value = total;
  }
 
@@ -836,11 +949,9 @@ document.addEventListener('DOMContentLoaded', function() {
  // Add event listeners for real-time total calculation
  document.addEventListener('DOMContentLoaded', function() {
      const updateStallManning = document.getElementById('updateStallManning');
-     const updateComplimentary = document.getElementById('updateComplimentary');
      
-     if (updateStallManning && updateComplimentary) {
+     if (updateStallManning) {
          updateStallManning.addEventListener('input', updateTotalPasses);
-         updateComplimentary.addEventListener('input', updateTotalPasses);
      }
  });
  </script>
