@@ -190,11 +190,31 @@
                     <div class="content">
                         <h1>Dear {{ $name }},</h1>
 
-                        <p>Welcome to <strong>{{config('constants.EVENT_NAME')}} {{config('constants.EVENT_YEAR')}}</strong>!</p>
+                        <p>Greetings from <strong>{{config('constants.EVENT_NAME')}} {{config('constants.EVENT_YEAR')}}</strong>!</p>
 
                         <p>
-                            We are delighted to have you onboard as an exhibitor. The Exhibitor Portal allows you to set
-                            up and manage your company profile, add team members.
+                            We are delighted to have you onboard as an exhibitor. The <b>Exhibitor Portal</b>  enables you to set up and manage your company profile, register your team members participating in BTS 2025, and access all essential event-related resources.
+                        </p>
+
+                        <p>
+                            You can register your team members by directly entering their details or by sending them an invitation using their email address. Please ensure that each team member is registered under the correct registration category as per your entitlements. Complimentary delegates may attend the conference, and Exhibitor category is for registration of stall manning members.
+                            Additionally, we request you to:
+                        </p>
+
+                        <ul>
+                            <li>
+                                Fill out the <strong>Exhibitor Directory Form</strong> to ensure your organisation is correctly featured in the official BTS 2025 directory.
+                            </li>
+                            <li>
+                                Upload your organisation’s logo in the specified section of the portal for use in official materials.
+                            </li>
+                            <li>
+                                Review the <strong>Exhibitor Manual</strong>, <strong>Portal User Guide</strong>, and other important documents, available inside the portal, which contain important guidelines and operational instructions, along with other key information.
+                            </li>
+                            
+                        </ul>
+                        <p>
+                            Please update all relevant information in the portal at the earliest to ensure a smooth experience.
                         </p>
 
                         <div class="details" role="group" aria-label="Login credentials">
@@ -234,7 +254,8 @@
                     <div class="foot">
                         <div style="margin-bottom:6px;">{{ config('constants.EVENT_NAME') }} {{config('constants.EVENT_YEAR')}}
                         </div>
-                        <div class="small">For assistance, email <a href="mailto:info@interlinks.in">info@interlinks.in</a></div>
+                        <div class="small">For <b>technical assistance</b>, email <a href="mailto:info@interlinks.in">info@interlinks.in</a>.<br>For <b>general queries</b>, write to us at <a href="mailto:enquiry@bengalurutechsummit.com">enquiry@bengalurutechsummit.com</a>.
+                        </div>
                     </div>
                 </div>
             </td>
