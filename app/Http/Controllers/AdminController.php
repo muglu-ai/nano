@@ -66,6 +66,13 @@ class AdminController extends Controller
 
         $users = User::orderBy($sortField, $sortDirection)->paginate($perPage);
 
+        // if the user has application then pass the company name as in users.company 
+        $users->each(function ($user) {
+            // Get the most recent application or the first one if multiple exist
+            $application = $user->applications()->latest()->first();
+            $user->company = $application ? $application->company_name : 'N/A';
+        });
+
         return response()->json($users);
     }
 

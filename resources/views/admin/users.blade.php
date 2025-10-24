@@ -54,11 +54,12 @@
                     const portalUrl = '{{ env("APP_URL") }}';
                     const row = `
                         <tr>
+                            <td class="text-md font-weight-normal text-dark">${user.company}</td>
                             <td class="text-md font-weight-normal text-dark">${user.name}</td>
                             <td class="text-md font-weight-normal text-dark">${user.email}</td>
                             <td class="text-md font-weight-normal text-dark">${user.simplePass}</td>
                             <td class="text-md font-weight-normal text-dark">
-                                <button class="btn btn-sm btn-primary" onclick="copyCredentials('${portalUrl}', '${user.email}', '${user.simplePass}', '${user.name}')">
+                                <button class="btn btn-sm btn-primary" onclick="copyCredentials('${portalUrl}', '${user.email}', '${user.simplePass}', '${user.name}', '${user.company}')">
                                     <i class="fas fa-copy"></i> Copy Credentials
                                 </button>
                             </td>
@@ -112,24 +113,24 @@
             const modal = new bootstrap.Modal(document.getElementById('confirmationModal'));
             modal.show();
         }
-        function copyCredentials(portalUrl, username, password, userName) {
-            const credentials = `Portal URL: ${portalUrl}\nUsername: ${username}\nPassword: ${password}`;
+        function copyCredentials(portalUrl, username, password, userName, companyName) {
+            const credentials = `Company: ${companyName}\nContact: ${userName}\nPortal URL: ${portalUrl}\nUsername: ${username}\nPassword: ${password}`;
             
             // Use the modern Clipboard API if available
             if (navigator.clipboard && window.isSecureContext) {
                 navigator.clipboard.writeText(credentials).then(() => {
-                    showNotification(`Credentials copied for ${userName}`, 'success');
+                    showNotification(`Credentials copied for ${userName} (${companyName})`, 'success');
                 }).catch(err => {
                     console.error('Failed to copy: ', err);
-                    fallbackCopyTextToClipboard(credentials, userName);
+                    fallbackCopyTextToClipboard(credentials, userName, companyName);
                 });
             } else {
                 // Fallback for older browsers
-                fallbackCopyTextToClipboard(credentials, userName);
+                fallbackCopyTextToClipboard(credentials, userName, companyName);
             }
         }
 
-        function fallbackCopyTextToClipboard(text, userName) {
+        function fallbackCopyTextToClipboard(text, userName, companyName) {
             const textArea = document.createElement("textarea");
             textArea.value = text;
             
@@ -146,13 +147,13 @@
             try {
                 const successful = document.execCommand('copy');
                 if (successful) {
-                    showNotification(`Credentials copied for ${userName}`, 'success');
+                    showNotification(`Credentials copied for ${userName} (${companyName})`, 'success');
                 } else {
-                    showNotification(`Failed to copy credentials for ${userName}`, 'error');
+                    showNotification(`Failed to copy credentials for ${userName} (${companyName})`, 'error');
                 }
             } catch (err) {
                 console.error('Fallback: Oops, unable to copy', err);
-                showNotification(`Failed to copy credentials for ${userName}`, 'error');
+                showNotification(`Failed to copy credentials for ${userName} (${companyName})`, 'error');
             }
 
             document.body.removeChild(textArea);
@@ -251,6 +252,7 @@
                         <table class="table table-flush min-vh-40" id="datatable-basic2">
                             <thead class="thead-light table-dark custom-header">
                             <tr>
+                                <th class="text-uppercase text-md text-white" data-sort="company">Company</th>
                                 <th class="text-uppercase text-md text-white" data-sort="name">Name</th>
                                 <th class="text-uppercase text-md text-white" data-sort="email">Email</th>
                                 <th class="text-uppercase text-md text-white" data-sort="phone">Password</th>
