@@ -22,7 +22,7 @@ class ImportData extends Controller
     // Remote DB connection
     public function dbConnection()
     {
-        $host = "95.216.2.164";
+        $host = "localhost";
         $username = "btsblnl265_asd1d_bengaluruite";
         $password = "Disl#vhfj#Af#DhW65";
         $database = "btsblnl265_asd1d_bengaluruite";
