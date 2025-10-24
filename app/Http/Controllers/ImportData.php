@@ -40,7 +40,7 @@ class ImportData extends Controller
 
         // This query selects all columns from the exhibitors payments table (it_2025_exhibitors_dir_payment_tbl) where the pay_status is 'PAID'.
         // It retrieves a maximum of 50 records, skipping the very first (OFFSET 1).
-        $query = "SELECT * FROM it_2025_exhibitors_dir_payment_tbl WHERE pay_status = 'PAID' LIMIT 120 OFFSET 50";
+        $query = "SELECT * FROM it_2025_exhibitors_dir_payment_tbl WHERE pay_status = 'PAID' LIMIT 180 OFFSET 120";
         $result = $connection->query($query);
         $data = [];
         while ($row = $result->fetch_assoc()) {
