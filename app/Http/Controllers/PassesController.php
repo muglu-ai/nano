@@ -562,6 +562,10 @@ class PassesController extends Controller
                 'total_complimentary_delegates' => $applicationsData->sum('exhibitionParticipant.complimentary_delegate_count'),
                 'total_ticket_allocations' => $totalTicketAllocations,
             ];
+            /*
+            To-DO
+            handle the exhibitor passes allocation
+            */ 
 
             // Get all available tickets for the modal (unique ticket types)
             $availableTickets = \App\Models\Ticket::where('status', 1)

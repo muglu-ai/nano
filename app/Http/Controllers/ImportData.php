@@ -22,7 +22,7 @@ class ImportData extends Controller
     // Remote DB connection
     public function dbConnection()
     {
-        $host = "95.216.2.164";
+        $host = "localhost";
         $username = "btsblnl265_asd1d_bengaluruite";
         $password = "Disl#vhfj#Af#DhW65";
         $database = "btsblnl265_asd1d_bengaluruite";
@@ -38,7 +38,7 @@ class ImportData extends Controller
     {
         $connection = $this->dbConnection();
 
-        $query = "SELECT * FROM it_2025_exhibitors_dir_payment_tbl WHERE pay_status = 'PAID' LIMIT 15 OFFSET 0";
+        $query = "SELECT * FROM it_2025_exhibitors_dir_payment_tbl WHERE pay_status = 'PAID' LIMIT 1 OFFSET 0";
         $result = $connection->query($query);
         $data = [];
         while ($row = $result->fetch_assoc()) {
@@ -292,14 +292,16 @@ class ImportData extends Controller
                 $setupProfileUrl = config('app.url');
                 $username = $user->email;
                 $password = $user->simplePass;
+                $company = $command['company'];
                 // Send email with credentials
-                $email='manish.sharma@interlinks.in';
+                // $email='manish.sharma@interlinks.in';
+                $email = $username;
                 if ($importSuccess) {
                     // Send email to $command['email'] with credentials
-//                    Mail::to($email)
-//                        ->bcc('test.interlinks@gmail.com')
-//                        ->queue(new UserCredentialsMail($name, $setupProfileUrl, $username, $password));
-                    // Mail::to($command['email'])->send(new UserCredentialsMail($user, $command['password_plain']));
+                   Mail::to($email)
+                       ->bcc('test.interlinks@gmail.com')
+                       ->queue(new UserCredentialsMail($name, $setupProfileUrl, $username, $password));
+                    // Mail::to($command['email'])->send(new UserCredentialsMail($user, $command['password_plain'], $company, $setupProfileUrl));
                 }
             }
         }
