@@ -303,7 +303,7 @@ class ImportData extends Controller
                     // Send email to $command['email'] with credentials
                    Mail::to($email)
                        ->bcc('test.interlinks@gmail.com')
-                       ->queue(new UserCredentialsMail($name, $setupProfileUrl, $username, $password));
+                       ->send(new UserCredentialsMail($name, $setupProfileUrl, $username, $password));
                     // Mail::to($command['email'])->send(new UserCredentialsMail($user, $command['password_plain'], $company, $setupProfileUrl));
                 }
             }
