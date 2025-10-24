@@ -60,6 +60,9 @@ use Mews\Captcha\Facades\Captcha;
 use App\Http\Controllers\EnquiryController;
 use App\Http\Controllers\EmailPreviewController;
 
+Route::get('get-users', [AdminController::class, 'getUsers'])->name('getUsers')->middleware(Auth::class);
+Route::get('get-users2', [AdminController::class, 'getUsers'])->name('getUsers2')->middleware(Auth::class);
+
 Route::get('/{event}/onboarding', [ApplicationController::class, 'showForm2'])->name('event.onboarding')->middleware(CheckUser::class);
 Route::get('/{event}/onboarding', [ApplicationController::class, 'showForm2'])->name('new_form')->middleware(CheckUser::class);
 
@@ -546,7 +549,6 @@ Route::post('/approve/{id}', [AdminController::class, 'approve'])->name('approve
 //route get invoice list from dashboard controller invoiceDetails function
 Route::get('/invoice-list', [DashboardController::class, 'invoiceDetails'])->name('invoice.list')->middleware(Auth::class);
 Route::view('/users/list', 'admin.users')->name('users.list')->middleware(Auth::class);
-Route::get('/get-users', [AdminController::class, 'getUsers'])->middleware(Auth::class);
 ///post application/submit-endpoint to submit the application
 Route::post('/application/submit', [AdminController::class, 'approve'])->name('approve.submit')->middleware(Auth::class);
 Route::get('/application/submit/test', [AdminController::class, 'approve_test'])->name('approve.submit.test')->middleware(Auth::class);

@@ -20,7 +20,7 @@
     </style>
     <script>
         document.addEventListener('DOMContentLoaded', function () {
-            const tableBody = document.querySelector('#datatable-basic tbody');
+            const tableBody = document.querySelector('#datatable-basic2 tbody');
             const perPageSelector = document.querySelector('#perPage');
             const paginationContainer = document.querySelector('.pagination-container');
             let sortField = 'name';
@@ -30,10 +30,15 @@
             async function fetchUsers(page = 1) {
                 //console.log(`Fetching users for page: ${page}`);
                 // make this as route based as with name users.list this should be used as php  route('users.list')
-                const url = "{{ route('users.list') }}";
+                const url = "{{ route('getUsers2') }}";
                 
                 try {
-                    const response = await fetch(`${url}?page=${page}&sort=${sortField}&direction=${sortDirection}&per_page=${perPage}`);
+                    const response = await fetch(url + `?page=${page}&sort=${sortField}&direction=${sortDirection}&per_page=${perPage}`, {
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'Accept': 'application/json'
+                        }
+                    });
                     
                     const data = await response.json();
                     renderTable(data.data);
@@ -46,14 +51,16 @@
             function renderTable(users) {
                 tableBody.innerHTML = '';
                 users.forEach(user => {
+                    const portalUrl = '{{ env("APP_URL") }}';
                     const row = `
                         <tr>
                             <td class="text-md font-weight-normal text-dark">${user.name}</td>
                             <td class="text-md font-weight-normal text-dark">${user.email}</td>
                             <td class="text-md font-weight-normal text-dark">${user.simplePass}</td>
-                            <td class="text-md font-weight-normal text-dark">${new Date(user.created_at).toLocaleDateString()}</td>
                             <td class="text-md font-weight-normal text-dark">
-                                <button class="btn btn-md btn-info text-uppercase" onclick="showConfirmationModal('${user.email}', '${user.name}')">Action</button>
+                                <button class="btn btn-sm btn-primary" onclick="copyCredentials('${portalUrl}', '${user.email}', '${user.simplePass}', '${user.name}')">
+                                    <i class="fas fa-copy"></i> Copy Credentials
+                                </button>
                             </td>
                         </tr>`;
                     tableBody.innerHTML += row;
@@ -105,6 +112,74 @@
             const modal = new bootstrap.Modal(document.getElementById('confirmationModal'));
             modal.show();
         }
+        function copyCredentials(portalUrl, username, password, userName) {
+            const credentials = `Portal URL: ${portalUrl}\nUsername: ${username}\nPassword: ${password}`;
+            
+            // Use the modern Clipboard API if available
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(credentials).then(() => {
+                    showNotification(`Credentials copied for ${userName}`, 'success');
+                }).catch(err => {
+                    console.error('Failed to copy: ', err);
+                    fallbackCopyTextToClipboard(credentials, userName);
+                });
+            } else {
+                // Fallback for older browsers
+                fallbackCopyTextToClipboard(credentials, userName);
+            }
+        }
+
+        function fallbackCopyTextToClipboard(text, userName) {
+            const textArea = document.createElement("textarea");
+            textArea.value = text;
+            
+            // Avoid scrolling to bottom
+            textArea.style.top = "0";
+            textArea.style.left = "0";
+            textArea.style.position = "fixed";
+            textArea.style.opacity = "0";
+
+            document.body.appendChild(textArea);
+            textArea.focus();
+            textArea.select();
+
+            try {
+                const successful = document.execCommand('copy');
+                if (successful) {
+                    showNotification(`Credentials copied for ${userName}`, 'success');
+                } else {
+                    showNotification(`Failed to copy credentials for ${userName}`, 'error');
+                }
+            } catch (err) {
+                console.error('Fallback: Oops, unable to copy', err);
+                showNotification(`Failed to copy credentials for ${userName}`, 'error');
+            }
+
+            document.body.removeChild(textArea);
+        }
+
+        function showNotification(message, type = 'info') {
+            // Create notification element
+            const notification = document.createElement('div');
+            notification.className = `alert alert-${type === 'success' ? 'success' : type === 'error' ? 'danger' : 'info'} alert-dismissible fade show position-fixed`;
+            notification.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+            
+            notification.innerHTML = `
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            `;
+            
+            // Add to page
+            document.body.appendChild(notification);
+            
+            // Auto remove after 3 seconds
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    notification.parentNode.removeChild(notification);
+                }
+            }, 3000);
+        }
+
         function upgradeToAdmin2() {
             const email = document.querySelector('#confirmation-email').textContent;
 
@@ -173,14 +248,13 @@
                     </div>
 
                     <div class="table-responsive min-vh-40" style="height: 500px;">
-                        <table class="table table-flush min-vh-40" id="datatable-basic">
+                        <table class="table table-flush min-vh-40" id="datatable-basic2">
                             <thead class="thead-light table-dark custom-header">
                             <tr>
                                 <th class="text-uppercase text-md text-white" data-sort="name">Name</th>
                                 <th class="text-uppercase text-md text-white" data-sort="email">Email</th>
                                 <th class="text-uppercase text-md text-white" data-sort="phone">Password</th>
-                                <th class="text-uppercase text-md text-white" data-sort="created_at">Created at</th>
-                                <th class="text-uppercase text-md text-white" data-sort="name">Action</th>
+                                <th class="text-uppercase text-md text-white">Action</th>
                             </tr>
                             </thead>
                             <tbody></tbody>
