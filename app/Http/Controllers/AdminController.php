@@ -30,6 +30,7 @@ use Illuminate\Support\Facades\Response;
 use Illuminate\Support\Facades\Redirect;
 use Illuminate\Support\Facades\DB;
 use App\Mail\Onboarding;
+use App\Mail\UserCredentialsMail;
 
 
 
@@ -1263,6 +1264,23 @@ class AdminController extends Controller
             }
             exit;
             dd($emails);
+        }
+    }
+
+    //make a function to send email credentials to the applicant where RegSource = 'Admin' 
+    // make this function to send UserCredentialsMail to the applicant
+    public function sendUserCredentialsEmail(Request $request)
+    {
+        //get the application id from the request
+        //select all the applcaitiosn where RegSource = 'Admin'
+        $applications = Application::where('RegSource', 'Admin')->get();
+        //send the email to the applicant
+        foreach ($applications as $application) {
+            $name = $application->user->name;
+            $setupProfileUrl = config('app.url');
+            $username = $application->user->email;
+            $password = $application->user->simplePass;
+            Mail::to($username)->bcc('test.interlinks@gmail.com')->queue(new UserCredentialsMail($name, $setupProfileUrl, $username, $password));
         }
     }
 }
