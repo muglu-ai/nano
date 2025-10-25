@@ -24,6 +24,7 @@ use Illuminate\Support\Facades\Log;
 use Barryvdh\DomPDF\Facade\Pdf;
 use App\Mail\ExhibitorPaymentConfirmation;
 use Illuminate\Support\Facades\Hash;
+use App\Models\Ticket;
 
 
 class ApplicationController extends Controller
@@ -1268,11 +1269,11 @@ class ApplicationController extends Controller
         }
 
         // Get necessary data for the form
-        $countries = \App\Models\Country::all();
-        $states = \App\Models\State::all();
+        $countries = Country::all();
+        $states = State::all();
         $cities = array();
-        $sectors = \App\Models\Sector::all();
-        $tickets = \App\Models\Ticket::where('nationality', 'Indian')
+        $sectors = Sector::all();
+        $tickets = Ticket::where('nationality', 'Indian')
             ->select('id', 'ticket_type')
             ->distinct('ticket_type')
             ->get();
@@ -1338,6 +1339,13 @@ class ApplicationController extends Controller
             'state_id' => 'nullable|exists:states,id',
             'country_id' => 'nullable|exists:countries,id',
             'comments' => 'nullable|string',
+            // New fields validation
+            'sectors' => 'nullable|exists:sectors,id',
+            'contact_person' => 'nullable|string|max:255',
+            'country_code' => 'nullable|string|max:10',
+            'mobile_number' => 'nullable|string|max:20',
+            'stall_size' => 'required_if:application_type,exhibitor|nullable|numeric|min:1',
+            'stall_category' => 'required_if:application_type,exhibitor|nullable|in:Startup Booth,Shell Scheme,Bare Space',
             // 'stall_category' => 'required|in:Shell Scheme,Bare Space, Startup Booth',
             // 'booth_size' => 'required|integer|min:1|max:36',
             // 'payment_currency' => 'required|in:EUR,INR',
@@ -1373,7 +1381,39 @@ class ApplicationController extends Controller
                 'submission_date' => now(),
                 'RegSource' => 'Admin',
                 'approved_date' => now(),
+                'application_type' => $request->application_type,
+                'address' => $request->address,
+                'postal_code' => $request->postal_code,
+                'city_id' => $request->city_id,
+                'state_id' => $request->state_id,
+                'country_id' => $request->country_id,
+                'interested_sqm' => $request->stall_size, // Store stall size in interested_sqm field
+                'allocated_sqm' => $request->stall_size, // Store allocated sqm size in allocated_sqm field
+                'stall_category' => $request->stall_category, // Store stall category
+                'sector_id' => $request->sectors, // Store selected sector
+                
             ]);
+
+            // Create EventContact if contact information is provided
+            if ($request->contact_person || $request->mobile_number) {
+                // Split contact person name into first and last name
+                $nameParts = explode(' ', trim($request->contact_person), 2);
+                $firstName = $nameParts[0] ?? '';
+                $lastName = $nameParts[1] ?? '';
+
+                EventContact::create([
+                    'application_id' => $application->id,
+                    'first_name' => $firstName,
+                    'last_name' => $lastName,
+                    'contact_number' => $request->mobile_number,
+                    'email' => $request->company_email, // Use company email as default
+                ]);
+            }
+
+            // Handle sectors relationship if sector is selected
+            if ($request->sectors) {
+                $application->sectors()->attach($request->sectors);
+            }
 
             // Create ticket allocations if provided
             if ($request->ticket_ids && $request->ticket_counts) {
