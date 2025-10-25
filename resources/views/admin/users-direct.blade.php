@@ -206,7 +206,7 @@
                                 </div>
                                 <div class="col-md-2 text-end">
                                     @if(request('search'))
-                                        <a href="{{ route('users.list2') }}" class="btn clear-btn">
+                                        <a href="{{ route('users.list') }}" class="btn clear-btn">
                                             <i class="fas fa-times me-1"></i> Clear
                                         </a>
                                     @endif
