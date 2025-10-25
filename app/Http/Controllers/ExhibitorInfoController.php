@@ -206,7 +206,7 @@ class ExhibitorInfoController extends Controller
             ['application_id' => $applicationId],
             [
                 'category' => $data['category'] ?: 'Not Provided',
-                'fascia_name' => $data['fascia_name'] ?: 'Not Provided',
+                'fascia_name' => strtoupper($data['fascia_name']),
                 'contact_person' => trim(($data['salutation'] ?? '') . ' ' . ($data['contact_first_name'] ?? '') . ' ' . ($data['contact_last_name'] ?? '')) ?: 'Not Provided',
                 'designation' => $data['designation'] ?: 'Not Provided',
                 'email' => $data['email'] ?: 'Not Provided',
@@ -654,6 +654,9 @@ class ExhibitorInfoController extends Controller
                 unset($data['logo']);
             }
 
+            // Convert fascia_name to uppercase before updating
+            $data['fascia_name'] = strtoupper($data['fascia_name']);
+            
             $exhibitor->update($data);
 
             return response()->json([
@@ -661,7 +664,7 @@ class ExhibitorInfoController extends Controller
                 'message' => 'Exhibitor information updated successfully',
                 'data' => [
                     'id' => $exhibitor->id,
-                    'fascia_name' => $exhibitor->fascia_name,
+                    'fascia_name' => strtoupper($exhibitor->fascia_name),
                     'submission_status' => $exhibitor->submission_status,
                 ]
             ]);
