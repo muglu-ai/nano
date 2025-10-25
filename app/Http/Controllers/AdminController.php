@@ -52,6 +52,51 @@ class AdminController extends Controller
         $this->middleware(['admin']);
     }
 
+    // make a route to display all the users in a table with pagination and search and sort
+    public function usersList(Request $request)
+    {
+        $query = User::query();
+        
+        // Search functionality
+        if ($request->has('search') && !empty($request->search)) {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhere('email', 'like', "%{$search}%")
+                  ->orWhereHas('applications', function($appQuery) use ($search) {
+                      $appQuery->where('company_name', 'like', "%{$search}%");
+                  });
+            });
+        }
+        
+        // Sorting
+        $sortField = $request->get('sort', 'name');
+        $sortDirection = $request->get('direction', 'asc');
+        
+        if (in_array($sortField, ['name', 'email', 'created_at'])) {
+            $query->orderBy($sortField, $sortDirection);
+        } elseif ($sortField === 'company') {
+            // For company sorting, we need to join with applications table
+            $query->leftJoin('applications', 'users.id', '=', 'applications.user_id')
+                  ->orderBy('applications.company_name', $sortDirection)
+                  ->select('users.*'); // Ensure we only select user columns
+        }
+        
+        // Pagination
+        $perPage = $request->get('per_page', 10);
+        $users = $query->paginate($perPage);
+        $users->appends($request->query());
+        
+        // Add company name from applications table
+        foreach ($users as $user) {
+            // Get the most recent application or the first one if multiple exist
+            $application = $user->applications()->latest()->first();
+            $user->company = $application ? $application->company_name : 'N/A';
+        }
+        
+        return view('admin.users-direct', compact('users'));
+    }
+
 
     public function getUsers(Request $request)
     {
