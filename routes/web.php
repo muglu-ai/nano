@@ -548,8 +548,8 @@ Route::get('/price', [AdminController::class, 'price'])->name('price')->middlewa
 Route::post('/approve/{id}', [AdminController::class, 'approve'])->name('approve')->middleware(Auth::class);
 //route get invoice list from dashboard controller invoiceDetails function
 Route::get('/invoice-list', [DashboardController::class, 'invoiceDetails'])->name('invoice.list')->middleware(Auth::class);
-Route::view('/users/list', 'admin.users')->name('users.list')->middleware(Auth::class);
-Route::get('/users/list2', [AdminController::class, 'usersList'])->name('users.list2')->middleware(Auth::class);
+// Route::view('/users/list', 'admin.users')->name('users.list')->middleware(Auth::class);
+Route::get('/users/list', [AdminController::class, 'usersList'])->name('users.list')->middleware(Auth::class);
 ///post application/submit-endpoint to submit the application
 Route::post('/application/submit', [AdminController::class, 'approve'])->name('approve.submit')->middleware(Auth::class);
 Route::get('/application/submit/test', [AdminController::class, 'approve_test'])->name('approve.submit.test')->middleware(Auth::class);

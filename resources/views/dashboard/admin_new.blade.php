@@ -60,7 +60,7 @@
 
                                 <hr class="dark horizontal my-0">
                                 <div class="card-footer p-2 ps-3">
-                                    <p class="mb-0 text-sm"><a href="/users/list"><span
+                                    <p class="mb-0 text-sm"><a href="{{ route('users.list') }}"><span
                                                     class="text-success font-weight-bolder">Click here </span></a>for
                                         more info.</p>
                                 </div>
