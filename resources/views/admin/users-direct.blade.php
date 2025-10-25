@@ -182,7 +182,7 @@
                     
                     <!-- Search Section -->
                     <div class="search-section">
-                        <form method="GET" action="{{ route('users.list2') }}">
+                        <form method="GET" action="{{ route('users.list') }}">
                             <div class="row align-items-center">
                                 <div class="col-md-8">
                                     <div class="input-group">
