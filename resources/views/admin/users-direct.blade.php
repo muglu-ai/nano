@@ -3,105 +3,165 @@
 @section('content')
 
     <style>
-        thead.custom-header {
-            background-color: #000; /* Light gray */
-            color: #fff; /* Dark text */
-        }
-        th {
-            text-align: left !important;
-            padding-left:20px !important;
-            color:white !important;
-        }
-        .dataTable-table th a {
-            text-decoration: none;
-            color: white;
-        }
-        .search-container {
-            margin-bottom: 0;
-            padding: 20px 0;
-        }
-        .sortable {
-            cursor: pointer;
-        }
-        .sortable:hover {
-            background-color: #333;
+        /* Clean and simple design */
+        .card {
+            border: 1px solid #e3e6f0;
+            box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
         }
         
-        /* Enhanced search box styling */
-        .input-group-lg .form-control {
-            font-size: 1.1rem;
-            padding: 0.75rem 1rem;
-        }
-        .input-group-text {
-            border-right: none;
-        }
-        .form-control:focus {
-            border-color: #0d6efd;
-            box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
-        }
-        .search-container .input-group {
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            border-radius: 0.5rem;
-            overflow: hidden;
-        }
-        .search-container .btn {
-            border-radius: 0;
-        }
-        .search-container .input-group-text {
-            border-radius: 0.5rem 0 0 0.5rem;
-        }
-        .search-container .btn:last-child {
-            border-radius: 0 0.5rem 0.5rem 0;
-        }
-        
-        /* Card header improvements */
         .card-header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border-bottom: none;
-        }
-        .card-header h5 {
-            font-weight: 600;
-            margin-bottom: 0.5rem;
-        }
-        .card-header p {
-            opacity: 0.9;
-            margin-bottom: 0;
+            background-color: #f8f9fc;
+            border-bottom: 1px solid #e3e6f0;
+            color: #5a5c69;
         }
         
-        /* Table improvements */
-        .table-responsive {
-            border-radius: 0.5rem;
-            overflow: hidden;
+        .card-header h5 {
+            color: #5a5c69;
+            font-weight: 600;
         }
+        
+        /* Search section */
+        .search-section {
+            background-color: #f8f9fc;
+            border-bottom: 1px solid #e3e6f0;
+            padding: 1.5rem;
+        }
+        
+        .search-input {
+            border: 2px solid #d1d3e2;
+            border-radius: 0.35rem;
+            padding: 0.75rem 1rem;
+            font-size: 0.9rem;
+        }
+        
+        .search-input:focus {
+            border-color: #4e73df;
+            box-shadow: 0 0 0 0.2rem rgba(78, 115, 223, 0.25);
+        }
+        
+        .search-btn {
+            background-color: #4e73df;
+            border-color: #4e73df;
+            border-radius: 0.35rem;
+            padding: 0.75rem 1.5rem;
+        }
+        
+        .search-btn:hover {
+            background-color: #2e59d9;
+            border-color: #2e59d9;
+        }
+        
+        .clear-btn {
+            background-color: #e74a3b;
+            border-color: #e74a3b;
+            border-radius: 0.35rem;
+            padding: 0.75rem 1.5rem;
+        }
+        
+        .clear-btn:hover {
+            background-color: #c0392b;
+            border-color: #c0392b;
+        }
+        
+        /* Table styling */
         .table th {
+            background-color: #5a5c69;
+            color: white;
             font-weight: 600;
             text-transform: uppercase;
+            font-size: 0.85rem;
             letter-spacing: 0.5px;
-        }
-        .table td {
-            vertical-align: middle;
+            padding: 1rem 0.75rem;
+            border: none;
         }
         
-        /* Pagination improvements */
+        .table td {
+            padding: 0.75rem;
+            vertical-align: middle;
+            border-top: 1px solid #e3e6f0;
+        }
+        
+        .table tbody tr:hover {
+            background-color: #f8f9fc;
+        }
+        
+        /* Sortable headers */
+        .sortable {
+            cursor: pointer;
+            position: relative;
+        }
+        
+        .sortable:hover {
+            background-color: #6c757d !important;
+        }
+        
+        .sortable::after {
+            content: '↕';
+            position: absolute;
+            right: 8px;
+            opacity: 0.5;
+        }
+        
+        /* Pagination */
         .pagination {
-            margin-bottom: 0;
+            margin: 0;
         }
+        
         .page-link {
-            border-radius: 0.375rem;
+            color: #4e73df;
+            border: 1px solid #d1d3e2;
+            padding: 0.5rem 0.75rem;
             margin: 0 2px;
-            border: 1px solid #dee2e6;
+            border-radius: 0.35rem;
         }
+        
         .page-item.active .page-link {
-            background-color: #0d6efd;
-            border-color: #0d6efd;
+            background-color: #4e73df;
+            border-color: #4e73df;
+            color: white;
+        }
+        
+        .page-link:hover {
+            color: #2e59d9;
+            background-color: #f8f9fc;
+            border-color: #d1d3e2;
+        }
+        
+        /* Copy credentials button */
+        .copy-btn {
+            background-color: #e83e8c;
+            border-color: #e83e8c;
+            color: white;
+            padding: 0.375rem 0.75rem;
+            font-size: 0.875rem;
+            border-radius: 0.35rem;
+        }
+        
+        .copy-btn:hover {
+            background-color: #d91a72;
+            border-color: #d91a72;
+            color: white;
+        }
+        
+        /* Results info */
+        .results-info {
+            color: #5a5c69;
+            font-size: 0.9rem;
+        }
+        
+        .filter-badge {
+            background-color: #4e73df;
+            color: white;
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.25rem;
+            font-size: 0.75rem;
         }
     </style>
 
     <div class="container-fluid py-2">
         <div class="row mt-4">
             <div class="col-12">
-                <div class="card shadow-lg border-0">
+                <div class="card">
                     <!-- Card header -->
                     <div class="card-header">
                         <div class="d-flex justify-content-between align-items-center">
@@ -112,51 +172,42 @@
                                 </p>
                             </div>
                             <div class="text-end">
-                                <span class="badge bg-light text-dark fs-6">
+                                <span class="badge bg-primary">
                                     <i class="fas fa-users me-1"></i>
-                                    {{ $users->total() }} Total Users
+                                    {{ $users->total() }} Users
                                 </span>
                             </div>
                         </div>
                     </div>
                     
-                    <!-- Search and Filters -->
-                    <div class="card-body bg-light border-bottom">
-                        <form method="GET" action="{{ route('users.list2') }}" class="search-container">
+                    <!-- Search Section -->
+                    <div class="search-section">
+                        <form method="GET" action="{{ route('users.list2') }}">
                             <div class="row align-items-center">
-                                <div class="col-md-6">
-                                    <div class="input-group input-group-lg">
-                                        <span class="input-group-text bg-primary text-white">
-                                            <i class="fas fa-search"></i>
-                                        </span>
+                                <div class="col-md-8">
+                                    <div class="input-group">
                                         <input type="text" 
-                                               class="form-control form-control-lg border-primary" 
+                                               class="form-control search-input" 
                                                name="search" 
                                                placeholder="Search by name, email, or company..." 
-                                               value="{{ request('search') }}"
-                                               style="border-left: none; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-                                        <button class="btn btn-primary btn-lg" type="submit">
+                                               value="{{ request('search') }}">
+                                        <button class="btn search-btn" type="submit">
                                             <i class="fas fa-search me-1"></i> Search
                                         </button>
                                     </div>
                                 </div>
-                                <div class="col-md-3">
-                                    <div class="input-group">
-                                        <span class="input-group-text bg-secondary text-white">
-                                            <i class="fas fa-list"></i>
-                                        </span>
-                                        <select name="per_page" class="form-select border-secondary" onchange="this.form.submit()">
-                                            <option value="5" {{ request('per_page') == 5 ? 'selected' : '' }}>5 per page</option>
-                                            <option value="10" {{ request('per_page') == 10 || !request('per_page') ? 'selected' : '' }}>10 per page</option>
-                                            <option value="25" {{ request('per_page') == 25 ? 'selected' : '' }}>25 per page</option>
-                                            <option value="50" {{ request('per_page') == 50 ? 'selected' : '' }}>50 per page</option>
-                                        </select>
-                                    </div>
+                                <div class="col-md-2">
+                                    <select name="per_page" class="form-control search-input" onchange="this.form.submit()">
+                                        <option value="10" {{ request('per_page') == 10 || !request('per_page') ? 'selected' : '' }}>10 per page</option>
+                                        <option value="25" {{ request('per_page') == 25 ? 'selected' : '' }}>25 per page</option>
+                                        <option value="50" {{ request('per_page') == 50 ? 'selected' : '' }}>50 per page</option>
+                                        <option value="100" {{ request('per_page') == 100 ? 'selected' : '' }}>100 per page</option>
+                                    </select>
                                 </div>
-                                <div class="col-md-3 text-end">
+                                <div class="col-md-2 text-end">
                                     @if(request('search'))
-                                        <a href="{{ route('users.list2') }}" class="btn btn-outline-danger btn-lg">
-                                            <i class="fas fa-times me-1"></i> Clear Search
+                                        <a href="{{ route('users.list2') }}" class="btn clear-btn">
+                                            <i class="fas fa-times me-1"></i> Clear
                                         </a>
                                     @endif
                                 </div>
@@ -164,49 +215,43 @@
                         </form>
                     </div>
 
-                    <div class="table-responsive min-vh-40" style="height: 500px;">
-                        <table class="table table-flush min-vh-40" id="datatable-basic2">
-                            <thead class="thead-light table-dark custom-header">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
                             <tr>
-                                <th class="text-uppercase text-md text-white sortable" 
-                                    data-sort="company"
-                                    onclick="sortTable('company')">
+                                <th class="sortable" onclick="sortTable('company')">
                                     Company
                                     @if(request('sort') == 'company')
-                                        <i class="fas fa-sort-{{ request('direction') == 'asc' ? 'up' : 'down' }}"></i>
+                                        <i class="fas fa-sort-{{ request('direction') == 'asc' ? 'up' : 'down' }} ms-1"></i>
                                     @endif
                                 </th>
-                                <th class="text-uppercase text-md text-white sortable" 
-                                    data-sort="name"
-                                    onclick="sortTable('name')">
+                                <th class="sortable" onclick="sortTable('name')">
                                     Name
                                     @if(request('sort') == 'name')
-                                        <i class="fas fa-sort-{{ request('direction') == 'asc' ? 'up' : 'down' }}"></i>
+                                        <i class="fas fa-sort-{{ request('direction') == 'asc' ? 'up' : 'down' }} ms-1"></i>
                                     @endif
                                 </th>
-                                <th class="text-uppercase text-md text-white sortable" 
-                                    data-sort="email"
-                                    onclick="sortTable('email')">
+                                <th class="sortable" onclick="sortTable('email')">
                                     Email
                                     @if(request('sort') == 'email')
-                                        <i class="fas fa-sort-{{ request('direction') == 'asc' ? 'up' : 'down' }}"></i>
+                                        <i class="fas fa-sort-{{ request('direction') == 'asc' ? 'up' : 'down' }} ms-1"></i>
                                     @endif
                                 </th>
-                                <th class="text-uppercase text-md text-white" data-sort="phone">Password</th>
-                                <th class="text-uppercase text-md text-white">Action</th>
+                                <th>Password</th>
+                                <th>Action</th>
                             </tr>
                             </thead>
                             <tbody>
                                 @forelse($users as $user)
                                     <tr>
-                                        <td class="text-md font-weight-normal text-dark">{{ $user->company ?? 'N/A' }}</td>
-                                        <td class="text-md font-weight-normal text-dark">{{ $user->name ?? 'N/A' }}</td>
-                                        <td class="text-md font-weight-normal text-dark">{{ $user->email ?? 'N/A' }}</td>
-                                        <td class="text-md font-weight-normal text-dark">{{ $user->simplePass ?? 'N/A' }}</td>
-                                        <td class="text-md font-weight-normal text-dark">
-                                            <button class="btn btn-sm btn-primary" 
+                                        <td>{{ $user->company ?? 'N/A' }}</td>
+                                        <td>{{ $user->name ?? 'N/A' }}</td>
+                                        <td>{{ $user->email ?? 'N/A' }}</td>
+                                        <td>{{ $user->simplePass ?? 'N/A' }}</td>
+                                        <td>
+                                            <button class="btn copy-btn" 
                                                     onclick="copyCredentials('{{ env("APP_URL") }}', '{{ $user->email }}', '{{ $user->simplePass }}', '{{ $user->name }}', '{{ $user->company }}')">
-                                                <i class="fas fa-copy"></i> Copy Credentials
+                                                <i class="fas fa-copy me-1"></i> Copy Credentials
                                             </button>
                                         </td>
                                     </tr>
@@ -214,8 +259,10 @@
                                     <tr>
                                         <td colspan="5" class="text-center text-muted py-4">
                                             @if(request('search'))
+                                                <i class="fas fa-search me-2"></i>
                                                 No users found matching your search criteria.
                                             @else
+                                                <i class="fas fa-users me-2"></i>
                                                 No users found.
                                             @endif
                                         </td>
@@ -226,13 +273,13 @@
                     </div>
                     
                     <!-- Pagination -->
-                    <div class="card-footer bg-light">
+                    <div class="card-footer">
                         <div class="d-flex justify-content-between align-items-center">
-                            <div class="text-muted">
+                            <div class="results-info">
                                 <i class="fas fa-info-circle me-1"></i>
                                 Showing {{ $users->firstItem() ?? 0 }} to {{ $users->lastItem() ?? 0 }} of {{ $users->total() }} results
                                 @if(request('search'))
-                                    <span class="badge bg-primary ms-2">
+                                    <span class="filter-badge ms-2">
                                         <i class="fas fa-search me-1"></i>
                                         Filtered
                                     </span>
