@@ -46,7 +46,7 @@
 
     @php
         //if exhibitorInfo is filled then set the css value to is-filled
-        $fasciaName = $exhibitorInfo->fascia_name ?? '';
+        $fasciaName = strtoupper($exhibitorInfo->fascia_name ?? '');
         $cssClass = $fasciaName !== '' ? 'is-filled' : '';
 
         //break down the name into salutation, first and last name
@@ -172,7 +172,7 @@
                                     <div class="input-group input-group-dynamic {{ $cssClass }}">
 
                                         <input class="form-control" type="text" name="fascia_name"
-                                            value="{{ $fasciaName }}" required>
+                                            value="{{ $fasciaName }}" required oninput="this.value = this.value.toUpperCase()">
                                     </div>
 
 
