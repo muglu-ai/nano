@@ -570,6 +570,7 @@ Route::post('membership/verify', [AdminController::class, 'verifyMembership'])->
 Route::post('membership/reject', [AdminController::class, 'unverifyMembership'])->name('membership.reject')->middleware(Auth::class);
 Route::get('onboarding-test', [AdminController::class, 'sendOnboardingEmail'])->name('onboarding.test');
 
+Route::get('/send-user-credentials-email', [AdminController::class, 'sendUserCredentialsEmail'])->name('send.user.credentials.email')->middleware(Auth::class);
 /* Admin Controller Routes Ends
 * */
 
