@@ -221,6 +221,10 @@
                                                     $paymentStatus = 'unpaid';
                                                 }
 
+                                                //if RegSource = 
+                                                if ($application->RegSource == 'Admin') {
+                                                    $paymentStatus = 'Imported';
+                                                }
                                                 // Map payment status to badge color
                                                 $paymentBadgeColor = match (strtolower($paymentStatus)) {
                                                     'paid' => 'badge-success',

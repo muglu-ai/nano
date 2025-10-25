@@ -16,6 +16,8 @@ use App\Models\BillingDetail;
 use App\Models\Invoice;
 use App\Models\Payment;
 use App\Models\Sector;
+use App\Models\State;
+use App\Models\Country;
 
 class ImportData extends Controller
 {
@@ -36,8 +38,8 @@ class ImportData extends Controller
 
     public function importUsers(Request $request)
     {
-        echo "Importing users...\n";
-        exit;
+        // echo "Importing users...\n";
+        // exit;
         $connection = $this->dbConnection();
 
         // This query selects all columns from the exhibitors payments table (it_2025_exhibitors_dir_payment_tbl) where the pay_status is 'PAID'.
@@ -89,8 +91,8 @@ class ImportData extends Controller
 
             // Lookup foreign keys
             $command['sector_id'] = Sector::where('name', $row['sector'])->value('id');
-            $command['state_id']  = DB::table('states')->where('name', $row['state'])->value('id');
-            $command['country_id'] = DB::table('countries')->where('name', $row['country'])->value('id');
+            $command['state_id']  = State::where('name', $row['state'])->value('id');
+            $command['country_id'] = Country::where('name', $row['country'])->value('id');
 
             // Random password
             $command['password_plain'] = substr(str_shuffle('abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'), 0, 8);
@@ -114,6 +116,7 @@ class ImportData extends Controller
 
             if ($user) {
                 echo "User with email {$command['email']} already exists. Skipping...\n";
+
                 continue;
             } else {
                 /** ---------------------------

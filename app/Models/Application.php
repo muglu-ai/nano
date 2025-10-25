@@ -82,6 +82,7 @@ class Application extends Model
         'exhibitorType',
         'tag',
         'approved_by',
+        'RegSource',
     ];
 
     /* Todo : Addedd the following new fields

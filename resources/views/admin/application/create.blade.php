@@ -50,6 +50,45 @@
         font-weight: 600;
         border-radius: 0.5rem;
     }
+    
+    /* Multiple select styling */
+    select[multiple] {
+        min-height: 120px;
+        padding: 0.5rem;
+    }
+    
+    select[multiple] option {
+        padding: 0.5rem;
+        margin: 2px 0;
+        border-radius: 0.25rem;
+    }
+    
+    select[multiple] option:checked {
+        background-color: #007bff;
+        color: white;
+    }
+    
+    /* Form text styling */
+    .form-text {
+        font-size: 0.875rem;
+        margin-top: 0.25rem;
+    }
+    
+    /* Conditional field styling */
+    #stall_size_field, #stall_category_field {
+        transition: all 0.3s ease-in-out;
+        overflow: hidden;
+    }
+    
+    #stall_size_field.show, #stall_category_field.show {
+        opacity: 1;
+        max-height: 200px;
+    }
+    
+    #stall_size_field.hide, #stall_category_field.hide {
+        opacity: 0;
+        max-height: 0;
+    }
 </style>
 
 <div class="container-fluid py-4">
@@ -131,6 +170,86 @@
                                         <option value="sponsor" {{ old('application_type') == 'sponsor' ? 'selected' : '' }}>Sponsor</option>
                                     </select>
                                     @error('application_type')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
+                                <div class="col-md-6" id="stall_size_field" style="display: none;">
+                                    <label for="stall_size" class="form-label">Stall Size (SQM) <span class="text-danger">*</span></label>
+                                    <input type="number" class="form-control @error('stall_size') is-invalid @enderror" 
+                                           id="stall_size" name="stall_size" value="{{ old('stall_size') }}" 
+                                           placeholder="Enter stall size in square meters" min="1" step="0.1">
+                                    <small class="form-text text-muted">Enter the desired stall size in square meters</small>
+                                    @error('stall_size')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
+                            </div>
+                            <div class="row mt-3" id="stall_category_field" style="display: none;">
+                                <div class="col-md-6">
+                                    <label for="stall_category" class="form-label">Stall Category <span class="text-danger">*</span></label>
+                                    <select class="form-select @error('stall_category') is-invalid @enderror" id="stall_category" name="stall_category">
+                                        <option value="">Select Stall Category</option>
+                                        <option value="Startup Booth" {{ old('stall_category') == 'Startup Booth' ? 'selected' : '' }}>Startup Booth</option>
+                                        <option value="Shell Scheme" {{ old('stall_category') == 'Shell Scheme' ? 'selected' : '' }}>Shell Scheme</option>
+                                        <option value="Bare Space" {{ old('stall_category') == 'Bare Space' ? 'selected' : '' }}>Bare Space</option>
+                                    </select>
+                                    <small class="form-text text-muted">Select the type of stall category</small>
+                                    @error('stall_category')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Contact Information -->
+                        <div class="form-section">
+                            <h6>Contact Information <small class="text-muted">(Optional)</small></h6>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <label for="sectors" class="form-label">Sector</label>
+                                    <select class="form-select @error('sectors') is-invalid @enderror" id="sectors" name="sectors">
+                                        <option value="">Select Sector</option>
+                                        @foreach($sectors ?? [] as $sector)
+                                            <option value="{{ $sector->id }}" {{ old('sectors') == $sector->id ? 'selected' : '' }}>
+                                                {{ $sector->name }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                    @error('sectors')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="contact_person" class="form-label">Contact Person Full Name</label>
+                                    <input type="text" class="form-control @error('contact_person') is-invalid @enderror" 
+                                           id="contact_person" name="contact_person" value="{{ old('contact_person') }}" 
+                                           placeholder="Enter full name">
+                                    @error('contact_person')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
+                            </div>
+                            <div class="row mt-3">
+                                <div class="col-md-6">
+                                    <label for="country_code" class="form-label">Country Code</label>
+                                    <select class="form-select @error('country_code') is-invalid @enderror" id="country_code" name="country_code">
+                                        <option value="">Select Country Code</option>
+                                        @foreach($countries ?? [] as $country)
+                                            <option value="{{ $country->code }}" {{ old('country_code') == $country->code ? 'selected' : '' }}>
+                                                {{ $country->code }} - {{ $country->name }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                    @error('country_code')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="mobile_number" class="form-label">Mobile Number</label>
+                                    <input type="tel" class="form-control @error('mobile_number') is-invalid @enderror" 
+                                           id="mobile_number" name="mobile_number" value="{{ old('mobile_number') }}" 
+                                           placeholder="Enter mobile number">
+                                    @error('mobile_number')
                                         <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
                                 </div>
@@ -267,7 +386,62 @@
 document.addEventListener('DOMContentLoaded', function() {
     const addTicketBtn = document.getElementById('add-ticket');
     const ticketAllocations = document.getElementById('ticket-allocations');
+    const applicationTypeSelect = document.getElementById('application_type');
+    const stallSizeField = document.getElementById('stall_size_field');
+    const stallSizeInput = document.getElementById('stall_size');
+    const stallCategoryField = document.getElementById('stall_category_field');
+    const stallCategorySelect = document.getElementById('stall_category');
     let ticketRowCount = 1;
+
+    // Handle application type change
+    applicationTypeSelect.addEventListener('change', function() {
+        if (this.value === 'exhibitor') {
+            // Show stall size field
+            stallSizeField.style.display = 'block';
+            setTimeout(() => {
+                stallSizeField.classList.remove('hide');
+                stallSizeField.classList.add('show');
+            }, 10);
+            stallSizeInput.required = true;
+            
+            // Show stall category field
+            stallCategoryField.style.display = 'block';
+            setTimeout(() => {
+                stallCategoryField.classList.remove('hide');
+                stallCategoryField.classList.add('show');
+            }, 10);
+            stallCategorySelect.required = true;
+        } else {
+            // Hide stall size field
+            stallSizeField.classList.remove('show');
+            stallSizeField.classList.add('hide');
+            setTimeout(() => {
+                stallSizeField.style.display = 'none';
+            }, 300);
+            stallSizeInput.required = false;
+            stallSizeInput.value = '';
+            
+            // Hide stall category field
+            stallCategoryField.classList.remove('show');
+            stallCategoryField.classList.add('hide');
+            setTimeout(() => {
+                stallCategoryField.style.display = 'none';
+            }, 300);
+            stallCategorySelect.required = false;
+            stallCategorySelect.value = '';
+        }
+    });
+
+    // Check initial state on page load
+    if (applicationTypeSelect.value === 'exhibitor') {
+        stallSizeField.style.display = 'block';
+        stallSizeField.classList.add('show');
+        stallSizeInput.required = true;
+        
+        stallCategoryField.style.display = 'block';
+        stallCategoryField.classList.add('show');
+        stallCategorySelect.required = true;
+    }
 
     // Get ticket types from the first select element
     const firstSelect = document.querySelector('select[name="ticket_ids[]"]');
