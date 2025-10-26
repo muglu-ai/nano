@@ -72,7 +72,7 @@
                     <div class="text-center">
                         <a href="https://interlinxpartnering.com/bts/bts_forms/ebanner.php" 
                            target="_blank" 
-                           class="btn btn-gradient-primary btn-lg shadow-lg px-6 mb-0">
+                           class="btn btn-lg shadow-lg px-6 mb-0">
                             <i class="fa fa-external-link me-2"></i>
                             Start Creating Your Banner
                         </a>
