@@ -262,4 +262,9 @@ class DocumentsContoller extends Controller
             return redirect()->route('event.list')->with('error', 'FAQs not found.');
         }
     }
+
+    public function promo_banner()
+    {
+        return view('documents.promo_banner');
+    }
 }

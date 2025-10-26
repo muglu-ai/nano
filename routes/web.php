@@ -600,6 +600,7 @@ Route::get('transport-letter', [DocumentsContoller::class, 'transport_letter'])-
 Route::get('exhibitor-manual', [DocumentsContoller::class, 'exhibitor_manual'])->name('exhibitor_manual')->middleware(SharedMiddleware::class);
 Route::get('portal-guide', [DocumentsContoller::class, 'exhibitor_guide'])->name('exhibitor_guide')->middleware(SharedMiddleware::class);
 Route::get('faqs', [DocumentsContoller::class, 'faqs'])->name('faqs')->middleware(SharedMiddleware::class);
+Route::get('promo-banner', [DocumentsContoller::class, 'promo_banner'])->name('promo.banner')->middleware(SharedMiddleware::class);
 Route::get('participation-letter', [DashboardController::class, 'participantDetails'])->name('participation.letter')->middleware(CheckUser::class);
 
 /* Document Controller Routes Ends
