@@ -188,6 +188,12 @@
             </li>
             <hr class="horizontal dark mt-0">
             <li class="nav-item">
+                <a class="nav-link text-dark" href="{{ route('promo.banner') }}">
+                    <i class="fa-solid fa-image"></i>
+                    <span class="sidenav-normal ms-1 ps-1">Promo Banner</span>
+                </a>
+            </li>
+            <li class="nav-item">
                 <a  href="{{ route('extra_requirements.index') }}" class="nav-link" aria-controls="requirements"
                     role="button" aria-expanded="true"
                 >
