@@ -694,7 +694,7 @@ Route::post('/product-add', [ExhibitorInfoController::class, 'productStore'])->n
 /*Exhibitor Info Admin Routes
 */
 
-Route::get('/exhibitor-info-list', [ExhibitorInfoController::class, 'listExhibitors'])->name('exhibitor.list')->middleware(Auth::class);
+Route::get('/exhibitor-info-list', [ExhibitorInfoController::class, 'listExhibitors'])->name('exhibitor.directory.list')->middleware(Auth::class);
 
 // API endpoint for exhibitor details
 Route::get('/api/exhibitor-details/{id}', [ExhibitorInfoController::class, 'getExhibitorDetails'])->name('api.exhibitor.details')->middleware(Auth::class);
