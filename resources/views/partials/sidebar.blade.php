@@ -386,6 +386,13 @@
                     </div>
                 </li>
             @endif
+
+            <li class="nav-item">
+                <a class="nav-link text-dark" href="{{ route('exhibitor.directory.list') }}">
+                    <i class="fa-solid fa-address-book"></i>
+                    <span class="nav-link-text ms-1 ps-1 text-dark">Exhibitor Directory</span>
+                </a>
+            </li>
             @if ($subRole === 'visitor')
                 <li class="nav-item">
                     <a data-bs-toggle="collapse" href="#visitors" class="nav-link text-dark"
