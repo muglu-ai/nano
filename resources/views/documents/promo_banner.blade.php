@@ -13,25 +13,25 @@
                 <div class="card card-body mt-4">
                     <!-- Header Section -->
                     <div class="text-center mb-4">
-                        <div class="icon-shape icon-lg bg-gradient-primary shadow mx-auto mb-3 d-flex align-items-center justify-content-center" style="width: 80px; height: 80px; border-radius: 20px;">
-                            <i class="fa fa-image text-white" style="font-size: 2.5rem;"></i>
-                        </div>
+                        {{-- <div class="icon-shape icon-lg bg-gradient-primary shadow mx-auto mb-3 d-flex align-items-center justify-content-center" style="width: 80px; height: 80px; border-radius: 20px;">
+                            {{-- <i class="fa fa-image text-white" style="font-size: 2.5rem;"></i> 
+                        </div> --}}
                         <h4 class="font-weight-bolder text-gradient text-primary mb-2">Create Your Promotional Banner</h4>
                         <p class="text-sm opacity-8">Generate your personalized digital banner in minutes!</p>
                     </div>
 
                     <!-- Information Card -->
-                    <div class="card bg-gradient-light mb-4">
+                    <div class="card mb-4">
                         <div class="card-body p-4">
                             <div class="d-flex align-items-center mb-3">
-                                <span class="material-symbols-rounded me-2 text-primary">info</span>
+                                <span class="material-symbols-rounded me-2 text-dark">info</span>
                                 <h6 class="mb-0 font-weight-bolder">About This Tool</h6>
                             </div>
-                            <p class="text-sm opacity-8 mb-3">
+                            <p class="text-sm opacity-8 mb-3 text-dark">
                                 <strong>Proud BTS 2025 Exhibitor!</strong> Add your organization name and other details 
                                 to instantly create a share-ready creative for social media, email signatures, and websites.
                             </p>
-                            <p class="text-sm opacity-8 mb-0">
+                            <p class="text-sm opacity-8 mb-0 text-dark">
                                 <strong>Showcase your participation</strong> and be part of India's biggest tech showcase!
                             </p>
                         </div>
@@ -78,24 +78,13 @@
                         </a>
                         <p class="text-sm mt-3 opacity-6">
                             <i class="fa fa-info-circle me-1"></i>
-                            Opens in a new window
+                            Opens in a new window or copy the link and paste it in your browser
+                            <a href="https://interlinxpartnering.com/bts/bts_forms/ebanner.php" target="_blank">https://interlinxpartnering.com/bts/bts_forms/ebanner.php</a>
                         </p>
                     </div>
 
-                    <!-- Additional Info -->
-                    <div class="alert alert-info mt-4 border-0">
-                        <div class="d-flex align-items-start">
-                            <span class="material-symbols-rounded me-2">lightbulb</span>
-                            <div class="flex-grow-1">
-                                <h6 class="alert-heading font-weight-bolder">Tips for Best Results:</h6>
-                                <ul class="mb-0 text-sm">
-                                    <li>Have your company logo ready</li>
-                                    <li>Prepare any key messages you want to highlight</li>
-                                    <li>Use high-resolution images for better quality</li>
-                                </ul>
-                            </div>
-                        </div>
-                    </div>
+                   
+                    
                 </div>
             </div>
         </div>
