@@ -167,10 +167,10 @@ if (!$attendee) {
 
     // dd($data);
 
-    Mail::to($data['email'])
-    // ->cc('vanessa.kim@teradyne.com')
-    ->bcc(['test.interlinks@gmail.com'])
-    ->queue(new ExhibitorMail($data));
+    // Mail::to($data['email'])
+    // // ->cc('vanessa.kim@teradyne.com')
+    // ->bcc(['test.interlinks@gmail.com'])
+    // ->queue(new ExhibitorMail($data));
 // echo "Exhibitor confirmation mail sent successfully to " . $data['email'];
 // exit;
     return redirect()->back();
