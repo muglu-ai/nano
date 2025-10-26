@@ -190,7 +190,7 @@
             <li class="nav-item">
                 <a class="nav-link text-dark" href="{{ route('promo.banner') }}">
                     <i class="fa-solid fa-image"></i>
-                    <span class="sidenav-normal ms-1 ps-1">CreatePromo Banner</span>
+                    <span class="sidenav-normal ms-1 ps-1">Create Promo Banner</span>
                 </a>
             </li>
             <li class="nav-item">
