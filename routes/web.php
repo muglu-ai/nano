@@ -249,8 +249,8 @@ Route::get('/send-attendee-confirmation/{id}', function ($id) {
             : implode(', ', json_decode($attendee['event_days'], true) ?? []),
     ];
 
-    Mail::bcc(['test.interlinks@gmail.com'])
-        ->queue(new AttendeeConfirmationMail($data));
+    // Mail::bcc(['test.interlinks@gmail.com'])
+    //     ->queue(new AttendeeConfirmationMail($data));
 
     return redirect()->back();
 })->name('mail.attendee_confirmation')->middleware(Auth::class);
@@ -551,6 +551,10 @@ Route::get('/invoice-list', [DashboardController::class, 'invoiceDetails'])->nam
 // Route::view('/users/list', 'admin.users')->name('users.list')->middleware(Auth::class);
 Route::get('/users/list', [AdminController::class, 'usersList'])->name('users.list')->middleware(Auth::class);
 Route::post('/users/send-credentials/{userId}', [AdminController::class, 'sendCredentials'])->name('users.send-credentials')->middleware(Auth::class);
+Route::get('/admin/import-exhibitors', function() {
+    return view('admin.import-exhibitors');
+})->name('admin.import.exhibitors.view')->middleware(Auth::class);
+Route::post('/admin/import-exhibitors-bulk', [App\Http\Controllers\ImportData::class, 'importExhibitorsBulk'])->name('admin.import.exhibitors')->middleware(Auth::class);
 ///post application/submit-endpoint to submit the application
 Route::post('/application/submit', [AdminController::class, 'approve'])->name('approve.submit')->middleware(Auth::class);
 Route::get('/application/submit/test', [AdminController::class, 'approve_test'])->name('approve.submit.test')->middleware(Auth::class);

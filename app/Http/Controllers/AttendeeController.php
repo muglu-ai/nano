@@ -654,9 +654,9 @@ class AttendeeController extends Controller
             $apiRelayController->sendDataToApiNew($uniqueId);
 
 
-            Mail::to($attendee['email'])
-                ->bcc(['test.interlinks@gmail.com'])
-                ->queue(new AttendeeConfirmationMail($data));
+            // Mail::to($attendee['email'])
+            //     ->bcc(['test.interlinks@gmail.com'])
+            //     ->queue(new AttendeeConfirmationMail($data));
 
         }
 
