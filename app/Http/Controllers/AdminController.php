@@ -1271,6 +1271,9 @@ class AdminController extends Controller
     // make this function to send UserCredentialsMail to the applicant
     public function sendUserCredentialsEmail(Request $request)
     {
+
+        echo "Sending email credentials to the applicants";
+        exit;
         //get the application id from the request
         //select all the applcaitiosn where RegSource = 'Admin'
         $applications = Application::where('role', 'exhibitor')->get();
