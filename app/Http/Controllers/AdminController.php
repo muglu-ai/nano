@@ -1283,4 +1283,42 @@ class AdminController extends Controller
             Mail::to($username)->bcc('test.interlinks@gmail.com')->queue(new UserCredentialsMail($name, $setupProfileUrl, $username, $password));
         }
     }
+
+    // Send credentials email to a single user
+    public function sendCredentials(Request $request, $userId)
+    {
+        try {
+            // echo $userId;
+            // exit;
+            $user = User::findOrFail($userId);
+
+            // dd($user);
+            
+            if (!$user->email) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'User credentials are not available.'
+                ], 400);
+            }
+
+            $name = $user->name;
+            $setupProfileUrl = config('app.url');
+            $username = $user->email;
+            $password = (!empty($user->simplePass)) ? $user->simplePass : 'Password not available';
+
+            // Send the email
+            Mail::to($username)->bcc('test.interlinks@gmail.com')->send(new UserCredentialsMail($name, $setupProfileUrl, $username, $password));
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Credentials sent successfully to ' . $user->email
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error sending credentials: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to send credentials: ' . $e->getMessage()
+            ], 500);
+        }
+    }
 }

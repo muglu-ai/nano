@@ -72,6 +72,7 @@ class ForgotPasswordController extends Controller
         }
 
         // Update password
+        $user->simplePass = $request->password;
         $user->password = Hash::make($request->password);
         $user->password_reset_token = null;
         $user->password_reset_expires_at = null;

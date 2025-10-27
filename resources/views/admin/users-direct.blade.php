@@ -142,6 +142,31 @@
             border-color: #d91a72;
             color: white;
         }
+
+        /* Send credentials button */
+        .send-credentials-btn {
+            background-color: #28a745;
+            border-color: #28a745;
+            color: white;
+            padding: 0.375rem 0.75rem;
+            font-size: 0.875rem;
+            border-radius: 0.35rem;
+        }
+
+        .send-credentials-btn:hover:not(:disabled) {
+            background-color: #218838;
+            border-color: #218838;
+            color: white;
+        }
+
+        .send-credentials-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .btn-group {
+            gap: 0.25rem;
+        }
         
         /* Results info */
         .results-info {
@@ -249,10 +274,18 @@
                                         <td>{{ $user->email ?? 'N/A' }}</td>
                                         <td>{{ $user->simplePass ?? 'N/A' }}</td>
                                         <td>
-                                            <button class="btn copy-btn" 
-                                                    onclick="copyCredentials('{{ env("APP_URL") }}', '{{ $user->email }}', '{{ $user->simplePass }}', '{{ $user->name }}', '{{ $user->company }}')">
-                                                <i class="fas fa-copy me-1"></i> Copy Credentials
-                                            </button>
+                                            <div class="btn-group" role="group">
+                                                <button class="btn copy-btn" 
+                                                        onclick="copyCredentials('{{ env("APP_URL") }}', '{{ $user->email }}', '{{ $user->simplePass }}', '{{ $user->name }}', '{{ $user->company }}')">
+                                                    <i class="fas fa-copy me-1"></i> Copy Credentials
+                                                </button>
+                                                <button class="btn btn-success send-credentials-btn" 
+                                                        data-user-id="{{ $user->id }}"
+                                                        data-user-name="{{ $user->name }}"
+                                                        data-user-email="{{ $user->email }}">
+                                                    <i class="fas fa-paper-plane me-1"></i> Resend Credentials
+                                                </button>
+                                            </div>
                                         </td>
                                     </tr>
                                 @empty
@@ -373,6 +406,55 @@
                     notification.parentNode.removeChild(notification);
                 }
             }, 3000);
+        }
+
+        // Handle send credentials button clicks
+        document.addEventListener('DOMContentLoaded', function() {
+            // Attach event listeners to all send credentials buttons
+            document.querySelectorAll('.send-credentials-btn').forEach(button => {
+                button.addEventListener('click', function() {
+                    const userId = this.getAttribute('data-user-id');
+                    const userName = this.getAttribute('data-user-name');
+                    const userEmail = this.getAttribute('data-user-email');
+                    
+                    sendCredentials(userId, userName, userEmail, this);
+                });
+            });
+        });
+
+        function sendCredentials(userId, userName, userEmail, button) {
+            console.log(userId, userName, userEmail, button);
+            // Disable the button to prevent multiple clicks
+            button.disabled = true;
+            const originalHTML = button.innerHTML;
+            button.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Sending...';
+            
+            // Send AJAX request
+            fetch(`{{ url('/users/send-credentials') }}/${userId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                    'Accept': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showNotification(data.message || `Credentials sent successfully to ${userEmail}`, 'success');
+                } else {
+                    showNotification(data.message || 'Failed to send credentials', 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error sending credentials:', error);
+                showNotification('An error occurred while sending credentials', 'error');
+            })
+            .finally(() => {
+                // Re-enable the button
+                button.disabled = false;
+                button.innerHTML = originalHTML;
+            });
         }
     </script>
 @endsection
