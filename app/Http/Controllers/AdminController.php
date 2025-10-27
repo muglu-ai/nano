@@ -1273,7 +1273,7 @@ class AdminController extends Controller
     {
 
         echo "Sending email credentials to the applicants";
-        exit;
+        // exit;
         //get the application id from the request
         //select all the applcaitiosn where RegSource = 'Admin'
         $applications = Application::where('role', 'exhibitor')->get();
