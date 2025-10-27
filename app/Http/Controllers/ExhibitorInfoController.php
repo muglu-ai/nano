@@ -205,7 +205,7 @@ class ExhibitorInfoController extends Controller
         $exhibitor = ExhibitorInfo::updateOrCreate(
             ['application_id' => $applicationId],
             [
-                'category' => $data['category'] ?: 'Not Provided',
+                'category' => !empty($data['category']) ? $data['category'] : '',
                 'fascia_name' => strtoupper($data['fascia_name']),
                 'contact_person' => trim(($data['salutation'] ?? '') . ' ' . ($data['contact_first_name'] ?? '') . ' ' . ($data['contact_last_name'] ?? '')) ?: 'Not Provided',
                 'designation' => $data['designation'] ?: 'Not Provided',
