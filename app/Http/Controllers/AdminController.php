@@ -1304,7 +1304,7 @@ class AdminController extends Controller
             $name = $user->name;
             $setupProfileUrl = config('app.url');
             $username = $user->email;
-            $password = $user->simplePass;
+            $password = (!empty($user->simplePass)) ? $user->simplePass : 'Password not available';
 
             // Send the email
             Mail::to($username)->bcc('test.interlinks@gmail.com')->send(new UserCredentialsMail($name, $setupProfileUrl, $username, $password));
