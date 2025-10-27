@@ -1271,16 +1271,19 @@ class AdminController extends Controller
     // make this function to send UserCredentialsMail to the applicant
     public function sendUserCredentialsEmail(Request $request)
     {
+
+        echo "Sending email credentials to the applicants";
+        // exit;
         //get the application id from the request
         //select all the applcaitiosn where RegSource = 'Admin'
-        $applications = Application::where('RegSource', 'Admin')->get();
+        $applications = Application::where('role', 'exhibitor')->get();
         //send the email to the applicant
         foreach ($applications as $application) {
             $name = $application->user->name;
             $setupProfileUrl = config('app.url');
             $username = $application->user->email;
             $password = $application->user->simplePass;
-            Mail::to($username)->bcc('test.interlinks@gmail.com')->queue(new UserCredentialsMail($name, $setupProfileUrl, $username, $password));
+            Mail::to($username)->bcc('test.interlinks@gmail.com')->send(new UserCredentialsMail($name, $setupProfileUrl, $username, $password));
         }
     }
 
