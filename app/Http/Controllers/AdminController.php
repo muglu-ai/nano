@@ -1273,7 +1273,7 @@ class AdminController extends Controller
     {
         //get the application id from the request
         //select all the applcaitiosn where RegSource = 'Admin'
-        $applications = Application::get();
+        $applications = Application::where('role', 'exhibitor')->get();
         //send the email to the applicant
         foreach ($applications as $application) {
             $name = $application->user->name;
