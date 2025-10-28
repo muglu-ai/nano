@@ -275,6 +275,12 @@
                         </ul>
                     </div>
                 </li>
+                <li class="nav-item ">
+                    <a class="nav-link text-dark " href="{{ route('booth.management') }}">
+                        <span class="sidenav-mini-icon"> B </span>
+                        <span class="sidenav-normal  ms-1  ps-1 text-dark "> Booth Management </span>
+                    </a>
+                </li>
                 @if(!in_array('invoice.list', $hiddenRoutes))
                 <li class="nav-item">
                     <a href="{{ route('co_exhibitors') }}" class="nav-link text-dark " aria-controls="pagesExamples"

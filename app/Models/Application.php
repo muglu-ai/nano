@@ -83,6 +83,7 @@ class Application extends Model
         'tag',
         'approved_by',
         'RegSource',
+        'zone',
     ];
 
     /* Todo : Addedd the following new fields
