@@ -777,11 +777,11 @@ class ExhibitorController extends Controller
         ];
 
         // Send the email
-        if (!empty($email)) {
-            Mail::to($email)
-                ->bcc('test.interlinks@gmail.com')
-                ->send(new ExhibitorMail($data));
-        }
+        // if (!empty($email)) {
+        //     Mail::to($email)
+        //         ->bcc('test.interlinks@gmail.com')
+        //         ->send(new ExhibitorMail($data));
+        // }
         //redirect to the invited with message of successful submission route('exhibition.invited', ['token' => $token]) with token as success
         return redirect()->route('exhibition.invited', ['token' => 'success']);
     }
