@@ -645,7 +645,7 @@ class PassesController extends Controller
             $request->validate([
                 'application_id' => 'required|integer|exists:applications,id',
                 'stall_manning_count' => 'required|integer|min:0',
-                'complimentary_delegate_count' => 'required|integer|min:0',
+                // complimentary_delegate_count will be derived from ticket_allocations
                 'ticket_allocations' => 'sometimes|array',
                 'ticket_allocations.*' => 'integer|min:0',
             ]);
@@ -662,32 +662,35 @@ class PassesController extends Controller
                 }
             }
 
+            // Derive complimentary delegate count from ticket allocations (sum of counts)
+            $complimentaryCount = array_sum($ticketAllocations);
+
             // Check if exhibitionParticipant exists, if not create it
             if (!$application->exhibitionParticipant) {
                 $exhibitionParticipant = new ExhibitionParticipant();
                 $exhibitionParticipant->application_id = $application->id;
                 $exhibitionParticipant->stall_manning_count = $request->stall_manning_count;
-                $exhibitionParticipant->complimentary_delegate_count = $request->complimentary_delegate_count;
+                $exhibitionParticipant->complimentary_delegate_count = $complimentaryCount;
                 $exhibitionParticipant->ticketAllocation = json_encode($ticketAllocations);
                 $exhibitionParticipant->save();
             } else {
                 // Update existing exhibitionParticipant
                 $application->exhibitionParticipant->stall_manning_count = $request->stall_manning_count;
-                $application->exhibitionParticipant->complimentary_delegate_count = $request->complimentary_delegate_count;
+                $application->exhibitionParticipant->complimentary_delegate_count = $complimentaryCount;
                 $application->exhibitionParticipant->ticketAllocation = json_encode($ticketAllocations);
                 $application->exhibitionParticipant->save();
             }
 
             // Calculate total ticket allocations
             $totalTicketAllocations = array_sum($ticketAllocations);
-            $totalPasses = $request->stall_manning_count + $request->complimentary_delegate_count + $totalTicketAllocations;
+            $totalPasses = $request->stall_manning_count + $complimentaryCount + $totalTicketAllocations;
 
             // Log the update
             \Log::info('Passes allocation updated', [
                 'application_id' => $application->id,
                 'company_name' => $application->company_name,
                 'stall_manning_count' => $request->stall_manning_count,
-                'complimentary_delegate_count' => $request->complimentary_delegate_count,
+                'complimentary_delegate_count' => $complimentaryCount,
                 'ticket_allocations' => $ticketAllocations,
                 'total_ticket_allocations' => $totalTicketAllocations,
                 'total_passes' => $totalPasses,
@@ -700,7 +703,7 @@ class PassesController extends Controller
                 'message' => 'Passes allocation updated successfully for ' . $application->company_name,
                 'data' => [
                     'stall_manning_count' => $request->stall_manning_count,
-                    'complimentary_delegate_count' => $request->complimentary_delegate_count,
+                    'complimentary_delegate_count' => $complimentaryCount,
                     'ticket_allocations' => $ticketAllocations,
                     'total_ticket_allocations' => $totalTicketAllocations,
                     'total_passes' => $totalPasses

@@ -279,6 +279,8 @@
     
     .modal-body {
         padding: 30px;
+        max-height: 70vh;
+        overflow-y: auto;
     }
     
     .modal-body .form-control {
@@ -598,7 +600,7 @@
                                                     $tickets = $application->exhibitionParticipant->tickets();
                                                     $ticketTotal = collect($tickets)->sum('count');
                                                 }
-                                                $total = $stallManning + $complimentary + $ticketTotal;
+                                                $total = $stallManning + $complimentary;
                                             @endphp
                                             <span class="badge bg-success fs-6">{{ $total }}</span>
                                         </td>
@@ -677,11 +679,9 @@
                          <input type="text" class="form-control" id="updateCompanyName" readonly>
                      </div>
                      
-                     <div class="mb-3">
-                         <label for="updateStallManning" class="form-label">Exhibitor Passes Allocated</label>
-                         <input type="number" class="form-control" id="updateStallManning" name="stall_manning_count" min="0" required>
-                         <div class="form-text">Enter the number of exhibitor passes to allocate</div>
-                     </div>
+                   
+                        <input type="hidden" id="updateStallManning" name="stall_manning_count" min="0" required>
+                       
                      
                      {{-- <div class="mb-3">
                          <label for="updateComplimentary" class="form-label">Inaugural Passes Allocated</label>
