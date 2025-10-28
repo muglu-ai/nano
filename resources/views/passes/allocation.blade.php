@@ -148,7 +148,26 @@
     /* Ticket Allocations Styling */
     .ticket-allocations {
         max-width: 300px;
-        min-width: 150px;
+    }
+    
+    /* Consumed Passes Styling */
+    .consumed-passes {
+        max-width: 300px;
+    }
+    
+    .consumed-passes .badge {
+        font-size: 0.8rem;
+        padding: 4px 8px;
+        margin-bottom: 4px;
+    }
+    
+    .consumed-passes .badge.bg-danger {
+        background-color: #dc3545 !important;
+    }
+    
+    .consumed-passes .badge.bg-warning {
+        background-color: #ffc107 !important;
+        color: #000 !important;
     }
     
     .ticket-item {
@@ -456,6 +475,7 @@
                                         @endif
                                     </th> --}}
                                     <th style="white-space: normal;">Complimentary Passes</th>
+                                    <th style="white-space: normal;">Consumed Passes</th>
                                     <th class="sortable-header" data-sort="total_passes" data-order="{{ request('sort') == 'total_passes' ? request('order') : '' }}" style="white-space: normal;">
                                         Total Passes
                                         @if(request('sort') == 'total_passes')
@@ -514,8 +534,6 @@
                                             @if($application->exhibitionParticipant)
                                                 @php
                                                     $tickets = $application->exhibitionParticipant->tickets();
-                                                    // Debug: Let's see what we're getting
-                                                    // dd($tickets, $application->exhibitionParticipant->ticketAllocation);
                                                 @endphp
                                                 @if(count($tickets) > 0)
                                                     <div class="ticket-allocations">
@@ -528,6 +546,35 @@
                                                     </div>
                                                 @else
                                                     <span class="text-muted">No tickets allocated</span>
+                                                @endif
+                                            @else
+                                                <span class="text-muted">N/A</span>
+                                            @endif
+                                        </td>
+                                        <td>
+                                            @if($application->exhibitionParticipant)
+                                                @php
+                                                    $consumedTickets = $application->consumedTickets ?? [];
+                                                    $consumedStallManning = $application->consumedStallManning ?? 0;
+                                                    $consumedComplimentary = $application->consumedComplimentary ?? 0;
+                                                    $ticketTypes = ['VIP Pass', 'Premium', 'Exhibitor', 'Service Pass', 'Business Visitor Pass'];
+                                                    $hasConsumed = $consumedStallManning > 0 || $consumedComplimentary > 0 || array_sum($consumedTickets) > 0;
+                                                @endphp
+                                                @if($hasConsumed)
+                                                    <div class="consumed-passes">
+                                                        <div class="mb-1">
+                                                            <span class="badge bg-danger me-1">Exhibitor: {{ $consumedStallManning }}</span>
+                                                        </div>
+                                                        @foreach($ticketTypes as $ticketType)
+                                                            @if(isset($consumedTickets[$ticketType]) && $consumedTickets[$ticketType] > 0)
+                                                                <div class="mb-1">
+                                                                    <span class="badge bg-warning me-1">{{ $ticketType }}: {{ $consumedTickets[$ticketType] }}</span>
+                                                                </div>
+                                                            @endif
+                                                        @endforeach
+                                                    </div>
+                                                @else
+                                                    <span class="text-muted">0</span>
                                                 @endif
                                             @else
                                                 <span class="text-muted">N/A</span>
