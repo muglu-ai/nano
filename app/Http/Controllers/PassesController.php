@@ -540,6 +540,39 @@ class PassesController extends Controller
 
             // Get paginated results
             $applications = $query->paginate($perPage);
+            
+            // Calculate consumed passes for each application
+            foreach ($applications as $app) {
+                if ($app->exhibitionParticipant) {
+                    // Count consumed StallManning passes
+                    $app->consumedStallManning = DB::table('stall_manning')
+                        ->where('exhibition_participant_id', $app->exhibitionParticipant->id)
+                        ->whereNotNull('first_name')
+                        ->where('first_name', '!=', '')
+                        ->count();
+                    
+                    // Count consumed ComplimentaryDelegate passes
+                    $app->consumedComplimentary = DB::table('complimentary_delegates')
+                        ->where('exhibition_participant_id', $app->exhibitionParticipant->id)
+                        ->whereNotNull('first_name')
+                        ->whereRaw("TRIM(first_name) != ''")
+                        ->count();
+                    
+                    // Calculate consumed tickets by type
+                    $consumedTicketsArray = [];
+                    $ticketTypes = ['VIP Pass', 'Premium', 'Exhibitor', 'Service Pass', 'Business Visitor Pass'];
+                    foreach ($ticketTypes as $ticketType) {
+                        $count = DB::table('complimentary_delegates')
+                            ->where('exhibition_participant_id', $app->exhibitionParticipant->id)
+                            ->where('ticketType', $ticketType)
+                            ->whereNotNull('first_name')
+                            ->whereRaw("TRIM(first_name) != ''")
+                            ->count();
+                        $consumedTicketsArray[$ticketType] = $count;
+                    }
+                    $app->consumedTickets = $consumedTicketsArray;
+                }
+            }
 
 
 
