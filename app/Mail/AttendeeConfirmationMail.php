@@ -29,8 +29,6 @@ class AttendeeConfirmationMail extends Mailable
      */
     public function build()
     {
-        return $this->view('mail.attendee_confirmation')
-            ->with('data', $this->data)
-            ->subject('SEMICON India 2025: Registration');
+        return 0;
     }
 }
