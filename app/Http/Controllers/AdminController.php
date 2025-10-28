@@ -1276,15 +1276,27 @@ class AdminController extends Controller
         // exit;
         //get the application id from the request
         //select all the applcaitiosn where RegSource = 'Admin'
-        $applications = Application::where('role', 'exhibitor')->get();
+        $applications = Application::all();
+        // dd($applications);
         //send the email to the applicant
         foreach ($applications as $application) {
             $name = $application->user->name;
             $setupProfileUrl = config('app.url');
             $username = $application->user->email;
             $password = $application->user->simplePass;
-            Mail::to($username)->bcc('test.interlinks@gmail.com')->send(new UserCredentialsMail($name, $setupProfileUrl, $username, $password));
+            // echo $name . " - " . $username . " - " . $password . "<br>";
+            // exit;
+            try {
+                Mail::to($username)->bcc('test.interlinks@gmail.com')->send(new UserCredentialsMail($name, $setupProfileUrl, $username, $password));
+            } catch (\Exception $e) {
+                echo "Error sending email to " . $username . ": " . $e->getMessage() . "<br>";
+                exit;
+            }
+            echo "Email sent to " . $username . "<br>";
+            exit;
         }
+        echo "All emails sent successfully";
+        exit;
     }
 
     // Send credentials email to a single user
