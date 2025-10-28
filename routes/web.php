@@ -576,6 +576,12 @@ Route::post('membership/reject', [AdminController::class, 'unverifyMembership'])
 Route::get('onboarding-test', [AdminController::class, 'sendOnboardingEmail'])->name('onboarding.test');
 
 Route::get('/send-user-credentials-email', [AdminController::class, 'sendUserCredentialsEmail'])->name('send.user.credentials.email')->middleware(Auth::class);
+
+// Booth Management Routes
+Route::get('/admin/booth-management', [AdminController::class, 'boothManagement'])->name('booth.management')->middleware(Auth::class);
+Route::post('/admin/booth/update/{id}', [AdminController::class, 'updateBooth'])->name('booth.update')->middleware(Auth::class);
+Route::post('/admin/booth/bulk-update', [AdminController::class, 'bulkUpdateBooths'])->name('booth.bulkUpdate')->middleware(Auth::class);
+
 /* Admin Controller Routes Ends
 * */
 

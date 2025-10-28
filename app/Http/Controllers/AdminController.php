@@ -1276,15 +1276,27 @@ class AdminController extends Controller
         // exit;
         //get the application id from the request
         //select all the applcaitiosn where RegSource = 'Admin'
-        $applications = Application::where('role', 'exhibitor')->get();
+        $applications = Application::all();
+        // dd($applications);
         //send the email to the applicant
         foreach ($applications as $application) {
             $name = $application->user->name;
             $setupProfileUrl = config('app.url');
             $username = $application->user->email;
             $password = $application->user->simplePass;
-            Mail::to($username)->bcc('test.interlinks@gmail.com')->send(new UserCredentialsMail($name, $setupProfileUrl, $username, $password));
+            // echo $name . " - " . $username . " - " . $password . "<br>";
+            // exit;
+            try {
+                Mail::to($username)->bcc('test.interlinks@gmail.com')->send(new UserCredentialsMail($name, $setupProfileUrl, $username, $password));
+            } catch (\Exception $e) {
+                echo "Error sending email to " . $username . ": " . $e->getMessage() . "<br>";
+                exit;
+            }
+            echo "Email sent to " . $username . "<br>";
+            exit;
         }
+        echo "All emails sent successfully";
+        exit;
     }
 
     // Send credentials email to a single user
@@ -1323,5 +1335,138 @@ class AdminController extends Controller
                 'message' => 'Failed to send credentials: ' . $e->getMessage()
             ], 500);
         }
+    }
+
+    /**
+     * Display booth management page with all applications
+     */
+    public function boothManagement(Request $request)
+    {
+        if (!auth()->check() || auth()->user()->role !== 'admin') {
+            return redirect('/login');
+        }
+
+        $slug = 'Booth Management';
+
+        // Query to get applications with booth numbers or approved applications
+        $query = Application::with(['user'])
+            ->where(function($q) {
+                $q->whereNotNull('stallNumber')
+                  ->orWhere('submission_status', 'approved');
+            });
+
+        // Search functionality
+        if ($request->has('search') && !empty($request->search)) {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('company_name', 'like', "%{$search}%")
+                  ->orWhere('stallNumber', 'like', "%{$search}%")
+                  ->orWhere('application_id', 'like', "%{$search}%");
+            });
+        }
+
+        // Filter by zone
+        if ($request->has('zone') && !empty($request->zone)) {
+            $query->where('zone', $request->zone);
+        }
+
+        $query->orderBy('company_name', 'asc');
+
+        $perPage = $request->get('per_page', 25);
+        $applications = $query->paginate($perPage);
+        $applications->appends($request->query());
+
+        // Get unique zones for filter
+        $zones = Application::whereNotNull('zone')
+            ->distinct()
+            ->pluck('zone')
+            ->filter()
+            ->sort();
+
+        return view('admin.booth_management', compact('applications', 'slug', 'zones'));
+    }
+
+    /**
+     * Update a single booth number
+     */
+    public function updateBooth(Request $request, $id)
+    {
+        if (!auth()->check() || auth()->user()->role !== 'admin') {
+            return response()->json(['error' => 'Unauthorized'], 403);
+        }
+
+        $request->validate([
+            'stallNumber' => 'nullable|string|max:255',
+            'zone' => 'nullable|string|max:255',
+        ]);
+
+        $application = Application::findOrFail($id);
+
+        if ($request->has('stallNumber')) {
+            $application->stallNumber = $request->stallNumber;
+        }
+
+        if ($request->has('zone')) {
+            $application->zone = $request->zone;
+        }
+
+        $application->save();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Booth details updated successfully',
+            'application' => [
+                'id' => $application->id,
+                'company_name' => $application->company_name,
+                'stallNumber' => $application->stallNumber,
+                'zone' => $application->zone,
+            ]
+        ]);
+    }
+
+    /**
+     * Bulk update booth numbers
+     */
+    public function bulkUpdateBooths(Request $request)
+    {
+        if (!auth()->check() || auth()->user()->role !== 'admin') {
+            return response()->json(['error' => 'Unauthorized'], 403);
+        }
+
+        $request->validate([
+            'updates' => 'required|array',
+            'updates.*.id' => 'required|exists:applications,id',
+            'updates.*.stallNumber' => 'nullable|string|max:255',
+            'updates.*.zone' => 'nullable|string|max:255',
+        ]);
+
+        $updatedCount = 0;
+        $errors = [];
+
+        foreach ($request->updates as $update) {
+            try {
+                $application = Application::find($update['id']);
+                
+                if (isset($update['stallNumber'])) {
+                    $application->stallNumber = $update['stallNumber'];
+                }
+
+                if (isset($update['zone'])) {
+                    $application->zone = $update['zone'];
+                }
+
+                $application->save();
+                $updatedCount++;
+            } catch (\Exception $e) {
+                $errors[] = "Failed to update application ID {$update['id']}: " . $e->getMessage();
+            }
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => "Successfully updated {$updatedCount} booth(s)",
+            'updated_count' => $updatedCount,
+            'errors' => $errors
+        ]);
     }
 }

@@ -24,6 +24,7 @@
             'co_exhibitors',
             'visitors',
             'passes',
+            'booth.management',
         ],
         'sales' => ['sales', 'invoices'],
         'visitor' => ['registration.analytics', 'visitor.list'],
@@ -216,6 +217,12 @@
                             <a class="nav-link text-dark " href="/application-list/approved">
                                 <span class="sidenav-mini-icon"> A </span>
                                 <span class="sidenav-normal  ms-1  ps-1 text-dark "> Approved Applications </span>
+                            </a>
+                        </li>
+                        <li class="nav-item ">
+                            <a class="nav-link text-dark " href="{{ route('booth.management') }}">
+                                <span class="sidenav-mini-icon"> B </span>
+                                <span class="sidenav-normal  ms-1  ps-1 text-dark "> Booth Management </span>
                             </a>
                         </li>
                     </ul>
