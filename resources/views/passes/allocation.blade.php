@@ -562,9 +562,9 @@
                                                 @endphp
                                                 @if($hasConsumed)
                                                     <div class="consumed-passes">
-                                                        <div class="mb-1">
+                                                        {{-- <div class="mb-1">
                                                             <span class="badge bg-danger me-1">Exhibitor: {{ $consumedStallManning }}</span>
-                                                        </div>
+                                                        </div> --}}
                                                         @foreach($ticketTypes as $ticketType)
                                                             @if(isset($consumedTickets[$ticketType]) && $consumedTickets[$ticketType] > 0)
                                                                 <div class="mb-1">
