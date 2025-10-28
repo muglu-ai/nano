@@ -443,12 +443,12 @@
                                             <span class="sort-spinner"></span>
                                         @endif
                                     </th>
-                                    <th class="sortable-header" data-sort="stall_manning_count" data-order="{{ request('sort') == 'stall_manning_count' ? request('order') : '' }}" style="white-space: normal;">
+                                    {{-- <th class="sortable-header" data-sort="stall_manning_count" data-order="{{ request('sort') == 'stall_manning_count' ? request('order') : '' }}" style="white-space: normal;">
                                         Exhibitor Passes Allocated
                                         @if(request('sort') == 'stall_manning_count')
                                             <span class="sort-spinner"></span>
                                         @endif
-                                    </th>
+                                    </th> --}}
                                     {{-- <th class="sortable-header" data-sort="complimentary_delegate_count" data-order="{{ request('sort') == 'complimentary_delegate_count' ? request('order') : '' }}" style="white-space: normal;">
                                         Complimentary Passes Allocated
                                         @if(request('sort') == 'complimentary_delegate_count')
@@ -496,13 +496,13 @@
                                                 <br><small class="text-muted">{{ $application->allocated_sqm }} sqm</small>
                                             @endif
                                         </td>
-                                        <td>
+                                        {{-- <td>
                                             @if($application->exhibitionParticipant && $application->exhibitionParticipant->stall_manning_count > 0)
                                                 <span class="pass-count">{{ $application->exhibitionParticipant->stall_manning_count }}</span>
                                             @else
                                                 <span class="text-muted">0</span>
                                             @endif
-                                        </td>
+                                        </td> --}}
                                         {{-- <td>
                                             @if($application->exhibitionParticipant && $application->exhibitionParticipant->complimentary_delegate_count > 0)
                                                 <span class="pass-count">{{ $application->exhibitionParticipant->complimentary_delegate_count }}</span>
