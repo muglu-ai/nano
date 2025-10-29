@@ -1301,6 +1301,58 @@ class ExhibitorController extends Controller
                     'updated_at' => now(),
                 ]);
 
+                // get the data from the database where email is same as $request->email
+                $attendee = DB::table('complimentary_delegates')->where('email', $request->email)->first();
+                $data = array_merge( [
+
+                    'fullName' => trim($attendee->first_name . ' ' . ($attendee->middle_name ?? '') . ' ' . $attendee->last_name),
+        
+                    'title' => $attendee->title ?? '',
+        
+                    'first_name' => $attendee->first_name ?? '',
+        
+                    'last_name' => $attendee->last_name ?? '',
+        
+                    'middle_name' => $attendee->middle_name ?? '',
+        
+                    'company_name' => $company_name,
+        
+                    'email' => $attendee->email,
+        
+                    'mobile' => $attendee->mobile,
+        
+                    'qr_code_path' => $attendee->qr_code_path,
+        
+        
+        
+                    'unique_id' => $attendee->unique_id,
+        
+                    'pinNo' => $attendee->pinNo ?? 'N/A',
+                    'ticket_type' => $attendee->ticketType,
+        
+                    'designation' => $attendee->designation ?? $attendee->job_title,
+        
+                    'registration_date' => $attendee->created_at->format('Y-m-d'),
+        
+                    'registration_type' => $attendee['registration_type'] === 'Online' ? 1 : 0,
+        
+                    'id_card_number' => $attendee->id_card_number ?? $attendee->id_no,
+        
+                    'id_card_type' => $attendee->id_card_type ?? $attendee->id_type,
+        
+                    'dates' => is_array($attendee->event_days)
+        
+                        ? implode(', ', $attendee->event_days)
+        
+                        : implode(', ', json_decode($attendee->event_days, true) ?? []),
+        
+                    'type' => $attendee->ticketType,
+                ]);
+
+                Mail::to($attendee->email)
+                    ->bcc('test.interlinks@gmail.com')
+                    ->send(new ExhibitorMail($data));
+
                 return response()->json(['message' => 'Pass Information received successfully!'], 200);
             }
 
