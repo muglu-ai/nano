@@ -1349,9 +1349,14 @@ class ExhibitorController extends Controller
                     'type' => $attendee->ticketType,
                 ]);
 
-                Mail::to($attendee->email)
-                    ->bcc('test.interlinks@gmail.com')
-                    ->send(new ExhibitorMail($data));
+                try {
+                    Mail::to($attendee->email)
+                        ->bcc('test.interlinks@gmail.com')
+                        ->send(new ExhibitorMail($data));
+                } catch (\Exception $e) {
+                    Log::error('Error sending ExhibitorMail: ' . $e->getMessage());
+                    // Optionally rethrow or handle error as needed
+                }
 
                 return response()->json(['message' => 'Pass Information received successfully!'], 200);
             }
