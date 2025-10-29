@@ -31,6 +31,6 @@ class ExhibitorMail extends Mailable
     {
         return $this->view('mail.visitor_confirmation')
             ->with('data', $this->data)
-            ->subject('SEMICON India 2025: Registration');
+            ->subject('Exhibitor Badge Form Submission -'.config('constants.EVENT_NAME').' '.config('constants.EVENT_YEAR'));
     }
 }

@@ -168,6 +168,7 @@
                                         <option value="">Select Application Type</option>
                                         <option value="exhibitor" {{ old('application_type') == 'exhibitor' ? 'selected' : '' }}>Exhibitor</option>
                                         <option value="sponsor" {{ old('application_type') == 'sponsor' ? 'selected' : '' }}>Sponsor</option>
+                                        <option value="exhibitor+sponsor" {{ old('application_type') == 'exhibitor+sponsor' ? 'selected' : '' }}>Exhibitor + Sponsorship</option>
                                     </select>
                                     @error('application_type')
                                         <div class="invalid-feedback">{{ $message }}</div>
@@ -195,6 +196,16 @@
                                     </select>
                                     <small class="form-text text-muted">Select the type of stall category</small>
                                     @error('stall_category')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
+                                <div class="col-md-6" id="stall_number_field" style="display: none;">
+                                    <label for="stall_number" class="form-label">Stall Number</label>
+                                    <input type="text" class="form-control @error('stall_number') is-invalid @enderror" 
+                                           id="stall_number" name="stall_number" value="{{ old('stall_number') }}" 
+                                           placeholder="Enter stall number">
+                                    <small class="form-text text-muted">Enter the stall number</small>
+                                    @error('stall_number')
                                         <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
                                 </div>
@@ -391,12 +402,97 @@ document.addEventListener('DOMContentLoaded', function() {
     const stallSizeInput = document.getElementById('stall_size');
     const stallCategoryField = document.getElementById('stall_category_field');
     const stallCategorySelect = document.getElementById('stall_category');
+    const stallNumberField = document.getElementById('stall_number_field');
+    const stallNumberInput = document.getElementById('stall_number');
     let ticketRowCount = 1;
 
+    // ===== Dynamic States by Country =====
+    const countrySelect = document.getElementById('country_id');
+    const stateSelect = document.getElementById('state_id');
+    const getStatesUrl = "{{ route('get.states') }}";
+    const csrfToken = "{{ csrf_token() }}";
+
+    function setStateOptions(states, selectedStateId) {
+        // Reset options
+        stateSelect.innerHTML = '';
+        const defaultOpt = document.createElement('option');
+        defaultOpt.value = '';
+        defaultOpt.textContent = 'Select State';
+        stateSelect.appendChild(defaultOpt);
+
+        // Populate
+        states.forEach(function(state) {
+            const opt = document.createElement('option');
+            opt.value = state.id;
+            opt.textContent = state.name;
+            if (selectedStateId && String(selectedStateId) === String(state.id)) {
+                opt.selected = true;
+            }
+            stateSelect.appendChild(opt);
+        });
+    }
+
+    async function loadStatesForCountry(countryId, selectedStateId) {
+        if (!countryId) {
+            setStateOptions([], null);
+            return;
+        }
+
+        // Show loading indicator
+        stateSelect.innerHTML = '';
+        const loadingOpt = document.createElement('option');
+        loadingOpt.value = '';
+        loadingOpt.textContent = 'Loading...';
+        stateSelect.appendChild(loadingOpt);
+
+        try {
+            // Use FormData to send form data (not JSON) - matches controller expectations
+            const formData = new FormData();
+            formData.append('country_id', countryId);
+            formData.append('_token', csrfToken);
+
+            const response = await fetch(getStatesUrl, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRF-TOKEN': csrfToken
+                }
+            });
+            
+            if (!response.ok) {
+                throw new Error('Failed to fetch states');
+            }
+            
+            const states = await response.json();
+            setStateOptions(Array.isArray(states) ? states : [], selectedStateId);
+        } catch (e) {
+            console.error('Error loading states:', e);
+            setStateOptions([], null);
+            alert('Error fetching states. Please try again.');
+        }
+    }
+
+    // Bind change event
+    if (countrySelect && stateSelect) {
+        countrySelect.addEventListener('change', function() {
+            loadStatesForCountry(this.value, null);
+        });
+
+        // On initial load, if a country is preselected, load its states and keep old state selected
+        const initialCountry = countrySelect.value;
+        const initialState = "{{ old('state_id') }}";
+        if (initialCountry) {
+            loadStatesForCountry(initialCountry, initialState);
+        }
+    }
+
     // Handle application type change
-    applicationTypeSelect.addEventListener('change', function() {
-        if (this.value === 'exhibitor') {
-            // Show stall size field
+    function handleApplicationTypeChange() {
+        const appType = applicationTypeSelect.value;
+        
+        if (appType === 'exhibitor' || appType === 'exhibitor+sponsor') {
+            // Show stall size field for both exhibitor and exhibitor+sponsor
             stallSizeField.style.display = 'block';
             setTimeout(() => {
                 stallSizeField.classList.remove('hide');
@@ -404,15 +500,22 @@ document.addEventListener('DOMContentLoaded', function() {
             }, 10);
             stallSizeInput.required = true;
             
-            // Show stall category field
+            // Show stall category field for both exhibitor and exhibitor+sponsor
             stallCategoryField.style.display = 'block';
             setTimeout(() => {
                 stallCategoryField.classList.remove('hide');
                 stallCategoryField.classList.add('show');
             }, 10);
             stallCategorySelect.required = true;
+            
+            // Show stall number field for both exhibitor and exhibitor+sponsor
+            stallNumberField.style.display = 'block';
+            setTimeout(() => {
+                stallNumberField.classList.remove('hide');
+                stallNumberField.classList.add('show');
+            }, 10);
         } else {
-            // Hide stall size field
+            // Hide all stall fields for sponsor or empty
             stallSizeField.classList.remove('show');
             stallSizeField.classList.add('hide');
             setTimeout(() => {
@@ -421,7 +524,6 @@ document.addEventListener('DOMContentLoaded', function() {
             stallSizeInput.required = false;
             stallSizeInput.value = '';
             
-            // Hide stall category field
             stallCategoryField.classList.remove('show');
             stallCategoryField.classList.add('hide');
             setTimeout(() => {
@@ -429,18 +531,22 @@ document.addEventListener('DOMContentLoaded', function() {
             }, 300);
             stallCategorySelect.required = false;
             stallCategorySelect.value = '';
+            
+            stallNumberField.classList.remove('show');
+            stallNumberField.classList.add('hide');
+            setTimeout(() => {
+                stallNumberField.style.display = 'none';
+            }, 300);
+            stallNumberInput.value = '';
         }
-    });
+    }
+
+    applicationTypeSelect.addEventListener('change', handleApplicationTypeChange);
 
     // Check initial state on page load
-    if (applicationTypeSelect.value === 'exhibitor') {
-        stallSizeField.style.display = 'block';
-        stallSizeField.classList.add('show');
-        stallSizeInput.required = true;
-        
-        stallCategoryField.style.display = 'block';
-        stallCategoryField.classList.add('show');
-        stallCategorySelect.required = true;
+    const initialAppType = applicationTypeSelect.value;
+    if (initialAppType === 'exhibitor' || initialAppType === 'exhibitor+sponsor') {
+        handleApplicationTypeChange();
     }
 
     // Get ticket types from the first select element

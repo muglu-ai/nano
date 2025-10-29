@@ -1332,7 +1332,7 @@ class ApplicationController extends Controller
         $request->validate([            
             'company_name' => 'required|string|max:255',
             'company_email' => 'required|email|max:255',
-            'application_type' => 'required|in:exhibitor,sponsor',
+            'application_type' => 'required|in:exhibitor,sponsor,exhibitor+sponsor',
             'address' => 'nullable|string',
             'postal_code' => 'nullable|string|max:20',
             'city_id' => 'nullable|string|max:255',
@@ -1344,8 +1344,9 @@ class ApplicationController extends Controller
             'contact_person' => 'nullable|string|max:255',
             'country_code' => 'nullable|string|max:10',
             'mobile_number' => 'nullable|string|max:20',
-            'stall_size' => 'required_if:application_type,exhibitor|nullable|numeric|min:1',
-            'stall_category' => 'required_if:application_type,exhibitor|nullable|in:Startup Booth,Shell Scheme,Bare Space',
+            'stall_size' => 'required_if:application_type,exhibitor|required_if:application_type,exhibitor+sponsor|nullable|numeric|min:1',
+            'stall_category' => 'required_if:application_type,exhibitor|required_if:application_type,exhibitor+sponsor|nullable|in:Startup Booth,Shell Scheme,Bare Space',
+            'stall_number' => 'nullable|string|max:255',
             // 'stall_category' => 'required|in:Shell Scheme,Bare Space, Startup Booth',
             // 'booth_size' => 'required|integer|min:1|max:36',
             // 'payment_currency' => 'required|in:EUR,INR',
@@ -1390,6 +1391,7 @@ class ApplicationController extends Controller
                 'interested_sqm' => $request->stall_size, // Store stall size in interested_sqm field
                 'allocated_sqm' => $request->stall_size, // Store allocated sqm size in allocated_sqm field
                 'stall_category' => $request->stall_category, // Store stall category
+                'stallNumber' => $request->stall_number, // Store stall number (for Exhibitor + Sponsorship)
                 'sector_id' => $request->sectors, // Store selected sector
                 
             ]);
