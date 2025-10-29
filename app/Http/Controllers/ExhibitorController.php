@@ -1258,7 +1258,7 @@ class ExhibitorController extends Controller
                     ->bcc('test.interlinks@gmail.com')
                     ->send(new ExhibitorMail($data));
 
-                return response()->json(['message' => 'Exhibitor Delegate added  successfully!']);
+                return response()->json(['message' => $request->invite_type . ' Delegate added  successfully!']);
             } else {
 
                 //check the count of ticket allocation from the exhibition table
@@ -1383,6 +1383,7 @@ class ExhibitorController extends Controller
      */
     function sendSemiconEmail(array $recipients, string $subject = 'Important Information – SEMICON India 2025', string $attachment = null)
     {
+        exit;
         // Set max execution time to 0 (unlimited) or adjust as needed
         ini_set('max_execution_time', 0);
 
@@ -1491,6 +1492,7 @@ class ExhibitorController extends Controller
     //select all email from stall_manning where emailSent is null or 0 and first_name is not null and email is not null
     public function emailSent(Request $request)
     {
+        exit;
         $emails = DB::table('complimentary_delegates')
             ->where(function ($query) {
                 $query->whereNull('emailSent')
