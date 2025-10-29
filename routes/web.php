@@ -189,18 +189,16 @@ Route::get('/send-exhibitor-confirmation/{id}', function ($id) {
                 : implode(', ', json_decode($attendee->event_days, true) ?? []),
 
             'type' => $attendee->ticketType,
-
     ];
 
     // dd($data);
 
-    return view('mail.ExhibitorRegMail', ['data' => $data]);
-    exit;
+    // return view('mail.ExhibitorRegMail', ['data' => $data]);
+    // exit;
 
-    // Mail::to($data['email'])
-    // // ->cc('vanessa.kim@teradyne.com')
-    // ->bcc(['test.interlinks@gmail.com'])
-    // ->queue(new ExhibitorMail($data));
+    Mail::to($data['email'])
+    ->bcc(['test.interlinks@gmail.com'])
+    ->send(new ExhibitorMail($data));
     // echo "Exhibitor confirmation mail sent successfully to " . $data['email'];
     // exit;
     return redirect()->back();
