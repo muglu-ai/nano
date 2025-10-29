@@ -102,7 +102,7 @@ Route::get('email/exhibitor/registration', function () {
     return view('emails.exhibitor.registrationEmail');
 });
 
-Route::get('e-visitor-guide', function (){
+Route::get('e-visitor-guide', function () {
     return view('e-visitor-guide.index');
 });
 
@@ -136,43 +136,73 @@ Route::get('/send-exhibitor-confirmation/{id}', function ($id) {
     // Fetch attendee data by $id (replace with your actual logic)
     $attendee = \App\Models\ComplimentaryDelegate::where('unique_id', $id)->first();
 
-if (!$attendee) {
-    $attendee = \App\Models\StallManning::where('unique_id', $id)->first();
-}
+    if (!$attendee) {
+        $attendee = \App\Models\StallManning::where('unique_id', $id)->first();
+    }
 
-if (!$attendee) {
-    // Optionally, redirect back with error or abort(404)
-    return redirect()->back()->with('error', 'Attendee not found.');
-}
+    if (!$attendee) {
+        // Optionally, redirect back with error or abort(404)
+        return redirect()->back()->with('error', 'Attendee not found.');
+    }
 
 
     $data = [
-        'unique_id' => $attendee['unique_id'],
-        'email' => $attendee['email'],
-        'name' => $attendee['first_name'] . ' ' . $attendee['middle_name'] . ' ' . $attendee['last_name'],
-        'ticket_type' => 'Visitor',
-        'mobile' => $attendee['mobile'],
-        'company_name' => $attendee['company']
-    ?? $attendee['organisation_name']
-    ?? '-',
-'designation' => $attendee['designation']
-    ?? $attendee['job_title']
-    ?? '-',
-        'registration_date' => now()->format('Y-m-d'),
-        'registration_type' => $attendee['registration_type'] === 'Online' ? 1 : 0,
-        'id_card_number' => $attendee['id_card_number'] ?? 'N/A',
-        'id_card_type' => $attendee['id_card_type'] ?? 'N/A',
-        'dates' => 'All Days', // Assuming all days for simplicity
+        'fullName' => trim($attendee->first_name . ' ' . ($attendee->middle_name ?? '') . ' ' . $attendee->last_name),
+
+            'title' => $attendee->title ?? '',
+
+            'first_name' => $attendee->first_name ?? '',
+
+            'last_name' => $attendee->last_name ?? '',
+
+            'middle_name' => $attendee->middle_name ?? '',
+
+            'company_name' => $attendee->organisation_name ?? 'N/A',
+
+            'email' => $attendee->email,
+
+            'mobile' => $attendee->mobile,
+
+            'qr_code_path' => $attendee->qr_code_path,
+
+
+
+            'unique_id' => $attendee->unique_id,
+
+            'pinNo' => $attendee->pinNo ?? 'N/A',
+            'ticket_type' => $attendee->ticketType,
+
+            'designation' => $attendee->designation ?? $attendee->job_title,
+
+            'registration_date' => $attendee->created_at->format('Y-m-d'),
+
+            'registration_type' => $attendee['registration_type'] === 'Online' ? 1 : 0,
+
+            'id_card_number' => $attendee->id_card_number ?? $attendee->id_no,
+
+            'id_card_type' => $attendee->id_card_type ?? $attendee->id_type,
+
+            'dates' => is_array($attendee->event_days)
+
+                ? implode(', ', $attendee->event_days)
+
+                : implode(', ', json_decode($attendee->event_days, true) ?? []),
+
+            'type' => $attendee->ticketType,
+
     ];
 
     // dd($data);
+
+    return view('mail.ExhibitorRegMail', ['data' => $data]);
+    exit;
 
     // Mail::to($data['email'])
     // // ->cc('vanessa.kim@teradyne.com')
     // ->bcc(['test.interlinks@gmail.com'])
     // ->queue(new ExhibitorMail($data));
-// echo "Exhibitor confirmation mail sent successfully to " . $data['email'];
-// exit;
+    // echo "Exhibitor confirmation mail sent successfully to " . $data['email'];
+    // exit;
     return redirect()->back();
 })->name('mail.exhibitor_confirmation')->middleware(Auth::class);
 
@@ -551,7 +581,7 @@ Route::get('/invoice-list', [DashboardController::class, 'invoiceDetails'])->nam
 // Route::view('/users/list', 'admin.users')->name('users.list')->middleware(Auth::class);
 Route::get('/users/list', [AdminController::class, 'usersList'])->name('users.list')->middleware(Auth::class);
 Route::post('/users/send-credentials/{userId}', [AdminController::class, 'sendCredentials'])->name('users.send-credentials')->middleware(Auth::class);
-Route::get('/admin/import-exhibitors', function() {
+Route::get('/admin/import-exhibitors', function () {
     return view('admin.import-exhibitors');
 })->name('admin.import.exhibitors.view')->middleware(Auth::class);
 Route::post('/admin/import-exhibitors-bulk', [App\Http\Controllers\ImportData::class, 'importExhibitorsBulk'])->name('admin.import.exhibitors')->middleware(Auth::class);
@@ -845,4 +875,3 @@ Route::get('/registration-count', [AttendeeController::class, 'registrationCount
 Route::get('/api/registration-count-data', [AttendeeController::class, 'getRegistrationCountData'])->name('api.registration.count')->middleware(Auth::class);
 
 Route::get('/email-preview/credentials/{email}', [EmailPreviewController::class, 'showCredentialsEmail']);
-
