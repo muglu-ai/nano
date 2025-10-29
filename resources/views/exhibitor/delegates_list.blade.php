@@ -171,6 +171,30 @@
         .hidden {
             display: none;
         }
+
+        /* Global submit loader */
+        .loader-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255, 255, 255, 0.7);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+        }
+        .loader-content {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: #fff;
+            padding: 16px 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+            border: 1px solid #e9ecef;
+        }
     </style>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
@@ -479,6 +503,14 @@
 
     </div>
 
+    <!-- Global Loader -->
+    <div id="globalLoader" class="loader-overlay">
+        <div class="loader-content">
+            <div class="spinner-border text-primary" role="status" aria-hidden="true"></div>
+            <div><strong>Submitting...</strong> Please wait.</div>
+        </div>
+    </div>
+
     @php
         if ($ticketName == 'Inaugural Passes') {
             $input_type = 'delegate';
@@ -646,27 +678,42 @@
                 formData.append('invite_type', document.getElementById('inviteType2').value);
                 formData.append('organisationName', document.getElementById('organisationName').value);
 
-                fetch('{{ route('exhibition.add') }}', {
-                        method: 'POST',
-                        body: formData
+                // Show loader and disable submit
+                const loader = document.getElementById('globalLoader');
+                const submitBtn = document.querySelector('#addForm button[type="submit"]');
+                const originalBtnHtml = submitBtn ? submitBtn.innerHTML : '';
+                if (loader) loader.style.display = 'flex';
+                if (submitBtn) {
+                    submitBtn.disabled = true;
+                    submitBtn.innerHTML = 'Submitting...';
+                }
 
-                    })
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.error) {
-                            Swal.fire('Error', JSON.stringify(data.error), 'error');
-                        } else {
-                            Swal.fire('Success', data.message, 'success');
-                            var addModal = bootstrap.Modal.getInstance(document.getElementById(
-                                'addModal'));
-                            addModal.hide();
-                            location.reload();
-                        }
-                    })
-                    .catch(error => {
-                        console.error('Error:', error);
-                        Swal.fire('Error', 'Something went wrong! ' + error.message, 'error');
-                    });
+                fetch('{{ route('exhibition.add') }}', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        Swal.fire('Error', JSON.stringify(data.error), 'error');
+                    } else {
+                        Swal.fire('Success', data.message, 'success');
+                        var addModal = bootstrap.Modal.getInstance(document.getElementById('addModal'));
+                        addModal.hide();
+                        location.reload();
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    Swal.fire('Error', 'Something went wrong! ' + error.message, 'error');
+                })
+                .finally(() => {
+                    if (loader) loader.style.display = 'none';
+                    if (submitBtn) {
+                        submitBtn.disabled = false;
+                        submitBtn.innerHTML = originalBtnHtml || 'Add {{ $ticketName }}';
+                    }
+                });
 
 
             });

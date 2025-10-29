@@ -763,17 +763,54 @@ class ExhibitorController extends Controller
 
 
         //send an email to the invitee with the token and link as Route::get('/invited/{token}/', [ExhibitorController::class, 'invited'])->name('exhibition.invited');
+
+        //fetch the same data from the database where email is same as $email
+        $attendee = DB::table('complimentary_delegates')->where('email', $email)->first();
+       
         $data = [
-            'name' => trim($request->name),
-            'company_name' => $request->organisationName,
-            'email' => $email,
-            'mobile' => $request->fullPhoneNumber,
-            // 'qr_code_path' => $attendee->qr_code_path,
-            'unique_id' => $uniqueId,
-            'ticket_type' => 'Exhibitor',
-            'designation' => $request->jobTitle ?? '-',
-            'registration_date' => $request->created_at,
-            'registration_type' => 'Exhibitor',
+            'fullName' => trim($attendee->first_name . ' ' . ($attendee->middle_name ?? '') . ' ' . $attendee->last_name),
+
+            'title' => $attendee->title ?? '',
+
+            'first_name' => $attendee->first_name ?? '',
+
+            'last_name' => $attendee->last_name ?? '',
+
+            'middle_name' => $attendee->middle_name ?? '',
+
+            'company_name' => $attendee->organisation_name ?? 'N/A',
+
+            'email' => $attendee->email,
+
+            'mobile' => $attendee->mobile,
+
+            'qr_code_path' => $attendee->qr_code_path,
+
+
+
+            'unique_id' => $attendee->unique_id,
+
+            'pinNo' => $attendee->pinNo ?? 'N/A',
+            'ticket_type' => $attendee->ticketType,
+
+            'designation' => $attendee->designation ?? $attendee->job_title,
+
+            'registration_date' => $attendee->created_at->format('Y-m-d'),
+
+            'registration_type' => $attendee['registration_type'] === 'Online' ? 1 : 0,
+
+            'id_card_number' => $attendee->id_card_number ?? $attendee->id_no,
+
+            'id_card_type' => $attendee->id_card_type ?? $attendee->id_type,
+
+            'dates' => is_array($attendee->event_days)
+
+                ? implode(', ', $attendee->event_days)
+
+                : implode(', ', json_decode($attendee->event_days, true) ?? []),
+
+            'type' => $attendee->ticketType,
+
         ];
 
         // Send the email
@@ -1174,22 +1211,52 @@ class ExhibitorController extends Controller
                 $attendee = StallManning::where('unique_id', $uniqueId)->first(['first_name', 'last_name', 'organisation_name', 'email', 'mobile', 'unique_id', 'job_title', 'created_at', 'id_no', 'id_type']);
 
                 $data = [
-                    'name' => trim($attendee->first_name . ' ' . ($attendee->last_name ?? '')),
-                    'company_name' => $attendee->organisation_name,
+                    'fullName' => trim($attendee->first_name . ' ' . ($attendee->middle_name ?? '') . ' ' . $attendee->last_name),
+
+                    'title' => $attendee->title ?? '',
+        
+                    'first_name' => $attendee->first_name ?? '',
+        
+                    'last_name' => $attendee->last_name ?? '',
+        
+                    'middle_name' => $attendee->middle_name ?? '',
+        
+                    'company_name' => $attendee->organisation_name ?? 'N/A',
+        
                     'email' => $attendee->email,
+        
                     'mobile' => $attendee->mobile,
+        
+                    'qr_code_path' => $attendee->qr_code_path,
+        
+        
+        
                     'unique_id' => $attendee->unique_id,
-                    'registration_type' => 'Exhibitor',
-                    'designation' => $attendee->job_title,
-                    'registration_date' => $attendee->created_at ? $attendee->created_at->format('Y-m-d') : null,
-                    'id_card_number' => $attendee->id_no,
-                    'id_card_type' => $attendee->id_type,
-                    'dates' => 'All',
-                    'type' => $attendee->ticketType ?? 'Exhibitor',
+        
+                    'pinNo' => $attendee->pinNo ?? 'N/A',
+                    'ticket_type' => $attendee->ticketType,
+        
+                    'designation' => $attendee->designation ?? $attendee->job_title,
+        
+                    'registration_date' => $attendee->created_at->format('Y-m-d'),
+        
+                    'registration_type' => $attendee['registration_type'] === 'Online' ? 1 : 0,
+        
+                    'id_card_number' => $attendee->id_card_number ?? $attendee->id_no,
+        
+                    'id_card_type' => $attendee->id_card_type ?? $attendee->id_type,
+        
+                    'dates' => is_array($attendee->event_days)
+        
+                        ? implode(', ', $attendee->event_days)
+        
+                        : implode(', ', json_decode($attendee->event_days, true) ?? []),
+        
+                    'type' => $attendee->ticketType,
                 ];
                 Mail::to($attendee->email)
                     ->bcc('test.interlinks@gmail.com')
-                    ->queue(new ExhibitorMail($data));
+                    ->send(new ExhibitorMail($data));
 
                 return response()->json(['message' => 'Exhibitor Delegate added  successfully!']);
             } else {
