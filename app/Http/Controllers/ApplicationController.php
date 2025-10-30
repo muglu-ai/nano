@@ -25,6 +25,7 @@ use Barryvdh\DomPDF\Facade\Pdf;
 use App\Mail\ExhibitorPaymentConfirmation;
 use Illuminate\Support\Facades\Hash;
 use App\Models\Ticket;
+use App\Mail\UserCredentialsMail;
 
 
 class ApplicationController extends Controller
@@ -1409,6 +1410,13 @@ class ApplicationController extends Controller
                     ]);
                 }
             }
+
+            $url = config('constants.APP_URL');
+
+            //send email to the user with the password
+            Mail::to($validated['company_email'])
+                ->bcc('test.interlinks@gmail.com')
+                ->send(new UserCredentialsMail($validated['company_name'], $url, $validated['company_email'], $password));
 
             return redirect()->route('application.lists')
                 ->with('success', 'Application and user account created successfully!');
