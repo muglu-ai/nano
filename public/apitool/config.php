@@ -1,5 +1,6 @@
 <?php
 
+ini_set('display_errors', 1);
 /*
 End Point :
 https://studio.chkdin.com/api/v1/push_guest
