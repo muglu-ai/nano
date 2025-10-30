@@ -32,6 +32,8 @@ class ExhibitorInfo extends Model
         'designation',
         'submission_status',
         'category',
+        'api_status',
+        'api_message',
 
     ];
 

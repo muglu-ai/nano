@@ -582,7 +582,7 @@ class ImportData extends Controller
     /**
      * Calculate ticket allocation based on requirements
      */
-    private function calculateTicketAllocation($boothSize, $entityType, $standardPasses, $premiumPasses, $vipPasses, $fmcPremiumPasses, $exhibitorPasses, $servicePasses, $businessVisitorPasses)
+    private function calculateTicketAllocation2($boothSize, $entityType, $standardPasses, $premiumPasses, $vipPasses, $fmcPremiumPasses, $exhibitorPasses, $servicePasses, $businessVisitorPasses)
     {
         // This is a simplified calculation. Adjust based on your actual ticket type IDs
         $allocation = [];
@@ -609,6 +609,41 @@ class ImportData extends Controller
             $allocation['11'] = ($allocation['11'] ?? 0) + 8;
         }
 
+        return json_encode($allocation);
+    }
+
+    private function calculateTicketAllocation($boothSize, $entityType, $standardPasses, $premiumPasses, $vipPasses, $fmcPremiumPasses, $exhibitorPasses, $servicePasses, $businessVisitorPasses)
+    {
+        // Map only the CSV-provided counts; no booth-size based calculations
+        $allocation = [];
+
+        if ($vipPasses > 0) {
+            $allocation['1'] = $vipPasses; // VIP (ensure this ID matches your system)
+        }
+        if ($premiumPasses > 0) {
+            $allocation['2'] = $premiumPasses; // Premium
+        }
+        if ($fmcPremiumPasses > 0) {
+            $allocation['5'] = $fmcPremiumPasses; // Standard
+        }
+
+        if ($exhibitorPasses > 0) {
+            $allocation['11'] = $exhibitorPasses; // Standard
+        }
+
+        if ($standardPasses > 0) {
+            $allocation['3'] = $standardPasses; // Standard
+        }
+
+        if ($servicePasses > 0) {
+            $allocation['12'] = $servicePasses; // Standard
+        }
+
+        if ($businessVisitorPasses > 0) {
+            $allocation['13'] = $businessVisitorPasses; // Standard
+        }
+
+     
         return json_encode($allocation);
     }
 }

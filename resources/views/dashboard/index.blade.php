@@ -241,7 +241,7 @@
             {{--            </div> --}}
 
 
-            @if (($exhibitionParticipant['complimentary_delegate_count'] ?? 0) > 0)
+            {{-- @if (($exhibitionParticipant['complimentary_delegate_count'] ?? 0) > 0)
                 <div class="col-xl-3 col-sm-6 mb-4">
                     <div class="card h-100" style="min-height: 90px; min-width: 100%;">
                         <div class="card-header d-flex justify-content-between align-items-center">
@@ -264,7 +264,7 @@
                         </div>
                     </div>
                 </div>
-            @endif
+            @endif --}}
 
             {{-- if $ticketDetails is not null and array items count as not 0 then make card with 0.name passes --}}
             @foreach ($ticketSummary ?? [] as $ticket)
