@@ -19,7 +19,10 @@ PARAMS:
     qsn_935 (. Extra Variable 1  )
     qsn_936 (. Extra Variable 2 )
 
-
+$servername = 'localhost'; // Your MySql Server Name or IP address here
+	$dbusername = 'btsblnl265_asd1d_bengaluruite'; // Login user id here
+	$dbpassword = 'Disl#vhfj#Af#DhW65'; // Login password here
+	$dbname = 'btsblnl265_asd1d_bengaluruite';
 
 */ 
 
@@ -28,6 +31,25 @@ const API_KEY = 'scan626246ff10216s477754768osk';
 const EVENT_ID = 118150;
 
 CONST TEST_MODE = true;
+
+define('DB_HOST', 'localhost');
+define('DB_NAME', 'btsblnl265_asd1d_bengaluruite');
+define('DB_USERNAME', 'btsblnl265_asd1d_bengaluruite');
+define('DB_PASSWORD', 'Disl#vhfj#Af#DhW65');
+// define('DB_PORT', 3306);
+define('DB_NAME2', 'btsblnl265_asd1d_portal');
+
+// create a dbconnection function
+function dbconnection() {
+    $conn = new mysqli(DB_HOST, DB_USERNAME, DB_PASSWORD, DB_NAME);
+    if ($conn->connect_error) {
+        die("Connection failed: " . $conn->connect_error);
+    }
+    return $conn;
+}
+
+$conn = dbconnection();
+
 
 /*
 VVIP - 3516
@@ -94,8 +116,15 @@ STANDARD Pass Day 1 & 2 – 3584
 STANDARD Pass Day 1 & 3 – 3585
 STANDARD Pass Day 2 & 3 – 3586
 
-
 */ 
+
+function insert_api_log($name, $email, $booking_id, $ticket_id, $ticket_type, $status, $message, $request, $response) {
+    $sql = "INSERT INTO it_2025_chkdin_api_log (name, email, booking_id, ticket_id, ticket_type, status, message, request, response, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())";
+    $stmt = dbconnection()->prepare($sql);
+    $stmt->execute([$name, $email, $booking_id, $ticket_id, $ticket_type, $status, $message, $request, $response]);
+}
+
+
 
 function send_guest_data($name, $category_id, $email, $country_code, $mobile, $company, $qsn_933, $qsn_934, $qsn_935, $qsn_936) {
     $data = [
@@ -104,18 +133,62 @@ function send_guest_data($name, $category_id, $email, $country_code, $mobile, $c
         'name' => $name,
         'category_id' => $category_id,
         'email' => $email,
+        'country_code' => $country_code,
+        'mobile' => $mobile,
+        'company' => $company,
+        'qsn_933' => $qsn_933,
+        'qsn_934' => $qsn_934,
+        'qsn_935' => $qsn_935,
+        'qsn_936' => $qsn_936,
     ];
 
-    $ch = curl_init(API_ENDPOINT);
-    curl_setopt($ch, CURLOPT_POST, 1);
-    curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
-    $response = curl_exec($ch);
+    // Initialize cURL
+    $ch = curl_init();
 
-    // print_r($response);
+    // Set cURL options to send as application/x-www-form-urlencoded with proper headers and SSL
+    curl_setopt($ch, CURLOPT_URL, API_ENDPOINT);
+    curl_setopt($ch, CURLOPT_POST, true);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($data));
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_HTTPHEADER, [
+        'Content-Type: application/x-www-form-urlencoded',
+        'User-Agent: PHP-Guest-API-Client/1.0'
+    ]);
+    curl_setopt($ch, CURLOPT_TIMEOUT, 30);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);
+
+    // Execute the request
+    $response = curl_exec($ch);
+    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    $error = curl_error($ch);
+
+    // Close cURL
     curl_close($ch);
-    return $response;
+
+    // Handle errors
+    if ($error) {
+        return [
+            'success' => false,
+            'error' => 'cURL Error: ' . $error,
+            'http_code' => $httpCode
+        ];
+    }
+
+
+
+    // Parse response
+    $responseData = json_decode($response, true);
+
+    insert_api_log($name, $email, $responseData['guest_id'], $responseData['qr_code'], $responseData['qr_image'], $responseData['status'], $responseData['message'], $data, $response);
+    
+
+    return [
+        'success' => $httpCode >= 200 && $httpCode < 300,
+        'http_code' => $httpCode,
+        'response' => $responseData ?: $response,
+        'raw_response' => $response
+    ];
 }
 
 return [

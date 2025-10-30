@@ -66,6 +66,7 @@ $data = [
     'qsn_933' => 'VVIP',
     'qsn_934' => 'All Days',
     'qsn_935' => '',
+    'qsn_936' => '',
 ];
 
 // Generate next alias email automatically
