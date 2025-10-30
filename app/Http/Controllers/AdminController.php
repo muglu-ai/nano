@@ -1277,6 +1277,7 @@ class AdminController extends Controller
         //get the application id from the request
         //select all the applcaitiosn where RegSource = 'Admin'
         $applications = Application::all();
+        dd($applications);
         // dd($applications);
         //send the email to the applicant
         foreach ($applications as $application) {
