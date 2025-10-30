@@ -60,7 +60,7 @@ use Mews\Captcha\Facades\Captcha;
 use App\Http\Controllers\EnquiryController;
 use App\Http\Controllers\EmailPreviewController;
 
-Route::get('send-exhibitor-chkdin2', [ExhibitorInfoController::  class, 'sendAllData'])->name('send.exhibitor.chkdin')->middleware(Auth::class);
+Route::get('send-exhibitor-chkdin2', [AdminController::  class, 'sendAllData'])->name('send.exhibitor.chkdin')->middleware(Auth::class);
 Route::get('get-users', [AdminController::class, 'getUsers'])->name('getUsers')->middleware(Auth::class);
 Route::get('get-users2', [AdminController::class, 'getUsers'])->name('getUsers2')->middleware(Auth::class);
 
