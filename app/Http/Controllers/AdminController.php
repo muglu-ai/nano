@@ -1272,7 +1272,7 @@ class AdminController extends Controller
     public function sendUserCredentialsEmail(Request $request)
     {
 
-        echo "Sending email credentials to the applicants";
+        // echo "Sending email credentials to the applicants";
         // exit;
         //get the application id from the request
         //select all the applcaitiosn where RegSource = 'Admin'
@@ -1285,6 +1285,8 @@ class AdminController extends Controller
             $username = $application->user->email;
             $password = $application->user->simplePass;
             // echo $name . " - " . $username . " - " . $password . "<br>";
+            echo view('mail.user-credentials', ['email' => $username, 'name' => $name, 'password' => $password])->render();
+            exit;
             // exit;
             try {
                 Mail::to($username)->bcc('test.interlinks@gmail.com')->send(new UserCredentialsMail($name, $setupProfileUrl, $username, $password));
