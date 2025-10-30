@@ -127,31 +127,37 @@ class DashboardController extends Controller
             //get the exhibitor and delegate count from the exhibitionParticipation table where application id is same as the application id
             $exhibitionParticipant = ExhibitionParticipant::where('application_id', $applicationId)->first();
             // get the ticketAllocation value from the exhibitionParticipant table and get the ticket details from the tickets table with id and count from the ticketAllocation value
+            // Handle case when $exhibitionParticipant is null to avoid error when accessing property
             try {
-                $ticketAllocation = $exhibitionParticipant->ticketAllocation;
+                if ($exhibitionParticipant) {
+                    $ticketAllocation = $exhibitionParticipant->ticketAllocation;
 
-                if ($ticketAllocation) {
-                    $ticketIds = json_decode($ticketAllocation, true);
-                    if (!is_array($ticketIds)) {
-                        throw new \Exception('Invalid ticket allocation format.');
+                    if ($ticketAllocation) {
+                        $ticketIds = json_decode($ticketAllocation, true);
+                        if (!is_array($ticketIds)) {
+                            throw new \Exception('Invalid ticket allocation format.');
+                        }
+                        $tickets = Ticket::whereIn('id', array_keys($ticketIds))->get();
+                    } else {
+                        $tickets = collect();
+                        $ticketIds = [];
                     }
-                    $tickets = Ticket::whereIn('id', array_keys($ticketIds))->get();
-                } else {
-                    $tickets = collect();
-                    $ticketIds = [];
-                }
 
-                //make as json with ticket name and count
-                $ticketDetails = $tickets->map(function ($ticket) use ($ticketIds) {
-                    return [
-                        'name' => $ticket->ticket_type,
-                        'count' => isset($ticketIds[$ticket->id]) ? $ticketIds[$ticket->id] : 0,
-                        'slug' => Str::slug($ticket->ticket_type, '-'),
-                    ];
-                });
+                    //make as json with ticket name and count
+                    $ticketDetails = $tickets->map(function ($ticket) use ($ticketIds) {
+                        return [
+                            'name' => $ticket->ticket_type,
+                            'count' => isset($ticketIds[$ticket->id]) ? $ticketIds[$ticket->id] : 0,
+                            'slug' => Str::slug($ticket->ticket_type, '-'),
+                        ];
+                    });
+                } else {
+                    // If no participant, set empty collection for ticketDetails
+                    $ticketDetails = collect();
+                }
             } catch (\Exception $e) {
                 $ticketDetails = collect();
-                // Optionally log the error: \
+                // Optionally log the error:
                 Log::error($e->getMessage());
             }
 

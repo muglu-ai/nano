@@ -33,10 +33,16 @@ const EVENT_ID = 118150;
 
 CONST TEST_MODE = true;
 
+// define('DB_HOST', 'localhost');
+// define('DB_NAME', 'btsblnl265_asd1d_bengaluruite');
+// define('DB_USERNAME', 'btsblnl265_asd1d_bengaluruite');
+// define('DB_PASSWORD', 'Disl#vhfj#Af#DhW65');
+// // define('DB_PORT', 3306);
+// define('DB_NAME2', 'btsblnl265_asd1d_portal');
 define('DB_HOST', 'localhost');
-define('DB_NAME', 'btsblnl265_asd1d_bengaluruite');
-define('DB_USERNAME', 'btsblnl265_asd1d_bengaluruite');
-define('DB_PASSWORD', 'Disl#vhfj#Af#DhW65');
+define('DB_NAME', 'btsExhibitor');
+define('DB_USERNAME', 'semicon');
+define('DB_PASSWORD', 'Qwerty@123');
 // define('DB_PORT', 3306);
 define('DB_NAME2', 'btsblnl265_asd1d_portal');
 

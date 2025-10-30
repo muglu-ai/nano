@@ -150,6 +150,8 @@ class ExhibitorInfoController extends Controller
         //if full_address is there in ExhibitorInfo table then set the full_address to the full_address of the application
         if (!empty($exhibitorInfo) && !empty($exhibitorInfo->address)) {
             $application->full_address = $exhibitorInfo->address;
+
+            $application->category = $exhibitorInfo->category;
         }
 
 
@@ -228,14 +230,149 @@ class ExhibitorInfoController extends Controller
                 'youtube' => $data['youtube'] ?? null,
                 'application_id' => $data['application_id'],
                 'submission_status' => 0,
+                'api_status' => 0,
+                'api_message' => '',
             ]
         );
+
+        // Build payload for external API
+        $companyName = $exhibitor->company_name ?? '';
+        $about = $exhibitor->description ?? '';
+        $website = $exhibitor->website ?? '';
+        $fasciaName = $exhibitor->fascia_name ?? '';
+        $contactName = $exhibitor->contact_person ?? '';
+
+        // derive country code and mobile from phone using format "+CC-NUMBER"
+        $countryCode = '';
+        $mobile = '';
+        if (!empty($exhibitor->phone) && strpos($exhibitor->phone, '+') === 0) {
+            $parts = explode('-', $exhibitor->phone, 2);
+            if (count($parts) === 2) {
+                $countryCode = preg_replace('/[^\d]/', '', $parts[0]);
+                $mobile = preg_replace('/[^\d]/', '', $parts[1]);
+            }
+        }
+
+        // contact mobile (display) fallback to telPhone in same parsing style
+        $contactMobile = '';
+        if (!empty($exhibitor->telPhone) && strpos($exhibitor->telPhone, '+') === 0) {
+            $tparts = explode('-', $exhibitor->telPhone, 2);
+            if (count($tparts) === 2) {
+                $contactCountryCode = preg_replace('/[^\d+]/', '', $tparts[0]);
+                $contactNumber = preg_replace('/[^\d]/', '', $tparts[1]);
+                $contactMobile = trim($contactCountryCode . ' ' . $contactNumber);
+            }
+        }
+        if ($contactMobile === '' && $countryCode !== '' && $mobile !== '') {
+            // build display from main phone if no telPhone provided
+            $contactMobile = '+' . $countryCode . ' ' . $mobile;
+        }
+
+        // photo: send only the file name (API builds path automatically)
+        $photo = '';
+        if (!empty($exhibitor->logo)) {
+            $photo = basename($exhibitor->logo);
+        }
+
+        // optional custom variables
+        $var1 = $exhibitor->sector ?? '';
+        $var2 = $exhibitor->category ?? '';
+
+        $payload = [
+            'api_key' => 'scan626246ff10216s477754768osk',
+            'event_id' => '118150',
+            'company_name' => $companyName,
+            'about' => $about,
+            'email' => $exhibitor->email ?? '',
+            'country_code' => $countryCode,
+            'mobile' => $mobile,
+            'website' => $website,
+            'contact_mobile' => $contactMobile,
+            'contact_email' => $exhibitor->email ?? '',
+            'contact_name' => $contactName,
+            'photo' => $photo,
+            'fascia_name' => $fasciaName,
+            'var_1' => $var1,
+            'var_2' => $var2,
+        ];
+
+        /*
+
+        // Include user_id if available (to satisfy potential API requirement)
+        if (!empty($exhibitor->application) && !empty($exhibitor->application->user_id)) {
+            $payload['user_id'] = (string)$exhibitor->application->user_id;
+        }
+
+        // Send to external API and store response
+        $apiResult = $this->sendExhibitorData($payload);
+        // Determine success by API response status when available
+        $successFlag = false;
+        if (isset($apiResult['response']) && is_array($apiResult['response']) && isset($apiResult['response']['status'])) {
+            $successFlag = (string)$apiResult['response']['status'] === '1';
+        } else if (!empty($apiResult['success'])) {
+            $successFlag = true;
+        }
+        $exhibitor->api_status = $successFlag ? 1 : 0;
+        $message = '';
+        if (isset($apiResult['response']) && is_array($apiResult['response'])) {
+            $message = json_encode($apiResult['response']);
+        } else if (isset($apiResult['raw_response'])) {
+            $message = (string)$apiResult['raw_response'];
+        } else if (isset($apiResult['error'])) {
+            $message = (string)$apiResult['error'];
+        }
+        $exhibitor->api_message = $exhibitor->api_message . ' ' . $message;
+        $exhibitor->save();
+
+        */
 
 
         //$exhibitor = ExhibitorInfo::create($data);
 
         //redirect back with thank you for filling out the exhibitor directory fields
         return redirect()->route('exhibitor.info.preview')->with('success', 'Thank you for filling out the exhibitor directory information. Please review the preview and submit the information.');
+    }
+
+
+    private function sendExhibitorData(array $data): array
+    {
+        $url = 'https://studio.chkdin.com/api/v1/push_exhibitor';
+
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, $url);
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($data));
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, [
+            'Content-Type: application/x-www-form-urlencoded',
+            'User-Agent: PHP-Exhibitor-API-Client/1.0'
+        ]);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 30);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);
+
+        $response = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $error = curl_error($ch);
+
+        curl_close($ch);
+
+        if ($error) {
+            return [
+                'success' => false,
+                'error' => 'cURL Error: ' . $error,
+                'http_code' => $httpCode
+            ];
+        }
+
+        $responseData = json_decode($response, true);
+
+        return [
+            'success' => $httpCode >= 200 && $httpCode < 300,
+            'http_code' => $httpCode,
+            'response' => $responseData ?: $response,
+            'raw_response' => $response
+        ];
     }
 
     //show the preview page

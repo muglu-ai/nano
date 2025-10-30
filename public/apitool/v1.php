@@ -72,18 +72,69 @@ $data = [
 // Generate next alias email automatically
 $data['email'] = get_next_alias_email($data['email']);
 
-$response = send_guest_data(
-    $data['name'],
-    $data['category_id'],
-    $data['email'],
-    $data['country_code'],
-    $data['mobile'],
-    $data['company'],
-    $data['qsn_933'],
-    $data['qsn_934'],
-    $data['qsn_935'],
-    $data['qsn_936']
-);
+// $response = send_guest_data(
+//     $data['name'],
+//     $data['category_id'],
+//     $data['email'],
+//     $data['country_code'],
+//     $data['mobile'],
+//     $data['company'],
+//     $data['qsn_933'],
+//     $data['qsn_934'],
+//     $data['qsn_935'],
+//     $data['qsn_936']
+// );
 
-print_r($response);
+// print_r($response);
+
+
+// we have to make a function in which we will pass the tin_no and we will get the data from the database and we will return the data in json format
+function get_data_from_database($tin_no) {
+    $sql = "SELECT * FROM it_2025_reg_tbl WHERE tin_no = ?";
+    $stmt = dbconnection()->prepare($sql);
+    if ($stmt === false) {
+        return false;
+    }
+    $stmt->bind_param('s', $tin_no);
+    if (!$stmt->execute()) {
+        return false;
+    }
+    $result = $stmt->get_result();
+    if ($result === false) {
+        return "No Data Found";
+    }
+
+    // get the data from title1, fname1, lname1, email1, job_title1, cellno1, org_reg_type, org
+
+    $data = $result->fetch_assoc();
+    //curate that much of data array as per the no of delegate loop
+    $sub_delegates = $data['sub_delegates'];
+    for ($i = 1; $i <= $sub_delegates; $i++) {
+        $title = $data['title' . $i];
+        $fname = $data['fname' . $i];
+        $lname = $data['lname' . $i];
+        $email = $data['email' . $i];
+        $job_title = $data['job_title' . $i];
+        $cellno = $data['cellno' . $i];
+        $org_reg_type = $data['org_reg_type'];
+        $org = $data['org'];
+        $data = ['name' => $title . ' ' . $fname . ' ' . $lname,
+         'email' => $email,
+         'job_title' => $job_title, 
+         'cellno' => $cellno, 
+         'org_reg_type' => 
+         $org_reg_type, 
+         'org' => $org
+        ];
+        echo json_encode($data);
+
+    }
+    exit;
+    // echo json_encode($data);
+
+}
+
+echo get_data_from_database('TIN-BTS2025-18912511');
+
+
 
