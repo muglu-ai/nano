@@ -46,6 +46,8 @@ function dbconnection() {
     if ($conn->connect_error) {
         die("Connection failed: " . $conn->connect_error);
     }
+    // Ensure proper charset to avoid packet issues with unicode
+    $conn->set_charset('utf8mb4');
     return $conn;
 }
 
@@ -120,9 +122,47 @@ STANDARD Pass Day 2 & 3 – 3586
 */ 
 
 function insert_api_log($name, $email, $booking_id, $ticket_id, $ticket_type, $status, $message, $request, $response) {
+    // Normalize payloads to strings and cap size to avoid max_allowed_packet problems
+    $reqStr = is_string($request) ? $request : json_encode($request, JSON_UNESCAPED_UNICODE);
+    $resStr = is_string($response) ? $response : json_encode($response, JSON_UNESCAPED_UNICODE);
+    $max = 1024 * 1024; // 1 MB cap
+    if ($reqStr !== null && strlen($reqStr) > $max) {
+        $reqStr = substr($reqStr, 0, $max);
+    }
+    if ($resStr !== null && strlen($resStr) > $max) {
+        $resStr = substr($resStr, 0, $max);
+    }
+
+    $conn = dbconnection();
     $sql = "INSERT INTO it_2025_chkdin_api_log (name, email, booking_id, ticket_id, ticket_type, status, message, request, response, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())";
-    $stmt = dbconnection()->prepare($sql);
-    $stmt->execute([$name, $email, $booking_id, $ticket_id, $ticket_type, $status, $message, $request, $response]);
+    if ($stmt = $conn->prepare($sql)) {
+        // Bind all as strings to avoid type mismatches; cast nulls to empty strings
+        $name = (string)($name ?? '');
+        $email = (string)($email ?? '');
+        $booking_id = (string)($booking_id ?? '');
+        $ticket_id = (string)($ticket_id ?? '');
+        $ticket_type = (string)($ticket_type ?? '');
+        $status = (string)($status ?? '');
+        $message = (string)($message ?? '');
+        $reqStr = (string)($reqStr ?? '');
+        $resStr = (string)($resStr ?? '');
+
+        $stmt->bind_param(
+            'sssssssss',
+            $name,
+            $email,
+            $booking_id,
+            $ticket_id,
+            $ticket_type,
+            $status,
+            $message,
+            $reqStr,
+            $resStr
+        );
+        $stmt->execute();
+        $stmt->close();
+    }
+    $conn->close();
 }
 
 
@@ -181,7 +221,14 @@ function send_guest_data($name, $category_id, $email, $country_code, $mobile, $c
     // Parse response
     $responseData = json_decode($response, true);
 
-    insert_api_log($name, $email, $responseData['guest_id'], $responseData['qr_code'], $responseData['qr_image'], $responseData['status'], $responseData['message'], $data, $response);
+    // Safely extract response fields if present
+    $guestId    = is_array($responseData) && isset($responseData['guest_id']) ? $responseData['guest_id'] : null;
+    $qrCode     = is_array($responseData) && isset($responseData['qr_code']) ? $responseData['qr_code'] : null;
+    $qrImage    = is_array($responseData) && isset($responseData['qr_image']) ? $responseData['qr_image'] : null;
+    $statusResp = is_array($responseData) && isset($responseData['status']) ? $responseData['status'] : null;
+    $msgResp    = is_array($responseData) && isset($responseData['message']) ? $responseData['message'] : null;
+
+    insert_api_log($name, $email, $guestId, $qrCode, $qrImage, $statusResp, $msgResp, $data, $response);
     
 
     return [
