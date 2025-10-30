@@ -80,6 +80,7 @@ Route::get('/{event}/onboarding', [ApplicationController::class, 'showForm2'])->
 Route::get('dashboard', [DashboardController::class, 'exhibitorDashboard'])->name('user.dashboard')->middleware(CheckUser::class);
 
 Route::get('send-participation-email', [ExhibitorController::class, 'attendeeEmailSent'])->name('send.participation.email')->middleware(Auth::class);
+Route::get('send-exhibitor-chkdin', [ExhibitorInfoController::  class, 'sendAllData'])->name('send.exhibitor.chkdin')->middleware(Auth::class);
 //get the complimentary delegates list
 Route::get('/exhibitor/list/{type}', [ExhibitorController::class, 'list'])->name('exhibition.list')->middleware(CheckUser::class); //invite delegates to the event
 Route::get('/exhibitor/list2/{type}', [ExhibitorController::class, 'list2'])->name('exhibition2.list')->middleware(CheckUser::class); //invite delegates to the event
