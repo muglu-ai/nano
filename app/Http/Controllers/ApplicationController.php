@@ -1436,6 +1436,17 @@ class ApplicationController extends Controller
                 }
             }
 
+            //send usercredentails email hhere 
+            Mail::to($request->company_email)
+                ->bcc('test.interlinks@gmail.com')
+                ->send(new UserCredentialsMail($request->company_name, config('app.url'), $request->company_email, $password));
+            } catch (\Exception $e) {
+                Log::error('Error sending UserCredentialsMail: ' . $e->getMessage());
+                // Optionally rethrow or handle error as needed
+            }
+
+            //exit;
+
             return redirect()->route('application.lists')
                 ->with('success', 'Application and user account created successfully!');
 
