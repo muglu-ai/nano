@@ -1287,51 +1287,22 @@ class ApplicationController extends Controller
      */
     public function store(Request $request)
     {
+        // Fix Laravel Facade usage: use the Auth facade directly.
+        // Also, don't double validate fields, combine into a single validate call.
 
-        // dd($request->all());
         // Check if user is admin
-        if (!auth()->check() || auth()->user()->role !== 'admin') {
+        if (!\Illuminate\Support\Facades\Auth::check() || \Illuminate\Support\Facades\Auth::user()->role !== 'admin') {
             return redirect('/login')->with('error', 'Unauthorized access');
         }
-
-        //user validation with email unique
-        $request->validate([
-            'company_email' => 'required|email|max:255|unique:users,email',
-            'company_name' => 'required|string|max:255',
-        ]);
-
-        // password generate
-        $password = substr(md5(uniqid()), 0, 10);
-
-        // Import the Hash facade at the top of your file with: use Illuminate\Support\Facades\Hash;
-
-        // password hash
-        $passwordHash = Hash::make($password);
-
-        // make user first with email and name
-        // $user = \App\Models\User::create([
-        //     'name' => $request->company_name,
-        //     'email' => $request->company_email,
-        //     'password' => $passwordHash, // Default password, user should change
-        //     'simplePass' => $password,
-        //     'role' => 'exhibitor',
-        //     'email_verified_at' => now(),
-        // ]);
-
-        // dd($user);
-
-        //generate application id
-        
-
 
         // Get valid ticket IDs from database
         $validTicketIds = \App\Models\Ticket::pluck('id')->toArray();
         $ticketIdsRule = 'required|in:' . implode(',', $validTicketIds);
 
-        // Validate the request
-        $request->validate([            
+        // Validate all fields in a single call
+        $validated = $request->validate([
+            'company_email' => 'required|email|max:255|unique:users,email',
             'company_name' => 'required|string|max:255',
-            'company_email' => 'required|email|max:255',
             'application_type' => 'required|in:exhibitor,sponsor,exhibitor+sponsor',
             'address' => 'nullable|string',
             'postal_code' => 'nullable|string|max:20',
@@ -1357,10 +1328,14 @@ class ApplicationController extends Controller
         ]);
 
         try {
+            // Generate password and hash
+            $password = substr(md5(uniqid()), 0, 10);
+            $passwordHash = \Illuminate\Support\Facades\Hash::make($password);
+
             // Create user first
             $user = \App\Models\User::create([
-                'name' => $request->company_name,
-                'email' => $request->company_email,
+                'name' => $validated['company_name'],
+                'email' => $validated['company_email'],
                 'password' => $passwordHash, // Default password, user should change
                 'simplePass' => $password,
                 'role' => 'exhibitor',
@@ -1373,33 +1348,32 @@ class ApplicationController extends Controller
             // Create the application
             $application = Application::create([
                 'user_id' => $user->id,
-                'company_name' => $request->company_name,
-                'company_email' => $request->company_email,
+                'company_name' => $validated['company_name'],
+                'company_email' => $validated['company_email'],
                 'status' => 'approved',
                 'application_id' => $applicationId,
                 'submission_status' => 'approved',
-                'approved_by' => auth()->user()->name,
+                'approved_by' => \Illuminate\Support\Facades\Auth::user()->name,
                 'submission_date' => now(),
                 'RegSource' => 'Admin',
                 'approved_date' => now(),
-                'application_type' => $request->application_type,
-                'address' => $request->address,
-                'postal_code' => $request->postal_code,
-                'city_id' => $request->city_id,
-                'state_id' => $request->state_id,
-                'country_id' => $request->country_id,
-                'interested_sqm' => $request->stall_size, // Store stall size in interested_sqm field
-                'allocated_sqm' => $request->stall_size, // Store allocated sqm size in allocated_sqm field
-                'stall_category' => $request->stall_category, // Store stall category
-                'stallNumber' => $request->stall_number, // Store stall number (for Exhibitor + Sponsorship)
-                'sector_id' => $request->sectors, // Store selected sector
-                
+                'application_type' => $validated['application_type'],
+                'address' => $validated['address'] ?? null,
+                'postal_code' => $validated['postal_code'] ?? null,
+                'city_id' => $validated['city_id'] ?? null,
+                'state_id' => $validated['state_id'] ?? null,
+                'country_id' => $validated['country_id'] ?? null,
+                'interested_sqm' => $validated['stall_size'] ?? null, // Store stall size in interested_sqm field
+                'allocated_sqm' => $validated['stall_size'] ?? null, // Store allocated sqm size in allocated_sqm field
+                'stall_category' => $validated['stall_category'] ?? null, // Store stall category
+                'stallNumber' => $validated['stall_number'] ?? null, // Store stall number (for Exhibitor + Sponsorship)
+                'sector_id' => $validated['sectors'] ?? null, // Store selected sector
             ]);
 
             // Create EventContact if contact information is provided
-            if ($request->contact_person || $request->mobile_number) {
+            if (!empty($validated['contact_person']) || !empty($validated['mobile_number'])) {
                 // Split contact person name into first and last name
-                $nameParts = explode(' ', trim($request->contact_person), 2);
+                $nameParts = explode(' ', trim($validated['contact_person'] ?? ''), 2);
                 $firstName = $nameParts[0] ?? '';
                 $lastName = $nameParts[1] ?? '';
 
@@ -1407,25 +1381,25 @@ class ApplicationController extends Controller
                     'application_id' => $application->id,
                     'first_name' => $firstName,
                     'last_name' => $lastName,
-                    'contact_number' => $request->mobile_number,
-                    'email' => $request->company_email, // Use company email as default
+                    'contact_number' => $validated['mobile_number'] ?? null,
+                    'email' => $validated['company_email'],
                 ]);
             }
 
             // Handle sectors relationship if sector is selected
-            if ($request->sectors) {
-                $application->sectors()->attach($request->sectors);
+            if (!empty($validated['sectors'])) {
+                $application->sectors()->attach($validated['sectors']);
             }
 
             // Create ticket allocations if provided
-            if ($request->ticket_ids && $request->ticket_counts) {
+            if (!empty($validated['ticket_ids']) && !empty($validated['ticket_counts'])) {
                 $ticketAllocation = [];
-                foreach ($request->ticket_ids as $index => $ticketId) {
-                    if (isset($request->ticket_counts[$index])) {
-                        $ticketAllocation[$ticketId] = (int)$request->ticket_counts[$index];
+                foreach ($validated['ticket_ids'] as $index => $ticketId) {
+                    if (isset($validated['ticket_counts'][$index])) {
+                        $ticketAllocation[$ticketId] = (int) $validated['ticket_counts'][$index];
                     }
                 }
-                
+
                 if (!empty($ticketAllocation)) {
                     \App\Models\ExhibitionParticipant::create([
                         'application_id' => $application->id,
@@ -1435,17 +1409,6 @@ class ApplicationController extends Controller
                     ]);
                 }
             }
-
-            //send usercredentails email hhere 
-            Mail::to($request->company_email)
-                ->bcc('test.interlinks@gmail.com')
-                ->send(new UserCredentialsMail($request->company_name, config('app.url'), $request->company_email, $password));
-            } catch (\Exception $e) {
-                Log::error('Error sending UserCredentialsMail: ' . $e->getMessage());
-                // Optionally rethrow or handle error as needed
-            }
-
-            //exit;
 
             return redirect()->route('application.lists')
                 ->with('success', 'Application and user account created successfully!');
