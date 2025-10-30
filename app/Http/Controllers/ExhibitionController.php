@@ -15,10 +15,10 @@ class ExhibitionController extends Controller
 
     public function sendAllData()
     {
-        $middlewareResponse = $this->adminMiddleware();
-        if ($middlewareResponse) {
-            return $middlewareResponse;
-        }
+        // $middlewareResponse = $this->adminMiddleware();
+        // if ($middlewareResponse) {
+        //     return $middlewareResponse;
+        // }
         $exhibitorInfo = ExhibitorInfo::where('submission_status', 1)
             ->where(function($query) {
                 $query->whereNull('api_status')->orWhere('api_status', 0);
