@@ -98,7 +98,7 @@ class ExhibitorInfoController extends Controller
 
     public function showForm(Request $request)
     {
-     
+
 
         //check user is logged in
         if (!Auth::check()) {
@@ -132,8 +132,8 @@ class ExhibitorInfoController extends Controller
 
         // $application->full_address = $add1 . ', ' . $city . ', ' . $state . ', ' . $country . ', ' . $zip;
 
-// 
-// 
+        // 
+        // 
         //changes in backend
 
 
@@ -276,14 +276,20 @@ class ExhibitorInfoController extends Controller
 
         // optional custom variables
         $var1 = $exhibitor->sector ?? '';
-        $var2 = $exhibitor->category ?? '';
+        $var2 = $exhibitor->category ?? 'Startup';
+
+        //BizExpress Advisors Pvt Ltd 
+        //there is nbsp between the word handle it correctly 
+        // the like [NB] like this should be removed
+        $companyName = str_replace(["\u{00A0}", '&nbsp;'], ' ', $companyName);
+        $companyName = trim($companyName);
 
         $payload = [
             'api_key' => 'scan626246ff10216s477754768osk',
             'event_id' => '118150',
             'company_name' => $companyName,
             'about' => $about,
-            'email' => $exhibitor->email ?? '',
+            'email' => $exhibitor->email,
             'country_code' => $countryCode,
             'mobile' => $mobile,
             'website' => $website,
@@ -296,15 +302,30 @@ class ExhibitorInfoController extends Controller
             'var_2' => $var2,
         ];
 
-        /*
 
-        // Include user_id if available (to satisfy potential API requirement)
-        if (!empty($exhibitor->application) && !empty($exhibitor->application->user_id)) {
-            $payload['user_id'] = (string)$exhibitor->application->user_id;
+
+        //if api_status is 0 then send the data to the external API
+        if ($exhibitor->api_status == 0) {
+            // Include user_id if available (to satisfy potential API requirement)
+            if (!empty($exhibitor->application) && !empty($exhibitor->application->user_id)) {
+                $payload['user_id'] = (string)$exhibitor->application->user_id;
+            }
+
+        // Send to external API and store response (never allow failure to break flow)
+        try {
+            $apiResult = $this->sendExhibitorData($payload);
+        } catch (\Throwable $e) {
+            Log::error('Exhibitor API call failed', [
+                'exception' => $e->getMessage(),
+                'payload_company' => $companyName ?? null,
+                'application_id' => $exhibitor->application_id ?? null,
+            ]);
+            $apiResult = [
+                'success' => false,
+                'error' => 'Unhandled exception: ' . $e->getMessage(),
+            ];
         }
 
-        // Send to external API and store response
-        $apiResult = $this->sendExhibitorData($payload);
         // Determine success by API response status when available
         $successFlag = false;
         if (isset($apiResult['response']) && is_array($apiResult['response']) && isset($apiResult['response']['status'])) {
@@ -312,7 +333,9 @@ class ExhibitorInfoController extends Controller
         } else if (!empty($apiResult['success'])) {
             $successFlag = true;
         }
+
         $exhibitor->api_status = $successFlag ? 1 : 0;
+
         $message = '';
         if (isset($apiResult['response']) && is_array($apiResult['response'])) {
             $message = json_encode($apiResult['response']);
@@ -321,16 +344,101 @@ class ExhibitorInfoController extends Controller
         } else if (isset($apiResult['error'])) {
             $message = (string)$apiResult['error'];
         }
-        $exhibitor->api_message = $exhibitor->api_message . ' ' . $message;
-        $exhibitor->save();
 
-        */
+        // Safely append API message
+        $existingMessage = (string)($exhibitor->api_message ?? '');
+        $exhibitor->api_message = trim($existingMessage . ' ' . $message);
+        $exhibitor->save();
+        }
+
+
 
 
         //$exhibitor = ExhibitorInfo::create($data);
 
         //redirect back with thank you for filling out the exhibitor directory fields
         return redirect()->route('exhibitor.info.preview')->with('success', 'Thank you for filling out the exhibitor directory information. Please review the preview and submit the information.');
+    }
+
+    // send all exhibitor_info data and send to the external API where submission_status=1
+    // and api_status=0
+    private function sendAllData()
+    {
+        $exhibitorInfo = ExhibitorInfo::where('submission_status', 1)
+            ->where('api_status', 0)
+            ->limit(2)
+            ->get();
+        foreach ($exhibitorInfo as $exhibitor) {
+             // Build payload for external API
+        $companyName = $exhibitor->company_name ?? '';
+        $about = $exhibitor->description ?? '';
+        $website = $exhibitor->website ?? '';
+        $fasciaName = $exhibitor->fascia_name ?? '';
+        $contactName = $exhibitor->contact_person ?? '';
+
+        // derive country code and mobile from phone using format "+CC-NUMBER"
+        $countryCode = '';
+        $mobile = '';
+        if (!empty($exhibitor->phone) && strpos($exhibitor->phone, '+') === 0) {
+            $parts = explode('-', $exhibitor->phone, 2);
+            if (count($parts) === 2) {
+                $countryCode = preg_replace('/[^\d]/', '', $parts[0]);
+                $mobile = preg_replace('/[^\d]/', '', $parts[1]);
+            }
+        }
+
+        // contact mobile (display) fallback to telPhone in same parsing style
+        $contactMobile = '';
+        if (!empty($exhibitor->telPhone) && strpos($exhibitor->telPhone, '+') === 0) {
+            $tparts = explode('-', $exhibitor->telPhone, 2);
+            if (count($tparts) === 2) {
+                $contactCountryCode = preg_replace('/[^\d+]/', '', $tparts[0]);
+                $contactNumber = preg_replace('/[^\d]/', '', $tparts[1]);
+                $contactMobile = trim($contactCountryCode . ' ' . $contactNumber);
+            }
+        }
+        if ($contactMobile === '' && $countryCode !== '' && $mobile !== '') {
+            // build display from main phone if no telPhone provided
+            $contactMobile = '+' . $countryCode . ' ' . $mobile;
+        }
+
+        // photo: send only the file name (API builds path automatically)
+        $photo = '';
+        if (!empty($exhibitor->logo)) {
+            $photo = basename($exhibitor->logo);
+        }
+
+        // optional custom variables
+        $var1 = $exhibitor->sector ?? '';
+        $var2 = $exhibitor->category ?? 'Startup';
+
+        //BizExpress Advisors Pvt Ltd 
+        //there is nbsp between the word handle it correctly 
+        // the like [NB] like this should be removed
+        $companyName = str_replace(["\u{00A0}", '&nbsp;'], ' ', $companyName);
+        $companyName = trim($companyName);
+
+        $payload = [
+            'api_key' => 'scan626246ff10216s477754768osk',
+            'event_id' => '118150',
+            'company_name' => $companyName,
+            'about' => $about,
+            'email' => $exhibitor->email,
+            'country_code' => $countryCode,
+            'mobile' => $mobile,
+            'website' => $website,
+            'contact_mobile' => $contactMobile,
+            'contact_email' => $exhibitor->email ?? '',
+            'contact_name' => $contactName,
+            'photo' => $photo,
+            'fascia_name' => $fasciaName,
+            'var_1' => $var1,
+            'var_2' => $var2,
+        ];
+
+        dd($payload);
+            $this->sendExhibitorData($payload);
+        }
     }
 
 
@@ -382,12 +490,12 @@ class ExhibitorInfoController extends Controller
         $exhibitorInfo = ExhibitorInfo::where('application_id', $applicationId)->first();
 
         $application = Application::where('id', $applicationId)->first();
-        
+
         // Handle null cases
         if (!$exhibitorInfo) {
             return redirect()->route('exhibitor.info')->with('error', 'Exhibitor information not found.');
         }
-        
+
         if (!$application) {
             return redirect()->route('exhibitor.info')->with('error', 'Application not found.');
         }
@@ -401,11 +509,11 @@ class ExhibitorInfoController extends Controller
     {
         $applicationId = $this->getApplicationId();
         $exhibitorInfo = ExhibitorInfo::where('application_id', $applicationId)->first();
-        
+
         if (!$exhibitorInfo) {
             return redirect()->route('exhibitor.info')->with('error', 'Exhibitor information not found.');
         }
-        
+
         $exhibitorInfo->submission_status = 1;
         $exhibitorInfo->save();
 
@@ -421,7 +529,7 @@ class ExhibitorInfoController extends Controller
         $applicationId = $this->getApplicationId();
         $exhibitorInfo = ExhibitorInfo::where('application_id', $applicationId)->first();
         $application = Application::find($applicationId);
-        
+
         if (!$exhibitorInfo) {
             return redirect()->route('exhibitor.info')->with('error', 'Exhibitor information not found.');
         }
@@ -456,18 +564,18 @@ class ExhibitorInfoController extends Controller
 
         // Generate PDF with optimized options to reduce memory and limit to 1 page
         $pdf = Pdf::setOptions([
-                'isRemoteEnabled' => true,      // allow remote images
-                'dpi' => 72,                    // lower DPI to reduce memory
-                'enable_font_subsetting' => true,
-                'defaultFont' => 'dejavu sans', // wide unicode support with subset
-                'isHtml5ParserEnabled' => true,
-                'isPhpEnabled' => false,        // disable PHP for security
-                'page-break-inside' => 'avoid', // avoid page breaks inside elements
-            ])
+            'isRemoteEnabled' => true,      // allow remote images
+            'dpi' => 72,                    // lower DPI to reduce memory
+            'enable_font_subsetting' => true,
+            'defaultFont' => 'dejavu sans', // wide unicode support with subset
+            'isHtml5ParserEnabled' => true,
+            'isPhpEnabled' => false,        // disable PHP for security
+            'page-break-inside' => 'avoid', // avoid page breaks inside elements
+        ])
             ->loadView('exhibitor_info.pdf', $data);
         // Custom 100mm x 240mm page size (points)
         $pdf->setPaper([0, 0, 283.46, 680.31], 'portrait');
-        
+
         // Force single page generation
         $pdf->setOption('isPhpEnabled', false);
         $pdf->setOption('page-break-inside', 'avoid');
@@ -793,7 +901,7 @@ class ExhibitorInfoController extends Controller
 
             // Convert fascia_name to uppercase before updating
             $data['fascia_name'] = strtoupper($data['fascia_name']);
-            
+
             $exhibitor->update($data);
 
             return response()->json([
@@ -831,7 +939,7 @@ class ExhibitorInfoController extends Controller
 
         // Remove any existing formatting
         $phoneNumber = preg_replace('/[^+\d]/', '', $phoneNumber);
-        
+
         // If it starts with +, find where country code ends and number begins
         if (strpos($phoneNumber, '+') === 0) {
             // Known country codes and their lengths
@@ -1052,13 +1160,13 @@ class ExhibitorInfoController extends Controller
                     }
                 }
             }
-            
+
             // Fallback: try common patterns if no match found
             if (preg_match('/^\+(\d{1,3})(\d+)$/', $phoneNumber, $matches)) {
                 return '+' . $matches[1] . '-' . $matches[2];
             }
         }
-        
+
         return $phoneNumber;
     }
 }
