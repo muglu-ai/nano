@@ -362,7 +362,7 @@ class ExhibitorInfoController extends Controller
 
     // send all exhibitor_info data and send to the external API where submission_status=1
     // and api_status=0
-    private function sendAllData()
+    public function sendAllData()
     {
         $exhibitorInfo = ExhibitorInfo::where('submission_status', 1)
             ->where(function($query) {
@@ -371,7 +371,7 @@ class ExhibitorInfoController extends Controller
             ->limit(2)
             ->get();
 
-            dd($exhibitorInfo);
+            // dd($exhibitorInfo);
         foreach ($exhibitorInfo as $exhibitor) {
              // Build payload for external API
         $companyName = $exhibitor->company_name ?? '';
