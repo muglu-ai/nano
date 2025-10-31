@@ -1285,6 +1285,11 @@ class AdminController extends Controller
             $setupProfileUrl = 'http://bengalurutechsummit.com/portal/public';
             $username = $application->user->email;
             $password = $application->user->simplePass;
+
+            //if usernme talvinder.singh@zop.dev skip that email 
+            if ($username == 'talvinder.singh@zop.dev') {
+                continue;
+            }
             // echo $name . " - " . $username . " - " . $password . "<br>";
             // echo view('emails.credentials', ['setupProfileUrl' => $setupProfileUrl, 'email' => $username, 'name' => $name, 'password' => $password])->render();
             // exit;
@@ -1305,8 +1310,8 @@ class AdminController extends Controller
                 echo "Error sending email to " . $username . ": " . $e->getMessage() . "<br>";
                 exit;
             }
-            echo "Email sent to " . $username . "<br>";
-            exit;
+            // echo "Email sent to " . $username . "<br>";
+            // exit;
         }
         echo "All emails sent successfully";
         exit;
