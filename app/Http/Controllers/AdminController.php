@@ -218,18 +218,18 @@ class AdminController extends Controller
         // Validate the incoming request data
         $request->validate([
             'company_name' => 'required|string|max:255',
-            'website' => 'nullable|url',
-            'address' => 'required|string|max:255',
-            'postal_code' => 'required|string|max:20',
-            'main_product_category' => 'required|exists:product_categories,id',
-            'type_of_business' => 'required|string|max:255',
+            'website' => 'nullable|string',
+            'address' => 'nullable|string|max:255',
+            'postal_code' => 'nullable|string|max:20',
+            // 'main_product_category' => 'required|exists:product_categories,id',
+            // 'type_of_business' => 'nullable|string|max:255',
             'sectors' => 'nullable|array',
             'sectors.*' => 'exists:sectors,id',
             'stall_category' => 'nullable|string|max:255',
             'interested_sqm' => 'nullable|integer',
-            'allocated_sqm' => 'nullable|integer',
-            'semi_member' => 'nullable|string',
-            'semi_memberID' => 'nullable|string|max:100',
+            'allocated_sqm' => 'nullable|string|max:255',
+            // 'semi_member' => 'nullable|string',
+            // 'semi_memberID' => 'nullable|string|max:100',
             'event_contact_name' => 'nullable|string|max:255',
             'event_contact_design' => 'nullable|string|max:255',
             'event_contact_email' => 'nullable|email',
@@ -243,20 +243,42 @@ class AdminController extends Controller
             'pan_no' => 'nullable|string|max:20',
             'billing_company' => 'nullable|string|max:255',
             'contact_name' => 'nullable|string|max:255',
-            'billing_email' => 'nullable|email',
+            'billing_email' => 'nullable|string',
             'billing_phone' => 'nullable|string|max:20',
             'billing_address' => 'nullable|string|max:255',
             'billing_city' => 'nullable|string|max:255',
-            'billing_state' => 'nullable|exists:states,id',
-            'billing_country' => 'nullable|exists:countries,id',
+            'billing_state' => 'nullable|string|max:255',
+            'billing_country' => 'nullable|string|max:255',
         ]);
 
         // Find the application
         $application = Application::findOrFail($id);
 
+        // log in json file whatever the old data is and who has updated the data
+        // In case of version control, use a proper audit log or database mechanism instead of raw file writes.
+        // For demonstration, we'll append logs to a versioned log file with timestamps and user info.
+        $userName = auth()->user()->name ?? 'system';
+        $time = now()->toDateTimeString();
+
+        $oldData = $application->toArray();
+        $oldData['updated_by'] = $userName;
+        $oldData['updated_at'] = $time;
+
+        // Create a versioned history file per application
+        $oldDataLogFile = storage_path('logs/application_versions_' . $application->id . '.jsonl');
+        file_put_contents($oldDataLogFile, json_encode($oldData) . PHP_EOL, FILE_APPEND);
+
+        $requestData = $request->all();
+        $requestData['updated_by'] = $userName;
+        $requestData['updated_at'] = $time;
+        $requestDataLogFile = storage_path('logs/application_request_versions_' . $application->id . '.jsonl');
+        file_put_contents($requestDataLogFile, json_encode($requestData) . PHP_EOL, FILE_APPEND);
+
+
+
         // Update the basic fields
         $application->company_name = $request->company_name ?? $application->company_name;
-        $application->website = $request->website ?? $application->website;
+        $application->website = $request->website ?? $application->website ?? '';
         $application->address = $request->address ?? $application->address;
         $application->postal_code = $request->postal_code ?? $application->postal_code;
         $application->main_product_category = $request->main_product_category ?? $application->main_product_category;
@@ -269,6 +291,14 @@ class AdminController extends Controller
         $application->allocated_sqm = $request->allocated_sqm ?? $application->allocated_sqm;
         $application->semi_member = $request->semi_member == 'Yes' ? 1 : 0;
         $application->semi_memberID = $request->semi_memberID ?? $application->semi_memberID;
+
+        if ($application->eventContact->email != $request->event_contact_email) {
+            $user = User::find($application->user_id);
+            $user->email = $request->event_contact_email;
+            $user->save();
+            // echo "User email updated successfully";
+            // exit;
+        }
 
         // Update Event Contact Person
         if ($request->has('event_contact_name')) {
@@ -325,23 +355,27 @@ class AdminController extends Controller
         // Update Billing Details
         $billingDetails = $application->billingDetail;
         if ($billingDetails) {
-            $billingDetails->billing_company = $request->billing_company ?? $billingDetails->billing_company;
-            $billingDetails->contact_name = $request->contact_name ?? $billingDetails->contact_name;
-            $billingDetails->email = $request->billing_email ?? $billingDetails->email;
-            $billingDetails->phone = $request->billing_phone ?? $billingDetails->phone;
-            $billingDetails->address = $request->billing_address ?? $billingDetails->address;
-            $billingDetails->city_id = $request->billing_city ?? $billingDetails->city_id;
-            $billingDetails->state_id = $request->billing_state ?? $billingDetails->state_id;
-            $billingDetails->country_id = $request->billing_country ?? $billingDetails->country_id;
+            $billingDetails->billing_company = $request->billing_company ?? $billingDetails->billing_company ?? '';
+            $billingDetails->contact_name = $request->contact_name ?? $billingDetails->contact_name ?? '';
+            $billingDetails->email = $request->billing_email ?? $billingDetails->email ?? '';
+            $billingDetails->phone = $request->billing_phone ?? $billingDetails->phone ?? '';
+            $billingDetails->address = $request->billing_address ?? $billingDetails->address ?? '';
+            $billingDetails->city_id = $request->billing_city ?? $billingDetails->city_id ?? '';
+            $billingDetails->state_id = $request->billing_state ?? $billingDetails->state_id ?? '';
+            $billingDetails->country_id = $request->billing_country ?? $billingDetails->country_id ?? '';
             $billingDetails->save();
-        } else {
-            // Optionally, handle the case where billing details are missing
-            Log::error('Billing details not found for application ID: ' . $application->id);
-            return redirect()->back()->withErrors(['error' => 'Billing details not found for this application.']);
         }
+        //  else {
+        //     // Optionally, handle the case where billing details are missing
+        //     Log::error('Billing details not found for application ID: ' . $application->id);
+        //     return redirect()->back()->withErrors(['error' => 'Billing details not found for this application.']);
+        // }
 
         // Save the application
         $application->save();
+
+        // incase of change in contactperson email change update the user email to new email
+        
 
         // Redirect with success message
         return redirect()->back()->with('success', 'Application information updated successfully!');
