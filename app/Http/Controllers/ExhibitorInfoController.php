@@ -305,6 +305,7 @@ class ExhibitorInfoController extends Controller
 
 
         //if api_status is 0 then send the data to the external API
+/*
         if ($exhibitor->api_status == 0) {
             // Include user_id if available (to satisfy potential API requirement)
             if (!empty($exhibitor->application) && !empty($exhibitor->application->user_id)) {
@@ -352,7 +353,7 @@ class ExhibitorInfoController extends Controller
         }
 
 
-
+*/
 
         //$exhibitor = ExhibitorInfo::create($data);
 
