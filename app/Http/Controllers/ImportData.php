@@ -109,14 +109,24 @@ class ImportData extends Controller
 
             $command['row'] = $row; // keep raw row for fallback
 
+            
+
             /** ---------------------------
              * Step 2: Check existing user
              * ----------------------------*/
+            // First, check if company name is already registered
+            $existingApplication = Application::where('company_name', $command['company'])->first();
+
+            if ($existingApplication) {
+                echo "Company name '{$command['company']}' already registered. Skipping...\n";
+                continue;
+            }
+
+            // Now check if the user already exists by email
             $user = User::where('email', $command['email'])->first();
 
             if ($user) {
                 echo "User with email {$command['email']} already exists. Skipping...\n";
-
                 continue;
             } else {
                 /** ---------------------------
