@@ -1405,15 +1405,28 @@ class AdminController extends Controller
         // dd($payload);
             $apiResult = $this->sendExhibitorData($payload);
 
-            //from the response get the api_status and api_message
-            $api_status = $apiResult['response']['api_status'];
-            $api_message = $apiResult['response']['api_message'];
-          
-            // update the api_status and api_message in the exhibitor_info table
+            $successFlag = false;
+        if (isset($apiResult['response']) && is_array($apiResult['response']) && isset($apiResult['response']['status'])) {
+            $successFlag = (string)$apiResult['response']['status'] === '1';
+        } else if (!empty($apiResult['success'])) {
+            $successFlag = true;
+        }
 
-            $exhibitorInfo->api_status = $api_status ?? 0;
-            $exhibitorInfo->api_message = $api_message ?? '';
-            $exhibitorInfo->save();
+        $exhibitor->api_status = $successFlag ? 1 : 0;
+
+        $message = '';
+        if (isset($apiResult['response']) && is_array($apiResult['response'])) {
+            $message = json_encode($apiResult['response']);
+        } else if (isset($apiResult['raw_response'])) {
+            $message = (string)$apiResult['raw_response'];
+        } else if (isset($apiResult['error'])) {
+            $message = (string)$apiResult['error'];
+        }
+
+        // Safely append API message
+        $existingMessage = (string)($exhibitor->api_message ?? '');
+        $exhibitor->api_message = trim($existingMessage . ' ' . $message);
+        $exhibitor->save();
            
         }
     }
