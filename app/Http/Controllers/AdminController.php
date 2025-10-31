@@ -1288,9 +1288,9 @@ class AdminController extends Controller
             $password = $application->user->simplePass;
 
             //if usernme talvinder.singh@zop.dev skip that email 
-            if ($username == 'talvinder.singh@zop.dev') {
-                continue;
-            }
+            // if ($username == 'talvinder.singh@zop.dev') {
+            //     continue;
+            // }
             // echo $name . " - " . $username . " - " . $password . "<br>";
             // echo view('emails.credentials', ['setupProfileUrl' => $setupProfileUrl, 'email' => $username, 'name' => $name, 'password' => $password])->render();
             // exit;
@@ -1330,7 +1330,7 @@ class AdminController extends Controller
             ->where(function($query) {
                 $query->whereNull('api_status')->orWhere('api_status', 0);
             })
-            ->limit(1)
+            // ->limit(1)
             ->get();
 
             // dd($exhibitorInfo);
