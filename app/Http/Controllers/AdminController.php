@@ -1286,10 +1286,20 @@ class AdminController extends Controller
             $username = $application->user->email;
             $password = $application->user->simplePass;
             // echo $name . " - " . $username . " - " . $password . "<br>";
-            echo view('emails.credentials', ['setupProfileUrl' => $setupProfileUrl, 'email' => $username, 'name' => $name, 'password' => $password])->render();
-            exit;
+            // echo view('emails.credentials', ['setupProfileUrl' => $setupProfileUrl, 'email' => $username, 'name' => $name, 'password' => $password])->render();
             // exit;
+            // exit;
+            // echo $username;
+            // echo $name;
+            // echo $setupProfileUrl;
+            // echo $password;
+            // exit;
+            echo view('emails.credentials', ['name' => $name, 'setupProfileUrl' => $setupProfileUrl, 'username' => $username, 'password' => $password])->render();
+            exit;
             try {
+                //render the email to view it
+                echo view('emails.credentials', ['setupProfileUrl' => $setupProfileUrl, 'email' => $username, 'name' => $name, 'password' => $password])->render();
+                exit;
                 Mail::to($username)->bcc('test.interlinks@gmail.com')->send(new UserCredentialsMail($name, $setupProfileUrl, $username, $password));
             } catch (\Exception $e) {
                 echo "Error sending email to " . $username . ": " . $e->getMessage() . "<br>";
