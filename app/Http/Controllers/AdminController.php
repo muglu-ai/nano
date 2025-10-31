@@ -1402,7 +1402,7 @@ class AdminController extends Controller
             'var_2' => $var2,
         ];
 
-        dd($payload);
+        // dd($payload);
             $this->sendExhibitorData($payload);
         }
     }
