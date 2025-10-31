@@ -9,6 +9,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Barryvdh\DomPDF\Facade\Pdf;
 use App\Models\CoExhibitor;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 
 
@@ -274,5 +276,106 @@ class DocumentsContoller extends Controller
     public function promo_banner()
     {
         return view('documents.promo_banner');
+    }
+
+    // Declaration Form: download and upload
+    public function declaration_download()
+    {
+        $user = auth()->user();
+        if (!$user) {
+            return redirect('/login');
+        }
+
+        $id = $this->getUserApplicationInfo()->getData(true);
+        $application = null;
+        $uploadedFilePath = null;
+
+        if ($id['role'] == 'co-exhibitor') {
+            $coexhibitor = CoExhibitor::where('user_id', $id['userId'])->first();
+            // Co-exhibitor handling if needed
+        } else {
+            $application = Application::where('user_id', $id['userId'])->first();
+            
+            // Check if declaration file has been uploaded
+            if ($application && $application->declarationStatus == 1) {
+                $companyName = preg_replace('/[^A-Za-z0-9]/', '', (string) $application->company_name);
+                $fileName = $companyName . 'declaration.pdf';
+                $uploadedFileStoragePath = storage_path('app/public/declarations/' . $application->application_id . '/' . $fileName);
+                
+                if (file_exists($uploadedFileStoragePath)) {
+                    // Create a route URL to serve the file
+                    $uploadedFilePath = route('declaration.view', ['id' => $application->id]);
+                }
+            }
+        }
+
+        $pdfPath = 'https://bengalurutechsummit.com/pdf/Declaration-Form%20-BTS%202025.pdf';
+        
+        return view('documents.declaration_form', [
+            'pdfPath' => $pdfPath,
+            'application' => $application,
+            'uploadedFilePath' => $uploadedFilePath ?? null
+        ]);
+    }
+
+    public function declaration_upload(Request $request)
+    {
+        $request->validate([
+            'declaration_file' => 'required|file|mimetypes:application/pdf|max:2048',
+        ]);
+
+        $user = auth()->user();
+        if (!$user) {
+            return redirect('/login');
+        }
+
+        $application = Application::where('user_id', $user->id)->first();
+        if (!$application) {
+            return redirect()->back()->with('error', 'Application not found.');
+        }
+
+        $companyName = preg_replace('/[^A-Za-z0-9]/', '', (string) $application->company_name);
+        $fileName = $companyName . 'declaration.pdf';
+
+        $relativeDir = 'public/declarations/' . $application->application_id;
+        $storagePath = storage_path('app/' . $relativeDir);
+        if (!is_dir($storagePath)) {
+            mkdir($storagePath, 0755, true);
+        }
+
+        $file = $request->file('declaration_file');
+        $file->move($storagePath, $fileName);
+
+        $application->declarationStatus = 1;
+        $application->save();
+
+        return redirect()->back()->with('success', 'Declaration form uploaded successfully.');
+    }
+
+    public function declaration_view($id)
+    {
+        $user = auth()->user();
+        if (!$user) {
+            abort(403, 'Unauthorized');
+        }
+
+        $application = Application::findOrFail($id);
+        
+        // Check if user owns this application
+        if ($application->user_id != $user->id) {
+            abort(403, 'Unauthorized');
+        }
+
+        $companyName = preg_replace('/[^A-Za-z0-9]/', '', (string) $application->company_name);
+        $fileName = $companyName . 'declaration.pdf';
+        $filePath = storage_path('app/public/declarations/' . $application->application_id . '/' . $fileName);
+        
+        if (!file_exists($filePath)) {
+            abort(404, 'File not found');
+        }
+
+        return response()->file($filePath, [
+            'Content-Type' => 'application/pdf',
+        ]);
     }
 }

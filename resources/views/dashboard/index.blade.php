@@ -320,30 +320,46 @@
                         </thead>
                         <tbody>
                             <tr>
-
                                 <td class="" style="column-span: 1;">#1 </td>
                                 <td class="text-capitalize">Directory Listing</td>
                                 <td>
                                     @if ($directoryFilled)
-                                        <span class="text-success"><i
-                                                class="fa-solid fa-check-circle me-2"></i>Completed</span>
+                                        <span class="text-success"><i class="fa-solid fa-check-circle me-2"></i>Completed</span>
                                     @else
-                                        <span class="text-danger"><i
-                                                class="fa-solid fa-xmark-circle me-2"></i>Pending</span>
+                                        <span class="text-danger"><i class="fa-solid fa-xmark-circle me-2"></i>Pending</span>
                                     @endif
                                 </td>
                                 <td>
                                     @if ($directoryFilled)
-                                        <a href="{{ route('exhibitor.info') }}"
-                                            class="btn btn-outline-info btn-sm">View</a>
+                                        <a href="{{ route('exhibitor.info') }}" class="btn btn-outline-info btn-sm">View</a>
                                     @else
-                                        <a href="{{ route('exhibitor.info') }}"
-                                            class="btn btn-outline-danger btn-sm">Complete Now</a>
+                                        <a href="{{ route('exhibitor.info') }}" class="btn btn-outline-danger btn-sm">Complete Now</a>
                                     @endif
                                 </td>
                             </tr>
-                            {{-- Add Actions items as whichever usedCount of ticketSummary is 0 ask user to register under ticketName --}}
-                            @php $actionIndex = 2; @endphp
+
+                            {{-- Declaration Form Action Item --}}
+                            <tr>
+                                <td class="" style="column-span: 1;">#2 </td>
+                                <td class="text-capitalize">Declaration Form</td>
+                                <td>
+                                    @if(isset($application) && $application && $application->declarationStatus == 1)
+                                        <span class="text-success"><i class="fa-solid fa-check-circle me-2"></i>Completed</span>
+                                    @else
+                                        <span class="text-danger"><i class="fa-solid fa-xmark-circle me-2"></i>Pending</span>
+                                    @endif
+                                </td>
+                                <td>
+                                    @if(isset($application) && $application && $application->declarationStatus == 1)
+                                        <a href="{{ route('declaration.download') }}" class="btn btn-outline-info btn-sm">View</a>
+                                    @else
+                                        <a href="{{ route('declaration.download') }}" class="btn btn-outline-danger btn-sm">Upload Declaration PDF</a>
+                                    @endif
+                                </td>
+                            </tr>
+
+                            {{-- Continue with ticketSummary --}}
+                            @php $actionIndex = 3; @endphp
                             @foreach ($ticketSummary ?? [] as $ticket)
                                 @if (($ticket['usedCount'] ?? 0) == 0 && ($ticket['count'] ?? 0) > 0)
                                     <tr>

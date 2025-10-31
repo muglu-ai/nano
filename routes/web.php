@@ -642,6 +642,10 @@ Route::get('exhibitor-manual', [DocumentsContoller::class, 'exhibitor_manual'])-
 Route::get('portal-guide', [DocumentsContoller::class, 'exhibitor_guide'])->name('exhibitor_guide')->middleware(SharedMiddleware::class);
 Route::get('faqs', [DocumentsContoller::class, 'faqs'])->name('faqs')->middleware(SharedMiddleware::class);
 Route::get('promo-banner', [DocumentsContoller::class, 'promo_banner'])->name('promo.banner')->middleware(SharedMiddleware::class);
+// Declaration form routes
+Route::get('declaration-form', [DocumentsContoller::class, 'declaration_download'])->name('declaration.download')->middleware(SharedMiddleware::class);
+Route::post('declaration/upload', [DocumentsContoller::class, 'declaration_upload'])->name('declaration.upload')->middleware(SharedMiddleware::class);
+Route::get('declaration/view/{id}', [DocumentsContoller::class, 'declaration_view'])->name('declaration.view')->middleware(SharedMiddleware::class);
 Route::get('participation-letter', [DashboardController::class, 'participantDetails'])->name('participation.letter')->middleware(CheckUser::class);
 
 /* Document Controller Routes Ends
