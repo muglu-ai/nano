@@ -33,16 +33,16 @@ const EVENT_ID = 118150;
 
 CONST TEST_MODE = true;
 
-// define('DB_HOST', 'localhost');
-// define('DB_NAME', 'btsblnl265_asd1d_bengaluruite');
-// define('DB_USERNAME', 'btsblnl265_asd1d_bengaluruite');
-// define('DB_PASSWORD', 'Disl#vhfj#Af#DhW65');
+define('DB_HOST', '95.216.2.164');
+define('DB_NAME', 'btsblnl265_asd1d_bengaluruite');
+define('DB_USERNAME', 'btsblnl265_asd1d_bengaluruite');
+define('DB_PASSWORD', 'Disl#vhfj#Af#DhW65');
 // // define('DB_PORT', 3306);
 // define('DB_NAME2', 'btsblnl265_asd1d_portal');
-define('DB_HOST', 'localhost');
-define('DB_NAME', 'btsExhibitor');
-define('DB_USERNAME', 'semicon');
-define('DB_PASSWORD', 'Qwerty@123');
+// define('DB_HOST', 'localhost');
+// define('DB_NAME', 'btsExhibitor');
+// define('DB_USERNAME', 'semicon');
+// define('DB_PASSWORD', 'Qwerty@123');
 // define('DB_PORT', 3306);
 define('DB_NAME2', 'btsblnl265_asd1d_portal');
 
@@ -53,7 +53,7 @@ function dbconnection() {
         die("Connection failed: " . $conn->connect_error);
     }
     // Ensure proper charset to avoid packet issues with unicode
-    $conn->set_charset('utf8mb4');
+    // $conn->set_charset('utf8mb4');
     return $conn;
 }
 

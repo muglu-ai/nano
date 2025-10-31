@@ -209,7 +209,15 @@ class DocumentsContoller extends Controller
     {
         //path         public_path/assets/docs/Exhibitior-Manual-SEMICON-2025.pdf
 
-        $filePath = null;
+        //if the application is for 9sqm, then show the 9sqm manual
+        $application = Application::where('user_id', auth()->user()->id)->first();
+        if ($application->allocated_sqm != 'Booth / POD') {
+            $filePath = 'https://bengalurutechsummit.com/pdf/BTS-Exhibitor-Manual-9sqm.pdf';
+        } else {
+            $filePath = 'https://bengalurutechsummit.com/pdf/Startup-Exhibitor-Manual-2025.pdf';
+        }
+
+        //$filePath = 'https://bengalurutechsummit.com/pdf/BTS-Exhibitor-Manual-9sqm.pdf';
        //dd($filePath);
         //return view with the file path
         if (file_exists($filePath)) {
