@@ -84,6 +84,7 @@ class Application extends Model
         'approved_by',
         'RegSource',
         'zone',
+        'declarationStatus',
     ];
 
     /* Todo : Addedd the following new fields
