@@ -1330,7 +1330,7 @@ class AdminController extends Controller
             ->where(function($query) {
                 $query->whereNull('api_status')->orWhere('api_status', 0);
             })
-            ->limit(2)
+            ->limit(1)
             ->get();
 
             // dd($exhibitorInfo);
@@ -1403,7 +1403,18 @@ class AdminController extends Controller
         ];
 
         // dd($payload);
-            $this->sendExhibitorData($payload);
+            $apiResult = $this->sendExhibitorData($payload);
+
+            //from the response get the api_status and api_message
+            $api_status = $apiResult['response']['api_status'];
+            $api_message = $apiResult['response']['api_message'];
+          
+            // update the api_status and api_message in the exhibitor_info table
+
+            $exhibitorInfo->api_status = $api_status ?? 0;
+            $exhibitorInfo->api_message = $api_message ?? '';
+            $exhibitorInfo->save();
+           
         }
     }
 
