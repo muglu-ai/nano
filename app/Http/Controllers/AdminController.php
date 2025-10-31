@@ -1427,7 +1427,7 @@ class AdminController extends Controller
         $existingMessage = (string)($exhibitor->api_message ?? '');
         $exhibitor->api_message = trim($existingMessage . ' ' . $message);
         $exhibitor->save();
-           
+        echo "sent data to chkdin for " . $exhibitor->company_name . " with api_status " . $exhibitor->api_status . " and api_message " . $exhibitor->api_message . "<br>";
         }
     }
 
