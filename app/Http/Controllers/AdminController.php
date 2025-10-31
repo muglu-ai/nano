@@ -1282,7 +1282,7 @@ class AdminController extends Controller
         //send the email to the applicant
         foreach ($applications as $application) {
             $name = $application->user->name;
-            $setupProfileUrl = config('app.url');
+            $setupProfileUrl = 'http://bengalurutechsummit.com/portal/public';
             $username = $application->user->email;
             $password = $application->user->simplePass;
             // echo $name . " - " . $username . " - " . $password . "<br>";
