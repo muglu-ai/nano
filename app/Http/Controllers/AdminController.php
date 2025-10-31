@@ -1286,7 +1286,7 @@ class AdminController extends Controller
             $username = $application->user->email;
             $password = $application->user->simplePass;
             // echo $name . " - " . $username . " - " . $password . "<br>";
-            echo view('emails.credentials', ['email' => $username, 'name' => $name, 'password' => $password])->render();
+            echo view('emails.credentials', ['setupProfileUrl' => $setupProfileUrl, 'email' => $username, 'name' => $name, 'password' => $password])->render();
             exit;
             // exit;
             try {
