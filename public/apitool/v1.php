@@ -122,17 +122,17 @@ function get_data_from_database($tin_no) {
          'email' => $email,
          'job_title' => $job_title, 
          'cellno' => $cellno, 
-         'org_reg_type' => 
-         $org_reg_type, 
+         'org_reg_type' => $org_reg_type, 
          'org' => $org
         ];
         echo json_encode($data);
 
     }
-    exit;
+    // exit;
     // echo json_encode($data);
 
 }
+echo get_data_from_database('TIN-BTS2025-18912511');
 
 echo get_data_from_database('TIN-BTS2025-18912511');
 
