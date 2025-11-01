@@ -340,7 +340,7 @@
 
                             {{--Add here the action item for Fascia Name --}}
                             <tr>
-                                <td class="" style="column-span: 1;">#1 </td>
+                                <td class="" style="column-span: 1;">#2 </td>
                                 <td class="text-capitalize">Fascia Name</td>
                                 <td>
                                     @if ($directoryFilled)
@@ -361,7 +361,7 @@
 
                             {{-- Declaration Form Action Item --}}
                             <tr>
-                                <td class="" style="column-span: 1;">#2 </td>
+                                <td class="" style="column-span: 1;">#3 </td>
                                 <td class="text-capitalize">Declaration Form</td>
                                 <td>
                                     @if(isset($application) && $application && $application->declarationStatus == 1)
