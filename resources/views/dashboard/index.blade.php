@@ -338,6 +338,27 @@
                                 </td>
                             </tr>
 
+                            {{--Add here the action item for Fascia Name --}}
+                            <tr>
+                                <td class="" style="column-span: 1;">#1 </td>
+                                <td class="text-capitalize">Fascia Name</td>
+                                <td>
+                                    @if ($directoryFilled)
+                                        <span class="text-success"><i class="fa-solid fa-check-circle me-2"></i>Completed</span>
+                                    @else
+                                        <span class="text-danger"><i class="fa-solid fa-xmark-circle me-2"></i>Pending</span>
+                                    @endif
+                                </td>
+                                <td>
+                                    @if ($directoryFilled)
+                                        <a href="{{ route('exhibitor.info') }}" class="btn btn-outline-info btn-sm">View</a>
+                                    @else
+                                        <a href="{{ route('exhibitor.info') }}" class="btn btn-outline-danger btn-sm">Complete Now</a>
+                                    @endif
+                                </td>
+                            </tr>
+
+
                             {{-- Declaration Form Action Item --}}
                             <tr>
                                 <td class="" style="column-span: 1;">#2 </td>
