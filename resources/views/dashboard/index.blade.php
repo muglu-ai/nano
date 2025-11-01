@@ -341,7 +341,7 @@
                             {{--Add here the action item for Fascia Name --}}
                             <tr>
                                 <td class="" style="column-span: 1;">#2 </td>
-                                <td class="text-capitalize">Fascia Name</td>
+                                <td class="text-capitalize">Enter Fascia Name</td>
                                 <td>
                                     @if ($directoryFilled)
                                         <span class="text-success"><i class="fa-solid fa-check-circle me-2"></i>Completed</span>

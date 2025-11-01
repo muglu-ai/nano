@@ -1402,6 +1402,9 @@ class AdminController extends Controller
             $contactMobile = '+' . $countryCode . ' ' . $mobile;
         }
 
+        // remove space from the contactMobile
+        $contactMobile = str_replace(' ', '', $contactMobile);
+
         // photo: send only the file name (API builds path automatically)
         $photo = '';
         if (!empty($exhibitor->logo)) {
@@ -1417,6 +1420,9 @@ class AdminController extends Controller
         // the like [NB] like this should be removed
         $companyName = str_replace(["\u{00A0}", '&nbsp;'], ' ', $companyName);
         $companyName = trim($companyName);
+
+        $about = str_replace(["\r\n", "\n", "\r"], ' ', $about);
+        $about = trim($about);
 
         $payload = [
             'api_key' => 'scan626246ff10216s477754768osk',
@@ -1436,7 +1442,7 @@ class AdminController extends Controller
             'var_2' => $var2,
         ];
 
-        // dd($payload);
+        dd($payload);
             $apiResult = $this->sendExhibitorData($payload);
 
             $successFlag = false;
