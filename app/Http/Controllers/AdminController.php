@@ -1442,7 +1442,7 @@ class AdminController extends Controller
             'var_2' => $var2,
         ];
 
-        dd($payload);
+        // dd($payload);
             $apiResult = $this->sendExhibitorData($payload);
 
             $successFlag = false;
