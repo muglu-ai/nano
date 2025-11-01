@@ -235,7 +235,18 @@ class ExhibitorInfoController extends Controller
             ]
         );
 
-        // Build payload for external API
+
+        //$exhibitor = ExhibitorInfo::create($data);
+
+        //redirect back with thank you for filling out the exhibitor directory fields
+        return redirect()->route('exhibitor.info.preview')->with('success', 'Thank you for filling out the exhibitor directory information. Please review the preview and submit the information.');
+    }
+
+
+
+    // make a function that will curate the data for the external API
+    public function curateDataForAPI(ExhibitorInfo $exhibitor)
+    {
         $companyName = $exhibitor->company_name ?? '';
         $about = $exhibitor->description ?? '';
         $website = $exhibitor->website ?? '';
@@ -261,12 +272,18 @@ class ExhibitorInfoController extends Controller
                 $contactCountryCode = preg_replace('/[^\d+]/', '', $tparts[0]);
                 $contactNumber = preg_replace('/[^\d]/', '', $tparts[1]);
                 $contactMobile = trim($contactCountryCode . ' ' . $contactNumber);
+                //remove space from the contactMobile
+                $contactMobile = str_replace(' ', '', $contactMobile);
             }
         }
         if ($contactMobile === '' && $countryCode !== '' && $mobile !== '') {
             // build display from main phone if no telPhone provided
-            $contactMobile = '+' . $countryCode . ' ' . $mobile;
+            $contactMobile = '+' . $countryCode . $mobile;
+            //remove space from the contactMobile
+            $contactMobile = str_replace(' ', '', $contactMobile);
         }
+
+        // dd($contactMobile);
 
         // photo: send only the file name (API builds path automatically)
         $photo = '';
@@ -283,6 +300,10 @@ class ExhibitorInfoController extends Controller
         // the like [NB] like this should be removed
         $companyName = str_replace(["\u{00A0}", '&nbsp;'], ' ', $companyName);
         $companyName = trim($companyName);
+
+        //from about remove the \r\n and \n and \r
+        $about = str_replace(["\r\n", "\n", "\r"], ' ', $about);
+        $about = trim($about);
 
         $payload = [
             'api_key' => 'scan626246ff10216s477754768osk',
@@ -302,63 +323,9 @@ class ExhibitorInfoController extends Controller
             'var_2' => $var2,
         ];
 
+        return $payload;
 
-
-        //if api_status is 0 then send the data to the external API
-/*
-        if ($exhibitor->api_status == 0) {
-            // Include user_id if available (to satisfy potential API requirement)
-            if (!empty($exhibitor->application) && !empty($exhibitor->application->user_id)) {
-                $payload['user_id'] = (string)$exhibitor->application->user_id;
-            }
-
-        // Send to external API and store response (never allow failure to break flow)
-        try {
-            $apiResult = $this->sendExhibitorData($payload);
-        } catch (\Throwable $e) {
-            Log::error('Exhibitor API call failed', [
-                'exception' => $e->getMessage(),
-                'payload_company' => $companyName ?? null,
-                'application_id' => $exhibitor->application_id ?? null,
-            ]);
-            $apiResult = [
-                'success' => false,
-                'error' => 'Unhandled exception: ' . $e->getMessage(),
-            ];
-        }
-
-        // Determine success by API response status when available
-        $successFlag = false;
-        if (isset($apiResult['response']) && is_array($apiResult['response']) && isset($apiResult['response']['status'])) {
-            $successFlag = (string)$apiResult['response']['status'] === '1';
-        } else if (!empty($apiResult['success'])) {
-            $successFlag = true;
-        }
-
-        $exhibitor->api_status = $successFlag ? 1 : 0;
-
-        $message = '';
-        if (isset($apiResult['response']) && is_array($apiResult['response'])) {
-            $message = json_encode($apiResult['response']);
-        } else if (isset($apiResult['raw_response'])) {
-            $message = (string)$apiResult['raw_response'];
-        } else if (isset($apiResult['error'])) {
-            $message = (string)$apiResult['error'];
-        }
-
-        // Safely append API message
-        $existingMessage = (string)($exhibitor->api_message ?? '');
-        $exhibitor->api_message = trim($existingMessage . ' ' . $message);
-        $exhibitor->save();
-        }
-
-
-*/
-
-        //$exhibitor = ExhibitorInfo::create($data);
-
-        //redirect back with thank you for filling out the exhibitor directory fields
-        return redirect()->route('exhibitor.info.preview')->with('success', 'Thank you for filling out the exhibitor directory information. Please review the preview and submit the information.');
+        
     }
 
     // send all exhibitor_info data and send to the external API where submission_status=1
@@ -373,7 +340,7 @@ class ExhibitorInfoController extends Controller
             ->where(function($query) {
                 $query->whereNull('api_status')->orWhere('api_status', 0);
             })
-            ->limit(2)
+            // ->limit(2)
             ->get();
 
             // dd($exhibitorInfo);
@@ -523,8 +490,47 @@ class ExhibitorInfoController extends Controller
             return redirect()->route('exhibitor.info')->with('error', 'Exhibitor information not found.');
         }
 
-        $exhibitorInfo->submission_status = 1;
-        $exhibitorInfo->save();
+        // check if the submission_status is 1 then return the error
+        if ($exhibitorInfo->submission_status == 1) {
+            return redirect()->route('exhibitor.info')->with('error', 'Exhibitor information already submitted.');
+        }
+
+        // $exhibitorInfo->submission_status = 1;
+        // $exhibitorInfo->save();
+
+        $payload = $this->curateDataForAPI($exhibitorInfo);
+        // dd($payload);
+
+        // check if the api_status is 0 then send the data to the external API
+        if ($exhibitorInfo->api_status == 0 || $exhibitorInfo->api_status == null) {
+            $apiResult = $this->sendExhibitorData($payload);
+           
+
+            // store the response in the api_message
+            $successFlag = false;
+            if (isset($apiResult['response']) && is_array($apiResult['response']) && isset($apiResult['response']['status'])) {
+                $successFlag = (string)$apiResult['response']['status'] === '1';
+            } else if (!empty($apiResult['success'])) {
+                $successFlag = true;
+            }
+    
+            $exhibitorInfo->api_status = $successFlag ? 1 : 0;
+    
+            $message = '';
+            if (isset($apiResult['response']) && is_array($apiResult['response'])) {
+                $message = json_encode($apiResult['response']);
+            } else if (isset($apiResult['raw_response'])) {
+                $message = (string)$apiResult['raw_response'];
+            } else if (isset($apiResult['error'])) {
+                $message = (string)$apiResult['error'];
+            }
+    
+            // Safely append API message
+            $existingMessage = (string)($exhibitorInfo->api_message ?? '');
+            $exhibitorInfo->api_message = trim($existingMessage . ' ' . $message);
+            $exhibitorInfo->save();
+    
+        }
 
         return redirect()->route('exhibitor.info')->with('success', 'Exhibitor information submitted successfully.');
     }
