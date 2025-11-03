@@ -155,7 +155,7 @@ class ApplicationExport implements FromCollection, WithHeadings, WithMapping, Sh
 
             $application->type_of_business ?? 'N/A',
             $application->participated_previous == 1 ? 'Yes' : 'No',
-            $application->fascia_name ?? 'N/A',
+            //$application->fascia_name ?? 'N/A',
 
             //here we have to get the fascia name from the exhibitor_info table
             // $fasciaName = ExhibitorInfo::where('application_id', $application->id)->first()->fascia_name ?? 'N/A',
