@@ -31,7 +31,7 @@
               </p>
 
               <p style="margin:0 0 18px 0;font-size:15px;color:#333333;line-height:1.5;">
-                Thank you for registering as an exhibitor. We previously sent your exhibitor portal login credentials to your registered email address. Our records show that some exhibitors have not yet completed the exhibitor form or updated their <strong>facia details</strong>.
+                Thank you for registering as an exhibitor. We previously sent your exhibitor portal login credentials to your registered email address. Our records show that you have not yet completed the exhibitor directory form or updated your <strong>facia details</strong>.
               </p>
 
               <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="border-collapse:collapse;margin:18px 0;">

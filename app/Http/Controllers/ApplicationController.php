@@ -1427,4 +1427,6 @@ class ApplicationController extends Controller
                 ->with('error', 'Failed to create application: ' . $e->getMessage());
         }
     }
+
+    
 }
