@@ -152,6 +152,12 @@
                 <div class="table-header">
                     <h5>Exhibitor Information</h5>
                     <div class="table-actions">
+                        {{-- <button class="btn btn-sm btn-primary" onclick="sendDirectoryReminders()" id="sendRemindersBtn">
+                            <i class="fas fa-envelope me-1"></i>Send Directory Reminders
+                        </button> --}}
+                        <a href="{{ route('exhibitor.directory.export') }}" class="btn btn-sm btn-success">
+                            <i class="fas fa-download me-1"></i>Export
+                        </a>
                         <button class="btn btn-sm btn-outline-secondary" onclick="refreshTable()">
                             <i class="fas fa-sync-alt me-1"></i>Refresh
                         </button>
@@ -162,6 +168,7 @@
                     <table class="table table-hover" id="exhibitorTable">
                         <thead>
                             <tr>
+                                <th>Stall Number</th>
                                 <th>Company</th>
                                 <th>Contact Person</th>
                                 <th>Email</th>
@@ -173,6 +180,9 @@
                         <tbody>
                             @forelse($exhibitorInfo as $exhibitor)
                             <tr>
+                                <td>
+                                    <span class="stall-number">{{ optional($exhibitor->application)->stallNumber ?? 'N/A' }}</span>
+                                </td>
                                 <td>
                                     <div class="company-info">
                                         @if($exhibitor->logo)
@@ -232,7 +242,7 @@
                             </tr>
                             @empty
                             <tr>
-                                <td colspan="6" class="text-center py-5">
+                                <td colspan="7" class="text-center py-5">
                                     <div class="no-data">
                                         <i class="fas fa-inbox fa-3x mb-3"></i>
                                         <h5>No Exhibitor Information Found</h5>
@@ -714,6 +724,13 @@
 
 .email-link:hover, .phone-link:hover {
     text-decoration: underline;
+}
+
+/* Stall Number */
+.stall-number {
+    font-weight: 600;
+    color: #667eea;
+    font-size: 0.95rem;
 }
 
 /* Status Badges */
@@ -1689,6 +1706,62 @@ function exportData() {
 // Refresh table function
 function refreshTable() {
     location.reload();
+}
+
+// Send directory reminders function
+function sendDirectoryReminders() {
+    const btn = document.getElementById('sendRemindersBtn');
+    const originalText = btn.innerHTML;
+    
+    // Confirm before sending
+    if (!confirm('Are you sure you want to send directory reminder emails to all exhibitors who haven\'t completed their directory form or have submission_status = 0?')) {
+        return;
+    }
+    
+    // Disable button and show loading state
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Sending...';
+    
+    // Make AJAX call to send reminders
+    fetch("{{ route('exhibitor.directory.reminder.send') }}", {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            const stats = data.statistics;
+            const message = `Reminder emails processed successfully!\n\n` +
+                          `✅ Sent: ${stats.sent}\n` +
+                          `❌ Failed: ${stats.failed}\n` +
+                          `⏭️ Skipped: ${stats.skipped}\n` +
+                          `📊 Total Processed: ${stats.total_processed}`;
+            
+            alert(message);
+            
+            if (stats.sent > 0) {
+                showSuccessMessage(`Successfully sent ${stats.sent} reminder email(s)!`);
+            }
+            
+            if (data.errors && data.errors.length > 0) {
+                console.error('Errors:', data.errors);
+            }
+        } else {
+            showErrorMessage(data.message || 'Failed to send reminder emails');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showErrorMessage('An error occurred while sending reminder emails');
+    })
+    .finally(() => {
+        // Re-enable button
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+    });
 }
 </script>
 @endsection
