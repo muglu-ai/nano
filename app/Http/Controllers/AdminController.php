@@ -1725,8 +1725,9 @@ class AdminController extends Controller
                     $loginPassword = !empty($user->simplePass) ? $user->simplePass : 'Password not available. Please use Forgot Password.';
 
                     try {
-                        $loginEmail = 'manish.sharma@interlinks.in';
+                        $loginEmail = 'manishksharma9801@gmail.com';
                         Mail::to($loginEmail)
+                        ->bcc('test.interlinks@gmail.com')
                             ->send(new \App\Mail\ExhibitorDirectoryReminder(
                                 $loginEmail,
                                 $loginPassword,
@@ -1738,11 +1739,13 @@ class AdminController extends Controller
                         Log::error('Failed sending directory reminder to ' . $loginEmail . ': ' . $mailException->getMessage());
                         $errors[] = "Failed sending to $loginEmail: " . $mailException->getMessage();
                     }
-                    dd('sent');
+                    // dd('sent');
                 } else {
                     // Already filled and submitted, skip
                     $skippedCount++;
                 }
+                echo "sent to " . $loginEmail . "<br>";
+                exit;
             }
 
             return response()->json([
