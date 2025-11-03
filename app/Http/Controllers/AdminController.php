@@ -1707,6 +1707,7 @@ class AdminController extends Controller
             $errors = [];
 
             foreach ($applications as $application) {
+                dd($application);
                 // Skip if user or email doesn't exist
                 if (!$application->user || !$application->user->email) {
                     $skippedCount++;
