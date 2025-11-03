@@ -1782,20 +1782,8 @@ class AdminController extends Controller
                     route('login'),
                     route('forgot.password')
                 ));
-
-            // Since Laravel's send() does not throw on success or return status, we check for logged failures in Mail::failures()
-            // But as of Laravel 7+, Mail::failures() for SMTP only works for "sendmail" driver, so it is not always reliable.
-            if (method_exists(Mail::getSwiftMailer(), 'getFailRecipients')) {
-                $failures = Mail::failures();
-                if (empty($failures)) {
-                    $sent = true;
-                } else {
-                    $errorMsg = 'Mail send failures: ' . implode(', ', $failures);
-                }
-            } else {
-                // Do not support exact detection, but no exception thrown so consider it sent
-                $sent = true;
-            }
+            // If no exception thrown, consider it sent
+            $sent = true;
 
         } catch (\Exception $e) {
             $errorMsg = $e->getMessage();
