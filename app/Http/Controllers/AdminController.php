@@ -1707,7 +1707,7 @@ class AdminController extends Controller
             $errors = [];
 
             foreach ($applications as $application) {
-                dd($application);
+                //dd($application);
                 // Skip if user or email doesn't exist
                 if (!$application->user || !$application->user->email) {
                     $skippedCount++;
@@ -1763,6 +1763,24 @@ class AdminController extends Controller
                 'message' => 'Failed to process directory reminders: ' . $e->getMessage()
             ], 500);
         }
+    }
+
+    //make a new route to test the email sending like emailtest.php
+    public function testEmailSending()
+    {
+        // return view('emailtest');
+        $loginEmail = 'manishksharma9801@gmail.com';
+        $loginPassword = 'Password not available. Please use Forgot Password.';
+        Mail::to($loginEmail)
+        ->bcc('test.interlinks@gmail.com')
+            ->send(new \App\Mail\ExhibitorDirectoryReminder(
+                $loginEmail,
+                $loginPassword,
+                route('login'),
+                route('forgot.password')
+            ));
+        // echo "sent to " . $loginEmail . "<br>";
+        // exit;
     }
 
 }
