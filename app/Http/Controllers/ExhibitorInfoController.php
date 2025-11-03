@@ -15,9 +15,13 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\SponsorInvoiceMail;
+use App\Mail\ExhibitorDirectoryReminder;
 use Illuminate\Support\Facades\Storage;
 use App\Models\Sector;
+use App\Models\User;
 use Barryvdh\DomPDF\Facade\Pdf;
+use App\Exports\ExhibitorInfoExport;
+use Maatwebsite\Excel\Facades\Excel;
 
 
 class ExhibitorInfoController extends Controller
@@ -495,8 +499,8 @@ class ExhibitorInfoController extends Controller
             return redirect()->route('exhibitor.info')->with('error', 'Exhibitor information already submitted.');
         }
 
-        // $exhibitorInfo->submission_status = 1;
-        // $exhibitorInfo->save();
+        $exhibitorInfo->submission_status = 1;
+        $exhibitorInfo->save();
 
         $payload = $this->curateDataForAPI($exhibitorInfo);
         // dd($payload);
@@ -782,6 +786,100 @@ class ExhibitorInfoController extends Controller
         // how to ignore the construct function in this function
 
         dd('all exhibitors');
+    }
+
+    /**
+     * Send directory reminder emails to exhibitors who haven't completed their directory form
+     * or have submission_status = 0
+     */
+    public function sendDirectoryReminder()
+    {
+        // Check admin middleware
+        $middlewareResponse = $this->adminMiddleware();
+        if ($middlewareResponse) {
+            return $middlewareResponse;
+        }
+
+        try {
+            // Get all approved applications with their users
+            $applications = Application::where('submission_status', 'approved')
+                ->with('user')
+                ->get();
+
+            // Get all ExhibitorInfo records keyed by application_id
+            $exhibitorInfos = ExhibitorInfo::whereIn('application_id', $applications->pluck('id'))
+                ->get()
+                ->keyBy('application_id');
+
+            $sentCount = 0;
+            $failedCount = 0;
+            $skippedCount = 0;
+            $errors = [];
+
+            foreach ($applications as $application) {
+                // Skip if user or email doesn't exist
+                if (!$application->user || !$application->user->email) {
+                    $skippedCount++;
+                    continue;
+                }
+
+                // Check if directory is not filled: no ExhibitorInfo OR submission_status = 0
+                $exhibitorInfo = $exhibitorInfos->get($application->id);
+                $shouldSend = false;
+                
+                if (!$exhibitorInfo) {
+                    // Directory not filled at all
+                    $shouldSend = true;
+                } elseif ($exhibitorInfo->submission_status == 0) {
+                    // Directory exists but not submitted
+                    $shouldSend = true;
+                }
+
+                if (!$shouldSend) {
+                    $skippedCount++;
+                    continue;
+                }
+
+                // Get user credentials
+                $user = $application->user;
+                $loginEmail = $user->email;
+                $loginPassword = !empty($user->simplePass) ? $user->simplePass : 'Password not available. Please use Forgot Password.';
+
+                try {
+                    // Send email
+                    Mail::to($loginEmail)
+                        ->send(new ExhibitorDirectoryReminder(
+                            $loginEmail,
+                            $loginPassword
+                        ));
+
+                    $sentCount++;
+                    Log::info("Directory reminder sent to: {$loginEmail}");
+                } catch (\Exception $e) {
+                    $failedCount++;
+                    $errors[] = "Failed to send to {$loginEmail}: " . $e->getMessage();
+                    Log::error("Failed to send directory reminder to {$loginEmail}: " . $e->getMessage());
+                }
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Directory reminder emails processed',
+                'statistics' => [
+                    'sent' => $sentCount,
+                    'failed' => $failedCount,
+                    'skipped' => $skippedCount,
+                    'total_processed' => $applications->count(),
+                ],
+                'errors' => $errors
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error in sendDirectoryReminder: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to process directory reminders: ' . $e->getMessage()
+            ], 500);
+        }
     }
 
     // API endpoint to get exhibitor details
@@ -1183,5 +1281,19 @@ class ExhibitorInfoController extends Controller
         }
 
         return $phoneNumber;
+    }
+
+    /**
+     * Export all exhibitor info to Excel
+     */
+    public function exportExhibitorInfo()
+    {
+        // Check admin middleware
+        $middlewareResponse = $this->adminMiddleware();
+        if ($middlewareResponse) {
+            return $middlewareResponse;
+        }
+
+        return Excel::download(new ExhibitorInfoExport, 'exhibitor-info-' . date('Y-m-d-His') . '.xlsx');
     }
 }

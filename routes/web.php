@@ -18,6 +18,7 @@ use App\Http\Controllers\ForgotPasswordController;
 use App\Http\Controllers\GeoController;
 use App\Http\Controllers\ImportData;
 use App\Http\Controllers\IntegrationAPIController;
+use App\Http\Controllers\InterlinxAPIController;
 use App\Http\Controllers\InvoicesController;
 use App\Http\Controllers\MailController;
 use App\Http\Controllers\MeetingRoomAdminController;
@@ -741,6 +742,8 @@ Route::post('/product-add', [ExhibitorInfoController::class, 'productStore'])->n
 */
 
 Route::get('/exhibitor-info-list', [ExhibitorInfoController::class, 'listExhibitors'])->name('exhibitor.directory.list')->middleware(Auth::class);
+Route::get('/exhibitor-info-export', [ExhibitorInfoController::class, 'exportExhibitorInfo'])->name('exhibitor.directory.export')->middleware(Auth::class);
+Route::post('/exhibitor-directory-reminder-send', [ExhibitorInfoController::class, 'sendDirectoryReminder'])->name('exhibitor.directory.reminder.send')->middleware(Auth::class);
 
 // API endpoint for exhibitor details
 Route::get('/api/exhibitor-details/{id}', [ExhibitorInfoController::class, 'getExhibitorDetails'])->name('api.exhibitor.details')->middleware(Auth::class);
@@ -748,6 +751,12 @@ Route::get('/api/exhibitor-details/{id}', [ExhibitorInfoController::class, 'getE
 // API endpoints for exhibitor editing
 Route::get('/api/exhibitor-edit/{id}', [ExhibitorInfoController::class, 'getExhibitorForEdit'])->name('api.exhibitor.edit')->middleware(Auth::class);
 Route::post('/api/exhibitor-update/{id}', [ExhibitorInfoController::class, 'updateExhibitor'])->name('api.exhibitor.update')->middleware(Auth::class);
+
+/*Interlinx API Routes
+*/
+Route::post('/api/interlinx/register', [InterlinxAPIController::class, 'registerUserFromRequest'])->name('interlinx.register');
+Route::get('/api/interlinx/test', [InterlinxAPIController::class, 'testConnection'])->name('interlinx.test')->middleware(Auth::class);
+Route::get('/api/interlinx/check', [InterlinxAPIController::class, 'checkEndpoint'])->name('interlinx.check')->middleware(Auth::class);
 
 //terms and conditions route
 Route::get('/terms-conditions', function () {
