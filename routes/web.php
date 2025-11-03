@@ -742,7 +742,7 @@ Route::post('/product-add', [ExhibitorInfoController::class, 'productStore'])->n
 */
 
 Route::get('/exhibitor-info-list', [ExhibitorInfoController::class, 'listExhibitors'])->name('exhibitor.directory.list')->middleware(Auth::class);
-Route::get('/exhibitor-info-export', [ExhibitorInfoController::class, 'exportExhibitorInfo'])->name('exhibitor.directory.export')->middleware(Auth::class);
+Route::get('/exhibitor-info-export', [ExportController::class, 'export_exhibitor_info'])->name('exhibitor.directory.export')->middleware(Auth::class);
 Route::post('/exhibitor-directory-reminder-send', [ExhibitorInfoController::class, 'sendDirectoryReminder'])->name('exhibitor.directory.reminder.send')->middleware(Auth::class);
 
 // API endpoint for exhibitor details

@@ -10,6 +10,7 @@ use App\Exports\InvoicesExport;
 use App\Exports\LeadRetrievalExport;
 use App\Exports\ApprovedApplicationExport;
 use App\Exports\StallInvoiceExport;
+use App\Exports\ExhibitorInfoExport;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
 
@@ -124,5 +125,21 @@ class ExportController extends Controller
         Log::info('User ' . (Auth::user() ? Auth::user()->id : 'guest') . ' (IP: ' . request()->ip() . ') is exporting stall invoice data.');
         $filename = 'stall_invoices_' . now()->format('Y_m_d_H_i_s') . '.xlsx';
         return Excel::download(new StallInvoiceExport, $filename);
+    }
+
+    // Export exhibitor info to Excel
+    public function export_exhibitor_info()
+    {
+        // Check if user is admin
+        if (!Auth::check()) {
+            return redirect()->route('login')->with('error', 'Please login to continue.');
+        }
+
+        if (Auth::user()->role !== 'admin') {
+            return redirect()->route('user.dashboard')->with('error', 'You are not authorized to access this page.');
+        }
+
+        $filename = 'exhibitor-info-' . now()->format('Y-m-d-His') . '.xlsx';
+        return Excel::download(new ExhibitorInfoExport, $filename);
     }
 }
