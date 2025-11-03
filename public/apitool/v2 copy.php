@@ -517,43 +517,78 @@ $link2 = mysqli_connect($host, $user, $pass, $db);
 // Define all categories to test
 $categories_to_test = [
 	// VIP Delegate Pass variations
+	['pass_category' => 'VIP Delegate Pass', 'days' => null], // All days
+	['pass_category' => 'VIP Delegate Pass', 'days' => 'Day 1'],
+	['pass_category' => 'VIP Delegate Pass', 'days' => 'Day 2'],
+	['pass_category' => 'VIP Delegate Pass', 'days' => 'Day 3'],
+	['pass_category' => 'VIP Delegate Pass', 'days' => 'Day 1, Day 2'],
+	['pass_category' => 'VIP Delegate Pass', 'days' => 'Day 1, Day 3'],
+	['pass_category' => 'VIP Delegate Pass', 'days' => 'Day 2, Day 3'],
 	
+	// Premium Delegate Pass variations
+	['pass_category' => 'Premium Delegate Pass', 'days' => null], // All days
+	['pass_category' => 'Premium Delegate Pass', 'days' => 'Day 1'],
+	['pass_category' => 'Premium Delegate Pass', 'days' => 'Day 2'],
+	['pass_category' => 'Premium Delegate Pass', 'days' => 'Day 3'],
+	['pass_category' => 'Premium Delegate Pass', 'days' => 'Day 1, Day 2'],
+	['pass_category' => 'Premium Delegate Pass', 'days' => 'Day 1, Day 3'],
+	['pass_category' => 'Premium Delegate Pass', 'days' => 'Day 2, Day 3'],
+	
+	// Standard Delegate Pass variations
+	['pass_category' => 'Standard Delegate Pass', 'days' => null], // All days
+	['pass_category' => 'Standard Delegate Pass', 'days' => 'Day 1'],
+	['pass_category' => 'Standard Delegate Pass', 'days' => 'Day 2'],
+	['pass_category' => 'Standard Delegate Pass', 'days' => 'Day 3'],
+	['pass_category' => 'Standard Delegate Pass', 'days' => 'Day 1, Day 2'],
+	['pass_category' => 'Standard Delegate Pass', 'days' => 'Day 1, Day 3'],
+	['pass_category' => 'Standard Delegate Pass', 'days' => 'Day 2, Day 3'],
 	
 	// FMC Passes
-	// ['pass_category' => 'FMC Premium Delegate Pass', 'days' => null],
-	// ['pass_category' => 'FMC GO Pass', 'days' => null],
-	// ['pass_category' => 'FMC Delegate Pass', 'days' => null],
+	['pass_category' => 'FMC Premium Delegate Pass', 'days' => null],
+	['pass_category' => 'FMC GO Pass', 'days' => null],
+	['pass_category' => 'FMC Delegate Pass', 'days' => null],
 	
 	// Direct category mappings (categories not handled by matchPassesCategory)
-	// ['direct' => true, 'category_id' => 3516, 'name' => 'VVIP', 'event_dates' => '18, 19, 20 Nov'],
-	// ['direct' => true, 'category_id' => 3517, 'name' => 'VIP', 'event_dates' => '18, 19, 20 Nov'],
-	// ['direct' => true, 'category_id' => 3518, 'name' => 'Ministers VIP', 'event_dates' => '18, 19, 20 Nov'],
-	
-	// ['direct' => true, 'category_id' => 3531, 'name' => 'EVENT PARTNER', 'event_dates' => '18, 19, 20 Nov'],
-	// ['direct' => true, 'category_id' => 3532, 'name' => 'VIP GIA PARTNER', 'event_dates' => '18, 19, 20 Nov'],
-	// ['direct' => true, 'category_id' => 3533, 'name' => 'GIA PARTNER', 'event_dates' => '18, 19, 20 Nov'],
-	// ['direct' => true, 'category_id' => 3534, 'name' => 'ASSOCIATION PARTNER', 'event_dates' => '18, 19, 20 Nov'],
-	// ['direct' => true, 'category_id' => 3535, 'name' => 'ASSOCIATION SUPPORT', 'event_dates' => '18, 19, 20 Nov'],
-	// ['direct' => true, 'category_id' => 3547, 'name' => 'POSTER DELEGATE', 'event_dates' => '18, 19, 20 Nov'],
-	['direct' => true, 'category_id' => 3548, 'name' => 'VIP Pass', 'event_dates' => '18, 19, 20 Nov'],
-	['direct' => true, 'category_id' => 3549, 'name' => 'Premium Pass', 'event_dates' => '18, 19, 20 Nov'],
-	['direct' => true, 'category_id' => 3550, 'name' => 'Standard Pass', 'event_dates' => '18, 19, 20 Nov'],
-	['direct' => true, 'category_id' => 3551, 'name' => 'FMC Premium', 'event_dates' => '20th Nov'],
-	['direct' => true, 'category_id' => 3552, 'name' => 'FMC GO', 'event_dates' => '20 Nov'],
-	['direct' => true, 'category_id' => 3553, 'name' => 'VIP Pass', 'event_dates' => '18, 19, 20 Nov'],
-	['direct' => true, 'category_id' => 3554, 'name' => 'Premium Pass', 'event_dates' => '18, 19, 20 Nov'],
-	['direct' => true, 'category_id' => 3555, 'name' => 'Standard Pass', 'event_dates' => '18, 19, 20 Nov'],
-	['direct' => true, 'category_id' => 3556, 'name' => 'FMC Premium', 'event_dates' => '20th Nov'],
-	['direct' => true, 'category_id' => 3557, 'name' => 'FMC GO', 'event_dates' => '20 Nov'],
+	['direct' => true, 'category_id' => 3516, 'name' => 'VVIP', 'event_dates' => '18, 19, 20 Nov'],
+	['direct' => true, 'category_id' => 3517, 'name' => 'VIP', 'event_dates' => '18, 19, 20 Nov'],
+	['direct' => true, 'category_id' => 3518, 'name' => 'Ministers VIP', 'event_dates' => '18, 19, 20 Nov'],
+	['direct' => true, 'category_id' => 3519, 'name' => 'VISION GROUP ITE', 'event_dates' => '18, 19, 20 Nov'],
+	['direct' => true, 'category_id' => 3520, 'name' => 'VISION GROUP BIOTECH', 'event_dates' => '18, 19, 20 Nov'],
+	['direct' => true, 'category_id' => 3521, 'name' => 'VISION GROUP STARTUPS', 'event_dates' => '18, 19, 20 Nov'],
+	['direct' => true, 'category_id' => 3522, 'name' => 'VISION GROUP SPACE', 'event_dates' => '18, 19, 20 Nov'],
+	['direct' => true, 'category_id' => 3523, 'name' => 'VISION GROUP NANOTECH', 'event_dates' => '18, 19, 20 Nov'],
+	['direct' => true, 'category_id' => 3524, 'name' => 'CONFERENCE COMMITTEE', 'event_dates' => '18, 19, 20 Nov'],
+	['direct' => true, 'category_id' => 3525, 'name' => 'SPEAKER', 'event_dates' => '18, 19, 20 Nov'],
+	['direct' => true, 'category_id' => 3526, 'name' => 'Organiser Green', 'event_dates' => '18, 19, 20 Nov'],
+	['direct' => true, 'category_id' => 3527, 'name' => 'Organiser Blue', 'event_dates' => '18, 19, 20 Nov'],
+	['direct' => true, 'category_id' => 3528, 'name' => 'GoK Sr. Officer', 'event_dates' => '18, 19, 20 Nov'],
+	['direct' => true, 'category_id' => 3529, 'name' => 'GoK Staff', 'event_dates' => '18, 19, 20 Nov'],
+	['direct' => true, 'category_id' => 3530, 'name' => 'PROTOCOL', 'event_dates' => '18, 19, 20 Nov'],
+	['direct' => true, 'category_id' => 3531, 'name' => 'EVENT PARTNER', 'event_dates' => '18, 19, 20 Nov'],
+	['direct' => true, 'category_id' => 3532, 'name' => 'VIP GIA PARTNER', 'event_dates' => '18, 19, 20 Nov'],
+	['direct' => true, 'category_id' => 3533, 'name' => 'GIA PARTNER', 'event_dates' => '18, 19, 20 Nov'],
+	['direct' => true, 'category_id' => 3534, 'name' => 'ASSOCIATION PARTNER', 'event_dates' => '18, 19, 20 Nov'],
+	['direct' => true, 'category_id' => 3535, 'name' => 'ASSOCIATION SUPPORT', 'event_dates' => '18, 19, 20 Nov'],
+	['direct' => true, 'category_id' => 3547, 'name' => 'POSTER DELEGATE', 'event_dates' => '18, 19, 20 Nov'],
+	['direct' => true, 'category_id' => 3548, 'name' => 'Sponsor VIP Pass', 'event_dates' => '18, 19, 20 Nov'],
+	['direct' => true, 'category_id' => 3549, 'name' => 'Sponsor Premium', 'event_dates' => '18, 19, 20 Nov'],
+	['direct' => true, 'category_id' => 3550, 'name' => 'Sponsor Standard', 'event_dates' => '18, 19, 20 Nov'],
+	['direct' => true, 'category_id' => 3551, 'name' => 'Sponsor FMC Premium', 'event_dates' => '20th Nov'],
+	['direct' => true, 'category_id' => 3552, 'name' => 'Sponsor FMC GO', 'event_dates' => '20 Nov'],
+	['direct' => true, 'category_id' => 3553, 'name' => 'Exhibitor VIP Pass PAID', 'event_dates' => '18, 19, 20 Nov'],
+	['direct' => true, 'category_id' => 3554, 'name' => 'Exhibitor Premium', 'event_dates' => '18, 19, 20 Nov'],
+	['direct' => true, 'category_id' => 3555, 'name' => 'Exhibitor Standard', 'event_dates' => '18, 19, 20 Nov'],
+	['direct' => true, 'category_id' => 3556, 'name' => 'Exhibitor FMC Premium', 'event_dates' => '20th Nov'],
+	['direct' => true, 'category_id' => 3557, 'name' => 'Exhibitor FMC GO', 'event_dates' => '20 Nov'],
 	['direct' => true, 'category_id' => 3558, 'name' => 'Exhibitor', 'event_dates' => '18, 19, 20 Nov'],
-	// ['direct' => true, 'category_id' => 3559, 'name' => 'Media', 'event_dates' => '18, 19, 20 Nov'],
-	// ['direct' => true, 'category_id' => 3560, 'name' => 'Invitee', 'event_dates' => '18, 19, 20 Nov'],
-	// ['direct' => true, 'category_id' => 3561, 'name' => 'SESSION ATTENDEE', 'event_dates' => '18, 19, 20 Nov'],
-	// ['direct' => true, 'category_id' => 3562, 'name' => 'AWARD NOMINEE', 'event_dates' => '18, 19, 20 Nov'],
-	// ['direct' => true, 'category_id' => 3563, 'name' => 'QUIZ', 'event_dates' => '18, 19, 20 Nov'],
-	// ['direct' => true, 'category_id' => 3564, 'name' => 'BUSINESS VISITOR', 'event_dates' => '18, 19, 20 Nov'],
-	// ['direct' => true, 'category_id' => 3565, 'name' => 'VISITOR', 'event_dates' => '18, 19, 20 Nov'],
-	// ['direct' => true, 'category_id' => 3566, 'name' => 'STUDENT', 'event_dates' => '18, 19, 20 Nov'],
+	['direct' => true, 'category_id' => 3559, 'name' => 'Media', 'event_dates' => '18, 19, 20 Nov'],
+	['direct' => true, 'category_id' => 3560, 'name' => 'Invitee', 'event_dates' => '18, 19, 20 Nov'],
+	['direct' => true, 'category_id' => 3561, 'name' => 'SESSION ATTENDEE', 'event_dates' => '18, 19, 20 Nov'],
+	['direct' => true, 'category_id' => 3562, 'name' => 'AWARD NOMINEE', 'event_dates' => '18, 19, 20 Nov'],
+	['direct' => true, 'category_id' => 3563, 'name' => 'QUIZ', 'event_dates' => '18, 19, 20 Nov'],
+	['direct' => true, 'category_id' => 3564, 'name' => 'BUSINESS VISITOR', 'event_dates' => '18, 19, 20 Nov'],
+	['direct' => true, 'category_id' => 3565, 'name' => 'VISITOR', 'event_dates' => '18, 19, 20 Nov'],
+	['direct' => true, 'category_id' => 3566, 'name' => 'STUDENT', 'event_dates' => '18, 19, 20 Nov'],
 ];
 
 // Available sectors (including empty string)
@@ -571,65 +606,65 @@ $base_data = [
 ];
 
 // Send data to API for each category
-foreach ($categories_to_test as $index => $category_info) {
-	// Get category details - handle both direct mappings and matchPassesCategory
-	if (isset($category_info['direct']) && $category_info['direct'] === true) {
-		// Direct category mapping
-		$matchPassesCategory = [
-			'category_id' => $category_info['category_id'],
-			'name' => $category_info['name'],
-			'event_dates' => $category_info['event_dates']
-		];
-		$category_label = $category_info['name'];
-	} else {
-		// Use matchPassesCategory function
-		$matchPassesCategory = matchPassesCategory($category_info['pass_category'], $category_info['days'] ?? null);
+// foreach ($categories_to_test as $index => $category_info) {
+// 	// Get category details - handle both direct mappings and matchPassesCategory
+// 	if (isset($category_info['direct']) && $category_info['direct'] === true) {
+// 		// Direct category mapping
+// 		$matchPassesCategory = [
+// 			'category_id' => $category_info['category_id'],
+// 			'name' => $category_info['name'],
+// 			'event_dates' => $category_info['event_dates']
+// 		];
+// 		$category_label = $category_info['name'];
+// 	} else {
+// 		// Use matchPassesCategory function
+// 		$matchPassesCategory = matchPassesCategory($category_info['pass_category'], $category_info['days'] ?? null);
 		
-		if ($matchPassesCategory === null) {
-			echo "Skipping invalid category: " . $category_info['pass_category'] . "<br>";
-			continue;
-		}
+// 		if ($matchPassesCategory === null) {
+// 			echo "Skipping invalid category: " . $category_info['pass_category'] . "<br>";
+// 			continue;
+// 		}
 		
-		$category_label = $category_info['pass_category'];
-		if (isset($category_info['days']) && $category_info['days']) {
-			$category_label .= " (" . $category_info['days'] . ")";
-		}
-	}
+// 		$category_label = $category_info['pass_category'];
+// 		if (isset($category_info['days']) && $category_info['days']) {
+// 			$category_label .= " (" . $category_info['days'] . ")";
+// 		}
+// 	}
 	
-	// Prepare data for this category
-	$data = $base_data;
+// 	// Prepare data for this category
+// 	$data = $base_data;
 	
-	// Make email unique for each category to avoid duplicate issues
-	$email_base = 'manish.sharma';
-	$email_domain = '@interlinks.in';
-	$email = $email_base . '+' . $index . $email_domain;
-	$data['email'] = $email;
+// 	// Make email unique for each category to avoid duplicate issues
+// 	$email_base = 'manish.sharma';
+// 	$email_domain = '@interlinks.in';
+// 	$email = $email_base . '+' . $index . $email_domain;
+// 	$data['email'] = $email;
 	
-	// Add category information
-	$data['category_id'] = $matchPassesCategory['category_id'];
-	$data['qsn_933'] = $matchPassesCategory['name'];
-	$data['qsn_934'] = $matchPassesCategory['event_dates'];
+// 	// Add category information
+// 	$data['category_id'] = $matchPassesCategory['category_id'];
+// 	$data['qsn_933'] = $matchPassesCategory['name'];
+// 	$data['qsn_934'] = $matchPassesCategory['event_dates'];
 	
-	// Randomly select a sector
-	$random_sector = $sectors[array_rand($sectors)];
-	$data['qsn_935'] = $random_sector;
-	$data['qsn_936'] = '';
-	// $data['qsn_366'] = 'TEST-TIN-' . $index; // For API log
+// 	// Randomly select a sector
+// 	$random_sector = $sectors[array_rand($sectors)];
+// 	$data['qsn_935'] = $random_sector;
+// 	$data['qsn_936'] = '';
+// 	// $data['qsn_366'] = 'TEST-TIN-' . $index; // For API log
 	
-	// Display what we're sending
-	echo "<h3>Category " . ($index + 1) . ": " . $category_label . "</h3>";
-	echo "Category ID: " . $data['category_id'] . "<br>";
-	echo "Category Name: " . $data['qsn_933'] . "<br>";
-	echo "Event Dates: " . $data['qsn_934'] . "<br>";
-	echo "Sector: " . ($random_sector ?: '(empty)') . "<br>";
-	echo "Email: " . $data['email'] . "<br>";
+// 	// Display what we're sending
+// 	echo "<h3>Category " . ($index + 1) . ": " . $category_label . "</h3>";
+// 	echo "Category ID: " . $data['category_id'] . "<br>";
+// 	echo "Category Name: " . $data['qsn_933'] . "<br>";
+// 	echo "Event Dates: " . $data['qsn_934'] . "<br>";
+// 	echo "Sector: " . ($random_sector ?: '(empty)') . "<br>";
+// 	echo "Email: " . $data['email'] . "<br>";
 	
-	// Send to API
-	$response = sendchkdinapi($data);
-	echo "Response: ";
-	print_r($response);
-	echo "<br><br>";
-}
+// 	// Send to API
+// 	//$response = sendchkdinapi($data);
+// 	echo "Response: ";
+// 	print_r($response);
+// 	echo "<br><br>";
+// }
 
 
 // VIP GIA PARTNER - 3532
@@ -721,7 +756,7 @@ $data = [
 	'qsn_936' => '',
 	'qsn_366' => '',
 ];
-// $response = sendchkdinapi($data);
+$response = sendchkdinapi($data);
 echo "Response: ";
 print_r($response);
 echo "<br><br>";
