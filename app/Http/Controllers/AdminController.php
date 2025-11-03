@@ -1768,18 +1768,47 @@ class AdminController extends Controller
     //make a new route to test the email sending like emailtest.php
     public function testEmailSending()
     {
-        // return view('emailtest');
         $loginEmail = 'manishksharma9801@gmail.com';
         $loginPassword = 'Password not available. Please use Forgot Password.';
-        Mail::to($loginEmail)
-        ->bcc('test.interlinks@gmail.com')
-            ->send(new \App\Mail\ExhibitorDirectoryReminder(
-                $loginEmail,
-                $loginPassword,
-                route('login'),
-                route('forgot.password')
-            ));
-        echo "sent to " . $loginEmail . "<br>";
+        $sent = false;
+        $errorMsg = null;
+
+        try {
+            $mailerResponse = Mail::to($loginEmail)
+                ->bcc('test.interlinks@gmail.com')
+                ->send(new \App\Mail\ExhibitorDirectoryReminder(
+                    $loginEmail,
+                    $loginPassword,
+                    route('login'),
+                    route('forgot.password')
+                ));
+
+            // Since Laravel's send() does not throw on success or return status, we check for logged failures in Mail::failures()
+            // But as of Laravel 7+, Mail::failures() for SMTP only works for "sendmail" driver, so it is not always reliable.
+            if (method_exists(\Mail::getSwiftMailer(), 'getFailRecipients')) {
+                $failures = \Mail::failures();
+                if (empty($failures)) {
+                    $sent = true;
+                } else {
+                    $errorMsg = 'Mail send failures: ' . implode(', ', $failures);
+                }
+            } else {
+                // Do not support exact detection, but no exception thrown so consider it sent
+                $sent = true;
+            }
+
+        } catch (\Exception $e) {
+            $errorMsg = $e->getMessage();
+        }
+
+        if ($sent) {
+            echo "Mail sent successfully to " . $loginEmail . "<br>";
+        } else {
+            echo "Mail FAILED to send to " . $loginEmail . "<br>";
+            if ($errorMsg) {
+                echo "Error: " . $errorMsg . "<br>";
+            }
+        }
         // exit;
     }
 
