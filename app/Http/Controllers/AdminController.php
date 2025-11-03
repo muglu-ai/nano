@@ -1785,8 +1785,8 @@ class AdminController extends Controller
 
             // Since Laravel's send() does not throw on success or return status, we check for logged failures in Mail::failures()
             // But as of Laravel 7+, Mail::failures() for SMTP only works for "sendmail" driver, so it is not always reliable.
-            if (method_exists(\Mail::getSwiftMailer(), 'getFailRecipients')) {
-                $failures = \Mail::failures();
+            if (method_exists(Mail::getSwiftMailer(), 'getFailRecipients')) {
+                $failures = Mail::failures();
                 if (empty($failures)) {
                     $sent = true;
                 } else {
