@@ -1779,7 +1779,7 @@ class AdminController extends Controller
                 route('login'),
                 route('forgot.password')
             ));
-        // echo "sent to " . $loginEmail . "<br>";
+        echo "sent to " . $loginEmail . "<br>";
         // exit;
     }
 
