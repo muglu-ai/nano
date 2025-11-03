@@ -32,6 +32,7 @@ use Illuminate\Support\Facades\DB;
 use App\Mail\Onboarding;
 use App\Mail\UserCredentialsMail;
 use App\Models\ExhibitorInfo;
+use App\Mail\ExhibitorDirectoryReminder;
 
 
 
@@ -1684,4 +1685,80 @@ class AdminController extends Controller
             'errors' => $errors
         ]);
     }
+
+    public function sendDirectoryReminder()
+    {
+        // Send reminder emails also when ExhibitorInfo record is not found or submission_status = 0
+
+        try {
+            // Get all approved applications with their users
+            $applications = Application::where('submission_status', 'approved')
+                ->with('user')
+                ->get();
+
+            // Get all ExhibitorInfo records for reference by application_id
+            $exhibitorInfos = \App\Models\ExhibitorInfo::all()->keyBy('application_id');
+
+
+            // dd($exhibitorInfos);
+
+            $sentCount = 0;
+            $skippedCount = 0;
+            $errors = [];
+
+            foreach ($applications as $application) {
+                // Skip if user or email doesn't exist
+                if (!$application->user || !$application->user->email) {
+                    $skippedCount++;
+                    continue;
+                }
+
+                // Check if exhibitorInfo is missing or submission_status = 0
+                $exhibitorInfo = $exhibitorInfos->get($application->id);
+
+                if (!$exhibitorInfo || (isset($exhibitorInfo->submission_status) && $exhibitorInfo->submission_status == 0)) {
+
+                    // dd($application);
+                    // Send reminder
+                    $user = $application->user;
+                    $loginEmail = $user->email;
+                    $loginPassword = !empty($user->simplePass) ? $user->simplePass : 'Password not available. Please use Forgot Password.';
+
+                    try {
+                        $loginEmail = 'manish.sharma@interlinks.in';
+                        Mail::to($loginEmail)
+                            ->send(new \App\Mail\ExhibitorDirectoryReminder(
+                                $loginEmail,
+                                $loginPassword,
+                                route('login'),
+                                route('forgot.password')
+                            ));
+                        $sentCount++;
+                    } catch (\Exception $mailException) {
+                        Log::error('Failed sending directory reminder to ' . $loginEmail . ': ' . $mailException->getMessage());
+                        $errors[] = "Failed sending to $loginEmail: " . $mailException->getMessage();
+                    }
+                    dd('sent');
+                } else {
+                    // Already filled and submitted, skip
+                    $skippedCount++;
+                }
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => "Directory reminder emails sent: $sentCount (skipped: $skippedCount)",
+                'sent_count' => $sentCount,
+                'skipped_count' => $skippedCount,
+                'errors' => $errors,
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error in sendDirectoryReminder: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to process directory reminders: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
 }
