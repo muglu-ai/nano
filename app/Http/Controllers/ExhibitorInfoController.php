@@ -20,8 +20,6 @@ use Illuminate\Support\Facades\Storage;
 use App\Models\Sector;
 use App\Models\User;
 use Barryvdh\DomPDF\Facade\Pdf;
-use App\Exports\ExhibitorInfoExport;
-use Maatwebsite\Excel\Facades\Excel;
 
 
 class ExhibitorInfoController extends Controller
@@ -1281,19 +1279,5 @@ class ExhibitorInfoController extends Controller
         }
 
         return $phoneNumber;
-    }
-
-    /**
-     * Export all exhibitor info to Excel
-     */
-    public function exportExhibitorInfo()
-    {
-        // Check admin middleware
-        // $middlewareResponse = $this->adminMiddleware();
-        // if ($middlewareResponse) {
-        //     return $middlewareResponse;
-        // }
-
-        return Excel::download(new ExhibitorInfoExport, 'exhibitor-info-' . date('Y-m-d-His') . '.xlsx');
     }
 }
