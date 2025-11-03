@@ -1289,10 +1289,10 @@ class ExhibitorInfoController extends Controller
     public function exportExhibitorInfo()
     {
         // Check admin middleware
-        $middlewareResponse = $this->adminMiddleware();
-        if ($middlewareResponse) {
-            return $middlewareResponse;
-        }
+        // $middlewareResponse = $this->adminMiddleware();
+        // if ($middlewareResponse) {
+        //     return $middlewareResponse;
+        // }
 
         return Excel::download(new ExhibitorInfoExport, 'exhibitor-info-' . date('Y-m-d-His') . '.xlsx');
     }
