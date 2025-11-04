@@ -99,6 +99,9 @@ Route::get('/invited/inaugural/thank-you/{token}', [ExhibitorController::class, 
 Route::get('receipt', [ExhibitorController::class, 'invoices'])->name('exhibitor.invoices')->middleware(CheckUser::class);
 Route::patch('fasciaUpdate', [DashboardController::class, 'updateFasciaName'])->name('user.fascia.update')->middleware(CheckUser::class);
 Route::get('passes', [ExhibitorController::class, 'analytics'])->name('exhibitor.passes')->middleware(CheckUser::class);
+
+// get the registration data from the exhibitor controller
+Route::get('exhibitor/registration-data', [ExhibitorController::class, 'registrationData'])->name('exhibitor.registration.data')->middleware(CheckUser::class);
 // return view from email.exhibitor.registrationEmail
 Route::get('email/exhibitor/registration', function () {
 

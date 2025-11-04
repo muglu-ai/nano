@@ -1573,184 +1573,69 @@ class ExhibitorController extends Controller
         return view('applications.invoices', compact('invoices', 'application', 'payments'));
     }
 
-    /**
-     * Send SEMICON India 2025 email in batches of 500.
-     *
-     * @param array  $recipients  Array of recipient email addresses.
-     * @param string $subject     Subject of the email.
-     * @param string $attachment  (Optional) Full path to attachment file.
-     */
-  
 
-   
-    //select all email from stall_manning where emailSent is null or 0 and first_name is not null and email is not null
-    public function emailSent(Request $request)
+    // we have to display all the registration data to each user from the complimentary delegate
+    public function registrationData()
     {
-        exit;
-        $emails = DB::table('complimentary_delegates')
-            ->where(function ($query) {
-                $query->whereNull('emailSent')
-                    ->orWhere('emailSent', 0);
-            })
-            ->whereNotNull('first_name')
-            ->whereNotNull('email')
-            ->pluck('email');
-
-        //mark them as emailSent =1 and sleep for 1 second after every 100 updates
-        $count = 0;
-        foreach ($emails as $email) {
-            DB::table('complimentary_delegates')->where('email', $email)->update(['emailSent' => 1]);
-            $count++;
-
-            if ($count % 100 === 0) {
-                sleep(1);
+        try {
+            $user_id = auth()->user()->id;
+            $application = Application::where('user_id', $user_id)->first();
+            
+            if (!$application) {
+                return redirect('/dashboard')->with('error', 'Application not found.');
             }
+
+            //get the exhibition participant id from the exhibition participant table
+            $exhibitionParticipant = ExhibitionParticipant::where('application_id', $application->id)->first();
+            
+            if (!$exhibitionParticipant) {
+                return redirect('/dashboard')->with('error', 'Exhibition participant not found.');
+            }
+
+            //get the registration data from the complimentary delegate table
+            $registrationData = ComplimentaryDelegate::where('exhibition_participant_id', $exhibitionParticipant->id)
+                ->whereNotNull('first_name')
+                ->whereRaw("TRIM(first_name) != ''")
+                ->orderBy('created_at', 'desc')
+                ->get();
+
+            // Get ticket names from tickets table for pass name mapping
+            $tickets = DB::table('del_ticket')
+                ->select('id', 'ticket_type')
+                ->get()
+                ->keyBy('id');
+
+            // Map pass names for each registration
+            foreach ($registrationData as $registration) {
+                $passName = 'N/A';
+                if (!empty($registration->ticketType)) {
+                    // Check if ticketType is a ticket ID
+                    if (isset($tickets[$registration->ticketType])) {
+                        $passName = $tickets[$registration->ticketType]->ticket_type;
+                    } elseif (in_array($registration->ticketType, ['delegate', 'delegates'])) {
+                        $passName = 'Complimentary Delegate Pass';
+                    } else {
+                        $passName = $registration->ticketType;
+                    }
+                }
+                $registration->pass_name = $passName;
+                
+                // Build full name
+                $nameParts = array_filter([
+                    $registration->first_name ?? '',
+                    $registration->middle_name ?? '',
+                    $registration->last_name ?? ''
+                ]);
+                $registration->full_name = implode(' ', $nameParts);
+            }
+
+            return view('exhibitor.registration-data', compact('registrationData', 'application'));
+
+        } catch (\Exception $e) {
+            Log::error('Error in registrationData: ' . $e->getMessage() . ' | Trace: ' . $e->getTraceAsString());
+            return redirect('/dashboard')->with('error', 'An error occurred while loading registration data.');
         }
-
-        $emails = array_values(array_filter($emails->toArray(), function ($email) {
-            return filter_var($email, FILTER_VALIDATE_EMAIL);
-        }));
-
-        $subject = 'Important Information on Entry Passes & Access for SEMICON India 2025';
-
-        // Single source of truth for the email body
-        $emailBody =
-            <<<HTML
-                    <p>Dear Participant,</p>
-
-                    <p>Thank you for your interest in <strong>SEMICON India 2025</strong>, scheduled for <strong>2nd–4th September 2025</strong>. Entry passes (e-Badges) are now being issued.</p>
-
-                    <p>Please note the following important information:</p>
-                    <ul>
-                    <li>Entry for the <strong>Inaugural Session on 2nd September</strong> will be restricted.</li>
-                    <li>Only <strong>Inaugural Badge</strong> holders with QR codes may collect their physical badges and enter the venue between <strong>6:30 AM and 8:00 AM</strong> on 2nd September.</li>
-                    <li><strong>Non-Inaugural and Exhibitor Badge</strong> holders may enter after <strong>12:00 noon</strong> on 2nd September.</li>
-                    <li>Participants who have not yet received e-Badges will get them from <strong>3rd September</strong> onwards.</li>
-                    <li>The Inaugural Session will also be streamed live at:
-                        <a href="https://www.youtube.com/@IndiaSemiconductorMission/streams" target="_blank" rel="noopener">https://www.youtube.com/@IndiaSemiconductorMission/streams</a>
-                    </li>
-                    <li>Shuttle service details are attached.</li>
-                    </ul>
-
-                    <p>We regret any inconvenience caused. These arrangements are as per ISM guidelines, and we appreciate your cooperation.</p>
-
-                    <p>We look forward to welcoming you to SEMICON India 2025.</p>
-
-                    <p>
-                    <strong>Click Here to View Shuttle Service Plan:</strong><br>
-                    <a href="https://portal.semiconindia.org/storage/pdf/Semicon-2025-Shuttle_Plan.pdf" target="_blank" rel="noopener">
-                        https://portal.semiconindia.org/storage/pdf/Semicon-2025-Shuttle_Plan.pdf
-                    </a>
-                    </p>
-
-                    <p>Best regards,<br>
-                    SEMICON India Team</p>
-                    HTML;
-
-        // Convert the collection to an array and filter out invalid emails
-        // $emails = array_values(array_filter($emails->toArray(), function ($email) {
-        //     return filter_var($email, FILTER_VALIDATE_EMAIL);
-        // }));
-        // send email to all the emails in bcc with with this subject and email body
-        Mail::send([], [], function ($message) use ($emails, $subject, $emailBody) {
-            $message->bcc($emails)
-                ->subject($subject)
-                ->html($emailBody);
-        });
-
-        // Mark emails as sent
-        foreach ($emails as $email) {
-            DB::table('complimentary_delegates')->where('email', $email)->update(['emailSent' => 1]);
-        }
-
-        return response()->json($emails);
     }
 
-
-    //select from attendee table where emailSent is null or 0 and first_name is not null and email is not null
-    //send first 5000 emails in bcc with subject and email body and mark them as emailSent =1 and sleep for 1 second after every 100 updates
-    public function attendeeEmailSent(Request $request)
-    {
-        $emails = DB::table('attendees')
-            ->where(function ($query) {
-                $query->whereNull('emailSent')
-                    ->orWhere('emailSent', 0);
-            })
-            ->whereNotNull('first_name')
-            ->whereNotNull('email')
-            ->pluck('email')
-            ->take(5000);
-
-        //mark them as emailSent =1 and sleep for 1 second after every 100 updates
-        $count = 0;
-        foreach ($emails as $email) {
-            DB::table('attendees')->where('email', $email)->update(['emailSent' => 1]);
-            $count++;
-
-            if ($count % 100 === 0) {
-                sleep(1);
-            }
-        }
-
-        $subject = 'Important Information on Entry Passes & Access for SEMICON India 2025';
-
-        // Single source of truth for the email body
-        $emailBody = <<<HTML
-        <p>Dear Participant,</p>
-
-        <p>Thank you for your interest in <strong>SEMICON India 2025</strong>, scheduled for <strong>2nd–4th September 2025</strong>. Entry passes (e-Badges) are now being issued.</p>
-
-        <p>Please note the following important information:</p>
-        <ul>
-        <li>Entry for the <strong>Inaugural Session on 2nd September</strong> will be restricted.</li>
-        <li>Only <strong>Inaugural Badge</strong> holders with QR codes may collect their physical badges and enter the venue between <strong>6:30 AM and 8:00 AM</strong> on 2nd September.</li>
-        <li><strong>Non-Inaugural and Exhibitor Badge</strong> holders may enter after <strong>12:00 noon</strong> on 2nd September.</li>
-        <li>Participants who have not yet received e-Badges will get them from <strong>3rd September</strong> onwards.</li>
-        <li>The Inaugural Session will also be streamed live at:
-            <a href="https://www.youtube.com/@IndiaSemiconductorMission/streams" target="_blank" rel="noopener">https://www.youtube.com/@IndiaSemiconductorMission/streams</a>
-        </li>
-        <li>Shuttle service details are attached.</li>
-        </ul>
-
-        <p>We regret any inconvenience caused. These arrangements are as per ISM guidelines, and we appreciate your cooperation.</p>
-
-        <p>We look forward to welcoming you to SEMICON India 2025.</p>
-
-        <p>
-        <strong>Click Here to View Shuttle Service Plan:</strong><br>
-        <a href="https://portal.semiconindia.org/storage/pdf/Semicon-2025-Shuttle_Plan.pdf" target="_blank" rel="noopener">
-            https://portal.semiconindia.org/storage/pdf/Semicon-2025-Shuttle_Plan.pdf
-        </a>
-        </p>
-
-        <p>Best regards,<br>
-        SEMICON India Team</p>
-        HTML;
-
-        //skip emails which is not valid email address
-        $emails = array_filter($emails->toArray(), function ($email) {
-            return filter_var($email, FILTER_VALIDATE_EMAIL);
-        });
-
-        // send email to all the emails in bcc with with this subject and email body
-        // Send emails individually to avoid hitting BCC limits
-        foreach ($emails as $email) {
-            try {
-                // Dispatch email sending to the queue
-                Mail::to($email)
-                    ->queue((new \Illuminate\Support\HtmlString($emailBody))
-                        ->withSubject($subject));
-
-                // Mark email as sent after dispatching to queue
-                DB::table('attendees')->where('email', $email)->update(['emailSent' => 1]);
-                exit;
-            } catch (\Exception $e) {
-                // Optionally log the error or handle failed emails
-                Log::error("Failed to queue email to $email: " . $e->getMessage());
-            }
-        }
-
-        //retunr that all mails are sent
-        return response()->json(['message' => 'Emails are being sent in batches.']);
-    }
+    
 }
