@@ -1002,7 +1002,7 @@ class ExhibitorController extends Controller
             ];
 
             // Send the email
-            Mail::to($attendee->email)->send(new ExhibitorMail($data));
+            // Mail::to($attendee->email)->send(new ExhibitorMail($data));
 
             //route to inaugural.invitee.thankyou with unique_id
             return redirect()->route('inaugural.invitee.thankyou', ['token' => $uniqueId]);
