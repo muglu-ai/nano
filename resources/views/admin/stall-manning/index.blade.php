@@ -2,7 +2,7 @@
 @section('title', $slug)
 @section('content')
     @php
-        $route = ($slug === 'Inaugural Passes') ? 'admin.inaugural' : 'admin.stall-manning';
+        $route = ($slug === 'Inaugural Passes') ? 'admin.inaugural' : 'admin.inaugural';
 
     @endphp
     <div class="container-fluid py-4">
