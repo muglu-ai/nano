@@ -8,7 +8,7 @@
         <th style="width: 220px; white-space: normal; text-align: center;">Contact Details</th>
         <th style="width: 180px; white-space: normal; text-align: center;">Company</th>
         <th style="width: 120px; white-space: normal; text-align: center;">Type</th>
-        <th style="width: 100px; white-space: normal; text-align: center;">Actions</th>
+        {{-- <th style="width: 100px; white-space: normal; text-align: center;">Actions</th> --}}
     </tr>
     </thead>
     <tbody>
@@ -54,13 +54,13 @@
             <td class="text-end" style="width: 120px; white-space: normal; word-break: break-word;">
                 <span class="text-secondary">{{ $entry->pass_type }}</span>
             </td>
-            <td class="text-end" style="width: 120px; white-space: normal; word-break: break-word;">
+            {{-- <td class="text-end" style="width: 120px; white-space: normal; word-break: break-word;">
                 <a href="{{ route('mail.exhibitor_confirmation', ['id' => $entry->unique_id]) }}"
                    class="btn btn-link btn-sm text-primary ms-2"
                    title="Resend Confirmation Email">
                     <i class="fas fa-envelope"></i> Resend Email
                 </a>
-            </td>
+            </td> --}}
 
         </tr>
     @empty

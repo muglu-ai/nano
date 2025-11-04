@@ -472,7 +472,7 @@ Route::get('exhibitor/stallmanning', [PassesController::class, 'StallManning'])-
 Route::get('exhibitor/complimentary', [PassesController::class, 'Complimentary'])->name('admin.complimentary.delegate')->middleware(Auth::class);
 
 
-Route::get('exhibitor/inaugural', [PassesController::class, 'Inaugural'])->name('admin.inaugural')->middleware(Auth::class);
+Route::get('exhibitor/passes', [PassesController::class, 'Complimentary'])->name('admin.inaugural')->middleware(Auth::class);
 Route::get('exhibitor/remove/{id}', [PassesController::class, 'deleteVisitor'])->name('admin.remove')->middleware(Auth::class);
 Route::get('visitor/remove/{id}', [PassesController::class, 'deleteVisitor2'])->name('admin.remove.attendee')->middleware(Auth::class);
 
