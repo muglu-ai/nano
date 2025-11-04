@@ -1101,21 +1101,17 @@ class ExhibitorController extends Controller
     public function add(Request $request)
     {
         try {
-            /**
-             * name: document.getElementById('name').value,
-             * email: document.getElementById('email').value,
-             * phone: fullPhoneNumber,
-             * jobTitle: document.getElementById('jobTitle').value,
-             * invite_type : document.getElementById('inviteType2').value
-             */
-
             // Get counts and participant id first (for use in unique validation)
             $count = $this->checkCount();
             $participantId = $count['exhibition_participant_id'];
 
+            if (!$participantId) {
+                return response()->json(['error' => 'Invalid exhibitor participant'], 400);
+            }
+
             // Prepare validation rules
             $rules = [
-                'invite_type' => 'required',
+                'invite_type' => 'required|string',
                 'email' => [
                     'required',
                     'email',
@@ -1140,11 +1136,12 @@ class ExhibitorController extends Controller
                                 $fail("The email has already been taken for this exhibitor (stall manning).");
                             }
                         } else {
-                            // It's a custom ticket type
+                            // It's a custom ticket type - check with ticketType
+                            $ticketId = $this->getTicketId($request->invite_type);
                             $exists = DB::table('complimentary_delegates')
                                 ->where('exhibition_participant_id', $participantId)
                                 ->where('email', $value)
-                                ->where('ticketType', $request->invite_type)
+                                ->where('ticketType', $ticketId)
                                 ->exists();
                             if ($exists) {
                                 $fail("The email has already been taken for this ticket type for this exhibitor.");
@@ -1152,209 +1149,370 @@ class ExhibitorController extends Controller
                         }
                     },
                 ],
-                'name' => 'required',
-                'phone' => 'required',
-                'jobTitle' => 'required',
+                'name' => 'required|string|max:255',
+                'phone' => 'required|string',
+                'jobTitle' => 'required|string|max:255',
                 'organisationName' => 'nullable|string|max:255',
                 'idCardType' => 'nullable|string|max:255',
                 'idCardNumber' => 'nullable|string|max:255',
             ];
 
-            // Validate request and return JSON error messages
+            // Validate request
             $validatedData = $request->validate($rules);
 
-            $qr_code_path = null;
+            // Normalize invite_type
+            $inviteType = $request->invite_type;
+            if ($inviteType === 'delegates') {
+                $inviteType = 'delegate';
+            }
 
             // Determine ticket type/ID for allocations
-            if (!in_array($request->invite_type, ['delegate', 'delegates', 'exhibitor'])) {
-                // Assume invite_type is a slug for a custom ticket
-                $ticket = \App\Models\Ticket::where('id', $request->invite_type)->first();
+            $ticketId = null;
+            if (!in_array($inviteType, ['delegate', 'exhibitor'])) {
+                $ticket = Ticket::where('id', $inviteType)->first();
                 if (!$ticket) {
                     return response()->json(['error' => 'Invalid ticket type'], 400);
                 }
                 $ticketId = $ticket->ticket_type;
-            } elseif (in_array($request->invite_type, ['delegate', 'delegates', 'exhibitor'])) {
-                // For 'delegate/delegates' or 'exhibitor', set ticketId to invite_type for validation
-                $ticketId = $request->invite_type;
             } else {
-                return response()->json(['error' => 'Invalid ticket type'], 400);
+                $ticketId = $inviteType;
             }
 
-            // Handle 'delegate' or possible typo 'delegates'
-            if ($request->invite_type == 'delegate' || $request->invite_type == 'delegates') {
-                $countComplimentaryDelegates = DB::table('complimentary_delegates')
-                    ->where('exhibition_participant_id', $participantId)
-                    ->count();
-
-                if ($countComplimentaryDelegates >= $count['complimentary_delegate_count']) {
-                    return response()->json(['error' => 'You have reached the maximum limit of Exhibitor Passes'], 422);
+            // Use database transaction to prevent race conditions
+            return DB::transaction(function () use ($request, $inviteType, $participantId, $count, $ticketId) {
+                
+                // Re-check email uniqueness right before insert (race condition protection)
+                $emailExists = $this->checkEmailExists($participantId, $request->email, $inviteType, $ticketId);
+                if ($emailExists['exists']) {
+                    return response()->json(['error' => $emailExists['message']], 422);
                 }
-
-                // Generate token and insert
-                $token = (string) Str::uuid();
-                DB::table('complimentary_delegates')->insert([
-                    'email' => $request->email,
-                    'exhibition_participant_id' => $participantId,
-                    'first_name' => $request->name,
-                    'mobile' => $request->phone,
-                    'job_title' => $request->jobTitle,
-                    'organisation_name' => $request->organisationName,
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ]);
-
-                return response()->json(['message' => 'Delegate added successfully!']);
-            }
-
-            if ($request->invite_type == 'exhibitor') {
-                $countStallManning = DB::table('stall_manning')
-                    ->where('exhibition_participant_id', $participantId)
-                    ->count();
-
-                if ($countStallManning >= $count['stall_manning_count']) {
-                    return response()->json(['error' => 'You have reached the maximum limit of stall manning'], 422);
-                }
-                $uniqueId = $this->generateStallManningUniqueId();
-                $pinNo = $this->generateCompPinNo();
-
-                // Generate token and insert
-                $token = Str::random(32);
-                DB::table('stall_manning')->insert([
-                    'unique_id' => $uniqueId,
-                    'first_name' => $request->name,
-                    'mobile' => $request->phone,
-                    'job_title' => $request->jobTitle,
-                    'email' => $request->email,
-                    'exhibition_participant_id' => $participantId,
-                    'token' => null,
-                    'organisation_name' => $request->organisationName,
-                    'id_no' => $request->idCardNumber,
-                    'id_type' => $request->idCardType,
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                    'pinNo' => $pinNo,
-                    'ticketType' => $ticketId ?? $request->invite_type,
-                ]);
-
-                // Only select the columns actually present
-                $attendee = StallManning::where('unique_id', $uniqueId)->first();
-
-                $data = [
-                    'fullName' => trim(($attendee->first_name ?? '') . ' ' . (($attendee->middle_name ?? '') ? $attendee->middle_name . ' ' : '') . ($attendee->last_name ?? '')),
-                    'title' => $attendee->title ?? '',
-                    'first_name' => $attendee->first_name ?? '',
-                    'last_name' => $attendee->last_name ?? '',
-                    'middle_name' => $attendee->middle_name ?? '',
-                    'company_name' => $attendee->organisation_name ?? 'N/A',
-                    'email' => $attendee->email,
-                    'mobile' => $attendee->mobile,
-                    'qr_code_path' => $attendee->qr_code_path ?? '',
-                    'unique_id' => $attendee->unique_id,
-                    'pinNo' => $attendee->pinNo ?? 'N/A',
-                    'ticket_type' => $attendee->ticketType ?? '',
-                    'designation' => $attendee->designation ?? $attendee->job_title ?? '',
-                    'registration_date' => $attendee->created_at ? $attendee->created_at->format('Y-m-d') : '',
-                    'registration_type' => isset($attendee['registration_type']) && $attendee['registration_type'] === 'Online' ? 1 : 0,
-                    'id_card_number' => $attendee->id_card_number ?? $attendee->id_no ?? '',
-                    'id_card_type' => $attendee->id_card_type ?? $attendee->id_type ?? '',
-                    'dates' => isset($attendee->event_days) ?
-                        (is_array($attendee->event_days)
-                            ? implode(', ', $attendee->event_days)
-                            : implode(', ', json_decode($attendee->event_days, true) ?? []))
-                        : '',
-                    'type' => $attendee->ticketType ?? '',
-                ];
-                // Mail::to($attendee->email)->bcc('test.interlinks@gmail.com')->send(new ExhibitorMail($data));
-                return response()->json(['message' => $request->invite_type . ' Delegate added  successfully!']);
-            } else {
-
-                //check the count of ticket allocation from the exhibition table
-                $ticketAllocation  = $count['ticket_allocation'];
-                $ticket = collect($ticketAllocation)->firstWhere('ticket_id', $request->invite_type);
-
-                if ($ticket) {
-                    $allocatedCount = $ticket['count'];
-                    $usedCount = DB::table('complimentary_delegates')
-                        ->where('exhibition_participant_id', $participantId)
-                        ->where('ticketType', $ticketId ?? $request->invite_type)
-                        ->count();
-
-                    if ($usedCount >= $allocatedCount) {
-                        // Handle limit reached (e.g., return error)
-                        return response()->json(['error' => 'You have reached the maximum limit for this ticket type'], 422);
-                    }
-                } else {
-                    return response()->json(['error' => 'Invalid ticket type'], 400);
-                }
-
-                DB::table('complimentary_delegates')->insert([
-                    'unique_id' => strtoupper($this->generateUniqueId()),
-                    'pinNo' => strtoupper($this->generateCompPinNo()),
-                    'ticketType' => $ticketId ?? $request->invite_type,
-                    'email' => $request->email,
-                    'exhibition_participant_id' => $participantId,
-                    'first_name' => $request->name,
-                    'mobile' => $request->phone,
-                    'job_title' => $request->jobTitle,
-                    'organisation_name' => $request->organisationName,
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ]);
-
-                // get the data from the database where email is same as $request->email
-                $attendee = DB::table('complimentary_delegates')
-                    ->where('email', $request->email)
-                    ->where('exhibition_participant_id', $participantId)
-                    ->where('ticketType', $ticketId ?? $request->invite_type)
-                    ->orderByDesc('id')
-                    ->first();
-
-                $data = array_merge( [
-                    'fullName' => trim(($attendee->first_name ?? '') . ' ' . (($attendee->middle_name ?? '') ? $attendee->middle_name . ' ' : '') . ($attendee->last_name ?? '')),
-                    'title' => $attendee->title ?? '',
-                    'first_name' => $attendee->first_name ?? '',
-                    'last_name' => $attendee->last_name ?? '',
-                    'middle_name' => $attendee->middle_name ?? '',
-                    'company_name' => $attendee->organisation_name ?? 'N/A',
-                    'email' => $attendee->email,
-                    'mobile' => $attendee->mobile,
-                    'qr_code_path' => $attendee->qr_code_path ?? '',
-                    'unique_id' => $attendee->unique_id,
-                    'pinNo' => $attendee->pinNo ?? 'N/A',
-                    'ticket_type' => $attendee->ticketType ?? '',
-                    'designation' => $attendee->designation ?? $attendee->job_title ?? '',
-                    'registration_date' => $attendee->created_at ? (is_a($attendee->created_at, \Illuminate\Support\Carbon::class) ? $attendee->created_at->format('Y-m-d') : (is_string($attendee->created_at) ? \Illuminate\Support\Carbon::parse($attendee->created_at)->format('Y-m-d') : '')) : '',
-                    'registration_type' => isset($attendee['registration_type']) && $attendee['registration_type'] === 'Online' ? 1 : 0,
-                    'id_card_number' => $attendee->id_card_number ?? $attendee->id_no ?? '',
-                    'id_card_type' => $attendee->id_card_type ?? $attendee->id_type ?? '',
-                    'dates' => isset($attendee->event_days) ?
-                        (is_array($attendee->event_days)
-                            ? implode(', ', $attendee->event_days)
-                            : implode(', ', json_decode($attendee->event_days, true) ?? []))
-                        : '',
-                    'type' => $attendee->ticketType ?? '',
-                ]);
 
                 try {
-                    // Mail::to($attendee->email)
-                    //     ->bcc('test.interlinks@gmail.com')
-                    //     ->send(new ExhibitorMail($data));
-                } catch (\Exception $e) {
-                    Log::error('Error sending ExhibitorMail: ' . $e->getMessage());
+                    if ($inviteType === 'delegate') {
+                        return $this->addDelegate($request, $participantId, $count);
+                    } elseif ($inviteType === 'exhibitor') {
+                        return $this->addExhibitor($request, $participantId, $count, $ticketId);
+                    } else {
+                        return $this->addCustomTicket($request, $participantId, $count, $ticketId);
+                    }
+                } catch (\Illuminate\Database\QueryException $e) {
+                    // Catch database unique constraint violations
+                    if ($e->getCode() == 23000) { // SQLSTATE[23000]: Integrity constraint violation
+                        return response()->json([
+                            'error' => 'This email is already registered. Please use a different email address.'
+                        ], 422);
+                    }
+                    throw $e; // Re-throw if it's a different database error
                 }
+            });
 
-                return response()->json(['message' => 'Pass Information received successfully!'], 200);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json(['error' => $e->errors()], 422);
+        } catch (\Illuminate\Database\QueryException $e) {
+            Log::error('Database error in add method: ' . $e->getMessage());
+            if ($e->getCode() == 23000) {
+                return response()->json([
+                    'error' => 'This email is already registered. Please use a different email address.'
+                ], 422);
+            }
+            return response()->json(['error' => 'Database error occurred. Please try again.'], 500);
+        } catch (\Exception $e) {
+            Log::error('Error in add method: ' . $e->getMessage() . ' | Trace: ' . $e->getTraceAsString());
+            return response()->json(['error' => 'Something went wrong! Please try again.'], 500);
+        }
+    }
+
+    /**
+     * Get ticket ID from ticket type
+     */
+    private function getTicketId($inviteType)
+    {
+        if (in_array($inviteType, ['delegate', 'delegates', 'exhibitor'])) {
+            return $inviteType === 'delegates' ? 'delegate' : $inviteType;
+        }
+        
+        $ticket = Ticket::where('id', $inviteType)->first();
+        return $ticket ? $ticket->ticket_type : $inviteType;
+    }
+
+    /**
+     * Check if email already exists (with transaction safety)
+     * Note: This check happens within a transaction, providing isolation.
+     * Database unique constraints will also catch any duplicates.
+     */
+    private function checkEmailExists($participantId, $email, $inviteType, $ticketId = null)
+    {
+        if ($inviteType === 'delegate') {
+            $exists = DB::table('complimentary_delegates')
+                ->where('exhibition_participant_id', $participantId)
+                ->where('email', $email)
+                ->exists();
+            if ($exists) {
+                return ['exists' => true, 'message' => 'The email has already been taken for this exhibitor (delegate).'];
+            }
+        } elseif ($inviteType === 'exhibitor') {
+            $exists = DB::table('stall_manning')
+                ->where('exhibition_participant_id', $participantId)
+                ->where('email', $email)
+                ->exists();
+            if ($exists) {
+                return ['exists' => true, 'message' => 'The email has already been taken for this exhibitor (stall manning).'];
+            }
+        } else {
+            // Custom ticket type
+            $exists = DB::table('complimentary_delegates')
+                ->where('exhibition_participant_id', $participantId)
+                ->where('email', $email)
+                ->where('ticketType', $ticketId)
+                ->exists();
+            if ($exists) {
+                return ['exists' => true, 'message' => 'The email has already been taken for this ticket type for this exhibitor.'];
+            }
+        }
+        
+        return ['exists' => false];
+    }
+
+    /**
+     * Add delegate
+     */
+    private function addDelegate($request, $participantId, $count)
+    {
+        $countComplimentaryDelegates = DB::table('complimentary_delegates')
+            ->where('exhibition_participant_id', $participantId)
+            ->count();
+
+        if ($countComplimentaryDelegates >= $count['complimentary_delegate_count']) {
+            return response()->json(['error' => 'You have reached the maximum limit of Exhibitor Passes'], 422);
+        }
+
+        try {
+            DB::table('complimentary_delegates')->insert([
+                'email' => $request->email,
+                'exhibition_participant_id' => $participantId,
+                'first_name' => $request->name,
+                'mobile' => $request->phone,
+                'job_title' => $request->jobTitle,
+                'organisation_name' => $request->organisationName ?? null,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+
+            return response()->json(['message' => 'Delegate added successfully!'], 200);
+        } catch (\Exception $e) {
+            Log::error('Error adding delegate: ' . $e->getMessage());
+            throw $e;
+        }
+    }
+
+    /**
+     * Add exhibitor (stall manning)
+     */
+    private function addExhibitor($request, $participantId, $count, $ticketId)
+    {
+        $countStallManning = DB::table('stall_manning')
+            ->where('exhibition_participant_id', $participantId)
+            ->count();
+
+        if ($countStallManning >= $count['stall_manning_count']) {
+            return response()->json(['error' => 'You have reached the maximum limit of stall manning'], 422);
+        }
+
+        try {
+            $uniqueId = $this->generateStallManningUniqueId();
+            $pinNo = $this->generateCompPinNo();
+
+            DB::table('stall_manning')->insert([
+                'unique_id' => $uniqueId,
+                'first_name' => $request->name,
+                'mobile' => $request->phone,
+                'job_title' => $request->jobTitle,
+                'email' => $request->email,
+                'exhibition_participant_id' => $participantId,
+                'token' => null,
+                'organisation_name' => $request->organisationName ?? null,
+                'id_no' => $request->idCardNumber ?? null,
+                'id_type' => $request->idCardType ?? null,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'pinNo' => $pinNo,
+                'ticketType' => $ticketId,
+            ]);
+
+            $attendee = StallManning::where('unique_id', $uniqueId)->first();
+
+            if (!$attendee) {
+                throw new \Exception('Failed to retrieve created stall manning record');
             }
 
-            return response()->json(['error' => 'Invalid request'], 400);
-        } catch (\Illuminate\Validation\ValidationException $e) {
-            // Return validation errors in JSON format
-            return response()->json(['error' => $e->errors()], 422);
+            $data = $this->buildAttendeeData($attendee);
+            
+            // Uncomment when ready to send emails
+            // try {
+            //     Mail::to($attendee->email)
+            //         ->bcc('test.interlinks@gmail.com')
+            //         ->send(new ExhibitorMail($data));
+            // } catch (\Exception $e) {
+            //     Log::error('Error sending ExhibitorMail: ' . $e->getMessage());
+            // }
+
+            return response()->json(['message' => 'Exhibitor delegate added successfully!'], 200);
         } catch (\Exception $e) {
-            // Log error and return JSON response
-            Log::error('Invite error: ' . $e->getMessage());
-            return response()->json(['error' => 'Something went wrong!'], 500);
+            Log::error('Error adding exhibitor: ' . $e->getMessage());
+            throw $e;
         }
+    }
+
+    /**
+     * Add custom ticket type
+     */
+    private function addCustomTicket($request, $participantId, $count, $ticketId)
+    {
+        $ticketAllocation = $count['ticket_allocation'] ?? [];
+        $ticket = collect($ticketAllocation)->firstWhere('ticket_id', $request->invite_type);
+
+        if (!$ticket) {
+            return response()->json(['error' => 'Invalid ticket type'], 400);
+        }
+
+        $allocatedCount = $ticket['count'] ?? 0;
+        $usedCount = DB::table('complimentary_delegates')
+            ->where('exhibition_participant_id', $participantId)
+            ->where('ticketType', $ticketId)
+            ->count();
+
+        if ($usedCount >= $allocatedCount) {
+            return response()->json(['error' => 'You have reached the maximum limit for this ticket type'], 422);
+        }
+
+        try {
+            DB::table('complimentary_delegates')->insert([
+                'unique_id' => strtoupper($this->generateUniqueId()),
+                'pinNo' => strtoupper($this->generateCompPinNo()),
+                'ticketType' => $ticketId,
+                'email' => $request->email,
+                'exhibition_participant_id' => $participantId,
+                'first_name' => $request->name,
+                'mobile' => $request->phone,
+                'job_title' => $request->jobTitle,
+                'organisation_name' => $request->organisationName ?? null,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+
+            $attendee = DB::table('complimentary_delegates')
+                ->where('email', $request->email)
+                ->where('exhibition_participant_id', $participantId)
+                ->where('ticketType', $ticketId)
+                ->orderByDesc('id')
+                ->first();
+
+            if (!$attendee) {
+                throw new \Exception('Failed to retrieve created complimentary delegate record');
+            }
+
+            $data = $this->buildAttendeeDataFromObject($attendee);
+
+            // Uncomment when ready to send emails
+            // try {
+            //     Mail::to($attendee->email)
+            //         ->bcc('test.interlinks@gmail.com')
+            //         ->send(new ExhibitorMail($data));
+            // } catch (\Exception $e) {
+            //     Log::error('Error sending ExhibitorMail: ' . $e->getMessage());
+            // }
+
+            return response()->json(['message' => 'Pass Information received successfully!'], 200);
+        } catch (\Exception $e) {
+            Log::error('Error adding custom ticket: ' . $e->getMessage());
+            throw $e;
+        }
+    }
+
+    /**
+     * Build attendee data from StallManning model
+     */
+    private function buildAttendeeData($attendee)
+    {
+        return [
+            'fullName' => trim(($attendee->first_name ?? '') . ' ' . (($attendee->middle_name ?? '') ? $attendee->middle_name . ' ' : '') . ($attendee->last_name ?? '')),
+            'title' => $attendee->title ?? '',
+            'first_name' => $attendee->first_name ?? '',
+            'last_name' => $attendee->last_name ?? '',
+            'middle_name' => $attendee->middle_name ?? '',
+            'company_name' => $attendee->organisation_name ?? 'N/A',
+            'email' => $attendee->email,
+            'mobile' => $attendee->mobile,
+            'qr_code_path' => $attendee->qr_code_path ?? '',
+            'unique_id' => $attendee->unique_id,
+            'pinNo' => $attendee->pinNo ?? 'N/A',
+            'ticket_type' => $attendee->ticketType ?? '',
+            'designation' => $attendee->designation ?? $attendee->job_title ?? '',
+            'registration_date' => $attendee->created_at ? $attendee->created_at->format('Y-m-d') : '',
+            'registration_type' => isset($attendee->registration_type) && $attendee->registration_type === 'Online' ? 1 : 0,
+            'id_card_number' => $attendee->id_card_number ?? $attendee->id_no ?? '',
+            'id_card_type' => $attendee->id_card_type ?? $attendee->id_type ?? '',
+            'dates' => isset($attendee->event_days) ?
+                (is_array($attendee->event_days)
+                    ? implode(', ', $attendee->event_days)
+                    : implode(', ', json_decode($attendee->event_days, true) ?? []))
+                : '',
+            'type' => $attendee->ticketType ?? '',
+        ];
+    }
+
+    /**
+     * Build attendee data from stdClass object (DB query result)
+     */
+    private function buildAttendeeDataFromObject($attendee)
+    {
+        $createdAt = $attendee->created_at ?? null;
+        $registrationDate = '';
+        
+        if ($createdAt) {
+            if (is_a($createdAt, \Illuminate\Support\Carbon::class)) {
+                $registrationDate = $createdAt->format('Y-m-d');
+            } elseif (is_string($createdAt)) {
+                try {
+                    $registrationDate = \Illuminate\Support\Carbon::parse($createdAt)->format('Y-m-d');
+                } catch (\Exception $e) {
+                    $registrationDate = '';
+                }
+            }
+        }
+
+        $eventDays = $attendee->event_days ?? null;
+        $dates = '';
+        if ($eventDays) {
+            if (is_array($eventDays)) {
+                $dates = implode(', ', $eventDays);
+            } elseif (is_string($eventDays)) {
+                $decoded = json_decode($eventDays, true);
+                $dates = is_array($decoded) ? implode(', ', $decoded) : '';
+            }
+        }
+
+        return [
+            'fullName' => trim(($attendee->first_name ?? '') . ' ' . (($attendee->middle_name ?? '') ? $attendee->middle_name . ' ' : '') . ($attendee->last_name ?? '')),
+            'title' => $attendee->title ?? '',
+            'first_name' => $attendee->first_name ?? '',
+            'last_name' => $attendee->last_name ?? '',
+            'middle_name' => $attendee->middle_name ?? '',
+            'company_name' => $attendee->organisation_name ?? 'N/A',
+            'email' => $attendee->email,
+            'mobile' => $attendee->mobile,
+            'qr_code_path' => $attendee->qr_code_path ?? '',
+            'unique_id' => $attendee->unique_id ?? '',
+            'pinNo' => $attendee->pinNo ?? 'N/A',
+            'ticket_type' => $attendee->ticketType ?? '',
+            'designation' => $attendee->designation ?? $attendee->job_title ?? '',
+            'registration_date' => $registrationDate,
+            'registration_type' => isset($attendee->registration_type) && $attendee->registration_type === 'Online' ? 1 : 0,
+            'id_card_number' => $attendee->id_card_number ?? $attendee->id_no ?? '',
+            'id_card_type' => $attendee->id_card_type ?? $attendee->id_type ?? '',
+            'dates' => $dates,
+            'type' => $attendee->ticketType ?? '',
+        ];
     }
 
     //list all invoices of the exhibitor
