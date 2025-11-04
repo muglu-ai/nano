@@ -287,7 +287,7 @@
                                 <p class="mb-0 text-sm">
                                     <a href="{{ route('exhibition.list', ['type' => $ticket['slug'] ?? $ticket['name']]) }}"
                                         class="text-success font-weight-bolder">Click here</a> for {{ $ticket['name'] }}
-                                    Registration.
+                                    Registration or view the registration data.
                                 </p>
                             </div>
                         </div>
