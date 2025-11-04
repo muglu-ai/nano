@@ -43,7 +43,7 @@ mysqli_set_charset($link2, 'utf8mb4');
 function process_pending_registrations() {
 	global $link2;
 	
-	$host = "95.216.2.164";
+	$host = "localhost";
 	$user = "btsblnl265_asd1d_bengaluruite";
 	$pass = "Disl#vhfj#Af#DhW65";
 	$db = "btsblnl265_asd1d_bengaluruite";
