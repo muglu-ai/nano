@@ -26,6 +26,16 @@ $link2 = mysqli_connect($host, $user, $pass, $db);
 if (!$link2) {
     die("Connection failed: " . mysqli_connect_error());
 }
+mysqli_set_charset($link2, 'utf8mb4');
+
+// function clean_html_entities($string) {
+//     // Decode HTML entities and ensure UTF-8
+//     $string = html_entity_decode($string, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+//     // Remove non-printable characters
+//     $string = preg_replace('/[\x00-\x1F\x7F]/u', '', $string);
+//     return $string;
+// }
+
 
 /**
  * Cronjob function to process pending registrations and send to API
@@ -43,13 +53,15 @@ function process_pending_registrations() {
 		echo "[" . date('Y-m-d H:i:s') . "] Connection failed: " . mysqli_connect_error() . "\n";
 		return;
 	}
+	mysqli_set_charset($link, 'utf8mb4');
 	
 	// Fetch records with apiStatus = 0 and pay_status IN ('Paid', 'Free', 'Complimentary')
 	$query = "SELECT * FROM it_2025_reg_tbl 
 			  WHERE apiStatus = 0 
 			  AND (pay_status = 'Paid' OR pay_status = 'Free' OR pay_status = 'Complimentary')
+			--   AND cata = 'Complimentary Delegate'
 			  ORDER BY srno ASC
-			  LIMIT 100"; // Process 100 records at a time to avoid timeout
+			  LIMIT 20"; // Process 100 records at a time to avoid timeout
 	
 	$result = mysqli_query($link, $query);
 	
@@ -82,12 +94,23 @@ function process_pending_registrations() {
 		
 		// Process each delegate
 		$sub_delegates = isset($res['sub_delegates']) ? intval($res['sub_delegates']) : 0;
+
+		//store the previous response in a variable
+		$previous_response = $res['response'];
 		
 		if ($sub_delegates == 0) {
+			// log the error in the json file for the record
+			$error_json = json_encode(array(
+				'tin_no' => $tin_no,
+				'srno' => $srno,
+				'error' => 'No delegates found',
+				'timestamp' => date('Y-m-d H:i:s')
+			));
+			file_put_contents('sendingDataError.json', $error_json . "\n", FILE_APPEND);
 			echo "[" . date('Y-m-d H:i:s') . "] Warning: No delegates found for TIN {$tin_no}, skipping...\n";
 			// Still update status to avoid reprocessing
 			$update_query = "UPDATE it_2025_reg_tbl 
-							SET apiStatus = 1, 
+							SET apiStatus = 0, 
 								response = '[]'
 							WHERE srno = {$srno}";
 			mysqli_query($link, $update_query);
@@ -102,31 +125,38 @@ function process_pending_registrations() {
 			
 			// Skip if no name
 			if (empty($dele_fname) && empty($dele_lname)) {
+				// log the error in the json file for the record
+				$error_json = json_encode(array(
+					'tin_no' => $tin_no,
+					'srno' => $srno,
+					'error' => 'No name found',
+					'timestamp' => date('Y-m-d H:i:s')
+				));
+				file_put_contents('sendingDataError.json', $error_json . "\n", FILE_APPEND);
 				echo "[" . date('Y-m-d H:i:s') . "] Warning: Delegate {$i} has no name, skipping...\n";
 				continue;
 			}
 			
 			// Check for email field (email1, email2, etc. or fallback to main email)
 			$dele_email = '';
+			// Use email as stored in email1, email2, ... without generating or altering
 			if (isset($res['email' . $i]) && !empty($res['email' . $i])) {
 				$dele_email = trim($res['email' . $i]);
-			} elseif (isset($res['email']) && !empty($res['email'])) {
-				// Use main email with suffix for multiple delegates
-				$base_email = trim($res['email']);
-				if ($sub_delegates > 1) {
-					// Extract base email and domain
-					if (strpos($base_email, '@') !== false) {
-						list($email_local, $email_domain) = explode('@', $base_email, 2);
-						$dele_email = $email_local . '+' . $i . '@' . $email_domain;
-					} else {
-						$dele_email = $base_email;
-					}
-				} else {
-					$dele_email = $base_email;
-				}
 			} else {
-				// Generate a default email if none exists
-				$dele_email = 'guest' . $srno . '_' . $i . '@bts2025.in';
+				$dele_email = '';
+			}
+
+			if (empty($dele_email)) {
+				// log the error in the json file for the record
+				$error_json = json_encode(array(
+					'tin_no' => $tin_no,
+					'srno' => $srno,
+					'error' => 'No email found',
+					'timestamp' => date('Y-m-d H:i:s')
+				));
+				file_put_contents('sendingDataError.json', $error_json . "\n", FILE_APPEND);
+				echo "[" . date('Y-m-d H:i:s') . "] Warning: Delegate {$i} has no email, skipping...\n";
+				continue;
 			}
 			
 			$job_title = isset($res['job_title' . $i]) ? $res['job_title' . $i] : '';
@@ -134,6 +164,16 @@ function process_pending_registrations() {
 			$dele_cellno_arr = explode("-", $dele_cellno);
 			
 			$cate = isset($res['cata' . $i]) ? $res['cata' . $i] : '';
+
+			// if cata is GIA VIP then pass category is VIP GIA PARTNER
+			if ($cate == 'GIA VIP') {
+				$cate = 'VIP GIA PARTNER';
+			}
+			// if cata is GIA then pass category is GIA PARTNER
+			if ($cate == 'GIA Delegate') {
+				$cate = 'GIA PARTNER';
+			}
+			
 			$eventDays = isset($res['sessionDay']) ? $res['sessionDay'] : null;
 			
 			$country_code = '91'; // default
@@ -150,20 +190,43 @@ function process_pending_registrations() {
 				$phone = trim($dele_cellno_arr[1]);
 			}
 			if (empty($phone)) {
-				$phone = isset($res['mobile']) ? $res['mobile'] : (isset($res['cellno']) ? str_replace('+', '', $res['cellno']) : '9801217815');
+				$phone = isset($res['mobile']) ? $res['mobile'] : (isset($res['cellno']) ? str_replace('+', '', $res['cellno']) : '');
 			}
 			
 			// Prepare data for API
 			$data = array();
-			$data['name'] = clean_html_entities(trim($dele_title . ' ' . $dele_fname . ' ' . $dele_lname));
+			
+			// Fix encoding issues: ensure proper UTF-8 handling for special characters
+			// First, ensure the strings are properly encoded UTF-8
+			if (!mb_check_encoding($dele_title, 'UTF-8')) {
+				$dele_title = mb_convert_encoding($dele_title, 'UTF-8', mb_detect_encoding($dele_title));
+			}
+			if (!mb_check_encoding($dele_fname, 'UTF-8')) {
+				$dele_fname = mb_convert_encoding($dele_fname, 'UTF-8', mb_detect_encoding($dele_fname));
+			}
+			if (!mb_check_encoding($dele_lname, 'UTF-8')) {
+				$dele_lname = mb_convert_encoding($dele_lname, 'UTF-8', mb_detect_encoding($dele_lname));
+			}
+			
+			// Use clean_html_entities2 which recursively decodes HTML entities
+			// This handles cases like "Mrs. Vilma PagirÄ—" properly
+			$full_name = trim(  $dele_fname . ' ' . $dele_lname);
+
+			//display the title only if it is Dr. Or Prof.  else remove it
+			if ($dele_title == 'Dr.' || $dele_title == 'Prof.') {
+				$data['name'] = clean_html_entities2($dele_title . ' ' . $full_name);
+			} else {
+				$data['name'] = clean_html_entities2($full_name);
+			}
+
 			$data['email'] = trim($dele_email);
 			$data['country_code'] = $country_code;
 			$data['mobile'] = $phone;
-			$data['company'] = clean_html_entities(isset($res['org']) ? $res['org'] : '');
-			$data['designation'] = clean_html_entities($job_title);
+			$data['company'] = clean_html_entities2(isset($res['org']) ? $res['org'] : '');
+			$data['designation'] = clean_html_entities2($job_title);
 			
 			// Process sector
-			$sector = clean_html_entities(isset($res['org_reg_type']) ? $res['org_reg_type'] : '');
+			$sector = clean_html_entities2(isset($res['org_reg_type']) ? $res['org_reg_type'] : '');
 			$sector = trim($sector);
 			if ($sector == 'Investors') {
 				$sector = 'Investor';
@@ -176,8 +239,8 @@ function process_pending_registrations() {
 				$sector = '';
 			}
 			
-			$data['country'] = clean_html_entities(isset($res['country']) ? $res['country'] : '');
-			$data['city'] = clean_html_entities(isset($res['city']) ? $res['city'] : '');
+			$data['country'] = clean_html_entities2(isset($res['country']) ? $res['country'] : '');
+			$data['city'] = clean_html_entities2(isset($res['city']) ? $res['city'] : '');
 			
 			// Get category information
 			if (!empty($cate)) {
@@ -198,6 +261,10 @@ function process_pending_registrations() {
 			$data['qsn_935'] = $sector;
 			$data['qsn_936'] = '';
 			$data['qsn_366'] = $tin_no; // For API log
+
+			// Debug: Uncomment to see the data being sent
+			// echo json_encode($data);
+			// exit;
 			
 			// Send to API
 			try {
@@ -233,16 +300,25 @@ function process_pending_registrations() {
 				);
 				$all_success = false;
 			}
+		
+		
+		
 		}
+
 		
-		// Update the record
+		
+		// Update the record by concatenating the response
 		$response_json = json_encode($all_responses);
-		$response_json_escaped = mysqli_real_escape_string($link, $response_json);
+
+		$response_json = $previous_response . $response_json;
+
+		//$response_json_escaped = mysqli_real_escape_string($link, $response_json);
+		$response_json_escaped = '';
+
 		
-		$update_query = "UPDATE it_2025_reg_tbl 
-						SET apiStatus = 1, 
-							response = '{$response_json_escaped}'
-						WHERE srno = {$srno}";
+		
+		// Fix: Properly update the response column with new JSON (do not CONCAT to an empty string)
+		$update_query = "UPDATE it_2025_reg_tbl SET apiStatus = 1, response = '{$response_json_escaped}' WHERE srno = {$srno}";
 		
 		if (mysqli_query($link, $update_query)) {
 			echo "[" . date('Y-m-d H:i:s') . "] Record updated successfully (apiStatus = 1) for TIN: {$tin_no}\n";
