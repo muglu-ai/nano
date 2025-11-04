@@ -1254,9 +1254,9 @@ class ExhibitorController extends Controller
         
                     'type' => $attendee->ticketType,
                 ];
-                Mail::to($attendee->email)
-                    ->bcc('test.interlinks@gmail.com')
-                    ->send(new ExhibitorMail($data));
+                // Mail::to($attendee->email)
+                //     ->bcc('test.interlinks@gmail.com')
+                //     ->send(new ExhibitorMail($data));
 
                 return response()->json(['message' => $request->invite_type . ' Delegate added  successfully!']);
             } else {
@@ -1276,7 +1276,7 @@ class ExhibitorController extends Controller
 
                     //
 
-                    Log::info('Ticket Type ' . $request->invite_type . 'Used count: ' . $usedCount . ', Allocated count: ' . $allocatedCount);
+                    // Log::info('Ticket Type ' . $request->invite_type . 'Used count: ' . $usedCount . ', Allocated count: ' . $allocatedCount);
 
                     if ($usedCount >= $allocatedCount) {
                         // Handle limit reached (e.g., return error)
@@ -1315,7 +1315,7 @@ class ExhibitorController extends Controller
         
                     'middle_name' => $attendee->middle_name ?? '',
         
-                    'company_name' => $company_name,
+                    'company_name' => $attendee->organisation_name ?? 'N/A',
         
                     'email' => $attendee->email,
         
@@ -1350,9 +1350,9 @@ class ExhibitorController extends Controller
                 ]);
 
                 try {
-                    Mail::to($attendee->email)
-                        ->bcc('test.interlinks@gmail.com')
-                        ->send(new ExhibitorMail($data));
+                    // Mail::to($attendee->email)
+                    //     ->bcc('test.interlinks@gmail.com')
+                    //     ->send(new ExhibitorMail($data));
                 } catch (\Exception $e) {
                     Log::error('Error sending ExhibitorMail: ' . $e->getMessage());
                     // Optionally rethrow or handle error as needed
