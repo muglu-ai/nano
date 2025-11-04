@@ -163,6 +163,13 @@
                         Registrations
                     </span>
                 </a>
+
+                <a class="nav-link text-dark" href="{{ route('exhibitor.registration.data') }}">
+                    <i class="fa-solid fa-address-book"></i>
+                    <span class="sidenav-normal ms-1 ps-1">Registration Data</span>
+                </a>
+
+
                 {{--                <div class="collapse" id="pagesExamples">--}}
                 {{--                    <ul class="nav">--}}
                 {{--                        <li class="nav-item">--}}
