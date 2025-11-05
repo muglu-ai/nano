@@ -1,6 +1,6 @@
 <?php 
 
-$host = "95.216.2.164";
+$host = "localhost";
 $user = "btsblnl265_asd1d_bengaluruite";
 $pass = "Disl#vhfj#Af#DhW65";
 $db = "btsblnl265_asd1d_bengaluruite";
@@ -175,6 +175,7 @@ function matchPassesCategory($pass_category, $days = null ){
 		'Premium Delegate Pass' => array('category_id' => 3543, 'name' => 'Premium Pass'),
 		'Standard Delegate Pass' => array('category_id' => 3544, 'name' => 'Standard Pass'),
 		'SPEAKER' => array('category_id' => 3525, 'name' => 'SPEAKER'),
+		'SESSION ATTENDEE' => array('category_id' => 3561, 'name' => 'SESSION ATTENDEE'),
 		'VIP GIA PARTNER' => array('category_id' => 3532, 'name' => 'VIP GIA PARTNER'),
 		'GIA PARTNER' => array('category_id' => 3533, 'name' => 'GIA PARTNER'),
 	);
@@ -340,6 +341,35 @@ function matchPassesCategory($pass_category, $days = null ){
 			'category_id' => 3525,
 			'name' => 'SPEAKER',
 			'event_dates' => '18, 19, 20 Nov'
+		);
+	}
+
+	// SESSION ATTENDEE special handling (respects sessionDay parameter)
+	if (strcasecmp($pass_category, 'SESSION ATTENDEE') === 0) {
+		$key = $normalize_days_key($days);
+		$dates = $get_event_dates($key);
+		
+		// Determine printable name based on day(s)
+		$name = 'SESSION ATTENDEE';
+		if ($key === '1') {
+			$name = 'SESSION ATTENDEE Day 1';
+		} elseif ($key === '2') {
+			$name = 'SESSION ATTENDEE Day 2';
+		} elseif ($key === '3') {
+			$name = 'SESSION ATTENDEE Day 3';
+		} elseif ($key === '1&2') {
+			$name = 'SESSION ATTENDEE Day 1 & 2';
+		} elseif ($key === '1&3') {
+			$name = 'SESSION ATTENDEE Day 1 & 3';
+		} elseif ($key === '2&3') {
+			$name = 'SESSION ATTENDEE Day 2 & 3';
+		}
+		// For '1&2&3' or all days, keep default name 'SESSION ATTENDEE'
+		
+		return array(
+			'category_id' => 3561,
+			'name' => $name,
+			'event_dates' => $dates
 		);
 	}
 

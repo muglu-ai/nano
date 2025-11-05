@@ -54,11 +54,12 @@ function process_pending_registrations() {
 	}
 	mysqli_set_charset($link, 'utf8mb4');
 	
-	// Fetch records with apiStatus = 0 and pay_status IN ('Paid', 'Free', 'Complimentary')
+	// Fetch records with apiStatus = 0 and pay_status IN ('Paid', 'Free', 'Complimentary') apiStatus = 0 and
 	$query = "SELECT * FROM it_2025_reg_tbl 
-			  WHERE apiStatus = 0 
+			  WHERE  apiStatus = 0
 			  AND (pay_status = 'Paid' OR pay_status = 'Free' OR pay_status = 'Complimentary')
 			--   AND cata = 'Complimentary Delegate'
+
 			  ORDER BY srno ASC
 			  LIMIT 20"; // Process 100 records at a time to avoid timeout
 	
