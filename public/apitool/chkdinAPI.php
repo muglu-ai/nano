@@ -263,8 +263,8 @@ function process_pending_registrations() {
 			$data['qsn_366'] = $tin_no; // For API log
 
 			// Debug: Uncomment to see the data being sent
-			echo json_encode($data);
-			exit;
+			// echo json_encode($data);
+			// exit;
 			
 			// Send to API
 			try {
