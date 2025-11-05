@@ -153,7 +153,7 @@ $category_id_map = array(
 function process_pending_exhibitor_delegates() {
 	global $link2;
 	
-	$host = "95.216.2.164";
+	$host = "localhost";
 	$user = "btsblnl265_asd1d_bengaluruite";
 	$pass = "Disl#vhfj#Af#DhW65";
 	$db2 = "btsblnl265_asd1d_portal";
