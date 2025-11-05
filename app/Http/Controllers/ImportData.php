@@ -18,6 +18,7 @@ use App\Models\Payment;
 use App\Models\Sector;
 use App\Models\State;
 use App\Models\Country;
+use Illuminate\Support\Facades\DB;
 
 class ImportData extends Controller
 {
@@ -55,7 +56,6 @@ class ImportData extends Controller
 //        dd(count($data));
 //        print_r($data);
         // Use DB transaction for each user import and collect errors for summary
-        use Illuminate\Support\Facades\DB;
         $importErrors = [];
         $importedCount = 0;
         foreach ($data as $row) {
