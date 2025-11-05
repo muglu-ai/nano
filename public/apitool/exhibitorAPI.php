@@ -30,6 +30,99 @@ if (!$link2) {
 $db2 = 'btsblnl265_asd1d_portal';
 
 /**
+ * Map ticketType based on applicationType
+ * @param string $ticketType - The ticket type from complimentary_delegates table
+ * @param string $applicationType - The application type from applications table
+ * @return string - The mapped ticket type with proper prefix
+ */
+function mapTicketTypeByApplicationType($ticketType, $applicationType) {
+	if (empty($ticketType)) {
+		return null;
+	}
+	
+	// Normalize application type
+	$applicationType = strtolower(trim($applicationType));
+	$ticketTypeLower = strtolower(trim($ticketType));
+	$ticketType = trim($ticketType);
+	
+	// Handle GIA PARTNER and VIP GIA PARTNER - these are special categories that don't need prefixing
+	if (stripos($ticketTypeLower, 'vip gia partner') !== false || $ticketTypeLower === 'vip gia partner') {
+		return 'VIP GIA PARTNER';
+	}
+	if (stripos($ticketTypeLower, 'gia partner') !== false || $ticketTypeLower === 'gia partner') {
+		// If it contains "VIP", return VIP GIA PARTNER, otherwise GIA PARTNER
+		if (stripos($ticketTypeLower, 'vip') !== false) {
+			return 'VIP GIA PARTNER';
+		}
+		return 'GIA PARTNER';
+	}
+	
+	// Map based on application type
+	if ($applicationType === 'exhibitor') {
+		// For exhibitor, prefix with "Exhibitor " if not already prefixed
+		if (stripos($ticketType, 'Exhibitor') === false && stripos($ticketType, 'Sponsor') === false) {
+			// Handle special cases - check in order of specificity
+			if (stripos($ticketTypeLower, 'fmc go') !== false) {
+				return 'Exhibitor FMC GO';
+			}
+			if (stripos($ticketTypeLower, 'fmc premium') !== false || (stripos($ticketTypeLower, 'fmc') !== false && stripos($ticketTypeLower, 'premium') !== false)) {
+				return 'Exhibitor FMC Premium';
+			}
+			if (stripos($ticketTypeLower, 'fmc') !== false) {
+				return 'Exhibitor FMC Premium'; // Default FMC to Premium
+			}
+			if (stripos($ticketTypeLower, 'vip') !== false || stripos($ticketTypeLower, 'vip pass') !== false) {
+				return 'Exhibitor VIP Pass';
+			}
+			if (stripos($ticketTypeLower, 'premium') !== false || stripos($ticketTypeLower, 'premium pass') !== false) {
+				return 'Exhibitor Premium Pass';
+			}
+			if (stripos($ticketTypeLower, 'standard') !== false || stripos($ticketTypeLower, 'standard pass') !== false) {
+				return 'Exhibitor Standard Pass';
+			}
+			if (stripos($ticketTypeLower, 'service') !== false || stripos($ticketTypeLower, 'service pass') !== false) {
+				return 'Service Pass';
+			}
+			if (stripos($ticketTypeLower, 'business visitor') !== false) {
+				return 'BUSINESS VISITOR';
+			}
+			// Default to Exhibitor
+			return 'Exhibitor';
+		}
+		return $ticketType;
+	} elseif ($applicationType === 'sponsor' || $applicationType === 'exhibitor+sponsor' || stripos($applicationType, 'sponsor') !== false) {
+		// For sponsor or exhibitor+sponsor, prefix with "Sponsor " if not already prefixed
+		if (stripos($ticketType, 'Sponsor') === false && stripos($ticketType, 'Exhibitor') === false) {
+			// Handle special cases - check in order of specificity
+			if (stripos($ticketTypeLower, 'fmc go') !== false) {
+				return 'Sponsor FMC GO';
+			}
+			if (stripos($ticketTypeLower, 'fmc premium') !== false || (stripos($ticketTypeLower, 'fmc') !== false && stripos($ticketTypeLower, 'premium') !== false)) {
+				return 'Sponsor FMC Premium';
+			}
+			if (stripos($ticketTypeLower, 'fmc') !== false) {
+				return 'Sponsor FMC Premium'; // Default FMC to Premium
+			}
+			if (stripos($ticketTypeLower, 'vip') !== false || stripos($ticketTypeLower, 'vip pass') !== false) {
+				return 'Sponsor VIP Pass';
+			}
+			if (stripos($ticketTypeLower, 'premium') !== false || stripos($ticketTypeLower, 'premium pass') !== false) {
+				return 'Sponsor Premium';
+			}
+			if (stripos($ticketTypeLower, 'standard') !== false || stripos($ticketTypeLower, 'standard pass') !== false) {
+				return 'Sponsor Standard';
+			}
+			// Default to Sponsor Premium
+			return 'Sponsor Premium';
+		}
+		return $ticketType;
+	}
+	
+	// If no mapping found, return as is
+	return $ticketType;
+}
+
+/**
  * Map application_type to category_id_map for exhibitor tickets
  */
 $category_id_map = array(
@@ -38,18 +131,20 @@ $category_id_map = array(
 	'Sponsor Standard'         => array('category_id' => 3550, 'name' => 'STANDARD PASS'),
 	'Sponsor FMC Premium'      => array('category_id' => 3551, 'name' => 'FMC Premium'),
 	'Sponsor FMC GO'            => array('category_id' => 3552, 'name' => 'FMC GO'),
-	'VIP Pass'                 => array('category_id' => 3553, 'name' => 'VIP PASS'),
-	'Premium Pass'             => array('category_id' => 3554, 'name' => 'PREMIUM PASS'),
-	'Standard Pass'            => array('category_id' => 3555, 'name' => 'STANDARD PASS'),
+	'Exhibitor VIP Pass'                 => array('category_id' => 3553, 'name' => 'VIP PASS'),
+	'Exhibitor Premium Pass'             => array('category_id' => 3554, 'name' => 'PREMIUM PASS'),
+	'Exhibitor Standard Pass'            => array('category_id' => 3555, 'name' => 'STANDARD PASS'),
 	'Exhibitor FMC Premium'    => array('category_id' => 3556, 'name' => 'FMC Premium'),
 	'Exhibitor FMC GO'         => array('category_id' => 3557, 'name' => 'FMC GO'),
 	'Exhibitor'                => array('category_id' => 3558, 'name' => 'EXHIBITOR'),
-	'BUSINESS VISITOR'         => array('category_id' => 3564, 'name' => 'BUSINESS VISITOR PASS'),
+	'VIP GIA PARTNER'          => array('category_id' => 3532, 'name' => 'VIP GIA PARTNER'),
+	'GIA PARTNER'              => array('category_id' => 3533, 'name' => 'GIA PARTNER'),
+	'BUSINESS VISITOR'         => array('category_id' => 3564, 'name' => 'BUSINESS VISITOR'),
 	'Premium'                  => array('category_id' => 3554, 'name' => 'PREMIUM PASS'),
 	'Standard'                 => array('category_id' => 3555, 'name' => 'STANDARD PASS'),
 	'FMC GO'                   => array('category_id' => 3557, 'name' => 'FMC GO'),
 	'Service Pass'             => array('category_id' => 3558, 'name' => 'Service Pass'),
-	'Business Visitor Pass'    => array('category_id' => 3564, 'name' => 'BUSINESS VISITOR PASS'),
+	'Business Visitor'    => array('category_id' => 3564, 'name' => 'BUSINESS VISITOR'),
 );
 
 /**
@@ -73,7 +168,7 @@ function process_pending_exhibitor_delegates() {
 	
 	// Fetch records from complimentary_delegates where first_name is present and api_sent = 0 or NULL
 	$sql = "SELECT * FROM complimentary_delegates 
-			WHERE first_name IS NOT NULL 
+			WHERE first_name IS NOT NULL and exhibition_participant_id=240
 			AND TRIM(first_name) != ''
 			AND (api_sent = 0 OR api_sent IS NULL)
 			ORDER BY id ASC
@@ -110,7 +205,8 @@ function process_pending_exhibitor_delegates() {
 		
 		// Get application_id from ExhibitionParticipant
 		$application_id = null;
-		$ticketType = null;
+		$ticketType = isset($row['ticketType']) ? $row['ticketType'] : null;
+		$applicationType = null;
 		
 		if ($exhibition_participant_id) {
 			$appIdSql = "SELECT application_id FROM exhibition_participants WHERE id = ?";
@@ -127,14 +223,17 @@ function process_pending_exhibitor_delegates() {
 				$stmt2 = $dbConnection->prepare($catSql);
 				$stmt2->bind_param("i", $application_id);
 				$stmt2->execute();
-				$stmt2->bind_result($ticketType);
+				$stmt2->bind_result($applicationType);
 				$stmt2->fetch();
 				$stmt2->close();
 			}
 		}
 		
-		// Fallback to ticketType from complimentary_delegates table if available
-		if (empty($ticketType) && isset($row['ticketType']) && !empty($row['ticketType'])) {
+		// Map ticketType based on applicationType
+		if (!empty($ticketType) && !empty($applicationType)) {
+			$ticketType = mapTicketTypeByApplicationType($ticketType, $applicationType);
+		} elseif (empty($ticketType) && isset($row['ticketType']) && !empty($row['ticketType'])) {
+			// Fallback: use ticketType from complimentary_delegates table if available
 			$ticketType = $row['ticketType'];
 		}
 		
@@ -223,12 +322,12 @@ function process_pending_exhibitor_delegates() {
 		$data['qsn_936'] = '';
 		$data['qsn_366'] = isset($row['unique_id']) ? $row['unique_id'] : ''; // For API log
 
-        echo json_encode($data);
-        exit;
+        // echo json_encode($data);
+        // exit;
 		
 		// Send to API
 		try {
-			//$response_raw = sendchkdinapi($data);
+			$response_raw = sendchkdinapi($data);
 			$response = json_decode($response_raw, true);
 			
 			// Prepare data for storage
