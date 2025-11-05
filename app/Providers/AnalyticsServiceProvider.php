@@ -37,6 +37,16 @@ class AnalyticsServiceProvider extends ServiceProvider
                     ->pluck('count', 'status')
                     ->toArray(),
                 'payments' => \DB::table('payments')->select(\DB::raw('count(*) as count'))->pluck('count')->toArray(),
+                // Declaration form statistics
+                'declarationsFilled' => Application::where('application_type', 'exhibitor')
+                    ->where('declarationStatus', 1)
+                    ->count(),
+                'declarationsNotFilled' => Application::where('application_type', 'exhibitor')
+                    ->where(function($query) {
+                        $query->where('declarationStatus', 0)
+                              ->orWhereNull('declarationStatus');
+                    })
+                    ->count(),
                 'req_sqm_sum' => Application::where('application_type', 'exhibitor')->where('submission_status', 'submitted')->sum('interested_sqm'),
                 'approved_sqm_sum' => Application::where('application_type', 'exhibitor')
                     ->where('submission_status', 'approved')

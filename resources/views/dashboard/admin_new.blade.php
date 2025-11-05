@@ -367,6 +367,55 @@
                 </div>
                 <hr class="dark horizontal my-0">
 
+                {{-- <hr class="dark horizontal my-0"> --}}
+
+                <div class="ms-3 mt-2">
+                    <p class="font-weight-bolder">
+                        Declaration Forms
+                    </p>
+                </div>
+    
+                <div class="row mb-3">
+                    <div class="col-xl-6 col-sm-6 mb-xl-0 mb-4 mt-4">
+                        <div class="card">
+                            <div class="card-header p-2 ps-3">
+                                <div class="d-flex justify-content-between">
+                                    <div>
+                                        <p class="text-m mb-0 text-capitalize font-weight-black font-weight-bold">Declaration Forms Filled</p>
+                                        <h4 class="mb-0 mt-1">{{ $analytics['declarationsFilled'] ?? 0 }}</h4>
+                                    </div>
+                                    <div class="icon icon-md icon-shape bg-gradient-success shadow-success shadow text-center border-radius-lg">
+                                        <i class="material-symbols-rounded opacity-10">check_circle</i>
+                                    </div>
+                                </div>
+                            </div>
+                            <hr class="dark horizontal my-0">
+                            <div class="card-footer p-2 ps-3">
+                                <p class="mb-0 text-sm"><a href="{{ route('admin.declarations.list', ['status' => 'filled']) }}"><span class="text-success font-weight-bolder">Click here </span></a>for more info.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-xl-6 col-sm-6 mb-xl-0 mb-4 mt-4">
+                        <div class="card">
+                            <div class="card-header p-2 ps-3">
+                                <div class="d-flex justify-content-between">
+                                    <div>
+                                        <p class="text-m mb-0 text-capitalize font-weight-black font-weight-bold">Declaration Forms Not Filled</p>
+                                        <h4 class="mb-0 mt-1">{{ $analytics['declarationsNotFilled'] ?? 0 }}</h4>
+                                    </div>
+                                    <div class="icon icon-md icon-shape bg-gradient-danger shadow-danger shadow text-center border-radius-lg">
+                                        <i class="material-symbols-rounded opacity-10">cancel</i>
+                                    </div>
+                                </div>
+                            </div>
+                            <hr class="dark horizontal my-0">
+                            <div class="card-footer p-2 ps-3">
+                                <p class="mb-0 text-sm"><a href="{{ route('admin.declarations.list', ['status' => 'not_filled']) }}"><span class="text-success font-weight-bolder">Click here </span></a>for more info.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 {{--
                 <div class="ms-3 mt-2">
                     <p class="font-weight-bolder">
@@ -493,6 +542,7 @@
                 </div>
                 --}}
 
+                @if($hide == false)
                 <div class="ms-3 mt-2">
                     <p class="font-weight-bolder">
                         Statistics
@@ -640,6 +690,8 @@
 
                     </div>
                 </div>
+
+                @endif
 
 
             </div>
