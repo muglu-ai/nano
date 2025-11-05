@@ -603,6 +603,11 @@ Route::put('/application/update/{id}', [AdminController::class, 'applicationUpda
 //Admin Sponsorship Route
 Route::get('/sponsorship-list/', [AdminController::class, 'sponsorApplicationList'])->name('sponsorship.lists')->middleware(Auth::class);;
 Route::get('/sponsorship-list/{status}', [AdminController::class, 'sponsorApplicationList'])->name('sponsorship.list')->middleware(Auth::class);
+
+// Declaration form routes
+Route::get('/admin/declarations/list', [AdminController::class, 'declarationsList'])->name('admin.declarations.list')->middleware(Auth::class);
+Route::get('/admin/declarations/export', [AdminController::class, 'exportDeclarations'])->name('admin.declarations.export')->middleware(Auth::class);
+Route::get('/admin/declarations/view/{id}', [AdminController::class, 'viewDeclaration'])->name('admin.declarations.view')->middleware(Auth::class);
 //verify the membership by admin /membership/verify
 Route::post('membership/verify', [AdminController::class, 'verifyMembership'])->name('membership.verify')->middleware(Auth::class);
 ///membership/reject

@@ -1800,4 +1800,143 @@ class AdminController extends Controller
         // exit;
     }
 
+    /**
+     * List declarations - filled or not filled
+     */
+    public function declarationsList(Request $request)
+    {
+        $status = $request->get('status', 'filled'); // 'filled' or 'not_filled'
+        
+        $query = Application::where('application_type', 'exhibitor')
+            ->with('user');
+        
+        if ($status === 'filled') {
+            $query->where('declarationStatus', 1);
+        } else {
+            $query->where(function($q) {
+                $q->where('declarationStatus', 0)
+                  ->orWhereNull('declarationStatus');
+            });
+        }
+        
+        // Search functionality
+        if ($request->has('search') && !empty($request->search)) {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('company_name', 'like', "%{$search}%")
+                  ->orWhere('application_id', 'like', "%{$search}%")
+                  ->orWhereHas('user', function($userQuery) use ($search) {
+                      $userQuery->where('name', 'like', "%{$search}%")
+                               ->orWhere('email', 'like', "%{$search}%");
+                  });
+            });
+        }
+        
+        // Pagination
+        $perPage = $request->get('per_page', 20);
+        $applications = $query->orderBy('company_name', 'asc')->paginate($perPage);
+        $applications->appends($request->query());
+        
+        return view('admin.declarations.list', compact('applications', 'status'));
+    }
+
+    /**
+     * Export declarations with company names and PDFs
+     */
+    public function exportDeclarations(Request $request)
+    {
+        $status = $request->get('status', 'filled');
+        
+        $query = Application::where('application_type', 'exhibitor')
+            ->with('user');
+        
+        if ($status === 'filled') {
+            $query->where('declarationStatus', 1);
+        } else {
+            $query->where(function($q) {
+                $q->where('declarationStatus', 0)
+                  ->orWhereNull('declarationStatus');
+            });
+        }
+        
+        $applications = $query->orderBy('company_name', 'asc')->get();
+        
+        // Create a ZIP file
+        $zipFileName = 'declarations_' . $status . '_' . date('Y-m-d_H-i-s') . '.zip';
+        $zipPath = storage_path('app/temp/' . $zipFileName);
+        
+        // Create temp directory if it doesn't exist
+        if (!file_exists(storage_path('app/temp'))) {
+            mkdir(storage_path('app/temp'), 0755, true);
+        }
+        
+        $zip = new \ZipArchive();
+        if ($zip->open($zipPath, \ZipArchive::CREATE | \ZipArchive::OVERWRITE) !== TRUE) {
+            return redirect()->back()->with('error', 'Could not create ZIP file.');
+        }
+        
+        // Create CSV file for company names
+        $csvFileName = 'declarations_companies_' . $status . '.csv';
+        $csvPath = storage_path('app/temp/' . $csvFileName);
+        $csvFile = fopen($csvPath, 'w');
+        
+        // Add CSV header
+        fputcsv($csvFile, ['Application ID', 'Company Name', 'Email', 'Status', 'Declaration Status']);
+        
+        foreach ($applications as $application) {
+            // Add to CSV
+            $declarationStatus = $application->declarationStatus == 1 ? 'Filled' : 'Not Filled';
+            fputcsv($csvFile, [
+                $application->application_id,
+                $application->company_name,
+                $application->user->email ?? 'N/A',
+                $application->submission_status ?? 'N/A',
+                $declarationStatus
+            ]);
+            
+            // Add PDF to ZIP if declaration is filled
+            if ($application->declarationStatus == 1) {
+                $companyName = preg_replace('/[^A-Za-z0-9]/', '', (string) $application->company_name);
+                $fileName = $companyName . 'declaration.pdf';
+                $filePath = storage_path('app/public/declarations/' . $application->application_id . '/' . $fileName);
+                
+                if (file_exists($filePath)) {
+                    // Add PDF to ZIP with a clear filename
+                    $zipFileNameInZip = $application->application_id . '_' . $companyName . '_declaration.pdf';
+                    $zip->addFile($filePath, $zipFileNameInZip);
+                }
+            }
+        }
+        
+        fclose($csvFile);
+        
+        // Add CSV to ZIP
+        $zip->addFile($csvPath, $csvFileName);
+        
+        $zip->close();
+        
+        // Return the ZIP file
+        return response()->download($zipPath, $zipFileName)->deleteFileAfterSend(true);
+    }
+
+    /**
+     * View declaration PDF (admin access)
+     */
+    public function viewDeclaration($id)
+    {
+        $application = Application::findOrFail($id);
+        
+        $companyName = preg_replace('/[^A-Za-z0-9]/', '', (string) $application->company_name);
+        $fileName = $companyName . 'declaration.pdf';
+        $filePath = storage_path('app/public/declarations/' . $application->application_id . '/' . $fileName);
+        
+        if (!file_exists($filePath)) {
+            abort(404, 'Declaration PDF not found');
+        }
+
+        return response()->file($filePath, [
+            'Content-Type' => 'application/pdf',
+        ]);
+    }
+
 }

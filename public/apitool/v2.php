@@ -1,6 +1,6 @@
 <?php 
 
-$host = "localhost";
+$host = "95.216.2.164";
 $user = "btsblnl265_asd1d_bengaluruite";
 $pass = "Disl#vhfj#Af#DhW65";
 $db = "btsblnl265_asd1d_bengaluruite";
