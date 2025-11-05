@@ -153,7 +153,7 @@ $category_id_map = array(
 function process_pending_exhibitor_delegates() {
 	global $link2;
 	
-	$host = "95.216.2.164";
+	$host = "localhost";
 	$user = "btsblnl265_asd1d_bengaluruite";
 	$pass = "Disl#vhfj#Af#DhW65";
 	$db2 = "btsblnl265_asd1d_portal";
@@ -168,7 +168,7 @@ function process_pending_exhibitor_delegates() {
 	
 	// Fetch records from complimentary_delegates where first_name is present and api_sent = 0 or NULL
 	$sql = "SELECT * FROM complimentary_delegates 
-			WHERE first_name IS NOT NULL and exhibition_participant_id=240
+			WHERE first_name IS NOT NULL
 			AND TRIM(first_name) != ''
 			AND (api_sent = 0 OR api_sent IS NULL)
 			ORDER BY id ASC
