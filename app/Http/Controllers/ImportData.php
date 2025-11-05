@@ -54,273 +54,311 @@ class ImportData extends Controller
 
 //        dd(count($data));
 //        print_r($data);
+        // Use DB transaction for each user import and collect errors for summary
+        use Illuminate\Support\Facades\DB;
+        $importErrors = [];
+        $importedCount = 0;
         foreach ($data as $row) {
+            // Track import status for this user
+            $importSuccess = false;
+            $errorMessage = null;
+            // Begin transaction
+            try {
+                DB::beginTransaction();
 
-//            dd($row);
-            $importSuccess = false; // Track import status for this user
-
-            /** ---------------------------
-             * Step 1: Normalize & Prepare $command
-             * ----------------------------*/
-
-            // make and variable that say import is success or not
-            // once the variable value is changed to success then send an email to the user with their credentials
-
-            $command = [];
-
-            $command['contact_person'] = trim($row['cp_fname'] . ' ' . $row['cp_lname']);
-            $command['email'] = $row['cp_email'];
-
-            // Mobile split (91-9573600744)
-            $mobileSplit = explode('-', $row['cp_mobile']);
-            $command['country_code'] = $mobileSplit[0] ?? null;
-            $command['phone'] = $mobileSplit[1] ?? $row['cp_mobile'];
-
-            // Clean company name & fields
-            $command['company'] = $this->cleanString($row['exhibitor_name']);
-            $command['website'] = $this->cleanString($row['website']);
-            $command['address'] = $this->cleanString($row['addr1']);
-            $command['designation'] = $this->cleanString($row['cp_desig']);
-
-            //dd($command['designation']);
-
-            // Ensure website starts with https
-            if (!str_starts_with($command['website'], 'http')) {
-                $command['website'] = 'https://' . $command['website'];
-            }
-
-            // Lookup foreign keys
-            $command['sector_id'] = Sector::where('name', $row['sector'])->value('id');
-            $command['state_id']  = State::where('name', $row['state'])->value('id');
-            $command['country_id'] = Country::where('name', $row['country'])->value('id');
-
-            // Random password
-            $command['password_plain'] = substr(str_shuffle('abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'), 0, 8);
-            $command['password_hashed'] = Hash::make($command['password_plain']);
-
-            // Stall category
-            if (str_contains($row['booth_area'], 'Shell')) {
-                $command['stall_category'] = 'Shell Scheme';
-            } elseif (str_contains($row['booth_area'], 'Raw')) {
-                $command['stall_category'] = 'Raw Space';
-            } else {
-                $command['stall_category'] = 'Startup Booth';
-            }
-
-            $command['row'] = $row; // keep raw row for fallback
-
-            
-
-            /** ---------------------------
-             * Step 2: Check existing user
-             * ----------------------------*/
-            // First, check if company name is already registered
-            $existingApplication = Application::where('company_name', $command['company'])->first();
-
-            if ($existingApplication) {
-                echo "Company name '{$command['company']}' already registered. Skipping...\n";
-                continue;
-            }
-
-            // Now check if the user already exists by email
-            $user = User::where('email', $command['email'])->first();
-
-            if ($user) {
-                echo "User with email {$command['email']} already exists. Skipping...\n";
-                continue;
-            } else {
                 /** ---------------------------
-                 * Step 3: Create User
+                 * Step 1: Normalize & Prepare $command
                  * ----------------------------*/
-                $user = User::create([
-                    'name' => $command['contact_person'],
-                    'email' => $command['email'],
-                    'password' => $command['password_hashed'],
-                    'simplePass' => $command['password_plain'],
-                    'role' => 'exhibitor',
-                    'phone' => $command['phone'],
-                    'email_verified_at' => now(),
-                ]);
-                echo "Created user: {$user->email} with password: {$command['password_plain']}\n";
-            }
 
+                $command = [];
 
-            /** ---------------------------
-             * Step 4: Create Application
-             * ----------------------------*/
-            $application = Application::updateOrCreate(
-                ['user_id' => $user->id],
-                [
-                'user_id' => $user->id,
-                'company_name' => $command['company'],
-                'website' => $command['website'],
-                'address' => $command['address'],
-                'city_id' => $row['city'],
-                'companyYears' => intval($row['company_years']) ?? null,
-                'certificate' => $row['ci_certf'],
-                'sector_id' => $command['sector_id'],
-                'subSector' => $row['subsector'],
-                'event_id' => 1,
-                'stall_category' => $command['stall_category'],
-                'exhibitorType' => $row['promocode'],
-                'application_id' => $row['tin_no'],
-                'interested_sqm' => $row['booth_size'],
-                'allocated_sqm' => $row['booth_size'],
-                'state_id' => $command['state_id'] ?? $row['state'],
-                'country_id' => $command['country_id'] ?? $row['country'],
-                'headquarters_country_id' => $command['country_id'] ?? $row['country'],
-                'postal_code' => $row['zip'],
-                'gst_no' => $row['gst_number'],
-                'pan_no' => $row['pan_number'],
-                'company_email' => $command['email'],
-                'gst_compliance' => !empty($row['gst_number']) ? 1 : 0,
-                'submission_status' => ($row['approval_status'] == 'Approved' || $row['pay_status'] == 'Paid') ? 'approved' : 'pending',
-                'approved_date' => ($row['approval_status'] == 'Approved' || $row['pay_status'] == 'Paid') ? $row['reg_date'] : null,
-                'assoc_mem' => $row['user_type'],
-                'boothDescription' => $row['booth_area'],
-                'participation_type' => 'Onsite',
-                'region' => ($command['country_id'] == 101 ? 'India' : 'International'),
-                'approved_by' => $row['approved_by'],
-                'tag' => $row['promocode'],
-            ]);
-            $application->save();
+                $command['contact_person'] = trim($row['cp_fname'] . ' ' . $row['cp_lname']);
+                $command['email'] = $row['cp_email'];
 
-            echo "Created application for user: {$user->email}\n";
-            /** ---------------------------
-             * Step 5: Billing Details
-             * ----------------------------*/
-            BillingDetail::updateOrCreate(
-                ['application_id' => $application->id],
-                [
-                    'billing_company' => $command['company'],
-                    'contact_name' => $command['contact_person'],
-                    'email' => $command['email'],
-                    'phone' => $command['phone'],
-                    'address' => $command['address'],
-                    'city_id' => $row['city'],
-                    'state_id' => $command['state_id'],
-                    'country_id' => $command['country_id'],
-                    'postal_code' => $row['zip'],
-                ]
-            );
+                // Mobile split (91-9573600744)
+                $mobileSplit = explode('-', $row['cp_mobile']);
+                $command['country_code'] = $mobileSplit[0] ?? null;
+                $command['phone'] = $mobileSplit[1] ?? $row['cp_mobile'];
 
-            echo "Created billing details for application ID: {$application->id}\n";
+                // Clean company name & fields
+                $command['company'] = $this->cleanString($row['exhibitor_name']);
+                $command['website'] = $this->cleanString($row['website']);
+                $command['address'] = $this->cleanString($row['addr1']);
+                $command['designation'] = $this->cleanString($row['cp_desig']);
 
-            /** ---------------------------
-             * Step 6: Event Contact
-             * ----------------------------*/
-            EventContact::updateOrCreate(
-                ['application_id' => $application->id],
-                [
-                    'salutation' => $row['cp_title'],
-                    'first_name' => $row['cp_fname'],
-                    'last_name' => $row['cp_lname'],
-                    'email' => $command['email'],
-                    'contact_number' => $row['cp_mobile'],
-                    'job_title' => $command['designation'],
-                ]
-            );
-
-            echo "Created event contact for application ID: {$application->id}\n";
-
-            /** ---------------------------
-             * Step 7: Invoice
-             * ----------------------------*/
-            $invoice = Invoice::updateOrCreate(
-                ['application_id' => $application->id],
-                [
-                    'payment_due_date' => date('Y-m-d', strtotime($row['reg_date'] . ' +30 days')),
-                    'amount' => $row['total'],
-                    'currency' => ($row['curr'] == 'Indian' ? 'INR' : 'USD'),
-                    'payment_status' => ($row['pay_status'] == 'Paid' ? 'paid' : 'unpaid'),
-                    'type' => 'Stall Booking',
-                    'rate' => $row['selection_amt'],
-                    'gst' => $row['tax'],
-                    'processing_chargesRate' => $row['processing_charge_per'],
-                    'processing_charges' => $row['processing_charge'],
-                    'total_final_price' => $row['total'],
-                    'amount_paid' => $row['total_amt_received'] ?? 0,
-                    'invoice_no' => $row['tin_no'],
-                    'pin_no' => $row['pin_no'],
-                ]
-            );
-
-            echo "Created invoice ID: {$invoice->id} for application ID: {$application->id}\n";
-
-            /** ---------------------------
-             * Step 8: Payment (if paid)
-             * ----------------------------*/
-            if ($row['pay_status'] == 'Paid') {
-                Payment::create([
-                    'invoice_id' => $invoice->id,
-                    'order_id' => $row['pg_paymentid'] ?? null,
-                    'payment_method' => 'CCAvenue',
-                    'amount' => $row['total_amt_received'] ?? null,
-                    'amount_paid' => $row['total_amt_received'] ?? null,
-                    'transaction_id' => $row['pg_trackid'] ?? null,
-                    'payment_date' => date('Y-m-d H:i:s', strtotime($row['pg_postdate'])),
-                    'currency' => $invoice->currency,
-                    'status' => 'successful',
-                    'user_id' => $user->id,
-                ]);
-
-
-
-                /*
-                 * If Exhibitor Type is 'Startup Booth' then stall manning count = 2 and ticket allocation = '{"2": 1 }'
-                 * If booth size is 9sqm then stall manning count = 2 and ticket allocation = '{"2": 1 }'
-                 * If booth size is 18sqm then stall manning count = 4 and ticket allocation = '{"2": 2 }'
-                 * If booth size is 36sqm then stall manning count = 8 and ticket allocation = '{"2": 4 }'
-                 * */
-                if ($command['stall_category'] === 'Startup Booth' || (int)$row['booth_size'] <= 9) {
-                    $stallManningCount = 0;
-                    $ticketAllocation = '{"2": 1, "11":2 }';
-                } elseif ((int)$row['booth_size'] > 9 && (int)$row['booth_size'] <= 18) {
-                    $stallManningCount = 0;
-                    $ticketAllocation = '{"2": 2, "11":4 }';
-                } elseif ((int)$row['booth_size'] > 18 && (int)$row['booth_size'] <= 36) {
-                    $stallManningCount = 0;
-                    $ticketAllocation = '{"2": 4, "11":8 }';
-                } else if($command['stall_category'] === 'Startup Booth' || (int)$row['booth_size'] <= 9 && (int)$row['promocode'] == 'TIESB' || (int)$row['promocode'] == 'TIESNB') {
-                    $stallManningCount = 0;
-                    $ticketAllocation = '{"2": 1, "11":1 }';
-                
-                }
-                
-                else {
-                    $stallManningCount = 0;
-                    $ticketAllocation = '{"2": 1, "11":2 }';
+                // Ensure website starts with https
+                if (!str_starts_with($command['website'], 'http')) {
+                    $command['website'] = 'https://' . $command['website'];
                 }
 
+                // Lookup foreign keys with safe fallback for integer columns
+                $command['sector_id'] = optional(Sector::where('name', $row['sector'])->first())->id;
+                $command['state_id']  = optional(State::where('name', $row['state'])->first())->id;
+                $command['country_id'] = optional(Country::where('name', $row['country'])->first())->id;
 
-                //create a ExhibitionParticipation entry
-                ExhibitionParticipant::updateOrCreate(
+                // Fallback for dangerous config values (e.g., 'Harayana' instead of integer)
+                if (empty($command['state_id']) && !empty($row['state']) && is_numeric($row['state'])) {
+                    $command['state_id'] = (int) $row['state'];
+                }
+                if (empty($command['country_id']) && !empty($row['country']) && is_numeric($row['country'])) {
+                    $command['country_id'] = (int) $row['country'];
+                }
+                if (empty($command['sector_id']) && !empty($row['sector']) && is_numeric($row['sector'])) {
+                    $command['sector_id'] = (int) $row['sector'];
+                }
+
+                // If any are still not integer/null, mark as error
+                if (
+                    (!empty($row['state']) && !is_null($command['state_id']) && !is_int($command['state_id'])) ||
+                    (!empty($row['country']) && !is_null($command['country_id']) && !is_int($command['country_id'])) ||
+                    (!empty($row['sector']) && !is_null($command['sector_id']) && !is_int($command['sector_id']))
+                ) {
+                    throw new \Exception("One or more foreign key lookups failed (company: {$command['company']}, state: {$row['state']}, sector: {$row['sector']}, country: {$row['country']}).");
+                }
+
+                // Random password
+                $command['password_plain'] = substr(str_shuffle('abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'), 0, 8);
+                $command['password_hashed'] = Hash::make($command['password_plain']);
+
+                // Stall category
+                if (str_contains($row['booth_area'], 'Shell')) {
+                    $command['stall_category'] = 'Shell Scheme';
+                } elseif (str_contains($row['booth_area'], 'Raw')) {
+                    $command['stall_category'] = 'Raw Space';
+                } else {
+                    $command['stall_category'] = 'Startup Booth';
+                }
+
+                $command['row'] = $row; // keep raw row for fallback
+
+                /** ---------------------------
+                 * Step 2: Check existing user
+                 * ----------------------------*/
+                $existingApplication = Application::where('company_name', $command['company'])->first();
+
+                if ($existingApplication) {
+                    echo "Company name '{$command['company']}' already registered. Skipping...\n";
+                    DB::rollBack();
+                    continue;
+                }
+
+                $user = User::where('email', $command['email'])->first();
+
+                if ($user) {
+                    echo "User with email {$command['email']} already exists. Skipping...\n";
+                    DB::rollBack();
+                    continue;
+                } else {
+                    /** ---------------------------
+                     * Step 3: Create User
+                     * ----------------------------*/
+                    $user = User::create([
+                        'name' => $command['contact_person'],
+                        'email' => $command['email'],
+                        'password' => $command['password_hashed'],
+                        'simplePass' => $command['password_plain'],
+                        'role' => 'exhibitor',
+                        'phone' => $command['phone'],
+                        'email_verified_at' => now(),
+                    ]);
+                    echo "Created user: {$user->email} with password: {$command['password_plain']}\n";
+                }
+
+                /** ---------------------------
+                 * Step 4: Create Application
+                 * ----------------------------*/
+                $application = Application::updateOrCreate(
+                    ['user_id' => $user->id],
+                    [
+                        'user_id' => $user->id,
+                        'company_name' => $command['company'],
+                        'website' => $command['website'],
+                        'address' => $command['address'],
+                        'city_id' => $row['city'],
+                        'companyYears' => intval($row['company_years']) ?? null,
+                        'certificate' => $row['ci_certf'],
+                        'sector_id' => $command['sector_id'],
+                        'subSector' => $row['subsector'],
+                        'event_id' => 1,
+                        'stall_category' => $command['stall_category'],
+                        'exhibitorType' => $row['promocode'],
+                        'application_id' => $row['tin_no'],
+                        'interested_sqm' => $row['booth_size'],
+                        'allocated_sqm' => $row['booth_size'],
+                        'state_id' => $command['state_id'] ?? null,
+                        'country_id' => $command['country_id'] ?? null,
+                        'headquarters_country_id' => $command['country_id'] ?? null,
+                        'postal_code' => $row['zip'],
+                        'gst_no' => $row['gst_number'],
+                        'pan_no' => $row['pan_number'],
+                        'company_email' => $command['email'],
+                        'gst_compliance' => !empty($row['gst_number']) ? 1 : 0,
+                        'submission_status' => ($row['approval_status'] == 'Approved' || $row['pay_status'] == 'Paid') ? 'approved' : 'pending',
+                        'approved_date' => ($row['approval_status'] == 'Approved' || $row['pay_status'] == 'Paid') ? $row['reg_date'] : null,
+                        'assoc_mem' => $row['user_type'],
+                        'boothDescription' => $row['booth_area'],
+                        'participation_type' => 'Onsite',
+                        'region' => ($command['country_id'] == 101 ? 'India' : 'International'),
+                        'approved_by' => $row['approved_by'],
+                        'tag' => $row['promocode'],
+                    ]);
+                $application->save();
+
+                echo "Created application for user: {$user->email}\n";
+
+                /** ---------------------------
+                 * Step 5: Billing Details
+                 * ----------------------------*/
+                BillingDetail::updateOrCreate(
                     ['application_id' => $application->id],
                     [
-                        'stall_manning_count' => $stallManningCount,
-                        'ticketAllocation' => $ticketAllocation,
+                        'billing_company' => $command['company'],
+                        'contact_name' => $command['contact_person'],
+                        'email' => $command['email'],
+                        'phone' => $command['phone'],
+                        'address' => $command['address'],
+                        'city_id' => $row['city'],
+                        'state_id' => $command['state_id'],
+                        'country_id' => $command['country_id'],
+                        'postal_code' => $row['zip'],
                     ]
                 );
 
+                echo "Created billing details for application ID: {$application->id}\n";
 
+                /** ---------------------------
+                 * Step 6: Event Contact
+                 * ----------------------------*/
+                EventContact::updateOrCreate(
+                    ['application_id' => $application->id],
+                    [
+                        'salutation' => $row['cp_title'],
+                        'first_name' => $row['cp_fname'],
+                        'last_name' => $row['cp_lname'],
+                        'email' => $command['email'],
+                        'contact_number' => $row['cp_mobile'],
+                        'job_title' => $command['designation'],
+                    ]
+                );
 
-                echo "Created payment for application ID: {$application->id}\n";
-                $importSuccess = true;
-                $name = $user->name;
-                $setupProfileUrl = config('app.url');
-                $username = $user->email;
-                $password = $user->simplePass;
-                $company = $command['company'];
-                // Send email with credentials
-                // $email='manish.sharma@interlinks.in';
-                $email = $username;
-                if ($importSuccess) {
-                    // Send email to $command['email'] with credentials
-                   Mail::to($email)
-                       ->bcc('test.interlinks@gmail.com')
-                       ->send(new UserCredentialsMail($name, $setupProfileUrl, $username, $password));
-                    // Mail::to($command['email'])->send(new UserCredentialsMail($user, $command['password_plain'], $company, $setupProfileUrl));
+                echo "Created event contact for application ID: {$application->id}\n";
+
+                /** ---------------------------
+                 * Step 7: Invoice
+                 * ----------------------------*/
+                $invoice = Invoice::updateOrCreate(
+                    ['application_id' => $application->id],
+                    [
+                        'payment_due_date' => date('Y-m-d', strtotime($row['reg_date'] . ' +30 days')),
+                        'amount' => $row['total'],
+                        'currency' => ($row['curr'] == 'Indian' ? 'INR' : 'USD'),
+                        'payment_status' => ($row['pay_status'] == 'Paid' ? 'paid' : 'unpaid'),
+                        'type' => 'Stall Booking',
+                        'rate' => $row['selection_amt'],
+                        'gst' => $row['tax'],
+                        'processing_chargesRate' => $row['processing_charge_per'],
+                        'processing_charges' => $row['processing_charge'],
+                        'total_final_price' => $row['total'],
+                        'amount_paid' => $row['total_amt_received'] ?? 0,
+                        'invoice_no' => $row['tin_no'],
+                        'pin_no' => $row['pin_no'],
+                    ]
+                );
+
+                echo "Created invoice ID: {$invoice->id} for application ID: {$application->id}\n";
+
+                /** ---------------------------
+                 * Step 8: Payment (if paid)
+                 * ----------------------------*/
+                if ($row['pay_status'] == 'Paid') {
+                    Payment::create([
+                        'invoice_id' => $invoice->id,
+                        'order_id' => $row['pg_paymentid'] ?? null,
+                        'payment_method' => 'CCAvenue',
+                        'amount' => $row['total_amt_received'] ?? null,
+                        'amount_paid' => $row['total_amt_received'] ?? null,
+                        'transaction_id' => $row['pg_trackid'] ?? null,
+                        'payment_date' => date('Y-m-d H:i:s', strtotime($row['pg_postdate'])),
+                        'currency' => $invoice->currency,
+                        'status' => 'successful',
+                        'user_id' => $user->id,
+                    ]);
+
+                    // Booth & Ticket allocation as per rules
+                    if ($command['stall_category'] === 'Startup Booth' || (int)$row['booth_size'] <= 9) {
+                        $stallManningCount = 0;
+                        $ticketAllocation = '{"2": 1, "11":2 }';
+                    } elseif ((int)$row['booth_size'] > 9 && (int)$row['booth_size'] <= 18) {
+                        $stallManningCount = 0;
+                        $ticketAllocation = '{"2": 2, "11":4 }';
+                    } elseif ((int)$row['booth_size'] > 18 && (int)$row['booth_size'] <= 36) {
+                        $stallManningCount = 0;
+                        $ticketAllocation = '{"2": 4, "11":8 }';
+                    } else if($command['stall_category'] === 'Startup Booth' || (int)$row['booth_size'] <= 9 && (int)$row['promocode'] == 'TIESB' || (int)$row['promocode'] == 'TIESNB') {
+                        $stallManningCount = 0;
+                        $ticketAllocation = '{"2": 1, "11":1 }';
+                    } else {
+                        $stallManningCount = 0;
+                        $ticketAllocation = '{"2": 1, "11":2 }';
+                    }
+
+                    //create a ExhibitionParticipation entry
+                    ExhibitionParticipant::updateOrCreate(
+                        ['application_id' => $application->id],
+                        [
+                            'stall_manning_count' => $stallManningCount,
+                            'ticketAllocation' => $ticketAllocation,
+                        ]
+                    );
+                    echo "Created payment for application ID: {$application->id}\n";
                 }
+
+                // Everything succeeded, commit
+                DB::commit();
+                $importSuccess = true;
+                $importedCount++;
+
+                // Send user credentials only if all above succeeded
+                if ($importSuccess) {
+                    $name = $user->name;
+                    $setupProfileUrl = config('app.url');
+                    $username = $user->email;
+                    $password = $user->simplePass;
+                    $company = $command['company'];
+                    $email = $username;
+                    try {
+                        Mail::to($email)
+                            ->bcc('test.interlinks@gmail.com')
+                            ->send(new UserCredentialsMail($name, $setupProfileUrl, $username, $password));
+                    } catch (\Throwable $mailEx) {
+                        // Don't fail the import if mail sending fails, just log
+                        $importErrors[] = [
+                            'email' => $command['email'],
+                            'company' => $command['company'],
+                            'message' => 'Imported but mail failed: ' . $mailEx->getMessage()
+                        ];
+                    }
+                }
+
+            } catch (\Throwable $e) {
+                // Rollback transaction for this row and skip, log the error
+                DB::rollBack();
+                $importErrors[] = [
+                    'email' => $row['cp_email'] ?? '',
+                    'company' => $row['exhibitor_name'] ?? '',
+                    'message' => $e->getMessage(),
+                ];
+                echo "Error in import for company '{$row['exhibitor_name']}' (email: {$row['cp_email']}). Error: {$e->getMessage()}\n";
+                continue;
+            }
+        }
+
+        // Optional: Print import summary
+        echo "Imported {$importedCount} users successfully. " . (count($importErrors) ? (count($importErrors)." had errors.") : "") . "\n";
+        if (!empty($importErrors)) {
+            echo "Import Errors:\n";
+            foreach($importErrors as $error) {
+                echo "- [{$error['email']} | {$error['company']}] " . $error['message'] . "\n";
             }
         }
 
