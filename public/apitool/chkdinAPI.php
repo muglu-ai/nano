@@ -48,7 +48,6 @@ function process_pending_registrations() {
 	$pass = "Disl#vhfj#Af#DhW65";
 	$db = "btsblnl265_asd1d_bengaluruite";
 	$link = mysqli_connect($host, $user, $pass, $db);
-	
 	if (!$link) {
 		echo "[" . date('Y-m-d H:i:s') . "] Connection failed: " . mysqli_connect_error() . "\n";
 		return;
