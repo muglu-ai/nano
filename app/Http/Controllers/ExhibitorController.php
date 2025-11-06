@@ -795,9 +795,9 @@ class ExhibitorController extends Controller
 
             'designation' => $attendee->designation ?? $attendee->job_title,
 
-            'registration_date' => $attendee->created_at->format('Y-m-d'),
+            'registration_date' => $attendee->created_at ? date('Y-m-d', strtotime($attendee->created_at)) : null,
 
-            'registration_type' => $attendee['registration_type'] === 'Online' ? 1 : 0,
+            'registration_type' => ($attendee->registration_type ?? null) === 'Online' ? 1 : 0,
 
             'id_card_number' => $attendee->id_card_number ?? $attendee->id_no,
 
