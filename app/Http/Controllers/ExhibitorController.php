@@ -784,7 +784,7 @@ class ExhibitorController extends Controller
 
             'mobile' => $attendee->mobile,
 
-            'qr_code_path' => $attendee->qr_code_path,
+            'qr_code_path' => $attendee->qr_code_path ?? null,
 
 
 
