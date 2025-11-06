@@ -1,5 +1,5 @@
 <?php
-exit;
+// exit;
 set_time_limit(0);
 /**
  * Exhibitor Directory Reminder Email Script
@@ -260,7 +260,7 @@ while ($row = mysqli_fetch_assoc($result)) {
     $plainText = getPlainTextEmail($loginUrl, $email, $loginPassword, $forgotPasswordUrl);
     
     // Email subject
-    $subject = "Action Required: Complete Your Exhibitor Directory Form - Bengaluru Tech Summit";
+    $subject = "Urgent: Update Your Facia Details & Complete Your Exhibitor Directory Form - Bengaluru Tech Summit";
     
     // Determine recipient email (use test email if in test mode)
     $recipientEmail = $testMode ? $testEmail : $email;
