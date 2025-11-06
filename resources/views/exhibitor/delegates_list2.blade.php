@@ -136,6 +136,11 @@
                                     @endif</span>
                             </div>
                             <div class="text-end">
+                                @if($slug == 'Complimentary Delegates')
+                                    <a href="{{ route('exhibitor.export.complimentary') }}" class="btn btn-success me-2">
+                                        <i class="fas fa-download"></i> Export
+                                    </a>
+                                @endif
                                 <button type="button" class="btn btn-primary" onclick="openInviteModal('{{ $slug }}')">Invite</button>
                                 <button type="button" class="btn btn-secondary" onclick="openAddModal('{{ $slug }}')">Add</button>
                             </div>

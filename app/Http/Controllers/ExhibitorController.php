@@ -23,6 +23,7 @@ use App\Mail\InauguralMail;
 use App\Services\EmailService;
 use App\Models\Ticket;
 use NunoMaduro\Collision\Adapters\Phpunit\ConfigureIO;
+use Maatwebsite\Excel\Facades\Excel;
 
 class ExhibitorController extends Controller
 {
@@ -1630,6 +1631,71 @@ class ExhibitorController extends Controller
             Log::error('Error in registrationData: ' . $e->getMessage() . ' | Trace: ' . $e->getTraceAsString());
             return redirect('/dashboard')->with('error', 'An error occurred while loading registration data.');
         }
+    }
+
+    /**
+     * Export complimentary delegates to Excel
+     */
+    public function exportComplimentary(Request $request)
+    {
+        $this->__Construct();
+        $count = $this->checkCount();
+        $exhibitionParticipantId = $count['exhibition_participant_id'];
+
+        // Fetch complimentary delegates for this exhibitor
+        $complimentaryDelegates = DB::table('complimentary_delegates')
+            ->where('exhibition_participant_id', $exhibitionParticipantId)
+            ->whereNotNull('first_name')
+            ->where('first_name', '!=', '')
+            ->orderBy('first_name', 'asc')
+            ->get();
+
+        $data = collect();
+
+        foreach ($complimentaryDelegates as $row) {
+            $data->push([
+                'ID' => $row->unique_id ?? 'N/A',
+                'Name' => trim(($row->first_name ?? '') . ' ' . ($row->middle_name ?? '') . ' ' . ($row->last_name ?? '')),
+                'Email' => $row->email ?? 'N/A',
+                'Mobile' => $row->mobile ?? 'N/A',
+                'Job Title' => $row->job_title ?? 'N/A',
+                'Organisation' => $row->organisation_name ?? 'N/A',
+                'Ticket Type' => $row->ticketType ?? 'N/A',
+                'PIN No' => $row->pinNo ?? 'N/A',
+                'Registration Date' => $row->created_at ? date('Y-m-d', strtotime($row->created_at)) : 'N/A',
+            ]);
+        }
+
+        $filename = 'complimentary_delegates_' . date('Ymd_His') . '.xlsx';
+
+        return Excel::download(new class($data) implements \Maatwebsite\Excel\Concerns\FromCollection, \Maatwebsite\Excel\Concerns\WithHeadings {
+            protected $data;
+
+            public function __construct($data)
+            {
+                $this->data = $data;
+            }
+
+            public function collection()
+            {
+                return $this->data;
+            }
+
+            public function headings(): array
+            {
+                return [
+                    'ID',
+                    'Name',
+                    'Email',
+                    'Mobile',
+                    'Job Title',
+                    'Organisation',
+                    'Ticket Type',
+                    'PIN No',
+                    'Registration Date',
+                ];
+            }
+        }, $filename);
     }
 
     
