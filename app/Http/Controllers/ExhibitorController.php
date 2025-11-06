@@ -803,12 +803,7 @@ class ExhibitorController extends Controller
 
             'id_card_type' => $attendee->id_card_type ?? $attendee->id_type,
 
-            'dates' => is_array($attendee->event_days)
-
-                ? implode(', ', $attendee->event_days)
-
-                : implode(', ', json_decode($attendee->event_days, true) ?? []),
-
+            'dates' => null, 
             'type' => $attendee->ticketType,
 
         ];
