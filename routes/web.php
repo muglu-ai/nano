@@ -86,6 +86,7 @@ Route::get('send-participation-email', [ExhibitorController::class, 'attendeeEma
 //get the complimentary delegates list
 Route::get('/exhibitor/list/{type}', [ExhibitorController::class, 'list'])->name('exhibition.list')->middleware(CheckUser::class); //invite delegates to the event
 Route::get('/exhibitor/list2/{type}', [ExhibitorController::class, 'list2'])->name('exhibition2.list')->middleware(CheckUser::class); //invite delegates to the event
+Route::get('/exhibitor/export/complimentary', [ExhibitorController::class, 'exportComplimentary'])->name('exhibitor.export.complimentary')->middleware(CheckUser::class); //export complimentary delegates
 Route::post('/invite', [ExhibitorController::class, 'invite'])->name('exhibition.invite')->middleware(SharedMiddleware::class);
 Route::post('/accept-coex-terms', [ExhibitorController::class, 'acceptTerms'])->name('coex.acceptTerms')->middleware(CheckUser::class);
 //get the invited delegates form the exhibitor controller
