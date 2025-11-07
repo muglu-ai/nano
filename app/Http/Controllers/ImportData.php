@@ -284,8 +284,14 @@ class ImportData extends Controller
                         'user_id' => $user->id,
                     ]);
 
+
+
                     // Booth & Ticket allocation as per rules
-                    if ($command['stall_category'] === 'Startup Booth' || (int)$row['booth_size'] <= 9) {
+                    // promocode beyondBengaluru should get 1 stall Manning and 1 complimentary delegate as id 3 and 11 respectively
+                    if ((int)$row['promocode'] == 'beyondBengaluru') {
+                        $stallManningCount = 1;
+                        $ticketAllocation = '{"3": 1, "11":1 }';
+                    } else if ($command['stall_category'] === 'Startup Booth' || (int)$row['booth_size'] <= 9) {
                         $stallManningCount = 0;
                         $ticketAllocation = '{"2": 1, "11":2 }';
                     } elseif ((int)$row['booth_size'] > 9 && (int)$row['booth_size'] <= 18) {
