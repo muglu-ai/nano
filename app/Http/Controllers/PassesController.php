@@ -305,25 +305,20 @@ class PassesController extends Controller
         $data = collect();
 
         // Stall Manning
-        $stallManning = StallManning::select('id', 'exhibition_participant_id', 'unique_id', 'first_name', 'email', 'mobile', 'job_title', 'organisation_name', 'created_at', 'id_type', 'id_no')
+        $stallManning = ComplimentaryDelegate::select('id', 'exhibition_participant_id', 'unique_id', 'first_name', 'email', 'mobile', 'job_title', 'organisation_name', 'created_at', 'id_type', 'id_no', 'ticketType')
             ->whereNotNull('first_name')
             ->where('first_name', '!=', '')
-            ->with(['exhibitionParticipant.application', 'exhibitionParticipant.coExhibitor'])
             ->get();
 
         foreach ($stallManning as $row) {
-            $organisation = $row->organisation_name
-                ?? ($row->exhibitionParticipant->application->company_name ?? null)
-                ?? ($row->exhibitionParticipant->coExhibitor->co_exhibitor_name ?? null);
-
             $data->push([
-                'Type' => 'Exhibitor Stall Manning',
+                'Type' => $row->ticketType,
                 'ID' => $row->unique_id,
                 'Name' => $row->first_name,
                 'Email' => $row->email,
                 'Mobile' => ltrim($row->mobile, '+'),
                 'Job Title' => $row->job_title,
-                'Organisation' => $organisation,
+                'Organisation' => $row->organisation_name,
                 // 'ID Type' => $row->id_type ?? 'N/A',
                 // 'ID Number' => $row->id_no ?? 'N/A',/
             ]);

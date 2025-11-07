@@ -13,7 +13,7 @@ mysqli_set_charset($link2, 'utf8mb4');
 
 // select all the business visitor from it_visitor_pass where event_year = 2024 and apiSent = 0
 
-$sql = "SELECT * FROM it_visitor_pass WHERE event_year = 2025 AND apiSent = 0 limit 1";
+$sql = "SELECT * FROM it_visitor_pass WHERE event_year = 2025 AND apiSent = 0";
 
 //curate the data for the api to be send to 
 
@@ -37,16 +37,29 @@ while ($row = mysqli_fetch_assoc($result)) {
     $fone = $row['fone'];
 
     // get the country code and phone number from the fone
-    $fone_arr = explode('-', $fone);
-    $country_code = $fone_arr[0];
-    $phone = $fone_arr[1];
-
-    // fallback to the mobile if fone is not present
-    if (empty($fone)) {
+    $country_code = '91'; // default country code
+    $phone = '';
+    
+    if (!empty($fone)) {
+        $fone_arr = explode('-', $fone);
+        if (isset($fone_arr[0]) && isset($fone_arr[1])) {
+            $country_code = $fone_arr[0];
+            $phone = $fone_arr[1];
+        } else {
+            // If no dash found, use the whole fone as phone
+            $phone = $fone;
+        }
+    } elseif (!empty($row['mobile'])) {
+        // fallback to the mobile if fone is not present
         $mobile = $row['mobile'];
         $fone_arr = explode('-', $mobile);
-        $country_code = $fone_arr[0];
-        $phone = $fone_arr[1];
+        if (isset($fone_arr[0]) && isset($fone_arr[1])) {
+            $country_code = $fone_arr[0];
+            $phone = $fone_arr[1];
+        } else {
+            // If no dash found, use the whole mobile as phone
+            $phone = $mobile;
+        }
     }
 
     // prepare the data for the api to be send to
@@ -65,18 +78,37 @@ while ($row = mysqli_fetch_assoc($result)) {
     $data['qsn_936'] = '';
     $data['qsn_366'] = 'BUSINESS VISITOR-' . $row['srno'];
 
-    echo json_encode($data);
-    exit;
+   echo json_encode($data);
+    //exit;
 
     // send the data to the api
-    $response = sendchkdinapi($data);
+    $response_raw = sendchkdinapi($data);
+    // Decode the JSON response
+    $response = json_decode($response_raw, true);
+    
+    // Check if decoding was successful
+    if ($response === null || !is_array($response)) {
+        echo "Error: Failed to decode API response. Raw response: " . $response_raw;
+        exit;
+    }
+    
     // echo "Response: ";
     // print_r($response);
     // echo "<br><br>";
 
-    // update the apiSent to 1
-    $sql = "UPDATE it_visitor_pass SET apiSent = 1 WHERE id = " . $row['srno'];
+    // update apiSent to 1 only when the response is success
+    if (isset($response['message']) && $response['message'] === "Success") {
+        $sql = "UPDATE it_visitor_pass SET apiSent = 1 WHERE srno = " . $row['srno'];
+        mysqli_query($link2, $sql);
+    }
+
+     
+    $sql = "INSERT INTO it_2025_badge_api_log (name, email, mobile, category_id, status, response, tin_no, data, email_exist) VALUES 
+    ('" . $data['name'] . "', '" . $data['email'] . "', '" . $data['mobile'] . "', '" . $data['category_id'] . "', 
+    '" . ($response['message'] ?? 'Unknown') . "', '" . json_encode($response) . "', '" . $data['qsn_366'] . "', '" . json_encode($data) . "', '" . ($response['guest_id'] ?? 0) . "')";
     mysqli_query($link2, $sql);
+
+    // exit;
 
 
 }
