@@ -22,6 +22,7 @@ use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Support\Collection;
 use App\Models\AttendeeLog;
 use App\Models\Attendee;
+use App\Models\Ticket;
 
 
 class PassesController extends Controller
@@ -478,23 +479,34 @@ class PassesController extends Controller
         try {
 
             // Query for approved applications with passes allocation
+            // Include applications with exhibitionParticipant that have passes allocated
+            // OR applications without exhibitionParticipant (so admin can add/update passes)
             $query = Application::with(['exhibitionParticipant', 'user', 'billingDetail'])
                 ->where('submission_status', 'approved')
                 ->where(function ($query) {
                     $query->where('allocated_sqm', '>', 0)
                         ->orWhere('allocated_sqm', '=', 'Startup Booth')
-                        ->orWhere('allocated_sqm', '=', 'Booth / POD')
-                    ;
+                        ->orWhere('allocated_sqm', '=', 'Booth / POD');
                 })
-                ->whereHas('exhibitionParticipant', function ($ep) {
-                    $ep->where(function ($inner) {
-                        $inner->where('stall_manning_count', '>', 0)
-                            ->orWhere('complimentary_delegate_count', '>', 0)
-                            ->orWhereNotNull('ticketAllocation')
-                            ->where('ticketAllocation', '!=', '')
-                        ;
-                    });
+                ->where(function ($query) {
+                    // Applications that have exhibitionParticipant with passes allocated
+                    $query->whereHas('exhibitionParticipant', function ($ep) {
+                        $ep->where(function ($inner) {
+                            $inner->where(function ($count) {
+                                $count->where('stall_manning_count', '>', 0)
+                                    ->orWhere('complimentary_delegate_count', '>', 0);
+                            })
+                            ->orWhere(function ($ticket) {
+                                $ticket->whereNotNull('ticketAllocation')
+                                    ->where('ticketAllocation', '!=', '')
+                                    ->whereRaw("TRIM(ticketAllocation) != ''");
+                            });
+                        });
+                    })
+                    // OR applications that don't have exhibitionParticipant (so admin can add passes)
+                    ->orWhereDoesntHave('exhibitionParticipant');
                 });
+                // ->limit(50);
 
             // Apply search filter
             if ($search) {
@@ -538,7 +550,7 @@ class PassesController extends Controller
             
             // Calculate consumed passes for each application
             foreach ($applications as $app) {
-                if ($app->exhibitionParticipant) {
+                if ($app->exhibitionParticipant && $app->exhibitionParticipant->id) {
                     // Count consumed StallManning passes
                     $app->consumedStallManning = DB::table('stall_manning')
                         ->where('exhibition_participant_id', $app->exhibitionParticipant->id)
@@ -555,7 +567,8 @@ class PassesController extends Controller
                     
                     // Calculate consumed tickets by type
                     $consumedTicketsArray = [];
-                    $ticketTypes = ['VIP Pass', 'Premium', 'Exhibitor', 'Service Pass', 'Business Visitor Pass'];
+                    //select all the ticket types from the tickets table
+                    $ticketTypes = Ticket::select('ticket_type')->distinct()->pluck('ticket_type');
                     foreach ($ticketTypes as $ticketType) {
                         $count = DB::table('complimentary_delegates')
                             ->where('exhibition_participant_id', $app->exhibitionParticipant->id)
@@ -566,6 +579,11 @@ class PassesController extends Controller
                         $consumedTicketsArray[$ticketType] = $count;
                     }
                     $app->consumedTickets = $consumedTicketsArray;
+                } else {
+                    // Set default values when there's no exhibitionParticipant
+                    $app->consumedStallManning = 0;
+                    $app->consumedComplimentary = 0;
+                    $app->consumedTickets = [];
                 }
             }
 
@@ -574,20 +592,36 @@ class PassesController extends Controller
             // Calculate totals
             $applicationsData = $query->get();
             $totalTicketAllocations = 0;
+            $totalStallManning = 0;
+            $totalComplimentaryDelegates = 0;
             
             foreach ($applicationsData as $app) {
-                if ($app->exhibitionParticipant) {
-                    $tickets = $app->exhibitionParticipant->tickets();
-
-                    //dd($tickets);
-                    $totalTicketAllocations += collect($tickets)->sum('count');
+                if ($app->exhibitionParticipant && $app->exhibitionParticipant->id) {
+                    // Calculate ticket allocations
+                    try {
+                        $tickets = $app->exhibitionParticipant->tickets();
+                        if ($tickets) {
+                            $totalTicketAllocations += collect($tickets)->sum('count');
+                        }
+                    } catch (\Exception $e) {
+                        // Handle case where tickets() might fail
+                        Log::warning('Error calculating tickets for application ' . $app->id . ': ' . $e->getMessage());
+                    }
+                    
+                    // Sum stall manning count (handle null/empty)
+                    $stallManningCount = $app->exhibitionParticipant->stall_manning_count ?? 0;
+                    $totalStallManning += is_numeric($stallManningCount) ? (int)$stallManningCount : 0;
+                    
+                    // Sum complimentary delegate count (handle null/empty)
+                    $complimentaryCount = $app->exhibitionParticipant->complimentary_delegate_count ?? 0;
+                    $totalComplimentaryDelegates += is_numeric($complimentaryCount) ? (int)$complimentaryCount : 0;
                 }
             }
             
             $totalStats = [
                 'total_exhibitors' => $applicationsData->count(),
-                'total_stall_manning' => $applicationsData->sum('exhibitionParticipant.stall_manning_count'),
-                'total_complimentary_delegates' => $applicationsData->sum('exhibitionParticipant.complimentary_delegate_count'),
+                'total_stall_manning' => $totalStallManning,
+                'total_complimentary_delegates' => $totalComplimentaryDelegates,
                 'total_ticket_allocations' => $totalTicketAllocations,
             ];
             /*
@@ -661,29 +695,32 @@ class PassesController extends Controller
             $complimentaryCount = array_sum($ticketAllocations);
 
             // Check if exhibitionParticipant exists, if not create it
-            if (!$application->exhibitionParticipant) {
-                $exhibitionParticipant = new ExhibitionParticipant();
-                $exhibitionParticipant->application_id = $application->id;
-                $exhibitionParticipant->stall_manning_count = $request->stall_manning_count;
-                $exhibitionParticipant->complimentary_delegate_count = $complimentaryCount;
-                $exhibitionParticipant->ticketAllocation = json_encode($ticketAllocations);
-                $exhibitionParticipant->save();
-            } else {
-                // Update existing exhibitionParticipant
-                $application->exhibitionParticipant->stall_manning_count = $request->stall_manning_count;
-                $application->exhibitionParticipant->complimentary_delegate_count = $complimentaryCount;
-                $application->exhibitionParticipant->ticketAllocation = json_encode($ticketAllocations);
-                $application->exhibitionParticipant->save();
-            }
+            // Use updateOrCreate to handle both create and update in one call
+            $wasRecentlyCreated = !ExhibitionParticipant::where('application_id', $application->id)->exists();
+            
+            $exhibitionParticipant = ExhibitionParticipant::updateOrCreate(
+                ['application_id' => $application->id],
+                [
+                    'stall_manning_count' => $request->stall_manning_count ?? 0,
+                    'complimentary_delegate_count' => $complimentaryCount ?? 0,
+                    'ticketAllocation' => !empty($ticketAllocations) ? json_encode($ticketAllocations) : null,
+                ]
+            );
+
+            // Reload the relationship to ensure it's fresh
+            $application->load('exhibitionParticipant');
 
             // Calculate total ticket allocations
             $totalTicketAllocations = array_sum($ticketAllocations);
             $totalPasses = $request->stall_manning_count + $complimentaryCount + $totalTicketAllocations;
 
-            // Log the update
-            \Log::info('Passes allocation updated', [
+            // Log the update or creation
+            $action = $wasRecentlyCreated ? 'created' : 'updated';
+            \Log::info('Passes allocation ' . $action, [
                 'application_id' => $application->id,
                 'company_name' => $application->company_name,
+                'exhibition_participant_id' => $exhibitionParticipant->id,
+                'action' => $action,
                 'stall_manning_count' => $request->stall_manning_count,
                 'complimentary_delegate_count' => $complimentaryCount,
                 'ticket_allocations' => $ticketAllocations,
@@ -693,15 +730,21 @@ class PassesController extends Controller
                 'updated_at' => now()
             ]);
 
+            $message = $wasRecentlyCreated 
+                ? 'Passes allocation created successfully for ' . $application->company_name
+                : 'Passes allocation updated successfully for ' . $application->company_name;
+
             return response()->json([
                 'success' => true,
-                'message' => 'Passes allocation updated successfully for ' . $application->company_name,
+                'message' => $message,
                 'data' => [
+                    'exhibition_participant_id' => $exhibitionParticipant->id,
                     'stall_manning_count' => $request->stall_manning_count,
                     'complimentary_delegate_count' => $complimentaryCount,
                     'ticket_allocations' => $ticketAllocations,
                     'total_ticket_allocations' => $totalTicketAllocations,
-                    'total_passes' => $totalPasses
+                    'total_passes' => $totalPasses,
+                    'was_created' => $wasRecentlyCreated
                 ]
             ]);
         } catch (\Exception $e) {
