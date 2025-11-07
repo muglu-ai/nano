@@ -81,7 +81,7 @@ function renderEmailTemplate($loginUrl, $loginEmail, $loginPassword, $forgotUrl)
                 <tr>
                   <td style="padding:12px;border:1px solid #e6e6e9;border-radius:4px;background:#fafafa;">
                     <p style="margin:0 0 8px 0;font-size:14px;color:#333;"><strong>Deadline to update facia details:</strong></p>
-                    <p style="margin:0;font-size:16px;color:#d6336c;font-weight:700;">7 November 2025</p>
+                    <p style="margin:0;font-size:16px;color:#d6336c;font-weight:700;">8 November 2025</p>
                   </td>
                 </tr>
               </table>
