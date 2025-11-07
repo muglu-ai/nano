@@ -177,6 +177,7 @@ function matchPassesCategory($pass_category, $days = null ){
 		'Standard Delegate Pass' => array('category_id' => 3544, 'name' => 'Standard Pass'),
 		'SPEAKER' => array('category_id' => 3525, 'name' => 'SPEAKER'),
 		'SESSION ATTENDEE' => array('category_id' => 3561, 'name' => 'SESSION ATTENDEE'),
+		'INVITEE' => array('category_id' => 3560, 'name' => 'INVITEE'),
 		'VIP GIA PARTNER' => array('category_id' => 3532, 'name' => 'VIP GIA PARTNER'),
 		'GIA PARTNER' => array('category_id' => 3533, 'name' => 'GIA PARTNER'),
 	);
@@ -369,6 +370,35 @@ function matchPassesCategory($pass_category, $days = null ){
 		
 		return array(
 			'category_id' => 3561,
+			'name' => $name,
+			'event_dates' => $dates
+		);
+	}
+
+	// INVITEE special handling (respects sessionDay parameter)
+	if (strcasecmp($pass_category, 'INVITEE') === 0) {
+		$key = $normalize_days_key($days);
+		$dates = $get_event_dates($key);
+		
+		// Determine printable name based on day(s)
+		$name = 'INVITEE';
+		if ($key === '1') {
+			$name = 'INVITEE Day 1';
+		} elseif ($key === '2') {
+			$name = 'INVITEE Day 2';
+		} elseif ($key === '3') {
+			$name = 'INVITEE Day 3';
+		} elseif ($key === '1&2') {
+			$name = 'INVITEE Day 1 & 2';
+		} elseif ($key === '1&3') {
+			$name = 'INVITEE Day 1 & 3';
+		} elseif ($key === '2&3') {
+			$name = 'INVITEE Day 2 & 3';
+		}
+		// For '1&2&3' or all days, keep default name 'INVITEE'
+		
+		return array(
+			'category_id' => 3560,
 			'name' => $name,
 			'event_dates' => $dates
 		);
