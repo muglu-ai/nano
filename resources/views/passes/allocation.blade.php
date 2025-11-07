@@ -559,7 +559,6 @@
                                                     $consumedTickets = $application->consumedTickets ?? [];
                                                     $consumedStallManning = $application->consumedStallManning ?? 0;
                                                     $consumedComplimentary = $application->consumedComplimentary ?? 0;
-                                                    $ticketTypes = ['VIP Pass', 'Premium', 'Exhibitor', 'Service Pass', 'Business Visitor Pass'];
                                                     $hasConsumed = $consumedStallManning > 0 || $consumedComplimentary > 0 || array_sum($consumedTickets) > 0;
                                                 @endphp
                                                 @if($hasConsumed)
@@ -567,10 +566,10 @@
                                                         {{-- <div class="mb-1">
                                                             <span class="badge bg-danger me-1">Exhibitor: {{ $consumedStallManning }}</span>
                                                         </div> --}}
-                                                        @foreach($ticketTypes as $ticketType)
-                                                            @if(isset($consumedTickets[$ticketType]) && $consumedTickets[$ticketType] > 0)
+                                                        @foreach($consumedTickets as $ticketType => $count)
+                                                            @if($count > 0)
                                                                 <div class="mb-1">
-                                                                    <span class="badge bg-warning me-1">{{ $ticketType }}: {{ $consumedTickets[$ticketType] }}</span>
+                                                                    <span class="badge bg-warning me-1">{{ $ticketType }}: {{ $count }}</span>
                                                                 </div>
                                                             @endif
                                                         @endforeach
