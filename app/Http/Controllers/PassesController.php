@@ -16,6 +16,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\SponsorInvoiceMail;
+use App\Mail\InviteMail;
 use App\Models\ExhibitionParticipant;
 use App\Models\ComplimentaryDelegate;
 use Maatwebsite\Excel\Facades\Excel;
@@ -863,6 +864,114 @@ class PassesController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'An error occurred while auto-allocating passes. Please try again.'
+            ], 500);
+        }
+    }
+
+    /**
+     * Resend invite emails to complimentary delegates who haven't registered yet
+     * (first_name is null but token is not null)
+     */
+    public function resendInviteEmails(Request $request)
+    {
+        try {
+            // Find all complimentary delegates who have been invited but haven't registered
+            $pendingInvites = DB::table('complimentary_delegates')
+                ->whereNull('first_name')
+                ->whereNotNull('token')
+                ->where('token', '!=', '')
+                ->get();
+
+            if ($pendingInvites->isEmpty()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'No pending invites found to resend.',
+                    'count' => 0
+                ]);
+            }
+
+            $sentCount = 0;
+            $failedCount = 0;
+            $errors = [];
+
+            foreach ($pendingInvites as $delegate) {
+                try {
+                    // Get the company name from the application
+                    $companyName = Application::whereHas('exhibitionParticipant', function ($query) use ($delegate) {
+                        $query->where('id', $delegate->exhibition_participant_id);
+                    })->value('company_name') ?? '';
+
+                    // Determine delegate type based on ticketType or default to 'delegate'
+                    $delegateType = $delegate->ticketType ?? 'delegate';
+
+                    //render the email view
+                    //can we render the email view
+
+                    
+                    // Render the email view with the required variables to preview or generate the HTML (optional - for logging/debug/testing)
+                    // $emailView = view('emails.invitee', [
+                    //     'companyName' => $companyName,
+                    //     'delegateType' => $delegateType,
+                    //     'token' => $delegate->token,
+                    //     'email' => $delegate->email,
+                    // ])->render();
+
+                    // echo $emailView;
+
+                    // exit;
+
+                    // Optionally, you could log or inspect $emailView here for debugging
+                    // Log::info('Rendered invite email view', ['email' => $delegate->email, 'view' => $emailView]);
+
+
+                    // Send the invite email
+                    Mail::to($delegate->email)
+                    ->bcc('test.interlinks@gmail.com')
+                    ->send(new InviteMail($companyName, $delegateType, $delegate->token));
+                    
+                    $sentCount++;
+
+                    // Log the resend
+                    Log::info('Resent invite email to complimentary delegate', [
+                        'email' => $delegate->email,
+                        'exhibition_participant_id' => $delegate->exhibition_participant_id,
+                        'token' => $delegate->token,
+                        'sent_by' => auth()->id()
+                    ]);
+
+                } catch (\Exception $e) {
+                    $failedCount++;
+                    $errors[] = [
+                        'email' => $delegate->email,
+                        'error' => $e->getMessage()
+                    ];
+
+                    Log::error('Failed to resend invite email', [
+                        'email' => $delegate->email,
+                        'error' => $e->getMessage(),
+                        'trace' => $e->getTraceAsString()
+                    ]);
+                }
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => "Invite emails processed. Sent: {$sentCount}, Failed: {$failedCount}",
+                'sent_count' => $sentCount,
+                'failed_count' => $failedCount,
+                'total_pending' => $pendingInvites->count(),
+                'errors' => $errors
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Error in resendInviteEmails', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'An error occurred while resending invite emails: ' . $e->getMessage()
             ], 500);
         }
     }

@@ -469,6 +469,7 @@ Route::get('/reload-captcha', function () {
 Route::get('/passes-allocation', [PassesController::class, 'passesAllocation'])->name('passes.allocation')->middleware(Auth::class);
 Route::post('/update-passes-allocation', [PassesController::class, 'updatePassesAllocation'])->name('passes.update-allocation')->middleware(Auth::class);
 Route::post('/auto-allocate-passes', [PassesController::class, 'autoAllocatePasses'])->name('passes.auto-allocate')->middleware(Auth::class);
+Route::get('/resend-invite-emails', [PassesController::class, 'resendInviteEmails'])->name('passes.resend-invites')->middleware(Auth::class);
 
 
 Route::get('exhibitor/combine', [PassesController::class, 'CombinePasses'])->name('admin.passes.combine')->middleware(Auth::class);
