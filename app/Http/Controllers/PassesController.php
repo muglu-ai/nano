@@ -510,17 +510,34 @@ class PassesController extends Controller
 
             // Apply search filter
             if ($search) {
-                $query->where(function ($q) use ($search) {
-                    $q->where('company_name', 'like', "%{$search}%")
-                        ->orWhere('application_id', 'like', "%{$search}%")
-                        ->orWhereHas('user', function ($userQ) use ($search) {
-                            $userQ->where('name', 'like', "%{$search}%")
-                                ->orWhere('email', 'like', "%{$search}%");
-                        })
-                        ->orWhereHas('billingDetail', function ($billingQ) use ($search) {
-                            $billingQ->where('billing_company', 'like', "%{$search}%");
-                        });
-                });
+                $searchTerm = trim($search);
+                if (!empty($searchTerm)) {
+                    $query->where(function ($q) use ($searchTerm) {
+                        // Search in application fields directly (these will always work)
+                        $q->where('company_name', 'like', "%{$searchTerm}%")
+                            ->orWhere('application_id', 'like', "%{$searchTerm}%")
+                            ->orWhere('stall_category', 'like', "%{$searchTerm}%")
+                            ->orWhere('company_email', 'like', "%{$searchTerm}%")
+                            // Search in user relationship (if relationship exists)
+                            ->orWhereHas('user', function ($userQ) use ($searchTerm) {
+                                $userQ->where('name', 'like', "%{$searchTerm}%")
+                                    ->orWhere('email', 'like', "%{$searchTerm}%");
+                            })
+                            // Search in billing detail relationship (if relationship exists)
+                            ->orWhereHas('billingDetail', function ($billingQ) use ($searchTerm) {
+                                $billingQ->where('billing_company', 'like', "%{$searchTerm}%");
+                            })
+                            // Search numeric values in exhibition participant (if relationship exists and term is numeric)
+                            ->orWhere(function ($numQ) use ($searchTerm) {
+                                if (is_numeric($searchTerm)) {
+                                    $numQ->whereHas('exhibitionParticipant', function ($epQ) use ($searchTerm) {
+                                        $epQ->where('stall_manning_count', $searchTerm)
+                                            ->orWhere('complimentary_delegate_count', $searchTerm);
+                                    });
+                                }
+                            });
+                    });
+                }
             }
 
             // Validate sort order
