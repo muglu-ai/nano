@@ -513,29 +513,10 @@ class PassesController extends Controller
                 $searchTerm = trim($search);
                 if (!empty($searchTerm)) {
                     $query->where(function ($q) use ($searchTerm) {
-                        // Search in application fields directly (these will always work)
                         $q->where('company_name', 'like', "%{$searchTerm}%")
-                            ->orWhere('application_id', 'like', "%{$searchTerm}%")
-                            ->orWhere('stall_category', 'like', "%{$searchTerm}%")
-                            ->orWhere('company_email', 'like', "%{$searchTerm}%")
-                            // Search in user relationship (if relationship exists)
-                            ->orWhereHas('user', function ($userQ) use ($searchTerm) {
-                                $userQ->where('name', 'like', "%{$searchTerm}%")
-                                    ->orWhere('email', 'like', "%{$searchTerm}%");
-                            })
-                            // Search in billing detail relationship (if relationship exists)
-                            ->orWhereHas('billingDetail', function ($billingQ) use ($searchTerm) {
-                                $billingQ->where('billing_company', 'like', "%{$searchTerm}%");
-                            })
-                            // Search numeric values in exhibition participant (if relationship exists and term is numeric)
-                            ->orWhere(function ($numQ) use ($searchTerm) {
-                                if (is_numeric($searchTerm)) {
-                                    $numQ->whereHas('exhibitionParticipant', function ($epQ) use ($searchTerm) {
-                                        $epQ->where('stall_manning_count', $searchTerm)
-                                            ->orWhere('complimentary_delegate_count', $searchTerm);
-                                    });
-                                }
-                            });
+                          ->orWhere('application_id', 'like', "%{$searchTerm}%")
+                          ->orWhere('stall_category', 'like', "%{$searchTerm}%")
+                          ->orWhere('company_email', 'like', "%{$searchTerm}%");
                     });
                 }
             }
