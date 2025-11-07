@@ -60,6 +60,7 @@ use Illuminate\Support\Facades\Route;
 use Mews\Captcha\Facades\Captcha;
 use App\Http\Controllers\EnquiryController;
 use App\Http\Controllers\EmailPreviewController;
+use App\Http\Controllers\CompanyLookupController;
 
 Route::get('send-exhibitor-chkdin2', [AdminController::  class, 'sendAllData'])->name('send.exhibitor.chkdin')->middleware(Auth::class);
 Route::get('get-users', [AdminController::class, 'getUsers'])->name('getUsers')->middleware(Auth::class);
@@ -460,7 +461,21 @@ Route::get('/reload-captcha', function () {
     return response()->json(['captcha' => captcha_img()]);
 })->name('captcha.reload');
 
-
+Route::get('companies/{letter}', [CompanyLookupController::class, 'index']);
+// CORS preflight for companies endpoint
+Route::options('companies/{letter}', function () {
+    $origin = request()->headers->get('Origin');
+    $allowed = in_array($origin, [
+        'https://bengalurutechsummit.com',
+        'https://www.bengalurutechsummit.com',
+    ]) ? $origin : '';
+    return response('', 200)
+        ->header('Access-Control-Allow-Origin', $allowed)
+        ->header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
+        ->header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With')
+        ->header('Access-Control-Allow-Credentials', 'true')
+        ->header('Access-Control-Max-Age', '86400');
+})->middleware('companies.cors');
 
 
 /*
