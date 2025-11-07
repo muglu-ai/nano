@@ -482,11 +482,17 @@ class PassesController extends Controller
             // Include applications with exhibitionParticipant that have passes allocated
             // OR applications without exhibitionParticipant (so admin can add/update passes)
             $query = Application::with(['exhibitionParticipant', 'user', 'billingDetail'])
-                ->where('submission_status', 'approved')
+                // ->where('submission_status', 'approved')
                 ->where(function ($query) {
                     $query->where('allocated_sqm', '>', 0)
                         ->orWhere('allocated_sqm', '=', 'Startup Booth')
-                        ->orWhere('allocated_sqm', '=', 'Booth / POD');
+                        ->orWhere('allocated_sqm', '=', 'Booth / POD')
+                        ->orWhere('application_type', '=', 'exhibitor')
+                        ->orWhere('application_type', '=', 'pavilion')
+                        ->orWhere('application_type', '=', 'sponsor')
+                        //sponsor+exhibitor
+                        ->orWhere('application_type', '=', 'sponsor+exhibitor')
+                        ;
                 })
                 ->where(function ($query) {
                     // Applications that have exhibitionParticipant with passes allocated
@@ -518,6 +524,9 @@ class PassesController extends Controller
                           ->orWhere('stall_category', 'like', "%{$searchTerm}%")
                           ->orWhere('company_email', 'like', "%{$searchTerm}%");
                     });
+
+                    // dd($query->toSql());
+                    // dd($query->get());
                 }
             }
 
