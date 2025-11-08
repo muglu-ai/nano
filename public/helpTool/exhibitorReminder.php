@@ -66,22 +66,18 @@ function renderEmailTemplate($loginUrl, $loginEmail, $loginPassword, $forgotUrl)
           <tr>
             <td style="padding:24px;">
               <p style="margin:0 0 14px 0;font-size:15px;color:#333333;line-height:1.5;">
-                Dear Participant,
-              </p>
-
-              <p style="margin:0 0 14px 0;font-size:15px;color:#333333;line-height:1.5;">
-                Greetings from the Bengaluru Tech Summit team!
+                Dear Participants,
               </p>
 
               <p style="margin:0 0 18px 0;font-size:15px;color:#333333;line-height:1.5;">
-                Thank you for registering as an exhibitor. We previously sent your exhibitor portal login credentials to your registered email address. Our records show that you have not yet completed the exhibitor directory form or updated your <strong>facia details</strong>.
+                Despite repeated emails and follow-ups, we are yet to receive your exhibitor and fascia details. We request you to kindly share the required information by <strong>November 10th, 6:00 PM</strong> to ensure smooth coordination and timely processing.
               </p>
 
               <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="border-collapse:collapse;margin:18px 0;">
                 <tr>
                   <td style="padding:12px;border:1px solid #e6e6e9;border-radius:4px;background:#fafafa;">
-                    <p style="margin:0 0 8px 0;font-size:14px;color:#333;"><strong>Deadline to update facia details:</strong></p>
-                    <p style="margin:0;font-size:16px;color:#d6336c;font-weight:700;">8 November 2025</p>
+                    <p style="margin:0 0 8px 0;font-size:14px;color:#333;"><strong>Deadline to update exhibitor and fascia details:</strong></p>
+                    <p style="margin:0;font-size:16px;color:#d6336c;font-weight:700;">November 10th, 6:00 PM</p>
                   </td>
                 </tr>
               </table>
@@ -128,7 +124,7 @@ function renderEmailTemplate($loginUrl, $loginEmail, $loginPassword, $forgotUrl)
               </table>
 
               <p style="margin:0 0 14px 0;font-size:14px;color:#333;line-height:1.5;">
-                We appreciate your prompt attention to this important step and look forward to your active participation at the Bengaluru Tech Summit.
+                We appreciate your prompt attention to this matter.
               </p>
 
               <p style="margin:18px 0 0 0;font-size:14px;color:#333;line-height:1.5;">
@@ -172,13 +168,11 @@ HTML;
  */
 function getPlainTextEmail($loginUrl, $loginEmail, $loginPassword, $forgotUrl) {
     return <<<TEXT
-Dear Participant,
+Dear Participants,
 
-Greetings from the Bengaluru Tech Summit team!
+Despite repeated emails and follow-ups, we are yet to receive your exhibitor and fascia details. We request you to kindly share the required information by November 10th, 6:00 PM to ensure smooth coordination and timely processing.
 
-Thank you for registering as an exhibitor. We previously sent your exhibitor portal login credentials to your registered email address. Our records show that you have not yet completed the exhibitor directory form or updated your facia details.
-
-Deadline to update facia details: 7 November 2025
+Deadline to update exhibitor and fascia details: November 10th, 6:00 PM
 
 Your exhibitor login credentials:
 Portal URL: {$loginUrl}
@@ -189,7 +183,7 @@ If you have lost your password, please use the Forgot Password link on the login
 
 Update Facia Details & Complete Form: {$loginUrl}
 
-We appreciate your prompt attention to this important step and look forward to your active participation at the Bengaluru Tech Summit.
+We appreciate your prompt attention to this matter.
 
 Warm regards,
 Bengaluru Tech Summit Team
@@ -260,7 +254,7 @@ while ($row = mysqli_fetch_assoc($result)) {
     $plainText = getPlainTextEmail($loginUrl, $email, $loginPassword, $forgotPasswordUrl);
     
     // Email subject
-    $subject = "Urgent: Update Your Facia Details & Complete Your Exhibitor Directory Form - Bengaluru Tech Summit";
+    $subject = "Reminder: Update Your Exhibitor & Fascia Details by November 10th - Bengaluru Tech Summit";
     
     // Determine recipient email (use test email if in test mode)
     $recipientEmail = $testMode ? $testEmail : $email;
