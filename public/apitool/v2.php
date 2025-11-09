@@ -178,6 +178,7 @@ function matchPassesCategory($pass_category, $days = null ){
 		'SPEAKER' => array('category_id' => 3525, 'name' => 'SPEAKER'),
 		'SESSION ATTENDEE' => array('category_id' => 3561, 'name' => 'SESSION ATTENDEE'),
 		'INVITEE' => array('category_id' => 3560, 'name' => 'INVITEE'),
+		'MEDIA' => array('category_id' => 3559, 'name' => 'MEDIA'),
 		'VIP GIA PARTNER' => array('category_id' => 3532, 'name' => 'VIP GIA PARTNER'),
 		'GIA PARTNER' => array('category_id' => 3533, 'name' => 'GIA PARTNER'),
 	);
