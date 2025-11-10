@@ -201,6 +201,60 @@ class PassesController extends Controller
             ->whereNotNull('first_name')
             ->whereRaw("TRIM(first_name) != ''");
 
+        // Filter by specific exhibitor when id is provided
+        $filterExhibitionParticipantId = $request->get('exhibition_participant_id') ?? $request->get('exhibitorparticipant_id');
+        if (!empty($filterExhibitionParticipantId)) {
+            $complimentaryQuery->where('exhibition_participant_id', (int) $filterExhibitionParticipantId);
+        }
+
+        // Report mode: show grouped data by exhibitor with allocated/used and registrants
+        if ($request->boolean('report')) {
+            // Get unique exhibition participant IDs from current query
+            $epIds = (clone $complimentaryQuery)->select('exhibition_participant_id')->distinct()->pluck('exhibition_participant_id');
+            
+            $reportRows = collect();
+            if ($epIds->count() > 0) {
+                // Load EPs with related application once
+                $eps = ExhibitionParticipant::with('application')->whereIn('id', $epIds)->get()->keyBy('id');
+                
+                foreach ($epIds as $epId) {
+                    $ep = $eps->get($epId);
+                    if (!$ep) {
+                        continue;
+                    }
+                    // Allocated passes from ticketAllocation JSON (complimentary allocation)
+                    $allocated = 0;
+                    if (!empty($ep->ticketAllocation)) {
+                        $alloc = json_decode($ep->ticketAllocation, true);
+                        if (is_array($alloc)) {
+                            $allocated = array_sum($alloc);
+                        }
+                    }
+                    // Used passes = registered complimentary delegates for this EP
+                    $used = ComplimentaryDelegate::where('exhibition_participant_id', $epId)
+                        ->whereNotNull('first_name')
+                        ->whereRaw("TRIM(first_name) != ''")
+                        ->count();
+                    // Registrations list
+                    $registrations = ComplimentaryDelegate::where('exhibition_participant_id', $epId)
+                        ->whereNotNull('first_name')
+                        ->whereRaw("TRIM(first_name) != ''")
+                        ->orderBy('first_name', 'asc')
+                        ->get(['first_name', 'middle_name', 'last_name', 'email', 'mobile', 'organisation_name', 'unique_id', 'ticketType']);
+                    
+                    $reportRows->push((object)[
+                        'company_name' => $ep->application->company_name ?? ($registrations->first()->organisation_name ?? 'N/A'),
+                        'exhibition_participant_id' => $epId,
+                        'allocated_passes' => $allocated,
+                        'used_passes' => $used,
+                        'registrations' => $registrations,
+                    ]);
+                }
+            }
+            
+            $slug = "Complimentary Passes Report";
+            return view('admin.stall-manning.complimentary-report', compact('reportRows', 'slug'));
+        }
 
         if ($request->has('search')) {
             $searchTerm = trim($request->search);
@@ -231,7 +285,7 @@ class PassesController extends Controller
         ));
 
 
-        return view('admin.stall-manning.index', compact('stallManningList', 'totalCompanyCount', 'inauguralApplied', 'totalEntries', 'slug'));
+        // unreachable
     }
     public function Inaugural(Request $request)
     {
