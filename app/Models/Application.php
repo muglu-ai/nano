@@ -85,6 +85,7 @@ class Application extends Model
         'RegSource',
         'zone',
         'declarationStatus',
+        'hallNo',
     ];
 
     /* Todo : Addedd the following new fields
