@@ -500,7 +500,15 @@
                                                     </span>
                                                 </div>
                                                 <div>
-                                                    <h6 class="mb-0">{{ $application->company_name ?? 'N/A' }}</h6>
+													<h6 class="mb-0">
+														@if($application->exhibitionParticipant && $application->exhibitionParticipant->id)
+															<a href="{{ route('admin.complimentary.delegate', ['report' => 1, 'exhibition_participant_id' => $application->exhibitionParticipant->id]) }}" target="_blank" rel="noopener" class="text-primary text-decoration-underline">
+																{{ $application->company_name ?? 'N/A' }}
+															</a>
+														@else
+															{{ $application->company_name ?? 'N/A' }}
+														@endif
+													</h6>
                                                     <small class="text-muted">{{ $application->user->email ?? 'N/A' }}</small>
                                                 </div>
                                             </div>
