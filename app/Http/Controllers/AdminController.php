@@ -1614,6 +1614,7 @@ class AdminController extends Controller
         $request->validate([
             'stallNumber' => 'nullable|string|max:255',
             'zone' => 'nullable|string|max:255',
+            'hallNo' => 'nullable|string|max:255',
         ]);
 
         $application = Application::findOrFail($id);
@@ -1626,6 +1627,10 @@ class AdminController extends Controller
             $application->zone = $request->zone;
         }
 
+        if ($request->has('hallNo')) {
+            $application->hallNo = $request->hallNo;
+        }
+
         $application->save();
 
         return response()->json([
@@ -1636,6 +1641,7 @@ class AdminController extends Controller
                 'company_name' => $application->company_name,
                 'stallNumber' => $application->stallNumber,
                 'zone' => $application->zone,
+                'hallNo' => $application->hallNo,
             ]
         ]);
     }
@@ -1654,6 +1660,7 @@ class AdminController extends Controller
             'updates.*.id' => 'required|exists:applications,id',
             'updates.*.stallNumber' => 'nullable|string|max:255',
             'updates.*.zone' => 'nullable|string|max:255',
+            'updates.*.hallNo' => 'nullable|string|max:255',
         ]);
 
         $updatedCount = 0;
@@ -1669,6 +1676,10 @@ class AdminController extends Controller
 
                 if (isset($update['zone'])) {
                     $application->zone = $update['zone'];
+                }
+
+                if (isset($update['hallNo'])) {
+                    $application->hallNo = $update['hallNo'];
                 }
 
                 $application->save();

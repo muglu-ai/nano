@@ -274,6 +274,7 @@
                             <th>Application ID</th>
                             <th>Booth Number</th>
                             <th>Zone</th>
+                            <th>Hall No</th>
                             <th>Actions</th>
                         </tr>
                         </thead>
@@ -306,6 +307,15 @@
                                            placeholder="Enter zone">
                                 </td>
                                 <td>
+                                    <input type="text" 
+                                           class="edit-input" 
+                                           name="hallNo_{{ $app->id }}" 
+                                           value="{{ $app->hallNo ?? '' }}"
+                                           data-field="hallNo"
+                                           data-id="{{ $app->id }}"
+                                           placeholder="Enter hall no">
+                                </td>
+                                <td>
                                     <button class="btn btn-primary btn-sm" 
                                             onclick="saveRowChanges({{ $app->id }})"
                                             title="Save changes">
@@ -315,7 +325,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="6" class="text-center">
+                                <td colspan="7" class="text-center">
                                     <div class="py-4">
                                         <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
                                         <p class="text-muted">No applications found</p>
