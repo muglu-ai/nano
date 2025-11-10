@@ -453,7 +453,9 @@
                             <thead>
                                 <tr>
                                     <th class="sortable-header" data-sort="company_name" data-order="{{ request('sort') == 'company_name' ? request('order') : '' }}" style="white-space: normal;">
-                                        Exhibitor Name
+                                        <a href="{{ route('admin.complimentary.delegate', ['report' => 1]) }}" class="text-white text-decoration-underline" onclick="event.stopPropagation();">
+                                            Exhibitor Name
+                                        </a>
                                         @if(request('sort') == 'company_name')
                                             <span class="sort-spinner"></span>
                                         @endif
