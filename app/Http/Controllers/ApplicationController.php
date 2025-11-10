@@ -1411,7 +1411,7 @@ class ApplicationController extends Controller
                 }
             }
 
-            $url = config('constants.APP_URL');
+            $url = 'https://bengalurutechsummit.com/portal/public';
 
             //send email to the user with the password
             Mail::to($validated['company_email'])
