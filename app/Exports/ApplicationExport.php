@@ -57,7 +57,7 @@ class ApplicationExport implements FromCollection, WithHeadings, WithMapping, Sh
             'Booth size requested', // New Column
             // 'Preferred Location',
             // 'SEMI status',
-            'SEMI member Country',
+            // 'Country',
             'HQ Country',
             'Payment Currency',
 
@@ -130,9 +130,9 @@ class ApplicationExport implements FromCollection, WithHeadings, WithMapping, Sh
             optional($application)->interested_sqm . ' SQM' ?? 'N/A',
             // optional($application)->pref_location ?? 'N/A',
             // optional($application)->semi_member == 1 ? 'Yes / ' . optional($application)->semi_memberID : 'No',
-            optional(optional($application->billingDetail)->country)->name ?? 'N/A',
+            // optional(optional($application->billingDetail)->country)->name ?? 'N/A',
             optional($application->headquartersCountry)->name ?? 'N/A',
-            $application->payment_currency === 'EUR' ? 'INR' : ($application->payment_currency ?? 'N/A'),
+            $application->payment_currency === 'USD' ? 'INR' : ($application->payment_currency ?? 'N/A'),
 
             // Contact Person Details (Using optional() for safety)
             optional($application->eventContact)->salutation . ' ' . optional($application->eventContact)->first_name . ' ' . optional($application->eventContact)->last_name ?? 'N/A',
