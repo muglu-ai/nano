@@ -64,7 +64,8 @@
         'application.list',
         'application.lists',
         'visitor.analytics',
-
+        'sales.index',
+        'admin.stall-manning',
         // add more route names to hide as needed
     ];
 
@@ -119,6 +120,7 @@
                         </li>
                     </ul>
                 </li>
+                @if(!in_array('sales.index', $hiddenRoutes))
                 <li class="nav-item">
                     <a href="{{ route('sales.index') }}" class="nav-link text-dark " aria-controls="pagesExamples" role="button"
                        aria-expanded="false">
@@ -126,6 +128,7 @@
                         <span class="nav-link-text ms-1 ps-1 text-dark ">Sales</span>
                     </a>
                 </li>
+                @endif
 
                 <li class="nav-item">
                     <a href="{{ route('users.list') }}" class="nav-link text-dark " aria-controls="pagesExamples" role="button"
@@ -304,17 +307,20 @@
                     </a>
                 </li>
 
+                @if(!in_array('admin.stall-manning', $hiddenRoutes))
+
                 <li class="nav-item">
                     <a href="{{ route('admin.stall-manning') }}" class="nav-link text-dark">
                         <i class="fa-solid fa-passport"></i>
                         <span class="nav-link-text ms-1 ps-1 text-dark">Exhibitors Registration</span>
                     </a>
                 </li>
+                @endif
 
                 <li class="nav-item">
                     <a href="{{ route('admin.complimentary.delegate') }}" class="nav-link text-dark">
                         <i class="fa-solid fa-ticket"></i>
-                        <span class="nav-link-text ms-1 ps-1 text-dark">Complimentary Registration</span>
+                        <span class="nav-link-text ms-1 ps-1 text-dark">Complimentary Exhibitors Registration</span>
                     </a>
                 </li>
 
