@@ -55,8 +55,8 @@ class ApplicationExport implements FromCollection, WithHeadings, WithMapping, Sh
 
             'Stall Category',
             'Booth size requested', // New Column
-            'Preferred Location',
-            'SEMI status',
+            // 'Preferred Location',
+            // 'SEMI status',
             'SEMI member Country',
             'HQ Country',
             'Payment Currency',
@@ -70,27 +70,27 @@ class ApplicationExport implements FromCollection, WithHeadings, WithMapping, Sh
 
             //second contact person details
             //            'Sec-Contact Salutation',
-            'Sec-Contact Name',
-            'Sec-Job Title',
-            'Sec-Contact Email',
-            'Sec-Contact Number',
+            // 'Sec-Contact Name',
+            // 'Sec-Job Title',
+            // 'Sec-Contact Email',
+            // 'Sec-Contact Number',
 
 
 
             'Company Email',
             'Website',
-            'Main Product Category',
-            'Type of Business',
-            'Participated Previously',
+            // 'Main Product Category',
+            // 'Type of Business',
+            // 'Participated Previously',
             'Fascia Name', // New Column
 
             //            'Booth Count',
             'GST No',
             'PAN No',
             'TAN No',
-            'Region',
-            'Submission Status',
-            'Submission Date',
+            // 'Region',
+            // 'Submission Status',
+            // 'Submission Date',
             'Approved / Rejected Date',
             'Allocated SQM',
             'Sector',
@@ -113,7 +113,7 @@ class ApplicationExport implements FromCollection, WithHeadings, WithMapping, Sh
 
             //            'Secondary Email',
 
-            'Terms and Conditions',
+            // 'Terms and Conditions',
         ];
     }
 
@@ -128,8 +128,8 @@ class ApplicationExport implements FromCollection, WithHeadings, WithMapping, Sh
             $application->company_name ?? 'N/A',
             optional($application)->stall_category ?? 'N/A',
             optional($application)->interested_sqm . ' SQM' ?? 'N/A',
-            optional($application)->pref_location ?? 'N/A',
-            optional($application)->semi_member == 1 ? 'Yes / ' . optional($application)->semi_memberID : 'No',
+            // optional($application)->pref_location ?? 'N/A',
+            // optional($application)->semi_member == 1 ? 'Yes / ' . optional($application)->semi_memberID : 'No',
             optional(optional($application->billingDetail)->country)->name ?? 'N/A',
             optional($application->headquartersCountry)->name ?? 'N/A',
             $application->payment_currency === 'EUR' ? 'INR' : ($application->payment_currency ?? 'N/A'),
@@ -141,20 +141,20 @@ class ApplicationExport implements FromCollection, WithHeadings, WithMapping, Sh
             optional($application->eventContact)->contact_number ?? 'N/A',
 
             // Second Contact Person Details (Using optional() for safety) secondaryEventContact
-            optional($application->secondaryEventContact)->salutation . ' ' . optional($application->secondaryEventContact)->first_name . ' ' . optional($application->secondaryEventContact)->last_name ?? 'N/A',
-            optional($application->secondaryEventContact)->job_title ?? 'N/A',
-            optional($application->secondaryEventContact)->email ?? 'N/A',
-            optional($application->secondaryEventContact)->contact_number ?? 'N/A',
+            // optional($application->secondaryEventContact)->salutation . ' ' . optional($application->secondaryEventContact)->first_name . ' ' . optional($application->secondaryEventContact)->last_name ?? 'N/A',
+            // optional($application->secondaryEventContact)->job_title ?? 'N/A',
+            // optional($application->secondaryEventContact)->email ?? 'N/A',
+            // optional($application->secondaryEventContact)->contact_number ?? 'N/A',
 
 
             $application->company_email ?? 'N/A',
             $application->website ?? 'N/A',
 
             // Main Product Category
-            $application->mainProductCategoryName($application->main_product_category) ?? 'N/A',
+            // $application->mainProductCategoryName($application->main_product_category) ?? 'N/A',
 
-            $application->type_of_business ?? 'N/A',
-            $application->participated_previous == 1 ? 'Yes' : 'No',
+            // $application->type_of_business ?? 'N/A',
+            // $application->participated_previous == 1 ? 'Yes' : 'No',
             //$application->fascia_name ?? 'N/A',
 
             //here we have to get the fascia name from the exhibitor_info table
@@ -167,9 +167,9 @@ class ApplicationExport implements FromCollection, WithHeadings, WithMapping, Sh
             $application->gst_no ?? 'N/A',
             $application->pan_no ?? 'N/A',
             $application->tan_no ?? 'N/A',
-            $application->region ?? 'N/A',
-            $application->submission_status ?? 'N/A',
-            $application->submission_date ?? 'N/A',
+            // $application->region ?? 'N/A',
+            // $application->submission_status ?? 'N/A',
+            // $application->submission_date ?? 'N/A',
             $application->approved_date ?? 'N/A',
             $application->allocated_sqm ?? 0,
 
@@ -201,7 +201,7 @@ class ApplicationExport implements FromCollection, WithHeadings, WithMapping, Sh
             //            optional($application->eventContact)->secondary_email ?? 'N/A',
 
             // Terms Acceptance Status
-            $application->terms_accepted == 1 ? 'Accepted' : 'Not Accepted',
+            // $application->terms_accepted == 1 ? 'Accepted' : 'Not Accepted',
         ];
     }
 }
