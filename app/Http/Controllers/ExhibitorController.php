@@ -1240,7 +1240,7 @@ class ExhibitorController extends Controller
     {
         if ($inviteType === 'delegate') {
             $exists = DB::table('complimentary_delegates')
-                ->where('exhibition_participant_id', $participantId)
+                // ->where('exhibition_participant_id', $participantId)
                 ->where('email', $email)
                 ->exists();
             if ($exists) {
@@ -1248,7 +1248,7 @@ class ExhibitorController extends Controller
             }
         } elseif ($inviteType === 'exhibitor') {
             $exists = DB::table('stall_manning')
-                ->where('exhibition_participant_id', $participantId)
+                // ->where('exhibition_participant_id', $participantId)
                 ->where('email', $email)
                 ->exists();
             if ($exists) {
@@ -1257,9 +1257,9 @@ class ExhibitorController extends Controller
         } else {
             // Custom ticket type
             $exists = DB::table('complimentary_delegates')
-                ->where('exhibition_participant_id', $participantId)
+                // ->where('exhibition_participant_id', $participantId)
                 ->where('email', $email)
-                ->where('ticketType', $ticketId)
+                // ->where('ticketType', $ticketId)
                 ->exists();
             if ($exists) {
                 return ['exists' => true, 'message' => 'The email has already been taken for this ticket type for this exhibitor.'];
