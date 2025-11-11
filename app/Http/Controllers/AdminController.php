@@ -1842,6 +1842,11 @@ class AdminController extends Controller
             $hall = $idxHall !== -1 ? trim((string)($r[$idxHall] ?? '')) : null;
 
             $changed = false;
+            $before = [
+                'stallNumber' => $application->stallNumber,
+                'zone' => $application->zone,
+                'hallNo' => $application->hallNo,
+            ];
             if ($booth !== null && $booth !== '') { $application->stallNumber = $booth; $changed = true; }
             if ($zone !== null && $zone !== '') { $application->zone = $zone; $changed = true; }
             if ($hall !== null && $hall !== '') { $application->hallNo = $hall; $changed = true; }
@@ -1849,6 +1854,12 @@ class AdminController extends Controller
             if ($changed) {
                 try {
                     $application->save();
+                    $after = [
+                        'stallNumber' => $application->stallNumber,
+                        'zone' => $application->zone,
+                        'hallNo' => $application->hallNo,
+                    ];
+                    $this->logBoothUpdate($application, $before, $after, 'import', $i + 1);
                     $updated++;
                 } catch (\Exception $e) {
                     $errors[] = "Row ".($i+1).": Failed to update {$applicationId} - " . $e->getMessage();
@@ -1866,6 +1877,43 @@ class AdminController extends Controller
         }
         return redirect()->back()->with('success', $message);
     }
+
+    /**
+     * Append a booth update log (before vs after) to a JSONL file
+     */
+    private function logBoothUpdate(Application $application, array $before, array $after, string $source, ?int $rowNumber = null): void
+    {
+        try {
+            $changedKeys = [];
+            foreach (['stallNumber', 'zone', 'hallNo'] as $key) {
+                if (($before[$key] ?? null) !== ($after[$key] ?? null)) {
+                    $changedKeys[] = $key;
+                }
+            }
+            if (empty($changedKeys)) {
+                return;
+            }
+            $entry = [
+                'timestamp' => now()->toDateTimeString(),
+                'logged_by' => auth()->id(),
+                'ip' => request()->ip(),
+                'source' => $source, // single | bulk | import
+                'row_number' => $rowNumber,
+                'application' => [
+                    'id' => $application->id,
+                    'application_id' => $application->application_id,
+                    'company_name' => $application->company_name,
+                ],
+                'changed_fields' => $changedKeys,
+                'before' => array_intersect_key($before, array_flip($changedKeys)),
+                'after' => array_intersect_key($after, array_flip($changedKeys)),
+            ];
+            $logFile = storage_path('logs/booth_updates.jsonl');
+            file_put_contents($logFile, json_encode($entry, JSON_UNESCAPED_SLASHES) . PHP_EOL, FILE_APPEND);
+        } catch (\Throwable $e) {
+            // Do not interrupt main flow on logging failure
+        }
+    }
     /**
      * Update a single booth number
      */
@@ -1882,6 +1930,11 @@ class AdminController extends Controller
         ]);
 
         $application = Application::findOrFail($id);
+        $before = [
+            'stallNumber' => $application->stallNumber,
+            'zone' => $application->zone,
+            'hallNo' => $application->hallNo,
+        ];
 
         if ($request->has('stallNumber')) {
             $application->stallNumber = $request->stallNumber;
@@ -1896,6 +1949,12 @@ class AdminController extends Controller
         }
 
         $application->save();
+        $after = [
+            'stallNumber' => $application->stallNumber,
+            'zone' => $application->zone,
+            'hallNo' => $application->hallNo,
+        ];
+        $this->logBoothUpdate($application, $before, $after, 'single');
 
         return response()->json([
             'success' => true,
@@ -1934,20 +1993,38 @@ class AdminController extends Controller
             try {
                 $application = Application::find($update['id']);
                 
+                $before = [
+                    'stallNumber' => $application->stallNumber,
+                    'zone' => $application->zone,
+                    'hallNo' => $application->hallNo,
+                ];
+                $changed = false;
+
                 if (isset($update['stallNumber'])) {
                     $application->stallNumber = $update['stallNumber'];
+                    $changed = true;
                 }
 
                 if (isset($update['zone'])) {
                     $application->zone = $update['zone'];
+                    $changed = true;
                 }
 
                 if (isset($update['hallNo'])) {
                     $application->hallNo = $update['hallNo'];
+                    $changed = true;
                 }
 
-                $application->save();
-                $updatedCount++;
+                if ($changed) {
+                    $application->save();
+                    $after = [
+                        'stallNumber' => $application->stallNumber,
+                        'zone' => $application->zone,
+                        'hallNo' => $application->hallNo,
+                    ];
+                    $this->logBoothUpdate($application, $before, $after, 'bulk');
+                    $updatedCount++;
+                }
             } catch (\Exception $e) {
                 $errors[] = "Failed to update application ID {$update['id']}: " . $e->getMessage();
             }
