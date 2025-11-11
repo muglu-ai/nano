@@ -9,16 +9,19 @@ use Maatwebsite\Excel\Concerns\WithMapping;
 use Maatwebsite\Excel\Concerns\ShouldAutoSize;
 use Illuminate\Support\Facades\Log;
 use App\Models\ExhibitorInfo;
+use App\Models\Sector;
+use Illuminate\Support\Facades\Auth;
 
 class ApplicationExport implements FromCollection, WithHeadings, WithMapping, ShouldAutoSize
 {
+    protected $status;
 
     //construct function to get the data with status parameter
     public function     __construct($status)
     {
         //log the user->id , date and ip and date of the export
         Log::info('ApplicationExport initiated', [
-            'user_id' => auth()->id(),
+            'user_id' => Auth::id(),
             'date' => now(),
             'ip' => request()->ip(),
             'status' => $status,
@@ -122,6 +125,32 @@ class ApplicationExport implements FromCollection, WithHeadings, WithMapping, Sh
      */
     public function map($application): array
     {
+        // Resolve sector names from relation or fallback to sector_id JSON
+        $sectorDisplay = 'N/A';
+        if (!empty($application->sectors) && $application->sectors->count() > 0) {
+            $sectorDisplay = implode(', ', $application->sectors->pluck('name')->toArray());
+        } else {
+            $sectorIds = [];
+            if (!empty($application->sector_id)) {
+                if (is_string($application->sector_id)) {
+                    $decoded = json_decode($application->sector_id, true);
+                    if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+                        $sectorIds = $decoded;
+                    } elseif (is_numeric($application->sector_id)) {
+                        $sectorIds = [(int) $application->sector_id];
+                    }
+                } elseif (is_numeric($application->sector_id)) {
+                    $sectorIds = [(int) $application->sector_id];
+                }
+            }
+            if (!empty($sectorIds)) {
+                $sectorNames = Sector::whereIn('id', $sectorIds)->pluck('name')->toArray();
+                if (!empty($sectorNames)) {
+                    $sectorDisplay = implode(', ', $sectorNames);
+                }
+            }
+        }
+
         return [
             // General Information
             $application->application_id ?? 'N/A',
@@ -173,8 +202,8 @@ class ApplicationExport implements FromCollection, WithHeadings, WithMapping, Sh
             $application->approved_date ?? 'N/A',
             $application->allocated_sqm ?? 0,
 
-            // Sectors Handling (Checking null before pluck)
-            !empty($application->sectors) ? implode(', ', $application->sectors->pluck('name')->toArray()) : 'N/A',
+            // Sector(s)
+            $sectorDisplay,
 
             // Product Groups Handling (Checking null and decoding JSON safely)
             !empty($application->product_groups) && is_string($application->product_groups)
