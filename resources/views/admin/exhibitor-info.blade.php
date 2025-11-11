@@ -155,6 +155,9 @@
                         {{-- <button class="btn btn-sm btn-primary" onclick="sendDirectoryReminders()" id="sendRemindersBtn">
                             <i class="fas fa-envelope me-1"></i>Send Directory Reminders
                         </button> --}}
+                        <a href="{{ route('admin.export.missing-directory') }}" class="btn btn-sm btn-outline-primary">
+                            <i class="fas fa-file-export me-1"></i> Export Missing Directory
+                        </a>
                         <a href="{{ route('exhibitor.directory.export') }}" class="btn btn-sm btn-success">
                             <i class="fas fa-download me-1"></i>Export
                         </a>

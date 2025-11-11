@@ -195,9 +195,7 @@
                         </div>
                         <div class="text-end">
                             <div class="d-flex gap-2 align-items-center">
-                                <a href="{{ route('admin.export.missing-directory') }}" class="btn btn-sm btn-outline-primary">
-                                    <i class="fas fa-file-export me-1"></i> Export Missing Directory
-                                </a>
+                                
                                 <span class="badge bg-primary">
                                     <i class="fas fa-map-marker-alt me-1"></i>
                                     {{ $applications->total() }} Applications
