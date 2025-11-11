@@ -7,7 +7,7 @@ use App\Models\BillingDetail;
 use App\Models\EventContact;
 use App\Models\SecondaryEventContact;
 use App\Models\ProductCategory;
-use App\Models\Sector;
+// use App\Models\Sector;
 use App\Models\Sponsorship;
 use Illuminate\Http\Request;
 use App\Models\User;
@@ -34,6 +34,7 @@ use App\Mail\UserCredentialsMail;
 use App\Models\ExhibitorInfo;
 use App\Mail\ExhibitorDirectoryReminder;
 use Maatwebsite\Excel\Facades\Excel;
+use App\Models\Sector;
 
 
 
@@ -1675,6 +1676,196 @@ class AdminController extends Controller
         }, $filename);
     }
 
+    /**
+     * Export all exhibitors with booth fields for bulk update template
+     */
+    public function exportBoothTemplate(Request $request)
+    {
+        if (!auth()->check() || auth()->user()->role !== 'admin') {
+            return redirect('/login');
+        }
+
+        $apps = Application::where('submission_status', 'approved')
+            ->select(['id', 'application_id', 'company_name', 'stallNumber', 'zone', 'hallNo', 'sector_id', 'stall_category', 'allocated_sqm'])
+            ->orderBy('company_name', 'asc')
+            ->get();
+
+        // Collect all sector ids used in sector_id (json or scalar)
+        $allSectorIds = [];
+        foreach ($apps as $app) {
+            if (!empty($app->sector_id)) {
+                if (is_string($app->sector_id)) {
+                    $decoded = json_decode($app->sector_id, true);
+                    if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+                        $allSectorIds = array_merge($allSectorIds, $decoded);
+                    } elseif (is_numeric($app->sector_id)) {
+                        $allSectorIds[] = (int)$app->sector_id;
+                    }
+                } elseif (is_numeric($app->sector_id)) {
+                    $allSectorIds[] = (int)$app->sector_id;
+                }
+            }
+        }
+        $allSectorIds = array_values(array_unique(array_filter($allSectorIds, fn($v) => !is_null($v))));
+        $sectorMap = [];
+        if (!empty($allSectorIds)) {
+            $sectorMap = Sector::whereIn('id', $allSectorIds)->pluck('name', 'id')->toArray();
+        }
+
+        $rows = [];
+        foreach ($apps as $app) {
+            // Build sector display from sector_id
+            $sectorNames = [];
+            if (!empty($app->sector_id)) {
+                if (is_string($app->sector_id)) {
+                    $decoded = json_decode($app->sector_id, true);
+                    if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+                        foreach ($decoded as $sid) {
+                            if (isset($sectorMap[$sid])) {
+                                $sectorNames[] = $sectorMap[$sid];
+                            }
+                        }
+                    } elseif (is_numeric($app->sector_id)) {
+                        $sid = (int)$app->sector_id;
+                        if (isset($sectorMap[$sid])) {
+                            $sectorNames[] = $sectorMap[$sid];
+                        }
+                    }
+                } elseif (is_numeric($app->sector_id)) {
+                    $sid = (int)$app->sector_id;
+                    if (isset($sectorMap[$sid])) {
+                        $sectorNames[] = $sectorMap[$sid];
+                    }
+                }
+            }
+            $sectorDisplay = !empty($sectorNames) ? implode(', ', $sectorNames) : 'N/A';
+
+            $rows[] = [
+                $app->application_id,
+                $app->company_name,
+                $app->stallNumber,
+                $app->zone,
+                $app->hallNo,
+                $sectorDisplay,
+                $app->stall_category,
+                $app->allocated_sqm,
+            ];
+        }
+
+        $filename = 'booth_bulk_sample_' . date('Ymd_His') . '.xlsx';
+
+        return Excel::download(new class($rows) implements \Maatwebsite\Excel\Concerns\FromArray, \Maatwebsite\Excel\Concerns\WithHeadings {
+            protected $rows;
+            public function __construct($rows) { $this->rows = $rows; }
+            public function array(): array { return $this->rows; }
+            public function headings(): array {
+                return [
+                    'Application ID',
+                    'Company Name',
+                    'Booth Number',
+                    'Zone',
+                    'Hall No',
+                    'Sector',
+                    'Stall Category',
+                    'Allocated SQM',
+                ];
+            }
+        }, $filename);
+    }
+
+    /**
+     * Import booth updates from uploaded Excel
+     */
+    public function importBoothUpdates(Request $request)
+    {
+        if (!auth()->check() || auth()->user()->role !== 'admin') {
+            return redirect('/login');
+        }
+
+        $request->validate([
+            'file' => 'required|file|mimes:xlsx,csv,xls',
+        ]);
+
+        $sheets = Excel::toArray(new class implements \Maatwebsite\Excel\Concerns\ToArray {
+            public function array(array $array)
+            {
+                return $array;
+            }
+        }, $request->file('file'));
+        if (empty($sheets) || empty($sheets[0])) {
+            return redirect()->back()->with('error', 'The uploaded file is empty or invalid.');
+        }
+        $rows = $sheets[0];
+        if (count($rows) < 2) {
+            return redirect()->back()->with('error', 'No data rows found in the uploaded file.');
+        }
+
+        // Map headers
+        $header = array_map(fn($h) => strtolower(trim((string)$h)), $rows[0]);
+        $findIdx = function(string $name) use ($header) {
+            $name = strtolower($name);
+            foreach ($header as $i => $h) {
+                if ($h === $name) return $i;
+            }
+            return -1;
+        };
+        $idxAppId = $findIdx('application id');
+        $idxBooth = $findIdx('booth number');
+        $idxZone = $findIdx('zone');
+        $idxHall = $findIdx('hall no');
+
+        if ($idxAppId === -1) {
+            return redirect()->back()->with('error', 'Missing "Application ID" column in the uploaded file.');
+        }
+
+        $updated = 0;
+        $skipped = 0;
+        $errors = [];
+
+        // Process each row
+        for ($i = 1; $i < count($rows); $i++) {
+            $r = $rows[$i];
+            // Normalize row length to header length
+            $r = array_pad($r, count($header), null);
+            $applicationId = trim((string)($r[$idxAppId] ?? ''));
+            if ($applicationId === '') { $skipped++; continue; }
+
+            $application = Application::where('application_id', $applicationId)->first();
+            if (!$application) {
+                $errors[] = "Row ".($i+1).": Application ID {$applicationId} not found";
+                $skipped++;
+                continue;
+            }
+
+            $booth = $idxBooth !== -1 ? trim((string)($r[$idxBooth] ?? '')) : null;
+            $zone = $idxZone !== -1 ? trim((string)($r[$idxZone] ?? '')) : null;
+            $hall = $idxHall !== -1 ? trim((string)($r[$idxHall] ?? '')) : null;
+
+            $changed = false;
+            if ($booth !== null && $booth !== '') { $application->stallNumber = $booth; $changed = true; }
+            if ($zone !== null && $zone !== '') { $application->zone = $zone; $changed = true; }
+            if ($hall !== null && $hall !== '') { $application->hallNo = $hall; $changed = true; }
+
+            if ($changed) {
+                try {
+                    $application->save();
+                    $updated++;
+                } catch (\Exception $e) {
+                    $errors[] = "Row ".($i+1).": Failed to update {$applicationId} - " . $e->getMessage();
+                    $skipped++;
+                }
+            } else {
+                $skipped++;
+            }
+        }
+
+        $message = "Booth updates processed. Updated: {$updated}, Skipped: {$skipped}.";
+        if (!empty($errors)) {
+            $message .= " Errors: " . count($errors);
+            return redirect()->back()->with('success', $message)->with('import_errors', $errors);
+        }
+        return redirect()->back()->with('success', $message);
+    }
     /**
      * Update a single booth number
      */

@@ -195,7 +195,16 @@
                         </div>
                         <div class="text-end">
                             <div class="d-flex gap-2 align-items-center">
-                                
+                                <a href="{{ route('admin.booths.exportTemplate') }}" class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-file-download me-1"></i> Download Template
+                                </a>
+                                <form action="{{ route('admin.booths.import') }}" method="POST" enctype="multipart/form-data" class="d-inline-flex align-items-center gap-2">
+                                    @csrf
+                                    <input type="file" name="file" accept=".xlsx,.xls,.csv" class="form-control form-control-sm" required>
+                                    <button type="submit" class="btn btn-sm btn-success">
+                                        <i class="fas fa-upload me-1"></i> Upload Updates
+                                    </button>
+                                </form>
                                 <span class="badge bg-primary">
                                     <i class="fas fa-map-marker-alt me-1"></i>
                                     {{ $applications->total() }} Applications
@@ -204,6 +213,23 @@
                         </div>
                     </div>
                 </div>
+
+                @if(session('success'))
+                    <div class="alert alert-success mx-3 mt-3">{{ session('success') }}</div>
+                @endif
+                @if(session('error'))
+                    <div class="alert alert-danger mx-3 mt-3">{{ session('error') }}</div>
+                @endif
+                @if(session('import_errors'))
+                    <div class="alert alert-warning mx-3 mt-3">
+                        <strong>Some rows could not be processed:</strong>
+                        <ul class="mb-0">
+                            @foreach(session('import_errors') as $err)
+                                <li>{{ $err }}</li>
+                            @endforeach
+                        </ul>
+                    </div>
+                @endif
                 
                 <!-- Search Section -->
                 <div class="search-section">
