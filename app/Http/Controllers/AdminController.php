@@ -33,6 +33,7 @@ use App\Mail\Onboarding;
 use App\Mail\UserCredentialsMail;
 use App\Models\ExhibitorInfo;
 use App\Mail\ExhibitorDirectoryReminder;
+use Maatwebsite\Excel\Facades\Excel;
 
 
 
@@ -1600,6 +1601,78 @@ class AdminController extends Controller
             ->sort();
 
         return view('admin.booth_management', compact('applications', 'slug', 'zones'));
+    }
+
+    /**
+     * Export exhibitors who have not filled the exhibitor directory
+     * Includes company info and primary contact details
+     */
+    public function exportMissingExhibitorDirectory(Request $request)
+    {
+        if (!auth()->check() || auth()->user()->role !== 'admin') {
+            return redirect('/login');
+        }
+
+        $rows = DB::table('applications as a')
+            ->leftJoin('exhibitors_info as ei', 'ei.application_id', '=', 'a.id')
+            ->leftJoin('event_contacts as ec', 'ec.application_id', '=', 'a.id')
+            ->select(
+                'a.application_id',
+                'a.company_name',
+                'a.company_email',
+                'a.stallNumber',
+                'a.zone',
+                'a.hallNo',
+                DB::raw("TRIM(CONCAT(COALESCE(ec.first_name,''), ' ', COALESCE(ec.last_name,''))) as contact_person"),
+                'ec.job_title',
+                'ec.email as contact_email',
+                'ec.contact_number as contact_number'
+            )
+            ->where('a.submission_status', 'approved')
+            ->where(function ($q) {
+                $q->whereNull('ei.id')->orWhere('ei.submission_status', 0);
+            })
+            ->orderBy('a.company_name', 'asc')
+            ->get();
+
+        $filename = 'missing_exhibitor_directory_' . date('Ymd_His') . '.xlsx';
+
+        return Excel::download(new class($rows) implements \Maatwebsite\Excel\Concerns\FromArray, \Maatwebsite\Excel\Concerns\WithHeadings {
+            protected $rows;
+            public function __construct($rows) { $this->rows = $rows; }
+            public function array(): array {
+                $data = [];
+                foreach ($this->rows as $r) {
+                    $data[] = [
+                        $r->application_id ?? 'N/A',
+                        $r->company_name ?? 'N/A',
+                        $r->company_email ?? 'N/A',
+                        $r->stallNumber ?? 'N/A',
+                        $r->zone ?? 'N/A',
+                        $r->hallNo ?? 'N/A',
+                        $r->contact_person ?: 'N/A',
+                        $r->job_title ?? 'N/A',
+                        $r->contact_email ?? 'N/A',
+                        $r->contact_number ?? 'N/A',
+                    ];
+                }
+                return $data;
+            }
+            public function headings(): array {
+                return [
+                    'Application ID',
+                    'Company Name',
+                    'Company Email',
+                    'Booth Number',
+                    'Zone',
+                    'Hall No',
+                    'Contact Person',
+                    'Job Title',
+                    'Contact Email',
+                    'Contact Number',
+                ];
+            }
+        }, $filename);
     }
 
     /**

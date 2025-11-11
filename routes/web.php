@@ -637,6 +637,7 @@ Route::get('/send-user-credentials-email', [AdminController::class, 'sendUserCre
 Route::get('/admin/booth-management', [AdminController::class, 'boothManagement'])->name('booth.management')->middleware(Auth::class);
 Route::post('/admin/booth/update/{id}', [AdminController::class, 'updateBooth'])->name('booth.update')->middleware(Auth::class);
 Route::post('/admin/booth/bulk-update', [AdminController::class, 'bulkUpdateBooths'])->name('booth.bulkUpdate')->middleware(Auth::class);
+Route::get('/admin/export/missing-exhibitor-directory', [AdminController::class, 'exportMissingExhibitorDirectory'])->name('admin.export.missing-directory')->middleware(Auth::class);
 
 /* Admin Controller Routes Ends
 * */
