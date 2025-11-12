@@ -112,6 +112,35 @@
                                 <span class="sidenav-normal ms-1 ps-1">Portal Guide</span>
                             </a>
                         </li>
+                        <li class="nav-item">
+                            <a data-bs-toggle="collapse" href="#floorPlanDocs" class="nav-link text-dark"
+                               aria-controls="floorPlanDocs" role="button" aria-expanded="false">
+                                <span class="sidenav-mini-icon"> FP </span>
+                                <span class="sidenav-normal ms-1 ps-1">Floor Plans</span>
+                            </a>
+                            <div class="collapse" id="floorPlanDocs">
+                                <ul class="nav">
+                                    <li class="nav-item">
+                                        <a class="nav-link text-dark" href="https://bengalurutechsummit.com/pdf/Floor-Plan-Hall-1.pdf" target="_blank" rel="noopener">
+                                            <span class="sidenav-mini-icon"> 1 </span>
+                                            <span class="sidenav-normal ms-1 ps-1">Floorplan 1 (Hall 1)</span>
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link text-dark" href="https://bengalurutechsummit.com/pdf/Floor-Plan-Hall-2.pdf" target="_blank" rel="noopener">
+                                            <span class="sidenav-mini-icon"> 2 </span>
+                                            <span class="sidenav-normal ms-1 ps-1">Floorplan 2 (Hall 2)</span>
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link text-dark" href="https://bengalurutechsummit.com/pdf/Floor-Plan-Hall-3.pdf" target="_blank" rel="noopener">
+                                            <span class="sidenav-mini-icon"> 3 </span>
+                                            <span class="sidenav-normal ms-1 ps-1">Floorplan 3 (Hall 3)</span>
+                                        </a>
+                                    </li>
+                                </ul>
+                            </div>
+                        </li>
                     </ul>
                 </div>
             </li>
