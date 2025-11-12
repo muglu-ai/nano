@@ -238,6 +238,12 @@ function process_pending_registrations() {
 			} else {
 				$sector = '';
 			}
+
+			// if IVCAVIP20 or IVCAPR180
+			//then pass sector as Investor
+			if ($res['user_type'] == 'IVCA') {
+				$sector = 'Investor';
+			}
 			
 			$data['country'] = clean_html_entities2(isset($res['country']) ? $res['country'] : '');
 			$data['city'] = clean_html_entities2(isset($res['city']) ? $res['city'] : '');
