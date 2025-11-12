@@ -1903,6 +1903,8 @@ class AdminController extends Controller
                 'ec.email',
                 'ec.contact_number'
             )
+            //where fascia name is not null
+            ->where('ei.fascia_name', '!=', null)
             ->orderBy('a.company_name', 'asc')
             ->get();
 
