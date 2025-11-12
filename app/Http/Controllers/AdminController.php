@@ -1903,11 +1903,18 @@ class AdminController extends Controller
                 'ec.email',
                 'ec.contact_number'
             )
+            //where fascia name is not null
+            ->where('ei.fascia_name', '!=', null)
+            
             ->orderBy('a.company_name', 'asc')
             ->get();
 
         $arrayRows = [];
         foreach ($rows as $r) {
+            // Exclude rows where fascia_name is null
+            if (is_null($r->fascia_name)) {
+                continue;
+            }
             $contactName = trim(((string)$r->first_name) . ' ' . ((string)$r->last_name));
             $parts = array_filter([
                 $contactName !== '' ? $contactName : null,
