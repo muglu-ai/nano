@@ -1,5 +1,7 @@
 <?php
 
+exit;
+
 require 'emailFunction.php';
 
 

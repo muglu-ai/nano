@@ -1,5 +1,5 @@
 <?php 
-
+exit;
 require 'emailFunction.php';
 
 $emails = [ 'vibha.bhatia@mmactiv.com' ];

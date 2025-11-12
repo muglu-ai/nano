@@ -1,5 +1,5 @@
 <?php 
-
+exit;
 ini_set('display_errors', 1);
 require 'emailFunction.php';
 $message = $message5;

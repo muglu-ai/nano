@@ -1,4 +1,5 @@
 <?php 
+exit;
 require_once 'emailFunction.php';
 
 require_once 'dbcon.php';
