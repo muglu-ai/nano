@@ -598,7 +598,7 @@ class ImportData extends Controller
                 // Send email with credentials
                 Mail::to($email)
                     ->bcc('test.interlinks@gmail.com')
-                    ->queue(new UserCredentialsMail($contactName, config('app.url'), $email, $password));
+                    ->send(new UserCredentialsMail($contactName, config('app.url'), $email, $password));
 
                 $insertedRecords[] = [
                     'email' => $email,
