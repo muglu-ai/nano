@@ -562,6 +562,7 @@ class ImportData extends Controller
                     'participation_type' => 'Onsite',
                     'approved_by' => 'Admin -Imported',
                     'tag' => $entityType,
+                    'RegSource' => 'Admin',
                 ]);
 
                 // Create event contact
