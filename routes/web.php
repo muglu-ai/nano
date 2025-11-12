@@ -639,6 +639,7 @@ Route::post('/admin/booth/update/{id}', [AdminController::class, 'updateBooth'])
 Route::post('/admin/booth/bulk-update', [AdminController::class, 'bulkUpdateBooths'])->name('booth.bulkUpdate')->middleware(Auth::class);
 Route::get('/admin/booths/export-template', [AdminController::class, 'exportBoothTemplate'])->name('admin.booths.exportTemplate')->middleware(Auth::class);
 Route::post('/admin/booths/import', [AdminController::class, 'importBoothUpdates'])->name('admin.booths.import')->middleware(Auth::class);
+Route::get('/admin/booths/export-fascia', [AdminController::class, 'exportFasciaDetails'])->name('admin.booths.exportFascia')->middleware(Auth::class);
 Route::get('/admin/export/missing-exhibitor-directory', [AdminController::class, 'exportMissingExhibitorDirectory'])->name('admin.export.missing-directory')->middleware(Auth::class);
 
 /* Admin Controller Routes Ends

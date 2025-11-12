@@ -198,6 +198,9 @@
                                 <a href="{{ route('admin.booths.exportTemplate') }}" class="btn btn-sm btn-outline-primary">
                                     <i class="fas fa-file-download me-1"></i> Download Template
                                 </a>
+                                <a href="{{ route('admin.booths.exportFascia') }}" class="btn btn-sm btn-outline-secondary">
+                                    <i class="fas fa-file-export me-1"></i> Export Fascia Details
+                                </a>
                                 <form action="{{ route('admin.booths.import') }}" method="POST" enctype="multipart/form-data" class="d-inline-flex align-items-center gap-2">
                                     @csrf
                                     <input type="file" name="file" accept=".xlsx,.xls,.csv" class="form-control form-control-sm" required>
