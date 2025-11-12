@@ -5,7 +5,6 @@ function elastic_mail($subject, $message, $to, $bodyText = '')
 	$url = 'https://api.elasticemail.com/v2/email/send';
 
 	try {
-		//$to = array('sagarpatil2112@gmail.com', 'test.interlinks@gmail.com');
 		$to = implode(";", $to);
 		$post = array(
 			'from' => 'enquiry@bengalurutechsummit.com',//'enquiry@startupmahakumbh.org', // 'vivek.patil@mmactiv.com',
@@ -14,9 +13,15 @@ function elastic_mail($subject, $message, $to, $bodyText = '')
 			'subject' => $subject,
 			'to' => $to,
 			'bodyHtml' => $message,
-			'bodyText' => $bodyText
-		); //,//'<h1>Html Body</h1>',
+			'bodyText' => $message
+		); 
+		//,//'<h1>Html Body</h1>',
 		//'bodyText' => 'Text Body');
+		// echo $message;
+		// echo "br";
+		// echo $bodyText;
+
+
 
 		$ch = curl_init();
 		curl_setopt_array($ch, array(

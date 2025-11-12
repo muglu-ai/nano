@@ -8,20 +8,23 @@ $conn = $link;
 require_once '../Final-Emailer/email.html';
 
 //get all applications where submission_status is approved
-$sql = "SELECT * FROM applications WHERE submission_status = 'approved'";
+$sql = "SELECT * FROM user WHERE submission_status = 'approved'";
 $result = $conn->query($sql);
 
 //get the emailBody from ../Final-Emailer/email.html
 
 //write a query to get all applications where submission_status is approved elastic_mail
 while ($row = $result->fetch_assoc()) {
+
     $email = $row['company_email'];
     $to = array($email);
     $subject = 'Need extra hands at your Bengaluru Tech Summit stall?';
     $message = file_get_contents('../Final-Emailer/email.html');
 
-    echo $message;
-    exit;
+    // echo $message;
+    // echo $email;
+    // $to = ['chandrachood.as@mmactiv.com'];
 
-    //elastic_mail($subject, $message, $to);
+    elastic_mail($subject, $message, $to);
+    //exit;
 }
