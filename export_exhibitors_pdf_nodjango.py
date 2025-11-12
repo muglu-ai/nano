@@ -11,6 +11,18 @@ REQUIRED = {
     "dotenv": "python-dotenv",
 }
 
+# Toggle to force hardcoded DB credentials (set to True to bypass .env)
+USE_HARDCODED_DB: bool = True
+
+# Hardcoded MySQL credentials (update these values)
+HARDCODED_DB = {
+    "host": "95.216.2.164",
+    "port": 3306,
+    "database": "btsblnl265_asd1d_portal",
+    "user": "btsblnl265_asd1d_bengaluruite",
+    "password": 'Disl#vhfj#Af#DhW65'
+}
+
 
 def ensure_packages() -> None:
     to_install: List[str] = []
@@ -19,12 +31,20 @@ def ensure_packages() -> None:
     try:
         import weasyprint  # noqa: F401
     except Exception:
-        to_install.append(REQUIRED["weasyprint"])
+        # Python 3.6 and older Pango/Cairo stacks often require older WeasyPrint
+        if sys.version_info[:2] <= (3, 6):
+            to_install.append("weasyprint==52.5")
+        else:
+            to_install.append(REQUIRED["weasyprint"])
 
     try:
         import mysql.connector  # noqa: F401
     except Exception:
-        to_install.append(REQUIRED["mysql.connector"])
+        # Python 3.6 compatibility: pin mysql-connector-python to a version that supports 3.6
+        if sys.version_info[:2] <= (3, 6):
+            to_install.append("mysql-connector-python==8.0.28")
+        else:
+            to_install.append(REQUIRED["mysql.connector"])
 
     try:
         import dotenv  # noqa: F401
@@ -32,8 +52,14 @@ def ensure_packages() -> None:
         to_install.append(REQUIRED["dotenv"])
 
     if to_install:
-        cmd = [sys.executable, "-m", "pip", "install", "--quiet"] + to_install
-        completed = subprocess.run(cmd, capture_output=True, text=True)
+        cmd = [sys.executable, "-m", "pip", "install", "--quiet", "--upgrade", "--force-reinstall"] + to_install
+        # Python 3.6 compatibility: no capture_output/text args
+        completed = subprocess.run(
+            cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            universal_newlines=True,
+        )
         if completed.returncode != 0:
             raise RuntimeError(
                 f"Failed to install packages: {to_install}\nstdout:\n{completed.stdout}\nstderr:\n{completed.stderr}"
@@ -50,6 +76,9 @@ def load_env(env_path: Optional[str]) -> None:
 
 
 def get_db_config() -> Dict[str, Any]:
+    if USE_HARDCODED_DB:
+        return HARDCODED_DB
+
     # Expected envs
     db_connection = os.getenv("DB_CONNECTION", "").strip().lower()
     if db_connection and db_connection != "mysql":
@@ -121,20 +150,50 @@ def build_html(rows: List[Dict[str, Any]]) -> str:
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <style>
-            @page { size: A4; margin: 8mm; }
-            body { font-family: Arial, sans-serif; font-size: 0.7rem; margin: 0; padding: 0; }
-            .content { height: 230mm; display: flex; flex-direction: column; justify-content: space-between; margin: 0 auto; padding: 6px; }
-            .exhibitor { height: 50%; page-break-inside: avoid; border-top: 1px solid #ddd; padding-top: 12px; }
-            .exhibitor1 { height: 50%; page-break-inside: avoid; padding-top: 13px; }
-            h1 { font-size: 10px; text-align: center; margin: 0 0 5px 0; }
+            @page {
+                size: 100mm 240mm; /* Custom page size */
+                margin: 8mm;
+            }
+            body {
+                font-family: Arial, sans-serif;
+                font-size: 0.56rem;
+                margin: 0;
+                padding: 0;
+            }
+            .content {
+                height: 230mm; /* Available content height */
+                display: flex;
+                flex-direction: column;
+                justify-content: space-between;
+                margin: 0 auto;
+                padding: 6px;
+            }
+            .exhibitor {
+                height: 50%; /* Each exhibitor takes half of the page */
+                page-break-inside: avoid; /* Keep each exhibitor on one page */
+                border-top: 1px solid #ddd;
+                padding-top: 12px;
+            }
+            .exhibitor1 {
+                height: 50%; /* Each exhibitor takes half of the page */
+                page-break-inside: avoid; /* Keep each exhibitor on one page */
+                padding-top: 13px;
+            }
+            h1 {
+                font-size: 10px;
+                text-align: center;
+                margin: 0 0 5px 0;
+            }
             table { width: 100%; border-collapse: collapse; }
             td { padding: 2px 4px; word-break: break-word; vertical-align: top; }
             th { padding: 2px 4px; text-align: left; font-weight: bold; vertical-align: top; }
-            .header { padding-bottom: 10px; }
-            .header img { width: 100%; }
-            .profile { line-height: 1.5; text-align: justify; }
-            .page-number1 { text-align:center; display:block; margin-top:40px; }
-            .muted { color: #666; }
+            .front-page, .back-page { width: 100%; page-break-after: always; }
+            .front-page img, .back-page img { width: 100%; height: 135%; }
+            .header{ padding-bottom: 10px; }
+            .header img, .footer img { width: 100%; }
+            .profile{ line-height: 1.5; text-align: justify; }
+            .page-number11 { position: fixed; bottom: 5px; left: 50%; transform: translateX(-50%); z-index: 1000; text-align: center; }
+            .page-number1{ text-align:center; display:block; margin-top:40px; }
         </style>
     </head>
     <body>
@@ -158,6 +217,7 @@ def build_html(rows: List[Dict[str, Any]]) -> str:
 
             row = rows[i + j]
 
+            # Extract fields (with sanitation similar to provided reference)
             company_name = first_nonempty(row, ["company_name", "fascia_name"])
             sector = first_nonempty(row, ["sector"])
             country = first_nonempty(row, ["country"])
@@ -168,19 +228,46 @@ def build_html(rows: List[Dict[str, Any]]) -> str:
             contact_person = first_nonempty(row, ["contact_person"])
             designation = first_nonempty(row, ["designation"])
             email = first_nonempty(row, ["email"])
-            phone = first_nonempty(row, ["phone", "telPhone"])
+            phone = first_nonempty(row, ["phone", "telPhone", "mobile", "mob"])
 
-            address = first_nonempty(row, ["address"])
+            address = first_nonempty(row, ["address", "address_line_1"])
             if not address:
-                address = ", ".join([p for p in [city.title() if city else "", state.title() if state else "", country.title() if country else ""] if p])
+                address = ", ".join([p for p in [
+                    city.title() if city else "",
+                    state.title() if state else "",
+                    country.title() if country else ""
+                ] if p])
                 if zip_code:
                     address = f"{address} {zip_code}".strip()
 
-            description = first_nonempty(row, ["description"])
+            description = first_nonempty(row, ["description", "profile"])
             website = first_nonempty(row, ["website"])
 
-            category = first_nonempty(row, ["category"])
-            is_startup = category.lower() == "startup" if category else False
+            # Fix double https
+            if website.startswith("https://https://"):
+                website = website.replace("https://https://", "https://", 1)
+
+            # Sanitize newlines and replace &Amp;
+            def sanitize_text(s: str) -> str:
+                if not s:
+                    return s
+                s = s.replace("\\r\\n", " ")
+                s = s.replace("\r\n", " ")
+                s = s.replace("&Amp;", "&").replace("&amp;", "&")
+                return s.strip()
+
+            designation = sanitize_text(designation)
+            description = sanitize_text(description)
+            address = sanitize_text(address)
+
+            category = first_nonempty(row, ["category", "assoc_nm"])
+            is_startup = (category.lower() == "startup") if category else False
+
+            # Debug print similar to reference
+            try:
+                print(f"Processing exhibitor {i + j + 1}: {company_name}")
+            except Exception:
+                pass
 
             block_class = "exhibitor1" if j == 0 else "exhibitor"
 
@@ -190,7 +277,7 @@ def build_html(rows: List[Dict[str, Any]]) -> str:
                 {'<p style="text-align:center;"><em>(Startup)</em></p>' if is_startup else ''}
                 <table>
                     {"<tr><th>Sector</th><th>:</th><td>" + escape(sector) + "</td></tr>" if sector else ""}
-                    <tr><th>Contact</th><th>:</th><td>{escape(contact_person or "N/A")}</td></tr>
+                    <tr><th>Contact </th><th>:</th><td>{escape(contact_person or "N/A")}</td></tr>
                     <tr><th>Designation</th><th>:</th><td>{escape(designation or "N/A")}</td></tr>
                     <tr><th>Mobile</th><th>:</th><td>{escape(phone or "N/A")}</td></tr>
                     <tr><th>E-mail</th><th>:</th><td>{escape(email or "N/A")}</td></tr>
@@ -202,8 +289,9 @@ def build_html(rows: List[Dict[str, Any]]) -> str:
             </div>
             """)
 
-        parts.append(f'<span class="page-number1">{current_page} of {total_pages}</span>')
-        parts.append("</div>")
+        # Numeric current-page indicator to match sample
+        parts.append(f'<span class="page-number1"> {current_page} </span>')
+        parts.append('</div>')
 
     parts.append("""
     </body>
@@ -235,7 +323,7 @@ def write_pdf(html_content: str, output_dir: Optional[str]) -> str:
 def main() -> None:
     # Parse simple args: --env, --table, --out
     env_path = None
-    table_name = os.getenv("EXHIBITORS_TABLE", "").strip()
+    table_name = "exhibitors_info"
     output_dir = None
 
     args = sys.argv[1:]
@@ -252,7 +340,7 @@ def main() -> None:
 
     if not table_name:
         # Fall back to env or a generic default; user can override via --table
-        table_name = os.getenv("DB_TABLE", "").strip() or "exhibitors_info"
+        table_name = "exhibitors_info"
 
     rows = fetch_rows(table_name)
     html = build_html(rows)
