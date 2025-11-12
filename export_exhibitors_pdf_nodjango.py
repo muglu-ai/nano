@@ -207,7 +207,7 @@ def build_html(rows: List[Dict[str, Any]]) -> str:
         parts.append("""
         <div class="content">
             <div class="header">
-                <img src="https://tgs2024.org/admin/header-bg-2.png" alt="Header Image">
+                <img src="https://bengalurutechsummit.com/portal/public/asset/header.jpg" alt="Header Image">
             </div>
         """)
 
