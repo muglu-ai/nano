@@ -375,6 +375,7 @@ class PassesController extends Controller
                 'Mobile' => ltrim($row->mobile, '+'),
                 'Job Title' => $row->job_title,
                 'Organisation' => $row->organisation_name,
+                'Exhibitor Name' => $row->exhibitionParticipant->application->company_name,
                 // 'ID Type' => $row->id_type ?? 'N/A',
                 // 'ID Number' => $row->id_no ?? 'N/A',/
             ]);
@@ -431,6 +432,7 @@ class PassesController extends Controller
                     'Mobile',
                     'Job Title',
                     'Organisation',
+                    'Exhibitor Name',
                     // 'ID Type',
                     // 'ID Number',
                 ];
