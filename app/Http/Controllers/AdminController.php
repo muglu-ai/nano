@@ -1879,6 +1879,72 @@ class AdminController extends Controller
     }
 
     /**
+     * Export Fascia Details for exhibitors (Booth Management)
+     * Headers: Exhibitor Name, Fascia Name, Booth Number, Hall Number, Contact Person and Details
+     * Fascia falls back to application.fascia_name if exhibitor_info.fascia_name is missing
+     */
+    public function exportFasciaDetails(Request $request)
+    {
+        if (!auth()->check() || auth()->user()->role !== 'admin') {
+            return redirect('/login');
+        }
+
+        $rows = DB::table('applications as a')
+            ->leftJoin('exhibitors_info as ei', 'ei.application_id', '=', 'a.id')
+            ->leftJoin('event_contacts as ec', 'ec.application_id', '=', 'a.id')
+            ->select(
+                'a.company_name as exhibitor_name',
+                DB::raw('COALESCE(ei.fascia_name, a.fascia_name) as fascia_name'),
+                'a.stallNumber as booth_number',
+                'a.hallNo as hall_number',
+                'ec.first_name',
+                'ec.last_name',
+                'ec.job_title',
+                'ec.email',
+                'ec.contact_number'
+            )
+            ->orderBy('a.company_name', 'asc')
+            ->get();
+
+        $arrayRows = [];
+        foreach ($rows as $r) {
+            $contactName = trim(((string)$r->first_name) . ' ' . ((string)$r->last_name));
+            $parts = array_filter([
+                $contactName !== '' ? $contactName : null,
+                $r->job_title ?: null,
+                $r->email ?: null,
+                $r->contact_number ?: null,
+            ]);
+            $contactDisplay = implode(' | ', $parts);
+
+            $arrayRows[] = [
+                $r->exhibitor_name ?? 'N/A',
+                $r->fascia_name ?? 'N/A',
+                $r->booth_number ?? 'N/A',
+                $r->hall_number ?? 'N/A',
+                $contactDisplay ?: 'N/A',
+            ];
+        }
+
+        $filename = 'fascia_details_' . date('Ymd_His') . '.xlsx';
+
+        return Excel::download(new class($arrayRows) implements \Maatwebsite\Excel\Concerns\FromArray, \Maatwebsite\Excel\Concerns\WithHeadings {
+            protected $rows;
+            public function __construct($rows) { $this->rows = $rows; }
+            public function array(): array { return $this->rows; }
+            public function headings(): array {
+                return [
+                    'Exhibitor Name',
+                    'Fascia Name',
+                    'Booth Number',
+                    'Hall Number',
+                    'Contact Person and Details',
+                ];
+            }
+        }, $filename);
+    }
+
+    /**
      * Append a booth update log (before vs after) to a JSONL file
      */
     private function logBoothUpdate(Application $application, array $before, array $after, string $source, ?int $rowNumber = null): void
