@@ -54,7 +54,7 @@ class ImportData extends Controller
         while ($row = $result->fetch_assoc()) {
             $data[] = $row;
         }
-        $connection->close();
+        // NOTE: Do not close the connection here as it is used later in the import loop.
 
 //        dd(count($data));
 //        print_r($data);
@@ -392,6 +392,11 @@ class ImportData extends Controller
             foreach($importErrors as $error) {
                 echo "- [{$error['email']} | {$error['company']}] " . $error['message'] . "\n";
             }
+        }
+
+        // Close the remote DB connection after all operations are done
+        if ($connection && $connection instanceof \mysqli) {
+            $connection->close();
         }
 
         return response()->json(['message' => 'Data imported successfully']);
