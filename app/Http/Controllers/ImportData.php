@@ -283,7 +283,7 @@ class ImportData extends Controller
                     ['application_id' => $application->id],
                     [
                         'payment_due_date' => date('Y-m-d', strtotime($row['reg_date'] . ' +30 days')),
-                        'amount' => $row['total'],
+                        'amount' => $row['total'] ?? 0,
                         'currency' => ($row['curr'] == 'Indian' ? 'INR' : 'USD'),
                         'payment_status' => ($row['pay_status'] == 'Paid' ? 'paid' : 'unpaid'),
                         'type' => 'Stall Booking',
