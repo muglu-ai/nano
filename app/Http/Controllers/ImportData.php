@@ -45,7 +45,10 @@ class ImportData extends Controller
 
         // This query selects all columns from the exhibitors payments table (it_2025_exhibitors_dir_payment_tbl) where the pay_status is 'PAID'.
         // It retrieves a maximum of 50 records, skipping the very first (OFFSET 1).
-        $query = "SELECT * FROM it_2025_exhibitors_dir_payment_tbl WHERE pay_status = 'PAID'";
+        $query = "SELECT * FROM it_2025_exhibitors_dir_payment_tbl WHERE pay_status = 'Paid'";
+
+        // OR pay_status = 'Complimentary'
+        
         $result = $connection->query($query);
         $data = [];
         while ($row = $result->fetch_assoc()) {
@@ -62,6 +65,7 @@ class ImportData extends Controller
             // Track import status for this user
             $importSuccess = false;
             $errorMessage = null;
+
             // Begin transaction
             try {
                 DB::beginTransaction();
@@ -131,16 +135,33 @@ class ImportData extends Controller
 
                 $command['row'] = $row; // keep raw row for fallback
 
+                // if the approval_status is 'pending and pay_status is 'Complimentary' then skip that one
+                if ($row['approval_status'] == 'Pending' && $row['pay_status'] == 'Complimentary') {
+                    echo "Company '{$command['company']}' is pending and complimentary. Skipping...\n";
+                    DB::rollBack();
+                    continue;
+                }
+
+                // 
+
                 /** ---------------------------
                  * Step 2: Check existing user
                  * ----------------------------*/
                 $existingApplication = Application::where('company_name', $command['company'])->first();
 
                 if ($existingApplication) {
+
+                    // update the table with portalAccess = 1 
+                    $tin_no = isset($row['tin_no']) ? (is_array($row['tin_no']) ? ($row['tin_no']['tin_no'] ?? null) : $row['tin_no']) : null;
+                    if ($tin_no) {
+                        $connection->query("UPDATE it_2025_exhibitors_dir_payment_tbl SET portalAccess = 1 WHERE tin_no = '{$tin_no}'");
+                    }
                     echo "Company name '{$command['company']}' already registered. Skipping...\n";
                     DB::rollBack();
                     continue;
                 }
+
+                // if 
 
                 $user = User::where('email', $command['email'])->first();
 
@@ -162,6 +183,11 @@ class ImportData extends Controller
                         'email_verified_at' => now(),
                     ]);
                     echo "Created user: {$user->email} with password: {$command['password_plain']}\n";
+                }
+
+                // if the approval_status is 'Approved' and pay_status is 'Complimentary' then in $command['country_id'] set it to 351 
+                if ($row['approval_status'] == 'Approved' && $row['pay_status'] == 'Complimentary') {
+                    $command['country_id'] = 351;
                 }
 
                 /** ---------------------------
