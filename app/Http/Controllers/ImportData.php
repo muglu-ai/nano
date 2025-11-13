@@ -68,7 +68,7 @@ class ImportData extends Controller
         $importedCount = 0;
         foreach ($data as $row) {
 
-            dd($data);
+           // dd($data);
             // Track import status for this user
             $importSuccess = false;
             $errorMessage = null;
