@@ -43,9 +43,12 @@ class ImportData extends Controller
         // exit;
         $connection = $this->dbConnection();
 
-        // This query selects all columns from the exhibitors payments table (it_2025_exhibitors_dir_payment_tbl) where the pay_status is 'PAID'.
-        // It retrieves a maximum of 50 records, skipping the very first (OFFSET 1).
-        $query = "SELECT * FROM it_2025_exhibitors_dir_payment_tbl WHERE pay_status = 'Paid' and portalAccess = 0 and pay_status = 'Complimentary' and approval_status = 'Approved'";
+        // Fetch exhibitors whose portal access isn't granted yet and are approved,
+        // with pay_status either Paid or Complimentary.
+        $query = "SELECT * FROM it_2025_exhibitors_dir_payment_tbl
+                  WHERE portalAccess = 0
+                  AND approval_status = 'Approved' 
+                  AND pay_status IN ('Paid','Complimentary')";
 
         // OR pay_status = 'Complimentary'
         
