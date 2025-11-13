@@ -86,6 +86,12 @@
                         <div>
                             <h6 class="mb-1">Booth Number</h6>
                             <span class="fw-bold fs-5">{{ $application->stallNumber ?? 'Not Assigned' }}</span>
+							@if (!empty($application->hallNo))
+								<div class="mt-1">
+									<small class="text-secondary">Hall Number</small><br>
+									<span class="fw-bold fs-6">{{ $application->hallNo }}</span>
+								</div>
+							@endif
                         </div>
                     </div>
                 </div>

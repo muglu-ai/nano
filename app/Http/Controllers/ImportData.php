@@ -348,6 +348,13 @@ class ImportData extends Controller
                         $ticketAllocation = '{"2": 1, "11":2 }';
                     }
 
+                    // if the pay_status is 'Complimentary' then set the stallManningCount to 0 and ticketAllocation to '{"8": 1, "11":2 }'
+
+                    if ($row['pay_status'] == 'Complimentary') {
+                        $stallManningCount = 0;
+                        $ticketAllocation = '{"8": 1, "11":2 }';
+                    }
+
                     //create a ExhibitionParticipation entry
                     ExhibitionParticipant::updateOrCreate(
                         ['application_id' => $application->id],
