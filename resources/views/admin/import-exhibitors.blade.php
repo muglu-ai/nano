@@ -94,6 +94,11 @@
                                         <td><span class="badge bg-danger">Yes</span></td>
                                         <td>9876543210</td>
                                     </tr>
+                                    <tr>
+                                        <td>Stall Number</td>
+                                        <td><span class="badge bg-secondary">No</span></td>
+                                        <td>B12</td>
+                                    </tr>
                                 </tbody>
                             </table>
                         </div>

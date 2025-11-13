@@ -489,6 +489,7 @@ class ImportData extends Controller
                 $entityType = $this->cleanString($row['Entity is Sponsor/ Exhibitor / Startup?']) ?? 'Exhibitor';
                 $boothSize = intval($row['Exhibition booth Size: in SQM'] ?? 9);
                 $spaceType = $this->cleanString($row['Exhibitions Space Type (Raw / Shell)']) ?? 'Shell Scheme';
+                $stallNumberCsv = $this->cleanString($row['Stall Number'] ?? '');
                 $focusSectors = $this->cleanString($row['Focus Sectors (if any)'] ?? '');
                 $onboardingStatus = $this->cleanString($row['Onboarding Status (From TechTeam)'] ?? '');
                 $contactName = $this->cleanString($row['Exhibitor Contact Person Name']);
@@ -554,6 +555,7 @@ class ImportData extends Controller
                     'exhibitorType' => $exhibitorType,
                     'interested_sqm' => $boothSize,
                     'allocated_sqm' => $boothSize,
+                    'stallNumber' => $stallNumberCsv ?: null,
                     'submission_status' => 'approved',
                     'subSector' => $focusSectors,
                     'salesPerson' => $salesPerson,
