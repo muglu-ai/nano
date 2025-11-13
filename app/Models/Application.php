@@ -86,6 +86,7 @@ class Application extends Model
         'zone',
         'declarationStatus',
         'hallNo',
+        'pavilionName',
     ];
 
     /* Todo : Addedd the following new fields

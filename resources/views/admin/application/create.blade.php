@@ -169,6 +169,7 @@
                                         <option value="exhibitor" {{ old('application_type') == 'exhibitor' ? 'selected' : '' }}>Exhibitor</option>
                                         <option value="sponsor" {{ old('application_type') == 'sponsor' ? 'selected' : '' }}>Sponsor</option>
                                         <option value="exhibitor+sponsor" {{ old('application_type') == 'exhibitor+sponsor' ? 'selected' : '' }}>Exhibitor + Sponsorship</option>
+                                        <option value="co-exhibitor" {{ old('application_type') == 'co-exhibitor' ? 'selected' : '' }}>Co-Exhibitor</option>
                                     </select>
                                     @error('application_type')
                                         <div class="invalid-feedback">{{ $message }}</div>
@@ -206,6 +207,18 @@
                                            placeholder="Enter stall number">
                                     <small class="form-text text-muted">Enter the stall number</small>
                                     @error('stall_number')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
+                            </div>
+                            <div class="row mt-3" id="pavilion_name_field" style="display: none;">
+                                <div class="col-md-6">
+                                    <label for="pavilionName" class="form-label">Pavilion Name <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control @error('pavilionName') is-invalid @enderror"
+                                           id="pavilionName" name="pavilionName" value="{{ old('pavilionName') }}"
+                                           placeholder="Enter Pavilion Name">
+                                    <small class="form-text text-muted">Required if Application Type is Co-Exhibitor</small>
+                                    @error('pavilionName')
                                         <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
                                 </div>
@@ -404,6 +417,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const stallCategorySelect = document.getElementById('stall_category');
     const stallNumberField = document.getElementById('stall_number_field');
     const stallNumberInput = document.getElementById('stall_number');
+    const pavilionNameField = document.getElementById('pavilion_name_field');
+    const pavilionNameInput = document.getElementById('pavilionName');
     let ticketRowCount = 1;
 
     // ===== Dynamic States by Country =====
@@ -491,7 +506,34 @@ document.addEventListener('DOMContentLoaded', function() {
     function handleApplicationTypeChange() {
         const appType = applicationTypeSelect.value;
         
-        if (appType === 'exhibitor' || appType === 'exhibitor+sponsor') {
+        // Co-Exhibitor => show Pavilion Name; hide stall fields
+        if (appType === 'co-exhibitor') {
+            // Hide stall-related fields
+            stallSizeField.classList.remove('show');
+            stallSizeField.classList.add('hide');
+            setTimeout(() => { stallSizeField.style.display = 'none'; }, 300);
+            stallSizeInput.required = false;
+            stallSizeInput.value = '';
+
+            stallCategoryField.classList.remove('show');
+            stallCategoryField.classList.add('hide');
+            setTimeout(() => { stallCategoryField.style.display = 'none'; }, 300);
+            stallCategorySelect.required = false;
+            stallCategorySelect.value = '';
+
+            stallNumberField.classList.remove('show');
+            stallNumberField.classList.add('hide');
+            setTimeout(() => { stallNumberField.style.display = 'none'; }, 300);
+            stallNumberInput.value = '';
+
+            // Show pavilion name
+            pavilionNameField.style.display = 'block';
+            setTimeout(() => {
+                pavilionNameField.classList.remove('hide');
+                pavilionNameField.classList.add('show');
+            }, 10);
+            pavilionNameInput.required = true;
+        } else if (appType === 'exhibitor' || appType === 'exhibitor+sponsor') {
             // Show stall size field for both exhibitor and exhibitor+sponsor
             stallSizeField.style.display = 'block';
             setTimeout(() => {
@@ -514,6 +556,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 stallNumberField.classList.remove('hide');
                 stallNumberField.classList.add('show');
             }, 10);
+
+            // Hide pavilion name
+            pavilionNameField.classList.remove('show');
+            pavilionNameField.classList.add('hide');
+            setTimeout(() => { pavilionNameField.style.display = 'none'; }, 300);
+            pavilionNameInput.required = false;
+            pavilionNameInput.value = '';
         } else {
             // Hide all stall fields for sponsor or empty
             stallSizeField.classList.remove('show');
@@ -538,6 +587,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 stallNumberField.style.display = 'none';
             }, 300);
             stallNumberInput.value = '';
+
+            // Hide pavilion name
+            pavilionNameField.classList.remove('show');
+            pavilionNameField.classList.add('hide');
+            setTimeout(() => { pavilionNameField.style.display = 'none'; }, 300);
+            pavilionNameInput.required = false;
+            pavilionNameInput.value = '';
         }
     }
 
