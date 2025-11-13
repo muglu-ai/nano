@@ -196,6 +196,8 @@ class ImportData extends Controller
                 if ($row['approval_status'] == 'Approved' && $row['pay_status'] == 'Complimentary') {
                     $command['country_id'] = 351;
                     $row['amount_paid'] = 0;
+                    $row['total_amt_received'] = 0;
+                    $row['total'] = 0;
                 }
 
                 /** ---------------------------
