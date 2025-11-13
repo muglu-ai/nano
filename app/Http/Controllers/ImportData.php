@@ -291,7 +291,7 @@ class ImportData extends Controller
                         'gst' => $row['tax'],
                         'processing_chargesRate' => $row['processing_charge_per'],
                         'processing_charges' => $row['processing_charge'],
-                        'total_final_price' => $row['total'],
+                        'total_final_price' => $row['total'] ?? 0,
                         'amount_paid' => $row['total_amt_received'] ?? 0,
                         'invoice_no' => $row['tin_no'],
                         'pin_no' => $row['pin_no'],
