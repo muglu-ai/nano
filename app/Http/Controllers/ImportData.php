@@ -173,6 +173,9 @@ class ImportData extends Controller
                 $user = User::where('email', $command['email'])->first();
 
                 if ($user) {
+                    // update the user with portalAccess = 1  in payment table
+                    $connection->query("UPDATE it_2025_exhibitors_dir_payment_tbl SET portalAccess = 1 WHERE tin_no = '{$row['tin_no']}'");
+                    
                     echo "User with email {$command['email']} already exists. Skipping...\n";
                     DB::rollBack();
                     continue;
