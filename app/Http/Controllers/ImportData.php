@@ -310,14 +310,14 @@ class ImportData extends Controller
                 /** ---------------------------
                  * Step 8: Payment (if paid)
                  * ----------------------------*/
-                if ($row['pay_status'] == 'Paid') {
+                if ($row['pay_status'] == 'Paid' || $row['pay_status'] == 'Complimentary') {
                     Payment::create([
                         'invoice_id' => $invoice->id,
-                        'order_id' => $row['pg_paymentid'] ?? null,
+                        'order_id' => $row['pg_paymentid'] ?? $row['tin_no'],
                         'payment_method' => 'CCAvenue',
-                        'amount' => $row['total_amt_received'] ?? null,
-                        'amount_paid' => $row['total_amt_received'] ?? null,
-                        'transaction_id' => $row['pg_trackid'] ?? null,
+                        'amount' => $row['total_amt_received'] ?? 0,
+                        'amount_paid' => $row['total_amt_received'] ?? 0,
+                        'transaction_id' => $row['pg_trackid'] ?? 0,
                         'payment_date' => date('Y-m-d H:i:s', strtotime($row['pg_postdate'])),
                         'currency' => $invoice->currency,
                         'status' => 'successful',
@@ -350,10 +350,9 @@ class ImportData extends Controller
 
                     // if the pay_status is 'Complimentary' then set the stallManningCount to 0 and ticketAllocation to '{"8": 1, "11":2 }'
 
-                    if ($row['pay_status'] == 'Complimentary') {
-                        $stallManningCount = 0;
-                        $ticketAllocation = '{"8": 1, "11":2 }';
-                    }
+                    
+
+                    // dd($stallManningCount, $ticketAllocation);
 
                     //create a ExhibitionParticipation entry
                     ExhibitionParticipant::updateOrCreate(
