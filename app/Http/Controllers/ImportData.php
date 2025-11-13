@@ -55,7 +55,7 @@ class ImportData extends Controller
             $data[] = $row;
         }
 
-        dd($data);
+        dd($row);
         // NOTE: Do not close the connection here as it is used later in the import loop.
 
 //        dd(count($data));
