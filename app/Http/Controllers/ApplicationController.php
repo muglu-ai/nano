@@ -1304,7 +1304,7 @@ class ApplicationController extends Controller
         $validated = $request->validate([
             'company_email' => 'required|email|max:255|unique:users,email',
             'company_name' => 'required|string|max:255',
-            'application_type' => 'required|in:exhibitor,sponsor,exhibitor+sponsor',
+            'application_type' => 'required|in:exhibitor,sponsor,exhibitor+sponsor,co-exhibitor',
             'address' => 'nullable|string',
             'postal_code' => 'nullable|string|max:20',
             'city_id' => 'nullable|string|max:255',
@@ -1319,6 +1319,7 @@ class ApplicationController extends Controller
             'stall_size' => 'required_if:application_type,exhibitor|required_if:application_type,exhibitor+sponsor|nullable|numeric|min:1',
             'stall_category' => 'required_if:application_type,exhibitor|required_if:application_type,exhibitor+sponsor|nullable|in:Startup Booth,Shell Scheme,Bare Space',
             'stall_number' => 'nullable|string|max:255',
+            'pavilionName' => 'required_if:application_type,co-exhibitor|nullable|string|max:255',
             // 'stall_category' => 'required|in:Shell Scheme,Bare Space, Startup Booth',
             // 'booth_size' => 'required|integer|min:1|max:36',
             // 'payment_currency' => 'required|in:EUR,INR',
@@ -1369,6 +1370,7 @@ class ApplicationController extends Controller
                 'stall_category' => $validated['stall_category'] ?? null, // Store stall category
                 'stallNumber' => $validated['stall_number'] ?? null, // Store stall number (for Exhibitor + Sponsorship)
                 'sector_id' => $validated['sectors'] ?? null, // Store selected sector
+                'pavilionName' => $validated['pavilionName'] ?? null, // Store pavilion name for co-exhibitor
             ]);
 
             // Create EventContact if contact information is provided
