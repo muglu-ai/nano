@@ -173,6 +173,7 @@ class ImportData extends Controller
                 $user = User::where('email', $command['email'])->first();
 
                 if ($user) {
+                    //test 
                     // update the user with portalAccess = 1  in payment table
                     $connection->query("UPDATE it_2025_exhibitors_dir_payment_tbl SET portalAccess = 1 WHERE tin_no = '{$row['tin_no']}'");
                     
