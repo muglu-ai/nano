@@ -8,7 +8,7 @@ $conn = $link;
 require_once '../Final-Emailer/email.html';
 
 //get all applications where submission_status is approved
-$sql = "SELECT * FROM user WHERE submission_status = 'approved'";
+$sql = "SELECT * FROM users WHERE role = 'exhibitor'";
 $result = $conn->query($sql);
 
 //get the emailBody from ../Final-Emailer/email.html
@@ -16,7 +16,7 @@ $result = $conn->query($sql);
 //write a query to get all applications where submission_status is approved elastic_mail
 while ($row = $result->fetch_assoc()) {
 
-    $email = $row['company_email'];
+    $email = $row['email'];
     $to = array($email);
     $subject = 'Need extra hands at your Bengaluru Tech Summit stall?';
     $message = file_get_contents('../Final-Emailer/email.html');
@@ -26,5 +26,5 @@ while ($row = $result->fetch_assoc()) {
     // $to = ['chandrachood.as@mmactiv.com'];
 
     elastic_mail($subject, $message, $to);
-    //exit;
+    // exit;
 }

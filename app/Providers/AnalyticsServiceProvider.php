@@ -20,7 +20,7 @@ class AnalyticsServiceProvider extends ServiceProvider
     {
         $this->app->singleton('analytics', function () {
             return [
-                'totalApplications' => Application::where('application_type', 'exhibitor')->count(),
+                'totalApplications' => Application::where('application_type', ['exhibitor', 'sponsor', 'exhibitor+sponsor'])->count(),
                 'totalCoExhibitors' => CoExhibitor::count(),
                 'totalUsers' => User::count(),
                 'totalInvoices' => Invoice::count(),
