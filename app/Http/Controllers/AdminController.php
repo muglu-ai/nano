@@ -1686,7 +1686,7 @@ class AdminController extends Controller
         }
 
         $apps = Application::where('submission_status', 'approved')
-            ->select(['id', 'application_id', 'company_name', 'stallNumber', 'zone', 'hallNo', 'sector_id', 'stall_category', 'allocated_sqm'])
+            ->select(['id', 'application_id', 'company_name', 'tag', 'stallNumber', 'zone', 'hallNo', 'sector_id', 'stall_category', 'allocated_sqm'])
             ->orderBy('company_name', 'asc')
             ->get();
 
@@ -1743,6 +1743,7 @@ class AdminController extends Controller
             $rows[] = [
                 $app->application_id,
                 $app->company_name,
+                $app->tag ?? 'N/A',
                 $app->stallNumber,
                 $app->zone,
                 $app->hallNo,
@@ -1762,6 +1763,7 @@ class AdminController extends Controller
                 return [
                     'Application ID',
                     'Company Name',
+                    'Association Name',
                     'Booth Number',
                     'Zone',
                     'Hall No',
