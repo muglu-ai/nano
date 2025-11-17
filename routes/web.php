@@ -917,3 +917,9 @@ Route::get('/registration-count', [AttendeeController::class, 'registrationCount
 Route::get('/api/registration-count-data', [AttendeeController::class, 'getRegistrationCountData'])->name('api.registration.count')->middleware(Auth::class);
 
 Route::get('/email-preview/credentials/{email}', [EmailPreviewController::class, 'showCredentialsEmail']);
+
+// Exhibitor Directory PDF export (runs Python script) - Admin only
+Route::middleware(['auth', 'role:admin'])->group(function () {
+    Route::get('/admin/exhibitors/export-directory', [AdminController::class, 'showExhibitorDirectoryExportPage'])->name('admin.exhibitors.exportDirectory');
+    Route::post('/admin/exhibitors/export-directory/run', [AdminController::class, 'runExhibitorDirectoryExport'])->name('admin.exhibitors.exportDirectory.run');
+});

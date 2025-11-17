@@ -35,6 +35,7 @@ use App\Models\ExhibitorInfo;
 use App\Mail\ExhibitorDirectoryReminder;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Models\Sector;
+use Illuminate\Support\Facades\Http;
 
 
 
@@ -2364,6 +2365,91 @@ class AdminController extends Controller
         return response()->file($filePath, [
             'Content-Type' => 'application/pdf',
         ]);
+    }
+
+    /**
+     * Show the Exhibitor Directory PDF export page (runs Python script)
+     */
+    public function showExhibitorDirectoryExportPage()
+    {
+        if (!auth()->check() || auth()->user()->role !== 'admin') {
+            return redirect('/login');
+        }
+        return view('admin.exhibitor_directory_export');
+    }
+
+    /**
+     * Run the Python script to generate the Exhibitor Directory PDF and return a download URL
+     */
+    public function runExhibitorDirectoryExport(Request $request)
+    {
+        if (!auth()->check() || auth()->user()->role !== 'admin') {
+            return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
+        }
+
+        try {
+            $remoteUrl = env('EXHIBITOR_EXPORT_REMOTE_URL', 'https://portal.semiconindia.org/exhibitor_export_runner.php');
+            if (empty($remoteUrl)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Remote export URL is not configured. Set EXHIBITOR_EXPORT_REMOTE_URL in .env',
+                ], 500);
+            }
+
+            $secret = env('EXHIBITOR_EXPORT_SHARED_SECRET');
+            $http = Http::timeout(600)->acceptJson();
+            if (!empty($secret)) {
+                $http = $http->withHeaders(['X-EXPORT-SECRET' => $secret]);
+            }
+            $response = $http->post($remoteUrl, ['action' => 'run']);
+
+            if (!$response->ok()) {
+                try {
+                    $body = $response->body();
+                } catch (\Throwable $e) {
+                    $body = null;
+                }
+                Log::error('Exhibitor export remote server error', [
+                    'url' => $remoteUrl,
+                    'status' => $response->status(),
+                    'body' => is_string($body) ? mb_substr($body, 0, 2000) : null,
+                ]);
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Remote server error: ' . $response->status(),
+                ], 500);
+            }
+
+            $data = $response->json();
+            if (!is_array($data) || empty($data['success'])) {
+                Log::error('Exhibitor export remote reported failure', [
+                    'url' => $remoteUrl,
+                    'payload' => is_array($data) ? $data : (is_string($response->body()) ? mb_substr($response->body(), 0, 2000) : null),
+                ]);
+                return response()->json([
+                    'success' => false,
+                    'message' => $data['message'] ?? 'Remote export failed',
+                ], 500);
+            }
+
+            return response()->json([
+                'success' => true,
+                'url' => $data['url'] ?? null,
+                'filename' => $data['filename'] ?? null,
+                'timestamp' => $data['timestamp'] ?? null,
+                'started_at' => $data['started_at'] ?? null,
+                'finished_at' => $data['finished_at'] ?? null,
+                'duration_seconds' => $data['duration_seconds'] ?? null,
+            ]);
+        } catch (\Throwable $e) {
+            Log::error('Exhibitor export run exception', [
+                'error' => $e->getMessage(),
+            ]);
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], 500);
+        }
     }
 
 }

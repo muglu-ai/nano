@@ -1,120 +1,120 @@
-<?php 
+<?php
+exit; 
 ini_set('display_errors', 1);
 require 'emailFunction.php';
 
 
-$emails = [
-    "ZOE.LEE@NOW-INTERFACE.COM",
-    "rsgupta@djkindia.co.in",
-    "soyoung.jang@kohyoung.com",
-    "ppmfg@precisionproducts.in",
-    "rohitdoke@doshaheen.com",
-    "mani.prasad@orbitsolutions.net",
-    "mohit.singla@vvdntech.in",
-    "hgr@jtcorp.co.kr",
-    "marketing@surplusglobal.com",
-    "r-pal@ml.tanaka.co.jp",
-    "abhidha.s@deltaww.com",
-    "munira.rangwala@nagase.co.in",
-    "hariharasudan@stratusauto.com",
-    "samy@douyee.com.sg",
-    "y-murai@ckd.co.jp",
-    "peilin.lim@appsystems.com.sg",
-    "janice-yu@maxell.com.hk",
-    "tsuchihashi@samco.co.jp",
-    "hemant.waghela@clariant.com",
-    "nishant.kamboj@cdil.com",
-    "amit.chaudhary@nipponfusso.in",
-    "pavankumar@icleantech.com",
-    "neeraj@higgsbosonsystems.com",
-    "rohit@swift-corp.com",
-    "naveen.khurana@nmtronics.com",
-    "poonam.bhondve@georgfischer.com",
-    "d.suraj@precitec.com",
-    "dan.choy@ontoinnovation.com",
-    "hadar-p@novami.com",
-    "seshadri.s@asmltd.com",
-    "tokuriki-h@pack-sd.com",
-    "veeresh@maven-silicon.com",
-    "Mahesh.kothiyal@xylem.com",
-    "chenkueiping@genicgr.com",
-    "Tcaldwell@sid.org",
-    "svpatil@accurategauging.com",
-    "avinash.kumar@elesa-ganter.in",
-    "mithilesh.yadav@fabtechnologies.com",
-    "support@fluroengg.com",
-    "ginumong@morimura.in",
-    "nathankb@tpste.com",
-    "vanessa.kim@teradyne.com",
-    "ops@kloudklick.com",
-    "kaipai@hanbell.com",
-    "sandip_sen@tii.murugappa.com",
-    "deepika_sharma@argconsulting.co.in",
-    "apearson@cartencontrols.com",
-    "sbp@globetek.in",
-    "chitra.parmar@linde.com",
-    "accounts@rrpelectronics.com",
-    "hshah@rensatubes.com",
-    "mahesh@innatera.com",
-    "mmeruva@trojantechnologies.com",
-    "gauravshah@gampservices.com",
-    "accounts1@vasant.in",
-    "sarvesh.gunjal@vayusodh.com",
-    "paige.tan@thermofisher.com",
-    "keshav@vbshilpa.com",
-    "akansha@parasartstudio.com",
-    "torsten@ptwsingapore.com",
-    "operations1.tih@iitr.ac.in",
-    "surbhi@jeolindia.com",
-    "shivani@ozoneentertainments.com",
-    "mohan.selvaraj@esmo-asia.com",
-    "sanjay@sahasrasemi.com",
-    "kits.esdm@gmail.com",
-    "emarketing@sangir.com",
-    "deepa.sasidharan@lamresearch.com",
-    "INFO@AIMIL.COM",
-    "shivasrini@melss.com",
-    "kajal.thakur@toshiautomation.com",
-    "manish.sharma@interlinks.in",
-    "sales@lucidimaging.in",
-    "umashankar@aura.co.in",
-    "rahul.tyagi@addverb.com",
-    "tomoko_suzuki@ha.daifuku.co.jp",
-    "angie.cho@pentamaster.com.my",
-    "mustaqh.shaik@moschip.com",
-    "pritika.koul@smartsocs.com",
-    "pradeep@ausdia.com",
-    "thejas.raghav@uhptech.com",
-    "sanyam.sultania@akribis-sys.com",
-    "puneet.gupta@inoxap.com",
-    "JAYA.SINGH@PAVILIONSINTERIORS.COM",
-    "wassi.uddin@kaynes.org",
-    "praveen_kaushik@amat.com",
-    "Alimkhan@prime-pci.com",
-    "shima.sasaki@us.tel.com",
-    "Kannan.Kuriyan@swagelok.com",
-    "md@investtn.in",
-    "bhupinderduggal@htlaircon.com",
-    "industry.cense@iisc.ac.in",
-    "tadashi_oowada@ulvac.com",
-    "petrinaheng@discosin.com.sg",
-    "harshad.umrotkar@growel.com",
-    "ifitp.eit@odisha.gov.in",
-    "naresh@shavogroup.com",
-    "pmishra@yes.tech",
-    "scottng@jlk-tech.com"
-];
-
 $emailList = [
-    'manish.sharma@interlinks.in'
+    "vivek@playshifu.com",
+    "prithvi@qunulabs.in",
+    "sanjay@spyne.ai",
+    "darryl.d.dias@gmail.com",
+    "prem@marutdrones.com",
+    "pramod@unboxrobotics.com",
+    "akshay@kazam.in",
+    "nikhil@cynlr.com",
+    "nagendra@jed-i.in",
+    "pratik@neuronenergy.in",
+    "vadhiraja@vmvh.in",
+    "peeyush@vecmocon.com",
+    "kartikey.hariyani@chargezone.co",
+    "sandeep@sksadvisor.com",
+    "ramaseshan.satagopan@generalaeronautics.com",
+    "adithyavs@tvastagroup.in",
+    "tapan@mihup.com",
+    "jyothis@netrasemi.com",
+    "akshit712@gmail.com",
+    "jayant@nayantech.com",
+    "anindya.das@neysanetworks.com",
+    "manish.doshi@voltup.in",
+    "arpit@dharaksha.com",
+    "mayank@scalenut.com",
+    "jagga@perceptyne.com",
+    "notul.atul@hotmail.com",
+    "akash.gupta@cleanelectric.in",
+    "sanjay@exponent.energy",
+    "raj@kogo.ai",
+    "harshal_thakur@amphoursolar.com",
+    "vinodh@jidoka-tech.com",
+    "pradeep@thanos.in",
+    "narayanlalgurjar98@gmail.com",
+    "armaanmehta12@gmail.com",
+    "ganeshg@gnani.ai",
+    "KAUSTUBHD271@GMAIL.COM",
+    "neha@zerocircle.in",
+    "mailpranjal99@gmail.com",
+    "charu@3rdflix.com",
+    "pratik.somani@energycompany.in",
+    "anirvan@haystackanalytics.in",
+    "rituraj@gro.care",
+    "ajayraj.ramineni@gmail.com",
+    "manoj@orbo.ai",
+    "dreamflyinnovations@gmail.com",
+    "tonmoy@binocs.co",
+    "vishwanath.jha@gamutanalytics.com",
+    "sameer@indigridtechnology.com",
+    "saurabh@flickstree.com",
+    "gopinath@satsure.co",
+    "manesh@flomobility.com",
+    "sriram@sociographsolutions.in",
+    "offgridenergylabs@gmail.com",
+    "divyanshu@redinent.com",
+    "arun@racenergy.in",
+    "shanmukhs@iisc.ac.in",
+    "akshay@predictt.ai",
+    "shrey@altcarbon.in",
+    "mohal@mattermotor.com",
+    "laina.emmanuel@brainsightai.com",
+    "Shrikant@skyeair.tech",
+    "prasanta@newtrace.io",
+    "pinakd2013@email.iimcal.ac.in",
+    "hshah@replusengitech.com",
+    "raghus.iitm@gmail.com",
+    "vimal@ionage.in",
+    "aks.che@gmail.com",
+    "ramesh.srinivasan@zepcotek.com",
+    "janakiram@hbrobotics.in",
+    "john.kuruvilla@kalpnik.com",
+    "sraghavan@iisc.ac.in",
+    "ritwika@unscript.ai",
+    "aditya@frinks.in",
+    "accounts@zoop.one",
+    "Om@igdrones.com",
+    "kushagra@vidyo.ai",
+    "varun.goenka@echargeup.com",
+    "akhil@pulseenergy.io",
+    "nakul@devnagri.com",
+    "ramanunnim1995@gmail.com",
+    "ANKIT@SKILLR.AI",
+    "arthchowdhary18@gmail.com"
 ];
 
 
-$subject = "Important Note for Extra Requirements - SEMICON India 2025";
+// $emailList = [
+//     'chandrachood.as@mmactiv.com'
+// ];
+
+
+$subject = "Invitation for Startups to Participate in the Startup India Pavilion at Bengaluru Tech Summit 2025";
 // $message = "Your email message here.";
+
+$message = "Dear Startup Founder,<br><br>
+We are pleased to invite you to showcase your innovation at the Startup India Pavilion during the Bengaluru Tech Summit 2025. This is a prime opportunity to gain visibility, connect with investors, network with industry leaders and engage with the vibrant tech ecosystem.<br><br>
+A limited number of complimentary stalls are available and selection will be at the discretion of the organisers. Shortlisted startups will be allotted stalls on a first-come, first-served basis from among the eligible applicants.<br><br>
+If you wish to participate, kindly complete your registration at the earliest using the link below:<br><br>
+Register here: <a href=\"https://forms.gle/QvuXdPcevETaX4cL6\">https://forms.gle/QvuXdPcevETaX4cL6</a><br><br>
+We look forward to your participation and to celebrating pioneering innovations at the Summit.<br><br>
+Warm regards,<br>
+Chandrachood<br>
+Bengaluru Tech Summit Secretariat";
+
+
+
 // $headers = "From: sender@example.com\r\nReply-To: sender@example.com\r\n";
 
 foreach ($emailList as $email) {
     $email = array($email);
-    elastic_mail($subject, $message, $email, 'Important Note for Extra Requirements - SEMICON India 2025');
+    elastic_mail($subject, $message, $email, 'Invitation: Bengaluru Tech Summit 2025');
+
+    // exit;
 }

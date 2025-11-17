@@ -439,7 +439,12 @@ class ImportData extends Controller
     // TIN-BTS2025-EXHST-{random 5 characters with numbers only}
     public function generateTinNo()
     {
-        return 'TIN-BTS2025-EXHST-' . rand(10000, 99999);
+        //check if the tin_no is already exists in the database
+        $existingTinNo = Application::where('application_id', 'TIN-BTS2025-EXHST-' . rand(10000, 99999))->first();
+        if ($existingTinNo) {
+            return $this->generateTinNo();
+        }
+        // return 'TIN-BTS2025-EXHST-' . rand(10000, 99999);
     }
     public function generatePinNo()
     {
