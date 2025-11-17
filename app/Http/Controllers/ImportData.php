@@ -440,11 +440,11 @@ class ImportData extends Controller
     public function generateTinNo()
     {
         //check if the tin_no is already exists in the database
-        $existingTinNo = Application::where('application_id', 'TIN-BTS2025-EXHST-' . rand(10000, 99999))->first();
-        if ($existingTinNo) {
-            return $this->generateTinNo();
-        }
-        return 'TIN-BTS2025-EXHST-' . rand(10000, 99999);
+        // $existingTinNo = Application::where('application_id', 'TIN-BTS2025-EXHST-' . rand(10000, 99999))->first();
+        // if ($existingTinNo) {
+        //     return $this->generateTinNo();
+        // }
+        return 'TIN-BTS2025-EXHST-I' . rand(1111, 99999);
         // return 'TIN-BTS2025-EXHST-' . rand(10000, 99999);
     }
     public function generatePinNo()
