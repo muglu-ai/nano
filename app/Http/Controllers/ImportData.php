@@ -448,6 +448,10 @@ class ImportData extends Controller
     }
     public function generatePinNo()
     {
+        $existingPinNo = Application::where('pin_no', 'PIN-BTS2025-EXHST-' . rand(10000, 99999))->first();
+        if ($existingPinNo) {
+            return $this->generatePinNo();
+        }
         return 'PIN-BTS2025-EXHST-' . rand(10000, 99999);
     }
 
