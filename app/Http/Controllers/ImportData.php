@@ -444,6 +444,7 @@ class ImportData extends Controller
         if ($existingTinNo) {
             return $this->generateTinNo();
         }
+        return 'TIN-BTS2025-EXHST-' . rand(10000, 99999);
         // return 'TIN-BTS2025-EXHST-' . rand(10000, 99999);
     }
     public function generatePinNo()
