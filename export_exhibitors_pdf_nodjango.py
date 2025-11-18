@@ -125,6 +125,92 @@ def fetch_rows(table_name: str) -> List[Dict[str, Any]]:
             pass
 
 
+def fetch_exhibitors(event_id: Optional[int] = None) -> List[Dict[str, Any]]:
+    import mysql.connector
+    from mysql.connector import Error
+
+    cfg = get_db_config()
+    conn = None
+    try:
+        conn = mysql.connector.connect(
+            host=cfg["host"],
+            port=cfg["port"],
+            database=cfg["database"],
+            user=cfg["user"],
+            password=cfg["password"],
+        )
+        cursor = conn.cursor(dictionary=True)
+
+        query = """
+        SELECT
+            a.id AS a_id,
+            a.company_name AS a_company_name,
+            a.fascia_name AS a_fascia_name,
+            a.address AS a_address,
+            a.postal_code AS a_postal_code,
+            a.company_email AS a_company_email,
+            a.website AS a_website,
+            a.landline AS a_landline,
+            a.main_product_category AS a_main_product_category,
+            a.comments AS a_comments,
+            a.boothDescription AS a_booth_description,
+            ei.*,
+            ec.ec_salutation,
+            ec.ec_first_name,
+            ec.ec_last_name,
+            ec.ec_job_title,
+            ec.ec_email
+        FROM applications a
+        LEFT JOIN exhibitors_info ei ON ei.application_id = a.id
+        LEFT JOIN (
+            SELECT t.application_id,
+                   t.salutation AS ec_salutation,
+                   t.first_name AS ec_first_name,
+                   t.last_name AS ec_last_name,
+                   t.job_title AS ec_job_title,
+                   t.email AS ec_email,
+                   t.id AS ec_id
+            FROM event_contacts t
+            INNER JOIN (
+                SELECT application_id, MIN(id) AS id
+                FROM event_contacts
+                GROUP BY application_id
+            ) x ON x.application_id = t.application_id AND x.id = t.id
+        ) ec ON ec.application_id = a.id
+        """
+        params: List[Any] = []
+        if event_id is not None:
+            query += " WHERE a.event_id = %s"
+            params.append(event_id)
+
+        cursor.execute(query, params)
+        rows = cursor.fetchall()
+        return rows or []
+    except Error as e:
+        raise RuntimeError(f"MySQL error: {e}") from e
+    finally:
+        try:
+            if conn and conn.is_connected():
+                conn.close()
+        except Exception:
+            pass
+
+
+def get_display_company_name(row: Dict[str, Any]) -> str:
+    candidates = [
+        # row.get("fascia_name"),
+        # row.get("company_name"),
+        # row.get("a_fascia_name"),
+        row.get("a_company_name"),
+    ]
+    for c in candidates:
+        if c is not None:
+            s = str(c).strip()
+            if s:
+                return s
+    return ""
+
+
 def first_nonempty(data: Dict[str, Any], keys: List[str]) -> str:
     for k in keys:
         if k in data and data[k] is not None:
@@ -136,6 +222,15 @@ def first_nonempty(data: Dict[str, Any], keys: List[str]) -> str:
 
 def clean_text(text: str) -> str:
     return text.replace("\\r\\n", " ").replace("\r\n", " ").strip()
+
+
+def has_display_value(value: Optional[str]) -> bool:
+    if value is None:
+        return False
+    s = str(value).strip()
+    if not s:
+        return False
+    return s.lower() not in ("n/a", "na")
 
 
 def build_html(rows: List[Dict[str, Any]]) -> str:
@@ -199,14 +294,8 @@ def build_html(rows: List[Dict[str, Any]]) -> str:
     <body>
     """)
 
-    # Sort exhibitors alphabetically by company/fascia name (empty names last)
-    rows = sorted(
-        rows,
-        key=lambda r: (
-            not bool((first_nonempty(r, ["company_name", "fascia_name"]) or "").strip()),
-            (first_nonempty(r, ["company_name", "fascia_name"]) or "").strip().lower(),
-        ),
-    )
+    # Sort exhibitors alphabetically by display company name (empty names last)
+    rows = sorted(rows, key=lambda r: (not bool(get_display_company_name(r).strip()), get_display_company_name(r).strip().lower()))
 
     total_pages = ceil(len(rows) / 2) if rows else 0
 
@@ -226,31 +315,54 @@ def build_html(rows: List[Dict[str, Any]]) -> str:
 
             row = rows[i + j]
 
-            # Extract fields (with sanitation similar to provided reference)
-            company_name = first_nonempty(row, ["company_name", "fascia_name"])
-            sector = first_nonempty(row, ["sector"])
+            # Extract fields with precedence:
+            # Company name display: exhibitors_info first, then applications
+            company_name = get_display_company_name(row)
+
+            # Sector/category
+            sector = first_nonempty(row, ["sector", "category", "assoc_nm", "a_main_product_category"])
+
+            # Location and postal
             country = first_nonempty(row, ["country"])
             state = first_nonempty(row, ["state"])
             city = first_nonempty(row, ["city"])
-            zip_code = first_nonempty(row, ["zip_code", "zip"])
+            zip_code = first_nonempty(row, ["zip_code", "zip", "a_postal_code"])
 
-            contact_person = first_nonempty(row, ["contact_person"])
-            designation = first_nonempty(row, ["designation"])
-            email = first_nonempty(row, ["email"])
-            phone = first_nonempty(row, ["phone", "telPhone", "mobile", "mob"])
+            # Contact details: prefer exhibitors_info, then event_contacts, then applications
+            exhibitor_name = " ".join([p for p in [
+                first_nonempty(row, ["contact_person"]),
+            ] if p]).strip()
+            ec_name = " ".join([p for p in [
+                first_nonempty(row, ["ec_salutation"]),
+                first_nonempty(row, ["ec_first_name"]),
+                first_nonempty(row, ["ec_last_name"]),
+            ] if p]).strip()
 
+            # Prefer exhibitors_info name, then event_contacts name, then blank
+            contact_person = exhibitor_name or ec_name
+
+            # Prefer exhibitors_info job title, then event_contacts, then applications
+            designation = first_nonempty(row, ["designation", "ec_job_title"])
+
+            # Prefer exhibitors_info email, then event_contacts, then applications
+            email = first_nonempty(row, ["email", "ec_email", "a_company_email"])
+
+            # Prefer exhibitors_info phone, then event_contacts, then applications
+            phone = first_nonempty(row, ["phone", "ec_phone", "telPhone", "mobile", "mob", "a_landline"])
+
+            # Address: exhibitors_info first, else applications address + postal
             address = first_nonempty(row, ["address", "address_line_1"])
             if not address:
-                address = ", ".join([p for p in [
-                    city.title() if city else "",
-                    state.title() if state else "",
-                    country.title() if country else ""
-                ] if p])
+                base_addr = first_nonempty(row, ["a_address"]) or ""
+                address = base_addr.strip()
                 if zip_code:
                     address = f"{address} {zip_code}".strip()
 
-            description = first_nonempty(row, ["description", "profile"])
-            website = first_nonempty(row, ["website"])
+            # Description/profile: exhibitors_info first, else applications
+            description = first_nonempty(row, ["description", "profile", "a_comments", "a_booth_description"])
+
+            # Website: exhibitors_info first, else applications
+            website = first_nonempty(row, ["website", "a_website"])
 
             # Fix double https
             if website.startswith("https://https://"):
@@ -280,20 +392,34 @@ def build_html(rows: List[Dict[str, Any]]) -> str:
 
             block_class = "exhibitor1" if j == 0 else "exhibitor"
 
+            # Build table rows conditionally; hide header if value is empty or 'N/A'
+            table_rows: List[str] = []
+            if has_display_value(sector):
+                table_rows.append(f"<tr><th>Sector</th><th>:</th><td>{escape(sector)}</td></tr>")
+            if has_display_value(contact_person):
+                table_rows.append(f"<tr><th>Contact </th><th>:</th><td>{escape(contact_person)}</td></tr>")
+            if has_display_value(designation):
+                table_rows.append(f"<tr><th>Designation</th><th>:</th><td>{escape(designation)}</td></tr>")
+            if has_display_value(phone):
+                table_rows.append(f"<tr><th>Mobile</th><th>:</th><td>{escape(phone)}</td></tr>")
+            if has_display_value(email):
+                table_rows.append(f"<tr><th>E-mail</th><th>:</th><td>{escape(email)}</td></tr>")
+            if has_display_value(address):
+                table_rows.append(f"<tr><th>Address</th><th>:</th><td>{escape(address)}</td></tr>")
+            if has_display_value(website):
+                table_rows.append(f"<tr><th>Website</th><th>:</th><td>{escape(website)}</td></tr>")
+            if has_display_value(description):
+                table_rows.append("<tr><th><br>Profile:</th><th> </th></tr>")
+                table_rows.append(f'<tr><td colspan="3" class="profile">{escape(description)}</td></tr>')
+
+            rows_html = "\n".join(table_rows)
+
             parts.append(f"""
             <div class="{block_class}">
                 <h1>{escape((company_name or "N/A").upper())}</h1>
                 {'<p style="text-align:center;"><em>(Startup)</em></p>' if is_startup else ''}
                 <table>
-                    {"<tr><th>Sector</th><th>:</th><td>" + escape(sector) + "</td></tr>" if sector else ""}
-                    <tr><th>Contact </th><th>:</th><td>{escape(contact_person or "N/A")}</td></tr>
-                    <tr><th>Designation</th><th>:</th><td>{escape(designation or "N/A")}</td></tr>
-                    <tr><th>Mobile</th><th>:</th><td>{escape(phone or "N/A")}</td></tr>
-                    <tr><th>E-mail</th><th>:</th><td>{escape(email or "N/A")}</td></tr>
-                    <tr><th>Address</th><th>:</th><td>{escape(address or "N/A")}</td></tr>
-                    {"<tr><th>Website</th><th>:</th><td>" + escape(website) + "</td></tr>" if website else ""}
-                    <tr><th><br>Profile:</th><th> </th></tr>
-                    <tr><td colspan="3" class="profile">{escape(description or "N/A")}</td></tr>
+                    {rows_html}
                 </table>
             </div>
             """)
@@ -334,6 +460,7 @@ def main() -> None:
     env_path = None
     table_name = "exhibitors_info"
     output_dir = None
+    event_id: Optional[int] = None
 
     args = sys.argv[1:]
     for idx, arg in enumerate(args):
@@ -343,6 +470,11 @@ def main() -> None:
             table_name = args[idx + 1]
         if arg == "--out" and idx + 1 < len(args):
             output_dir = args[idx + 1]
+        if arg == "--event" and idx + 1 < len(args):
+            try:
+                event_id = int(args[idx + 1])
+            except Exception:
+                event_id = None
 
     ensure_packages()
     load_env(env_path)
@@ -351,7 +483,8 @@ def main() -> None:
         # Fall back to env or a generic default; user can override via --table
         table_name = "exhibitors_info"
 
-    rows = fetch_rows(table_name)
+    # Always fetch exhibitors based on applications, with joins
+    rows = fetch_exhibitors(event_id=event_id)
     html = build_html(rows)
     pdf_path = write_pdf(html, output_dir)
     print(f"PDF generated: {pdf_path}")
