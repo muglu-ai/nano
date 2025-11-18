@@ -26,18 +26,30 @@ class GeoController extends Controller
             $countries = Country::orderBy('name')->get(['id', 'name', 'code']);
             if ($countries->count() > 0) {
                 // Map to a structure similar to external API minimal needs
-                return $countries->map(function ($c) {
+                $data = $countries->map(function ($c) {
                     return [
                         'id' => $c->id,
                         'name' => $c->name,
                         'iso2' => $c->code, // external API uses iso2; our DB stores as code
                     ];
                 });
+                return response()->json($data)
+                    ->header('Access-Control-Allow-Origin', '*')
+                    ->header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
+                    ->header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With')
+                    ->header('Access-Control-Allow-Credentials', 'true')
+                    ->header('Vary', 'Origin');
             }
         } catch (\Throwable $e) {
             Log::warning('countries(): local DB fetch failed, trying external API', ['error' => $e->getMessage()]);
         }
-        return Http::withHeaders($this->headers)->get('https://api.countrystatecity.in/v1/countries')->json();
+        $res = Http::withHeaders($this->headers)->get('https://api.countrystatecity.in/v1/countries')->json();
+        return response()->json($res)
+            ->header('Access-Control-Allow-Origin', '*')
+            ->header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
+            ->header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With')
+            ->header('Access-Control-Allow-Credentials', 'true')
+            ->header('Vary', 'Origin');
     }
 
     public function states($country)
@@ -54,18 +66,30 @@ class GeoController extends Controller
             if ($countryId) {
                 $states = State::where('country_id', $countryId)->orderBy('name')->get(['id', 'name']);
                 if ($states->count() > 0) {
-                    return $states->map(function ($s) {
+                    $data = $states->map(function ($s) {
                         return [
                             'id' => $s->id,
                             'name' => $s->name,
                         ];
                     });
+                    return response()->json($data)
+                        ->header('Access-Control-Allow-Origin', '*')
+                        ->header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
+                        ->header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With')
+                        ->header('Access-Control-Allow-Credentials', 'true')
+                        ->header('Vary', 'Origin');
                 }
             }
         } catch (\Throwable $e) {
             Log::warning('states(): local DB fetch failed, trying external API', ['country' => $country, 'error' => $e->getMessage()]);
         }
-        return Http::withHeaders($this->headers)->get("https://api.countrystatecity.in/v1/countries/{$country}/states")->json();
+        $res = Http::withHeaders($this->headers)->get("https://api.countrystatecity.in/v1/countries/{$country}/states")->json();
+        return response()->json($res)
+            ->header('Access-Control-Allow-Origin', '*')
+            ->header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
+            ->header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With')
+            ->header('Access-Control-Allow-Credentials', 'true')
+            ->header('Vary', 'Origin');
     }
     public function statesName($country)
     {
@@ -81,22 +105,40 @@ class GeoController extends Controller
             if ($countryId) {
                 $states = State::where('country_id', $countryId)->orderBy('name')->get(['id', 'name']);
                 if ($states->count() > 0) {
-                    return $states->map(function ($s) {
+                    $data = $states->map(function ($s) {
                         return [
                             'id' => $s->id,
                             'name' => $s->name,
                         ];
                     });
+                    return response()->json($data)
+                        ->header('Access-Control-Allow-Origin', '*')
+                        ->header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
+                        ->header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With')
+                        ->header('Access-Control-Allow-Credentials', 'true')
+                        ->header('Vary', 'Origin');
                 }
             }
         } catch (\Throwable $e) {
             Log::warning('statesName(): local DB fetch failed, trying external API', ['country' => $country, 'error' => $e->getMessage()]);
         }
-        return Http::withHeaders($this->headers)->get("https://api.countrystatecity.in/v1/countries/{$country}/states")->json();
+        $res = Http::withHeaders($this->headers)->get("https://api.countrystatecity.in/v1/countries/{$country}/states")->json();
+        return response()->json($res)
+            ->header('Access-Control-Allow-Origin', '*')
+            ->header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
+            ->header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With')
+            ->header('Access-Control-Allow-Credentials', 'true')
+            ->header('Vary', 'Origin');
     }
 
     public function cities($country, $state)
     {
-        return Http::withHeaders($this->headers)->get("https://api.countrystatecity.in/v1/countries/{$country}/states/{$state}/cities")->json();
+        $res = Http::withHeaders($this->headers)->get("https://api.countrystatecity.in/v1/countries/{$country}/states/{$state}/cities")->json();
+        return response()->json($res)
+            ->header('Access-Control-Allow-Origin', '*')
+            ->header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
+            ->header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With')
+            ->header('Access-Control-Allow-Credentials', 'true')
+            ->header('Vary', 'Origin');
     }
 }

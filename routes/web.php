@@ -900,6 +900,31 @@ Route::prefix('api')->group(function () {
     Route::get('/countries', [GeoController::class, 'countries'])->name('api.countries');
     Route::get('/states/{country}', [GeoController::class, 'states'])->name('api.states');
     Route::get('/cities/{country}/{state}', [GeoController::class, 'cities'])->name('api.cities');
+    // CORS preflight for geo endpoints (allow all origins)
+    Route::options('/countries', function () {
+        return response('', 200)
+            ->header('Access-Control-Allow-Origin', '*')
+            ->header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
+            ->header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With')
+            ->header('Access-Control-Allow-Credentials', 'true')
+            ->header('Access-Control-Max-Age', '86400');
+    });
+    Route::options('/states/{country}', function () {
+        return response('', 200)
+            ->header('Access-Control-Allow-Origin', '*')
+            ->header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
+            ->header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With')
+            ->header('Access-Control-Allow-Credentials', 'true')
+            ->header('Access-Control-Max-Age', '86400');
+    });
+    Route::options('/cities/{country}/{state}', function () {
+        return response('', 200)
+            ->header('Access-Control-Allow-Origin', '*')
+            ->header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
+            ->header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With')
+            ->header('Access-Control-Allow-Credentials', 'true')
+            ->header('Access-Control-Max-Age', '86400');
+    });
 });
 Route::post('/otp/send', [OTPController::class, 'sendOtp']);
 Route::post('/otp/verify', [OTPController::class, 'verifyOtp']);
