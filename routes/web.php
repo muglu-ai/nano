@@ -17,6 +17,7 @@ use App\Http\Controllers\FileUploadController;
 use App\Http\Controllers\ForgotPasswordController;
 use App\Http\Controllers\GeoController;
 use App\Http\Controllers\ImportData;
+use App\Http\Controllers\EVisitorGuideController;
 use App\Http\Controllers\IntegrationAPIController;
 use App\Http\Controllers\InterlinxAPIController;
 use App\Http\Controllers\InvoicesController;
@@ -113,6 +114,7 @@ Route::get('email/exhibitor/registration', function () {
 Route::get('exhibitor-directory', function () {
     return view('e-visitor-guide.index');
 });
+Route::get('exhibitor-directory/pdf', [EVisitorGuideController::class, 'showPdf'])->name('exhibitor.directory.pdf');
 
 Route::get('send-sample-data', [ApiRelayController::class, 'testSampleEnqueue'])->name('send.sample.data');
 //api test 

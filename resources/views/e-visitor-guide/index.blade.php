@@ -79,7 +79,7 @@
 
     <div class="flipbook-wrapper">
         <div class="flipbook-card">
-            <div class="_df_book" id="flipbok_example" source="{{ asset('assets/docs/BTS-2025_Exhibitor-Directory.pdf') }}"></div>
+            <div class="_df_book" id="flipbok_example" source="{{ route('exhibitor.directory.pdf') }}"></div>
         </div>
     </div>
 
@@ -96,7 +96,7 @@
     <script src="{{ asset('dflip/js/dflip.min.js') }}" type="text/javascript"></script>
     <script>
         $(document).ready(function () {
-            $('#flipbok_example').flipBook({
+            $('#flipbok_example').flipBook({ 
                 maxVisiblePages: 2
             });
         });
