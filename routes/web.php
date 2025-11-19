@@ -19,6 +19,7 @@ use App\Http\Controllers\GeoController;
 use App\Http\Controllers\ImportData;
 use App\Http\Controllers\EVisitorGuideController;
 use App\Http\Controllers\IntegrationAPIController;
+use Illuminate\Http\Request;
 use App\Http\Controllers\InterlinxAPIController;
 use App\Http\Controllers\InvoicesController;
 use App\Http\Controllers\MailController;
@@ -111,7 +112,9 @@ Route::get('email/exhibitor/registration', function () {
     return view('emails.exhibitor.registrationEmail');
 });
 
-Route::get('exhibitor-directory', function () {
+Route::get('exhibitor-directory', function (Request $request) {
+    session(['allow_exhibitor_pdf' => true]);
+
     return view('e-visitor-guide.index');
 });
 Route::get('exhibitor-directory/pdf', [EVisitorGuideController::class, 'showPdf'])->name('exhibitor.directory.pdf');

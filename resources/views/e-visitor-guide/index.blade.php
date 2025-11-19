@@ -112,7 +112,14 @@
         $(document).ready(function () {
             $('#flipbok_example').flipBook({
                 maxVisiblePages: 2,
-                hideControls: ['download', 'share', 'fullscreen', 'thumbnails']
+                hideControls: ['download', 'share', 'fullscreen', 'thumbnails', 'sound', 'menu'],
+                controlsProps: {
+                    download: { enabled: false },
+                    share: { enabled: false },
+                    menu: { enabled: false }
+                },
+                downloadURL: null,
+                enableDownload: false
             });
         });
     </script>
