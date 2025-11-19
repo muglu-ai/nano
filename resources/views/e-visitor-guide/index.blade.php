@@ -71,6 +71,14 @@
             color: #6c7a99;
             font-size: 0.9rem;
         }
+
+        /* Force-hide any dFlip download control that may remain */
+        .df-ui .download,
+        .df-ui [data-action="download"],
+        .df-ui .df-download,
+        .df-ui .df-menu [data-action="download"] {
+            display: none !important;
+        }
     </style>
 </head>
 
