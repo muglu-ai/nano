@@ -13,15 +13,13 @@ class EVisitorGuideController extends Controller
      */
     public function showPdf(Request $request)
     {
-        if (!auth()->check()) {
-            abort(403);
-        }
-
         $path = storage_path('app/private/docs/BTS-2025_Exhibitor-Directory.pdf');
 
         if (!file_exists($path)) {
             abort(404);
         }
+
+        
 
         return Response::file($path, [
             'Content-Type' => 'application/pdf',
