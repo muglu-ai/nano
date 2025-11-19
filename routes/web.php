@@ -110,7 +110,7 @@ Route::get('email/exhibitor/registration', function () {
     return view('emails.exhibitor.registrationEmail');
 });
 
-Route::get('e-visitor-guide', function () {
+Route::get('exhibitor-directory', function () {
     return view('e-visitor-guide.index');
 });
 

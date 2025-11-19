@@ -7,16 +7,16 @@
     <link rel="icon" href="https://www.bengalurutechsummit.com/favicon-16x16.png"
         type="image/vnd.microsoft.icon" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SEMICON India 2025 - Visitor Guide</title>
+<title>{{ config('constants.EVENT_NAME') }} - Exhibitor Directory</title>
 
 <!-- Flipbook StyleSheets -->
-<link href="dflip/css/dflip.min.css" rel="stylesheet" type="text/css">
+<link href="public/dflip/css/dflip.min.css" rel="stylesheet" type="text/css">
 <!-- themify-icons.min.css is not required in version 2.0 and above -->
-<link href="dflip/css/themify-icons.min.css" rel="stylesheet" type="text/css">
+<link href="public/dflip/css/themify-icons.min.css" rel="stylesheet" type="text/css">
 
 </head>
 <body>
-<div class="_df_book" id="flipbok_example" source="Semicon-India-2025-E-Visitor-Guide_.pdf"></div>
+<div class="_df_book" id="flipbok_example" source="{{ asset('public/assets/docs/BTS-2025_Exhibitor-Directory.pdf') }}"></div>
 
 <!-- Scripts -->
 <script src="dflip/js/libs/jquery.min.js" type="text/javascript"></script>
