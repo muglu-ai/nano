@@ -16,7 +16,7 @@
 
 </head>
 <body>
-<div class="_df_book" id="flipbok_example" source="{{ asset('public/assets/docs/BTS-2025_Exhibitor-Directory.pdf') }}"></div>
+<div class="_df_book" id="flipbok_example" source="{{ asset('assets/docs/BTS-2025_Exhibitor-Directory.pdf') }}"></div>
 
 <!-- Scripts -->
 <script src="dflip/js/libs/jquery.min.js" type="text/javascript"></script>
