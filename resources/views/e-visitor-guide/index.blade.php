@@ -26,6 +26,10 @@
             min-height: 100vh;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             color: #1f2a44;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
         }
 
         .bts-header {
@@ -95,9 +99,20 @@
     <script src="{{ asset('dflip/js/libs/jquery.min.js') }}" type="text/javascript"></script>
     <script src="{{ asset('dflip/js/dflip.min.js') }}" type="text/javascript"></script>
     <script>
+        document.addEventListener('contextmenu', function (event) {
+            event.preventDefault();
+        });
+
+        document.addEventListener('keydown', function (event) {
+            if ((event.ctrlKey || event.metaKey) && ['s', 'S', 'p', 'u'].includes(event.key)) {
+                event.preventDefault();
+            }
+        });
+
         $(document).ready(function () {
-            $('#flipbok_example').flipBook({ 
-                maxVisiblePages: 2
+            $('#flipbok_example').flipBook({
+                maxVisiblePages: 2,
+                hideControls: ['download', 'share', 'fullscreen', 'thumbnails']
             });
         });
     </script>
