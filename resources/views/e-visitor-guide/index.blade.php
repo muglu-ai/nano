@@ -76,7 +76,8 @@
         .df-ui .download,
         .df-ui [data-action="download"],
         .df-ui .df-download,
-        .df-ui .df-menu [data-action="download"] {
+        .df-ui .df-menu [data-action="download"],
+        .more-container {
             display: none !important;
         }
     </style>
