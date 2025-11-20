@@ -1,4 +1,4 @@
-@include('layouts.dashboard2')
+@include('layouts.dashboard')
 <h1>Admin Dashboard</h1>
 
 <form method="POST" action="{{ route('logout') }}">
