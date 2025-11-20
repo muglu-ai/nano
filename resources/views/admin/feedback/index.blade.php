@@ -1,4 +1,6 @@
-@include('layouts.dashboard')
+@extends('layouts.dashboard')
+@section('title', 'Feedback Analytics')
+@section('content')
 
 <style>
     .feedback-analytics-card {
@@ -331,4 +333,6 @@
         }
     });
 </script>
+
+@endsection
 
