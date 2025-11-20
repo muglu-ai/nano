@@ -552,16 +552,16 @@
                             <div class="mb-4">
                                 <label class="form-label d-block text-center">How would you rate the overall event? <span class="text-danger">*</span></label>
                                 <div class="star-rating" id="eventRating">
-                                    <input type="radio" name="event_rating" value="5" id="event5" {{ old('event_rating') == '5' ? 'checked' : '' }} required>
-                                    <label for="event5"><i class="bi bi-star-fill"></i></label>
-                                    <input type="radio" name="event_rating" value="4" id="event4" {{ old('event_rating') == '4' ? 'checked' : '' }}>
-                                    <label for="event4"><i class="bi bi-star-fill"></i></label>
-                                    <input type="radio" name="event_rating" value="3" id="event3" {{ old('event_rating') == '3' ? 'checked' : '' }}>
-                                    <label for="event3"><i class="bi bi-star-fill"></i></label>
+                                    <input type="radio" name="event_rating" value="1" id="event1" {{ old('event_rating') == '1' ? 'checked' : '' }} required>
+                                    <label for="event1"><i class="bi bi-star-fill"></i></label>
                                     <input type="radio" name="event_rating" value="2" id="event2" {{ old('event_rating') == '2' ? 'checked' : '' }}>
                                     <label for="event2"><i class="bi bi-star-fill"></i></label>
-                                    <input type="radio" name="event_rating" value="1" id="event1" {{ old('event_rating') == '1' ? 'checked' : '' }}>
-                                    <label for="event1"><i class="bi bi-star-fill"></i></label>
+                                    <input type="radio" name="event_rating" value="3" id="event3" {{ old('event_rating') == '3' ? 'checked' : '' }}>
+                                    <label for="event3"><i class="bi bi-star-fill"></i></label>
+                                    <input type="radio" name="event_rating" value="4" id="event4" {{ old('event_rating') == '4' ? 'checked' : '' }}>
+                                    <label for="event4"><i class="bi bi-star-fill"></i></label>
+                                    <input type="radio" name="event_rating" value="5" id="event5" {{ old('event_rating') == '5' ? 'checked' : '' }}>
+                                    <label for="event5"><i class="bi bi-star-fill"></i></label>
                                 </div>
                                 <div class="rating-label" id="eventRatingLabel">Select a rating</div>
                                 @error('event_rating')
