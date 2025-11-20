@@ -1,4 +1,4 @@
-@include('layouts.dashboard2')
+@include('layouts.dashboard')
 
 <style>
     .feedback-analytics-card {
