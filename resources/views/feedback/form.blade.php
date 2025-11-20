@@ -601,7 +601,7 @@
                                     </div>
                                 </div>
                                 <div class="col-md-4 mb-3">
-                                    <label class="form-label text-center d-block">Networking Opportunities</label>
+                                    <label class="form-label text-center d-block">Networking Opportunities - B2B Interlinx Platform</label>
                                     <div class="star-rating" style="font-size: 2rem;">
                                         <input type="radio" name="networking_opportunities_rating" value="5" id="net5" {{ old('networking_opportunities_rating') == '5' ? 'checked' : '' }}>
                                         <label for="net5"><i class="bi bi-star-fill"></i></label>
