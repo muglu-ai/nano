@@ -63,6 +63,7 @@ use Mews\Captcha\Facades\Captcha;
 use App\Http\Controllers\EnquiryController;
 use App\Http\Controllers\EmailPreviewController;
 use App\Http\Controllers\CompanyLookupController;
+use App\Http\Controllers\FeedbackController;
 
 Route::get('send-exhibitor-chkdin2', [AdminController::  class, 'sendAllData'])->name('send.exhibitor.chkdin')->middleware(Auth::class);
 Route::get('get-users', [AdminController::class, 'getUsers'])->name('getUsers')->middleware(Auth::class);
@@ -953,3 +954,9 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
     Route::get('/admin/exhibitors/export-directory', [AdminController::class, 'showExhibitorDirectoryExportPage'])->name('admin.exhibitors.exportDirectory');
     Route::post('/admin/exhibitors/export-directory/run', [AdminController::class, 'runExhibitorDirectoryExport'])->name('admin.exhibitors.exportDirectory.run');
 });
+
+// Feedback Routes (Public Access - No Authentication Required)
+Route::get('/feedback', [FeedbackController::class, 'show'])->name('feedback.show');
+Route::post('/feedback', [FeedbackController::class, 'store'])->name('feedback.store');
+Route::get('/feedback/thankyou', [FeedbackController::class, 'thankyou'])->name('feedback.thankyou');
+Route::get('/feedback/reload-captcha', [FeedbackController::class, 'reloadCaptcha'])->name('feedback.reload.captcha');
