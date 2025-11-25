@@ -405,6 +405,14 @@
                     <span class="nav-link-text ms-1 ps-1 text-dark">Exhibitor Directory</span>
                 </a>
             </li>
+
+            {{-- add feedback analytics --}}
+            <li class="nav-item">
+                <a href="{{ route('admin.feedback.index') }}" class="nav-link text-dark">
+                    <i class="fa-solid fa-chart-line"></i>
+                    <span class="nav-link-text ms-1 ps-1 text-dark">Feedback Analytics</span>
+                </a>
+            </li>
             @if ($subRole === 'visitor')
                 <li class="nav-item">
                     <a data-bs-toggle="collapse" href="#visitors" class="nav-link text-dark"

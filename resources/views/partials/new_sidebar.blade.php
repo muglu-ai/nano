@@ -270,13 +270,7 @@
             </li>
             @endif
 
-            {{-- add feedback analytics --}}
-            <li class="nav-item">
-                <a href="{{ route('admin.feedback.index') }}" class="nav-link text-dark">
-                    <i class="fa-solid fa-chart-line"></i>
-                    <span class="nav-link-text ms-1 ps-1 text-dark">Feedback Analytics</span>
-                </a>
-            </li>
+            
 
         </ul>
     </div>
