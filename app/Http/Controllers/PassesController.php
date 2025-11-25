@@ -358,15 +358,45 @@ class PassesController extends Controller
 
     public function exportPasses(Request $request)
     {
+        ini_set('memory_limit', '512M');
+        set_time_limit(0);
+
+        // Keep log as per instruction, do not remove
+        $this->logExportingPassesToFile($request);
+
         $data = collect();
 
-        // Stall Manning
-        $stallManning = ComplimentaryDelegate::select('id', 'exhibition_participant_id', 'unique_id', 'first_name', 'email', 'mobile', 'job_title', 'organisation_name', 'created_at', 'id_type', 'id_no', 'ticketType')
+        // Getting all entries for ComplimentaryDelegate
+        $delegates = ComplimentaryDelegate::with(['exhibitionParticipant.application'])
+            ->select(
+                'id',
+                'exhibition_participant_id',
+                'unique_id',
+                'first_name',
+                'email',
+                'mobile',
+                'job_title',
+                'organisation_name',
+                'created_at',
+                'id_type',
+                'id_no',
+                'ticketType'
+            )
             ->whereNotNull('first_name')
             ->where('first_name', '!=', '')
             ->get();
 
-        foreach ($stallManning as $row) {
+        foreach ($delegates as $row) {
+            // Handle null relations gracefully
+            $exhibitorName = '';
+            if (
+                $row->relationLoaded('exhibitionParticipant') &&
+                $row->exhibitionParticipant &&
+                $row->exhibitionParticipant->relationLoaded('application') &&
+                $row->exhibitionParticipant->application
+            ) {
+                $exhibitorName = $row->exhibitionParticipant->application->company_name;
+            }
             $data->push([
                 'Type' => $row->ticketType,
                 'ID' => $row->unique_id,
@@ -375,69 +405,43 @@ class PassesController extends Controller
                 'Mobile' => ltrim($row->mobile, '+'),
                 'Job Title' => $row->job_title,
                 'Organisation' => $row->organisation_name,
-                'Exhibitor Name' => $row->exhibitionParticipant->application->company_name,
-                // 'ID Type' => $row->id_type ?? 'N/A',
-                // 'ID Number' => $row->id_no ?? 'N/A',/
+                'Exhibitor Name' => $exhibitorName,
             ]);
         }
 
-        // Complimentary Delegate
-        // $complimentary = ComplimentaryDelegate::select('id', 'exhibition_participant_id', 'unique_id', 'first_name', 'email', 'mobile', 'job_title', 'organisation_name', 'created_at', 'id_type', 'id_no')
-        //     ->whereNotNull('first_name')
-        //     ->where('first_name', '!=', '')
-        //     ->get();
-
-        // foreach ($complimentary as $row) {
-        //     $data->push([
-        //         'Type' => 'Exhibitor Inaugural Passes',
-        //         'ID' => $row->unique_id,
-        //         'Name' => $row->first_name,
-        //         'Email' => $row->email,
-        //         'Mobile' => ltrim($row->mobile, '+'),
-        //         'Job Title' => $row->job_title ?? 'N/A',
-        //         'Organisation' => $row->organisation_name,
-        //         // 'ID Type' => $row->id_type ?? 'N/A',
-        //         // 'ID Number' => $row->id_no ?? 'N/A',
-
-        //     ]);
-        // }
-
         $filename = 'exhibitor_passes_' . date('Ymd_His') . '.xlsx';
 
-        // Log export action to a file with user details and IP
-        $this->logExportingPassesToFile($request);
+        // Export via Excel. Headings and data are dynamically generated.
+        return \Maatwebsite\Excel\Facades\Excel::download(
+            new class($data) implements \Maatwebsite\Excel\Concerns\FromCollection, \Maatwebsite\Excel\Concerns\WithHeadings {
+                protected $data;
 
-        return Excel::download(new class($data) implements \Maatwebsite\Excel\Concerns\FromCollection, \Maatwebsite\Excel\Concerns\WithHeadings {
+                public function __construct($data)
+                {
+                    $this->data = $data;
+                }
 
-            //log which user is downloading the file
-            protected $data;
+                public function collection()
+                {
+                    return $this->data;
+                }
 
-            public function __construct($data)
-            {
-                $this->data = $data;
-            }
-
-            public function collection()
-            {
-                return $this->data;
-            }
-
-            public function headings(): array
-            {
-                return [
-                    'Type',
-                    'ID',
-                    'Name',
-                    'Email',
-                    'Mobile',
-                    'Job Title',
-                    'Organisation',
-                    'Exhibitor Name',
-                    // 'ID Type',
-                    // 'ID Number',
-                ];
-            }
-        }, $filename);
+                public function headings(): array
+                {
+                    return [
+                        'Type',
+                        'ID',
+                        'Name',
+                        'Email',
+                        'Mobile',
+                        'Job Title',
+                        'Organisation',
+                        'Exhibitor Name',
+                    ];
+                }
+            },
+            $filename
+        );
     }
 
     private function logExportingPassesToFile(Request $request)
