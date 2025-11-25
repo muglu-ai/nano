@@ -19,16 +19,20 @@ return new class extends Migration
             $table->string('email');
             $table->string('phone');
             $table->string('address');
-            //GST/Tax ID
-            $table->string('gst_id');
-            $table->foreignId('city_id')->constrained('cities');
+            $table->string('gst_id')->nullable();
+            $table->string('city_id')->nullable();
             $table->foreignId('state_id')->constrained('states');
             $table->foreignId('country_id')->constrained('countries');
             $table->string('postal_code');
-            $table->boolean('same_as_basic');
+            $table->boolean('same_as_basic')->default(false);
             $table->timestamps();
-        });
 
+            // Indexes
+            $table->index('application_id');
+            $table->index('country_id');
+            $table->index('state_id');
+            $table->index('city_id');
+        });
     }
 
     /**

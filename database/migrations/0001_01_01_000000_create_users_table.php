@@ -16,10 +16,14 @@ return new class extends Migration
             $table->string('name');
             $table->string('email')->unique();
             $table->string('password');
-            $table->enum('role', ['exhibitor', 'sponsor', 'admin']);
+            $table->string('simplePass')->nullable();
+            $table->enum('role', ['exhibitor', 'co-exhibitor', 'sponsor', 'admin']);
             $table->string('phone')->nullable();
             $table->string('password_reset_token')->nullable();
             $table->timestamp('password_reset_expires_at')->nullable();
+            $table->text('email_verification_token')->nullable();
+            $table->timestamp('email_verified_at')->nullable();
+            $table->string('sub_role', 125)->nullable();
             $table->timestamps();
         });
 

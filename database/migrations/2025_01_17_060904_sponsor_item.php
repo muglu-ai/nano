@@ -11,17 +11,36 @@ return new class extends Migration
      */
     public function up(): void
     {
-        // create sponsor_item table with id, name, price, no of items, deliverables, status, created_at, updated_at
+        // Create sponsor_categories first if not exists
+        if (!Schema::hasTable('sponsor_categories')) {
+            Schema::create('sponsor_categories', function (Blueprint $table) {
+                $table->id();
+                $table->string('name');
+                $table->enum('status', ['active', 'inactive'])->default('active');
+                $table->timestamps();
+            });
+        }
+
+        // Create sponsor_items table
         Schema::create('sponsor_items', function (Blueprint $table) {
             $table->id();
             $table->string('name');
+            $table->foreignId('category_id')->constrained('sponsor_categories');
             $table->decimal('price', 10, 2);
+            $table->decimal('mem_price', 10, 2);
             $table->integer('no_of_items');
+            $table->text('quantity_desc')->nullable();
             $table->text('deliverables');
             $table->enum('status', ['active', 'inactive'])->default('active');
+            $table->text('image_url')->nullable();
+            $table->dateTime('deadline')->nullable();
+            $table->boolean('is_addon')->default(false);
             $table->timestamps();
-        });
 
+            // Indexes
+            $table->index('category_id');
+            $table->index('no_of_items');
+        });
     }
 
     /**

@@ -21,18 +21,30 @@ return new class extends Migration
             $table->unsignedBigInteger('invoice_id');
             $table->string('payment_method');
             $table->decimal('amount', 10, 2);
+            $table->decimal('amount_paid', 10, 2)->nullable();
             $table->decimal('amount_received', 10, 2)->nullable();
-            $table->string('transaction_id')->unique();
+            $table->string('transaction_id');
             $table->string('pg_result')->nullable();
             $table->string('track_id')->nullable();
             $table->text('response')->nullable();
             $table->json('pg_response_json')->nullable();
-            $table->dateTime('payment_date');
+            $table->dateTime('payment_date')->nullable();
+            $table->string('currency', 10)->nullable();
             $table->enum('status', ['successful', 'failed', 'pending']);
-            $table->string('order_id')->nullable();
+            $table->text('rejection_reason')->nullable();
+            $table->string('receipt_image')->nullable();
+            $table->text('order_id')->nullable();
+            $table->foreignId('user_id')->nullable()->constrained('users')->onDelete('set null');
+            $table->string('verification_status', 150)->default('Pending');
+            $table->string('verified_by')->nullable();
+            $table->timestamp('verified_at')->nullable();
+            $table->text('remarks')->nullable();
+            $table->double('tds_amount')->default(0);
+            $table->text('tdsReason')->nullable();
             $table->timestamps();
-            $table->foreign('invoice_id')->references('id')->on('invoices')->onDelete('cascade');
 
+            // Indexes
+            $table->index('user_id');
         });
     }
 
