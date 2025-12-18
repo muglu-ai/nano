@@ -412,12 +412,12 @@ class PaymentController extends Controller
                                                 </p>
 
                                                 <p style="font-size:16px; color:#333; margin-bottom:0;">
-                                                    <strong>SEMICON India 2025.</strong>
+                                                    <strong>' . config('constants.EVENT_NAME') . ' ' . config('constants.EVENT_YEAR') . '.</strong>
                                                     <br>
                                                     <span style="color:#888;">For any queries, please reach out to us at:</span>
                                                 </p>
                                                 <p style="font-size:16px; color:#333; margin-top:8px; margin-bottom:0;">
-                                                    <strong>Email:</strong> <b>semiconindia@semi.org</b>
+                                                    <strong>Email:</strong> <b>' . ORGANIZER_EMAIL . '</b>
                                                 </p>
                                             </td>
                                         </tr>
@@ -431,7 +431,7 @@ class PaymentController extends Controller
 
                     // $email = "manish.sharma@interlinks.in";
                     // Send email using Laravel Mail::html with HTML content
-                    $subject = "Extra Requirement Payment Update - SEMICON India 2025";
+                    $subject = "Extra Requirement Payment Update - " . config('constants.EVENT_NAME') . " " . config('constants.EVENT_YEAR');
                     Mail::to($eventContactEmail)
                         ->cc(['support.mmaportal@interlinks.in'])
                         ->bcc(['test.interlinks@gmail.com'])
@@ -574,12 +574,12 @@ class PaymentController extends Controller
                                                         You can now log in to your dashboard to view your order details and manage your account.
                                                     </p>
                                                     <p style="font-size:16px; color:#333; margin-bottom:0;">
-                                                        <strong>SEMICON India 2025.</strong>
+                                                        <strong>' . config('constants.EVENT_NAME') . ' ' . config('constants.EVENT_YEAR') . '.</strong>
                                                         <br>
                                                         <span style="color:#888;">For any queries, please reach out to us at:</span>
                                                     </p>
                                                     <p style="font-size:16px; color:#333; margin-top:8px; margin-bottom:0;">
-                                                        <strong>Email:</strong> <b>semiconindia@semi.org</b>
+                                                        <strong>Email:</strong> <b>' . ORGANIZER_EMAIL . '</b>
                                                     </p>
                                                 </td>
                                             </tr>
@@ -591,7 +591,7 @@ class PaymentController extends Controller
                         </html>
                         HTML;
 
-                        $subject = "Extra Requirement Payment Update - SEMICON India 2025";
+                        $subject = "Extra Requirement Payment Update - " . config('constants.EVENT_NAME') . " " . config('constants.EVENT_YEAR');
 
                         $eventContact = EventContact::where('application_id', $invoice->application_id)->first();
                         $eventContactEmail = $eventContact->email;

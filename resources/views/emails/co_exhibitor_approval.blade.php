@@ -81,7 +81,7 @@
     </tr>
     <tr>
         <td class="footer" align="center">
-            <p>Best Regards,<br><strong>SEMICON India 2025 Team</strong></p>
+            <p>Best Regards,<br><strong>{{ config('constants')['EVENT_NAME'] }} {{ config('constants')['EVENT_YEAR'] }} Team</strong></p>
         </td>
     </tr>
     <tr>

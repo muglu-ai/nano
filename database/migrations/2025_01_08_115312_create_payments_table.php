@@ -3,6 +3,7 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Database\QueryException;
 
 return new class extends Migration
 {
@@ -11,10 +12,22 @@ return new class extends Migration
      */
     public function up(): void
     {
-
-        Schema::table('sponsorships', function (Blueprint $table) {
-            $table->foreign('invoice_id')->references('id')->on('invoices')->onDelete('cascade');
-        });
+        // Ensure foreign key from sponsorships to invoices exists, but avoid duplicate constraint errors
+        if (Schema::hasTable('sponsorships') && Schema::hasTable('invoices')) {
+            try {
+                Schema::table('sponsorships', function (Blueprint $table) {
+                    $table->foreign('invoice_id')
+                        ->references('id')
+                        ->on('invoices')
+                        ->onDelete('cascade');
+                });
+            } catch (QueryException $e) {
+                // Ignore duplicate foreign key (MySQL 1826); rethrow other errors
+                if (($e->errorInfo[1] ?? null) !== 1826) {
+                    throw $e;
+                }
+            }
+        }
 
         Schema::create('payments', function (Blueprint $table) {
             $table->id();

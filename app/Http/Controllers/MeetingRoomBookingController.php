@@ -319,7 +319,7 @@ class MeetingRoomBookingController extends Controller
             $toEmails = array_filter(array_unique($toEmails));
 
             Mail::to($toEmails)
-                // ->cc('semiconindia@semi.org')
+                // ->cc(ORGANIZER_EMAIL)
                 ->bcc('test.interlinks@gmail.com')
                 ->send(new MeetingRoomInvoice($booking->booking_id));
             return redirect()->route('meeting_rooms.mybook');

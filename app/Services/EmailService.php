@@ -9,7 +9,7 @@ use Throwable;
 class EmailService
 {
     /**
-     * Send the SEMICON India 2025 information email.
+     * Send the ' . config('constants.EVENT_NAME') . ' ' . config('constants.EVENT_YEAR') . ' information email.
      *
      * @param  string|array  $to          Single email or array of emails
      * @param  string        $subject     Email subject
@@ -18,13 +18,13 @@ class EmailService
      * @param  array         $bcc         BCC recipients (optional)
      * @return bool                      True on success, false on failure
      */
-    public static function sendSemiconNotice($to, string $subject = 'Important Information – SEMICON India 2025', ?string $attachment = null, array $cc = [], array $bcc = []): bool
+    public static function sendSemiconNotice($to, string $subject = 'Important Information – ' . config('constants.EVENT_NAME') . ' ' . config('constants.EVENT_YEAR'), ?string $attachment = null, array $cc = [], array $bcc = []): bool
     {
         // Your provided body (HTML). You can edit freely.
         $emailBody = <<<'HTML'
 <p>Dear Participant,</p>
 
-<p>Thank you for your interest in <strong>SEMICON India 2025</strong>, scheduled for <strong>2nd–4th September 2025</strong>. Entry passes (e-Badges) are now being issued.</p>
+<p>Thank you for your interest in <strong>' . config('constants.EVENT_NAME') . ' ' . config('constants.EVENT_YEAR') . '</strong>, scheduled for <strong>2nd–4th September 2025</strong>. Entry passes (e-Badges) are now being issued.</p>
 
 <p>Please note the following important information:</p>
 <ul>
@@ -40,7 +40,7 @@ class EmailService
 
 <p>We regret any inconvenience caused. These arrangements are as per ISM guidelines, and we appreciate your cooperation.</p>
 
-<p>We look forward to welcoming you to SEMICON India 2025.</p>
+<p>We look forward to welcoming you to ' . config('constants.EVENT_NAME') . ' ' . config('constants.EVENT_YEAR') . '.</p>
 
 <p>
   <strong>Click Here to View Shuttle Service Plan:</strong><br>
@@ -50,7 +50,7 @@ class EmailService
 </p>
 
 <p>Best regards,<br>
-SEMICON India Team</p>
+' . config('constants.EVENT_NAME') . ' Team</p>
 HTML;
 
         // Create a simple plaintext alternative for better deliverability

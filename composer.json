@@ -10,10 +10,11 @@
     "license": "MIT",
     "require": {
         "php": "^8.2",
-        "ext-http": "*",
         "ext-mysqli": "*",
+        "ext-pdo": "*",
         "barryvdh/laravel-dompdf": "^3.1",
         "elasticemail/elasticemail-php": "^4.0",
+        "guzzlehttp/guzzle": "^7.9",
         "illuminate/mail": "*",
         "laravel/framework": "^11.31",
         "laravel/tinker": "^2.9",
@@ -22,8 +23,7 @@
         "outhebox/blade-flags": "^1.5",
         "paypal/paypal-server-sdk": "^0.6.1",
         "simplesoftwareio/simple-qrcode": "^4.2",
-        "srmklive/paypal": "*",
-      "ext-pdo": "*"
+        "srmklive/paypal": "*"
     },
     "require-dev": {
         "fakerphp/faker": "^1.23",

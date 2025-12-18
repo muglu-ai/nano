@@ -118,7 +118,7 @@ class ExtraRequirementsMail extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Extra Requirements Order  - SEMICON India 2025',
+            subject: 'Extra Requirements Order  - ' . config('constants.EVENT_NAME') . ' ' . config('constants.EVENT_YEAR'),
         );
     }
 

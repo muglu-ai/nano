@@ -11,16 +11,28 @@ return new class extends Migration
      */
     public function up(): void
     {
-        //update invoice table with new columns for discount_per, discount, gst, processing charges, price, and total_final_price
-        Schema::table('invoices', function (Blueprint $table) {
-            $table->float('discount_per')->nullable();
-            $table->float('discount')->nullable();
-            $table->float('gst')->nullable();
-            $table->float('processing_charges')->nullable();
-            $table->float('price')->nullable();
-            $table->float('total_final_price')->nullable();
-        });
-
+        if (Schema::hasTable('invoices')) {
+            Schema::table('invoices', function (Blueprint $table) {
+                if (!Schema::hasColumn('invoices', 'discount_per')) {
+                    $table->float('discount_per')->nullable();
+                }
+                if (!Schema::hasColumn('invoices', 'discount')) {
+                    $table->float('discount')->nullable();
+                }
+                if (!Schema::hasColumn('invoices', 'gst')) {
+                    $table->float('gst')->nullable();
+                }
+                if (!Schema::hasColumn('invoices', 'processing_charges')) {
+                    $table->float('processing_charges')->nullable();
+                }
+                if (!Schema::hasColumn('invoices', 'price')) {
+                    $table->float('price')->nullable();
+                }
+                if (!Schema::hasColumn('invoices', 'total_final_price')) {
+                    $table->float('total_final_price')->nullable();
+                }
+            });
+        }
     }
 
     /**
@@ -28,6 +40,27 @@ return new class extends Migration
      */
     public function down(): void
     {
-        //
+        if (Schema::hasTable('invoices')) {
+            Schema::table('invoices', function (Blueprint $table) {
+                if (Schema::hasColumn('invoices', 'discount_per')) {
+                    $table->dropColumn('discount_per');
+                }
+                if (Schema::hasColumn('invoices', 'discount')) {
+                    $table->dropColumn('discount');
+                }
+                if (Schema::hasColumn('invoices', 'gst')) {
+                    $table->dropColumn('gst');
+                }
+                if (Schema::hasColumn('invoices', 'processing_charges')) {
+                    $table->dropColumn('processing_charges');
+                }
+                if (Schema::hasColumn('invoices', 'price')) {
+                    $table->dropColumn('price');
+                }
+                if (Schema::hasColumn('invoices', 'total_final_price')) {
+                    $table->dropColumn('total_final_price');
+                }
+            });
+        }
     }
 };

@@ -9,7 +9,7 @@
     <link rel="apple-touch-icon" sizes="76x76" href="../../assets/img/apple-icon.png">
     <link rel="icon" href="https://www.bengalurutechsummit.com/favicon-16x16.png" type="image/vnd.microsoft.icon" />
     <title>
-        @yield('title' , 'SEMICON 2025 Admin Panel')
+        @yield('title' , '{{ config('constants')['EVENT_NAME'] }} {{ config('constants')['EVENT_YEAR'] }} Admin Panel')
     </title>
     <!--     Fonts and icons     -->
     <link rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css?family=Inter:300,400,500,600,700,900" />

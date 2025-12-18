@@ -41,6 +41,17 @@ return new class extends Migration
             $table->index('category_id');
             $table->index('no_of_items');
         });
+
+        // Add foreign key from sponsorships to sponsor_items now that table exists
+        if (Schema::hasTable('sponsorships')) {
+            Schema::table('sponsorships', function (Blueprint $table) {
+                $table->foreign('sponsorship_item_id')
+                    ->references('id')
+                    ->on('sponsor_items')
+                    ->onDelete('cascade')
+                    ->onUpdate('cascade');
+            });
+        }
     }
 
     /**
@@ -48,6 +59,15 @@ return new class extends Migration
      */
     public function down(): void
     {
-        //
+        // Drop foreign key from sponsorships to sponsor_items if it exists
+        if (Schema::hasTable('sponsorships')) {
+            Schema::table('sponsorships', function (Blueprint $table) {
+                $table->dropForeign(['sponsorship_item_id']);
+            });
+        }
+
+        // Drop sponsor_items and sponsor_categories tables
+        Schema::dropIfExists('sponsor_items');
+        Schema::dropIfExists('sponsor_categories');
     }
 };

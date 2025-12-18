@@ -11,11 +11,14 @@ return new class extends Migration
      */
     public function up(): void
     {
-         Schema::table('applications', function (Blueprint $table) {
-             //add the following columns submissiion status submitted or in progress
-                $table->string('submission_status')->default('in progress');
-
-         });
+        if (Schema::hasTable('applications')) {
+            Schema::table('applications', function (Blueprint $table) {
+                // Add submission_status only if it doesn't already exist
+                if (!Schema::hasColumn('applications', 'submission_status')) {
+                    $table->string('submission_status')->default('in progress');
+                }
+            });
+        }
     }
 
     /**
@@ -23,8 +26,12 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('applications', function (Blueprint $table) {
-            $table->dropColumn('submission_status');
-        });
+        if (Schema::hasTable('applications')) {
+            Schema::table('applications', function (Blueprint $table) {
+                if (Schema::hasColumn('applications', 'submission_status')) {
+                    $table->dropColumn('submission_status');
+                }
+            });
+        }
     }
 };

@@ -11,10 +11,11 @@ return new class extends Migration
      */
     public function up()
     {
-        Schema::create('invoices', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('application_id')->nullable()->constrained('applications');
-            $table->foreignId('sponsorship_id')->nullable()->constrained('sponsorships');
+        if (!Schema::hasTable('invoices')) {
+            Schema::create('invoices', function (Blueprint $table) {
+                $table->id();
+                $table->foreignId('application_id')->nullable()->constrained('applications');
+                $table->unsignedBigInteger('sponsorship_id')->nullable(); // Foreign key will be added after sponsorships table exists
             $table->string('type')->nullable();
             $table->decimal('amount', 10, 2);
             $table->decimal('rate', 10, 2)->nullable();
@@ -51,12 +52,13 @@ return new class extends Migration
             $table->boolean('refund')->default(false);
             $table->timestamps();
 
-            // Indexes
-            $table->index('application_id');
-            $table->index('application_no');
-            $table->index('sponsorship_no');
-            $table->index('sponsorship_id');
-        });
+                // Indexes
+                $table->index('application_id');
+                $table->index('application_no');
+                $table->index('sponsorship_no');
+                $table->index('sponsorship_id');
+            });
+        }
     }
 
     /**

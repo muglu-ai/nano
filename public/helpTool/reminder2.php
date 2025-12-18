@@ -11,7 +11,7 @@ require_once 'dbcon.php';
 $message =  $message5;
 $conn = $link;
 
-$subject = '4TH SEPT - ENTRY FROM GATE 6 OR 10. CONF AND EXHIBITION STARTS AT 9 AM | SEMICON India 2025';
+$subject = '4TH SEPT - ENTRY FROM GATE 6 OR 10. CONF AND EXHIBITION STARTS AT 9 AM | ' . config('constants.EVENT_NAME') . ' ' . config('constants.EVENT_YEAR');
 
 $query = "SELECT email from stall_manning where first_name != '' AND email IS NOT NULL AND email != '' AND JSON_EXTRACT(reminder, '$.reminder2') IS NULL";
 $result = $conn->query($query);

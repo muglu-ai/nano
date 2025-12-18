@@ -735,7 +735,7 @@ class SponsorController extends Controller
         // ]);
 
         // Queue emails to admin and user
-        $adminEmail = ['test.interlinks@gmail.com', 'semiconindia@semi.org'];
+        $adminEmail = ['test.interlinks@gmail.com', ORGANIZER_EMAIL];
 
         Mail::to($adminEmail)->queue(new AdminApplicationSubmitted($application));
         // Send email to the user
@@ -777,7 +777,11 @@ class SponsorController extends Controller
         }
 
         // calculate the price by passing the sponsorship_item_id
-        $price = ExhibitorPriceCalculator::calculateSponsorshipPrice($sponsorship->sponsorship_item_id);
+        // Get member status from application and quantity from sponsorship
+        $application = $sponsorship->application;
+        $member = $application ? ($application->semi_member ?? false) : false;
+        $quantity = $sponsorship->sponsorship_item_count ?? 1;
+        $price = ExhibitorPriceCalculator::calculateSponsorshipPrice($sponsorship->sponsorship_item_id, $member, $quantity);
 
         //find from the invoice if the same sponsor_id and same type
         // as Sponsorship-{$sponsorship->sponsorship_id} exists
@@ -879,7 +883,7 @@ class SponsorController extends Controller
             // try {
             //     $recipients = is_array($to) ? $to : [$to];
             //     $recipients[] = 'test.interlinks@gmail.com'; // Add default email
-            //     //$recipients[] = 'semiconindia@semi.org'; // Add default email
+            //     //$recipients[] = ORGANIZER_EMAIL; // Add default email
             //     Mail::to($recipients[0])->bcc(array_slice($recipients, 1))->queue(new SponsorInvoiceMail($application_id));
             // } catch (\Exception $e) {
             //     Log::error("Error sending Sponsor Invoice email: " . $e->getMessage());
@@ -903,7 +907,7 @@ class SponsorController extends Controller
             // $quantity = $sponsorship->sponsorship_item_count;
             $quantity = $request->quantity;
             // Calculate sponsorship price (use cached results if possible)
-            $price = ExhibitorPriceCalculator::calculateSponsorshipPrice($sponsorship->sponsorship_item_id, 0, $member, $quantity);
+            $price = ExhibitorPriceCalculator::calculateSponsorshipPrice($sponsorship->sponsorship_item_id, $member, $quantity, 0);
 
             //invoice_no format as INV-SEMI25-S. 5 random numbers check also if the invoice_no already exists
             $invoiceNo = 'INV-SEMI25-S' . strtoupper(substr(uniqid(), -5));
@@ -947,7 +951,7 @@ class SponsorController extends Controller
             //send a post request to send email with email_type as submission and to as applicant email
             $recipients = is_array($to) ? $to : [$to];
             $recipients[] = 'test.interlinks@gmail.com'; // Add default email
-            $recipients[] = 'semiconindia@semi.org'; // Add default email
+            $recipients[] = ORGANIZER_EMAIL; // Add default email
             Mail::to($recipients[0])->bcc(array_slice($recipients, 1))->queue(new SponsorInvoiceMail($application_id));
 
             // Commit the transaction to save all changes

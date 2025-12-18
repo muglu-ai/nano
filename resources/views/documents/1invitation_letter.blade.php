@@ -105,10 +105,10 @@
   </div>
 
   <div class="body-text">
-    <p style="text-align: center;"><strong>Ref: Letter of Participation in SEMICON India 2025</strong></p>
+    <p style="text-align: center;"><strong>Ref: Letter of Participation in {{ config('constants')['EVENT_NAME'] }} {{ config('constants')['EVENT_YEAR'] }}</strong></p>
 
     <p>
-      This is to certify that <strong>{{$data['companyName']}}</strong> is participating as an exhibitor in <strong>SEMICON India 2025</strong>, scheduled to be held at <strong>Yashobhoomi-IICC, Convention Centre, Dwarka, New Delhi, India</strong>, from <strong>September 2nd to 4th, 2025</strong>.
+      This is to certify that <strong>{{$data['companyName']}}</strong> is participating as an exhibitor in <strong>{{ config('constants')['EVENT_NAME'] }} {{ config('constants')['EVENT_YEAR'] }}</strong>, scheduled to be held at <strong>Yashobhoomi-IICC, Convention Centre, Dwarka, New Delhi, India</strong>, from <strong>September 2nd to 4th, 2025</strong>.
     </p>
 
     <p>

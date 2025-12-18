@@ -11,7 +11,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('applications', function (Blueprint $table) {
+        if (!Schema::hasTable('applications')) {
+            Schema::create('applications', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
             $table->char('uuid', 35)->nullable();
@@ -53,7 +54,7 @@ return new class extends Migration
             $table->string('submission_status')->default('in progress');
             $table->string('salesPerson', 125)->nullable();
             $table->timestamp('approved_date')->nullable();
-            $table->foreignId('event_id')->default(1)->constrained('events');
+            $table->unsignedBigInteger('event_id')->default(1); // Foreign key will be added in events_mapping migration
             $table->foreignId('billing_country_id')->nullable()->constrained('countries')->onDelete('set null');
             $table->string('gst_no')->nullable();
             $table->string('pan_no')->nullable();
@@ -101,9 +102,10 @@ return new class extends Migration
             $table->index('headquarters_country_id');
             $table->index('state_id');
             $table->index('user_id');
-            $table->index('city_id');
-            $table->index('sector_id');
-        });
+                $table->index('city_id');
+                $table->index('sector_id');
+            });
+        }
     }
 
     /**

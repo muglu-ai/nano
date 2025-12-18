@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <title>Application Confirmation - SEMICON India 2025</title>
+    <title>Application Confirmation - <?php echo config('constants.EVENT_NAME') . ' ' . config('constants.EVENT_YEAR'); ?></title>
     <link href="https://fonts.googleapis.com/css?family=Inter:300,400,500,600,700,900" rel="stylesheet">
     <style>
         body {
@@ -64,15 +64,15 @@
 <div class="email-container">
     <!-- Email Header -->
     <div class="email-header">
-        <img src="https://interlinx.in/logo.svg" alt="SEMICON India 2025">
+        <img src="https://interlinx.in/logo.svg" alt="<?php echo config('constants.EVENT_NAME') . ' ' . config('constants.EVENT_YEAR'); ?>">
         <br>
-        <span style="font-size:14px; color:#333;">SEMICON India 2025</span>
+        <span style="font-size:14px; color:#333;"><?php echo config('constants.EVENT_NAME') . ' ' . config('constants.EVENT_YEAR'); ?></span>
     </div>
 
     <!-- Email Body -->
     <div class="email-body">
         <h3>Dear $firstName $lastName,</h3>
-        <p>Thank you for submitting your application for <strong>SEMICON India 2025</strong>!</p>
+        <p>Thank you for submitting your application for <strong><?php echo config('constants.EVENT_NAME') . ' ' . config('constants.EVENT_YEAR'); ?></strong>!</p>
         <p><strong>Application ID:</strong>{{$applicationID}}</p>
         <p><strong>Submission Date:</strong> {{$formattedDate}}</p>
 
@@ -84,10 +84,10 @@
         </a>
 
         <p class="email-footer">If you have any questions, feel free to reach out to us at:</p>
-        <p><a href="mailto:semiconindia@semi.org">semiconindia@semi.org</a></p>
+        <p><a href="mailto:<?php echo ORGANIZER_EMAIL; ?>"><?php echo ORGANIZER_EMAIL; ?></a></p>
 
         <p style="color:#333; font-size:14px;">Best regards,</p>
-        <p style="color:#333; font-weight:600;">SEMICON India 2025 Team</p>
+        <p style="color:#333; font-weight:600;"><?php echo config('constants.EVENT_NAME') . ' ' . config('constants.EVENT_YEAR'); ?> Team</p>
     </div>
 </div>
 

@@ -26,7 +26,7 @@ class InauguralMail extends Mailable implements ShouldQueue
      */
     public function build()
     {
-        return $this->subject('Important Information on Entry Passes & Access for SEMICON India 2025')
+        return $this->subject('Important Information on Entry Passes & Access for ' . config('constants.EVENT_NAME') . ' ' . config('constants.EVENT_YEAR'))
                     ->view('emails.passes-reminder')
                     ->with(['emailBody' => $this->emailBody]);
     }

@@ -233,7 +233,7 @@ class AuthController extends Controller
 
         Mail::send('emails.verify', ['user' => $user, 'verificationUrl' => $verificationUrl], function ($message) use ($user) {
             $message->to($user->email);
-            $message->subject('Verify Your Email Address - SEMICON India 2025');
+            $message->subject('Verify Your Email Address - ' . config('constants.EVENT_NAME') . ' ' . config('constants.EVENT_YEAR'));
         });
     }
 

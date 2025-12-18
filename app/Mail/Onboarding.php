@@ -32,7 +32,7 @@ class Onboarding extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Payment Update for SEMICON India 2025',
+            subject: 'Payment Update for ' . config('constants.EVENT_NAME') . ' ' . config('constants.EVENT_YEAR'),
         );
     }
     /**

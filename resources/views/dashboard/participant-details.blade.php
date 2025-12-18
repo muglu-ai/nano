@@ -102,9 +102,9 @@
   </div>
 
   <div class="body-text">
-    <p style="text-align: center;"><strong>Ref: Letter of Participation in SEMICON India 2024</strong></p>
+    <p style="text-align: center;"><strong>Ref: Letter of Participation in {{ config('constants')['EVENT_NAME'] }} {{ config('constants')['EVENT_YEAR'] }}</strong></p>
 
-    <p>This is to certify that <strong>{{ $data['company_name'] }}</strong> is participating as an exhibitor in <strong>SEMICON India 2025</strong>, scheduled to be held at <strong>Yashobhoomi-IICC, Convention Centre, Dwarka, New Delhi</strong>, from <strong>2 to 4, 2025</strong>.</p>
+    <p>This is to certify that <strong>{{ $data['company_name'] }}</strong> is participating as an exhibitor in <strong>{{ config('constants')['EVENT_NAME'] }} {{ config('constants')['EVENT_YEAR'] }}</strong>, scheduled to be held at <strong>Yashobhoomi-IICC, Convention Centre, Dwarka, New Delhi</strong>, from <strong>2 to 4, 2025</strong>.</p>
 
     <p>The organisation has been allotted booth number <strong>{{ $data['booth_no'] }}</strong> in <strong>Hall No. 1</strong> for the duration of the exhibition.</p>
 

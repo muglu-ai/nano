@@ -100,26 +100,8 @@ class MailController extends Controller
     public function inactiveUsersReminder()
     {
         $recipients = [
-            ['name' => 'Exposome Private Limited', 'email' => 'ankit.vadlamani@exposome.in'],
-            ['name' => 'Honeywell International Inc', 'email' => 'yeonkyoung.ahn@honeywell.com'],
-            ['name' => 'DHL Supply Chain India', 'email' => 'vinit.suri@dhl.com'],
-            ['name' => 'SEMI SEA', 'email' => 'glenntan@semi.org'],
-            ['name' => 'kaynes', 'email' => 's.budhadev@kaynessemicon.com'],
-            ['name' => 'Veeco Asia Pte Ltd', 'email' => 'achay@veeco.com'],
-            ['name' => 'ORISSA COMPUTER APPLICATION CENTRE', 'email' => 'ifitp.eit@odisha.gov.in'],
-            ['name' => 'RAANA SEMICONDUCTORS PVT LTD', 'email' => 'rajasekar@raana.in'],
-            ['name' => 'U.P. Electronics Corporation Limited (Department of IT & Electronics, Government of Uttar Pradesh)', 'email' => 'uplclko@gmail.com'],
-            ['name' => 'NCFlexE IIT KANPUR', 'email' => 'sudheerk@iitk.ac.in'],
-            ['name' => 'Assam Industrial Development Corporation Limited', 'email' => 'sanjeeb.aidc@gmail.com'],
-            ['name' => 'Tata Electronics', 'email' => 'abhishek.kumar3@tataelectronics.co.in'],
-            ['name' => 'HTL Co. India Pvt. Ltd.', 'email' => 'sanjayacharya1@yahoo.com'],
-            ['name' => 'India Semiconductor Mission', 'email' => 'piyush.priy@ism.gov.in'],
-            ['name' => 'India Electronics & Semiconductor Association', 'email' => 'vidya@semi.org'],
-            ['name' => 'Tessolve Semiconductor Pvt. Ltd.', 'email' => 'shruti.siddeshwar@tessolve.com'],
-            ['name' => 'Bharat Semitech Pvt LTd', 'email' => 'kumar@techovedas.com'],
-            ['name' => 'Maharashtra Industrial Development Corporation', 'email' => 'gmpr@midcindia.org'],
-            ['name' => 'Lindstrom Services (I) Pvt. Ltd.', 'email' => 'hemant.chanchlani@lindstromgroup.com'],
-            ];
+            
+             ];
 
                 foreach ($recipients as $r) {
                     $email = trim($r['email'] ?? '');
@@ -148,10 +130,10 @@ class MailController extends Controller
 	<tr>
 		<td style="padding:24px;">
 			<div style="text-align:left;">
-				<h2 style="color:#1a237e;margin-top:0;text-align:left;">Final Day – SEMICON India 2025 Exhibition & Conference</h2>
+				<h2 style="color:#1a237e;margin-top:0;text-align:left;">Final Day – ' . config('constants.EVENT_NAME') . ' ' . config('constants.EVENT_YEAR') . ' Exhibition & Conference</h2>
 				<p style="font-size:16px;color:#222;text-align:left;">Dear All,</p>
 				<p style="font-size:15px;color:#222;line-height:1.6;text-align:left;">
-					Welcome to the final day of the spectacular SEMICON India 2025 exhibition and conference sessions.<br>
+					Welcome to the final day of the spectacular ' . config('constants.EVENT_NAME') . ' ' . config('constants.EVENT_YEAR') . ' exhibition and conference sessions.<br>
 					Today’s (4th Sept 2025) conference sessions will start at 9 AM as per the published schedule, and the exhibition will also be open from 9 AM onwards.
 				</p>
 				<p style="font-size:15px;color:#222;line-height:1.6;text-align:left;">
@@ -162,14 +144,14 @@ class MailController extends Controller
 				</p>
 				<p style="font-size:15px;color:#222;text-align:left;">
 					Regards,<br>
-					<strong>SEMICON India Team</strong>
+					<strong>' . config('constants.EVENT_NAME') . ' Team</strong>
 				</p>
 			</div>
 		</td>
 	</tr>
 </table>
 ';
-        $subject = '4TH SEPT - ENTRY FROM GATE 6 OR 10. CONF AND EXHIBITION STARTS AT 9 AM | SEMICON India 2025';
+        $subject = '4TH SEPT - ENTRY FROM GATE 6 OR 10. CONF AND EXHIBITION STARTS AT 9 AM | ' . config('constants.EVENT_NAME') . ' ' . config('constants.EVENT_YEAR');
 
         // Fetch recipients as before
         $recipients = \App\Models\Attendee::where('registration_type', 'In-Person')
@@ -225,10 +207,10 @@ class MailController extends Controller
 	<tr>
 		<td style="padding:24px;">
 			<div style="text-align:left;">
-				<h2 style="color:#1a237e;margin-top:0;text-align:left;">Final Day – SEMICON India 2025 Exhibition & Conference</h2>
+				<h2 style="color:#1a237e;margin-top:0;text-align:left;">Final Day – ' . config('constants.EVENT_NAME') . ' ' . config('constants.EVENT_YEAR') . ' Exhibition & Conference</h2>
 				<p style="font-size:16px;color:#222;text-align:left;">Dear All,</p>
 				<p style="font-size:15px;color:#222;line-height:1.6;text-align:left;">
-					Welcome to the final day of the spectacular SEMICON India 2025 exhibition and conference sessions.<br>
+					Welcome to the final day of the spectacular ' . config('constants.EVENT_NAME') . ' ' . config('constants.EVENT_YEAR') . ' exhibition and conference sessions.<br>
 					Today’s (4th Sept 2025) conference sessions will start at 9 AM as per the published schedule, and the exhibition will also be open from 9 AM onwards.
 				</p>
 				<p style="font-size:15px;color:#222;line-height:1.6;text-align:left;">
@@ -239,7 +221,7 @@ class MailController extends Controller
 				</p>
 				<p style="font-size:15px;color:#222;text-align:left;">
 					Regards,<br>
-					<strong>SEMICON India Team</strong>
+					<strong>' . config('constants.EVENT_NAME') . ' Team</strong>
 				</p>
 			</div>
 		</td>
@@ -292,7 +274,7 @@ class MailController extends Controller
 
         $message6 = '<html>
 <head>
-    <title>Thank You - SEMICON India 2025</title>
+    <title>Thank You - ' . config('constants.EVENT_NAME') . ' ' . config('constants.EVENT_YEAR') . '</title>
  
 </head>
 <body>
@@ -300,10 +282,10 @@ class MailController extends Controller
         <tr>
             <td style="padding: 20px;  color:#2B2929; text-align: justify; line-height: 1.8; font-size:14px; font-family: Verdana, Geneva, sans-serif;  ">
                 
-                <img src="https://portal.semiconindia.org/SEMI-thank-you.jpg" alt="SEMICON India 2025 Thank You" style="width: 100%;  height: auto; margin-bottom: 20px;">
+                <img src="https://portal.semiconindia.org/SEMI-thank-you.jpg" alt="' . config('constants.EVENT_NAME') . ' ' . config('constants.EVENT_YEAR') . ' Thank You" style="width: 100%;  height: auto; margin-bottom: 20px;">
                 <p style="margin-bottom: 15px;">
 					<strong>Dear Exhibitors and Participants</strong>,<br>
-					On behalf of the organizing team, we extend our heartfelt gratitude to each one of you for making <strong>SEMICON India 2025</strong> an <strong>unprecedented success</strong>. With <strong>35,000 registrations, over 30,000 footfalls, 25,000+ live/online viewers, 350 exhibitors, and 48 international delegations</strong>, along with hundreds of MoUs, press releases, and thousands of B2B meetings, SEMICON India 2025 has truly set a <strong>new benchmark in India’s semiconductor journey</strong>. The impressive lineup of global leaders and speakers has further strengthened our confidence in driving this mission ahead. The event witnessed <strong>unprecedented participation across the entire value chain</strong>—from industry leaders, government officials, and academia to researchers and students—making it a landmark gathering for the ecosystem.</p>
+					On behalf of the organizing team, we extend our heartfelt gratitude to each one of you for making <strong>' . config('constants.EVENT_NAME') . ' ' . config('constants.EVENT_YEAR') . '</strong> an <strong>unprecedented success</strong>. With <strong>35,000 registrations, over 30,000 footfalls, 25,000+ live/online viewers, 350 exhibitors, and 48 international delegations</strong>, along with hundreds of MoUs, press releases, and thousands of B2B meetings, SEMICON India 2025 has truly set a <strong>new benchmark in India’s semiconductor journey</strong>. The impressive lineup of global leaders and speakers has further strengthened our confidence in driving this mission ahead. The event witnessed <strong>unprecedented participation across the entire value chain</strong>—from industry leaders, government officials, and academia to researchers and students—making it a landmark gathering for the ecosystem.</p>
                 <p style="margin-bottom: 15px;">We were deeply <strong>honored</strong> by the presence of <strong>Hon’ble Prime Minister Shri&nbsp;Narendra Modi, Union Minister Shri Ashwini Vaishnaw, MoS Shri&nbsp;Jitin Prasada,</strong>  along with the <strong>Chief Ministers of Delhi and Odisha</strong>. The inaugural session was further enriched by the participation of <strong>nine global CXOs</strong>, who shared their insights on the progress and opportunities in the semiconductor industry. Their active engagement reflected the strong leadership commitment to advancing India’s semiconductor agenda. A special highlight of the event was the <strong>Prime Minister’s visit to the exhibition booths and his roundtable interaction with global CXOs</strong>—a moment that will play a pivotal role in shaping the future of the world’s technology landscape.</p>
                 <p style="margin-bottom: 15px;">We sincerely apologize for any inconvenience caused during the initial days due to VVIP movement and the reduced exhibition time. We appreciate your understanding and patience and would improve next year. By the third day, our team had the pleasure of visiting most booths, and it was encouraging to hear how the <strong>quality of B2B leads and discussions remained strong throughout the event</strong> including unprecedented visitors.</p>
                 <p style="margin-bottom: 15px;">Now is the time to pause, reflect, and recharge— as we regroup to continue shaping<strong> India as a trusted global semiconductor powerhouse</strong>.</p>
@@ -332,7 +314,7 @@ class MailController extends Controller
 </body>
 </html>';
 
-        $subject = "Thank You for Making SEMICON India 2025 a Grand Success!";
+        $subject = "Thank You for Making " . config('constants.EVENT_NAME') . " " . config('constants.EVENT_YEAR') . " a Grand Success!";
 
         // Select application contact email from applications which is approved 
         // take company_email from applications table where status is approved and company_email is not null and company_email != ''
@@ -390,7 +372,7 @@ class MailController extends Controller
             // dd($bcc);
             if (count($bcc) > 0) {
             // Mail::send([], [], function ($message) use ($bcc, $subject, $message6) {
-            //    $message->to('semiconindia@semi.org')
+            //    $message->to(ORGANIZER_EMAIL)
             //             ->bcc($bcc)
             //             ->subject($subject)
             //             ->html($message6);

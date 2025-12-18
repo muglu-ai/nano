@@ -11,11 +11,13 @@ return new class extends Migration
      */
     public function up(): void
     {
-        //add approved_date columns in application table
-        Schema::table('applications', function (Blueprint $table) {
-            $table->timestamp('approved_date')->nullable();
-        });
-
+        if (Schema::hasTable('applications')) {
+            Schema::table('applications', function (Blueprint $table) {
+                if (!Schema::hasColumn('applications', 'approved_date')) {
+                    $table->timestamp('approved_date')->nullable();
+                }
+            });
+        }
     }
 
     /**
@@ -23,6 +25,12 @@ return new class extends Migration
      */
     public function down(): void
     {
-        //
+        if (Schema::hasTable('applications')) {
+            Schema::table('applications', function (Blueprint $table) {
+                if (Schema::hasColumn('applications', 'approved_date')) {
+                    $table->dropColumn('approved_date');
+                }
+            });
+        }
     }
 };

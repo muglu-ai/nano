@@ -11,11 +11,13 @@ return new class extends Migration
      */
     public function up(): void
     {
-        // add cloumns to applications table
-        //add billing_country_id column
-        Schema::table('applications', function (Blueprint $table) {
-            $table->foreignId('billing_country_id')->nullable()->constrained('countries')->onDelete('set null');
-        });
+        if (Schema::hasTable('applications')) {
+            Schema::table('applications', function (Blueprint $table) {
+                if (!Schema::hasColumn('applications', 'billing_country_id')) {
+                    $table->foreignId('billing_country_id')->nullable()->constrained('countries')->onDelete('set null');
+                }
+            });
+        }
     }
 
     /**
@@ -23,6 +25,13 @@ return new class extends Migration
      */
     public function down(): void
     {
-        //
+        if (Schema::hasTable('applications')) {
+            Schema::table('applications', function (Blueprint $table) {
+                if (Schema::hasColumn('applications', 'billing_country_id')) {
+                    $table->dropForeign(['billing_country_id']);
+                    $table->dropColumn('billing_country_id');
+                }
+            });
+        }
     }
 };

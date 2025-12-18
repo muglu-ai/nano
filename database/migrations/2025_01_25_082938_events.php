@@ -12,16 +12,18 @@ return new class extends Migration
     public function up(): void
     {
         // create events table with columns event year, event name, event date, event location, event description and event image
-        Schema::create('events', function (Blueprint $table) {
+        if (!Schema::hasTable('events')) {
+            Schema::create('events', function (Blueprint $table) {
             $table->id();
             $table->string('event_year');
             $table->string('event_name');
             $table->date('event_date');
             $table->string('event_location');
             $table->text('event_description');
-            $table->string('event_image');
-            $table->timestamps();
-        });
+                $table->string('event_image');
+                $table->timestamps();
+            });
+        }
     }
 
 

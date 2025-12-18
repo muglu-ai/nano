@@ -20,9 +20,9 @@ class ExhibitorPortalReminder extends Mailable implements ShouldQueue
     public function __construct(
         string $name,
         string $loginEmail,
-        string $loginUrl = 'https://portal.semiconindia.org/login',
-        string $forgotUrl = 'https://portal.semiconindia.org/forgot-password',
-        string $supportEmail = 'semiconindia@mmactiv.com'
+        string $loginUrl = config('constants.APP_URL') . '/login',
+        string $forgotUrl = config('constants.APP_URL') . '/forgot-password',
+        string $supportEmail = ORGANIZER_EMAIL
     ) {
         $this->name = $name;
         $this->loginEmail = $loginEmail;
@@ -33,7 +33,7 @@ class ExhibitorPortalReminder extends Mailable implements ShouldQueue
 
     public function build()
     {
-        return $this->subject('Action Required: Log in to the SEMICON India 2025 Exhibitor Portal')
+        return $this->subject('Action Required: Log in to the ' . config('constants.EVENT_NAME') . ' ' . config('constants.EVENT_YEAR') . ' Exhibitor Portal')
             ->view('emails.exhibitor_portal_reminder')
             ->with([
                 'name' => $this->name,

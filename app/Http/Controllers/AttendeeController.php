@@ -1719,7 +1719,7 @@ class AttendeeController extends Controller
 
             </p>
 
-            <p>Best regards,<br>SEMICON India Team</p>
+            <p>Best regards,<br>' . config('constants.EVENT_NAME') . ' Team</p>
 
         ";
 
@@ -1991,7 +1991,7 @@ class AttendeeController extends Controller
 
                     : 'If you have any questions, please contact the event team.') . "</p>
 
-            <p>Best regards,<br>SEMICON India Team</p>
+            <p>Best regards,<br>' . config('constants.EVENT_NAME') . ' Team</p>
 
         ";
 
@@ -2090,7 +2090,7 @@ class AttendeeController extends Controller
 
                     : 'If you have any questions, please contact the event team.') . "</p>
 
-            <p>Best regards,<br>SEMICON India Team</p>
+            <p>Best regards,<br>' . config('constants.EVENT_NAME') . ' Team</p>
 
         ";
 

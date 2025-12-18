@@ -9,7 +9,7 @@
                     <div class="col s12 m9 l6 offset-l4 offset-m6">
                         <div class="card white darken-1">
                             <div class="card-content">
-                                <span class="card-title center-align">SEMICON 2025 Register</span>
+                                <span class="card-title center-align">{{ config('constants')['EVENT_NAME'] }} {{ config('constants')['EVENT_YEAR'] }} Register</span>
                                 <div class="row">
                                     @if ($errors->any())
                                         <div class="p-4 mb-4 text-red-700 bg-red-100 rounded">

@@ -11,12 +11,14 @@ return new class extends Migration
      */
     public function up(): void
     {
-        //add new field as designation to event_contacts table
-        Schema::table('event_contacts', function (Blueprint $table) {
-            $table->string('designation')->nullable();
-        });
-
-
+        // Add new field designation to event_contacts table only if it doesn't exist
+        if (Schema::hasTable('event_contacts')) {
+            Schema::table('event_contacts', function (Blueprint $table) {
+                if (!Schema::hasColumn('event_contacts', 'designation')) {
+                    $table->string('designation')->nullable();
+                }
+            });
+        }
     }
 
     /**
@@ -24,9 +26,12 @@ return new class extends Migration
      */
     public function down(): void
     {
-        //
-
-
-
+        if (Schema::hasTable('event_contacts')) {
+            Schema::table('event_contacts', function (Blueprint $table) {
+                if (Schema::hasColumn('event_contacts', 'designation')) {
+                    $table->dropColumn('designation');
+                }
+            });
+        }
     }
 };

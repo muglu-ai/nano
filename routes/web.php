@@ -939,7 +939,7 @@ Route::post('/otp/verify', [OTPController::class, 'verifyOtp']);
 
 Route::get('/send-invite-mail-custom', function () {
     $coExhibitorco_exhibitor_id = "SI25-COEXH-4DFF7E"; // Replace with actual co-exhibitor ID
-    Mail::bcc(['semiconindia@semi.org'])
+    Mail::bcc([ORGANIZER_EMAIL])
         ->send(new CoExhibitorInvoiceMail($coExhibitorco_exhibitor_id));
 });
 

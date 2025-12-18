@@ -49,7 +49,7 @@
         <!-- Footer -->
         <tr>
             <td style="padding: 20px 30px; text-align: center; background-color: #f8f8f8; font-size: 14px; color: #666666; border-top: 1px solid #dddddd;">
-                <p style="margin: 0 0 10px 0;">If you have any questions, please email to <a href="mailto:semiconindia@semi.org">semiconindia@semi.org</a>. </p>
+                <p style="margin: 0 0 10px 0;">If you have any questions, please email to <a href="mailto:{{ config('constants')['organizer']['email'] }}">{{ config('constants')['organizer']['email'] }}</a>. </p>
             </td>
         </tr>
     </table>

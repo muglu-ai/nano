@@ -11,9 +11,13 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('applications', function (Blueprint $table) {
-            $table->string('zone')->nullable()->after('stallNumber');
-        });
+        if (Schema::hasTable('applications')) {
+            Schema::table('applications', function (Blueprint $table) {
+                if (!Schema::hasColumn('applications', 'zone')) {
+                    $table->string('zone')->nullable()->after('stallNumber');
+                }
+            });
+        }
     }
 
     /**
@@ -21,8 +25,12 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('applications', function (Blueprint $table) {
-            $table->dropColumn('zone');
-        });
+        if (Schema::hasTable('applications')) {
+            Schema::table('applications', function (Blueprint $table) {
+                if (Schema::hasColumn('applications', 'zone')) {
+                    $table->dropColumn('zone');
+                }
+            });
+        }
     }
 };

@@ -11,7 +11,7 @@ require 'emailFunction.php';
 
 $message = $message4;
 
-$subject = '4TH SEPT - ENTRY FROM GATE 6 OR 10. CONF AND EXHIBITION STARTS AT 9 AM | SEMICON India 2025';
+$subject = '4TH SEPT - ENTRY FROM GATE 6 OR 10. CONF AND EXHIBITION STARTS AT 9 AM | ' . config('constants.EVENT_NAME') . ' ' . config('constants.EVENT_YEAR');
 
 //$to = $email; // Replace with actual recipient(s)
 

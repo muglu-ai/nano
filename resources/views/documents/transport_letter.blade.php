@@ -107,13 +107,13 @@
   <div class="body-text">
 
     <p>
-      This is to certify that <strong>{{$data['companyName']}}</strong> is participating as an Exhibitor/Sponsor at <strong>SEMICON India 2025</strong>, scheduled to be held at <strong>IICC, Yashobhoomi, Dwarka, New Delhi</strong>, from <strong>September 2 to 4, 2025</strong>.
+      This is to certify that <strong>{{$data['companyName']}}</strong> is participating as an Exhibitor/Sponsor at <strong>{{ config('constants')['EVENT_NAME'] }} {{ config('constants')['EVENT_YEAR'] }}</strong>, scheduled to be held at <strong>IICC, Yashobhoomi, Dwarka, New Delhi</strong>, from <strong>September 2 to 4, 2025</strong>.
     </p>
     <p>
       The organisation has been allotted booth number <strong>{{$data['boothNumber']}}</strong> in <strong>Hall No. 1</strong> for the duration of the exhibition.
     </p>
     <p>
-      For the above mentioned <strong>{{$data['companyName']}}</strong>, they are transporting their material to IICC, Yashobhoomi, Dwarka to set up the exhibition for SEMICON 2025. This material carries no commercial value and the same shall be taken back after the completion of the exhibition. The necessary clearance may please be given to <strong>{{$data['companyName']}}</strong> for the material and equipment to set up “SEMICON 2025” at IICC, Yashobhoomi, Dwarka, New Delhi.
+      For the above mentioned <strong>{{$data['companyName']}}</strong>, they are transporting their material to IICC, Yashobhoomi, Dwarka to set up the exhibition for {{ config('constants')['EVENT_NAME'] }} {{ config('constants')['EVENT_YEAR'] }}. This material carries no commercial value and the same shall be taken back after the completion of the exhibition. The necessary clearance may please be given to <strong>{{$data['companyName']}}</strong> for the material and equipment to set up “{{ config('constants')['EVENT_NAME'] }} {{ config('constants')['EVENT_YEAR'] }}” at IICC, Yashobhoomi, Dwarka, New Delhi.
     </p>
     <p>
       We kindly request all concerned authorities to extend their full support and assistance to <strong>{{$data['companyName']}}</strong> to facilitate their participation in the event.

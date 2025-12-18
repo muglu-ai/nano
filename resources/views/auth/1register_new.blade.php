@@ -7,7 +7,7 @@
         name="viewport"
         content="width=device-width, initial-scale=1, shrink-to-fit=no"
     />
-    <title>SEMICON India 2025</title>
+    <title>{{ config('constants')['EVENT_NAME'] }} {{ config('constants')['EVENT_YEAR'] }}</title>
     <link
         rel="icon"
         href="https://www.bengalurutechsummit.com/favicon-16x16.png"
@@ -84,7 +84,7 @@
                     fill-rule="nonzero"
                 ></path>
             </svg>
-            <span>SEMICON India 2025</span>
+            <span>{{ config('constants')['EVENT_NAME'] }} {{ config('constants')['EVENT_YEAR'] }}</span>
         </a>
     </div>
 </nav>

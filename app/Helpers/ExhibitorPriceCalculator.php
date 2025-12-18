@@ -190,7 +190,7 @@ class ExhibitorPriceCalculator
         ];
     }
 
-    public static function calculateSponsorshipPrice(int $itemId, float $discountPercentage = 0, $member, $quantity): array
+    public static function calculateSponsorshipPrice(int $itemId, $member, $quantity, float $discountPercentage = 0): array
     {
         $item = SponsorItem::find($itemId);
         if (!$item) {

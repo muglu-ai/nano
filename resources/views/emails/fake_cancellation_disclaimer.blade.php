@@ -33,7 +33,7 @@
                     All stakeholders are requested to <strong>ignore such unauthorized communications</strong> and refer only to the <strong>official sources </strong> for authentic updates:
                 </p>
                 <p style="margin: 0 0 15px;">
-                    <strong>Official Email:</strong> semiconindia@semi.org<br>
+                    <strong>Official Email:</strong> {{ config('constants')['organizer']['email'] }}<br>
                     <strong>Official Website:</strong> <a href="http://www.semiconindia.org" style="color: #007BFF; text-decoration: none;">www.semiconindia.org</a><br>
                     <strong>Official SEMI Domain:</strong> <a href="http://semi.org" style="color: #007BFF; text-decoration: none;">semi.org</a>
                 </p>

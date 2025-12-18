@@ -143,7 +143,7 @@ class CoExhibitorController extends Controller
         // Mail::to('admin@example.com')->send(new AdminNotificationMail($coExhibitor));
         $adminEmail = "test.interlinks@mail.com"; // Change to your admin email
         Mail::to($adminEmail)
-            ->bcc('test.interlinks@gmail.com', 'semiconindia@semi.org')
+            ->bcc('test.interlinks@gmail.com', ORGANIZER_EMAIL)
             ->send(new CoExhibitorRequest($coExhibitorArray)); // Send to user and BCC
 
 
@@ -332,7 +332,7 @@ class CoExhibitorController extends Controller
         $coExhibitorEmail = $coExhibitor->email;
 
         Mail::to([$userEmail, $exhibitorEmail, $coExhibitorEmail])
-            ->bcc('semiconindia@semi.org', 'test.interlinks@gmail.com')
+            ->bcc(ORGANIZER_EMAIL, 'test.interlinks@gmail.com')
             ->send(new CoExhibitorInvoiceMail($coExhibitor->co_exhibitor_id));
 
 
@@ -953,7 +953,7 @@ class CoExhibitorController extends Controller
             $exhibiting_under = Application::where('id', $coExhibitor->application_id)->value('company_name');
 
             Mail::to($coExhibitor->email)
-                ->cc(['gaurav@investtn.in', 'semiconindia@semi.org'])
+                ->cc(['gaurav@investtn.in', ORGANIZER_EMAIL])
                 ->bcc('test.interlinks@gmail.com')
                 ->send(new CoExhibitorApprovalMail(
                     $coExhibitor,
@@ -1066,7 +1066,7 @@ class CoExhibitorController extends Controller
         $exhibiting_under = Application::where('id', $coExhibitor->application_id)->value('company_name');
 
         Mail::to($coExhibitor->email)
-        ->cc(['yhwang@semi.org', 'semiconindia@semi.org'])
+        ->cc(['yhwang@semi.org', ORGANIZER_EMAIL])
             ->bcc('test.interlinks@gmail.com')
             ->send(new CoExhibitorApprovalMail(
             $coExhibitor,

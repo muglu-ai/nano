@@ -985,7 +985,7 @@ class ApplicationController extends Controller
         $application->save();
 
         // Get the admin email (replace with your actual admin email)
-        //semiconindia@semi.org
+        //ORGANIZER_EMAIL
         $emails = ['test.interlinks@gmail.com'];
 
         // Send email to admin and organisers using BCC
@@ -1046,7 +1046,7 @@ class ApplicationController extends Controller
         $application->save();
 
         // Get the admin email (replace with your actual admin email)
-        //semiconindia@semi.org
+        //ORGANIZER_EMAIL
         $emails = ['test.interlinks@gmail.com'];
         $adminEmails = config('constants.admin_emails.to');
 

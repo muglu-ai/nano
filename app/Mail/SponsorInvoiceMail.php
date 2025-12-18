@@ -136,7 +136,7 @@ class SponsorInvoiceMail extends Mailable
 
     public function build()
     {
-        return $this->subject('Your Sponsor Application is approved at SEMICON 2025')
+        return $this->subject('Your Sponsor Application is approved at ' . config('constants.EVENT_NAME') . ' ' . config('constants.EVENT_YEAR'))
             ->view('emails.sponsor_invoice')
             ->with('data', $this->data);
     }

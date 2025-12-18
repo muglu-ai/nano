@@ -14,12 +14,12 @@ class ExtraRequirementPaymentUpdate extends Mailable
     use Queueable, SerializesModels;
 
     public $htmlContent;
-    public $subject = 'Extra Requirements Payment Update - SEMICON India 2025';
+    public $subject = 'Extra Requirements Payment Update - ' . config('constants.EVENT_NAME') . ' ' . config('constants.EVENT_YEAR');
 
     public function __construct($htmlContent, $subject)
     {
          $this->htmlContent = $htmlContent;
-        $this->customSubject = $subject ?: 'Extra Requirements Payment Update - SEMICON India 2025';
+        $this->customSubject = $subject ?: 'Extra Requirements Payment Update - ' . config('constants.EVENT_NAME') . ' ' . config('constants.EVENT_YEAR');
 
     }
 

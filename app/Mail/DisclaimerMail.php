@@ -24,7 +24,7 @@ class DisclaimerMail extends Mailable
      */
     public function build()
     {
-        return $this->subject("Important Update for Exhibitors – SEMICON India 2025")
+        return $this->subject("Important Update for Exhibitors – " . config('constants.EVENT_NAME') . " " . config('constants.EVENT_YEAR'))
             ->view('emails.disclaimer'); // Using view template
     }
 }

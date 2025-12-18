@@ -31,7 +31,7 @@
 
 
                                     </h6>
-                                    Email: <a href="mailto:semiconindia@semi.org">semiconindia@semi.org </a><br>
+                                    Email: <a href="mailto:{{ config('constants')['organizer']['email'] }}">{{ config('constants')['organizer']['email'] }} </a><br>
                                     tel: +4 (074) 1090873<br>
                                     GSTIN: 27AABCD7055L1ZE<br>
                                     PAN: AABCD7055L<br>
@@ -137,9 +137,9 @@
                                         you can contact us at:</p>
                                     <h6 class="text-secondary font-weight-normal mb-0">
                                         email:
-                                        <span class="text-dark"><a href="mailto:semiconindia@semi.org"
+                                        <span class="text-dark"><a href="mailto:{{ config('constants')['organizer']['email'] }}"
                                                                    class="__cf_email__"
-                                                                   data-cfemail="e99a9c9999869b9da98a9b8c889d809f8cc49d8084c78a8684">semiconindia@semi.org</a></span>
+                                                                   data-cfemail="e99a9c9999869b9da98a9b8c889d809f8cc49d8084c78a8684">{{ config('constants')['organizer']['email'] }}</a></span>
                                     </h6>
                                 </div>
                                 <div class="col-lg-7 text-md-end mt-md-0 mt-3">

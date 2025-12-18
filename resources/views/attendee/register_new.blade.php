@@ -1,6 +1,6 @@
 @extends('attendee.app')
 
-@section('title', 'Visitor Registration - SEMICON India 2025')
+@section('title', 'Visitor Registration - {{ config('constants')['EVENT_NAME'] }} {{ config('constants')['EVENT_YEAR'] }}')
 
 @section('content')
 <div class="container py-5">

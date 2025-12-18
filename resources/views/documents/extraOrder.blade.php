@@ -43,9 +43,9 @@
         <tr>
             <td align="center">
                 <img src="https://portal.semiconindia.org/asset/img/logos/logo.png" width="120">
-                <h4>SEMICON India 2025</h4>
+                <h4>{{ config('constants')['EVENT_NAME'] }} {{ config('constants')['EVENT_YEAR'] }}</h4>
                 <h1>Proforma Invoice</h1>
-                <p>Thank you for ordering extra requirement items at SEMICON India 2025</p>
+                <p>Thank you for ordering extra requirement items at {{ config('constants')['EVENT_NAME'] }} {{ config('constants')['EVENT_YEAR'] }}</p>
             </td>
         </tr>
     </table>

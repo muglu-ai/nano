@@ -113,7 +113,7 @@ class CoExhibitorInvoiceMail extends Mailable
 
     public function build()
     {
-        return $this->subject('Co-Exhibitor Application for ' . $this->data['coExhibitorName'] . ' is approved at SEMICON 2025')
+        return $this->subject('Co-Exhibitor Application for ' . $this->data['coExhibitorName'] . ' is approved at ' . config('constants.EVENT_NAME') . ' ' . config('constants.EVENT_YEAR'))
             ->view('emails.Co-invoice')
             ->with('data', $this->data);
     }

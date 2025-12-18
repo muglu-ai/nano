@@ -620,7 +620,7 @@ class AdminController extends Controller
         //send a post request to send email with email_type as submission and to as applicant email
         $recipients = is_array($to) ? $to : [$to];
         $recipients[] = 'manish.sharma@interlinks.in'; // Add default email
-        $recipients[] = 'semiconindia@semi.org'; // Add default email
+        $recipients[] = ''; // Add default email
         Mail::to($recipients[0])->bcc(array_slice($recipients, 1))->send(new InvoiceMail($application_id));
 
         //return success message with approved application id
@@ -718,13 +718,13 @@ class AdminController extends Controller
             $to = $application->eventContact->email;
             $recipients = is_array($to) ? $to : [$to];
             $recipients[] = 'test.interlinks@gmail.com'; // Add default email
-            $recipients[] = 'semiconindia@semi.org'; // Add default email
+            $recipients[] = ORGANIZER_EMAIL; // Add default email
 
             $html = "<p>Dear {$application->company_name},</p>
-            <p>We are pleased to inform you that your application at the SEMICON India 2025 has been approved.</p>
-            <p>Thank you for your interest in participating in SEMICON India 2025. We look forward to your presence at the event.</p>
+            <p>We are pleased to inform you that your application at the ' . config('constants.EVENT_NAME') . ' ' . config('constants.EVENT_YEAR') . ' has been approved.</p>
+            <p>Thank you for your interest in participating in ' . config('constants.EVENT_NAME') . ' ' . config('constants.EVENT_YEAR') . '. We look forward to your presence at the event.</p>
             <p>Best regards,</p>
-            <p>SEMICON India Team</p>";
+            <p>' . config('constants.EVENT_NAME') . ' Team</p>";
             $html = <<<HTML
                     <!DOCTYPE html>
                     <html>
@@ -783,8 +783,8 @@ class AdminController extends Controller
                     <body>
                     <div class="email-container">
                         <div class="header">
-                            <img src="https://www.mmactiv.in/images/semicon_logo.png" alt="SEMICON India 2025">
-                            <span class="header-text">SEMICON India 2025</span>
+                            <img src="https://www.mmactiv.in/images/semicon_logo.png" alt="' . config('constants.EVENT_NAME') . ' ' . config('constants.EVENT_YEAR') . '">
+                            <span class="header-text">' . config('constants.EVENT_NAME') . ' ' . config('constants.EVENT_YEAR') . '</span>
                         </div>
                         <div class="content">
                             <p>{$contactName},</p>
@@ -793,7 +793,7 @@ class AdminController extends Controller
                         </div>
                         <div class="footer">
                             <p>Best Regards,</p>
-                            <p><strong>SEMICON India 2025</strong></p>
+                            <p><strong>' . config('constants.EVENT_NAME') . ' ' . config('constants.EVENT_YEAR') . '</strong></p>
                             <p><a href="https://www.semiconindia.org/">https://www.semiconindia.org/</a></p>
                         </div>
                     </div>
@@ -804,7 +804,7 @@ class AdminController extends Controller
                 Mail::send([], [], function ($message) use ($recipients, $html) {
                     $message->to($recipients[0])
                         ->bcc(array_slice($recipients, 1))
-                        ->subject('SEMICON India 2025 Application Approved')
+                        ->subject(config('constants.EVENT_NAME') . ' ' . config('constants.EVENT_YEAR') . ' Application Approved')
                         ->html($html);
                 });
             } catch (\Exception $e) {
@@ -888,7 +888,7 @@ class AdminController extends Controller
         //send a post request to send email with email_type as submission and to as applicant email
         $recipients = is_array($to) ? $to : [$to];
         $recipients[] = 'test.interlinks@gmail.com'; // Add default email
-        $recipients[] = 'semiconindia@semi.org'; // Add default email
+        $recipients[] = ORGANIZER_EMAIL; // Add default email
         try {
             Mail::to($recipients[0])->bcc(array_slice($recipients, 1))->send(new InvoiceMail($application_id));
         } catch (\Exception $e) {

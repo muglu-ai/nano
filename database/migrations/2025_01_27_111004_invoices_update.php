@@ -11,11 +11,16 @@ return new class extends Migration
      */
     public function up(): void
     {
-        //add pending_amount, invoices no, pending_amount,  in invoices table
-        Schema::table('invoices', function (Blueprint $table) {
-            $table->string('invoice_no')->nullable();
-            $table->decimal('pending_amount', 10, 2)->default(0);
-        });
+        if (Schema::hasTable('invoices')) {
+            Schema::table('invoices', function (Blueprint $table) {
+                if (!Schema::hasColumn('invoices', 'invoice_no')) {
+                    $table->string('invoice_no')->nullable();
+                }
+                if (!Schema::hasColumn('invoices', 'pending_amount')) {
+                    $table->decimal('pending_amount', 10, 2)->default(0);
+                }
+            });
+        }
     }
 
     /**
@@ -23,6 +28,15 @@ return new class extends Migration
      */
     public function down(): void
     {
-        //
+        if (Schema::hasTable('invoices')) {
+            Schema::table('invoices', function (Blueprint $table) {
+                if (Schema::hasColumn('invoices', 'invoice_no')) {
+                    $table->dropColumn('invoice_no');
+                }
+                if (Schema::hasColumn('invoices', 'pending_amount')) {
+                    $table->dropColumn('pending_amount');
+                }
+            });
+        }
     }
 };

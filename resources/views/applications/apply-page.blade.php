@@ -97,7 +97,7 @@
                                     <div class="row mt-3">
                                         <div class="col-md-6">
                                             <label class="red-label" for="participation_type">Please select an option of
-                                                your participation in SEMICON India <span class="red-label">*</span></label>
+                                                your participation in {{ config('constants')['EVENT_NAME'] }} <span class="red-label">*</span></label>
                                             <div style="display: flex; flex-wrap: wrap; gap: 10px;"
                                                 class="form-check is-filled">
                                                 @foreach ($participation_type as $type => $status)
@@ -441,7 +441,7 @@
                                             <div class="col-12 col-sm-12 mt-3">
                                                 <p style="text-align: justify; color: black;"><strong>We shall be
                                                         presenting exhibits and/or services, which belong to the
-                                                        following product group(s) in the SEMICON India product index.
+                                                        following product group(s) in the {{ config('constants')['EVENT_NAME'] }} product index.
                                                         This information is necessary for correct space
                                                         allocations.</strong> (But request you to limit your selection
                                                     only to product groups that your products represent. This will help

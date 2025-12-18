@@ -133,7 +133,7 @@
     <!-- Footer -->
     <tr>
         <td style="padding: 20px; text-align: center; color: #666666; font-size: 14px; border-top: 1px solid #eeeeee;">
-            <p style="margin: 0 0 10px 0;">If you have any questions, please contact us at <a href="mailto:semiconindia@semi.org">semiconindia@semi.org</a> .</p>
+            <p style="margin: 0 0 10px 0;">If you have any questions, please contact us at <a href="mailto:{{ config('constants')['organizer']['email'] }}">{{ config('constants')['organizer']['email'] }}</a> .</p>
             <p style="margin: 0;">Thank you for exhibitor registration at SEMICON India 2025.</p>
         </td>
     </tr>

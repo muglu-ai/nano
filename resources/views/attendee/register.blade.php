@@ -1,6 +1,6 @@
 @extends('attendee.app')
 
-@section('title', 'SEMICON India 2025: Registration')
+@section('title', '{{ config('constants')['EVENT_NAME'] }} {{ config('constants')['EVENT_YEAR'] }}: Registration')
 
 @section('content')
 <style>
@@ -89,7 +89,7 @@
 </div>
 
 
-    <h2 class="text-center">SEMICON India 2025: Registration</h2>
+    <h2 class="text-center">{{ config('constants')['EVENT_NAME'] }} {{ config('constants')['EVENT_YEAR'] }}: Registration</h2>
 
     @if ($errors->any())
     <div class="alert alert-danger" id="error-alert">

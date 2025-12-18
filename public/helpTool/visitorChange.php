@@ -3,7 +3,7 @@ exit;
 ini_set('display_errors', 1);
 require 'emailFunction.php';
 $message = $message5;
-$subject = '4TH SEPT - ENTRY FROM GATE 6 OR 10. CONF AND EXHIBITION STARTS AT 9 AM | SEMICON India 2025';
+$subject = '4TH SEPT - ENTRY FROM GATE 6 OR 10. CONF AND EXHIBITION STARTS AT 9 AM | ' . config('constants.EVENT_NAME') . ' ' . config('constants.EVENT_YEAR');
 
 $sql = "SELECT EMAIL FROM attendees WHERE approvedCate = 'Dignitaries' OR approvedCate = 'Delegate' AND email IS NOT NULL AND email != '' AND JSON_EXTRACT(reminder, '$.reminder4') IS NULL";
 

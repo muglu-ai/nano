@@ -10,7 +10,7 @@
                 <div class="col s12 m6 l4 offset-l4 offset-m3">
                     <div class="card white darken-1">
                         <div class="card-content">
-                            <span class="card-title center-align">SEMICON 2025 Login</span>
+                            <span class="card-title center-align">{{ config('constants')['EVENT_NAME'] }} {{ config('constants')['EVENT_YEAR'] }} Login</span>
                                     @if ($errors->any())
                                         <div class="p-4 mb-4 text-red-700 bg-red-100 rounded">
                                             {{ $errors->first() }}

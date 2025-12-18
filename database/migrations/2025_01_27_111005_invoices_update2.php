@@ -11,10 +11,13 @@ return new class extends Migration
      */
     public function up(): void
     {
-        // add invoice type to invoices table
-        Schema::table('invoices', function (Blueprint $table) {
-            $table->string('type')->after('sponsorship_id')->nullable();
-        });
+        if (Schema::hasTable('invoices')) {
+            Schema::table('invoices', function (Blueprint $table) {
+                if (!Schema::hasColumn('invoices', 'type')) {
+                    $table->string('type')->after('sponsorship_id')->nullable();
+                }
+            });
+        }
     }
 
     /**
@@ -22,6 +25,12 @@ return new class extends Migration
      */
     public function down(): void
     {
-        //
+        if (Schema::hasTable('invoices')) {
+            Schema::table('invoices', function (Blueprint $table) {
+                if (Schema::hasColumn('invoices', 'type')) {
+                    $table->dropColumn('type');
+                }
+            });
+        }
     }
 };

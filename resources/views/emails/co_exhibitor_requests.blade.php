@@ -9,7 +9,7 @@
 
     <div style="text-align: center; margin-bottom: 24px;">
         <img src="https://interlinx.in/logo.svg" alt="Logo" style="max-height: 60px; margin-bottom: 10px;">
-        <div style="font-size: 22px; font-weight: bold; color: #222;">SEMICON India 2025</div>
+        <div style="font-size: 22px; font-weight: bold; color: #222;">{{ config('constants')['EVENT_NAME'] }} {{ config('constants')['EVENT_YEAR'] }}</div>
     </div>
         <h2 style="color: #333; margin-bottom: 20px;">New Co-Exhibitor Application Submitted</h2>
         <table style="width:100%; border-collapse:collapse;">

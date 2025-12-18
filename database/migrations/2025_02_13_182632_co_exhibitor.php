@@ -11,12 +11,19 @@ return new class extends Migration
      */
     public function up(): void
     {
-        //
-        Schema::table('co_exhibitors', function (Blueprint $table) {
-            $table->enum('status', ['pending', 'approved', 'rejected'])->default('pending'); // Admin approval
-            $table->unsignedBigInteger('user_id')->nullable(); // Link to user account
-            $table->integer('allocated_passes')->default(0); // Pass allocation
-        });
+        if (Schema::hasTable('co_exhibitors')) {
+            Schema::table('co_exhibitors', function (Blueprint $table) {
+                if (!Schema::hasColumn('co_exhibitors', 'status')) {
+                    $table->enum('status', ['pending', 'approved', 'rejected'])->default('pending'); // Admin approval
+                }
+                if (!Schema::hasColumn('co_exhibitors', 'user_id')) {
+                    $table->unsignedBigInteger('user_id')->nullable(); // Link to user account
+                }
+                if (!Schema::hasColumn('co_exhibitors', 'allocated_passes')) {
+                    $table->integer('allocated_passes')->default(0); // Pass allocation
+                }
+            });
+        }
     }
 
     /**
@@ -24,6 +31,18 @@ return new class extends Migration
      */
     public function down(): void
     {
-        //
+        if (Schema::hasTable('co_exhibitors')) {
+            Schema::table('co_exhibitors', function (Blueprint $table) {
+                if (Schema::hasColumn('co_exhibitors', 'status')) {
+                    $table->dropColumn('status');
+                }
+                if (Schema::hasColumn('co_exhibitors', 'user_id')) {
+                    $table->dropColumn('user_id');
+                }
+                if (Schema::hasColumn('co_exhibitors', 'allocated_passes')) {
+                    $table->dropColumn('allocated_passes');
+                }
+            });
+        }
     }
 };

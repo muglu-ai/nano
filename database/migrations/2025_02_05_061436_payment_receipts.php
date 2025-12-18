@@ -11,16 +11,25 @@ return new class extends Migration
      */
     public function up(): void
     {
-        //
-        Schema::table('payments', function (Blueprint $table) {
-            // Adding new columns
-            $table->decimal('amount_paid', 10, 2)->nullable()->after('amount');
-            $table->string('currency', 10)->nullable()->after('payment_date');
-            $table->text('rejection_reason')->nullable()->after('status');
-            $table->string('receipt_image')->nullable()->after('rejection_reason');
-            // Adding foreign key constraint for user_id
-            $table->foreignId('user_id')->nullable()->constrained()->onDelete('set null');
-        });
+        if (Schema::hasTable('payments')) {
+            Schema::table('payments', function (Blueprint $table) {
+                if (!Schema::hasColumn('payments', 'amount_paid')) {
+                    $table->decimal('amount_paid', 10, 2)->nullable()->after('amount');
+                }
+                if (!Schema::hasColumn('payments', 'currency')) {
+                    $table->string('currency', 10)->nullable()->after('payment_date');
+                }
+                if (!Schema::hasColumn('payments', 'rejection_reason')) {
+                    $table->text('rejection_reason')->nullable()->after('status');
+                }
+                if (!Schema::hasColumn('payments', 'receipt_image')) {
+                    $table->string('receipt_image')->nullable()->after('rejection_reason');
+                }
+                if (!Schema::hasColumn('payments', 'user_id')) {
+                    $table->foreignId('user_id')->nullable()->constrained()->onDelete('set null');
+                }
+            });
+        }
     }
 
     /**
@@ -28,6 +37,25 @@ return new class extends Migration
      */
     public function down(): void
     {
-        //
+        if (Schema::hasTable('payments')) {
+            Schema::table('payments', function (Blueprint $table) {
+                if (Schema::hasColumn('payments', 'amount_paid')) {
+                    $table->dropColumn('amount_paid');
+                }
+                if (Schema::hasColumn('payments', 'currency')) {
+                    $table->dropColumn('currency');
+                }
+                if (Schema::hasColumn('payments', 'rejection_reason')) {
+                    $table->dropColumn('rejection_reason');
+                }
+                if (Schema::hasColumn('payments', 'receipt_image')) {
+                    $table->dropColumn('receipt_image');
+                }
+                if (Schema::hasColumn('payments', 'user_id')) {
+                    $table->dropForeign(['user_id']);
+                    $table->dropColumn('user_id');
+                }
+            });
+        }
     }
 };

@@ -699,7 +699,7 @@ class ApiRelayController extends Controller
 
                 "Name" => "Rajat Rai",
 
-                "CompanyName" => "SEMICON India",
+                "CompanyName" => config('constants.EVENT_NAME'),
 
                 "Designation" => "Delegate",
 
@@ -734,7 +734,7 @@ class ApiRelayController extends Controller
 
                 "Name" => "Sudhanshu ",
 
-                "CompanyName" => "SEMICON India",
+                "CompanyName" => config('constants.EVENT_NAME'),
 
                 "Designation" => "Organizer",
 
@@ -769,7 +769,7 @@ class ApiRelayController extends Controller
 
                 "Name" => "Dheeraj ",
 
-                "CompanyName" => "SEMICON India",
+                "CompanyName" => config('constants.EVENT_NAME'),
 
                 "Designation" => "Exhibitor",
 
@@ -839,7 +839,7 @@ class ApiRelayController extends Controller
 
                 "Name" => "Ved Mall",
 
-                "CompanyName" => "SEMICON India",
+                "CompanyName" => config('constants.EVENT_NAME'),
 
                 "Designation" => "Delegate",
 
@@ -874,7 +874,7 @@ class ApiRelayController extends Controller
 
                 "Name" => "Ashok Chandak",
 
-                "CompanyName" => "SEMICON India",
+                "CompanyName" => config('constants.EVENT_NAME'),
 
                 "Designation" => "President",
 

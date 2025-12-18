@@ -27,7 +27,7 @@ class PaymentVerifiedMailer extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Payment Verified Mailer - SEMICON India 2025',
+            subject: 'Payment Verified Mailer - ' . config('constants.EVENT_NAME') . ' ' . config('constants.EVENT_YEAR'),
         );
     }
 

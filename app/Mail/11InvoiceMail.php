@@ -76,7 +76,7 @@ class InvoiceMail extends Mailable
 
     public function build()
     {
-        return $this->subject('Your Application is approved at SEMICON 2025')
+        return $this->subject('Your Application is approved at ' . config('constants.EVENT_NAME') . ' ' . config('constants.EVENT_YEAR'))
             ->view('emails.invoice')
             ->with('data', $this->data);
     }
