@@ -4,7 +4,7 @@ const MAIL_FROM_NAME = 'Bengaluru Tech Summit 2025';
 const APP_NAME = 'Bengaluru Tech Summit 2025';
 const APP_NAME_SHORT = 'BTS 2025';
 const EVENT_NAME = 'Bengaluru Tech Summit';
-const EVENT_YEAR = '2025';
+const EVENT_YEAR = '2026';
 const SHORT_NAME = 'BTS';
 const EVENT_WEBSITE = 'https://www.bengalurutechsummit.com';
 //event dates

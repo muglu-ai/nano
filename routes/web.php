@@ -65,6 +65,34 @@ use App\Http\Controllers\EnquiryController;
 use App\Http\Controllers\EmailPreviewController;
 use App\Http\Controllers\CompanyLookupController;
 use App\Http\Controllers\FeedbackController;
+use App\Http\Controllers\SuperAdminController;
+
+// Super Admin Routes
+Route::middleware(['auth'])->prefix('super-admin')->name('super-admin.')->group(function () {
+    Route::get('/event-config', [SuperAdminController::class, 'eventConfig'])->name('event-config');
+    Route::post('/event-config', [SuperAdminController::class, 'updateEventConfig'])->name('event-config.update');
+    
+    // Event CRUD Routes
+    Route::get('/events', [SuperAdminController::class, 'events'])->name('events');
+    Route::get('/events/create', [SuperAdminController::class, 'createEvent'])->name('events.create');
+    Route::post('/events', [SuperAdminController::class, 'storeEvent'])->name('events.store');
+    Route::get('/events/{id}/edit', [SuperAdminController::class, 'editEvent'])->name('events.edit');
+    Route::put('/events/{id}', [SuperAdminController::class, 'updateEvent'])->name('events.update');
+    Route::delete('/events/{id}', [SuperAdminController::class, 'deleteEvent'])->name('events.delete');
+    
+    Route::get('/sectors', [SuperAdminController::class, 'sectors'])->name('sectors');
+    Route::post('/sectors', [SuperAdminController::class, 'addSector'])->name('sectors.add');
+    Route::post('/sectors/{id}', [SuperAdminController::class, 'updateSector'])->name('sectors.update');
+    Route::delete('/sectors/{id}', [SuperAdminController::class, 'deleteSector'])->name('sectors.delete');
+    
+    Route::post('/sub-sectors', [SuperAdminController::class, 'addSubSector'])->name('sub-sectors.add');
+    Route::post('/sub-sectors/{id}', [SuperAdminController::class, 'updateSubSector'])->name('sub-sectors.update');
+    Route::delete('/sub-sectors/{id}', [SuperAdminController::class, 'deleteSubSector'])->name('sub-sectors.delete');
+    
+    Route::post('/org-types', [SuperAdminController::class, 'addOrgType'])->name('org-types.add');
+    Route::post('/org-types/{id}', [SuperAdminController::class, 'updateOrgType'])->name('org-types.update');
+    Route::delete('/org-types/{id}', [SuperAdminController::class, 'deleteOrgType'])->name('org-types.delete');
+});
 
 Route::get('send-exhibitor-chkdin2', [AdminController::  class, 'sendAllData'])->name('send.exhibitor.chkdin')->middleware(Auth::class);
 Route::get('get-users', [AdminController::class, 'getUsers'])->name('getUsers')->middleware(Auth::class);

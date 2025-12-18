@@ -17,5 +17,7 @@ class Events extends Model
         'event_image',
         'start_date',
         'end_date',
+        'slug',
+        'status',
     ];
 }

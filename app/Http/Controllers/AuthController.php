@@ -24,6 +24,10 @@ class AuthController extends Controller
     {
         // If user is already logged in, redirect to dashboard
         if (Auth::check()) {
+            // if user is super-admin then redirect to super-admin event config
+            if (Auth::user()->role == 'super-admin') {
+                return redirect()->route("super-admin.event-config");
+            }
             // if user is admin then redirect to admin dashboard
             if (Auth::user()->role == 'admin') {
                 // ✅ Only log if role is admin
@@ -75,6 +79,10 @@ class AuthController extends Controller
         //if user already register then redirect to dashboard
         $role = 'exhibitor'; // Default role is exhibitor
         if (Auth::check()) {
+            // if user is super-admin then redirect to super-admin event config
+            if (Auth::user()->role == 'super-admin') {
+                return redirect()->route("super-admin.event-config");
+            }
             // if user is admin then redirect to admin dashboard
             if (Auth::user()->role == 'admin') {
                 return redirect()->route("dashboard.admin");
@@ -108,6 +116,10 @@ class AuthController extends Controller
     {
 
         if (Auth::check()) {
+            // if user is super-admin then redirect to super-admin event config
+            if (Auth::user()->role == 'super-admin') {
+                return redirect()->route("super-admin.event-config");
+            }
             // if user is admin then redirect to admin dashboard
             if (Auth::user()->role == 'admin') {
                 return redirect()->route("dashboard.admin");
@@ -170,6 +182,11 @@ class AuthController extends Controller
     private function redirectBasedOnRole($user)
     {
         $role = $user->role;
+
+        // Super Admin redirect
+        if ($role === 'super-admin') {
+            return redirect()->route('super-admin.event-config');
+        }
 
         // Admin redirect
         if ($role === 'admin') {
@@ -241,7 +258,9 @@ class AuthController extends Controller
     {
         $role = Auth::user()->role;
 
-        if ($role == 'exhibitor') {
+        if ($role == 'super-admin') {
+            return redirect()->route('super-admin.event-config');
+        } elseif ($role == 'exhibitor') {
             return view('exhibitor.dashboard');
         } elseif ($role == 'sponsor') {
             return view('sponsor.dashboard');
@@ -257,6 +276,10 @@ class AuthController extends Controller
 
         // If user is already logged in, redirect to dashboard
         if (Auth::check()) {
+            // if user is super-admin then redirect to super-admin event config
+            if (Auth::user()->role == 'super-admin') {
+                return redirect()->route("super-admin.event-config");
+            }
             // if user is admin then redirect to admin dashboard
             if (Auth::user()->role == 'admin') {
                 //if sub_role is visitor then redirect to registration analytics
@@ -322,6 +345,10 @@ class AuthController extends Controller
             // Redirect based on user role
             $role = Auth::user()->role;
             $role_class = strtolower($role);
+            //if role is super-admin then redirect to super-admin event config
+            if ($role == 'super-admin') {
+                return redirect()->route("super-admin.event-config");
+            }
             //if role is admin then redirect to admin dashboard
             if ($role == 'admin') {
                 //if sub_role is visitor then redirect to registration analytics

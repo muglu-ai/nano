@@ -20,15 +20,15 @@ class PortalReminder extends Mailable implements ShouldQueue
     public function __construct(
         string $name,
         string $loginEmail,
-        string $loginUrl = config('constants.APP_URL') . '/login',
-        string $forgotUrl = config('constants.APP_URL') . '/forgot-password',
-        string $supportEmail = ORGANIZER_EMAIL
+        ?string $loginUrl = null,
+        ?string $forgotUrl = null,
+        ?string $supportEmail = null
     ) {
         $this->name = $name;
         $this->loginEmail = $loginEmail;
-        $this->loginUrl = $loginUrl;
-        $this->forgotUrl = $forgotUrl;
-        $this->supportEmail = $supportEmail;
+        $this->loginUrl = $loginUrl ?? config('constants.APP_URL') . '/login';
+        $this->forgotUrl = $forgotUrl ?? config('constants.APP_URL') . '/forgot-password';
+        $this->supportEmail = $supportEmail ?? ORGANIZER_EMAIL;
     }
 
     public function build()

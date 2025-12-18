@@ -148,11 +148,15 @@ if (!Auth::check() || !isset(Auth::user()->id)) {
 
         <!-- First Row: Onboarding/Sponsorship (Left), Logos (Center), Profile (Right) -->
         <div class="d-flex justify-content-between align-items-center w-100 flex-wrap">
-            <!-- Left: Onboarding & Sponsorship Buttons -->
+            <!-- Left: Onboarding & Sponsorship Buttons (Hidden for super-admin) -->
+            @if(Auth::check() && Auth::user()->role !== 'super-admin')
             <div class="d-flex align-items-center">
                 <a href="" class="btn btn-primary me-2 bold-text">Onboarding</a>
                 <a href="" class="btn btn-secondary bold-text">Sponsorship</a>
             </div>
+            @else
+            <div></div>
+            @endif
 
             <!-- Center: Logos -->
             <div class="d-flex align-items-center flex-grow-1 justify-content-center">
@@ -199,6 +203,7 @@ if (!Auth::check() || !isset(Auth::user()->id)) {
         @endphp
 
         <!-- Second Row: Left-Aligned Navigation -->
+        @if(Auth::check() && Auth::user()->role !== 'super-admin')
         <div class="container-fluid mt-2">
             <nav class="nav nav-pills flex-column flex-md-row">
                 <a class="nav-link active bold-black" href="{{ route('event.list') }}">
@@ -209,5 +214,6 @@ if (!Auth::check() || !isset(Auth::user()->id)) {
                 <a class="nav-link bold-black" href="/semicon-2025/onboarding">Onboarding</a>
             </nav>
         </div>
+        @endif
     </div>
 </nav>
