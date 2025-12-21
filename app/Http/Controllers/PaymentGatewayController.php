@@ -211,7 +211,7 @@ class PaymentGatewayController extends Controller
         ];
 
 
-        dd($data);
+        // dd($data);
 
         $merchantData = json_encode($data);
 
