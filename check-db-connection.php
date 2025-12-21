@@ -3,10 +3,16 @@
  * Database Connection Check Script
  * 
  * Supports both .env file and MySQL connection string
+ * Includes TiDB Cloud SSL support
  * 
  * Usage:
  *   php check-db-connection.php
  *   php check-db-connection.php "mysql://user:pass@host:port/database"
+ * 
+ * For TiDB Cloud:
+ *   - Set DB_URL or DB_HOST, DB_PORT, DB_DATABASE, DB_USERNAME, DB_PASSWORD in .env
+ *   - Set MYSQL_ATTR_SSL_CA to TiDB Cloud CA certificate URL or path
+ *   - Ensure your IP is whitelisted in TiDB Cloud console
  */
 
 // Parse MySQL connection string
@@ -200,8 +206,17 @@ if (empty($dbUsername)) {
 echo "🔌 Attempting to connect to database...\n\n";
 
 try {
+    // Detect TiDB Cloud connection
+    $isTiDBCloud = (strpos($dbHost, 'tidbcloud.com') !== false || strpos($dbHost, 'tidb') !== false);
+    
     // Create PDO connection
-    $dsn = "mysql:host={$dbHost};port={$dbPort};dbname={$dbDatabase};charset=utf8mb4";
+    // TiDB Cloud requires SSL, so add ssl-mode to DSN if it's TiDB Cloud
+    if ($isTiDBCloud) {
+        $dsn = "mysql:host={$dbHost};port={$dbPort};dbname={$dbDatabase};charset=utf8mb4";
+    } else {
+        $dsn = "mysql:host={$dbHost};port={$dbPort};dbname={$dbDatabase};charset=utf8mb4";
+    }
+    
     $options = [
         PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
         PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
@@ -209,34 +224,85 @@ try {
         PDO::ATTR_TIMEOUT => 10,
     ];
     
-    // Add SSL configuration if SSL CA is provided
-    if (!empty($sslCa)) {
+    // Add SSL configuration if SSL CA is provided or if it's TiDB Cloud
+    
+    if (!empty($sslCa) || $isTiDBCloud) {
         echo "🔒 Configuring SSL connection...\n";
         
-        // Download SSL certificate if it's a URL
-        $sslCaPath = $sslCa;
-        if (filter_var($sslCa, FILTER_VALIDATE_URL)) {
-            echo "   Downloading SSL certificate from: {$sslCa}\n";
-            $sslCaPath = sys_get_temp_dir() . '/mysql_ssl_ca_' . md5($sslCa) . '.pem';
-            
-            $sslContent = @file_get_contents($sslCa);
-            if ($sslContent === false) {
-                throw new Exception("Failed to download SSL certificate from: {$sslCa}");
+        if (!empty($sslCa)) {
+            // Download SSL certificate if it's a URL
+            $sslCaPath = $sslCa;
+            if (filter_var($sslCa, FILTER_VALIDATE_URL)) {
+                echo "   Downloading SSL certificate from: {$sslCa}\n";
+                $sslCaPath = sys_get_temp_dir() . '/mysql_ssl_ca_' . md5($sslCa) . '.pem';
+                
+                $sslContent = @file_get_contents($sslCa);
+                if ($sslContent === false) {
+                    throw new Exception("Failed to download SSL certificate from: {$sslCa}");
+                }
+                
+                file_put_contents($sslCaPath, $sslContent);
+                echo "   SSL certificate saved to: {$sslCaPath}\n";
             }
             
-            file_put_contents($sslCaPath, $sslContent);
-            echo "   SSL certificate saved to: {$sslCaPath}\n";
+            // Verify SSL certificate file exists
+            if (!file_exists($sslCaPath)) {
+                throw new Exception("SSL certificate file not found: {$sslCaPath}");
+            }
+            
+            $options[PDO::MYSQL_ATTR_SSL_CA] = $sslCaPath;
+        } else if ($isTiDBCloud) {
+            // For TiDB Cloud, try to use system CA bundle or disable verification
+            echo "   Detected TiDB Cloud connection - configuring SSL...\n";
+            
+            // Try to find system CA bundle
+            $caPaths = [
+                '/etc/ssl/certs/ca-certificates.crt',  // Debian/Ubuntu
+                '/etc/pki/tls/certs/ca-bundle.crt',     // CentOS/RHEL
+                '/usr/local/etc/openssl/cert.pem',      // macOS Homebrew
+                '/opt/homebrew/etc/openssl@3/cert.pem', // macOS Homebrew (Apple Silicon)
+                '/System/Library/OpenSSL/certs/cert.pem', // macOS System
+            ];
+            
+            $foundCa = false;
+            foreach ($caPaths as $caPath) {
+                if (file_exists($caPath)) {
+                    $options[PDO::MYSQL_ATTR_SSL_CA] = $caPath;
+                    echo "   Using system CA bundle: {$caPath}\n";
+                    $foundCa = true;
+                    break;
+                }
+            }
+            
+            if (!$foundCa) {
+                echo "   ⚠️  System CA bundle not found, using SSL without CA verification\n";
+                echo "   (For production, download TiDB Cloud CA certificate)\n";
+            }
         }
         
-        // Verify SSL certificate file exists
-        if (!file_exists($sslCaPath)) {
-            throw new Exception("SSL certificate file not found: {$sslCaPath}");
+        // TiDB Cloud SSL options
+        if ($isTiDBCloud) {
+            // For TiDB Cloud, we need SSL but can skip verification if no CA cert
+            if (empty($sslCa) || !isset($options[PDO::MYSQL_ATTR_SSL_CA])) {
+                $options[PDO::MYSQL_ATTR_SSL_VERIFY_SERVER_CERT] = false;
+                echo "   ⚠️  SSL verification disabled (no CA cert provided)\n";
+                echo "   💡 For production, download TiDB Cloud CA certificate\n";
+            } else {
+                $options[PDO::MYSQL_ATTR_SSL_VERIFY_SERVER_CERT] = true;
+            }
+            $options[PDO::MYSQL_ATTR_SSL_CIPHER] = 'DEFAULT';
+        } else {
+            $options[PDO::MYSQL_ATTR_SSL_VERIFY_SERVER_CERT] = true;
         }
-        
-        $options[PDO::MYSQL_ATTR_SSL_CA] = $sslCaPath;
-        $options[PDO::MYSQL_ATTR_SSL_VERIFY_SERVER_CERT] = true;
         
         echo "   ✅ SSL configuration added\n\n";
+    } elseif ($isTiDBCloud) {
+        // TiDB Cloud detected but no SSL config - add minimal SSL
+        echo "🔒 TiDB Cloud detected - configuring SSL (minimal)...\n";
+        $options[PDO::MYSQL_ATTR_SSL_VERIFY_SERVER_CERT] = false;
+        $options[PDO::MYSQL_ATTR_SSL_CIPHER] = 'DEFAULT';
+        echo "   ⚠️  Using SSL without verification (recommended: set MYSQL_ATTR_SSL_CA in .env)\n";
+        echo "   💡 Download TiDB Cloud CA: https://docs.pingcap.com/tidbcloud/secure-connections-to-serverless-tier\n\n";
     }
 
     $startTime = microtime(true);
@@ -347,17 +413,28 @@ try {
     echo "Error Code: {$e->getCode()}\n";
     echo "Error Message: {$e->getMessage()}\n\n";
     
+    $isTiDBCloud = (strpos($dbHost, 'tidbcloud.com') !== false || strpos($dbHost, 'tidb') !== false);
+    
     echo "💡 Troubleshooting tips:\n";
     echo "   1. Verify connection details are correct\n";
-    echo "   2. Ensure MySQL/MariaDB server is running\n";
+    echo "   2. Ensure MySQL/TiDB server is running\n";
     echo "   3. Check if the database exists: CREATE DATABASE IF NOT EXISTS `{$dbDatabase}`;\n";
     echo "   4. Verify user has proper permissions\n";
     echo "   5. Check firewall settings if connecting to remote host\n";
     echo "   6. Verify network connectivity to {$dbHost}:{$dbPort}\n";
-    echo "   7. Test connection: mysql -h {$dbHost} -P {$dbPort} -u {$dbUsername} -p{$dbDatabase}\n";
+    
+    if ($isTiDBCloud) {
+        echo "   7. ⚠️  TiDB Cloud requires SSL connection - ensure MYSQL_ATTR_SSL_CA is set in .env\n";
+        echo "   8. Check TiDB Cloud IP whitelist - your IP must be allowed\n";
+        echo "   9. Download TiDB Cloud CA certificate from: https://docs.pingcap.com/tidbcloud/secure-connections-to-serverless-tier\n";
+        echo "  10. Test connection: mysql -h {$dbHost} -P {$dbPort} -u {$dbUsername} -p --ssl-mode=REQUIRED\n";
+    } else {
+        echo "   7. Test connection: mysql -h {$dbHost} -P {$dbPort} -u {$dbUsername} -p{$dbDatabase}\n";
+    }
+    
     if (!empty($sslCa)) {
-        echo "   8. Verify SSL certificate URL is accessible: {$sslCa}\n";
-        echo "   9. Check SSL certificate file permissions\n";
+        echo "   " . ($isTiDBCloud ? "11" : "8") . ". Verify SSL certificate URL is accessible: {$sslCa}\n";
+        echo "   " . ($isTiDBCloud ? "12" : "9") . ". Check SSL certificate file permissions\n";
     }
     echo "\n";
     
