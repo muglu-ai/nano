@@ -210,8 +210,9 @@ try {
     $isTiDBCloud = (strpos($dbHost, 'tidbcloud.com') !== false || strpos($dbHost, 'tidb') !== false);
     
     // Create PDO connection
-    // TiDB Cloud requires SSL, so add ssl-mode to DSN if it's TiDB Cloud
+    // TiDB Cloud requires SSL - add ssl-mode to DSN
     if ($isTiDBCloud) {
+        // For TiDB Cloud, we need to ensure SSL is used
         $dsn = "mysql:host={$dbHost};port={$dbPort};dbname={$dbDatabase};charset=utf8mb4";
     } else {
         $dsn = "mysql:host={$dbHost};port={$dbPort};dbname={$dbDatabase};charset=utf8mb4";
@@ -221,7 +222,7 @@ try {
         PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
         PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
         PDO::ATTR_EMULATE_PREPARES => false,
-        PDO::ATTR_TIMEOUT => 10,
+        PDO::ATTR_TIMEOUT => 30, // Increased timeout for TiDB Cloud
     ];
     
     // Add SSL configuration if SSL CA is provided or if it's TiDB Cloud
@@ -299,9 +300,29 @@ try {
     } elseif ($isTiDBCloud) {
         // TiDB Cloud detected but no SSL config - add minimal SSL
         echo "🔒 TiDB Cloud detected - configuring SSL (minimal)...\n";
+        
+        // TiDB Cloud requires SSL - enable it even without CA cert
         $options[PDO::MYSQL_ATTR_SSL_VERIFY_SERVER_CERT] = false;
         $options[PDO::MYSQL_ATTR_SSL_CIPHER] = 'DEFAULT';
-        echo "   ⚠️  Using SSL without verification (recommended: set MYSQL_ATTR_SSL_CA in .env)\n";
+        
+        // Try to use system CA bundle if available
+        $caPaths = [
+            '/etc/ssl/certs/ca-certificates.crt',  // Debian/Ubuntu
+            '/etc/pki/tls/certs/ca-bundle.crt',     // CentOS/RHEL
+            '/usr/local/etc/openssl/cert.pem',      // macOS Homebrew
+            '/opt/homebrew/etc/openssl@3/cert.pem', // macOS Homebrew (Apple Silicon)
+            '/System/Library/OpenSSL/certs/cert.pem', // macOS System
+        ];
+        
+        foreach ($caPaths as $caPath) {
+            if (file_exists($caPath)) {
+                $options[PDO::MYSQL_ATTR_SSL_CA] = $caPath;
+                echo "   Using system CA bundle: {$caPath}\n";
+                break;
+            }
+        }
+        
+        echo "   ⚠️  Using SSL without strict verification (recommended: set MYSQL_ATTR_SSL_CA in .env)\n";
         echo "   💡 Download TiDB Cloud CA: https://docs.pingcap.com/tidbcloud/secure-connections-to-serverless-tier\n\n";
     }
 
@@ -413,6 +434,34 @@ try {
     echo "Error Code: {$e->getCode()}\n";
     echo "Error Message: {$e->getMessage()}\n\n";
     
+    // Additional diagnostics for specific error codes
+    if ($e->getCode() == 2002) {
+        echo "🔍 Error 2002 Analysis:\n";
+        echo "   This usually means the server refused the connection.\n";
+        echo "   Possible causes:\n";
+        echo "   - Firewall blocking port {$dbPort}\n";
+        echo "   - IP not whitelisted (even if you think it is, double-check)\n";
+        echo "   - Server is down or unreachable\n";
+        echo "   - Wrong host/port combination\n";
+        echo "   - Network connectivity issues\n\n";
+        
+        // Test network connectivity
+        echo "🧪 Testing network connectivity...\n";
+        $testHost = $dbHost;
+        $testPort = $dbPort;
+        
+        // Try to connect with fsockopen
+        $connection = @fsockopen($testHost, $testPort, $errno, $errstr, 5);
+        if ($connection) {
+            echo "   ✅ Port {$testPort} is reachable on {$testHost}\n";
+            fclose($connection);
+        } else {
+            echo "   ❌ Cannot reach {$testHost}:{$testPort}\n";
+            echo "   Error: {$errstr} (Code: {$errno})\n";
+        }
+        echo "\n";
+    }
+    
     $isTiDBCloud = (strpos($dbHost, 'tidbcloud.com') !== false || strpos($dbHost, 'tidb') !== false);
     
     echo "💡 Troubleshooting tips:\n";
@@ -425,9 +474,13 @@ try {
     
     if ($isTiDBCloud) {
         echo "   7. ⚠️  TiDB Cloud requires SSL connection - ensure MYSQL_ATTR_SSL_CA is set in .env\n";
-        echo "   8. Check TiDB Cloud IP whitelist - your IP must be allowed\n";
-        echo "   9. Download TiDB Cloud CA certificate from: https://docs.pingcap.com/tidbcloud/secure-connections-to-serverless-tier\n";
-        echo "  10. Test connection: mysql -h {$dbHost} -P {$dbPort} -u {$dbUsername} -p --ssl-mode=REQUIRED\n";
+        echo "   8. Verify IP whitelist in TiDB Cloud console (you mentioned it's whitelisted)\n";
+        echo "   9. Check if port {$dbPort} is accessible: telnet {$dbHost} {$dbPort}\n";
+        echo "  10. Test connection with mysql client:\n";
+        echo "      mysql -h {$dbHost} -P {$dbPort} -u {$dbUsername} -p --ssl-mode=REQUIRED\n";
+        echo "  11. Verify your current IP matches whitelist: curl ifconfig.me\n";
+        echo "  12. Check TiDB Cloud cluster status in console (ensure it's running)\n";
+        echo "  13. Try increasing timeout if connection is slow\n";
     } else {
         echo "   7. Test connection: mysql -h {$dbHost} -P {$dbPort} -u {$dbUsername} -p{$dbDatabase}\n";
     }
