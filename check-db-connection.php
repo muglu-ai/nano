@@ -458,6 +458,23 @@ try {
         } else {
             echo "   ❌ Cannot reach {$testHost}:{$testPort}\n";
             echo "   Error: {$errstr} (Code: {$errno})\n";
+            echo "\n";
+            echo "   🔍 Additional Diagnostics:\n";
+            
+            // Get current IP
+            $currentIp = @file_get_contents('https://ifconfig.me');
+            if (!$currentIp) {
+                $currentIp = @file_get_contents('https://ipinfo.io/ip');
+            }
+            if ($currentIp) {
+                echo "   Your current public IP: " . trim($currentIp) . "\n";
+                echo "   ⚠️  Verify this IP is whitelisted in TiDB Cloud console\n";
+            }
+            
+            echo "   - Check TiDB Cloud console → Security → IP Access List\n";
+            echo "   - Ensure cluster is running (not paused)\n";
+            echo "   - Try disabling VPN/Proxy if active\n";
+            echo "   - Wait a few minutes after adding IP to whitelist (propagation delay)\n";
         }
         echo "\n";
     }
