@@ -374,109 +374,126 @@ class StartupZoneController extends Controller
      */
     public function submitForm(Request $request)
     {
-        $fieldConfigs = FormFieldConfiguration::currentVersion()
-            ->active()
-            ->byFormType('startup-zone')
-            ->get()
-            ->keyBy('field_name');
+        try {
+            $fieldConfigs = FormFieldConfiguration::currentVersion()
+                ->active()
+                ->byFormType('startup-zone')
+                ->get()
+                ->keyBy('field_name');
 
-        // Build validation rules for all fields
-        $rules = $this->buildValidationRules($fieldConfigs, 'all');
-        
-        // Merge session data with request data for validation
-        $sessionData = session('startup_zone_draft', []);
-        $allData = array_merge($sessionData, $request->all());
-        
-        // For intl-tel-input fields, validate the national number instead
-        // Map contact_mobile_national to contact_mobile for validation
-        if ($request->has('contact_mobile_national') && !empty($request->input('contact_mobile_national'))) {
-            $allData['contact_mobile'] = $request->input('contact_mobile_national');
-        }
-        if ($request->has('landline_national') && !empty($request->input('landline_national'))) {
-            $allData['landline'] = $request->input('landline_national');
-        }
-        
-        $validator = Validator::make($allData, $rules);
+            // Build validation rules for all fields
+            $rules = $this->buildValidationRules($fieldConfigs, 'all');
+            
+            // Merge session data with request data for validation
+            $sessionData = session('startup_zone_draft', []);
+            $allData = array_merge($sessionData, $request->all());
+            
+            // For intl-tel-input fields, validate the national number instead
+            // Map contact_mobile_national to contact_mobile for validation
+            if ($request->has('contact_mobile_national') && !empty($request->input('contact_mobile_national'))) {
+                $allData['contact_mobile'] = $request->input('contact_mobile_national');
+            }
+            if ($request->has('landline_national') && !empty($request->input('landline_national'))) {
+                $allData['landline'] = $request->input('landline_national');
+            }
+            
+            $validator = Validator::make($allData, $rules);
 
-        if ($validator->fails()) {
-            // Log validation errors for debugging
-            \Log::info('Startup Zone Form Validation Failed', [
-                'errors' => $validator->errors()->toArray(),
-                'data_keys' => array_keys($allData),
-                'rules' => $rules
+            if ($validator->fails()) {
+                // Log validation errors for debugging
+                \Log::info('Startup Zone Form Validation Failed', [
+                    'errors' => $validator->errors()->toArray(),
+                    'data_keys' => array_keys($allData),
+                    'rules' => $rules
+                ]);
+                
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Please fix the validation errors below.',
+                    'errors' => $validator->errors()
+                ], 422);
+            }
+
+            // Now save to database from session + request data
+            $sessionId = session()->getId();
+            
+            // Get or create draft in database
+            $draft = StartupZoneDraft::bySession($sessionId)->first();
+
+            if (!$draft) {
+                $draft = new StartupZoneDraft();
+                $draft->session_id = $sessionId;
+                $draft->uuid = Str::uuid();
+                $draft->expires_at = now()->addDays(30);
+            }
+
+            // Handle file upload (from request or session)
+            if ($request->hasFile('certificate')) {
+                $file = $request->file('certificate');
+                $path = $file->store('startup-zone/certificates', 'public');
+                $draft->certificate_path = $path;
+            } elseif (isset($sessionData['certificate_path'])) {
+                $draft->certificate_path = $sessionData['certificate_path'];
+            }
+
+            // Handle landline: use national number if available
+            $landlineData = [];
+            if ($request->has('landline_national') && $request->input('landline_national')) {
+                $landlineData['landline'] = $request->input('landline_national');
+            } elseif ($request->has('landline')) {
+                $landlineData['landline'] = $request->input('landline');
+            }
+            
+            // Update draft with all form fields from session + request
+            $draft->fill(array_merge($sessionData, $landlineData, $request->only([
+                'stall_category', 'interested_sqm', 'company_name',
+                'how_old_startup', 'address', 'city_id', 'state_id',
+                'postal_code', 'country_id', 'website',
+                'company_email', 'gst_compliance', 'gst_no', 'pan_no',
+                'sector_id', 'subSector', 'type_of_business',
+                'promocode', 'assoc_mem', 'RegSource', 'payment_mode'
+            ])));
+
+            // Store contact data as JSON (from session or request)
+            if (isset($sessionData['contact_data'])) {
+                $draft->contact_data = $sessionData['contact_data'];
+            } else {
+                $contactData = [
+                    'title' => $request->input('contact_title'),
+                    'first_name' => $request->input('contact_first_name'),
+                    'last_name' => $request->input('contact_last_name'),
+                    'designation' => $request->input('contact_designation'),
+                    'email' => $request->input('contact_email'),
+                    'mobile' => $request->input('contact_mobile_national') ?: $request->input('contact_mobile'), // Use national number if available
+                    'country_code' => $request->input('contact_country_code'),
+                ];
+                $draft->contact_data = $contactData;
+            }
+
+            $draft->progress_percentage = $this->calculateProgress($draft);
+            $draft->save();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Form saved successfully',
+                'progress' => $draft->progress_percentage
+            ]);
+        } catch (\Exception $e) {
+            // Log the error for debugging
+            \Log::error('Startup Zone Form Submission Error', [
+                'message' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'trace' => $e->getTraceAsString()
             ]);
             
+            // Return JSON error response instead of HTML
             return response()->json([
                 'success' => false,
-                'message' => 'Please fix the validation errors below.',
-                'errors' => $validator->errors()
-            ], 422);
+                'message' => 'An error occurred while saving the form. Please try again.',
+                'error' => config('app.debug') ? $e->getMessage() : 'Internal server error'
+            ], 500);
         }
-
-        // Now save to database from session + request data
-        $sessionId = session()->getId();
-        
-        // Get or create draft in database
-        $draft = StartupZoneDraft::bySession($sessionId)->first();
-
-        if (!$draft) {
-            $draft = new StartupZoneDraft();
-            $draft->session_id = $sessionId;
-            $draft->uuid = Str::uuid();
-            $draft->expires_at = now()->addDays(30);
-        }
-
-        // Handle file upload (from request or session)
-        if ($request->hasFile('certificate')) {
-            $file = $request->file('certificate');
-            $path = $file->store('startup-zone/certificates', 'public');
-            $draft->certificate_path = $path;
-        } elseif (isset($sessionData['certificate_path'])) {
-            $draft->certificate_path = $sessionData['certificate_path'];
-        }
-
-        // Handle landline: use national number if available
-        $landlineData = [];
-        if ($request->has('landline_national') && $request->input('landline_national')) {
-            $landlineData['landline'] = $request->input('landline_national');
-        } elseif ($request->has('landline')) {
-            $landlineData['landline'] = $request->input('landline');
-        }
-        
-        // Update draft with all form fields from session + request
-        $draft->fill(array_merge($sessionData, $landlineData, $request->only([
-            'stall_category', 'interested_sqm', 'company_name',
-            'how_old_startup', 'address', 'city_id', 'state_id',
-            'postal_code', 'country_id', 'website',
-            'company_email', 'gst_compliance', 'gst_no', 'pan_no',
-            'sector_id', 'subSector', 'type_of_business',
-            'promocode', 'assoc_mem', 'RegSource', 'payment_mode'
-        ])));
-
-        // Store contact data as JSON (from session or request)
-        if (isset($sessionData['contact_data'])) {
-            $draft->contact_data = $sessionData['contact_data'];
-        } else {
-            $contactData = [
-                'title' => $request->input('contact_title'),
-                'first_name' => $request->input('contact_first_name'),
-                'last_name' => $request->input('contact_last_name'),
-                'designation' => $request->input('contact_designation'),
-                'email' => $request->input('contact_email'),
-                'mobile' => $request->input('contact_mobile_national') ?: $request->input('contact_mobile'), // Use national number if available
-                'country_code' => $request->input('contact_country_code'),
-            ];
-            $draft->contact_data = $contactData;
-        }
-
-        $draft->progress_percentage = $this->calculateProgress($draft);
-        $draft->save();
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Form saved successfully',
-            'progress' => $draft->progress_percentage
-        ]);
     }
 
     /**

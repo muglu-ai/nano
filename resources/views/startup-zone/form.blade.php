@@ -1116,6 +1116,10 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(response => {
             // Check if response is ok (status 200-299)
             if (!response.ok) {
+                // Get content type to check if it's JSON
+                const contentType = response.headers.get('content-type');
+                const isJson = contentType && contentType.includes('application/json');
+                
                 // For 422 validation errors, parse JSON
                 if (response.status === 422) {
                     return response.json().then(data => {
@@ -1123,12 +1127,39 @@ document.addEventListener('DOMContentLoaded', function() {
                         // Convert Laravel errors object to plain object if needed
                         const errors = data.errors || {};
                         throw { type: 'validation', errors: errors, message: data.message || 'Validation failed' };
+                    }).catch(err => {
+                        // If JSON parsing fails, it's likely HTML error page
+                        if (err.type === 'validation') throw err;
+                        throw { type: 'validation', errors: {}, message: 'Validation failed. Please check all fields.' };
                     });
                 }
-                // For other errors
-                return response.json().then(data => {
-                    throw { type: 'error', message: data.message || 'Failed to submit form' };
-                });
+                
+                // For 500 errors, try to parse JSON, but handle HTML response
+                if (response.status === 500) {
+                    if (isJson) {
+                        return response.json().then(data => {
+                            throw { type: 'error', message: data.message || 'Server error occurred. Please try again.' };
+                        });
+                    } else {
+                        // Server returned HTML error page
+                        return response.text().then(html => {
+                            console.error('Server returned HTML error page:', html.substring(0, 500));
+                            throw { type: 'error', message: 'Server error occurred. Please check the console for details or contact support.' };
+                        });
+                    }
+                }
+                
+                // For other errors, try JSON first
+                if (isJson) {
+                    return response.json().then(data => {
+                        throw { type: 'error', message: data.message || 'Failed to submit form' };
+                    });
+                } else {
+                    // Non-JSON response
+                    return response.text().then(text => {
+                        throw { type: 'error', message: 'Unexpected server response. Please try again.' };
+                    });
+                }
             }
             return response.json();
         })
