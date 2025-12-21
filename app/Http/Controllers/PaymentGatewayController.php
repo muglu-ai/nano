@@ -49,8 +49,8 @@ class PaymentGatewayController extends Controller
         $this->merchantId  = '7700';
         $this->accessCode  = 'AVAX60MC26BE01XAEB';
         $this->workingKey  = 'DBBE266B02508AF7118D4A2598763D69';
-        $this->redirectUrl = 'https://portal.semiconindia.org/payment/ccavenue-success';
-        $this->cancelUrl   = 'https://portal.semiconindia.org/payment/ccavenue-success';
+        $this->redirectUrl = 'https://bengalurutechsummit.com/bts-portal/public/payment/ccavenue-success';
+        $this->cancelUrl   = 'https://bengalurutechsummit.com/bts-portal/public/payment/ccavenue-success';
     }
 
 
