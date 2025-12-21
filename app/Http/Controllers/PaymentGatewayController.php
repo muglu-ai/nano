@@ -233,9 +233,12 @@ class PaymentGatewayController extends Controller
         $queryString = http_build_query($data);
         $encryptedData = $this->encrypt($queryString, $this->workingKey);
 
+        // Store invoice_no in session for fallback handling
         session([
             'invoice_no' => $orderID,
             'payment_user_id' => auth()->check() ? auth()->id() : null,
+            'payment_application_id' => $application ? $application->application_id : null,
+            'payment_application_type' => $application ? $application->application_type : null,
         ]);
 
         return view('pgway.ccavenue', compact('encryptedData'));
@@ -263,17 +266,106 @@ class PaymentGatewayController extends Controller
 
     public function ccAvenueSuccess(Request $request)
     {
+        // Log incoming request for debugging
+        Log::info('CCAvenue Success Callback', [
+            'request_data' => $request->all(),
+            'has_encResp' => $request->has('encResp'),
+        ]);
 
-
-
-        //dd($request->all());
-        // Decrypt response
-        $workingKey = env('CCAVENUE_WORKING_KEY');
+        // Check if encResp parameter exists
         $encResponse = $request->input("encResp");
+        
+        if (empty($encResponse)) {
+            Log::warning('CCAvenue Success: Missing encResp parameter', [
+                'request_data' => $request->all(),
+                'session_invoice' => session('invoice_no'),
+            ]);
+            
+            // Try to get invoice from session
+            $invoiceNo = session('invoice_no');
+            if ($invoiceNo) {
+                $invoice = Invoice::where('invoice_no', $invoiceNo)->first();
+                if ($invoice && $invoice->application_id) {
+                    $application = Application::find($invoice->application_id);
+                    if ($application && $application->application_type === 'startup-zone') {
+                        return redirect()->route('startup-zone.payment', $application->application_id)
+                            ->with('error', 'Payment was cancelled or incomplete. Please try again.');
+                    }
+                }
+            }
+            
+            return redirect()->route('exhibitor.orders')
+                ->with('error', 'Payment response incomplete. Please contact support if payment was deducted.');
+        }
 
-
-        $decryptedResponse = $this->decrypt($encResponse, $this->workingKey);
-        parse_str($decryptedResponse, $responseArray);
+        // Decrypt response
+        $workingKey = env('CCAVENUE_WORKING_KEY') ?: $this->workingKey;
+        
+        try {
+            $decryptedResponse = $this->decrypt($encResponse, $workingKey);
+            parse_str($decryptedResponse, $responseArray);
+        } catch (\Exception $e) {
+            Log::error('CCAvenue Success: Decryption failed', [
+                'error' => $e->getMessage(),
+                'encResp_length' => strlen($encResponse),
+            ]);
+            
+            // Try to get invoice from session
+            $invoiceNo = session('invoice_no');
+            $applicationId = session('payment_application_id');
+            
+            if ($applicationId) {
+                // Startup zone - redirect to payment page
+                return redirect()->route('startup-zone.payment', $applicationId)
+                    ->with('error', 'Payment response error. Please try again or contact support.');
+            }
+            
+            if ($invoiceNo) {
+                $invoice = Invoice::where('invoice_no', $invoiceNo)->first();
+                if ($invoice && $invoice->application_id) {
+                    $application = Application::find($invoice->application_id);
+                    if ($application && $application->application_type === 'startup-zone') {
+                        return redirect()->route('startup-zone.payment', $application->application_id)
+                            ->with('error', 'Payment response error. Please try again or contact support.');
+                    }
+                }
+            }
+            
+            return redirect()->route('exhibitor.orders')
+                ->with('error', 'Payment response error. Please contact support if payment was deducted.');
+        }
+        
+        // Validate response array
+        if (empty($responseArray) || !isset($responseArray['order_id'])) {
+            Log::error('CCAvenue Success: Invalid response array', [
+                'response_array' => $responseArray,
+                'decrypted_response' => $decryptedResponse ?? null,
+            ]);
+            
+            // Try to get invoice from session
+            $invoiceNo = session('invoice_no');
+            $applicationId = session('payment_application_id');
+            
+            if ($applicationId) {
+                // Startup zone - redirect to payment page
+                return redirect()->route('startup-zone.payment', $applicationId)
+                    ->with('error', 'Invalid payment response. Please try again.');
+            }
+            
+            if ($invoiceNo) {
+                $invoice = Invoice::where('invoice_no', $invoiceNo)->first();
+                if ($invoice && $invoice->application_id) {
+                    $application = Application::find($invoice->application_id);
+                    if ($application && $application->application_type === 'startup-zone') {
+                        return redirect()->route('startup-zone.payment', $application->application_id)
+                            ->with('error', 'Invalid payment response. Please try again.');
+                    }
+                }
+            }
+            
+            return redirect()->route('exhibitor.orders')
+                ->with('error', 'Invalid payment response. Please contact support.');
+        }
 
 
 
@@ -298,12 +390,44 @@ class PaymentGatewayController extends Controller
 
             $invoice = Invoice::where('invoice_no', $order_id)->first();
             
+            // Check if this is a startup zone invoice FIRST (before any other processing)
+            // This helps us redirect correctly even if invoice is not found
+            $isStartupZone = false;
+            $application = null;
+            $applicationId = session('payment_application_id');
+            
+            if ($invoice && $invoice->application_id) {
+                $application = Application::find($invoice->application_id);
+                if ($application && $application->application_type === 'startup-zone') {
+                    $isStartupZone = true;
+                    $applicationId = $application->application_id; // Update from invoice if found
+                }
+            } elseif ($applicationId) {
+                // Try to get application from session application_id
+                $application = Application::where('application_id', $applicationId)
+                    ->where('application_type', 'startup-zone')
+                    ->first();
+                if ($application) {
+                    $isStartupZone = true;
+                }
+            }
+            
             // If invoice not found, log and redirect
             if (!$invoice) {
                 Log::error('CCAvenue Success: Invoice not found', [
                     'order_id' => $order_id,
-                    'response' => $responseArray
+                    'response' => $responseArray,
+                    'is_startup_zone' => $isStartupZone,
+                    'application_id' => $applicationId
                 ]);
+                
+                // If startup zone, redirect to confirmation page
+                if ($isStartupZone && $applicationId) {
+                    return redirect()->route('startup-zone.confirmation', $applicationId)
+                        ->with('error', 'Invoice not found. Please contact support.')
+                        ->with('payment_response', $responseArray);
+                }
+                
                 return redirect()->route('exhibitor.orders')
                     ->with('error', 'Invoice not found. Please contact support.');
             }
@@ -318,28 +442,37 @@ class PaymentGatewayController extends Controller
                     'currency' => 'INR',
                 ]);
                 
-                // Check if this is a startup zone invoice
-                $isStartupZone = false;
-                $application = null;
-                if ($invoice->application_id) {
-                    $application = Application::find($invoice->application_id);
-                    if ($application && $application->application_type === 'startup-zone') {
-                        $isStartupZone = true;
-                    }
-                }
-                
-                if ($isStartupZone) {
-                    // For startup zone, payment success is handled by webhook
-                    // Just redirect to confirmation page
+                // Create payment record for startup zone
+                if ($isStartupZone && $application) {
+                    // Create payment record
+                    Payment::create([
+                        'invoice_id' => $invoice->id,
+                        'payment_method' => $responseArray['payment_mode'] ?? 'CCAvenue',
+                        'amount' => $responseArray['mer_amount'],
+                        'amount_paid' => $responseArray['mer_amount'],
+                        'amount_received' => $responseArray['mer_amount'],
+                        'transaction_id' => $responseArray['tracking_id'] ?? null,
+                        'pg_result' => $responseArray['order_status'],
+                        'track_id' => $responseArray['tracking_id'] ?? null,
+                        'pg_response_json' => $responseArray,
+                        'payment_date' => $trans_date ?? now(),
+                        'currency' => 'INR',
+                        'status' => 'successful',
+                        'order_id' => $responseArray['order_id'],
+                        'user_id' => $application->user_id ?? null,
+                    ]);
+                    
                     Log::info('Startup Zone CCAvenue Payment Success', [
                         'application_id' => $application->application_id,
                         'invoice_no' => $invoice->invoice_no,
-                        'amount' => $responseArray['mer_amount']
+                        'amount' => $responseArray['mer_amount'],
+                        'transaction_id' => $responseArray['tracking_id'] ?? null,
                     ]);
                     
-                    // Redirect to startup zone confirmation
+                    // Redirect to startup zone confirmation with payment response
                     return redirect()->route('startup-zone.confirmation', $application->application_id)
-                        ->with('success', 'Payment successful!');
+                        ->with('success', 'Payment successful!')
+                        ->with('payment_response', $responseArray);
                 } else {
                     // For other invoice types, send extra requirements mail
                     $service = new ExtraRequirementsMailService();
@@ -354,7 +487,7 @@ class PaymentGatewayController extends Controller
 
             // check the application_id from the invoice and theen from the application use user_id to authenticate the user
             // Only authenticate for non-startup-zone invoices
-            if (!$isStartupZone) {
+            if (!$isStartupZone && $invoice) {
                 //check if the invoices doesn't have co_exhibitorID 
                 if ($invoice->co_exhibitorID) {
                     // If co_exhibitor_id is present, authenticate as co-exhibitor user only
@@ -387,12 +520,13 @@ class PaymentGatewayController extends Controller
                 session(['payment_success' => true, 'invoice_no' => $order_id, 'payment_message' => 'Payment is successful.']);
                 return redirect()->route('exhibitor.orders');
             } else {
-                // Startup zone - already redirected above
-                return redirect()->route('startup-zone.confirmation', $application->application_id)
-                    ->with('success', 'Payment successful!');
+                // Startup zone - should have already redirected above, but this is a fallback
+                if ($isStartupZone && $application) {
+                    return redirect()->route('startup-zone.confirmation', $application->application_id)
+                        ->with('success', 'Payment successful!')
+                        ->with('payment_response', $responseArray);
+                }
             }
-            return response()->json($responseArray);
-            return redirect('/payment-success');
         } elseif (isset($responseArray)) {
             //update the table with failed payment details
             if (!empty($responseArray['trans_date'])) {
@@ -430,9 +564,40 @@ class PaymentGatewayController extends Controller
                 }
             }
             
+            // If invoice not found, check session
+            if (!$invoice) {
+                $applicationId = session('payment_application_id');
+                if ($applicationId) {
+                    return redirect()->route('startup-zone.payment', $applicationId)
+                        ->with('error', 'Payment failed. Please try again.');
+                }
+            }
+            
             if ($isStartupZone && $application) {
+                // Create failed payment record for startup zone
+                if ($invoice) {
+                    Payment::create([
+                        'invoice_id' => $invoice->id,
+                        'payment_method' => $responseArray['payment_mode'] ?? 'CCAvenue',
+                        'amount' => $responseArray['mer_amount'] ?? $invoice->total_final_price,
+                        'amount_paid' => 0,
+                        'amount_received' => 0,
+                        'transaction_id' => $responseArray['tracking_id'] ?? null,
+                        'pg_result' => $responseArray['order_status'] ?? 'Failed',
+                        'track_id' => $responseArray['tracking_id'] ?? null,
+                        'pg_response_json' => $responseArray,
+                        'payment_date' => $trans_date ?? now(),
+                        'currency' => 'INR',
+                        'status' => 'failed',
+                        'rejection_reason' => $responseArray['failure_message'] ?? 'Payment failed',
+                        'order_id' => $responseArray['order_id'],
+                        'user_id' => $application->user_id ?? null,
+                    ]);
+                }
+                
                 return redirect()->route('startup-zone.payment', $application->application_id)
-                    ->with('error', 'Payment failed. Please try again.');
+                    ->with('error', 'Payment failed. Please try again.')
+                    ->with('payment_response', $responseArray);
             }
             
             // For non-startup-zone invoices or if invoice not found
@@ -446,16 +611,40 @@ class PaymentGatewayController extends Controller
 
             //return to /payment/{id} 
         } else {
-            //update the table with failed payment details
-            \DB::table('payment_gateway_response')
-                ->where('order_id', $responseArray['order_id'])
-                ->update([
-                    'status' => 'Failed',
-                    'updated_at' => now(),
-                ]);
+            // No response array or unexpected format
+            Log::warning('CCAvenue Success: Unexpected response format', [
+                'has_response_array' => isset($responseArray),
+                'response_array' => $responseArray ?? null,
+                'request_data' => $request->all(),
+            ]);
+            
+            // Try to get invoice from session
+            $invoiceNo = session('invoice_no');
+            if ($invoiceNo) {
+                $invoice = Invoice::where('invoice_no', $invoiceNo)->first();
+                if ($invoice && $invoice->application_id) {
+                    $application = Application::find($invoice->application_id);
+                    if ($application && $application->application_type === 'startup-zone') {
+                        return redirect()->route('startup-zone.payment', $application->application_id)
+                            ->with('error', 'Payment response incomplete. Please try again or contact support.');
+                    }
+                }
+            }
+            
+            // If we have response array but no order_id, try to update what we can
+            if (isset($responseArray) && isset($responseArray['order_id'])) {
+                \DB::table('payment_gateway_response')
+                    ->where('order_id', $responseArray['order_id'])
+                    ->update([
+                        'status' => 'Failed',
+                        'updated_at' => now(),
+                    ]);
+            }
         }
 
-        return redirect('/payment-failed');
+        // Final fallback redirect
+        return redirect()->route('exhibitor.orders')
+            ->with('error', 'Payment response incomplete. Please contact support if payment was deducted.');
     }
 
 

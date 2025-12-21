@@ -108,6 +108,20 @@
                             <td><strong>Total Amount:</strong></td>
                             <td class="text-end"><strong>{{ $invoice->currency }} {{ number_format($invoice->total_final_price, 2) }}</strong></td>
                         </tr>
+                        @if(session('payment_response'))
+                        <tr>
+                            <td><strong>Transaction ID:</strong></td>
+                            <td>{{ session('payment_response.tracking_id') ?? 'N/A' }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Payment Method:</strong></td>
+                            <td>{{ session('payment_response.payment_mode') ?? 'N/A' }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Bank Reference:</strong></td>
+                            <td>{{ session('payment_response.bank_ref_no') ?? 'N/A' }}</td>
+                        </tr>
+                        @endif
                         <tr>
                             <td><strong>Payment Status:</strong></td>
                             <td>
