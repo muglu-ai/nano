@@ -47,8 +47,8 @@ class PaymentGatewayController extends Controller
     public function __construct()
     {
         $this->merchantId  = '7700';
-        $this->accessCode  = 'AVAX60MC26BE01XAEB';
-        $this->workingKey  = 'DBBE266B02508AF7118D4A2598763D69';
+        $this->accessCode  = 'AVJS71ME17AS68SJSA';
+        $this->workingKey  = '7AF39D44C8DC0DE71EDD69C288C96694';
         $this->redirectUrl = 'https://bengalurutechsummit.com/bts-portal/public/payment/ccavenue-success';
         $this->cancelUrl   = 'https://bengalurutechsummit.com/bts-portal/public/payment/ccavenue-success';
     }

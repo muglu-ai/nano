@@ -8,7 +8,7 @@
 <body onload="document.ccavenueForm.submit();">
     <form method="post" name="ccavenueForm" action="https://secure.ccavenue.com/transaction/transaction.do?command=initiateTransaction">
         <input type="hidden" name="encRequest" value="{{ $encryptedData }}">
-        <input type="hidden" name="access_code" value="AVAX60MC26BE01XAEB">
+        <input type="hidden" name="access_code" value="AVJS71ME17AS68SJSA">
         <p>Redirecting to payment gateway...</p>
         <button type="submit">Click here if not redirected</button>
     </form>
