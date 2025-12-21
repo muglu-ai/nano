@@ -105,8 +105,43 @@ class PaymentGatewayController extends Controller
             $application = Application::find($invoice->application_id);
         }
 
-        //fetch the BillingDetail details from the model BillingDetail where application_id = $invoice->application_id
-        $billingDetail = BillingDetail::where('application_id', $invoice->application_id)->first();
+        // Fetch billing detail - handle startup zone differently
+        $billingDetail = null;
+        $isStartupZone = false;
+        
+        if ($invoice->application_id) {
+            $application = Application::find($invoice->application_id);
+            if ($application && $application->application_type === 'startup-zone') {
+                $isStartupZone = true;
+                // For startup zone, get billing from EventContact
+                $eventContact = \App\Models\EventContact::where('application_id', $invoice->application_id)->first();
+                if ($eventContact && $application) {
+                    $billingDetail = (object) [
+                        'billing_company' => $application->company_name ?? '',
+                        'contact_name' => ($eventContact->salutation ?? '') . ' ' . ($eventContact->first_name ?? '') . ' ' . ($eventContact->last_name ?? ''),
+                        'email' => $eventContact->email ?? $application->company_email ?? '',
+                        'phone' => $eventContact->contact_number ?? $application->landline ?? '',
+                        'address' => $application->address ?? '',
+                        'country_id' => $application->country_id ?? null,
+                        'state_id' => $application->state_id ?? null,
+                        'postal_code' => $application->postal_code ?? '',
+                        'state' => $application->state_id ? (object)['name' => optional(\App\Models\State::find($application->state_id))->name] : (object)['name' => ''],
+                        'country' => $application->country_id ? (object)[
+                            'name' => optional(\App\Models\Country::find($application->country_id))->name,
+                            'states' => collect()
+                        ] : (object)['name' => '', 'states' => collect()],
+                        'gst' => $application->gst_no ?? null,
+                        'pan_no' => $application->pan_no ?? null,
+                        'city_id' => $application->city_id ?? null,
+                    ];
+                }
+            }
+        }
+        
+        // For non-startup-zone, use BillingDetail
+        if (!$billingDetail) {
+            $billingDetail = BillingDetail::where('application_id', $invoice->application_id)->first();
+        }
 
         $requirementsBilling = \DB::table('requirements_billings')
             ->where('invoice_id', $invoice->id)
