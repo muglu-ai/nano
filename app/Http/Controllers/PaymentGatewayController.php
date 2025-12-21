@@ -297,6 +297,16 @@ class PaymentGatewayController extends Controller
             $order_id = explode('_', $responseArray['order_id'])[0];
 
             $invoice = Invoice::where('invoice_no', $order_id)->first();
+            
+            // If invoice not found, log and redirect
+            if (!$invoice) {
+                Log::error('CCAvenue Success: Invoice not found', [
+                    'order_id' => $order_id,
+                    'response' => $responseArray
+                ]);
+                return redirect()->route('exhibitor.orders')
+                    ->with('error', 'Invoice not found. Please contact support.');
+            }
 
             //update the invoice table with the status as paid
             if ($responseArray['order_status'] == "Success") {
@@ -406,11 +416,14 @@ class PaymentGatewayController extends Controller
 
             //order_id
             $order_id = explode('_', $responseArray['order_id'])[0];
+            
+            // Find invoice for failure handling
+            $invoice = Invoice::where('invoice_no', $order_id)->first();
 
             // Check if this is a startup zone invoice
             $isStartupZone = false;
             $application = null;
-            if ($invoice->application_id) {
+            if ($invoice && $invoice->application_id) {
                 $application = Application::find($invoice->application_id);
                 if ($application && $application->application_type === 'startup-zone') {
                     $isStartupZone = true;
@@ -422,7 +435,14 @@ class PaymentGatewayController extends Controller
                     ->with('error', 'Payment failed. Please try again.');
             }
             
-            return redirect('/payment/' . $order_id . '?status=failed');
+            // For non-startup-zone invoices or if invoice not found
+            if ($invoice) {
+                return redirect('/payment/' . $order_id . '?status=failed');
+            } else {
+                // If invoice not found, redirect to a safe page
+                return redirect()->route('exhibitor.orders')
+                    ->with('error', 'Payment failed. Invoice not found.');
+            }
 
             //return to /payment/{id} 
         } else {
