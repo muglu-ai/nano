@@ -210,6 +210,9 @@ class PaymentGatewayController extends Controller
             'billing_email' => $billingDetail->email,
         ];
 
+
+        dd($data);
+
         $merchantData = json_encode($data);
 
         //insert into payment_gateway_response table
