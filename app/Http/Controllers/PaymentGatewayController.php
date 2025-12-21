@@ -269,56 +269,80 @@ class PaymentGatewayController extends Controller
                     'pending_amount' => 0,
                     'currency' => 'INR',
                 ]);
-                //
-                $service = new ExtraRequirementsMailService();
-                $data = $service->prepareMailData($order_id);
-                $email = $data['billingEmail'];
+                
+                // Check if this is a startup zone invoice
+                $isStartupZone = false;
+                $application = null;
+                if ($invoice->application_id) {
+                    $application = Application::find($invoice->application_id);
+                    if ($application && $application->application_type === 'startup-zone') {
+                        $isStartupZone = true;
+                    }
+                }
+                
+                if ($isStartupZone) {
+                    // For startup zone, payment success is handled by webhook
+                    // Just redirect to confirmation page
+                    Log::info('Startup Zone CCAvenue Payment Success', [
+                        'application_id' => $application->application_id,
+                        'invoice_no' => $invoice->invoice_no,
+                        'amount' => $responseArray['mer_amount']
+                    ]);
+                    
+                    // Redirect to startup zone confirmation
+                    return redirect()->route('startup-zone.confirmation', $application->application_id)
+                        ->with('success', 'Payment successful!');
+                } else {
+                    // For other invoice types, send extra requirements mail
+                    $service = new ExtraRequirementsMailService();
+                    $data = $service->prepareMailData($order_id);
+                    $email = $data['billingEmail'];
 
-                Mail::to($email)
-                    ->bcc(['semiconindia@mmactiv.com', 'test.interlinks@gmail.com', 'amit.upadhyay@mmactiv.com', 'nitin.chauhan@mmactiv.com'])
-                    ->send(new ExtraRequirementsMail($data));
+                    Mail::to($email)
+                        ->bcc(['test.interlinks@gmail.com'])
+                        ->send(new ExtraRequirementsMail($data));
+                }
             }
 
             // check the application_id from the invoice and theen from the application use user_id to authenticate the user
-
-            //check if the invoices doesn't have co_exhibitorID 
-            if ($invoice->co_exhibitorID) {
-                // If co_exhibitor_id is present, authenticate as co-exhibitor user only
-                $coExhibitor = \DB::table('co_exhibitors')->where('id', $invoice->co_exhibitorID)->first();
-                Log::info('CoExhibitor ID: ' . $invoice->co_exhibitorID);
-                Log::info('CoExhibitor Details: ' . json_encode($coExhibitor));
-                if ($coExhibitor) {
-                    $userId = $coExhibitor->user_id;
-                    if (auth()->check() && auth()->id() != $userId) {
-                        auth()->logout();
+            // Only authenticate for non-startup-zone invoices
+            if (!$isStartupZone) {
+                //check if the invoices doesn't have co_exhibitorID 
+                if ($invoice->co_exhibitorID) {
+                    // If co_exhibitor_id is present, authenticate as co-exhibitor user only
+                    $coExhibitor = \DB::table('co_exhibitors')->where('id', $invoice->co_exhibitorID)->first();
+                    Log::info('CoExhibitor ID: ' . $invoice->co_exhibitorID);
+                    Log::info('CoExhibitor Details: ' . json_encode($coExhibitor));
+                    if ($coExhibitor) {
+                        $userId = $coExhibitor->user_id;
+                        if (auth()->check() && auth()->id() != $userId) {
+                            auth()->logout();
+                        }
+                        Auth::loginUsingId($userId);
                     }
-                    Auth::loginUsingId($userId);
+                } else {
+                    // Otherwise, authenticate as main exhibitor (application user)
+                    $applicationId = $invoice->application_id;
+                    $application = \DB::table('applications')->where('id', $applicationId)->first();
+                    if ($application) {
+                        $userId = $application->user_id;
+                        if (auth()->check() && auth()->id() != $userId) {
+                            auth()->logout();
+                        }
+                        Auth::loginUsingId($userId);
+                    }
+                    Log::info('Application ID: ' . $applicationId);
+                    Log::info('Application User ID: ' . $userId);
                 }
+
+                //put in session that paymeent is successful
+                session(['payment_success' => true, 'invoice_no' => $order_id, 'payment_message' => 'Payment is successful.']);
+                return redirect()->route('exhibitor.orders');
             } else {
-                // Otherwise, authenticate as main exhibitor (application user)
-                $applicationId = $invoice->application_id;
-                $application = \DB::table('applications')->where('id', $applicationId)->first();
-                if ($application) {
-                    $userId = $application->user_id;
-                    if (auth()->check() && auth()->id() != $userId) {
-                        auth()->logout();
-                    }
-                    Auth::loginUsingId($userId);
-                }
-                Log::info('Application ID: ' . $applicationId);
-                Log::info('Application User ID: ' . $userId);
+                // Startup zone - already redirected above
+                return redirect()->route('startup-zone.confirmation', $application->application_id)
+                    ->with('success', 'Payment successful!');
             }
-
-
-            // route to Route::get('/payment/{id}', [PayPalController::class, 'showPaymentForm'])->name('paypal.form'); with invoice_no as $order_id
-            //return to /payment/{id}
-            //return to /payment/{id} with status=success
-            //  return redirect('/payment/' . $order_id . '?status=success');
-            //reutn to route exhibitor.orders
-
-            //put in session that paymeent is successful
-            session(['payment_success' => true, 'invoice_no' => $order_id, 'payment_message' => 'Payment is successful.']);
-            return redirect()->route('exhibitor.orders');
             return response()->json($responseArray);
             return redirect('/payment-success');
         } elseif (isset($responseArray)) {
@@ -345,6 +369,21 @@ class PaymentGatewayController extends Controller
             //order_id
             $order_id = explode('_', $responseArray['order_id'])[0];
 
+            // Check if this is a startup zone invoice
+            $isStartupZone = false;
+            $application = null;
+            if ($invoice->application_id) {
+                $application = Application::find($invoice->application_id);
+                if ($application && $application->application_type === 'startup-zone') {
+                    $isStartupZone = true;
+                }
+            }
+            
+            if ($isStartupZone && $application) {
+                return redirect()->route('startup-zone.payment', $application->application_id)
+                    ->with('error', 'Payment failed. Please try again.');
+            }
+            
             return redirect('/payment/' . $order_id . '?status=failed');
 
             //return to /payment/{id} 

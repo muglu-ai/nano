@@ -14,6 +14,8 @@ use PaypalServerSdkLib\Models\Builders\AmountWithBreakdownBuilder;
 use App\Models\Invoice;
 use App\Models\BillingDetail;
 use App\Models\RequirementsOrder;
+use App\Models\Payment;
+use App\Models\Application;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
 use App\Mail\ExtraRequirementsMail;
@@ -37,34 +39,67 @@ class PayPalController extends Controller
     }
 
     $invoice = Invoice::where('invoice_no', $id)->first();
-    if (!$invoice || $invoice->type != 'extra_requirement') {
+    if (!$invoice) {
+        return redirect()->route('exhibitor.orders');
+    }
+    
+    // Check if this is a startup zone invoice
+    $isStartupZone = false;
+    if ($invoice->application_id) {
+        $application = \App\Models\Application::find($invoice->application_id);
+        if ($application && $application->application_type === 'startup-zone') {
+            $isStartupZone = true;
+        }
+    }
+    
+    // For non-startup-zone invoices, check type
+    if (!$isStartupZone && $invoice->type != 'extra_requirement') {
         return redirect()->route('exhibitor.orders');
     }
 
-    // fetch default billing detail
-    $billingDetail = BillingDetail::where('application_id', $invoice->application_id)->first();
+    // Fetch billing detail - handle startup zone differently
+    $billingDetail = null;
+    
+    if ($isStartupZone) {
+        // For startup zone, get billing from EventContact
+        $eventContact = \App\Models\EventContact::where('application_id', $invoice->application_id)->first();
+        if ($eventContact) {
+            $billingDetail = $this->formatBillingFromEventContact($eventContact, $invoice->application_id);
+        }
+    } else {
+        // For other types, use BillingDetail
+        $billingDetail = BillingDetail::where('application_id', $invoice->application_id)->first();
 
-    // co-exhibitor override
-    if ($invoice->co_exhibitorID) {
-        $coExhibitor = \App\Models\CoExhibitor::find($invoice->co_exhibitorID);
-        if ($coExhibitor) {
-            $billingDetail = $this->formatBillingFromCoExhibitor($coExhibitor);
+        // co-exhibitor override
+        if ($invoice->co_exhibitorID) {
+            $coExhibitor = \App\Models\CoExhibitor::find($invoice->co_exhibitorID);
+            if ($coExhibitor) {
+                $billingDetail = $this->formatBillingFromCoExhibitor($coExhibitor);
+            }
+        }
+
+        // requirements billing override
+        $requirementsBilling = \DB::table('requirements_billings')
+            ->where('invoice_id', $invoice->id)
+            ->first();
+        if ($requirementsBilling) {
+            $billingDetail = $this->formatBillingFromRequirements($requirementsBilling);
         }
     }
-
-    // requirements billing override
-    $requirementsBilling = \DB::table('requirements_billings')
-        ->where('invoice_id', $invoice->id)
-        ->first();
-    if ($requirementsBilling) {
-        $billingDetail = $this->formatBillingFromRequirements($requirementsBilling);
+    
+    if (!$billingDetail) {
+        return redirect()->route('exhibitor.orders')->with('error', 'Billing details not found');
     }
 
     // determine timezone to compute "today" correctly for the buyer
     $timezone = $this->detectTimezoneForBilling($billingDetail);
 
 
-    if($invoice->payment_status == 'unpaid') {
+    // For startup zone, skip surcharge logic
+    if ($isStartupZone) {
+        // Startup zone invoices are already calculated, just use the invoice amount
+        // Currency is already set in the invoice
+    } elseif($invoice->payment_status == 'unpaid') {
 
 
 
@@ -957,9 +992,23 @@ private function formatBillingFromRequirements($billing)
                 ->first();
 
             // explode the orderData after _ and get the values 
-            $orderID = explode('_', $orderData->order_id);
-            //find the 
-            $invoice = Invoice::where('invoice_no', $orderID)->first();
+            $orderIDParts = explode('_', $orderData->order_id);
+            $invoiceNo = $orderIDParts[0]; // Get first part (invoice_no)
+            $invoice = Invoice::where('invoice_no', $invoiceNo)->first();
+            
+            if (!$invoice) {
+                return response()->json(['error' => 'Invoice not found'], 404);
+            }
+            
+            // Check if this is a startup zone invoice
+            $isStartupZone = false;
+            $application = null;
+            if ($invoice->application_id) {
+                $application = \App\Models\Application::find($invoice->application_id);
+                if ($application && $application->application_type === 'startup-zone') {
+                    $isStartupZone = true;
+                }
+            }
 
 
 
@@ -972,15 +1021,36 @@ private function formatBillingFromRequirements($billing)
                     'pending_amount' => 0,
                     'currency' => 'USD',
                 ]);
+                
+                // Check if this is a startup zone invoice
+                $isStartupZone = false;
+                $application = null;
+                if ($invoice->application_id) {
+                    $application = \App\Models\Application::find($invoice->application_id);
+                    if ($application && $application->application_type === 'startup-zone') {
+                        $isStartupZone = true;
+                    }
+                }
+                
+                if ($isStartupZone && $application) {
+                    // For startup zone, payment success is handled by webhook
+                    // Just log it here
+                    Log::info('Startup Zone PayPal Payment Captured', [
+                        'application_id' => $application->application_id,
+                        'invoice_no' => $invoice->invoice_no,
+                        'amount' => $amountPaid
+                    ]);
+                } else {
+                    // For other invoice types, send extra requirements mail
+                    $service = new ExtraRequirementsMailService();
+                    $data = $service->prepareMailData($orderID[0]);
+                    $email = $data['billingEmail'];
 
-                $service = new ExtraRequirementsMailService();
-                $data = $service->prepareMailData($orderID[0]);
-                $email = $data['billingEmail'];
-
-                Mail::to($email)
-                    ->cc(['semiconindia@mmactiv.com', 'amit.upadhyay@mmactiv.com'])
-                    ->bcc(['test.interlinks@gmail.com'])
-                    ->queue(new ExtraRequirementsMail($data));
+                    Mail::to($email)
+                        
+                        ->bcc(['test.interlinks@gmail.com'])
+                        ->queue(new ExtraRequirementsMail($data));
+                }
             }
 
 
@@ -1017,5 +1087,81 @@ private function formatBillingFromRequirements($billing)
         } catch (\Exception $e) {
             Log::error('Error inserting payment gateway response: ' . $e->getMessage());
         }
+    }
+    
+    /**
+     * Handle PayPal success redirect
+     */
+    public function success(Request $request)
+    {
+        $token = $request->query('token');
+        
+        if ($token) {
+            // Find invoice by token/order_id
+            $paymentResponse = \DB::table('payment_gateway_response')
+                ->where('payment_id', $token)
+                ->orWhere('order_id', 'like', '%' . $token . '%')
+                ->first();
+            
+            if ($paymentResponse) {
+                // Extract invoice_no from order_id
+                $orderIdParts = explode('_', $paymentResponse->order_id);
+                $invoiceNo = $orderIdParts[0];
+                
+                $invoice = Invoice::where('invoice_no', $invoiceNo)->first();
+                
+                if ($invoice && $invoice->application_id) {
+                    $application = Application::find($invoice->application_id);
+                    
+                    // Check if this is a startup zone invoice
+                    if ($application && $application->application_type === 'startup-zone') {
+                        return redirect()->route('startup-zone.confirmation', $application->application_id)
+                            ->with('success', 'Payment successful!');
+                    }
+                }
+            }
+        }
+        
+        // Default redirect for non-startup-zone
+        return redirect()->route('exhibitor.orders')
+            ->with('success', 'Payment successful!');
+    }
+    
+    /**
+     * Handle PayPal cancel redirect
+     */
+    public function cancel(Request $request)
+    {
+        $token = $request->query('token');
+        
+        if ($token) {
+            // Find invoice by token/order_id
+            $paymentResponse = \DB::table('payment_gateway_response')
+                ->where('payment_id', $token)
+                ->orWhere('order_id', 'like', '%' . $token . '%')
+                ->first();
+            
+            if ($paymentResponse) {
+                // Extract invoice_no from order_id
+                $orderIdParts = explode('_', $paymentResponse->order_id);
+                $invoiceNo = $orderIdParts[0];
+                
+                $invoice = Invoice::where('invoice_no', $invoiceNo)->first();
+                
+                if ($invoice && $invoice->application_id) {
+                    $application = Application::find($invoice->application_id);
+                    
+                    // Check if this is a startup zone invoice
+                    if ($application && $application->application_type === 'startup-zone') {
+                        return redirect()->route('startup-zone.payment', $application->application_id)
+                            ->with('error', 'Payment was cancelled. Please try again.');
+                    }
+                }
+            }
+        }
+        
+        // Default redirect for non-startup-zone
+        return redirect()->route('exhibitor.orders')
+            ->with('error', 'Payment was cancelled.');
     }
 }

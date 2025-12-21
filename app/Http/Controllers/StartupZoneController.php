@@ -445,14 +445,41 @@ class StartupZoneController extends Controller
             }
             
             // Update draft with all form fields from session + request
-            $draft->fill(array_merge($sessionData, $landlineData, $request->only([
+            $formFields = array_merge($sessionData, $landlineData, $request->only([
                 'stall_category', 'interested_sqm', 'company_name',
                 'how_old_startup', 'address', 'city_id', 'state_id',
                 'postal_code', 'country_id', 'website',
                 'company_email', 'gst_compliance', 'gst_no', 'pan_no',
                 'sector_id', 'subSector', 'type_of_business',
                 'promocode', 'assoc_mem', 'RegSource', 'payment_mode'
-            ])));
+            ]));
+            
+            // Validate foreign key relationships before saving
+            if (isset($formFields['state_id']) && $formFields['state_id']) {
+                $stateExists = State::where('id', $formFields['state_id'])->exists();
+                if (!$stateExists) {
+                    \Log::warning('Invalid state_id provided', [
+                        'state_id' => $formFields['state_id'],
+                        'session_id' => $sessionId
+                    ]);
+                    // Set to null if state doesn't exist to avoid foreign key violation
+                    $formFields['state_id'] = null;
+                }
+            }
+            
+            if (isset($formFields['country_id']) && $formFields['country_id']) {
+                $countryExists = Country::where('id', $formFields['country_id'])->exists();
+                if (!$countryExists) {
+                    \Log::warning('Invalid country_id provided', [
+                        'country_id' => $formFields['country_id'],
+                        'session_id' => $sessionId
+                    ]);
+                    // Set to null if country doesn't exist to avoid foreign key violation
+                    $formFields['country_id'] = null;
+                }
+            }
+            
+            $draft->fill($formFields);
 
             // Store contact data as JSON (from session or request)
             if (isset($sessionData['contact_data'])) {
