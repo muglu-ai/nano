@@ -6,6 +6,11 @@ const APP_NAME_SHORT = 'BTS 2025';
 const EVENT_NAME = 'Bengaluru Tech Summit';
 const EVENT_YEAR = '2026';
 const SHORT_NAME = 'BTS';
+
+// TIN number prefix: event short name (SHORT_NAME), year, EXH, then 6-digit random number will be appended in code.
+const TIN_NO_PREFIX = SHORT_NAME . '-' . EVENT_YEAR . '-EXH-';
+
+const PIN_NO_PREFIX = SHORT_NAME . '-' . EVENT_YEAR . '-EXHP-';
 const EVENT_WEBSITE = 'https://www.bengalurutechsummit.com';
 //event dates
 const EVENT_DATE_START = '19-11-2025';
@@ -46,7 +51,8 @@ const EXHIBITOR_REGISTRATION_LINK = 'https://www.bengalurutechsummit.com/web/it_
 
 const GUIDE_LINK = 'https://bengalurutechsummit.com/pdf/BTS-Exhibitor-Portal-Guide.pdf';
 
-
+const GST_API_URL = 'https://my.gstzen.in/api/gstin-validator/';
+const GST_API_KEY = '5479841c-b3ff-42ba-90bf-cb9866f52321';
 
 //define("DEFAULT_REGISTRATION_LINK", route('register.form'));
 const DEFAULT_REGISTRATION_LINK = null;
@@ -66,6 +72,8 @@ return [
     'APP_NAME_SHORT' => SHORT_NAME,
     'APPLICATION_ID_PREFIX' => 'TIN-BTS-2025-EXH-',
     'SPONSORSHIP_ID_PREFIX' => 'TIN-BTS-2025-SPONSOR-',
+    'TIN_NO_PREFIX' => TIN_NO_PREFIX,
+    'PIN_NO_PREFIX' => PIN_NO_PREFIX,
     'COMPLIMENTARY_REG_ID_PREFIX' => 'TIN-' . SHORT_NAME . EVENT_YEAR . '-EXHC',
     'CONFIRMATION_ID_PREFIX_EXH' => 'PIN-' . SHORT_NAME . EVENT_YEAR . '-EXHC',
     'DELEGATE_ID_PREFIX' => 'TIN-' . SHORT_NAME . EVENT_YEAR,
@@ -120,6 +128,22 @@ return [
     'CCAVENUE_WORKING_KEY' => "DBBE266B02508AF7118D4A2598763D69",
     'CCAVENUE_MERCHANT_ID' => "7700",
     'CCAVENUE_REDIRECT_URL' => APP_URL . "/payment/ccavenue-success",
+    'ccavenue' => [
+        'environment' => env('CCAVENUE_ENV', 'production'), // 'test' or 'production'
+        'test' => [
+            'merchant_id' => env('CCAVENUE_TEST_MERCHANT_ID', ''),
+            'access_code' => env('CCAVENUE_TEST_ACCESS_CODE', ''),
+            'working_key' => env('CCAVENUE_TEST_WORKING_KEY', ''),
+            'api_url' => 'https://apitest.ccavenue.com/apis/servlet/DoWebTrans',
+        ],
+        'production' => [
+            'merchant_id' => env('CCAVENUE_MERCHANT_ID', '7700'),
+            'access_code' => env('CCAVENUE_ACCESS_CODE', 'AVAX60MC26BE01XAEB'),
+            'working_key' => env('CCAVENUE_WORKING_KEY', 'DBBE266B02508AF7118D4A2598763D69'),
+            'api_url' => 'https://api.ccavenue.com/apis/servlet/DoWebTrans',
+        ],
+        'webhook_url' => env('APP_URL', APP_URL) . '/ccavenue/webhook',
+    ],
     'IND_PROCESSING_CHARGE' => IND_PROCESSING_CHARGE, // 3% processing fee for National payments
     'GSTIN' => '29AABCM2615H1ZM',
     'PAN'   => 'AABCS1234A',
@@ -288,5 +312,7 @@ return [
         'DB_DATABASE' => env('DB_DATABASE1', 'btsblnl265_asd1d_bengaluruite'),
         'DB_USERNAME' => env('DB_USERNAME1', 'btsblnl265_asd1d_bengaluruite'),
         'DB_PASSWORD' => env('DB_PASSWORD1', 'Disl#vhfj#Af#DhW65'),
-    ]
+    ],
+    'GST_API_URL' => GST_API_URL,
+    'GST_API_KEY' => GST_API_KEY,
 ];

@@ -83,6 +83,7 @@ class Application extends Model
         'tag',
         'approved_by',
         'RegSource',
+        'promocode', // NEW: Promocode column
         'zone',
         'declarationStatus',
         'hallNo',

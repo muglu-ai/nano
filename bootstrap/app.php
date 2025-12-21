@@ -17,7 +17,8 @@ return Application::configure(basePath: dirname(__DIR__))
             'admin' => \App\Http\Middleware\AdminMiddleware::class,
         ]);
         //
-        $middleware->append(Auth::class);
+        // Don't append Auth middleware globally - apply it only to specific routes
+        // $middleware->append(Auth::class);
         $middleware->validateCsrfTokens(except: ['/payment/ccavenue-success']);
     })
     ->withExceptions(function (Exceptions $exceptions) {

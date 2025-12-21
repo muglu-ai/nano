@@ -8,10 +8,13 @@ use Carbon\Carbon;
 use App\Models\Invoice;
 use App\Models\BillingDetail;
 use App\Models\RequirementsOrder;
+use App\Models\Application;
+use App\Models\Payment;
 use App\Mail\ExtraRequirementsMail;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Log;
 use App\Services\ExtraRequirementsMailService;
+use App\Services\CcAvenueService;
 use Illuminate\Support\Facades\Response;
 use Illuminate\Support\Facades\Auth;
 use App\Models\User;
@@ -96,6 +99,12 @@ class PaymentGatewayController extends Controller
             return redirect()->route('exhibitor.orders');
         }
 
+        // Get application to extract application_id (TIN) for order_id format
+        $application = null;
+        if ($invoice->application_id) {
+            $application = Application::find($invoice->application_id);
+        }
+
         //fetch the BillingDetail details from the model BillingDetail where application_id = $invoice->application_id
         $billingDetail = BillingDetail::where('application_id', $invoice->application_id)->first();
 
@@ -141,9 +150,16 @@ class PaymentGatewayController extends Controller
         }
 
 
+        // Generate order_id with TIN prefix format: {application_id}_{timestamp}
+        // If application exists, use application_id (TIN), otherwise use invoice_no
+        $tinPrefix = $application && $application->application_id 
+            ? $application->application_id 
+            : $orderID;
+        $orderIdWithTimestamp = $tinPrefix . '_' . time();
+
         $data = [
             'merchant_id' => $this->merchantId,
-            'order_id' => $orderID . '_' . time(),
+            'order_id' => $orderIdWithTimestamp,
             'currency' => 'INR',
             'amount' => $invoice->total_final_price,
             'redirect_url' => $this->redirectUrl,
@@ -170,6 +186,7 @@ class PaymentGatewayController extends Controller
             'gateway' => 'CCAvenue',
             'currency' => 'INR',
             'email' => $data['billing_email'],
+            'user_id' => $application ? $application->user_id : null,
             'created_at' => now(),
         ]);
 
@@ -382,5 +399,302 @@ class PaymentGatewayController extends Controller
         Mail::to($email)->send(new ExtraRequirementsMail($data));
         $end = microtime(true);
         return response()->json(['message' => 'Invoice email sent successfully!' . $end - $start]);
+    }
+
+    /**
+     * Handle CCAvenue webhook callback
+     * Receives payment status updates from CCAvenue
+     */
+    public function ccAvenueWebhook(Request $request)
+    {
+        try {
+            // Log incoming webhook for debugging
+            Log::info('CCAvenue Webhook Received', [
+                'request_data' => $request->all(),
+                'ip' => $request->ip(),
+            ]);
+
+            // Extract webhook parameters
+            $orderId = $request->input('order_id');
+            $trackingId = $request->input('tracking_id');
+            $bankRefNo = $request->input('bank_ref_no');
+            $orderStatus = $request->input('order_status');
+            $amount = $request->input('amount');
+            $paymentMode = $request->input('payment_mode');
+            $cardName = $request->input('card_name');
+            $statusCode = $request->input('status_code');
+            $statusMessage = $request->input('status_message');
+            $currency = $request->input('currency');
+            $failureMessage = $request->input('failure_message');
+
+            if (!$orderId) {
+                Log::error('CCAvenue Webhook: Missing order_id');
+                return response()->json(['error' => 'Missing order_id'], 400);
+            }
+
+            // Extract TIN from order_id (format: BTS-2026-EXH-123456_timestamp)
+            $ccAvenueService = new CcAvenueService();
+            $tinNumber = $ccAvenueService->extractTinFromOrderId($orderId);
+
+            // Find application by TIN (application_id)
+            $application = Application::where('application_id', $tinNumber)->first();
+
+            if (!$application) {
+                Log::error('CCAvenue Webhook: Application not found', [
+                    'tin_number' => $tinNumber,
+                    'order_id' => $orderId,
+                ]);
+                // Still update payment_gateway_response even if application not found
+            }
+
+            // Find invoice by application_id or by invoice_no from order_id
+            $invoice = null;
+            if ($application) {
+                // Try to find invoice by application_id first
+                $invoice = Invoice::where('application_id', $application->id)
+                    ->where('currency', $currency ?? 'INR')
+                    ->orderBy('created_at', 'desc')
+                    ->first();
+            }
+            
+            // If invoice not found by application, try to extract from order_id
+            // Order ID format might be: {invoice_no}_{timestamp} or {application_id}_{timestamp}
+            if (!$invoice && strpos($orderId, '_') !== false) {
+                $possibleInvoiceNo = explode('_', $orderId)[0];
+                $invoice = Invoice::where('invoice_no', $possibleInvoiceNo)->first();
+            }
+
+            // Store all webhook data
+            $webhookData = $request->all();
+
+            // Begin transaction
+            DB::beginTransaction();
+
+            try {
+                // Update or create payment_gateway_response record
+                $paymentResponse = DB::table('payment_gateway_response')
+                    ->where('order_id', $orderId)
+                    ->first();
+
+                $updateData = [
+                    'transaction_id' => $trackingId,
+                    'reference_id' => $bankRefNo,
+                    'status' => $orderStatus === 'Success' ? 'Success' : ($orderStatus === 'Failure' ? 'Failed' : 'Pending'),
+                    'amount_received' => $amount,
+                    'payment_method' => $paymentMode,
+                    'response_json' => json_encode($webhookData),
+                    'bank_ref_no' => $bankRefNo,
+                    'trans_date' => now()->format('Y-m-d H:i:s'),
+                    'updated_at' => now(),
+                ];
+
+                if ($paymentResponse) {
+                    DB::table('payment_gateway_response')
+                        ->where('id', $paymentResponse->id)
+                        ->update($updateData);
+                } else {
+                    // Create new record if not exists
+                    $updateData['order_id'] = $orderId;
+                    $updateData['currency'] = $currency ?? 'INR';
+                    $updateData['gateway'] = 'CCAvenue';
+                    $updateData['amount'] = $amount;
+                    $updateData['email'] = $request->input('billing_email', '');
+                    $updateData['created_at'] = now();
+                    DB::table('payment_gateway_response')->insert($updateData);
+                }
+
+                // Update invoice if found
+                if ($invoice && $orderStatus === 'Success') {
+                    $invoice->update([
+                        'payment_status' => 'paid',
+                        'amount_paid' => $amount,
+                        'pending_amount' => 0,
+                        'updated_at' => now(),
+                    ]);
+
+                    // Create or update payment record
+                    $payment = Payment::where('invoice_id', $invoice->id)
+                        ->where('transaction_id', $trackingId)
+                        ->first();
+
+                    if ($payment) {
+                        $payment->update([
+                            'status' => 'successful',
+                            'amount_paid' => $amount,
+                            'amount_received' => $amount,
+                            'payment_date' => now(),
+                            'pg_response_json' => $webhookData,
+                            'updated_at' => now(),
+                        ]);
+                    } else {
+                        Payment::create([
+                            'invoice_id' => $invoice->id,
+                            'payment_method' => $paymentMode ?? 'CCAvenue',
+                            'amount' => $amount,
+                            'amount_paid' => $amount,
+                            'amount_received' => $amount,
+                            'transaction_id' => $trackingId ?? $orderId,
+                            'pg_result' => $orderStatus,
+                            'track_id' => $trackingId,
+                            'pg_response_json' => $webhookData,
+                            'payment_date' => now(),
+                            'currency' => $currency ?? 'INR',
+                            'status' => 'successful',
+                            'order_id' => $orderId,
+                            'user_id' => $application->user_id ?? null,
+                        ]);
+                    }
+
+                    Log::info('CCAvenue Webhook: Payment processed successfully', [
+                        'order_id' => $orderId,
+                        'tin_number' => $tinNumber,
+                        'invoice_id' => $invoice->id,
+                        'amount' => $amount,
+                    ]);
+                } elseif ($invoice && $orderStatus === 'Failure') {
+                    // Log failed payment
+                    $invoice->update([
+                        'payment_status' => 'unpaid',
+                        'updated_at' => now(),
+                    ]);
+
+                    Payment::create([
+                        'invoice_id' => $invoice->id,
+                        'payment_method' => $paymentMode ?? 'CCAvenue',
+                        'amount' => $amount,
+                        'amount_paid' => 0,
+                        'amount_received' => 0,
+                        'transaction_id' => $trackingId ?? $orderId,
+                        'pg_result' => $orderStatus,
+                        'track_id' => $trackingId,
+                        'pg_response_json' => $webhookData,
+                        'payment_date' => now(),
+                        'currency' => $currency ?? 'INR',
+                        'status' => 'failed',
+                        'rejection_reason' => $failureMessage ?? $statusMessage ?? 'Payment failed',
+                        'order_id' => $orderId,
+                        'user_id' => $application->user_id ?? null,
+                    ]);
+
+                    Log::warning('CCAvenue Webhook: Payment failed', [
+                        'order_id' => $orderId,
+                        'tin_number' => $tinNumber,
+                        'failure_message' => $failureMessage,
+                    ]);
+                }
+
+                DB::commit();
+
+                // Return success response to CCAvenue
+                return response()->json(['status' => 'success'], 200);
+
+            } catch (\Exception $e) {
+                DB::rollBack();
+                Log::error('CCAvenue Webhook: Database update failed', [
+                    'error' => $e->getMessage(),
+                    'order_id' => $orderId,
+                    'trace' => $e->getTraceAsString(),
+                ]);
+                return response()->json(['error' => 'Processing failed'], 500);
+            }
+
+        } catch (\Exception $e) {
+            Log::error('CCAvenue Webhook: Exception', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+            return response()->json(['error' => 'Internal server error'], 500);
+        }
+    }
+
+    /**
+     * List all CCAvenue transactions (Admin page)
+     */
+    public function listTransactions(Request $request)
+    {
+        $query = DB::table('payment_gateway_response')
+            ->where('gateway', 'CCAvenue')
+            ->orderBy('created_at', 'desc');
+
+        // Search filters
+        if ($request->filled('search')) {
+            $search = $request->input('search');
+            $query->where(function($q) use ($search) {
+                $q->where('order_id', 'like', "%{$search}%")
+                  ->orWhere('transaction_id', 'like', "%{$search}%")
+                  ->orWhere('email', 'like', "%{$search}%")
+                  ->orWhere('reference_id', 'like', "%{$search}%");
+            });
+        }
+
+        // Status filter
+        if ($request->filled('status')) {
+            $query->where('status', $request->input('status'));
+        }
+
+        // Date range filter
+        if ($request->filled('from_date')) {
+            $query->whereDate('created_at', '>=', $request->input('from_date'));
+        }
+        if ($request->filled('to_date')) {
+            $query->whereDate('created_at', '<=', $request->input('to_date'));
+        }
+
+        // Payment method filter
+        if ($request->filled('payment_method')) {
+            $query->where('payment_method', $request->input('payment_method'));
+        }
+
+        $perPage = $request->input('per_page', 20);
+        $transactions = $query->paginate($perPage);
+        $transactions->appends($request->query());
+
+        // Extract TIN from order_id and fetch application details
+        $ccAvenueService = new CcAvenueService();
+        foreach ($transactions as $transaction) {
+            $tinNumber = $ccAvenueService->extractTinFromOrderId($transaction->order_id);
+            $transaction->tin_number = $tinNumber;
+            
+            // Find application
+            $application = Application::where('application_id', $tinNumber)->first();
+            if ($application) {
+                $transaction->application_id = $application->application_id;
+                $transaction->company_name = $application->company_name;
+                $transaction->application = $application;
+            }
+        }
+
+        return view('admin.ccavenue-transactions', compact('transactions'));
+    }
+
+    /**
+     * Get transaction details for modal
+     */
+    public function getTransactionDetails($id)
+    {
+        $transaction = DB::table('payment_gateway_response')
+            ->where('id', $id)
+            ->where('gateway', 'CCAvenue')
+            ->first();
+
+        if (!$transaction) {
+            return response()->json(['success' => false, 'message' => 'Transaction not found'], 404);
+        }
+
+        // Extract TIN and get application details
+        $ccAvenueService = new CcAvenueService();
+        $tinNumber = $ccAvenueService->extractTinFromOrderId($transaction->order_id);
+        $application = Application::where('application_id', $tinNumber)->first();
+
+        $transaction->tin_number = $tinNumber;
+        if ($application) {
+            $transaction->application_id = $application->application_id;
+            $transaction->company_name = $application->company_name;
+        }
+
+        return response()->json([
+            'success' => true,
+            'transaction' => $transaction,
+        ]);
     }
 }

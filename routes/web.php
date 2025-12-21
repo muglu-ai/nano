@@ -37,6 +37,7 @@ use App\Http\Controllers\PaymentReceiptController;
 use App\Http\Controllers\SalesController;
 use App\Http\Controllers\SponsorController;
 use App\Http\Controllers\SponsorshipController;
+use App\Http\Controllers\StartupZoneController;
 use App\Http\Middleware\Auth;
 use App\Http\Middleware\CheckUser;
 use App\Http\Middleware\CoExhibitorMiddleware;
@@ -594,6 +595,9 @@ Route::get('/paypal/webhook', [PayPalController::class, 'webhook'])->withoutMidd
 */
 Route::post('/payment/ccavenue/{id}', [PaymentGatewayController::class, 'ccAvenuePayment']);
 Route::post('/payment/ccavenue-success', [PaymentGatewayController::class, 'ccAvenueSuccess'])->withoutMiddleware([\App\Http\Middleware\VerifyCsrfToken::class]);
+Route::post('/ccavenue/webhook', [PaymentGatewayController::class, 'ccAvenueWebhook'])->withoutMiddleware([\App\Http\Middleware\VerifyCsrfToken::class])->name('ccavenue.webhook');
+Route::get('/admin/ccavenue-transactions', [PaymentGatewayController::class, 'listTransactions'])->name('admin.ccavenue.transactions')->middleware(Auth::class);
+Route::get('/admin/ccavenue-transactions/{id}/details', [PaymentGatewayController::class, 'getTransactionDetails'])->name('admin.ccavenue.transactions.details')->middleware(Auth::class);
 
 /* Payment Gateway Routes Ends
 */
@@ -867,14 +871,19 @@ Route::get('verify-account/{token}', [AuthController::class, 'verifyAccount'])->
  * */
 Route::get('/import-users', [ImportData::class, 'importUsers'])->name('import.users')->middleware(Auth::class);
 
-Route::middleware(['auth', 'role:sponsor'])->group(function () {
-    Route::get('/sponsor/dashboard', fn() => view('sponsor.dashboard'))->name('dashboard.sponsor');
+Route::middleware(['auth'])->group(function () {
+    Route::get('/sponsor/dashboard', function () {
+        if (auth()->user()->role !== 'sponsor') {
+            abort(403);
+        }
+        return view('sponsor.dashboard');
+    })->name('dashboard.sponsor');
 });
 
-Route::middleware(['auth', 'role:admin'])->group(function () {
+Route::middleware(['auth', Auth::class])->group(function () {
     Route::get('/admin/dashboard_old', [DashboardController::class, 'exhibitorDashboard'])->name('dashboard.admin');
 });
-Route::middleware(['auth', 'role:admin'])->group(function () {
+Route::middleware(['auth', Auth::class])->group(function () {
     Route::get('/admin/dashboard', [DashboardController::class, 'exhibitorDashboard_new'])->name('dashboard.admin');
     Route::get('/admin/feedback', [AdminFeedbackController::class, 'index'])->name('admin.feedback.index');
 });
@@ -978,9 +987,10 @@ Route::get('/registration-count', [AttendeeController::class, 'registrationCount
 Route::get('/api/registration-count-data', [AttendeeController::class, 'getRegistrationCountData'])->name('api.registration.count')->middleware(Auth::class);
 
 Route::get('/email-preview/credentials/{email}', [EmailPreviewController::class, 'showCredentialsEmail']);
+Route::get('/email-preview/exhibitor-registration/{applicationId}', [EmailPreviewController::class, 'showExhibitorRegistrationEmail'])->name('email-preview.exhibitor-registration');
 
 // Exhibitor Directory PDF export (runs Python script) - Admin only
-Route::middleware(['auth', 'role:admin'])->group(function () {
+Route::middleware(['auth', Auth::class])->group(function () {
     Route::get('/admin/exhibitors/export-directory', [AdminController::class, 'showExhibitorDirectoryExportPage'])->name('admin.exhibitors.exportDirectory');
     Route::post('/admin/exhibitors/export-directory/run', [AdminController::class, 'runExhibitorDirectoryExport'])->name('admin.exhibitors.exportDirectory.run');
 });
@@ -990,3 +1000,17 @@ Route::get('/feedback', [FeedbackController::class, 'show'])->name('feedback.sho
 Route::post('/feedback', [FeedbackController::class, 'store'])->name('feedback.store');
 Route::get('/feedback/thankyou', [FeedbackController::class, 'thankyou'])->name('feedback.thankyou');
 Route::get('/feedback/reload-captcha', [FeedbackController::class, 'reloadCaptcha'])->name('feedback.reload.captcha');
+
+// Startup Zone Registration Routes
+Route::prefix('startup')->name('startup-zone.')->group(function () {
+    Route::get('/register', [StartupZoneController::class, 'showForm'])->name('register');
+    Route::post('/auto-save', [StartupZoneController::class, 'autoSave'])->name('auto-save');
+    Route::post('/validate-promocode', [StartupZoneController::class, 'validatePromocode'])->name('validate-promocode');
+    Route::post('/fetch-gst-details', [StartupZoneController::class, 'fetchGstDetails'])->name('fetch-gst-details');
+    Route::post('/submit-form', [StartupZoneController::class, 'submitForm'])->name('submit-form');
+    Route::get('/preview', [StartupZoneController::class, 'showPreview'])->name('preview');
+    Route::post('/restore-draft', [StartupZoneController::class, 'restoreDraftToApplication'])->name('restore-draft');
+    Route::get('/payment/{applicationId}', [StartupZoneController::class, 'showPayment'])->name('payment');
+    Route::post('/payment/{applicationId}/process', [StartupZoneController::class, 'processPayment'])->name('payment.process');
+    Route::get('/confirmation/{applicationId}', [StartupZoneController::class, 'showConfirmation'])->name('confirmation');
+});
