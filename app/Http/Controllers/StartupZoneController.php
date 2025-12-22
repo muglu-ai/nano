@@ -922,8 +922,13 @@ class StartupZoneController extends Controller
                 // Don't fail the transaction if email fails
             }
 
-            // Delete draft
+            // Delete draft from database
             $draft->delete();
+            
+            // Clear session data (draft data is no longer needed)
+            session()->forget('startup_zone_draft');
+            session()->forget('payment_application_id');
+            session()->forget('payment_application_type');
 
             DB::commit();
 
@@ -1015,6 +1020,17 @@ class StartupZoneController extends Controller
 
         $invoice = Invoice::where('application_id', $application->id)->firstOrFail();
         $contact = EventContact::where('application_id', $application->id)->first();
+        
+        // Clean up any remaining session data and drafts for this session
+        // (in case user navigated directly to confirmation page)
+        session()->forget('startup_zone_draft');
+        session()->forget('payment_application_id');
+        session()->forget('payment_application_type');
+        session()->forget('invoice_no');
+        
+        // Also delete any draft records for this session (cleanup)
+        $sessionId = session()->getId();
+        StartupZoneDraft::where('session_id', $sessionId)->delete();
 
         // Get association logo if promocode exists
         $associationLogo = null;
