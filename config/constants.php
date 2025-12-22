@@ -17,7 +17,7 @@ const EVENT_DATE_START = '19-11-2026';
 const EVENT_DATE_END = '21-11-2026';
 const EVENT_VENUE = 'Bengaluru International Exhibition Centre (BIEC), Bengaluru, India';
 
-const APP_URL = 'http://bengalurutechsummit.com/portal/public';
+const APP_URL = 'http://bengalurutechsummit.com/bts-portal/public';
 const SHELL_SCHEME_RATE = 13000; // per sqm
 const RAW_SPACE_RATE = 12000; // per sqm
 const IND_PROCESSING_CHARGE = 3; // 5% processing fee for National payments
@@ -164,8 +164,8 @@ return [
     'RAW_SPACE_RATE' => RAW_SPACE_RATE,    // per sqm
 
     'max_attendees' => env('MAX_ATTENDEES', 1),
-    'hosted_url' => env('HOSTED_URL', 'https://www.bengalurutechsummit.com/app'),
-    'HOSTED_URL' => env('hosted_url', 'https://www.bengalurutechsummit.com/app'),
+    'hosted_url' => APP_URL,
+    'HOSTED_URL' => APP_URL,
     'sectors' => [
         'Startup',
         'Information Technology',

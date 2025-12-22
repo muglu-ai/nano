@@ -3,26 +3,28 @@
 @section('title', 'Payment - ' . config('constants.EVENT_NAME') . ' ' . config('constants.EVENT_YEAR'))
 
 @section('content')
-<style>
-    .payment-option-card {
-        cursor: pointer;
-        transition: all 0.3s ease;
-        border: 2px solid #e0e0e0;
-    }
-    .payment-option-card:hover {
-        border-color: #007bff;
-        box-shadow: 0 4px 8px rgba(0,123,255,0.2);
-        transform: translateY(-2px);
-    }
-    .payment-option-card.border-primary {
-        border-color: #007bff !important;
-        background-color: #f0f8ff;
-    }
-    .payment-option-card input[type="radio"]:checked + div {
-        color: #007bff;
-    }
-</style>
 <div class="container py-5">
+    {{-- Step Indicator --}}
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="step-indicator">
+                <div class="step-item completed">
+                    <div class="step-number">1</div>
+                    <div class="step-label">Exhibitor Details</div>
+                </div>
+                <div class="step-connector"></div>
+                <div class="step-item completed">
+                    <div class="step-number">2</div>
+                    <div class="step-label">Preview Details</div>
+                </div>
+                <div class="step-connector"></div>
+                <div class="step-item active">
+                    <div class="step-number">3</div>
+                    <div class="step-label">Payment</div>
+                </div>
+            </div>
+        </div>
+    </div>
     <div class="row justify-content-center">
         <div class="col-md-8">
             <div class="card shadow-sm">
@@ -135,4 +137,118 @@
         </div>
     </div>
 </div>
+
+@push('styles')
+<style>
+    .step-indicator {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 2rem;
+        padding: 1.5rem;
+        background: #f8f9fa;
+        border-radius: 10px;
+    }
+    .step-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        position: relative;
+        flex: 1;
+    }
+    .step-number {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        background: #e0e0e0;
+        color: #666;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        font-size: 1.2rem;
+        margin-bottom: 0.5rem;
+        transition: all 0.3s ease;
+        border: 3px solid #e0e0e0;
+    }
+    .step-item.active .step-number {
+        background: var(--primary-color);
+        color: white;
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 4px rgba(27, 55, 131, 0.2);
+    }
+    .step-item.completed .step-number {
+        background: #28a745;
+        color: white;
+        border-color: #28a745;
+        font-size: 0;
+    }
+    .step-item.completed .step-number::before {
+        content: '✓';
+        font-size: 1.5rem;
+        display: block;
+    }
+    .step-label {
+        font-size: 0.9rem;
+        color: #666;
+        font-weight: 500;
+        text-align: center;
+    }
+    .step-item.active .step-label {
+        color: var(--primary-color);
+        font-weight: 600;
+    }
+    .step-item.completed .step-label {
+        color: #28a745;
+    }
+    .step-connector {
+        flex: 1;
+        height: 3px;
+        background: #e0e0e0;
+        margin: 0 1rem;
+        margin-top: -25px;
+        position: relative;
+        z-index: 0;
+    }
+    .step-item.completed ~ .step-connector,
+    .step-item.active ~ .step-connector {
+        background: var(--primary-color);
+    }
+    .payment-option-card {
+        cursor: pointer;
+        transition: all 0.3s ease;
+        border: 2px solid #e0e0e0;
+    }
+    .payment-option-card:hover {
+        border-color: #007bff;
+        box-shadow: 0 4px 8px rgba(0,123,255,0.2);
+        transform: translateY(-2px);
+    }
+    .payment-option-card.border-primary {
+        border-color: #007bff !important;
+        background-color: #f0f8ff;
+    }
+    .payment-option-card input[type="radio"]:checked + div {
+        color: #007bff;
+    }
+    @media (max-width: 768px) {
+        .step-indicator {
+            padding: 1rem 0.5rem;
+        }
+        .step-number {
+            width: 40px;
+            height: 40px;
+            font-size: 1rem;
+        }
+        .step-label {
+            font-size: 0.75rem;
+        }
+        .step-connector {
+            margin: 0 0.5rem;
+            margin-top: -20px;
+        }
+    }
+</style>
+@endpush
+
 @endsection

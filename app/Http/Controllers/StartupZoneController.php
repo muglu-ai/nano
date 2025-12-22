@@ -212,6 +212,46 @@ class StartupZoneController extends Controller
             $formData['contact_data'] = $contactData;
         }
         
+        // Handle billing data if billing is different
+        if ($request->has('billing_different') && $request->input('billing_different')) {
+            // Format billing phone similar to contact mobile
+            $billingPhoneNational = '';
+            $billingPhoneCountryCode = '91'; // Default to India
+            
+            if ($request->has('billing_phone_national') && $request->input('billing_phone_national')) {
+                $billingPhoneNational = preg_replace('/\s+/', '', trim($request->input('billing_phone_national')));
+                $billingPhoneCountryCode = $request->input('billing_phone_country_code') ?: '91';
+            } elseif ($request->has('billing_phone') && $request->input('billing_phone')) {
+                $billingPhoneValue = preg_replace('/\s+/', '', trim($request->input('billing_phone')));
+                if (preg_match('/^\+?(\d{1,3})(\d+)$/', $billingPhoneValue, $matches)) {
+                    $billingPhoneCountryCode = $matches[1];
+                    $billingPhoneNational = $matches[2];
+                } else {
+                    $billingPhoneNational = $billingPhoneValue;
+                }
+            }
+            
+            $billingData = [
+                'billing_company' => $request->input('billing_company'),
+                'contact_name' => $request->input('billing_contact_name'),
+                'email' => $request->input('billing_email'),
+                'phone' => $billingPhoneNational ? ($billingPhoneCountryCode . '-' . $billingPhoneNational) : '',
+                'address' => $request->input('billing_address'),
+                'country_id' => $request->input('billing_country_id'),
+                'state_id' => $request->input('billing_state_id'),
+                'city' => $request->input('billing_city'), // City is now text input, not dropdown
+                'postal_code' => $request->input('billing_postal_code'),
+                'gst_id' => $request->input('billing_gst_id'),
+            ];
+            
+            if (!empty($billingData)) {
+                $formData['billing_data'] = $billingData;
+            }
+        } else {
+            // Remove billing_data if billing is not different
+            unset($formData['billing_data']);
+        }
+        
         // Store in session
         session(['startup_zone_draft' => $formData]);
         
@@ -837,25 +877,64 @@ class StartupZoneController extends Controller
                 $contact->save();
             }
 
-            // Create billing detail - use contact person details
-            $contactName = trim(($draft->contact_data['title'] ?? '') . ' ' . ($draft->contact_data['first_name'] ?? '') . ' ' . ($draft->contact_data['last_name'] ?? ''));
-            if (empty($contactName)) {
-                $contactName = $draft->company_name;
-            }
-            
+            // Create billing detail - check if billing is different
             $billingDetail = new \App\Models\BillingDetail();
             $billingDetail->application_id = $application->id;
-            $billingDetail->billing_company = $draft->company_name ?? '';
-            $billingDetail->contact_name = $contactName;
-            $billingDetail->email = $contactEmail;
-            $billingDetail->phone = $draft->contact_data['mobile'] ?? $draft->landline ?? '';
-            $billingDetail->address = $draft->address ?? '';
-            $billingDetail->city_id = $draft->city_id ?? null;
-            $billingDetail->state_id = $draft->state_id ?? null;
-            $billingDetail->country_id = $draft->country_id ?? null;
-            $billingDetail->postal_code = $draft->postal_code ?? '';
-            $billingDetail->gst_id = $draft->gst_no ?? null; // Store GST number in billing detail
-            $billingDetail->same_as_basic = '0';
+            
+            if (isset($draft->billing_data) && !empty($draft->billing_data)) {
+                // Use billing data if provided
+                $billingDetail->billing_company = $draft->billing_data['billing_company'] ?? $draft->company_name ?? '';
+                $billingDetail->contact_name = $draft->billing_data['contact_name'] ?? '';
+                $billingDetail->email = $draft->billing_data['email'] ?? $contactEmail;
+                $billingDetail->phone = $draft->billing_data['phone'] ?? '';
+                $billingDetail->address = $draft->billing_data['address'] ?? '';
+                
+                // Handle city - try to find by name if provided as text, otherwise use city_id
+                $billingCityId = null;
+                if (isset($draft->billing_data['city']) && !empty($draft->billing_data['city'])) {
+                    // Try to find city by name in the state
+                    if (isset($draft->billing_data['state_id']) && $draft->billing_data['state_id']) {
+                        $city = \App\Models\City::where('state_id', $draft->billing_data['state_id'])
+                            ->where('name', 'like', $draft->billing_data['city'])
+                            ->first();
+                        if ($city) {
+                            $billingCityId = $city->id;
+                        }
+                    }
+                    // If not found by name, check if it's already a numeric ID
+                    if (!$billingCityId && is_numeric($draft->billing_data['city'])) {
+                        $billingCityId = $draft->billing_data['city'];
+                    }
+                } elseif (isset($draft->billing_data['city_id']) && $draft->billing_data['city_id']) {
+                    $billingCityId = $draft->billing_data['city_id'];
+                }
+                $billingDetail->city_id = $billingCityId;
+                
+                $billingDetail->state_id = $draft->billing_data['state_id'] ?? null;
+                $billingDetail->country_id = $draft->billing_data['country_id'] ?? null;
+                $billingDetail->postal_code = $draft->billing_data['postal_code'] ?? '';
+                $billingDetail->gst_id = $draft->billing_data['gst_id'] ?? null;
+                $billingDetail->same_as_basic = '0'; // Different from basic
+            } else {
+                // Use exhibitor/contact details (same as basic)
+                $contactName = trim(($draft->contact_data['title'] ?? '') . ' ' . ($draft->contact_data['first_name'] ?? '') . ' ' . ($draft->contact_data['last_name'] ?? ''));
+                if (empty($contactName)) {
+                    $contactName = $draft->company_name;
+                }
+                
+                $billingDetail->billing_company = $draft->company_name ?? '';
+                $billingDetail->contact_name = $contactName;
+                $billingDetail->email = $contactEmail;
+                $billingDetail->phone = $draft->contact_data['mobile'] ?? $draft->landline ?? '';
+                $billingDetail->address = $draft->address ?? '';
+                $billingDetail->city_id = $draft->city_id ?? null;
+                $billingDetail->state_id = $draft->state_id ?? null;
+                $billingDetail->country_id = $draft->country_id ?? null;
+                $billingDetail->postal_code = $draft->postal_code ?? '';
+                $billingDetail->gst_id = $draft->gst_no ?? null;
+                $billingDetail->same_as_basic = '1'; // Same as basic
+            }
+            
             $billingDetail->save();
 
             // Create invoice

@@ -114,6 +114,22 @@ class MisController extends Controller
         return response()->json($states);
     }
 
+    public function getCities(Request $request)
+    {
+        if (!$request->has('state_id')) {
+            return response()->json(['error' => 'State ID is missing'], 400);
+        }
+
+        //validate the state id and get the cities
+        $validated = $request->validate([
+            'state_id' => 'required|integer',
+        ]);
+
+        $cities = \App\Models\City::where('state_id', $request->state_id)->get();
+
+        return response()->json($cities);
+    }
+
 
     public function activeUsersAnalytics()
     {

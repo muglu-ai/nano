@@ -4,6 +4,28 @@
 
 @section('content')
 <div class="container py-5">
+    {{-- Step Indicator --}}
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="step-indicator">
+                <div class="step-item active">
+                    <div class="step-number">1</div>
+                    <div class="step-label">Exhibitor Details</div>
+                </div>
+                <div class="step-connector"></div>
+                <div class="step-item">
+                    <div class="step-number">2</div>
+                    <div class="step-label">Preview Details</div>
+                </div>
+                <div class="step-connector"></div>
+                <div class="step-item">
+                    <div class="step-number">3</div>
+                    <div class="step-label">Payment</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     {{-- Progress Bar --}}
     <div class="row mb-4">
         <div class="col-12">
@@ -123,7 +145,7 @@
                             <input type="text" class="form-control" id="gst_no" name="gst_no" 
                                    value="{{ $draft->gst_no ?? '' }}" 
                                    pattern="[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}" 
-                                   placeholder="22AAAAA0000A1Z5">
+                                   placeholder="">
                             <button type="button" class="btn btn-outline-primary" id="validateGstBtn">
                                 <i class="fas fa-search"></i> Validate
                             </button>
@@ -143,16 +165,16 @@
                         <input type="text" class="form-control" id="pan_no" name="pan_no" 
                                value="{{ $draft->pan_no ?? '' }}" 
                                pattern="[A-Z]{5}[0-9]{4}[A-Z]{1}" 
-                               maxlength="10" placeholder="ABCDE1234F" required>
+                               maxlength="10" placeholder="" required>
                         <div class="invalid-feedback"></div>
                     </div>
                 </div>
 
                 {{-- Company Information --}}
-                <h5 class="mb-3 mt-4 border-bottom pb-2"><i class="fas fa-building"></i> Company Information</h5>
+                <h5 class="mb-3 mt-4 border-bottom pb-2"><i class="fas fa-building"></i> Exhibitor Information</h5>
                 <div class="row mb-3">
                     <div class="col-md-6">
-                        <label for="company_name" class="form-label">Company Name <span class="text-danger">*</span></label>
+                        <label for="company_name" class="form-label">Name of Exhibitor  <small>(Organisation Name)</small> <span class="text-danger">*</span></label>
                         <input type="text" class="form-control" id="company_name" name="company_name" 
                                value="{{ $draft->company_name ?? '' }}" 
                                maxlength="100" required>
@@ -247,7 +269,7 @@
                         <label for="website" class="form-label">Website <span class="text-danger">*</span></label>
                         <input type="url" class="form-control" id="website" name="website" 
                                value="{{ $draft->website ?? '' }}" 
-                               placeholder="https://example.com" required>
+                               placeholder="" required>
                         <div class="invalid-feedback"></div>
                     </div>
                 </div>
@@ -318,16 +340,143 @@
                     </div>
                 </div>
 
+                {{-- Billing Information --}}
+                <h5 class="mb-3 mt-4 border-bottom pb-2"><i class="fas fa-file-invoice"></i> Billing Information</h5>
+                <div class="row mb-3">
+                    <div class="col-12">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="billing_different" name="billing_different" 
+                                   {{ (isset($draft->billing_data) && $draft->billing_data) ? 'checked' : '' }}>
+                            <label class="form-check-label" for="billing_different">
+                                <strong>Billing information is different from exhibitor information</strong>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="billing_details_section" style="display: {{ (isset($draft->billing_data) && $draft->billing_data) ? 'block' : 'none' }};">
+                    <div class="row mb-3">
+                        <div class="col-12">
+                            <div class="form-check mb-3">
+                                <input class="form-check-input" type="checkbox" id="copy_from_exhibitor" name="copy_from_exhibitor">
+                                <label class="form-check-label" for="copy_from_exhibitor">
+                                    <strong>Copy details from exhibitor information</strong>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="billing_company" class="form-label">Billing Company Name <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="billing_company" name="billing_company" 
+                                   value="{{ isset($draft->billing_data['billing_company']) ? $draft->billing_data['billing_company'] : '' }}" 
+                                   maxlength="100">
+                            <div class="invalid-feedback"></div>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="billing_contact_name" class="form-label">Contact Name <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="billing_contact_name" name="billing_contact_name" 
+                                   value="{{ isset($draft->billing_data['contact_name']) ? $draft->billing_data['contact_name'] : '' }}" 
+                                   maxlength="100">
+                            <div class="invalid-feedback"></div>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="billing_email" class="form-label">Billing Email <span class="text-danger">*</span></label>
+                            <input type="email" class="form-control" id="billing_email" name="billing_email" 
+                                   value="{{ isset($draft->billing_data['email']) ? $draft->billing_data['email'] : '' }}">
+                            <div class="invalid-feedback"></div>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="billing_phone" class="form-label">Billing Phone <span class="text-danger">*</span></label>
+                            <input type="tel" class="form-control" id="billing_phone" name="billing_phone" 
+                                   value="{{ isset($draft->billing_data['phone']) ? $draft->billing_data['phone'] : '' }}" 
+                                   placeholder="">
+                            <input type="hidden" id="billing_phone_country_code" name="billing_phone_country_code">
+                            <input type="hidden" id="billing_phone_national" name="billing_phone_national">
+                            <div class="invalid-feedback"></div>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-12">
+                            <label for="billing_address" class="form-label">Billing Address <span class="text-danger">*</span></label>
+                            <textarea class="form-control" id="billing_address" name="billing_address" rows="2">{{ isset($draft->billing_data['address']) ? $draft->billing_data['address'] : '' }}</textarea>
+                            <div class="invalid-feedback"></div>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <label for="billing_country_id" class="form-label">Billing Country <span class="text-danger">*</span></label>
+                            <select class="form-select" id="billing_country_id" name="billing_country_id">
+                                <option value="">Select Country</option>
+                                @foreach($countries as $country)
+                                @php
+                                    $isSelected = (isset($draft->billing_data['country_id']) && $draft->billing_data['country_id'] == $country->id) || 
+                                                 (!isset($draft->billing_data['country_id']) && $country->code === 'IN');
+                                @endphp
+                                <option value="{{ $country->id }}" {{ $isSelected ? 'selected' : '' }}>
+                                    {{ $country->name }}
+                                </option>
+                                @endforeach
+                            </select>
+                            <div class="invalid-feedback"></div>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="billing_state_id" class="form-label">Billing State <span class="text-danger">*</span></label>
+                            <select class="form-select" id="billing_state_id" name="billing_state_id">
+                                <option value="">Select State</option>
+                                @if(isset($draft->billing_data['state_id']) && $draft->billing_data['state_id'])
+                                    @php
+                                        $billingState = \App\Models\State::find($draft->billing_data['state_id']);
+                                    @endphp
+                                    @if($billingState)
+                                        <option value="{{ $billingState->id }}" selected>{{ $billingState->name }}</option>
+                                    @endif
+                                @endif
+                            </select>
+                            <div class="invalid-feedback"></div>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="billing_city" class="form-label">Billing City <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="billing_city" name="billing_city" 
+                                   value="{{ isset($draft->billing_data['city']) ? $draft->billing_data['city'] : (isset($draft->billing_data['city_id']) && is_numeric($draft->billing_data['city_id']) ? (\App\Models\City::find($draft->billing_data['city_id'])->name ?? '') : (isset($draft->billing_data['city_id']) ? $draft->billing_data['city_id'] : '')) }}" 
+                                   maxlength="100">
+                            <div class="invalid-feedback"></div>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="billing_postal_code" class="form-label">Billing Postal Code <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="billing_postal_code" name="billing_postal_code" 
+                                   value="{{ isset($draft->billing_data['postal_code']) ? $draft->billing_data['postal_code'] : '' }}" 
+                                   pattern="[0-9]{6}" maxlength="6">
+                            <div class="invalid-feedback"></div>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="billing_gst_id" class="form-label">Billing GST Number</label>
+                            <input type="text" class="form-control" id="billing_gst_id" name="billing_gst_id" 
+                                   value="{{ isset($draft->billing_data['gst_id']) ? $draft->billing_data['gst_id'] : '' }}" 
+                                   pattern="[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}" 
+                                   placeholder="">
+                            <div class="invalid-feedback"></div>
+                        </div>
+                    </div>
+                </div>
+
                 {{-- Payment Mode --}}
                 <h5 class="mb-3 mt-4 border-bottom pb-2"><i class="fas fa-credit-card"></i> Payment Mode</h5>
                 <div class="row mb-3">
                     <div class="col-md-6">
                         <label for="payment_mode" class="form-label">Payment Mode <span class="text-danger">*</span></label>
                         <select class="form-select" id="payment_mode" name="payment_mode" required>
-                            <option value="">Select Payment Mode</option>
                             <option value="CCAvenue" {{ ($draft->payment_mode ?? '') == 'CCAvenue' ? 'selected' : '' }}>CCAvenue (Indian Payments)</option>
-                            <option value="PayPal" {{ ($draft->payment_mode ?? '') == 'PayPal' ? 'selected' : '' }}>PayPal (International Payments)</option>
-                            <option value="Bank Transfer" {{ ($draft->payment_mode ?? '') == 'Bank Transfer' ? 'selected' : '' }}>Bank Transfer</option>
+                            
                         </select>
                         <div class="invalid-feedback"></div>
                     </div>
@@ -367,6 +516,80 @@
 
 @push('styles')
 <style>
+    .step-indicator {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 2rem;
+        padding: 1.5rem;
+        background: #f8f9fa;
+        border-radius: 10px;
+    }
+    .step-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        position: relative;
+        flex: 1;
+    }
+    .step-number {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        background: #e0e0e0;
+        color: #666;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        font-size: 1.2rem;
+        margin-bottom: 0.5rem;
+        transition: all 0.3s ease;
+        border: 3px solid #e0e0e0;
+    }
+    .step-item.active .step-number {
+        background: var(--primary-color);
+        color: white;
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 4px rgba(27, 55, 131, 0.2);
+    }
+    .step-item.completed .step-number {
+        background: #28a745;
+        color: white;
+        border-color: #28a745;
+        font-size: 0;
+    }
+    .step-item.completed .step-number::before {
+        content: '✓';
+        font-size: 1.5rem;
+        display: block;
+    }
+    .step-label {
+        font-size: 0.9rem;
+        color: #666;
+        font-weight: 500;
+        text-align: center;
+    }
+    .step-item.active .step-label {
+        color: var(--primary-color);
+        font-weight: 600;
+    }
+    .step-item.completed .step-label {
+        color: #28a745;
+    }
+    .step-connector {
+        flex: 1;
+        height: 3px;
+        background: #e0e0e0;
+        margin: 0 1rem;
+        margin-top: -25px;
+        position: relative;
+        z-index: 0;
+    }
+    .step-item.completed ~ .step-connector,
+    .step-item.active ~ .step-connector {
+        background: var(--primary-color);
+    }
     .step-content {
         animation: fadeIn 0.3s;
     }
@@ -388,6 +611,23 @@
     h5.border-bottom {
         color: var(--primary-color);
         font-weight: 600;
+    }
+    @media (max-width: 768px) {
+        .step-indicator {
+            padding: 1rem 0.5rem;
+        }
+        .step-number {
+            width: 40px;
+            height: 40px;
+            font-size: 1rem;
+        }
+        .step-label {
+            font-size: 0.75rem;
+        }
+        .step-connector {
+            margin: 0 0.5rem;
+            margin-top: -20px;
+        }
     }
 </style>
 @endpush
@@ -499,6 +739,94 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Initialize hidden fields on load
         setTimeout(window.updatePhoneFields, 100);
+    }
+    
+    // Initialize intl-tel-input for billing phone
+    const billingPhoneInput = document.getElementById('billing_phone');
+    let billingPhoneIti = null;
+    if (billingPhoneInput) {
+        @php
+            $initialBillingCountry = 'in';
+            $initialBillingPhone = '';
+            if (isset($draft->billing_data['phone']) && $draft->billing_data['phone']) {
+                // Extract country code from phone (format: 91-9801217815)
+                $phoneParts = explode('-', $draft->billing_data['phone']);
+                if (count($phoneParts) == 2) {
+                    $billingCountryCode = $phoneParts[0];
+                    $billingNational = $phoneParts[1];
+                    $country = \App\Models\Country::where('phonecode', $billingCountryCode)->first();
+                    if ($country) {
+                        $initialBillingCountry = strtolower($country->code);
+                    }
+                    $initialBillingPhone = '+' . $billingCountryCode . $billingNational;
+                }
+            }
+        @endphp
+        
+        @if(!empty($initialBillingPhone))
+        billingPhoneInput.value = '{{ $initialBillingPhone }}';
+        @endif
+        
+        billingPhoneIti = window.intlTelInput(billingPhoneInput, {
+            initialCountry: '{{ $initialBillingCountry }}',
+            preferredCountries: ['in', 'us', 'gb'],
+            utilsScript: "https://cdn.jsdelivr.net/npm/intl-tel-input@18.1.1/build/js/utils.js",
+            separateDialCode: true,
+            nationalMode: false,
+            autoPlaceholder: 'off'
+        });
+        
+        billingPhoneInput.placeholder = '';
+        setTimeout(function() {
+            billingPhoneInput.placeholder = '';
+        }, 100);
+        setTimeout(function() {
+            billingPhoneInput.placeholder = '';
+        }, 300);
+        setTimeout(function() {
+            billingPhoneInput.placeholder = '';
+        }, 500);
+        
+        billingPhoneInput.addEventListener('focus', function() {
+            if (this.placeholder) {
+                this.placeholder = '';
+            }
+        });
+        
+        // Update hidden fields for billing phone
+        window.updateBillingPhoneFields = function() {
+            if (!billingPhoneIti) return;
+            
+            const countryCode = billingPhoneIti.getSelectedCountryData().dialCode;
+            const fullNumber = billingPhoneIti.getNumber();
+            
+            let nationalNumber = '';
+            if (window.intlTelInputUtils && billingPhoneIti.isValidNumber()) {
+                nationalNumber = billingPhoneIti.getNumber(window.intlTelInputUtils.numberFormat.NATIONAL);
+                nationalNumber = nationalNumber.replace(/\s/g, '').replace(/^0+/, '');
+            } else {
+                const dialCode = '+' + countryCode;
+                if (fullNumber.startsWith(dialCode)) {
+                    nationalNumber = fullNumber.substring(dialCode.length).replace(/\s/g, '').replace(/^0+/, '');
+                } else {
+                    const inputValue = billingPhoneInput.value.replace(/\s/g, '');
+                    nationalNumber = inputValue.replace(/^\+?\d{1,3}/, '');
+                }
+            }
+            
+            nationalNumber = nationalNumber.replace(/\s+/g, '');
+            
+            const billingCountryCodeField = document.getElementById('billing_phone_country_code');
+            const billingPhoneNationalField = document.getElementById('billing_phone_national');
+            if (billingCountryCodeField) billingCountryCodeField.value = countryCode;
+            if (billingPhoneNationalField) billingPhoneNationalField.value = nationalNumber;
+        };
+        
+        billingPhoneInput.addEventListener('change', window.updateBillingPhoneFields);
+        billingPhoneInput.addEventListener('blur', window.updateBillingPhoneFields);
+        billingPhoneInput.addEventListener('countrychange', window.updateBillingPhoneFields);
+        
+        setTimeout(window.updateBillingPhoneFields, 100);
     }
     
     // Initialize intl-tel-input for landline/telephone
@@ -826,6 +1154,63 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
+    // Billing Information Toggle
+    const billingDifferentCheckbox = document.getElementById('billing_different');
+    const billingDetailsSection = document.getElementById('billing_details_section');
+    
+    if (billingDifferentCheckbox && billingDetailsSection) {
+        // Function to toggle required attributes
+        function toggleBillingRequiredFields(required) {
+            const billingFields = [
+                'billing_company',
+                'billing_contact_name',
+                'billing_email',
+                'billing_phone',
+                'billing_address',
+                'billing_country_id',
+                'billing_state_id',
+                'billing_city',
+                'billing_postal_code'
+            ];
+            
+            billingFields.forEach(fieldId => {
+                const field = document.getElementById(fieldId);
+                if (field) {
+                    if (required) {
+                        field.setAttribute('required', 'required');
+                    } else {
+                        field.removeAttribute('required');
+                    }
+                }
+            });
+        }
+        
+        billingDifferentCheckbox.addEventListener('change', function() {
+            if (this.checked) {
+                billingDetailsSection.style.display = 'block';
+                toggleBillingRequiredFields(true);
+            } else {
+                billingDetailsSection.style.display = 'none';
+                toggleBillingRequiredFields(false);
+                // Clear billing fields when unchecked
+                const billingInputs = billingDetailsSection.querySelectorAll('input, select, textarea');
+                billingInputs.forEach(field => {
+                    if (field.id !== 'billing_different') {
+                        field.value = '';
+                    }
+                });
+            }
+            resetAutoSaveTimer();
+        });
+        
+        // Initialize on page load
+        if (billingDifferentCheckbox.checked) {
+            toggleBillingRequiredFields(true);
+        } else {
+            toggleBillingRequiredFields(false);
+        }
+    }
+
     // Dynamic state loading based on country selection
     const countrySelect = document.getElementById('country_id');
     const stateSelect = document.getElementById('state_id');
@@ -889,6 +1274,135 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
+    // Billing country/state loading (city is now input, not dropdown)
+    const billingCountrySelect = document.getElementById('billing_country_id');
+    const billingStateSelect = document.getElementById('billing_state_id');
+    
+    function loadBillingStatesForCountry(countryId, preserveSelectedStateId = null) {
+        if (!countryId) {
+            billingStateSelect.innerHTML = '<option value="">Select State</option>';
+            billingStateSelect.disabled = false;
+            return;
+        }
+        
+        billingStateSelect.innerHTML = '<option value="">Loading states...</option>';
+        billingStateSelect.disabled = true;
+        
+        fetch('{{ route("get.states") }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+            },
+            body: JSON.stringify({ country_id: countryId })
+        })
+        .then(response => response.json())
+        .then(data => {
+            billingStateSelect.innerHTML = '<option value="">Select State</option>';
+            if (data && data.length > 0) {
+                data.forEach(state => {
+                    const option = document.createElement('option');
+                    option.value = state.id;
+                    option.textContent = state.name;
+                    if (preserveSelectedStateId && preserveSelectedStateId == state.id) {
+                        option.selected = true;
+                    }
+                    billingStateSelect.appendChild(option);
+                });
+            }
+            billingStateSelect.disabled = false;
+            resetAutoSaveTimer();
+        })
+        .catch(error => {
+            console.error('Error loading billing states:', error);
+            billingStateSelect.innerHTML = '<option value="">Error loading states</option>';
+            billingStateSelect.disabled = false;
+        });
+    }
+    
+    if (billingCountrySelect && billingStateSelect) {
+        // Load states on page load if country is already selected
+        const initialBillingCountryId = billingCountrySelect.value;
+        const initialBillingStateId = billingStateSelect.value;
+        if (initialBillingCountryId) {
+            loadBillingStatesForCountry(initialBillingCountryId, initialBillingStateId);
+        }
+        
+        // Handle billing country change
+        billingCountrySelect.addEventListener('change', function() {
+            loadBillingStatesForCountry(this.value);
+        });
+    }
+
+    // Copy from exhibitor information checkbox
+    const copyFromExhibitorCheckbox = document.getElementById('copy_from_exhibitor');
+    if (copyFromExhibitorCheckbox) {
+        copyFromExhibitorCheckbox.addEventListener('change', function() {
+            if (this.checked) {
+                // Copy company name
+                const companyName = document.getElementById('company_name')?.value || '';
+                document.getElementById('billing_company').value = companyName;
+                
+                // Copy contact name from contact person
+                const contactTitle = document.getElementById('contact_title')?.value || '';
+                const contactFirstName = document.getElementById('contact_first_name')?.value || '';
+                const contactLastName = document.getElementById('contact_last_name')?.value || '';
+                const contactName = (contactTitle + ' ' + contactFirstName + ' ' + contactLastName).trim();
+                document.getElementById('billing_contact_name').value = contactName;
+                
+                // Copy email
+                const contactEmail = document.getElementById('contact_email')?.value || '';
+                document.getElementById('billing_email').value = contactEmail;
+                
+                // Copy phone (from contact mobile or landline)
+                const contactMobile = document.getElementById('contact_mobile')?.value || '';
+                const landline = document.getElementById('landline')?.value || '';
+                const phoneValue = contactMobile || landline;
+                if (phoneValue && billingPhoneIti) {
+                    billingPhoneIti.setNumber(phoneValue);
+                    if (typeof window.updateBillingPhoneFields === 'function') {
+                        window.updateBillingPhoneFields();
+                    }
+                } else {
+                    document.getElementById('billing_phone').value = phoneValue;
+                }
+                
+                // Copy address
+                const address = document.getElementById('address')?.value || '';
+                document.getElementById('billing_address').value = address;
+                
+                // Copy country
+                const countryId = document.getElementById('country_id')?.value || '';
+                if (countryId && billingCountrySelect) {
+                    billingCountrySelect.value = countryId;
+                    loadBillingStatesForCountry(countryId);
+                    
+                    // Copy state after states are loaded
+                    setTimeout(() => {
+                        const stateId = document.getElementById('state_id')?.value || '';
+                        if (stateId && billingStateSelect) {
+                            billingStateSelect.value = stateId;
+                        }
+                    }, 500);
+                }
+                
+                // Copy city (as text input)
+                const cityInput = document.getElementById('city_id')?.value || '';
+                document.getElementById('billing_city').value = cityInput;
+                
+                // Copy postal code
+                const postalCode = document.getElementById('postal_code')?.value || '';
+                document.getElementById('billing_postal_code').value = postalCode;
+                
+                // Copy GST number
+                const gstNo = document.getElementById('gst_no')?.value || '';
+                document.getElementById('billing_gst_id').value = gstNo;
+                
+                resetAutoSaveTimer();
+            }
+        });
+    }
+
     // Store form data in session after 30 seconds of inactivity (no database writes)
     let autoSaveTimer = null;
     const AUTO_SAVE_DELAY = 10000; // 10 seconds
@@ -918,12 +1432,26 @@ document.addEventListener('DOMContentLoaded', function() {
     function validateForm() {
         let isValid = true;
         const form = document.getElementById('startupZoneForm');
-        const requiredFields = form.querySelectorAll('[required]');
+        const billingDifferent = document.getElementById('billing_different')?.checked;
         
         // Clear previous validation
         form.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
         
+        // Get all required fields, but exclude billing fields if billing is not different
+        let requiredFields = form.querySelectorAll('[required]');
+        if (!billingDifferent) {
+            // Remove billing fields from validation if billing is not different
+            requiredFields = Array.from(requiredFields).filter(field => {
+                return !field.id.startsWith('billing_');
+            });
+        }
+        
         requiredFields.forEach(field => {
+            // Skip hidden fields
+            if (field.type === 'hidden') {
+                return;
+            }
+            
             if (!field.value.trim()) {
                 field.classList.add('is-invalid');
                 const feedback = field.nextElementSibling;
@@ -1067,6 +1595,9 @@ document.addEventListener('DOMContentLoaded', function() {
         if (typeof window.updateLandlineFields === 'function') {
             window.updateLandlineFields();
         }
+        if (typeof window.updateBillingPhoneFields === 'function') {
+            window.updateBillingPhoneFields();
+        }
         
         const formData = new FormData(document.getElementById('startupZoneForm'));
         
@@ -1153,6 +1684,9 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         if (typeof window.updateLandlineFields === 'function') {
             window.updateLandlineFields();
+        }
+        if (typeof window.updateBillingPhoneFields === 'function') {
+            window.updateBillingPhoneFields();
         }
         
         const form = document.getElementById('startupZoneForm');
