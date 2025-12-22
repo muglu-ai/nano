@@ -119,7 +119,18 @@
                                 </div>
                                 <div class="col-md-4 mb-2">
                                     <strong>City:</strong><br>
-                                    <small>{{ $application->city_id ? (\App\Models\City::find($application->city_id)->name ?? $application->city_id) : 'N/A' }}</small>
+                                    @php
+                                        $exhibitorCity = 'N/A';
+                                        if ($application->city_id) {
+                                            if (is_numeric($application->city_id)) {
+                                                $city = \App\Models\City::find($application->city_id);
+                                                $exhibitorCity = $city ? $city->name : $application->city_id;
+                                            } else {
+                                                $exhibitorCity = $application->city_id; // It's already a city name
+                                            }
+                                        }
+                                    @endphp
+                                    <small>{{ $exhibitorCity }}</small>
                                 </div>
                                 <div class="col-md-4 mb-2">
                                     <strong>State:</strong><br>

@@ -172,7 +172,18 @@
                                         <td style="width: 40%; font-weight: bold; color: #555555; padding: 5px 0; vertical-align: top;">Address:</td>
                                         <td style="color: #333333; padding: 5px 0;">
                                             {{ $billingDetail->address }}
-                                            @if($billingDetail->city_id), {{ \App\Models\City::find($billingDetail->city_id)->name ?? $billingDetail->city_id }}@endif
+                                            @if($billingDetail->city_id)
+                                                @php
+                                                    $billingCity = '';
+                                                    if (is_numeric($billingDetail->city_id)) {
+                                                        $city = \App\Models\City::find($billingDetail->city_id);
+                                                        $billingCity = $city ? $city->name : $billingDetail->city_id;
+                                                    } else {
+                                                        $billingCity = $billingDetail->city_id; // It's already a city name
+                                                    }
+                                                @endphp
+                                                , {{ $billingCity }}
+                                            @endif
                                             @if($billingDetail->state_id), {{ \App\Models\State::find($billingDetail->state_id)->name ?? '' }}@endif
                                             @if($billingDetail->country_id), {{ \App\Models\Country::find($billingDetail->country_id)->name ?? '' }}@endif
                                             @if($billingDetail->postal_code) - {{ $billingDetail->postal_code }}@endif
@@ -211,7 +222,18 @@
                                         <td style="width: 40%; font-weight: bold; color: #555555; padding: 5px 0; vertical-align: top;">Address:</td>
                                         <td style="color: #333333; padding: 5px 0;">
                                             {{ $application->address }}
-                                            @if($application->city_id), {{ \App\Models\City::find($application->city_id)->name ?? $application->city_id }}@endif
+                                            @if($application->city_id)
+                                                @php
+                                                    $exhibitorCity = '';
+                                                    if (is_numeric($application->city_id)) {
+                                                        $city = \App\Models\City::find($application->city_id);
+                                                        $exhibitorCity = $city ? $city->name : $application->city_id;
+                                                    } else {
+                                                        $exhibitorCity = $application->city_id; // It's already a city name
+                                                    }
+                                                @endphp
+                                                , {{ $exhibitorCity }}
+                                            @endif
                                             @if($application->state && $application->state->name), {{ $application->state->name }}@endif
                                             @if($application->country && $application->country->name), {{ $application->country->name }}@endif
                                             @if($application->postal_code) - {{ $application->postal_code }}@endif
