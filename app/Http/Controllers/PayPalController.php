@@ -35,16 +35,20 @@ class PayPalController extends Controller
        public function showPaymentForm($id)
 {
     if (!$id) {
-        return redirect()->route('exhibitor.orders');
+        return redirect()->route('payment.lookup')
+            ->with('error', 'Invoice ID is required');
     }
 
     $invoice = Invoice::where('invoice_no', $id)->first();
     if (!$invoice) {
-        return redirect()->route('exhibitor.orders');
+        return redirect()->route('payment.lookup')
+            ->with('error', 'Invoice not found')
+            ->with('invoice_hint', $id);
     }
     
     // Check if this is a startup zone invoice
     $isStartupZone = false;
+    $application = null;
     if ($invoice->application_id) {
         $application = \App\Models\Application::find($invoice->application_id);
         if ($application && $application->application_type === 'startup-zone') {
@@ -52,9 +56,18 @@ class PayPalController extends Controller
         }
     }
     
+    // For startup-zone, check if already paid and redirect to confirmation
+    if ($isStartupZone && $application) {
+        if ($invoice->payment_status === 'paid') {
+            return redirect()->route('startup-zone.confirmation', $application->application_id)
+                ->with('info', 'Payment already completed');
+        }
+    }
+    
     // For non-startup-zone invoices, check type
     if (!$isStartupZone && $invoice->type != 'extra_requirement') {
-        return redirect()->route('exhibitor.orders');
+        return redirect()->route('exhibitor.orders')
+            ->with('error', 'Invalid invoice type');
     }
 
     // Fetch billing detail - handle startup zone differently
@@ -88,7 +101,12 @@ class PayPalController extends Controller
     }
     
     if (!$billingDetail) {
-        return redirect()->route('exhibitor.orders')->with('error', 'Billing details not found');
+        if ($isStartupZone && $application) {
+            return redirect()->route('startup-zone.payment', $application->application_id)
+                ->with('error', 'Billing details not found. Please contact support.');
+        }
+        return redirect()->route('exhibitor.orders')
+            ->with('error', 'Billing details not found');
     }
 
     // determine timezone to compute "today" correctly for the buyer
@@ -861,29 +879,53 @@ private function formatBillingFromEventContact($eventContact, $applicationId)
 
 
 
-        //if invoice  type not extra_requirement then return error
-        if ($invoice->type != 'extra_requirement') {
+        // Check if this is a startup zone invoice
+        $isStartupZone = false;
+        $application = null;
+        if ($invoice->application_id) {
+            $application = \App\Models\Application::find($invoice->application_id);
+            if ($application && $application->application_type === 'startup-zone') {
+                $isStartupZone = true;
+            }
+        }
+
+        //if invoice  type not extra_requirement and not startup-zone then return error
+        if (!$isStartupZone && $invoice->type != 'extra_requirement') {
             return response()->json(['error' => 'Invalid invoice type'], 400);
         }
 
         Log::info('Invoice Type: ' . $invoice->type);
-        Log::info("test");
+        Log::info('Is Startup Zone: ' . ($isStartupZone ? 'Yes' : 'No'));
 
-
-
-
-        $billingDetail = BillingDetail::where('application_id', $invoice->application_id)->first();
+        // Fetch billing detail - handle startup zone differently
+        $billingDetail = null;
+        
+        if ($isStartupZone) {
+            // For startup zone, get billing from EventContact
+            $eventContact = \App\Models\EventContact::where('application_id', $invoice->application_id)->first();
+            if ($eventContact && $application) {
+                $billingDetail = $this->formatBillingFromEventContact($eventContact, $invoice->application_id);
+            }
+        } else {
+            // For other types, use BillingDetail
+            $billingDetail = BillingDetail::where('application_id', $invoice->application_id)->first();
+        }
         Log::info('Billing Detail: ' . json_encode($billingDetail));
+        if (!$billingDetail) {
+            return response()->json(['error' => 'Billing details not found'], 404);
+        }
+
         $order_ID = $invoice->invoice_no . '_' . substr(uniqid(), -5);
 
         Log::info('Order ID: ' . $order_ID);
         $order = $order_ID;
-        $amount = $invoice->int_amount_value;
+        $amount = $invoice->int_amount_value ?? $invoice->amount;
 
         $email = $billingDetail->email;
-        $company = $billingDetail->billing_company;
+        $company = $billingDetail->billing_company ?? ($application ? $application->company_name : '');
 
-        if ($invoice->co_exhibitorID) {
+        // Only check co-exhibitor for non-startup-zone invoices
+        if (!$isStartupZone && $invoice->co_exhibitorID) {
             //if co_exhibitor_id is not null then get the co-exhibitor details from the CoExhibitor model
             $coExhibitor = \App\Models\CoExhibitor::where('id', $invoice->co_exhibitorID)->first();
             //if coExhibitor is not null then get the billing details from the coExhibitor
@@ -952,11 +994,21 @@ private function formatBillingFromEventContact($eventContact, $applicationId)
 
 
 
+        if (!$billingDetail) {
+            return response()->json(['error' => 'Billing details not found'], 404);
+        }
+
         Log::info('Billing Detail: ' . json_encode($billingDetail));
+        
+        // Determine amount - for startup zone use int_amount_value, for others use int_amount_value
+        $amount = $invoice->int_amount_value ?? $invoice->amount;
+        $email = $billingDetail->email;
+        $company = $billingDetail->billing_company ?? ($application ? $application->company_name : '');
+        
         $purchaseUnit = PurchaseUnitRequestBuilder::init(
             AmountWithBreakdownBuilder::init('USD', $amount)->build()
         )
-            ->description('Extra Requirements for ' . $company)   // Optional description
+            ->description($isStartupZone ? 'Startup Zone Registration for ' . $company : 'Extra Requirements for ' . $company)   // Optional description
             ->invoiceId($order_ID)            // PayPal invoice tracking
             ->build();
 
