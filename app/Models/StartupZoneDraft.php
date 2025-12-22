@@ -47,6 +47,8 @@ class StartupZoneDraft extends Model
         'is_abandoned',
         'abandoned_at',
         'expires_at',
+        'converted_to_application_id',
+        'converted_at',
     ];
 
     protected $casts = [
@@ -57,6 +59,7 @@ class StartupZoneDraft extends Model
         'progress_percentage' => 'integer',
         'expires_at' => 'datetime',
         'abandoned_at' => 'datetime',
+        'converted_at' => 'datetime',
     ];
 
     // Relationships

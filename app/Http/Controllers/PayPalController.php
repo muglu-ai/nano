@@ -1033,12 +1033,35 @@ private function formatBillingFromRequirements($billing)
                 }
                 
                 if ($isStartupZone && $application) {
-                    // For startup zone, payment success is handled by webhook
-                    // Just log it here
+                    // Create payment record for startup zone
+                    Payment::create([
+                        'invoice_id' => $invoice->id,
+                        'payment_method' => 'PayPal',
+                        'amount' => $amountPaid,
+                        'amount_paid' => $amountPaid,
+                        'amount_received' => $amountPaid,
+                        'transaction_id' => $apiDecodedResponse['purchase_units'][0]['payments']['captures'][0]['id'] ?? null,
+                        'pg_result' => $pg_status,
+                        'track_id' => $orderId,
+                        'pg_response_json' => $apiDecodedResponse,
+                        'payment_date' => now(),
+                        'currency' => 'USD',
+                        'status' => 'successful',
+                        'order_id' => $orderData->order_id,
+                        'user_id' => $application->user_id ?? null,
+                    ]);
+                    
                     Log::info('Startup Zone PayPal Payment Captured', [
                         'application_id' => $application->application_id,
                         'invoice_no' => $invoice->invoice_no,
                         'amount' => $amountPaid
+                    ]);
+                    
+                    // Return JSON with redirect URL for startup zone
+                    return response()->json([
+                        'status' => 'success',
+                        'message' => 'Payment successful',
+                        'redirect' => route('startup-zone.confirmation', $application->application_id)
                     ]);
                 } else {
                     // For other invoice types, send extra requirements mail
@@ -1059,7 +1082,8 @@ private function formatBillingFromRequirements($billing)
 
             //find the invoice from the payment_gateway_response table where payment_id = $orderId
 
-
+            // For startup zone, return JSON with redirect URL (already handled above)
+            // For other types, return the API response
             return response()->json($apiResponse->getResult());
         } catch (\Exception $e) {
             return response()->json(['error' => $e->getMessage()], 500);

@@ -583,10 +583,20 @@
                         }
                     }).then(response => response.json())
                     .then(details => {
+                        // Check if response has redirect URL (for startup zone)
+                        if (details.redirect) {
+                            window.location.href = details.redirect;
+                            return;
+                        }
+                        
                         //if status is COMPLETED then hide the div with id = not-paid and set the id = pay_status with Paid
                         if (details.status === 'COMPLETED') {
-                            document.getElementById('not-paid').style.display = 'none';
-                            document.getElementById('pay_status').innerHTML = 'Paid';
+                            if (document.getElementById('not-paid')) {
+                                document.getElementById('not-paid').style.display = 'none';
+                            }
+                            if (document.getElementById('pay_status')) {
+                                document.getElementById('pay_status').innerHTML = 'Paid';
+                            }
                         }
                         //console.log(details);
 

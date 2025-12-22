@@ -525,7 +525,7 @@ class PaymentGatewayController extends Controller
                         'transaction_id' => $responseArray['tracking_id'] ?? null,
                     ]);
                     
-                    // Redirect to startup zone confirmation with payment response
+                    // Redirect to startup zone confirmation with payment response - MUST RETURN HERE
                     return redirect()->route('startup-zone.confirmation', $application->application_id)
                         ->with('success', 'Payment successful!')
                         ->with('payment_response', $responseArray);
@@ -543,6 +543,7 @@ class PaymentGatewayController extends Controller
 
             // check the application_id from the invoice and theen from the application use user_id to authenticate the user
             // Only authenticate for non-startup-zone invoices
+            // IMPORTANT: If it's startup zone, we should have already returned above
             if (!$isStartupZone && $invoice) {
                 //check if the invoices doesn't have co_exhibitorID 
                 if ($invoice->co_exhibitorID) {
@@ -575,12 +576,34 @@ class PaymentGatewayController extends Controller
                 //put in session that paymeent is successful
                 session(['payment_success' => true, 'invoice_no' => $order_id, 'payment_message' => 'Payment is successful.']);
                 return redirect()->route('exhibitor.orders');
-            } else {
-                // Startup zone - should have already redirected above, but this is a fallback
-                if ($isStartupZone && $application) {
+            }
+            
+            // IMPORTANT: Startup zone should have already redirected above (line 529-531)
+            // This is a safety fallback in case something went wrong
+            if ($isStartupZone) {
+                // Try to get application from various sources
+                if ($application && $application->application_id) {
                     return redirect()->route('startup-zone.confirmation', $application->application_id)
                         ->with('success', 'Payment successful!')
                         ->with('payment_response', $responseArray);
+                } elseif ($applicationId) {
+                    // Try to get from session application_id
+                    $application = Application::where('application_id', $applicationId)
+                        ->where('application_type', 'startup-zone')
+                        ->first();
+                    if ($application) {
+                        return redirect()->route('startup-zone.confirmation', $application->application_id)
+                            ->with('success', 'Payment successful!')
+                            ->with('payment_response', $responseArray);
+                    }
+                } elseif ($invoice && $invoice->application_id) {
+                    // Try to get from invoice
+                    $application = Application::find($invoice->application_id);
+                    if ($application && $application->application_type === 'startup-zone' && $application->application_id) {
+                        return redirect()->route('startup-zone.confirmation', $application->application_id)
+                            ->with('success', 'Payment successful!')
+                            ->with('payment_response', $responseArray);
+                    }
                 }
             }
         } elseif (isset($responseArray)) {

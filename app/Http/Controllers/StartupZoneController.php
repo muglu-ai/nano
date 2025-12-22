@@ -922,10 +922,14 @@ class StartupZoneController extends Controller
                 // Don't fail the transaction if email fails
             }
 
-            // Delete draft from database
-            $draft->delete();
+            // Mark draft as converted to application (keep for analytics)
+            $draft->update([
+                'converted_to_application_id' => $application->id,
+                'converted_at' => now(),
+                'is_abandoned' => false, // Keep it active for analytics
+            ]);
             
-            // Clear session data (draft data is no longer needed)
+            // Clear session data (draft data is no longer needed in session)
             session()->forget('startup_zone_draft');
             session()->forget('payment_application_id');
             session()->forget('payment_application_type');
@@ -1021,16 +1025,13 @@ class StartupZoneController extends Controller
         $invoice = Invoice::where('application_id', $application->id)->firstOrFail();
         $contact = EventContact::where('application_id', $application->id)->first();
         
-        // Clean up any remaining session data and drafts for this session
-        // (in case user navigated directly to confirmation page)
+        // Clean up session data (drafts are kept in database for analytics)
         session()->forget('startup_zone_draft');
         session()->forget('payment_application_id');
         session()->forget('payment_application_type');
         session()->forget('invoice_no');
         
-        // Also delete any draft records for this session (cleanup)
-        $sessionId = session()->getId();
-        StartupZoneDraft::where('session_id', $sessionId)->delete();
+        // Note: Drafts are NOT deleted - they are kept in database for analytics purposes
 
         // Get association logo if promocode exists
         $associationLogo = null;
