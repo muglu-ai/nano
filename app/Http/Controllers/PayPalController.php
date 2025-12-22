@@ -945,6 +945,28 @@ private function formatBillingFromRequirements($billing)
                 'created_at' => now(),
             ]);
 
+            // Create payment record with 'pending' status when payment is initiated
+            $application = null;
+            if ($invoice->application_id) {
+                $application = \App\Models\Application::find($invoice->application_id);
+            }
+            
+            Payment::create([
+                'invoice_id' => $invoice->id,
+                'order_id' => $data['order_id'],
+                'payment_method' => 'PayPal',
+                'amount' => $data['amount'],
+                'amount_paid' => 0,
+                'amount_received' => 0,
+                'transaction_id' => null,
+                'pg_result' => 'Pending',
+                'track_id' => $data['payment_id'],
+                'pg_response_json' => null,
+                'payment_date' => null,
+                'currency' => 'USD',
+                'status' => 'pending',
+                'user_id' => $application ? $application->user_id : null,
+            ]);
 
             return response()->json($apiResponse->getResult());
         } catch (\Exception $e) {
@@ -1033,23 +1055,44 @@ private function formatBillingFromRequirements($billing)
                 }
                 
                 if ($isStartupZone && $application) {
-                    // Create payment record for startup zone
-                    Payment::create([
-                        'invoice_id' => $invoice->id,
-                        'payment_method' => 'PayPal',
-                        'amount' => $amountPaid,
-                        'amount_paid' => $amountPaid,
-                        'amount_received' => $amountPaid,
-                        'transaction_id' => $apiDecodedResponse['purchase_units'][0]['payments']['captures'][0]['id'] ?? null,
-                        'pg_result' => $pg_status,
-                        'track_id' => $orderId,
-                        'pg_response_json' => $apiDecodedResponse,
-                        'payment_date' => now(),
-                        'currency' => 'USD',
-                        'status' => 'successful',
-                        'order_id' => $orderData->order_id,
-                        'user_id' => $application->user_id ?? null,
-                    ]);
+                    // Find existing payment record by order_id
+                    $payment = Payment::where('order_id', $orderData->order_id)
+                        ->where('invoice_id', $invoice->id)
+                        ->first();
+                    
+                    if ($payment) {
+                        // Update existing payment record
+                        $payment->update([
+                            'payment_method' => 'PayPal',
+                            'amount' => $amountPaid,
+                            'amount_paid' => $amountPaid,
+                            'amount_received' => $amountPaid,
+                            'transaction_id' => $apiDecodedResponse['purchase_units'][0]['payments']['captures'][0]['id'] ?? null,
+                            'pg_result' => $pg_status,
+                            'track_id' => $orderId,
+                            'pg_response_json' => json_encode($apiDecodedResponse),
+                            'payment_date' => now(),
+                            'status' => 'successful',
+                        ]);
+                    } else {
+                        // Create payment record if not found (fallback)
+                        Payment::create([
+                            'invoice_id' => $invoice->id,
+                            'payment_method' => 'PayPal',
+                            'amount' => $amountPaid,
+                            'amount_paid' => $amountPaid,
+                            'amount_received' => $amountPaid,
+                            'transaction_id' => $apiDecodedResponse['purchase_units'][0]['payments']['captures'][0]['id'] ?? null,
+                            'pg_result' => $pg_status,
+                            'track_id' => $orderId,
+                            'pg_response_json' => json_encode($apiDecodedResponse),
+                            'payment_date' => now(),
+                            'currency' => 'USD',
+                            'status' => 'successful',
+                            'order_id' => $orderData->order_id,
+                            'user_id' => $application->user_id ?? null,
+                        ]);
+                    }
                     
                     Log::info('Startup Zone PayPal Payment Captured', [
                         'application_id' => $application->application_id,

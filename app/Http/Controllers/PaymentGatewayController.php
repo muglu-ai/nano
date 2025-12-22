@@ -284,6 +284,24 @@ class PaymentGatewayController extends Controller
             'created_at' => now(),
         ]);
 
+        // Create payment record with 'pending' status when payment is initiated
+        Payment::create([
+            'invoice_id' => $invoice->id,
+            'order_id' => $data['order_id'],
+            'payment_method' => 'CCAvenue',
+            'amount' => $data['amount'],
+            'amount_paid' => 0,
+            'amount_received' => 0,
+            'transaction_id' => null,
+            'pg_result' => 'Pending',
+            'track_id' => null,
+            'pg_response_json' => null,
+            'payment_date' => null,
+            'currency' => 'INR',
+            'status' => 'pending',
+            'user_id' => $application ? $application->user_id : null,
+        ]);
+
         // dd($data);
 
         $queryString = http_build_query($data);
@@ -498,25 +516,46 @@ class PaymentGatewayController extends Controller
                     'currency' => 'INR',
                 ]);
                 
-                // Create payment record for startup zone
+                // Update payment record for startup zone (created when payment was initiated)
                 if ($isStartupZone && $application) {
-                    // Create payment record
-                    Payment::create([
-                        'invoice_id' => $invoice->id,
-                        'payment_method' => $responseArray['payment_mode'] ?? 'CCAvenue',
-                        'amount' => $responseArray['mer_amount'],
-                        'amount_paid' => $responseArray['mer_amount'],
-                        'amount_received' => $responseArray['mer_amount'],
-                        'transaction_id' => $responseArray['tracking_id'] ?? null,
-                        'pg_result' => $responseArray['order_status'],
-                        'track_id' => $responseArray['tracking_id'] ?? null,
-                        'pg_response_json' => $responseArray,
-                        'payment_date' => $trans_date ?? now(),
-                        'currency' => 'INR',
-                        'status' => 'successful',
-                        'order_id' => $responseArray['order_id'],
-                        'user_id' => $application->user_id ?? null,
-                    ]);
+                    // Find existing payment record by order_id
+                    $payment = Payment::where('order_id', $responseArray['order_id'])
+                        ->where('invoice_id', $invoice->id)
+                        ->first();
+                    
+                    if ($payment) {
+                        // Update existing payment record
+                        $payment->update([
+                            'payment_method' => $responseArray['payment_mode'] ?? 'CCAvenue',
+                            'amount' => $responseArray['mer_amount'],
+                            'amount_paid' => $responseArray['mer_amount'],
+                            'amount_received' => $responseArray['mer_amount'],
+                            'transaction_id' => $responseArray['tracking_id'] ?? null,
+                            'pg_result' => $responseArray['order_status'],
+                            'track_id' => $responseArray['tracking_id'] ?? null,
+                            'pg_response_json' => json_encode($responseArray),
+                            'payment_date' => $trans_date ?? now(),
+                            'status' => 'successful',
+                        ]);
+                    } else {
+                        // Create payment record if not found (fallback)
+                        Payment::create([
+                            'invoice_id' => $invoice->id,
+                            'payment_method' => $responseArray['payment_mode'] ?? 'CCAvenue',
+                            'amount' => $responseArray['mer_amount'],
+                            'amount_paid' => $responseArray['mer_amount'],
+                            'amount_received' => $responseArray['mer_amount'],
+                            'transaction_id' => $responseArray['tracking_id'] ?? null,
+                            'pg_result' => $responseArray['order_status'],
+                            'track_id' => $responseArray['tracking_id'] ?? null,
+                            'pg_response_json' => json_encode($responseArray),
+                            'payment_date' => $trans_date ?? now(),
+                            'currency' => 'INR',
+                            'status' => 'successful',
+                            'order_id' => $responseArray['order_id'],
+                            'user_id' => $application->user_id ?? null,
+                        ]);
+                    }
                     
                     Log::info('Startup Zone CCAvenue Payment Success', [
                         'application_id' => $application->application_id,
@@ -664,7 +703,7 @@ class PaymentGatewayController extends Controller
                         'transaction_id' => $responseArray['tracking_id'] ?? null,
                         'pg_result' => $responseArray['order_status'] ?? 'Failed',
                         'track_id' => $responseArray['tracking_id'] ?? null,
-                        'pg_response_json' => $responseArray,
+                        'pg_response_json' => json_encode($responseArray),
                         'payment_date' => $trans_date ?? now(),
                         'currency' => 'INR',
                         'status' => 'failed',
@@ -888,7 +927,7 @@ class PaymentGatewayController extends Controller
                             'amount_paid' => $amount,
                             'amount_received' => $amount,
                             'payment_date' => now(),
-                            'pg_response_json' => $webhookData,
+                            'pg_response_json' => is_array($webhookData) ? json_encode($webhookData) : $webhookData,
                             'updated_at' => now(),
                         ]);
                     } else {
@@ -901,7 +940,7 @@ class PaymentGatewayController extends Controller
                             'transaction_id' => $trackingId ?? $orderId,
                             'pg_result' => $orderStatus,
                             'track_id' => $trackingId,
-                            'pg_response_json' => $webhookData,
+                            'pg_response_json' => is_array($webhookData) ? json_encode($webhookData) : $webhookData,
                             'payment_date' => now(),
                             'currency' => $currency ?? 'INR',
                             'status' => 'successful',
@@ -932,7 +971,7 @@ class PaymentGatewayController extends Controller
                         'transaction_id' => $trackingId ?? $orderId,
                         'pg_result' => $orderStatus,
                         'track_id' => $trackingId,
-                        'pg_response_json' => $webhookData,
+                        'pg_response_json' => is_array($webhookData) ? json_encode($webhookData) : $webhookData,
                         'payment_date' => now(),
                         'currency' => $currency ?? 'INR',
                         'status' => 'failed',
