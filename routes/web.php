@@ -577,19 +577,26 @@ Route::get('/send-invoice/{invoiceId}/{email}', function ($invoiceId, $email) {
 
 
 /* Payment Gateway Routes
-* PayPalController Routes
-*/
+ * PayPalController Routes
+ *
+ * IMPORTANT: Define lookup routes BEFORE the generic /payment/{id} route
+ * so that /payment/lookup does not get captured by the {id} wildcard.
+ */
 
-Route::get('/payment/{id}', [PayPalController::class, 'showPaymentForm'])->name('paypal.form');
-// Route::get('/payment/{id}', [PayPalController::class, 'showPaymentForm2'])->name('paypal.form');
-Route::get('/payment/{id}', [PayPalController::class, 'showPaymentForm'])->name('paypal.form');
+// Generic payment lookup page for unknown payment errors
+Route::get('/payment/lookup', [PaymentGatewayController::class, 'showPaymentLookup'])->name('payment.lookup');
+Route::post('/payment/lookup', [PaymentGatewayController::class, 'handlePaymentLookup'])->name('payment.lookup.submit');
+
+// PayPal routes (constrain {id} to avoid matching 'lookup')
+Route::get('/payment/{id}', [PayPalController::class, 'showPaymentForm'])
+    ->where('id', '^(?!lookup$).*')
+    ->name('paypal.form');
 Route::post('/paypal/create', [PayPalController::class, 'createOrder'])->name('paypal.create');
 Route::post('/paypal/create-order', [PayPalController::class, 'createOrder']);
 Route::post('/paypal/capture-order/{orderId}', [PayPalController::class, 'captureOrder']);
 Route::get('/paypal/success', [PayPalController::class, 'success'])->name('paypal.success');
 Route::get('/paypal/cancel', [PayPalController::class, 'cancel'])->name('paypal.cancel');
 Route::get('/paypal/webhook', [PayPalController::class, 'webhook'])->withoutMiddleware([\App\Http\Middleware\VerifyCsrfToken::class]);
-
 
 /* Payment Gateway CCAvenue Routes
 */
@@ -599,10 +606,6 @@ Route::post('/payment/ccavenue-success', [PaymentGatewayController::class, 'ccAv
 Route::post('/ccavenue/webhook', [PaymentGatewayController::class, 'ccAvenueWebhook'])->withoutMiddleware([\App\Http\Middleware\VerifyCsrfToken::class])->name('ccavenue.webhook');
 Route::get('/admin/ccavenue-transactions', [PaymentGatewayController::class, 'listTransactions'])->name('admin.ccavenue.transactions')->middleware(Auth::class);
 Route::get('/admin/ccavenue-transactions/{id}/details', [PaymentGatewayController::class, 'getTransactionDetails'])->name('admin.ccavenue.transactions.details')->middleware(Auth::class);
-
-// Generic payment lookup page for unknown payment errors
-Route::get('/payment/lookup', [PaymentGatewayController::class, 'showPaymentLookup'])->name('payment.lookup');
-Route::post('/payment/lookup', [PaymentGatewayController::class, 'handlePaymentLookup'])->name('payment.lookup.submit');
 
 /* Payment Gateway Routes Ends
 */
