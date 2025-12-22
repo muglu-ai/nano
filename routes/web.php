@@ -600,6 +600,10 @@ Route::post('/ccavenue/webhook', [PaymentGatewayController::class, 'ccAvenueWebh
 Route::get('/admin/ccavenue-transactions', [PaymentGatewayController::class, 'listTransactions'])->name('admin.ccavenue.transactions')->middleware(Auth::class);
 Route::get('/admin/ccavenue-transactions/{id}/details', [PaymentGatewayController::class, 'getTransactionDetails'])->name('admin.ccavenue.transactions.details')->middleware(Auth::class);
 
+// Generic payment lookup page for unknown payment errors
+Route::get('/payment/lookup', [PaymentGatewayController::class, 'showPaymentLookup'])->name('payment.lookup');
+Route::post('/payment/lookup', [PaymentGatewayController::class, 'handlePaymentLookup'])->name('payment.lookup.submit');
+
 /* Payment Gateway Routes Ends
 */
 

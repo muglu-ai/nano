@@ -863,7 +863,7 @@ class StartupZoneController extends Controller
             $invoice = new Invoice();
             $invoice->application_id = $application->id;
             $invoice->application_no = $application->application_id;
-            $invoice->invoice_no = $application->application_id . '-' . date('YmdHis');
+            $invoice->invoice_no = $application->application_id;
             $invoice->type = 'Startup Zone Registration';
             $invoice->amount = $pricing['total']; // Required field - total amount
             $invoice->price = $pricing['base_price'];
