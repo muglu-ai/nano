@@ -35,7 +35,116 @@
                     {{-- Application Summary --}}
                     <div class="alert alert-info">
                         <strong>Application ID:</strong> {{ $application->application_id }}<br>
-                        <strong>Company:</strong> {{ $application->company_name }}
+                        <strong>Exhibitor:</strong> {{ $application->company_name }}
+                    </div>
+
+                    {{-- Billing Information --}}
+                    @if($billingDetail)
+                    <div class="card mb-4" style="border: 1px solid #dee2e6;">
+                        <div class="card-header bg-light">
+                            <h5 class="mb-0"><i class="fas fa-file-invoice"></i> Billing Information</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6 mb-2">
+                                    <strong>Company Name:</strong><br>
+                                    <small>{{ $billingDetail->billing_company ?? 'N/A' }}</small>
+                                </div>
+                                <div class="col-md-6 mb-2">
+                                    <strong>Contact Name:</strong><br>
+                                    <small>{{ $billingDetail->contact_name ?? 'N/A' }}</small>
+                                </div>
+                                <div class="col-md-6 mb-2">
+                                    <strong>Email:</strong><br>
+                                    <small>{{ $billingDetail->email ?? 'N/A' }}</small>
+                                </div>
+                                <div class="col-md-6 mb-2">
+                                    <strong>Phone:</strong><br>
+                                    <small>{{ $billingDetail->phone ?? 'N/A' }}</small>
+                                </div>
+                                <div class="col-md-12 mb-2">
+                                    <strong>Address:</strong><br>
+                                    <small>{{ $billingDetail->address ?? 'N/A' }}</small>
+                                </div>
+                                <div class="col-md-4 mb-2">
+                                    <strong>City:</strong><br>
+                                    @php
+                                        $billingCity = 'N/A';
+                                        if ($billingDetail->city_id) {
+                                            if (is_numeric($billingDetail->city_id)) {
+                                                $city = \App\Models\City::find($billingDetail->city_id);
+                                                $billingCity = $city ? $city->name : $billingDetail->city_id;
+                                            } else {
+                                                $billingCity = $billingDetail->city_id; // It's already a city name
+                                            }
+                                        }
+                                    @endphp
+                                    <small>{{ $billingCity }}</small>
+                                </div>
+                                <div class="col-md-4 mb-2">
+                                    <strong>State:</strong><br>
+                                    <small>{{ $billingDetail->state_id ? (\App\Models\State::find($billingDetail->state_id)->name ?? 'N/A') : 'N/A' }}</small>
+                                </div>
+                                <div class="col-md-4 mb-2">
+                                    <strong>Country:</strong><br>
+                                    <small>{{ $billingDetail->country_id ? (\App\Models\Country::find($billingDetail->country_id)->name ?? 'N/A') : 'N/A' }}</small>
+                                </div>
+                                <div class="col-md-6 mb-2">
+                                    <strong>Postal Code:</strong><br>
+                                    <small>{{ $billingDetail->postal_code ?? 'N/A' }}</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    @endif
+
+                    {{-- Exhibitor Information --}}
+                    <div class="card mb-4" style="border: 1px solid #dee2e6;">
+                        <div class="card-header bg-light">
+                            <h5 class="mb-0"><i class="fas fa-building"></i> Exhibitor Information</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6 mb-2">
+                                    <strong>Name of Exhibitor:</strong><br>
+                                    <small>{{ $application->company_name }}</small>
+                                </div>
+                                <div class="col-md-6 mb-2">
+                                    <strong>Company Email:</strong><br>
+                                    <small>{{ $application->company_email }}</small>
+                                </div>
+                                <div class="col-md-12 mb-2">
+                                    <strong>Address:</strong><br>
+                                    <small>{{ $application->address ?? 'N/A' }}</small>
+                                </div>
+                                <div class="col-md-4 mb-2">
+                                    <strong>City:</strong><br>
+                                    <small>{{ $application->city_id ? (\App\Models\City::find($application->city_id)->name ?? $application->city_id) : 'N/A' }}</small>
+                                </div>
+                                <div class="col-md-4 mb-2">
+                                    <strong>State:</strong><br>
+                                    <small>{{ $application->state ? $application->state->name : 'N/A' }}</small>
+                                </div>
+                                <div class="col-md-4 mb-2">
+                                    <strong>Country:</strong><br>
+                                    <small>{{ $application->country ? $application->country->name : 'N/A' }}</small>
+                                </div>
+                                <div class="col-md-6 mb-2">
+                                    <strong>Postal Code:</strong><br>
+                                    <small>{{ $application->postal_code ?? 'N/A' }}</small>
+                                </div>
+                                <div class="col-md-6 mb-2">
+                                    <strong>Telephone:</strong><br>
+                                    <small>{{ $application->landline ?? 'N/A' }}</small>
+                                </div>
+                                @if($application->website)
+                                <div class="col-md-6 mb-2">
+                                    <strong>Website:</strong><br>
+                                    <small><a href="{{ $application->website }}" target="_blank">{{ $application->website }}</a></small>
+                                </div>
+                                @endif
+                            </div>
+                        </div>
                     </div>
 
                     {{-- Invoice Details --}}

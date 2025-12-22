@@ -155,20 +155,37 @@ class StartupZoneController extends Controller
         // No duplicate checking here - this is just session storage for draft data
         $formData = $request->except(['_token', 'certificate']);
         
-        // Normalize website URL - add https:// if missing
-        if (isset($formData['website']) && !empty($formData['website'])) {
-            $formData['website'] = $this->normalizeWebsiteUrl($formData['website']);
+        // Handle billing data
+        $billingTelephoneNational = '';
+        $billingTelephoneCountryCode = '91'; // Default to India
+        
+        if ($request->has('billing_telephone_national') && $request->input('billing_telephone_national')) {
+            $billingTelephoneNational = preg_replace('/\s+/', '', trim($request->input('billing_telephone_national')));
+            $billingTelephoneCountryCode = $request->input('billing_telephone_country_code') ?: '91';
+        } elseif ($request->has('billing_telephone') && $request->input('billing_telephone')) {
+            $billingTelephoneValue = preg_replace('/\s+/', '', trim($request->input('billing_telephone')));
+            if (preg_match('/^\+?(\d{1,3})(\d+)$/', $billingTelephoneValue, $matches)) {
+                $billingTelephoneCountryCode = $matches[1];
+                $billingTelephoneNational = $matches[2];
+            } else {
+                $billingTelephoneNational = $billingTelephoneValue;
+            }
         }
         
-        // Handle landline: format as country_code-national_number (e.g., 91-9801217815)
-        if ($request->has('landline_national') && $request->input('landline_national')) {
-            $landlineNational = preg_replace('/\s+/', '', trim($request->input('landline_national'))); // Remove all spaces
-            $landlineCountryCode = $request->input('landline_country_code') ?: '91'; // Default to India
-            $formData['landline'] = $landlineCountryCode . '-' . $landlineNational;
-            $formData['landline_country_code'] = $landlineCountryCode;
-        } elseif ($request->has('landline') && $request->input('landline')) {
-            // If landline is provided directly, trim spaces
-            $formData['landline'] = preg_replace('/\s+/', '', trim($request->input('landline')));
+        $billingData = [
+            'company_name' => $request->input('billing_company_name'),
+            'address' => $request->input('billing_address'),
+            'country_id' => $request->input('billing_country_id'),
+            'state_id' => $request->input('billing_state_id'),
+            'city' => $request->input('billing_city'),
+            'postal_code' => $request->input('billing_postal_code'),
+            'telephone' => $billingTelephoneNational ? ($billingTelephoneCountryCode . '-' . $billingTelephoneNational) : '',
+            'website' => $this->normalizeWebsiteUrl($request->input('billing_website') ?? ''),
+            'email' => $request->input('billing_email'),
+        ];
+        
+        if (!empty($billingData)) {
+            $formData['billing_data'] = $billingData;
         }
         
         // Handle file upload separately (if provided)
@@ -212,44 +229,37 @@ class StartupZoneController extends Controller
             $formData['contact_data'] = $contactData;
         }
         
-        // Handle billing data if billing is different
-        if ($request->has('billing_different') && $request->input('billing_different')) {
-            // Format billing phone similar to contact mobile
-            $billingPhoneNational = '';
-            $billingPhoneCountryCode = '91'; // Default to India
-            
-            if ($request->has('billing_phone_national') && $request->input('billing_phone_national')) {
-                $billingPhoneNational = preg_replace('/\s+/', '', trim($request->input('billing_phone_national')));
-                $billingPhoneCountryCode = $request->input('billing_phone_country_code') ?: '91';
-            } elseif ($request->has('billing_phone') && $request->input('billing_phone')) {
-                $billingPhoneValue = preg_replace('/\s+/', '', trim($request->input('billing_phone')));
-                if (preg_match('/^\+?(\d{1,3})(\d+)$/', $billingPhoneValue, $matches)) {
-                    $billingPhoneCountryCode = $matches[1];
-                    $billingPhoneNational = $matches[2];
-                } else {
-                    $billingPhoneNational = $billingPhoneValue;
-                }
+        // Handle exhibitor data
+        $exhibitorTelephoneNational = '';
+        $exhibitorTelephoneCountryCode = '91'; // Default to India
+        
+        if ($request->has('exhibitor_telephone_national') && $request->input('exhibitor_telephone_national')) {
+            $exhibitorTelephoneNational = preg_replace('/\s+/', '', trim($request->input('exhibitor_telephone_national')));
+            $exhibitorTelephoneCountryCode = $request->input('exhibitor_telephone_country_code') ?: '91';
+        } elseif ($request->has('exhibitor_telephone') && $request->input('exhibitor_telephone')) {
+            $exhibitorTelephoneValue = preg_replace('/\s+/', '', trim($request->input('exhibitor_telephone')));
+            if (preg_match('/^\+?(\d{1,3})(\d+)$/', $exhibitorTelephoneValue, $matches)) {
+                $exhibitorTelephoneCountryCode = $matches[1];
+                $exhibitorTelephoneNational = $matches[2];
+            } else {
+                $exhibitorTelephoneNational = $exhibitorTelephoneValue;
             }
-            
-            $billingData = [
-                'billing_company' => $request->input('billing_company'),
-                'contact_name' => $request->input('billing_contact_name'),
-                'email' => $request->input('billing_email'),
-                'phone' => $billingPhoneNational ? ($billingPhoneCountryCode . '-' . $billingPhoneNational) : '',
-                'address' => $request->input('billing_address'),
-                'country_id' => $request->input('billing_country_id'),
-                'state_id' => $request->input('billing_state_id'),
-                'city' => $request->input('billing_city'), // City is now text input, not dropdown
-                'postal_code' => $request->input('billing_postal_code'),
-                'gst_id' => $request->input('billing_gst_id'),
-            ];
-            
-            if (!empty($billingData)) {
-                $formData['billing_data'] = $billingData;
-            }
-        } else {
-            // Remove billing_data if billing is not different
-            unset($formData['billing_data']);
+        }
+        
+        $exhibitorData = [
+            'name' => $request->input('exhibitor_name'),
+            'address' => $request->input('exhibitor_address'),
+            'country_id' => $request->input('exhibitor_country_id'),
+            'state_id' => $request->input('exhibitor_state_id'),
+            'city' => $request->input('exhibitor_city'),
+            'postal_code' => $request->input('exhibitor_postal_code'),
+            'telephone' => $exhibitorTelephoneNational ? ($exhibitorTelephoneCountryCode . '-' . $exhibitorTelephoneNational) : '',
+            'website' => $this->normalizeWebsiteUrl($request->input('exhibitor_website') ?? ''),
+            'email' => $request->input('exhibitor_email'),
+        ];
+        
+        if (!empty($exhibitorData)) {
+            $formData['exhibitor_data'] = $exhibitorData;
         }
         
         // Store in session
@@ -478,6 +488,38 @@ class StartupZoneController extends Controller
             $sessionData = session('startup_zone_draft', []);
             $allData = array_merge($sessionData, $request->all());
             
+            // Map new billing field names to old field names for validation compatibility
+            // Billing fields -> map to old names for validation
+            if ($request->has('billing_postal_code')) {
+                $allData['postal_code'] = $request->input('billing_postal_code');
+            }
+            if ($request->has('billing_email')) {
+                $allData['company_email'] = $request->input('billing_email');
+            }
+            if ($request->has('billing_company_name')) {
+                $allData['company_name'] = $request->input('billing_company_name');
+            }
+            if ($request->has('billing_address')) {
+                $allData['address'] = $request->input('billing_address');
+            }
+            if ($request->has('billing_country_id')) {
+                $allData['country_id'] = $request->input('billing_country_id');
+            }
+            if ($request->has('billing_state_id')) {
+                $allData['state_id'] = $request->input('billing_state_id');
+            }
+            if ($request->has('billing_city')) {
+                $allData['city_id'] = $request->input('billing_city');
+            }
+            if ($request->has('billing_telephone_national') && !empty($request->input('billing_telephone_national'))) {
+                $allData['landline'] = $request->input('billing_telephone_national');
+            } elseif ($request->has('billing_telephone')) {
+                $allData['landline'] = $request->input('billing_telephone');
+            }
+            if ($request->has('billing_website')) {
+                $allData['website'] = $request->input('billing_website');
+            }
+            
             // For intl-tel-input fields, validate the national number instead
             // Map contact_mobile_national to contact_mobile for validation
             if ($request->has('contact_mobile_national') && !empty($request->input('contact_mobile_national'))) {
@@ -497,10 +539,39 @@ class StartupZoneController extends Controller
                     'rules' => $rules
                 ]);
                 
+                // Map validation errors back to frontend field names
+                $errors = $validator->errors();
+                $mappedErrors = [];
+                
+                foreach ($errors->messages() as $field => $messages) {
+                    // Map old field names back to new field names for frontend
+                    if ($field === 'postal_code') {
+                        $mappedErrors['billing_postal_code'] = $messages;
+                    } elseif ($field === 'company_email') {
+                        $mappedErrors['billing_email'] = $messages;
+                    } elseif ($field === 'company_name') {
+                        $mappedErrors['billing_company_name'] = $messages;
+                    } elseif ($field === 'address') {
+                        $mappedErrors['billing_address'] = $messages;
+                    } elseif ($field === 'country_id') {
+                        $mappedErrors['billing_country_id'] = $messages;
+                    } elseif ($field === 'state_id') {
+                        $mappedErrors['billing_state_id'] = $messages;
+                    } elseif ($field === 'city_id') {
+                        $mappedErrors['billing_city'] = $messages;
+                    } elseif ($field === 'landline') {
+                        $mappedErrors['billing_telephone'] = $messages;
+                    } elseif ($field === 'website') {
+                        $mappedErrors['billing_website'] = $messages;
+                    } else {
+                        $mappedErrors[$field] = $messages;
+                    }
+                }
+                
                 return response()->json([
                     'success' => false,
                     'message' => 'Please fix the validation errors below.',
-                    'errors' => $validator->errors()
+                    'errors' => $mappedErrors
                 ], 422);
             }
 
@@ -590,6 +661,14 @@ class StartupZoneController extends Controller
             
             $draft->fill($formFields);
 
+            // Store billing_data and exhibitor_data from session (these are not in fillable)
+            if (isset($sessionData['billing_data'])) {
+                $draft->billing_data = $sessionData['billing_data'];
+            }
+            if (isset($sessionData['exhibitor_data'])) {
+                $draft->exhibitor_data = $sessionData['exhibitor_data'];
+            }
+            
             // Store contact data as JSON (from session or request)
             if (isset($sessionData['contact_data'])) {
                 $draft->contact_data = $sessionData['contact_data'];
@@ -666,6 +745,7 @@ class StartupZoneController extends Controller
             
             $invoice = Invoice::where('application_id', $application->id)->firstOrFail();
             $contact = EventContact::where('application_id', $application->id)->first();
+            $billingDetail = \App\Models\BillingDetail::where('application_id', $application->id)->first();
             
             // Get association logo if promocode exists
             if ($application->promocode) {
@@ -678,7 +758,7 @@ class StartupZoneController extends Controller
             }
             view()->share('associationLogo', $associationLogo);
             
-            return view('startup-zone.preview', compact('application', 'invoice', 'contact'));
+            return view('startup-zone.preview', compact('application', 'invoice', 'contact', 'billingDetail'));
         }
         
         // Otherwise, show draft preview from database (after submitForm saves it)
@@ -728,13 +808,24 @@ class StartupZoneController extends Controller
 
         DB::beginTransaction();
         try {
-            // Get contact email - prioritize contact person email, fallback to company email
+            // Merge session data with draft data (billing_data and exhibitor_data are in session)
+            $sessionData = session('startup_zone_draft', []);
+            if (isset($sessionData['billing_data'])) {
+                $draft->billing_data = $sessionData['billing_data'];
+            }
+            if (isset($sessionData['exhibitor_data'])) {
+                $draft->exhibitor_data = $sessionData['exhibitor_data'];
+            }
+            
+            // Get contact email - prioritize contact person email, fallback to billing email or exhibitor email
             $contactPersonEmail = $draft->contact_data['email'] ?? null;
-            $contactEmail = $contactPersonEmail ?: $draft->company_email;
+            $billingEmail = $draft->billing_data['email'] ?? null;
+            $exhibitorEmail = $draft->exhibitor_data['email'] ?? null;
+            $contactEmail = $contactPersonEmail ?: $billingEmail ?: $exhibitorEmail;
             
             // Validate email is not empty
             if (empty($contactEmail)) {
-                throw new \Exception('Contact email or company email is required');
+                throw new \Exception('Contact email or billing email is required');
             }
             
             // Get event_id from draft (default to 1 if not set)
@@ -768,9 +859,19 @@ class StartupZoneController extends Controller
                         // Check by company email (contact email)
                         ->orWhere('company_email', $contactEmail);
                         
-                        // Also check company email if different from contact email
-                        if (!empty($draft->company_email) && $draft->company_email !== $contactEmail) {
-                            $query->orWhere('company_email', $draft->company_email);
+                        // Also check billing email or exhibitor email if different from contact email
+                        $billingEmail = isset($draft->billing_data) && isset($draft->billing_data['email']) 
+                            ? $draft->billing_data['email'] 
+                            : null;
+                        $exhibitorEmail = isset($draft->exhibitor_data) && isset($draft->exhibitor_data['email']) 
+                            ? $draft->exhibitor_data['email'] 
+                            : null;
+                        
+                        if (!empty($billingEmail) && $billingEmail !== $contactEmail) {
+                            $query->orWhere('company_email', $billingEmail);
+                        }
+                        if (!empty($exhibitorEmail) && $exhibitorEmail !== $contactEmail) {
+                            $query->orWhere('company_email', $exhibitorEmail);
                         }
                     })
                     ->first();
@@ -789,7 +890,9 @@ class StartupZoneController extends Controller
             
             $contactName = trim(($draft->contact_data['first_name'] ?? '') . ' ' . ($draft->contact_data['last_name'] ?? ''));
             if (empty($contactName)) {
-                $contactName = $draft->company_name;
+                $exhibitorData = $draft->exhibitor_data ?? null;
+                $billingData = $draft->billing_data ?? null;
+                $contactName = $exhibitorData['name'] ?? $billingData['company_name'] ?? $draft->company_name ?? '';
             }
             $passwordGenerated = false;
             $password = null;
@@ -828,22 +931,125 @@ class StartupZoneController extends Controller
             
             // Create application
             $application = new Application();
+            
+            // Use exhibitor data if available, otherwise fallback to billing data, then old draft fields
+            // Get exhibitor_data - prefer session data (already merged above), then draft, then decode if needed
+            $exhibitorData = null;
+            if (isset($sessionData['exhibitor_data']) && is_array($sessionData['exhibitor_data'])) {
+                $exhibitorData = $sessionData['exhibitor_data'];
+            } else {
+                $exhibitorData = $draft->exhibitor_data ?? null;
+                if (is_string($exhibitorData)) {
+                    $exhibitorData = json_decode($exhibitorData, true);
+                }
+                if (!is_array($exhibitorData)) {
+                    $exhibitorData = null;
+                }
+            }
+            
+            // Get billing_data - prefer session data (already merged above), then draft, then decode if needed
+            $billingData = null;
+            if (isset($sessionData['billing_data']) && is_array($sessionData['billing_data'])) {
+                $billingData = $sessionData['billing_data'];
+            } else {
+                $billingData = $draft->billing_data ?? null;
+                if (is_string($billingData)) {
+                    $billingData = json_decode($billingData, true);
+                }
+                if (!is_array($billingData)) {
+                    $billingData = null;
+                }
+            }
+            
+            // Get company name with proper fallback chain
+            $companyName = null;
+            
+            if ($exhibitorData && is_array($exhibitorData) && !empty($exhibitorData['name'])) {
+                $companyName = trim($exhibitorData['name']);
+            }
+            if (empty($companyName) && $billingData && is_array($billingData) && !empty($billingData['company_name'])) {
+                $companyName = trim($billingData['company_name']);
+            }
+            if (empty($companyName) && !empty($draft->company_name)) {
+                $companyName = trim($draft->company_name);
+            }
+            
+            // Final validation: company_name cannot be null
+            if (empty($companyName)) {
+                DB::rollBack();
+                \Log::error('Startup Zone: company_name is null after all fallbacks', [
+                    'draft_id' => $draft->id,
+                    'exhibitor_data' => $exhibitorData,
+                    'billing_data' => $billingData,
+                    'draft_company_name' => $draft->company_name,
+                ]);
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Company name is required. Please fill in the Exhibitor Information or Billing Information section.',
+                    'errors' => [
+                        'company_name' => ['Company name is required. Please fill in the Exhibitor Information or Billing Information section.']
+                    ]
+                ], 422);
+            }
+            
+            // Get company email with proper fallback chain
+            $companyEmail = null;
+            if ($exhibitorData && !empty($exhibitorData['email'])) {
+                $companyEmail = $exhibitorData['email'];
+            } elseif ($billingData && !empty($billingData['email'])) {
+                $companyEmail = $billingData['email'];
+            } elseif (!empty($draft->company_email)) {
+                $companyEmail = $draft->company_email;
+            } else {
+                $companyEmail = $contactEmail; // Final fallback to contact email
+            }
+            
+            // Get address with proper fallback chain
+            $address = $exhibitorData['address'] ?? $billingData['address'] ?? $draft->address ?? '';
+            
+            // Get city_id with proper fallback chain
+            $cityId = null;
+            if ($exhibitorData && !empty($exhibitorData['city'])) {
+                $cityId = $this->getCityIdFromName($exhibitorData['city'], $exhibitorData['state_id'] ?? null);
+            } elseif ($billingData && !empty($billingData['city'])) {
+                $cityId = $this->getCityIdFromName($billingData['city'], $billingData['state_id'] ?? null);
+            }
+            if (!$cityId) {
+                $cityId = $draft->city_id;
+            }
+            
+            // Get state_id with proper fallback chain
+            $stateId = $exhibitorData['state_id'] ?? $billingData['state_id'] ?? $draft->state_id ?? null;
+            
+            // Get postal_code with proper fallback chain
+            $postalCode = $exhibitorData['postal_code'] ?? $billingData['postal_code'] ?? $draft->postal_code ?? '';
+            
+            // Get country_id with proper fallback chain
+            $countryId = $exhibitorData['country_id'] ?? $billingData['country_id'] ?? $draft->country_id ?? null;
+            
+            // Get landline with proper fallback chain
+            $landline = $exhibitorData['telephone'] ?? $billingData['telephone'] ?? $draft->landline ?? '';
+            
+            // Get website with proper fallback chain
+            $website = $exhibitorData['website'] ?? $billingData['website'] ?? $draft->website ?? '';
+            $website = $this->normalizeWebsiteUrl($website);
+            
             $application->fill([
                 'application_id' => $applicationId,
                 'stall_category' => $draft->stall_category ?? 'Startup Booth',
                 'interested_sqm' => $draft->interested_sqm ?? 'Booth / POD',
-                'company_name' => $draft->company_name,
+                'company_name' => $companyName,
                 'certificate' => $draft->certificate_path,
                 'how_old_startup' => $draft->how_old_startup,
                 'companyYears' => $draft->how_old_startup, // Also save to companyYears field
-                'address' => $draft->address,
-                'city_id' => $draft->city_id,
-                'state_id' => $draft->state_id,
-                'postal_code' => $draft->postal_code,
-                'country_id' => $draft->country_id,
-                'landline' => $draft->landline,
-                'website' => $this->normalizeWebsiteUrl($draft->website ?? ''),
-                'company_email' => $draft->company_email,
+                'address' => $address,
+                'city_id' => $cityId,
+                'state_id' => $stateId,
+                'postal_code' => $postalCode,
+                'country_id' => $countryId,
+                'landline' => $landline,
+                'website' => $website,
+                'company_email' => $companyEmail,
                 'gst_compliance' => $draft->gst_compliance,
                 'gst_no' => $draft->gst_no,
                 'pan_no' => $draft->pan_no,
@@ -877,62 +1083,65 @@ class StartupZoneController extends Controller
                 $contact->save();
             }
 
-            // Create billing detail - check if billing is different
+            // Create billing detail - use billing_data from form
             $billingDetail = new \App\Models\BillingDetail();
             $billingDetail->application_id = $application->id;
             
-            if (isset($draft->billing_data) && !empty($draft->billing_data)) {
-                // Use billing data if provided
-                $billingDetail->billing_company = $draft->billing_data['billing_company'] ?? $draft->company_name ?? '';
-                $billingDetail->contact_name = $draft->billing_data['contact_name'] ?? '';
-                $billingDetail->email = $draft->billing_data['email'] ?? $contactEmail;
-                $billingDetail->phone = $draft->billing_data['phone'] ?? '';
-                $billingDetail->address = $draft->billing_data['address'] ?? '';
+            $billingData = $draft->billing_data ?? null;
+            $contactName = trim(($draft->contact_data['title'] ?? '') . ' ' . ($draft->contact_data['first_name'] ?? '') . ' ' . ($draft->contact_data['last_name'] ?? ''));
+            if (empty($contactName)) {
+                $contactName = $billingData['company_name'] ?? $exhibitorData['name'] ?? '';
+            }
+            
+            if ($billingData && !empty($billingData)) {
+                // Use billing data from form
+                $billingDetail->billing_company = $billingData['company_name'] ?? '';
+                $billingDetail->contact_name = $contactName;
+                $billingDetail->email = $billingData['email'] ?? $contactEmail;
+                $billingDetail->phone = $billingData['telephone'] ?? '';
+                $billingDetail->address = $billingData['address'] ?? '';
                 
-                // Handle city - try to find by name if provided as text, otherwise use city_id
-                $billingCityId = null;
-                if (isset($draft->billing_data['city']) && !empty($draft->billing_data['city'])) {
-                    // Try to find city by name in the state
-                    if (isset($draft->billing_data['state_id']) && $draft->billing_data['state_id']) {
-                        $city = \App\Models\City::where('state_id', $draft->billing_data['state_id'])
-                            ->where('name', 'like', $draft->billing_data['city'])
-                            ->first();
-                        if ($city) {
-                            $billingCityId = $city->id;
-                        }
-                    }
-                    // If not found by name, check if it's already a numeric ID
-                    if (!$billingCityId && is_numeric($draft->billing_data['city'])) {
-                        $billingCityId = $draft->billing_data['city'];
-                    }
-                } elseif (isset($draft->billing_data['city_id']) && $draft->billing_data['city_id']) {
-                    $billingCityId = $draft->billing_data['city_id'];
-                }
+                // Handle city - try to find by name if provided as text
+                $billingCityId = $this->getCityIdFromName($billingData['city'] ?? null, $billingData['state_id'] ?? null);
                 $billingDetail->city_id = $billingCityId;
                 
-                $billingDetail->state_id = $draft->billing_data['state_id'] ?? null;
-                $billingDetail->country_id = $draft->billing_data['country_id'] ?? null;
-                $billingDetail->postal_code = $draft->billing_data['postal_code'] ?? '';
-                $billingDetail->gst_id = $draft->billing_data['gst_id'] ?? null;
-                $billingDetail->same_as_basic = '0'; // Different from basic
-            } else {
-                // Use exhibitor/contact details (same as basic)
-                $contactName = trim(($draft->contact_data['title'] ?? '') . ' ' . ($draft->contact_data['first_name'] ?? '') . ' ' . ($draft->contact_data['last_name'] ?? ''));
-                if (empty($contactName)) {
-                    $contactName = $draft->company_name;
-                }
-                
-                $billingDetail->billing_company = $draft->company_name ?? '';
-                $billingDetail->contact_name = $contactName;
-                $billingDetail->email = $contactEmail;
-                $billingDetail->phone = $draft->contact_data['mobile'] ?? $draft->landline ?? '';
-                $billingDetail->address = $draft->address ?? '';
-                $billingDetail->city_id = $draft->city_id ?? null;
-                $billingDetail->state_id = $draft->state_id ?? null;
-                $billingDetail->country_id = $draft->country_id ?? null;
-                $billingDetail->postal_code = $draft->postal_code ?? '';
+                $billingDetail->state_id = $billingData['state_id'] ?? null;
+                $billingDetail->country_id = $billingData['country_id'] ?? null;
+                $billingDetail->postal_code = $billingData['postal_code'] ?? '';
                 $billingDetail->gst_id = $draft->gst_no ?? null;
-                $billingDetail->same_as_basic = '1'; // Same as basic
+                $billingDetail->same_as_basic = '0'; // Different from exhibitor
+            } else {
+                // Fallback: Use exhibitor data if billing data not available
+                $exhibitorData = $draft->exhibitor_data ?? null;
+                if ($exhibitorData && !empty($exhibitorData)) {
+                    $billingDetail->billing_company = $exhibitorData['name'] ?? '';
+                    $billingDetail->contact_name = $contactName;
+                    $billingDetail->email = $exhibitorData['email'] ?? $contactEmail;
+                    $billingDetail->phone = $exhibitorData['telephone'] ?? '';
+                    $billingDetail->address = $exhibitorData['address'] ?? '';
+                    
+                    $billingCityId = $this->getCityIdFromName($exhibitorData['city'] ?? null, $exhibitorData['state_id'] ?? null);
+                    $billingDetail->city_id = $billingCityId;
+                    
+                    $billingDetail->state_id = $exhibitorData['state_id'] ?? null;
+                    $billingDetail->country_id = $exhibitorData['country_id'] ?? null;
+                    $billingDetail->postal_code = $exhibitorData['postal_code'] ?? '';
+                    $billingDetail->gst_id = $draft->gst_no ?? null;
+                    $billingDetail->same_as_basic = '1'; // Same as exhibitor
+                } else {
+                    // Last fallback: Use contact details
+                    $billingDetail->billing_company = $contactName;
+                    $billingDetail->contact_name = $contactName;
+                    $billingDetail->email = $contactEmail;
+                    $billingDetail->phone = $draft->contact_data['mobile'] ?? '';
+                    $billingDetail->address = '';
+                    $billingDetail->city_id = null;
+                    $billingDetail->state_id = null;
+                    $billingDetail->country_id = null;
+                    $billingDetail->postal_code = '';
+                    $billingDetail->gst_id = $draft->gst_no ?? null;
+                    $billingDetail->same_as_basic = '1';
+                }
             }
             
             $billingDetail->save();
@@ -1055,7 +1264,9 @@ class StartupZoneController extends Controller
         }
         view()->share('associationLogo', $associationLogo);
 
-        return view('startup-zone.payment', compact('application', 'invoice'));
+        $billingDetail = \App\Models\BillingDetail::where('application_id', $application->id)->first();
+        
+        return view('startup-zone.payment', compact('application', 'invoice', 'billingDetail'));
     }
 
     /**
@@ -1172,7 +1383,9 @@ class StartupZoneController extends Controller
         }
         view()->share('associationLogo', $associationLogo);
 
-        return view('startup-zone.confirmation', compact('application', 'invoice', 'contact'));
+        $billingDetail = \App\Models\BillingDetail::where('application_id', $application->id)->first();
+        
+        return view('startup-zone.confirmation', compact('application', 'invoice', 'contact', 'billingDetail'));
     }
 
     /**
@@ -1373,6 +1586,51 @@ class StartupZoneController extends Controller
 
                 if ($field === 'contact_data') {
                     $value = $draft->contact_data;
+                } elseif ($field === 'postal_code') {
+                    // Check billing_postal_code first, then fallback to postal_code
+                    $value = isset($draft->billing_data) && isset($draft->billing_data['postal_code']) 
+                        ? $draft->billing_data['postal_code'] 
+                        : ($draft->postal_code ?? null);
+                } elseif ($field === 'company_email') {
+                    // Check billing_email first, then fallback to company_email
+                    $value = isset($draft->billing_data) && isset($draft->billing_data['email']) 
+                        ? $draft->billing_data['email'] 
+                        : ($draft->company_email ?? null);
+                } elseif ($field === 'company_name') {
+                    // Check billing_company_name first, then fallback to company_name
+                    $value = isset($draft->billing_data) && isset($draft->billing_data['company_name']) 
+                        ? $draft->billing_data['company_name'] 
+                        : ($draft->company_name ?? null);
+                } elseif ($field === 'address') {
+                    // Check billing_address first, then fallback to address
+                    $value = isset($draft->billing_data) && isset($draft->billing_data['address']) 
+                        ? $draft->billing_data['address'] 
+                        : ($draft->address ?? null);
+                } elseif ($field === 'country_id') {
+                    // Check billing_country_id first, then fallback to country_id
+                    $value = isset($draft->billing_data) && isset($draft->billing_data['country_id']) 
+                        ? $draft->billing_data['country_id'] 
+                        : ($draft->country_id ?? null);
+                } elseif ($field === 'state_id') {
+                    // Check billing_state_id first, then fallback to state_id
+                    $value = isset($draft->billing_data) && isset($draft->billing_data['state_id']) 
+                        ? $draft->billing_data['state_id'] 
+                        : ($draft->state_id ?? null);
+                } elseif ($field === 'city_id') {
+                    // Check billing_city first, then fallback to city_id
+                    $value = isset($draft->billing_data) && isset($draft->billing_data['city']) 
+                        ? $draft->billing_data['city'] 
+                        : ($draft->city_id ?? null);
+                } elseif ($field === 'landline') {
+                    // Check billing_telephone first, then fallback to landline
+                    $value = isset($draft->billing_data) && isset($draft->billing_data['telephone']) 
+                        ? $draft->billing_data['telephone'] 
+                        : ($draft->landline ?? null);
+                } elseif ($field === 'website') {
+                    // Check billing_website first, then fallback to website
+                    $value = isset($draft->billing_data) && isset($draft->billing_data['website']) 
+                        ? $draft->billing_data['website'] 
+                        : ($draft->website ?? null);
                 } else {
                     $value = $draft->$field ?? null;
                 }
@@ -1428,5 +1686,29 @@ class StartupZoneController extends Controller
             'total' => round($total, 2),
             'currency' => $currency
         ];
+    }
+
+    /**
+     * Get city ID from city name
+     */
+    private function getCityIdFromName($cityName, $stateId = null)
+    {
+        if (empty($cityName)) {
+            return null;
+        }
+        
+        // If it's already numeric, return as is
+        if (is_numeric($cityName)) {
+            return $cityName;
+        }
+        
+        // Try to find city by name
+        $query = \App\Models\City::where('name', 'like', $cityName);
+        if ($stateId) {
+            $query->where('state_id', $stateId);
+        }
+        $city = $query->first();
+        
+        return $city ? $city->id : null;
     }
 }

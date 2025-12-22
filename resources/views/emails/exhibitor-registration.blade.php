@@ -125,14 +125,81 @@
                                 @endif
                             </div>
 
-                            <!-- Company Details -->
+                            <!-- Billing Information -->
+                            @if($billingDetail)
                             <div style="background-color: #f8f9fa; border-left: 4px solid #1a237e; padding: 20px; margin: 25px 0; border-radius: 4px;">
-                                <h2 style="margin: 0 0 15px; font-size: 18px; color: #1a237e; font-weight: bold;">Company Details</h2>
+                                <h2 style="margin: 0 0 15px; font-size: 18px; color: #1a237e; font-weight: bold;">Billing Information</h2>
+                                
+                                @if($billingDetail->billing_company)
+                                <table role="presentation" width="100%" cellpadding="5" cellspacing="0" style="margin-bottom: 10px;">
+                                    <tr>
+                                        <td style="width: 40%; font-weight: bold; color: #555555; padding: 5px 0;">Company Name:</td>
+                                        <td style="color: #333333; padding: 5px 0;">{{ $billingDetail->billing_company }}</td>
+                                    </tr>
+                                </table>
+                                @endif
+
+                                @if($billingDetail->contact_name)
+                                <table role="presentation" width="100%" cellpadding="5" cellspacing="0" style="margin-bottom: 10px;">
+                                    <tr>
+                                        <td style="width: 40%; font-weight: bold; color: #555555; padding: 5px 0;">Contact Name:</td>
+                                        <td style="color: #333333; padding: 5px 0;">{{ $billingDetail->contact_name }}</td>
+                                    </tr>
+                                </table>
+                                @endif
+
+                                @if($billingDetail->email)
+                                <table role="presentation" width="100%" cellpadding="5" cellspacing="0" style="margin-bottom: 10px;">
+                                    <tr>
+                                        <td style="width: 40%; font-weight: bold; color: #555555; padding: 5px 0;">Email:</td>
+                                        <td style="color: #333333; padding: 5px 0;"><a href="mailto:{{ $billingDetail->email }}" style="color: #1a237e; text-decoration: none;">{{ $billingDetail->email }}</a></td>
+                                    </tr>
+                                </table>
+                                @endif
+
+                                @if($billingDetail->phone)
+                                <table role="presentation" width="100%" cellpadding="5" cellspacing="0" style="margin-bottom: 10px;">
+                                    <tr>
+                                        <td style="width: 40%; font-weight: bold; color: #555555; padding: 5px 0;">Phone:</td>
+                                        <td style="color: #333333; padding: 5px 0;">{{ $billingDetail->phone }}</td>
+                                    </tr>
+                                </table>
+                                @endif
+
+                                @if($billingDetail->address)
+                                <table role="presentation" width="100%" cellpadding="5" cellspacing="0" style="margin-bottom: 10px;">
+                                    <tr>
+                                        <td style="width: 40%; font-weight: bold; color: #555555; padding: 5px 0; vertical-align: top;">Address:</td>
+                                        <td style="color: #333333; padding: 5px 0;">
+                                            {{ $billingDetail->address }}
+                                            @if($billingDetail->city_id), {{ \App\Models\City::find($billingDetail->city_id)->name ?? $billingDetail->city_id }}@endif
+                                            @if($billingDetail->state_id), {{ \App\Models\State::find($billingDetail->state_id)->name ?? '' }}@endif
+                                            @if($billingDetail->country_id), {{ \App\Models\Country::find($billingDetail->country_id)->name ?? '' }}@endif
+                                            @if($billingDetail->postal_code) - {{ $billingDetail->postal_code }}@endif
+                                        </td>
+                                    </tr>
+                                </table>
+                                @endif
+
+                                @if($billingDetail->gst_id)
+                                <table role="presentation" width="100%" cellpadding="5" cellspacing="0" style="margin-bottom: 10px;">
+                                    <tr>
+                                        <td style="width: 40%; font-weight: bold; color: #555555; padding: 5px 0;">GST Number:</td>
+                                        <td style="color: #333333; padding: 5px 0;">{{ $billingDetail->gst_id }}</td>
+                                    </tr>
+                                </table>
+                                @endif
+                            </div>
+                            @endif
+
+                            <!-- Exhibitor Information -->
+                            <div style="background-color: #f8f9fa; border-left: 4px solid #1a237e; padding: 20px; margin: 25px 0; border-radius: 4px;">
+                                <h2 style="margin: 0 0 15px; font-size: 18px; color: #1a237e; font-weight: bold;">Exhibitor Information</h2>
                                 
                                 @if($application->company_name)
                                 <table role="presentation" width="100%" cellpadding="5" cellspacing="0" style="margin-bottom: 10px;">
                                     <tr>
-                                        <td style="width: 40%; font-weight: bold; color: #555555; padding: 5px 0;">Company Name:</td>
+                                        <td style="width: 40%; font-weight: bold; color: #555555; padding: 5px 0;">Name of Exhibitor:</td>
                                         <td style="color: #333333; padding: 5px 0;">{{ $application->company_name }}</td>
                                     </tr>
                                 </table>
@@ -144,7 +211,7 @@
                                         <td style="width: 40%; font-weight: bold; color: #555555; padding: 5px 0; vertical-align: top;">Address:</td>
                                         <td style="color: #333333; padding: 5px 0;">
                                             {{ $application->address }}
-                                            @if($application->city_id), {{ $application->city_id }}@endif
+                                            @if($application->city_id), {{ \App\Models\City::find($application->city_id)->name ?? $application->city_id }}@endif
                                             @if($application->state && $application->state->name), {{ $application->state->name }}@endif
                                             @if($application->country && $application->country->name), {{ $application->country->name }}@endif
                                             @if($application->postal_code) - {{ $application->postal_code }}@endif
@@ -156,7 +223,7 @@
                                 @if($application->company_email)
                                 <table role="presentation" width="100%" cellpadding="5" cellspacing="0" style="margin-bottom: 10px;">
                                     <tr>
-                                        <td style="width: 40%; font-weight: bold; color: #555555; padding: 5px 0;">Email:</td>
+                                        <td style="width: 40%; font-weight: bold; color: #555555; padding: 5px 0;">Company Email:</td>
                                         <td style="color: #333333; padding: 5px 0;"><a href="mailto:{{ $application->company_email }}" style="color: #1a237e; text-decoration: none;">{{ $application->company_email }}</a></td>
                                     </tr>
                                 </table>
@@ -165,7 +232,7 @@
                                 @if($application->landline)
                                 <table role="presentation" width="100%" cellpadding="5" cellspacing="0" style="margin-bottom: 10px;">
                                     <tr>
-                                        <td style="width: 40%; font-weight: bold; color: #555555; padding: 5px 0;">Phone:</td>
+                                        <td style="width: 40%; font-weight: bold; color: #555555; padding: 5px 0;">Telephone:</td>
                                         <td style="color: #333333; padding: 5px 0;">{{ $application->landline }}</td>
                                     </tr>
                                 </table>
@@ -194,6 +261,20 @@
                                     <tr>
                                         <td style="width: 40%; font-weight: bold; color: #555555; padding: 5px 0;">PAN Number:</td>
                                         <td style="color: #333333; padding: 5px 0;">{{ $application->pan_no }}</td>
+                                    </tr>
+                                </table>
+                                @endif
+
+                                @if($application->how_old_startup || $application->companyYears)
+                                <table role="presentation" width="100%" cellpadding="5" cellspacing="0" style="margin-bottom: 10px;">
+                                    <tr>
+                                        <td style="width: 40%; font-weight: bold; color: #555555; padding: 5px 0;">Company Age:</td>
+                                        <td style="color: #333333; padding: 5px 0;">
+                                            @php
+                                                $companyAge = $application->companyYears ?? $application->how_old_startup;
+                                            @endphp
+                                            {{ $companyAge }} Year{{ $companyAge > 1 ? 's' : '' }}
+                                        </td>
                                     </tr>
                                 </table>
                                 @endif

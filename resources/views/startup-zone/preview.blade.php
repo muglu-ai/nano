@@ -45,74 +45,198 @@
                 </div>
             @endif
 
-            {{-- Company Information --}}
+            {{-- Billing Information --}}
             <div class="card shadow-sm mb-4">
                 <div class="card-header bg-primary text-white">
-                    <h4 class="mb-0">Company Information</h4>
+                    <h4 class="mb-0">Billing Information</h4>
                 </div>
                 <div class="card-body">
+                    @php
+                        if (isset($application) && isset($billingDetail)) {
+                            // From application (after creation)
+                            $billingCompany = $billingDetail->billing_company ?? 'N/A';
+                            $billingEmail = $billingDetail->email ?? 'N/A';
+                            $billingAddress = $billingDetail->address ?? 'N/A';
+                            // Handle city - could be ID or name string
+                            $billingCity = 'N/A';
+                            if ($billingDetail->city_id) {
+                                if (is_numeric($billingDetail->city_id)) {
+                                    $city = \App\Models\City::find($billingDetail->city_id);
+                                    $billingCity = $city ? $city->name : $billingDetail->city_id;
+                                } else {
+                                    $billingCity = $billingDetail->city_id; // It's already a city name
+                                }
+                            }
+                            $billingState = $billingDetail->state_id ? (\App\Models\State::find($billingDetail->state_id)->name ?? 'N/A') : 'N/A';
+                            $billingCountry = $billingDetail->country_id ? (\App\Models\Country::find($billingDetail->country_id)->name ?? 'N/A') : 'N/A';
+                            $billingPostalCode = $billingDetail->postal_code ?? 'N/A';
+                            $billingPhone = $billingDetail->phone ?? 'N/A';
+                            $billingWebsite = 'N/A';
+                        } elseif (isset($draft) && isset($draft->billing_data)) {
+                            // From draft
+                            $billingData = is_array($draft->billing_data) ? $draft->billing_data : json_decode($draft->billing_data, true);
+                            $billingCompany = $billingData['company_name'] ?? 'N/A';
+                            $billingEmail = $billingData['email'] ?? 'N/A';
+                            $billingAddress = $billingData['address'] ?? 'N/A';
+                            $billingCity = $billingData['city'] ?? 'N/A';
+                            $billingState = $billingData['state_id'] ? (\App\Models\State::find($billingData['state_id'])->name ?? 'N/A') : 'N/A';
+                            $billingCountry = $billingData['country_id'] ? (\App\Models\Country::find($billingData['country_id'])->name ?? 'N/A') : 'N/A';
+                            $billingPostalCode = $billingData['postal_code'] ?? 'N/A';
+                            $billingPhone = $billingData['telephone'] ?? 'N/A';
+                            $billingWebsite = $billingData['website'] ?? 'N/A';
+                        } else {
+                            $billingCompany = $billingEmail = $billingAddress = $billingCity = $billingState = $billingCountry = $billingPostalCode = $billingPhone = $billingWebsite = 'N/A';
+                        }
+                    @endphp
                     <div class="row">
                         <div class="col-md-6 mb-3">
                             <strong>Company Name:</strong><br>
-                            {{ $application->company_name ?? $draft->company_name ?? 'N/A' }}
+                            {{ $billingCompany }}
                         </div>
                         <div class="col-md-6 mb-3">
-                            <strong>Company Email:</strong><br>
-                            {{ $application->company_email ?? $draft->company_email ?? 'N/A' }}
+                            <strong>Email:</strong><br>
+                            {{ $billingEmail }}
                         </div>
                         <div class="col-md-6 mb-3">
                             <strong>Address:</strong><br>
-                            {{ $application->address ?? $draft->address ?? 'N/A' }}
+                            {{ $billingAddress }}
                         </div>
                         <div class="col-md-6 mb-3">
                             <strong>City:</strong><br>
-                            {{ $application->city_id ?? $draft->city_id ?? 'N/A' }}
+                            {{ $billingCity }}
                         </div>
                         <div class="col-md-6 mb-3">
                             <strong>State:</strong><br>
-                            @if(isset($application))
-                                {{ $application->state->name ?? 'N/A' }}
-                            @elseif(isset($draft) && $draft->state_id)
-                                {{ \App\Models\State::find($draft->state_id)->name ?? 'N/A' }}
-                            @else
-                                N/A
-                            @endif
+                            {{ $billingState }}
                         </div>
                         <div class="col-md-6 mb-3">
                             <strong>Postal Code:</strong><br>
-                            {{ $application->postal_code ?? $draft->postal_code ?? 'N/A' }}
+                            {{ $billingPostalCode }}
                         </div>
                         <div class="col-md-6 mb-3">
                             <strong>Country:</strong><br>
-                            @if(isset($application))
-                                {{ $application->country->name ?? 'N/A' }}
-                            @elseif(isset($draft) && $draft->country_id)
-                                {{ \App\Models\Country::find($draft->country_id)->name ?? 'N/A' }}
-                            @else
-                                N/A
-                            @endif
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <strong>Website:</strong><br>
-                            <a href="{{ $application->website ?? $draft->website ?? '#' }}" target="_blank">
-                                {{ $application->website ?? $draft->website ?? 'N/A' }}
-                            </a>
+                            {{ $billingCountry }}
                         </div>
                         <div class="col-md-6 mb-3">
                             <strong>Telephone:</strong><br>
-                            {{ $application->landline ?? $draft->landline ?? 'N/A' }}
+                            {{ $billingPhone }}
+                        </div>
+                        @if($billingWebsite !== 'N/A')
+                        <div class="col-md-6 mb-3">
+                            <strong>Website:</strong><br>
+                            <a href="{{ $billingWebsite }}" target="_blank">{{ $billingWebsite }}</a>
+                        </div>
+                        @endif
+                    </div>
+                </div>
+            </div>
+
+            {{-- Exhibitor Information --}}
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">Exhibitor Information</h4>
+                </div>
+                <div class="card-body">
+                    @php
+                        if (isset($application)) {
+                            // From application (after creation)
+                            $exhibitorName = $application->company_name ?? 'N/A';
+                            $exhibitorEmail = $application->company_email ?? 'N/A';
+                            $exhibitorAddress = $application->address ?? 'N/A';
+                            // Handle city - could be ID or name string
+                            $exhibitorCity = 'N/A';
+                            if ($application->city_id) {
+                                if (is_numeric($application->city_id)) {
+                                    $city = \App\Models\City::find($application->city_id);
+                                    $exhibitorCity = $city ? $city->name : $application->city_id;
+                                } else {
+                                    $exhibitorCity = $application->city_id; // It's already a city name
+                                }
+                            }
+                            $exhibitorState = $application->state ? $application->state->name : 'N/A';
+                            $exhibitorCountry = $application->country ? $application->country->name : 'N/A';
+                            $exhibitorPostalCode = $application->postal_code ?? 'N/A';
+                            $exhibitorPhone = $application->landline ?? 'N/A';
+                            $exhibitorWebsite = $application->website ?? 'N/A';
+                            $companyAge = $application->companyYears ?? $application->how_old_startup ?? null;
+                        } elseif (isset($draft)) {
+                            // From draft
+                            $exhibitorData = isset($draft->exhibitor_data) ? (is_array($draft->exhibitor_data) ? $draft->exhibitor_data : json_decode($draft->exhibitor_data, true)) : null;
+                            if ($exhibitorData && !empty($exhibitorData['name'])) {
+                                $exhibitorName = $exhibitorData['name'] ?? 'N/A';
+                                $exhibitorEmail = $exhibitorData['email'] ?? 'N/A';
+                                $exhibitorAddress = $exhibitorData['address'] ?? 'N/A';
+                                $exhibitorCity = $exhibitorData['city'] ?? 'N/A';
+                                $exhibitorState = $exhibitorData['state_id'] ? (\App\Models\State::find($exhibitorData['state_id'])->name ?? 'N/A') : 'N/A';
+                                $exhibitorCountry = $exhibitorData['country_id'] ? (\App\Models\Country::find($exhibitorData['country_id'])->name ?? 'N/A') : 'N/A';
+                                $exhibitorPostalCode = $exhibitorData['postal_code'] ?? 'N/A';
+                                $exhibitorPhone = $exhibitorData['telephone'] ?? 'N/A';
+                                $exhibitorWebsite = $exhibitorData['website'] ?? 'N/A';
+                            } else {
+                                // Fallback to old draft fields
+                                $exhibitorName = $draft->company_name ?? 'N/A';
+                                $exhibitorEmail = $draft->company_email ?? 'N/A';
+                                $exhibitorAddress = $draft->address ?? 'N/A';
+                                $exhibitorCity = $draft->city_id ?? 'N/A';
+                                $exhibitorState = $draft->state_id ? (\App\Models\State::find($draft->state_id)->name ?? 'N/A') : 'N/A';
+                                $exhibitorCountry = $draft->country_id ? (\App\Models\Country::find($draft->country_id)->name ?? 'N/A') : 'N/A';
+                                $exhibitorPostalCode = $draft->postal_code ?? 'N/A';
+                                $exhibitorPhone = $draft->landline ?? 'N/A';
+                                $exhibitorWebsite = $draft->website ?? 'N/A';
+                            }
+                            $companyAge = $draft->how_old_startup ?? null;
+                        } else {
+                            $exhibitorName = $exhibitorEmail = $exhibitorAddress = $exhibitorCity = $exhibitorState = $exhibitorCountry = $exhibitorPostalCode = $exhibitorPhone = $exhibitorWebsite = 'N/A';
+                            $companyAge = null;
+                        }
+                    @endphp
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <strong>Name of Exhibitor:</strong><br>
+                            {{ $exhibitorName }}
                         </div>
                         <div class="col-md-6 mb-3">
-                            <strong>Company Age:</strong><br>
-                            @php
-                                $companyAge = $application->companyYears ?? $application->how_old_startup ?? $draft->how_old_startup ?? null;
-                            @endphp
-                            @if($companyAge)
-                                {{ $companyAge }} Year{{ $companyAge > 1 ? 's' : '' }}
+                            <strong>Company Email:</strong><br>
+                            {{ $exhibitorEmail }}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <strong>Address:</strong><br>
+                            {{ $exhibitorAddress }}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <strong>City:</strong><br>
+                            {{ $exhibitorCity }}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <strong>State:</strong><br>
+                            {{ $exhibitorState }}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <strong>Postal Code:</strong><br>
+                            {{ $exhibitorPostalCode }}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <strong>Country:</strong><br>
+                            {{ $exhibitorCountry }}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <strong>Telephone:</strong><br>
+                            {{ $exhibitorPhone }}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <strong>Website:</strong><br>
+                            @if($exhibitorWebsite !== 'N/A')
+                                <a href="{{ $exhibitorWebsite }}" target="_blank">{{ $exhibitorWebsite }}</a>
                             @else
                                 N/A
                             @endif
                         </div>
+                        @if($companyAge)
+                        <div class="col-md-6 mb-3">
+                            <strong>Company Age:</strong><br>
+                            {{ $companyAge }} Year{{ $companyAge > 1 ? 's' : '' }}
+                        </div>
+                        @endif
                     </div>
                 </div>
             </div>

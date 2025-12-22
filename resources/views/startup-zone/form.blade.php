@@ -170,13 +170,13 @@
                     </div>
                 </div>
 
-                {{-- Company Information --}}
-                <h5 class="mb-3 mt-4 border-bottom pb-2"><i class="fas fa-building"></i> Exhibitor Information</h5>
+                {{-- Billing Information --}}
+                <h5 class="mb-3 mt-4 border-bottom pb-2"><i class="fas fa-building"></i> Billing Information</h5>
                 <div class="row mb-3">
                     <div class="col-md-6">
-                        <label for="company_name" class="form-label">Name of Exhibitor  <small>(Organisation Name)</small> <span class="text-danger">*</span></label>
-                        <input type="text" class="form-control" id="company_name" name="company_name" 
-                               value="{{ $draft->company_name ?? '' }}" 
+                        <label for="billing_company_name" class="form-label">Billing Company Name <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="billing_company_name" name="billing_company_name" 
+                               value="{{ isset($draft->billing_data['company_name']) ? $draft->billing_data['company_name'] : ($draft->company_name ?? '') }}" 
                                maxlength="100" required>
                         <div class="invalid-feedback"></div>
                     </div>
@@ -203,24 +203,22 @@
                         <div class="invalid-feedback"></div>
                     </div>
                     <div class="col-md-6">
-                        <label for="address" class="form-label">Invoice Address <span class="text-danger">*</span></label>
-                        <textarea class="form-control" id="address" name="address" rows="2" required>{{ $draft->address ?? '' }}</textarea>
+                        <label for="billing_address" class="form-label">Billing Address <span class="text-danger">*</span></label>
+                        <textarea class="form-control" id="billing_address" name="billing_address" rows="2" required>{{ isset($draft->billing_data['address']) ? $draft->billing_data['address'] : ($draft->address ?? '') }}</textarea>
                         <div class="invalid-feedback"></div>
                     </div>
                 </div>
 
                 <div class="row mb-3">
                     <div class="col-md-4">
-                        <label for="country_id" class="form-label">Country <span class="text-danger">*</span></label>
-                        <select class="form-select" id="country_id" name="country_id" required>
+                        <label for="billing_country_id" class="form-label">Billing Country <span class="text-danger">*</span></label>
+                        <select class="form-select" id="billing_country_id" name="billing_country_id" required>
                             <option value="">Select Country</option>
                             @foreach($countries as $country)
                             @php
-                                $isSelected = ($draft->country_id ?? '') == $country->id;
-                                // If no country selected and this is India, select it
-                                if (!isset($draft->country_id) && $country->code === 'IN') {
-                                    $isSelected = true;
-                                }
+                                $isSelected = (isset($draft->billing_data['country_id']) && $draft->billing_data['country_id'] == $country->id) || 
+                                             (!isset($draft->billing_data['country_id']) && !isset($draft->country_id) && $country->code === 'IN') ||
+                                             (isset($draft->country_id) && $draft->country_id == $country->id && !isset($draft->billing_data['country_id']));
                             @endphp
                             <option value="{{ $country->id }}" {{ $isSelected ? 'selected' : '' }}>
                                 {{ $country->name }}
@@ -230,45 +228,57 @@
                         <div class="invalid-feedback"></div>
                     </div>
                     <div class="col-md-4">
-                        <label for="state_id" class="form-label">State <span class="text-danger">*</span></label>
-                        <select class="form-select" id="state_id" name="state_id" required>
+                        <label for="billing_state_id" class="form-label">Billing State <span class="text-danger">*</span></label>
+                        <select class="form-select" id="billing_state_id" name="billing_state_id" required>
                             <option value="">Select State</option>
-                            @foreach($states as $state)
-                            <option value="{{ $state->id }}" {{ ($draft->state_id ?? '') == $state->id ? 'selected' : '' }}>
-                                {{ $state->name }}
-                            </option>
-                            @endforeach
+                            @if(isset($draft->billing_data['state_id']) && $draft->billing_data['state_id'])
+                                @php
+                                    $billingState = \App\Models\State::find($draft->billing_data['state_id']);
+                                @endphp
+                                @if($billingState)
+                                    <option value="{{ $billingState->id }}" selected>{{ $billingState->name }}</option>
+                                @endif
+                            @elseif(isset($draft->state_id) && $draft->state_id)
+                                @php
+                                    $billingState = \App\Models\State::find($draft->state_id);
+                                @endphp
+                                @if($billingState)
+                                    <option value="{{ $billingState->id }}" selected>{{ $billingState->name }}</option>
+                                @endif
+                            @endif
                         </select>
                         <div class="invalid-feedback"></div>
                     </div>
                     <div class="col-md-4">
-                        <label for="city_id" class="form-label">City <span class="text-danger">*</span></label>
-                        <input type="text" class="form-control" id="city_id" name="city_id" 
-                               value="{{ $draft->city_id ?? '' }}" required>
+                        <label for="billing_city" class="form-label">Billing City <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="billing_city" name="billing_city" 
+                               value="{{ isset($draft->billing_data['city']) ? $draft->billing_data['city'] : ($draft->city_id ?? '') }}" 
+                               maxlength="100" required>
                         <div class="invalid-feedback"></div>
                     </div>
                 </div>
 
                 <div class="row mb-3">
                     <div class="col-md-4">
-                        <label for="postal_code" class="form-label">Postal Code <span class="text-danger">*</span></label>
-                        <input type="text" class="form-control" id="postal_code" name="postal_code" 
-                               value="{{ $draft->postal_code ?? '' }}" 
+                        <label for="billing_postal_code" class="form-label">Billing Postal Code <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="billing_postal_code" name="billing_postal_code" 
+                               value="{{ isset($draft->billing_data['postal_code']) ? $draft->billing_data['postal_code'] : ($draft->postal_code ?? '') }}" 
                                pattern="[0-9]{6}" maxlength="6" required>
                         <div class="invalid-feedback"></div>
                     </div>
                     <div class="col-md-4">
-                        <label for="landline" class="form-label">Telephone Number <span class="text-danger">*</span></label>
-                        <input type="tel" class="form-control" id="landline" name="landline" 
-                               value="{{ $draft->landline ?? '' }}" placeholder="" required>
-                        <input type="hidden" id="landline_country_code" name="landline_country_code">
-                        <input type="hidden" id="landline_national" name="landline_national">
+                        <label for="billing_telephone" class="form-label">Billing Telephone Number <span class="text-danger">*</span></label>
+                        <input type="tel" class="form-control" id="billing_telephone" name="billing_telephone" 
+                               value="{{ isset($draft->billing_data['telephone']) ? $draft->billing_data['telephone'] : ($draft->landline ?? '') }}" 
+                               placeholder="" required>
+                        <input type="hidden" id="billing_telephone_country_code" name="billing_telephone_country_code">
+                        <input type="hidden" id="billing_telephone_national" name="billing_telephone_national">
                         <div class="invalid-feedback"></div>
                     </div>
                     <div class="col-md-4">
-                        <label for="website" class="form-label">Website <span class="text-danger">*</span></label>
-                        <input type="url" class="form-control" id="website" name="website" 
-                               value="{{ $draft->website ?? '' }}" 
+                        <label for="billing_website" class="form-label">Website <span class="text-danger">*</span></label>
+                        <input type="url" class="form-control" id="billing_website" name="billing_website" 
+                               value="{{ isset($draft->billing_data['website']) ? $draft->billing_data['website'] : ($draft->website ?? '') }}" 
                                placeholder="" required>
                         <div class="invalid-feedback"></div>
                     </div>
@@ -276,13 +286,112 @@
 
                 <div class="row mb-3">
                     <div class="col-md-6">
-                        <label for="company_email" class="form-label">Company Email <span class="text-danger">*</span></label>
-                        <input type="email" class="form-control" id="company_email" name="company_email" 
-                               value="{{ $draft->company_email ?? '' }}" required>
+                        <label for="billing_email" class="form-label">Billing Email <span class="text-danger">*</span></label>
+                        <input type="email" class="form-control" id="billing_email" name="billing_email" 
+                               value="{{ isset($draft->billing_data['email']) ? $draft->billing_data['email'] : ($draft->company_email ?? '') }}" required>
                         <div class="invalid-feedback"></div>
                     </div>
                 </div>
 
+                {{-- Exhibitor Information --}}
+                <h5 class="mb-3 mt-4 border-bottom pb-2"><i class="fas fa-building"></i> Exhibitor Information</h5>
+                <div class="row mb-3">
+                    <div class="col-12">
+                        <button type="button" class="btn btn-outline-primary btn-sm mb-3" id="copy_from_billing">
+                            <i class="fas fa-copy"></i> Copy from Billing Information
+                        </button>
+                    </div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label for="exhibitor_name" class="form-label">Name of Exhibitor (Organisation Name) <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="exhibitor_name" name="exhibitor_name" 
+                               value="{{ isset($draft->exhibitor_data['name']) ? $draft->exhibitor_data['name'] : '' }}" 
+                               maxlength="100" required>
+                        <div class="invalid-feedback"></div>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="exhibitor_address" class="form-label">Address <span class="text-danger">*</span></label>
+                        <textarea class="form-control" id="exhibitor_address" name="exhibitor_address" rows="2" required>{{ isset($draft->exhibitor_data['address']) ? $draft->exhibitor_data['address'] : '' }}</textarea>
+                        <div class="invalid-feedback"></div>
+                    </div>
+                </div>
+
+                <div class="row mb-3">
+                    <div class="col-md-4">
+                        <label for="exhibitor_country_id" class="form-label">Country <span class="text-danger">*</span></label>
+                        <select class="form-select" id="exhibitor_country_id" name="exhibitor_country_id" required>
+                            <option value="">Select Country</option>
+                            @foreach($countries as $country)
+                            @php
+                                $isSelected = (isset($draft->exhibitor_data['country_id']) && $draft->exhibitor_data['country_id'] == $country->id) || 
+                                             (!isset($draft->exhibitor_data['country_id']) && $country->code === 'IN');
+                            @endphp
+                            <option value="{{ $country->id }}" {{ $isSelected ? 'selected' : '' }}>
+                                {{ $country->name }}
+                            </option>
+                            @endforeach
+                        </select>
+                        <div class="invalid-feedback"></div>
+                    </div>
+                    <div class="col-md-4">
+                        <label for="exhibitor_state_id" class="form-label">State <span class="text-danger">*</span></label>
+                        <select class="form-select" id="exhibitor_state_id" name="exhibitor_state_id" required>
+                            <option value="">Select State</option>
+                            @if(isset($draft->exhibitor_data['state_id']) && $draft->exhibitor_data['state_id'])
+                                @php
+                                    $exhibitorState = \App\Models\State::find($draft->exhibitor_data['state_id']);
+                                @endphp
+                                @if($exhibitorState)
+                                    <option value="{{ $exhibitorState->id }}" selected>{{ $exhibitorState->name }}</option>
+                                @endif
+                            @endif
+                        </select>
+                        <div class="invalid-feedback"></div>
+                    </div>
+                    <div class="col-md-4">
+                        <label for="exhibitor_city" class="form-label">City <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="exhibitor_city" name="exhibitor_city" 
+                               value="{{ isset($draft->exhibitor_data['city']) ? $draft->exhibitor_data['city'] : '' }}" 
+                               maxlength="100" required>
+                        <div class="invalid-feedback"></div>
+                    </div>
+                </div>
+
+                <div class="row mb-3">
+                    <div class="col-md-4">
+                        <label for="exhibitor_postal_code" class="form-label">Postal Code <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="exhibitor_postal_code" name="exhibitor_postal_code" 
+                               value="{{ isset($draft->exhibitor_data['postal_code']) ? $draft->exhibitor_data['postal_code'] : '' }}" 
+                               pattern="[0-9]{6}" maxlength="6" required>
+                        <div class="invalid-feedback"></div>
+                    </div>
+                    <div class="col-md-4">
+                        <label for="exhibitor_telephone" class="form-label">Telephone Number <span class="text-danger">*</span></label>
+                        <input type="tel" class="form-control" id="exhibitor_telephone" name="exhibitor_telephone" 
+                               value="{{ isset($draft->exhibitor_data['telephone']) ? $draft->exhibitor_data['telephone'] : '' }}" 
+                               placeholder="" required>
+                        <input type="hidden" id="exhibitor_telephone_country_code" name="exhibitor_telephone_country_code">
+                        <input type="hidden" id="exhibitor_telephone_national" name="exhibitor_telephone_national">
+                        <div class="invalid-feedback"></div>
+                    </div>
+                    <div class="col-md-4">
+                        <label for="exhibitor_website" class="form-label">Website <span class="text-danger">*</span></label>
+                        <input type="url" class="form-control" id="exhibitor_website" name="exhibitor_website" 
+                               value="{{ isset($draft->exhibitor_data['website']) ? $draft->exhibitor_data['website'] : '' }}" 
+                               placeholder="https://example.com" required>
+                        <div class="invalid-feedback"></div>
+                    </div>
+                </div>
+
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label for="exhibitor_email" class="form-label">Company Email <span class="text-danger">*</span></label>
+                        <input type="email" class="form-control" id="exhibitor_email" name="exhibitor_email" 
+                               value="{{ isset($draft->exhibitor_data['email']) ? $draft->exhibitor_data['email'] : '' }}" required>
+                        <div class="invalid-feedback"></div>
+                    </div>
+                </div>
 
                 {{-- Contact Person Details --}}
                 <h5 class="mb-3 mt-4 border-bottom pb-2"><i class="fas fa-user"></i> Contact Person Details</h5>
@@ -337,135 +446,6 @@
                         <input type="hidden" id="contact_country_code" name="contact_country_code">
                         <input type="hidden" id="contact_mobile_national" name="contact_mobile_national">
                         <div class="invalid-feedback"></div>
-                    </div>
-                </div>
-
-                {{-- Billing Information --}}
-                <h5 class="mb-3 mt-4 border-bottom pb-2"><i class="fas fa-file-invoice"></i> Billing Information</h5>
-                <div class="row mb-3">
-                    <div class="col-12">
-                        <div class="form-check">
-                            <input class="form-check-input" type="checkbox" id="billing_different" name="billing_different" 
-                                   {{ (isset($draft->billing_data) && $draft->billing_data) ? 'checked' : '' }}>
-                            <label class="form-check-label" for="billing_different">
-                                <strong>Billing information is different from exhibitor information</strong>
-                            </label>
-                        </div>
-                    </div>
-                </div>
-
-                <div id="billing_details_section" style="display: {{ (isset($draft->billing_data) && $draft->billing_data) ? 'block' : 'none' }};">
-                    <div class="row mb-3">
-                        <div class="col-12">
-                            <div class="form-check mb-3">
-                                <input class="form-check-input" type="checkbox" id="copy_from_exhibitor" name="copy_from_exhibitor">
-                                <label class="form-check-label" for="copy_from_exhibitor">
-                                    <strong>Copy details from exhibitor information</strong>
-                                </label>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="row mb-3">
-                        <div class="col-md-6">
-                            <label for="billing_company" class="form-label">Billing Company Name <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control" id="billing_company" name="billing_company" 
-                                   value="{{ isset($draft->billing_data['billing_company']) ? $draft->billing_data['billing_company'] : '' }}" 
-                                   maxlength="100">
-                            <div class="invalid-feedback"></div>
-                        </div>
-                        <div class="col-md-6">
-                            <label for="billing_contact_name" class="form-label">Contact Name <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control" id="billing_contact_name" name="billing_contact_name" 
-                                   value="{{ isset($draft->billing_data['contact_name']) ? $draft->billing_data['contact_name'] : '' }}" 
-                                   maxlength="100">
-                            <div class="invalid-feedback"></div>
-                        </div>
-                    </div>
-
-                    <div class="row mb-3">
-                        <div class="col-md-6">
-                            <label for="billing_email" class="form-label">Billing Email <span class="text-danger">*</span></label>
-                            <input type="email" class="form-control" id="billing_email" name="billing_email" 
-                                   value="{{ isset($draft->billing_data['email']) ? $draft->billing_data['email'] : '' }}">
-                            <div class="invalid-feedback"></div>
-                        </div>
-                        <div class="col-md-6">
-                            <label for="billing_phone" class="form-label">Billing Phone <span class="text-danger">*</span></label>
-                            <input type="tel" class="form-control" id="billing_phone" name="billing_phone" 
-                                   value="{{ isset($draft->billing_data['phone']) ? $draft->billing_data['phone'] : '' }}" 
-                                   placeholder="">
-                            <input type="hidden" id="billing_phone_country_code" name="billing_phone_country_code">
-                            <input type="hidden" id="billing_phone_national" name="billing_phone_national">
-                            <div class="invalid-feedback"></div>
-                        </div>
-                    </div>
-
-                    <div class="row mb-3">
-                        <div class="col-12">
-                            <label for="billing_address" class="form-label">Billing Address <span class="text-danger">*</span></label>
-                            <textarea class="form-control" id="billing_address" name="billing_address" rows="2">{{ isset($draft->billing_data['address']) ? $draft->billing_data['address'] : '' }}</textarea>
-                            <div class="invalid-feedback"></div>
-                        </div>
-                    </div>
-
-                    <div class="row mb-3">
-                        <div class="col-md-4">
-                            <label for="billing_country_id" class="form-label">Billing Country <span class="text-danger">*</span></label>
-                            <select class="form-select" id="billing_country_id" name="billing_country_id">
-                                <option value="">Select Country</option>
-                                @foreach($countries as $country)
-                                @php
-                                    $isSelected = (isset($draft->billing_data['country_id']) && $draft->billing_data['country_id'] == $country->id) || 
-                                                 (!isset($draft->billing_data['country_id']) && $country->code === 'IN');
-                                @endphp
-                                <option value="{{ $country->id }}" {{ $isSelected ? 'selected' : '' }}>
-                                    {{ $country->name }}
-                                </option>
-                                @endforeach
-                            </select>
-                            <div class="invalid-feedback"></div>
-                        </div>
-                        <div class="col-md-4">
-                            <label for="billing_state_id" class="form-label">Billing State <span class="text-danger">*</span></label>
-                            <select class="form-select" id="billing_state_id" name="billing_state_id">
-                                <option value="">Select State</option>
-                                @if(isset($draft->billing_data['state_id']) && $draft->billing_data['state_id'])
-                                    @php
-                                        $billingState = \App\Models\State::find($draft->billing_data['state_id']);
-                                    @endphp
-                                    @if($billingState)
-                                        <option value="{{ $billingState->id }}" selected>{{ $billingState->name }}</option>
-                                    @endif
-                                @endif
-                            </select>
-                            <div class="invalid-feedback"></div>
-                        </div>
-                        <div class="col-md-4">
-                            <label for="billing_city" class="form-label">Billing City <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control" id="billing_city" name="billing_city" 
-                                   value="{{ isset($draft->billing_data['city']) ? $draft->billing_data['city'] : (isset($draft->billing_data['city_id']) && is_numeric($draft->billing_data['city_id']) ? (\App\Models\City::find($draft->billing_data['city_id'])->name ?? '') : (isset($draft->billing_data['city_id']) ? $draft->billing_data['city_id'] : '')) }}" 
-                                   maxlength="100">
-                            <div class="invalid-feedback"></div>
-                        </div>
-                    </div>
-
-                    <div class="row mb-3">
-                        <div class="col-md-6">
-                            <label for="billing_postal_code" class="form-label">Billing Postal Code <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control" id="billing_postal_code" name="billing_postal_code" 
-                                   value="{{ isset($draft->billing_data['postal_code']) ? $draft->billing_data['postal_code'] : '' }}" 
-                                   pattern="[0-9]{6}" maxlength="6">
-                            <div class="invalid-feedback"></div>
-                        </div>
-                        <div class="col-md-6">
-                            <label for="billing_gst_id" class="form-label">Billing GST Number</label>
-                            <input type="text" class="form-control" id="billing_gst_id" name="billing_gst_id" 
-                                   value="{{ isset($draft->billing_data['gst_id']) ? $draft->billing_data['gst_id'] : '' }}" 
-                                   pattern="[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}" 
-                                   placeholder="">
-                            <div class="invalid-feedback"></div>
-                        </div>
                     </div>
                 </div>
 
@@ -741,94 +721,6 @@ document.addEventListener('DOMContentLoaded', function() {
         setTimeout(window.updatePhoneFields, 100);
     }
     
-    // Initialize intl-tel-input for billing phone
-    const billingPhoneInput = document.getElementById('billing_phone');
-    let billingPhoneIti = null;
-    if (billingPhoneInput) {
-        @php
-            $initialBillingCountry = 'in';
-            $initialBillingPhone = '';
-            if (isset($draft->billing_data['phone']) && $draft->billing_data['phone']) {
-                // Extract country code from phone (format: 91-9801217815)
-                $phoneParts = explode('-', $draft->billing_data['phone']);
-                if (count($phoneParts) == 2) {
-                    $billingCountryCode = $phoneParts[0];
-                    $billingNational = $phoneParts[1];
-                    $country = \App\Models\Country::where('phonecode', $billingCountryCode)->first();
-                    if ($country) {
-                        $initialBillingCountry = strtolower($country->code);
-                    }
-                    $initialBillingPhone = '+' . $billingCountryCode . $billingNational;
-                }
-            }
-        @endphp
-        
-        @if(!empty($initialBillingPhone))
-        billingPhoneInput.value = '{{ $initialBillingPhone }}';
-        @endif
-        
-        billingPhoneIti = window.intlTelInput(billingPhoneInput, {
-            initialCountry: '{{ $initialBillingCountry }}',
-            preferredCountries: ['in', 'us', 'gb'],
-            utilsScript: "https://cdn.jsdelivr.net/npm/intl-tel-input@18.1.1/build/js/utils.js",
-            separateDialCode: true,
-            nationalMode: false,
-            autoPlaceholder: 'off'
-        });
-        
-        billingPhoneInput.placeholder = '';
-        setTimeout(function() {
-            billingPhoneInput.placeholder = '';
-        }, 100);
-        setTimeout(function() {
-            billingPhoneInput.placeholder = '';
-        }, 300);
-        setTimeout(function() {
-            billingPhoneInput.placeholder = '';
-        }, 500);
-        
-        billingPhoneInput.addEventListener('focus', function() {
-            if (this.placeholder) {
-                this.placeholder = '';
-            }
-        });
-        
-        // Update hidden fields for billing phone
-        window.updateBillingPhoneFields = function() {
-            if (!billingPhoneIti) return;
-            
-            const countryCode = billingPhoneIti.getSelectedCountryData().dialCode;
-            const fullNumber = billingPhoneIti.getNumber();
-            
-            let nationalNumber = '';
-            if (window.intlTelInputUtils && billingPhoneIti.isValidNumber()) {
-                nationalNumber = billingPhoneIti.getNumber(window.intlTelInputUtils.numberFormat.NATIONAL);
-                nationalNumber = nationalNumber.replace(/\s/g, '').replace(/^0+/, '');
-            } else {
-                const dialCode = '+' + countryCode;
-                if (fullNumber.startsWith(dialCode)) {
-                    nationalNumber = fullNumber.substring(dialCode.length).replace(/\s/g, '').replace(/^0+/, '');
-                } else {
-                    const inputValue = billingPhoneInput.value.replace(/\s/g, '');
-                    nationalNumber = inputValue.replace(/^\+?\d{1,3}/, '');
-                }
-            }
-            
-            nationalNumber = nationalNumber.replace(/\s+/g, '');
-            
-            const billingCountryCodeField = document.getElementById('billing_phone_country_code');
-            const billingPhoneNationalField = document.getElementById('billing_phone_national');
-            if (billingCountryCodeField) billingCountryCodeField.value = countryCode;
-            if (billingPhoneNationalField) billingPhoneNationalField.value = nationalNumber;
-        };
-        
-        billingPhoneInput.addEventListener('change', window.updateBillingPhoneFields);
-        billingPhoneInput.addEventListener('blur', window.updateBillingPhoneFields);
-        billingPhoneInput.addEventListener('countrychange', window.updateBillingPhoneFields);
-        
-        setTimeout(window.updateBillingPhoneFields, 100);
-    }
-    
     // Initialize intl-tel-input for landline/telephone
     if (landlineInput) {
         // Get initial values from draft
@@ -938,23 +830,225 @@ document.addEventListener('DOMContentLoaded', function() {
         // Initialize hidden fields on load
         setTimeout(window.updateLandlineFields, 100);
     }
-
-    // Normalize website URL - add https:// if protocol is missing
-    const websiteInput = document.getElementById('website');
-    if (websiteInput) {
-        function normalizeWebsiteUrl(url) {
-            if (!url) return url;
+    
+    // Initialize intl-tel-input for exhibitor telephone
+    const exhibitorTelephoneInput = document.getElementById('exhibitor_telephone');
+    let exhibitorTelephoneIti = null;
+    if (exhibitorTelephoneInput) {
+        @php
+            $initialExhibitorTelephoneCountry = 'in';
+            $initialExhibitorTelephone = '';
+            if (isset($draft->exhibitor_data['telephone']) && $draft->exhibitor_data['telephone']) {
+                // Extract country code from telephone (format: 91-9801217815 or +919801217815)
+                $telephoneValue = $draft->exhibitor_data['telephone'];
+                if (strpos($telephoneValue, '-') !== false) {
+                    $telephoneParts = explode('-', $telephoneValue);
+                    if (count($telephoneParts) == 2) {
+                        $telephoneCountryCode = $telephoneParts[0];
+                        $telephoneNational = $telephoneParts[1];
+                        $country = \App\Models\Country::where('phonecode', $telephoneCountryCode)->first();
+                        if ($country) {
+                            $initialExhibitorTelephoneCountry = strtolower($country->code);
+                        }
+                        $initialExhibitorTelephone = '+' . $telephoneCountryCode . $telephoneNational;
+                    }
+                } elseif (strpos($telephoneValue, '+') === 0) {
+                    $initialExhibitorTelephone = $telephoneValue;
+                }
+            }
+        @endphp
+        
+        @if(!empty($initialExhibitorTelephone))
+        exhibitorTelephoneInput.value = '{{ $initialExhibitorTelephone }}';
+        @endif
+        
+        exhibitorTelephoneIti = window.intlTelInput(exhibitorTelephoneInput, {
+            initialCountry: '{{ $initialExhibitorTelephoneCountry }}',
+            preferredCountries: ['in', 'us', 'gb'],
+            utilsScript: "https://cdn.jsdelivr.net/npm/intl-tel-input@18.1.1/build/js/utils.js",
+            separateDialCode: true,
+            nationalMode: false,
+            autoPlaceholder: 'off'
+        });
+        
+        exhibitorTelephoneInput.placeholder = '';
+        setTimeout(function() {
+            exhibitorTelephoneInput.placeholder = '';
+        }, 100);
+        setTimeout(function() {
+            exhibitorTelephoneInput.placeholder = '';
+        }, 300);
+        setTimeout(function() {
+            exhibitorTelephoneInput.placeholder = '';
+        }, 500);
+        
+        exhibitorTelephoneInput.addEventListener('focus', function() {
+            if (this.placeholder) {
+                this.placeholder = '';
+            }
+        });
+        
+        // Update hidden fields for exhibitor telephone
+        window.updateExhibitorTelephoneFields = function() {
+            if (!exhibitorTelephoneIti) return;
             
-            url = url.trim();
+            const countryCode = exhibitorTelephoneIti.getSelectedCountryData().dialCode;
+            const fullNumber = exhibitorTelephoneIti.getNumber();
             
-            // If URL doesn't start with http:// or https://, add https://
-            if (!/^https?:\/\//i.test(url)) {
-                url = 'https://' + url;
+            let nationalNumber = '';
+            if (window.intlTelInputUtils && exhibitorTelephoneIti.isValidNumber()) {
+                nationalNumber = exhibitorTelephoneIti.getNumber(window.intlTelInputUtils.numberFormat.NATIONAL);
+                nationalNumber = nationalNumber.replace(/\s/g, '').replace(/^0+/, '');
+            } else {
+                const dialCode = '+' + countryCode;
+                if (fullNumber.startsWith(dialCode)) {
+                    nationalNumber = fullNumber.substring(dialCode.length).replace(/\s/g, '').replace(/^0+/, '');
+                } else {
+                    const inputValue = exhibitorTelephoneInput.value.replace(/\s/g, '');
+                    nationalNumber = inputValue.replace(/^\+?\d{1,3}/, '');
+                }
             }
             
-            return url;
+            nationalNumber = nationalNumber.replace(/\s+/g, '');
+            
+            const exhibitorCountryCodeField = document.getElementById('exhibitor_telephone_country_code');
+            const exhibitorTelephoneNationalField = document.getElementById('exhibitor_telephone_national');
+            if (exhibitorCountryCodeField) exhibitorCountryCodeField.value = countryCode;
+            if (exhibitorTelephoneNationalField) exhibitorTelephoneNationalField.value = nationalNumber;
+        };
+        
+        exhibitorTelephoneInput.addEventListener('change', window.updateExhibitorTelephoneFields);
+        exhibitorTelephoneInput.addEventListener('blur', window.updateExhibitorTelephoneFields);
+        exhibitorTelephoneInput.addEventListener('countrychange', window.updateExhibitorTelephoneFields);
+        
+        setTimeout(window.updateExhibitorTelephoneFields, 100);
+        
+        // Make iti accessible globally for copy function
+        window.exhibitorTelephoneIti = exhibitorTelephoneIti;
+    }
+    
+    // Initialize intl-tel-input for billing telephone
+    const billingTelephoneInput = document.getElementById('billing_telephone');
+    let billingTelephoneIti = null;
+    if (billingTelephoneInput) {
+        @php
+            $initialBillingTelephoneCountry = 'in';
+            $initialBillingTelephone = '';
+            if (isset($draft->billing_data['telephone']) && $draft->billing_data['telephone']) {
+                $telephoneValue = $draft->billing_data['telephone'];
+                if (strpos($telephoneValue, '-') !== false) {
+                    $telephoneParts = explode('-', $telephoneValue);
+                    if (count($telephoneParts) == 2) {
+                        $telephoneCountryCode = $telephoneParts[0];
+                        $telephoneNational = $telephoneParts[1];
+                        $country = \App\Models\Country::where('phonecode', $telephoneCountryCode)->first();
+                        if ($country) {
+                            $initialBillingTelephoneCountry = strtolower($country->code);
+                        }
+                        $initialBillingTelephone = '+' . $telephoneCountryCode . $telephoneNational;
+                    }
+                } elseif (strpos($telephoneValue, '+') === 0) {
+                    $initialBillingTelephone = $telephoneValue;
+                }
+            } elseif (isset($draft->landline) && $draft->landline) {
+                $landlineValue = $draft->landline;
+                if (strpos($landlineValue, '-') !== false) {
+                    $landlineParts = explode('-', $landlineValue);
+                    if (count($landlineParts) == 2) {
+                        $landlineCountryCode = $landlineParts[0];
+                        $landlineNational = $landlineParts[1];
+                        $country = \App\Models\Country::where('phonecode', $landlineCountryCode)->first();
+                        if ($country) {
+                            $initialBillingTelephoneCountry = strtolower($country->code);
+                        }
+                        $initialBillingTelephone = '+' . $landlineCountryCode . $landlineNational;
+                    }
+                }
+            }
+        @endphp
+        
+        @if(!empty($initialBillingTelephone))
+        billingTelephoneInput.value = '{{ $initialBillingTelephone }}';
+        @endif
+        
+        billingTelephoneIti = window.intlTelInput(billingTelephoneInput, {
+            initialCountry: '{{ $initialBillingTelephoneCountry }}',
+            preferredCountries: ['in', 'us', 'gb'],
+            utilsScript: "https://cdn.jsdelivr.net/npm/intl-tel-input@18.1.1/build/js/utils.js",
+            separateDialCode: true,
+            nationalMode: false,
+            autoPlaceholder: 'off'
+        });
+        
+        billingTelephoneInput.placeholder = '';
+        setTimeout(function() {
+            billingTelephoneInput.placeholder = '';
+        }, 100);
+        setTimeout(function() {
+            billingTelephoneInput.placeholder = '';
+        }, 300);
+        setTimeout(function() {
+            billingTelephoneInput.placeholder = '';
+        }, 500);
+        
+        billingTelephoneInput.addEventListener('focus', function() {
+            if (this.placeholder) {
+                this.placeholder = '';
+            }
+        });
+        
+        // Update hidden fields for billing telephone
+        window.updateBillingTelephoneFields = function() {
+            if (!billingTelephoneIti) return;
+            
+            const countryCode = billingTelephoneIti.getSelectedCountryData().dialCode;
+            const fullNumber = billingTelephoneIti.getNumber();
+            
+            let nationalNumber = '';
+            if (window.intlTelInputUtils && billingTelephoneIti.isValidNumber()) {
+                nationalNumber = billingTelephoneIti.getNumber(window.intlTelInputUtils.numberFormat.NATIONAL);
+                nationalNumber = nationalNumber.replace(/\s/g, '').replace(/^0+/, '');
+            } else {
+                const dialCode = '+' + countryCode;
+                if (fullNumber.startsWith(dialCode)) {
+                    nationalNumber = fullNumber.substring(dialCode.length).replace(/\s/g, '').replace(/^0+/, '');
+                } else {
+                    const inputValue = billingTelephoneInput.value.replace(/\s/g, '');
+                    nationalNumber = inputValue.replace(/^\+?\d{1,3}/, '');
+                }
+            }
+            
+            nationalNumber = nationalNumber.replace(/\s+/g, '');
+            
+            const billingCountryCodeField = document.getElementById('billing_telephone_country_code');
+            const billingTelephoneNationalField = document.getElementById('billing_telephone_national');
+            if (billingCountryCodeField) billingCountryCodeField.value = countryCode;
+            if (billingTelephoneNationalField) billingTelephoneNationalField.value = nationalNumber;
+        };
+        
+        billingTelephoneInput.addEventListener('change', window.updateBillingTelephoneFields);
+        billingTelephoneInput.addEventListener('blur', window.updateBillingTelephoneFields);
+        billingTelephoneInput.addEventListener('countrychange', window.updateBillingTelephoneFields);
+        
+        setTimeout(window.updateBillingTelephoneFields, 100);
+    }
+
+    // Normalize website URL - add https:// if protocol is missing
+    function normalizeWebsiteUrl(url) {
+        if (!url) return url;
+        
+        url = url.trim();
+        
+        // If URL doesn't start with http:// or https://, add https://
+        if (!/^https?:\/\//i.test(url)) {
+            url = 'https://' + url;
         }
         
+        return url;
+    }
+    
+    const websiteInput = document.getElementById('website');
+    if (websiteInput) {
         websiteInput.addEventListener('blur', function() {
             const currentValue = this.value.trim();
             if (currentValue && !currentValue.match(/^https?:\/\//i)) {
@@ -965,6 +1059,50 @@ document.addEventListener('DOMContentLoaded', function() {
         });
         
         websiteInput.addEventListener('change', function() {
+            const currentValue = this.value.trim();
+            if (currentValue && !currentValue.match(/^https?:\/\//i)) {
+                const normalizedUrl = normalizeWebsiteUrl(currentValue);
+                this.value = normalizedUrl;
+                resetAutoSaveTimer();
+            }
+        });
+    }
+    
+    // Normalize exhibitor website URL
+    const exhibitorWebsiteInput = document.getElementById('exhibitor_website');
+    if (exhibitorWebsiteInput) {
+        exhibitorWebsiteInput.addEventListener('blur', function() {
+            const currentValue = this.value.trim();
+            if (currentValue && !currentValue.match(/^https?:\/\//i)) {
+                const normalizedUrl = normalizeWebsiteUrl(currentValue);
+                this.value = normalizedUrl;
+                resetAutoSaveTimer();
+            }
+        });
+        
+        exhibitorWebsiteInput.addEventListener('change', function() {
+            const currentValue = this.value.trim();
+            if (currentValue && !currentValue.match(/^https?:\/\//i)) {
+                const normalizedUrl = normalizeWebsiteUrl(currentValue);
+                this.value = normalizedUrl;
+                resetAutoSaveTimer();
+            }
+        });
+    }
+    
+    // Normalize billing website URL
+    const billingWebsiteInput = document.getElementById('billing_website');
+    if (billingWebsiteInput) {
+        billingWebsiteInput.addEventListener('blur', function() {
+            const currentValue = this.value.trim();
+            if (currentValue && !currentValue.match(/^https?:\/\//i)) {
+                const normalizedUrl = normalizeWebsiteUrl(currentValue);
+                this.value = normalizedUrl;
+                resetAutoSaveTimer();
+            }
+        });
+        
+        billingWebsiteInput.addEventListener('change', function() {
             const currentValue = this.value.trim();
             if (currentValue && !currentValue.match(/^https?:\/\//i)) {
                 const normalizedUrl = normalizeWebsiteUrl(currentValue);
@@ -1057,44 +1195,44 @@ document.addEventListener('DOMContentLoaded', function() {
                 validateGstBtn.innerHTML = '<i class="fas fa-search"></i> Validate';
                 
                 if (data.success) {
-                    // Auto-fill company name and billing address
-                    const companyNameField = document.getElementById('company_name');
-                    const addressField = document.getElementById('address');
-                    const stateField = document.getElementById('state_id');
-                    const postalCodeField = document.getElementById('postal_code');
+                    // Auto-fill billing company name and billing address
+                    const billingCompanyNameField = document.getElementById('billing_company_name');
+                    const billingAddressField = document.getElementById('billing_address');
+                    const billingStateField = document.getElementById('billing_state_id');
+                    const billingPostalCodeField = document.getElementById('billing_postal_code');
                     const panField = document.getElementById('pan_no');
-                    const cityField = document.getElementById('city_id');
+                    const billingCityField = document.getElementById('billing_city');
                     
-                    if (data.data.company_name && companyNameField) {
-                        companyNameField.value = data.data.company_name;
+                    if (data.data.company_name && billingCompanyNameField) {
+                        billingCompanyNameField.value = data.data.company_name;
                     }
                     
-                    if (data.data.billing_address && addressField) {
-                        addressField.value = data.data.billing_address;
+                    if (data.data.billing_address && billingAddressField) {
+                        billingAddressField.value = data.data.billing_address;
                     }
                     
-                    if (data.data.state_id && stateField) {
-                        stateField.value = data.data.state_id;
+                    if (data.data.state_id && billingStateField) {
+                        billingStateField.value = data.data.state_id;
                         // Trigger state change event to ensure proper handling
                         const changeEvent = new Event('change', { bubbles: true });
-                        stateField.dispatchEvent(changeEvent);
+                        billingStateField.dispatchEvent(changeEvent);
                     }
                     
-                    if (data.data.pincode && postalCodeField) {
-                        postalCodeField.value = data.data.pincode;
+                    if (data.data.pincode && billingPostalCodeField) {
+                        billingPostalCodeField.value = data.data.pincode;
                     }
                     
                     if (data.data.pan && panField) {
                         panField.value = data.data.pan;
                     }
                     
-                    if (data.data.city && cityField) {
-                        cityField.value = data.data.city;
+                    if (data.data.city && billingCityField) {
+                        billingCityField.value = data.data.city;
                     }
                     
                     let successMsg = '<small class="text-success"><i class="fas fa-check"></i> GST details fetched successfully';
                     if (data.from_cache) {
-                        successMsg += ' (from cache)';
+                        successMsg += ' ';
                     }
                     // Only show remaining requests on the last API call (when 1 request remaining)
                     if (data.rate_limit_remaining !== undefined && data.rate_limit_remaining !== null && data.rate_limit_remaining === 1) {
@@ -1154,127 +1292,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // Billing Information Toggle
-    const billingDifferentCheckbox = document.getElementById('billing_different');
-    const billingDetailsSection = document.getElementById('billing_details_section');
-    
-    if (billingDifferentCheckbox && billingDetailsSection) {
-        // Function to toggle required attributes
-        function toggleBillingRequiredFields(required) {
-            const billingFields = [
-                'billing_company',
-                'billing_contact_name',
-                'billing_email',
-                'billing_phone',
-                'billing_address',
-                'billing_country_id',
-                'billing_state_id',
-                'billing_city',
-                'billing_postal_code'
-            ];
-            
-            billingFields.forEach(fieldId => {
-                const field = document.getElementById(fieldId);
-                if (field) {
-                    if (required) {
-                        field.setAttribute('required', 'required');
-                    } else {
-                        field.removeAttribute('required');
-                    }
-                }
-            });
-        }
-        
-        billingDifferentCheckbox.addEventListener('change', function() {
-            if (this.checked) {
-                billingDetailsSection.style.display = 'block';
-                toggleBillingRequiredFields(true);
-            } else {
-                billingDetailsSection.style.display = 'none';
-                toggleBillingRequiredFields(false);
-                // Clear billing fields when unchecked
-                const billingInputs = billingDetailsSection.querySelectorAll('input, select, textarea');
-                billingInputs.forEach(field => {
-                    if (field.id !== 'billing_different') {
-                        field.value = '';
-                    }
-                });
-            }
-            resetAutoSaveTimer();
-        });
-        
-        // Initialize on page load
-        if (billingDifferentCheckbox.checked) {
-            toggleBillingRequiredFields(true);
-        } else {
-            toggleBillingRequiredFields(false);
-        }
-    }
-
-    // Dynamic state loading based on country selection
-    const countrySelect = document.getElementById('country_id');
-    const stateSelect = document.getElementById('state_id');
-    
-    function loadStatesForCountry(countryId, preserveSelectedStateId = null) {
-        if (!countryId) {
-            stateSelect.innerHTML = '<option value="">Select State</option>';
-            stateSelect.disabled = false;
-            return;
-        }
-        
-        // Clear and disable state dropdown while loading
-        stateSelect.innerHTML = '<option value="">Loading states...</option>';
-        stateSelect.disabled = true;
-        
-        // Fetch states for selected country
-        fetch('{{ route("get.states") }}', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': '{{ csrf_token() }}'
-            },
-            body: JSON.stringify({ country_id: countryId })
-        })
-        .then(response => response.json())
-        .then(data => {
-            stateSelect.innerHTML = '<option value="">Select State</option>';
-            if (data && data.length > 0) {
-                data.forEach(state => {
-                    const option = document.createElement('option');
-                    option.value = state.id;
-                    option.textContent = state.name;
-                    // Preserve selected state if country hasn't changed
-                    if (preserveSelectedStateId && preserveSelectedStateId == state.id) {
-                        option.selected = true;
-                    }
-                    stateSelect.appendChild(option);
-                });
-            }
-            stateSelect.disabled = false;
-            resetAutoSaveTimer();
-        })
-        .catch(error => {
-            console.error('Error loading states:', error);
-            stateSelect.innerHTML = '<option value="">Error loading states</option>';
-            stateSelect.disabled = false;
-        });
-    }
-    
-    if (countrySelect && stateSelect) {
-        // Load states on page load if country is already selected
-        const initialCountryId = countrySelect.value;
-        const initialStateId = stateSelect.value;
-        if (initialCountryId) {
-            loadStatesForCountry(initialCountryId, initialStateId);
-        }
-        
-        // Handle country change
-        countrySelect.addEventListener('change', function() {
-            loadStatesForCountry(this.value);
-        });
-    }
-
-    // Billing country/state loading (city is now input, not dropdown)
+    // Billing country/state loading
     const billingCountrySelect = document.getElementById('billing_country_id');
     const billingStateSelect = document.getElementById('billing_state_id');
     
@@ -1334,72 +1352,131 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // Copy from exhibitor information checkbox
-    const copyFromExhibitorCheckbox = document.getElementById('copy_from_exhibitor');
-    if (copyFromExhibitorCheckbox) {
-        copyFromExhibitorCheckbox.addEventListener('change', function() {
-            if (this.checked) {
-                // Copy company name
-                const companyName = document.getElementById('company_name')?.value || '';
-                document.getElementById('billing_company').value = companyName;
-                
-                // Copy contact name from contact person
-                const contactTitle = document.getElementById('contact_title')?.value || '';
-                const contactFirstName = document.getElementById('contact_first_name')?.value || '';
-                const contactLastName = document.getElementById('contact_last_name')?.value || '';
-                const contactName = (contactTitle + ' ' + contactFirstName + ' ' + contactLastName).trim();
-                document.getElementById('billing_contact_name').value = contactName;
-                
-                // Copy email
-                const contactEmail = document.getElementById('contact_email')?.value || '';
-                document.getElementById('billing_email').value = contactEmail;
-                
-                // Copy phone (from contact mobile or landline)
-                const contactMobile = document.getElementById('contact_mobile')?.value || '';
-                const landline = document.getElementById('landline')?.value || '';
-                const phoneValue = contactMobile || landline;
-                if (phoneValue && billingPhoneIti) {
-                    billingPhoneIti.setNumber(phoneValue);
-                    if (typeof window.updateBillingPhoneFields === 'function') {
-                        window.updateBillingPhoneFields();
+    // Exhibitor country/state loading
+    const exhibitorCountrySelect = document.getElementById('exhibitor_country_id');
+    const exhibitorStateSelect = document.getElementById('exhibitor_state_id');
+    
+    function loadExhibitorStatesForCountry(countryId, preserveSelectedStateId = null, callback = null) {
+        if (!countryId) {
+            exhibitorStateSelect.innerHTML = '<option value="">Select State</option>';
+            exhibitorStateSelect.disabled = false;
+            if (callback) callback();
+            return Promise.resolve();
+        }
+        
+        exhibitorStateSelect.innerHTML = '<option value="">Loading states...</option>';
+        exhibitorStateSelect.disabled = true;
+        
+        return fetch('{{ route("get.states") }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+            },
+            body: JSON.stringify({ country_id: countryId })
+        })
+        .then(response => response.json())
+        .then(data => {
+            exhibitorStateSelect.innerHTML = '<option value="">Select State</option>';
+            if (data && data.length > 0) {
+                data.forEach(state => {
+                    const option = document.createElement('option');
+                    option.value = state.id;
+                    option.textContent = state.name;
+                    if (preserveSelectedStateId && preserveSelectedStateId == state.id) {
+                        option.selected = true;
                     }
-                } else {
-                    document.getElementById('billing_phone').value = phoneValue;
-                }
-                
-                // Copy address
-                const address = document.getElementById('address')?.value || '';
-                document.getElementById('billing_address').value = address;
-                
-                // Copy country
-                const countryId = document.getElementById('country_id')?.value || '';
-                if (countryId && billingCountrySelect) {
-                    billingCountrySelect.value = countryId;
-                    loadBillingStatesForCountry(countryId);
-                    
-                    // Copy state after states are loaded
-                    setTimeout(() => {
-                        const stateId = document.getElementById('state_id')?.value || '';
-                        if (stateId && billingStateSelect) {
-                            billingStateSelect.value = stateId;
-                        }
-                    }, 500);
-                }
-                
-                // Copy city (as text input)
-                const cityInput = document.getElementById('city_id')?.value || '';
-                document.getElementById('billing_city').value = cityInput;
-                
-                // Copy postal code
-                const postalCode = document.getElementById('postal_code')?.value || '';
-                document.getElementById('billing_postal_code').value = postalCode;
-                
-                // Copy GST number
-                const gstNo = document.getElementById('gst_no')?.value || '';
-                document.getElementById('billing_gst_id').value = gstNo;
-                
-                resetAutoSaveTimer();
+                    exhibitorStateSelect.appendChild(option);
+                });
             }
+            exhibitorStateSelect.disabled = false;
+            resetAutoSaveTimer();
+            if (callback) callback();
+        })
+        .catch(error => {
+            console.error('Error loading exhibitor states:', error);
+            exhibitorStateSelect.innerHTML = '<option value="">Error loading states</option>';
+            exhibitorStateSelect.disabled = false;
+            if (callback) callback();
+        });
+    }
+    
+    if (exhibitorCountrySelect && exhibitorStateSelect) {
+        // Load states on page load if country is already selected
+        const initialExhibitorCountryId = exhibitorCountrySelect.value;
+        const initialExhibitorStateId = exhibitorStateSelect.value;
+        if (initialExhibitorCountryId) {
+            loadExhibitorStatesForCountry(initialExhibitorCountryId, initialExhibitorStateId);
+        }
+        
+        // Handle exhibitor country change
+        exhibitorCountrySelect.addEventListener('change', function() {
+            loadExhibitorStatesForCountry(this.value);
+        });
+    }
+
+    // Copy from Billing Information to Exhibitor Information
+    const copyFromBillingBtn = document.getElementById('copy_from_billing');
+    if (copyFromBillingBtn) {
+        copyFromBillingBtn.addEventListener('click', function() {
+            // Copy company name
+            const billingCompanyName = document.getElementById('billing_company_name')?.value || '';
+            document.getElementById('exhibitor_name').value = billingCompanyName;
+            
+            // Copy address
+            const billingAddress = document.getElementById('billing_address')?.value || '';
+            document.getElementById('exhibitor_address').value = billingAddress;
+            
+            // Copy country
+            const billingCountryId = document.getElementById('billing_country_id')?.value || '';
+            const billingStateId = document.getElementById('billing_state_id')?.value || '';
+            if (billingCountryId && exhibitorCountrySelect) {
+                exhibitorCountrySelect.value = billingCountryId;
+                
+                // Load states and then copy state value after states are loaded
+                loadExhibitorStatesForCountry(billingCountryId, null, function() {
+                    // This callback runs after states are loaded
+                    if (billingStateId && exhibitorStateSelect) {
+                        exhibitorStateSelect.value = billingStateId;
+                        resetAutoSaveTimer();
+                    }
+                });
+            }
+            
+            // Copy city
+            const billingCity = document.getElementById('billing_city')?.value || '';
+            document.getElementById('exhibitor_city').value = billingCity;
+            
+            // Copy postal code
+            const billingPostalCode = document.getElementById('billing_postal_code')?.value || '';
+            document.getElementById('exhibitor_postal_code').value = billingPostalCode;
+            
+            // Copy telephone
+            const billingTelephone = document.getElementById('billing_telephone')?.value || '';
+            const exhibitorTelephone = document.getElementById('exhibitor_telephone');
+            if (billingTelephone) {
+                // Wait for exhibitorTelephoneIti to be initialized
+                setTimeout(() => {
+                    if (window.exhibitorTelephoneIti) {
+                        window.exhibitorTelephoneIti.setNumber(billingTelephone);
+                        if (typeof window.updateExhibitorTelephoneFields === 'function') {
+                            window.updateExhibitorTelephoneFields();
+                        }
+                    } else {
+                        exhibitorTelephone.value = billingTelephone;
+                    }
+                }, 100);
+            }
+            
+            // Copy website
+            const billingWebsite = document.getElementById('billing_website')?.value || '';
+            document.getElementById('exhibitor_website').value = billingWebsite;
+            
+            // Copy email
+            const billingEmail = document.getElementById('billing_email')?.value || '';
+            document.getElementById('exhibitor_email').value = billingEmail;
+            
+            resetAutoSaveTimer();
         });
     }
 
@@ -1595,8 +1672,8 @@ document.addEventListener('DOMContentLoaded', function() {
         if (typeof window.updateLandlineFields === 'function') {
             window.updateLandlineFields();
         }
-        if (typeof window.updateBillingPhoneFields === 'function') {
-            window.updateBillingPhoneFields();
+        if (typeof window.updateExhibitorTelephoneFields === 'function') {
+            window.updateExhibitorTelephoneFields();
         }
         
         const formData = new FormData(document.getElementById('startupZoneForm'));
@@ -1685,8 +1762,8 @@ document.addEventListener('DOMContentLoaded', function() {
         if (typeof window.updateLandlineFields === 'function') {
             window.updateLandlineFields();
         }
-        if (typeof window.updateBillingPhoneFields === 'function') {
-            window.updateBillingPhoneFields();
+        if (typeof window.updateExhibitorTelephoneFields === 'function') {
+            window.updateExhibitorTelephoneFields();
         }
         
         const form = document.getElementById('startupZoneForm');

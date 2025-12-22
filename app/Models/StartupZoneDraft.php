@@ -38,6 +38,8 @@ class StartupZoneDraft extends Model
         'assoc_mem',
         'RegSource',
         'contact_data',
+        'billing_data',
+        'exhibitor_data',
         'payment_mode',
         'application_type',
         'event_id',
@@ -53,6 +55,8 @@ class StartupZoneDraft extends Model
 
     protected $casts = [
         'contact_data' => 'array',
+        'billing_data' => 'array',
+        'exhibitor_data' => 'array',
         'gst_compliance' => 'boolean',
         'is_abandoned' => 'boolean',
         'how_old_startup' => 'integer',

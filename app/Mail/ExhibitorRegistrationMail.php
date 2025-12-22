@@ -20,6 +20,7 @@ class ExhibitorRegistrationMail extends Mailable
     public $application;
     public $invoice;
     public $contact;
+    public $billingDetail;
     public $paymentUrl;
     public $sectorName;
 
@@ -31,6 +32,7 @@ class ExhibitorRegistrationMail extends Mailable
         $this->application = $application;
         $this->invoice = $invoice;
         $this->contact = $contact;
+        $this->billingDetail = \App\Models\BillingDetail::where('application_id', $application->id)->first();
         $this->paymentUrl = route('startup-zone.payment', $application->application_id);
         
         // Get sector name if sector_id exists
@@ -71,6 +73,7 @@ class ExhibitorRegistrationMail extends Mailable
                 'application' => $this->application,
                 'invoice' => $this->invoice,
                 'contact' => $this->contact,
+                'billingDetail' => $this->billingDetail,
                 'paymentUrl' => $this->paymentUrl,
                 'sectorName' => $this->sectorName,
             ],
