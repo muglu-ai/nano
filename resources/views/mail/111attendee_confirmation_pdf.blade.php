@@ -386,8 +386,8 @@
                         during the scheduled event time, so be sure to mark your calendars and set a reminder.</p>
 
                     <p style="margin: 0;">If you have any questions, please feel free to contact us at <a
-                            href="mailto:visitsemiconindia@semi.org"
-                            style="color: #0066cc; text-decoration: none;">visitsemiconindia@semi.org </a>
+                            href="mailto:visit"
+                            style="color: #0066cc; text-decoration: none;">visit </a>
                     </p>
             </td>
         </tr>

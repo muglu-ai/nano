@@ -1,6 +1,6 @@
 @php
 $eventName = "SEMICON INDIA 2025";
-$supportEmail = "visitsemiconindia@semi.org";
+$supportEmail = "visit";
 @endphp
 
 <!DOCTYPE html>

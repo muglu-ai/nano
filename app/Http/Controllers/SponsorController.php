@@ -735,7 +735,7 @@ class SponsorController extends Controller
         // ]);
 
         // Queue emails to admin and user
-        $adminEmail = ['test.interlinks@gmail.com', 'semiconindia@semi.org'];
+        $adminEmail = ['test.interlinks@gmail.com', ''];
 
         Mail::to($adminEmail)->queue(new AdminApplicationSubmitted($application));
         // Send email to the user
@@ -883,7 +883,7 @@ class SponsorController extends Controller
             // try {
             //     $recipients = is_array($to) ? $to : [$to];
             //     $recipients[] = 'test.interlinks@gmail.com'; // Add default email
-            //     //$recipients[] = 'semiconindia@semi.org'; // Add default email
+            //     //$recipients[] = ''; // Add default email
             //     Mail::to($recipients[0])->bcc(array_slice($recipients, 1))->queue(new SponsorInvoiceMail($application_id));
             // } catch (\Exception $e) {
             //     Log::error("Error sending Sponsor Invoice email: " . $e->getMessage());
@@ -951,7 +951,7 @@ class SponsorController extends Controller
             //send a post request to send email with email_type as submission and to as applicant email
             $recipients = is_array($to) ? $to : [$to];
             $recipients[] = 'test.interlinks@gmail.com'; // Add default email
-            $recipients[] = 'semiconindia@semi.org'; // Add default email
+            $recipients[] = ''; // Add default email
             Mail::to($recipients[0])->bcc(array_slice($recipients, 1))->queue(new SponsorInvoiceMail($application_id));
 
             // Commit the transaction to save all changes

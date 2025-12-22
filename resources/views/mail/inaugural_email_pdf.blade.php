@@ -369,7 +369,7 @@
        
 
         <p class="contact-info" style="margin-top: 20px;">
-            If you have any query, please feel free to contact us at <strong>visitsemiconindia@semi.org</strong>.
+            If you have any query, please feel free to contact us at <strong>visit</strong>.
         </p>
 
     </div>

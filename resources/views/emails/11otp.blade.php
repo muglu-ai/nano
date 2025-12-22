@@ -1,7 +1,7 @@
 @component('mail::message')
 @php
     $eventName = "SEMICON INDIA 2025";
-    $supportEmail = "visitsemiconindia@semi.org";
+    $supportEmail = "visit";
 @endphp
 
 <table width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:600px; margin:0 auto; font-family:Arial, sans-serif; border:1px solid #ddd; background:#f9f9f9;">

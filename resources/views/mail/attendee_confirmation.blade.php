@@ -493,7 +493,7 @@
                     <tr>
                         <td style="padding: 18px 22px 0 22px;">
                             <p style="margin-top: 10px; font-size: 15px; color: #333;">
-                                If you have any query, please feel free to contact us at <strong>visitsemiconindia@semi.org</strong>.
+                                If you have any query, please feel free to contact us at <strong>visit</strong>.
                             </p>
                         </td>
                     </tr>
