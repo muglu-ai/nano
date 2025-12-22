@@ -146,10 +146,13 @@ class StartupZoneController extends Controller
 
     /**
      * Store form data in session (lightweight, no database writes)
+     * NOTE: This method does NOT check for duplicate applications.
+     * Duplicate checking only happens in restoreDraftToApplication() on final submission.
      */
     public function autoSave(Request $request)
     {
         // Store all form data in session - no database writes until submit
+        // No duplicate checking here - this is just session storage for draft data
         $formData = $request->except(['_token', 'certificate']);
         
         // Normalize website URL - add https:// if missing
@@ -157,10 +160,15 @@ class StartupZoneController extends Controller
             $formData['website'] = $this->normalizeWebsiteUrl($formData['website']);
         }
         
-        // Handle landline: use national number if available, otherwise use full number
+        // Handle landline: format as country_code-national_number (e.g., 91-9801217815)
         if ($request->has('landline_national') && $request->input('landline_national')) {
-            $formData['landline'] = $request->input('landline_national');
-            $formData['landline_country_code'] = $request->input('landline_country_code');
+            $landlineNational = preg_replace('/\s+/', '', trim($request->input('landline_national'))); // Remove all spaces
+            $landlineCountryCode = $request->input('landline_country_code') ?: '91'; // Default to India
+            $formData['landline'] = $landlineCountryCode . '-' . $landlineNational;
+            $formData['landline_country_code'] = $landlineCountryCode;
+        } elseif ($request->has('landline') && $request->input('landline')) {
+            // If landline is provided directly, trim spaces
+            $formData['landline'] = preg_replace('/\s+/', '', trim($request->input('landline')));
         }
         
         // Handle file upload separately (if provided)
@@ -171,15 +179,33 @@ class StartupZoneController extends Controller
         }
         
         // Build contact data from individual fields
-        // Use contact_mobile_national for the actual mobile number (without country code)
+        // Format mobile as country_code-national_number (e.g., 91-9801217815)
+        $mobileNational = '';
+        $mobileCountryCode = '91'; // Default to India
+        
+        if ($request->has('contact_mobile_national') && $request->input('contact_mobile_national')) {
+            $mobileNational = preg_replace('/\s+/', '', trim($request->input('contact_mobile_national'))); // Remove all spaces
+            $mobileCountryCode = $request->input('contact_country_code') ?: '91';
+        } elseif ($request->has('contact_mobile') && $request->input('contact_mobile')) {
+            // If mobile is provided directly, extract and format
+            $mobileValue = preg_replace('/\s+/', '', trim($request->input('contact_mobile')));
+            // Try to extract country code if present
+            if (preg_match('/^\+?(\d{1,3})(\d+)$/', $mobileValue, $matches)) {
+                $mobileCountryCode = $matches[1];
+                $mobileNational = $matches[2];
+            } else {
+                $mobileNational = $mobileValue;
+            }
+        }
+        
         $contactData = [
             'title' => $request->input('contact_title'),
             'first_name' => $request->input('contact_first_name'),
             'last_name' => $request->input('contact_last_name'),
             'designation' => $request->input('contact_designation'),
             'email' => $request->input('contact_email'),
-            'mobile' => $request->input('contact_mobile_national') ?: $request->input('contact_mobile'), // Use national number if available
-            'country_code' => $request->input('contact_country_code'),
+            'mobile' => $mobileNational ? ($mobileCountryCode . '-' . $mobileNational) : '', // Format as country_code-national_number
+            'country_code' => $mobileCountryCode,
         ];
         
         if (!empty($contactData)) {
@@ -460,12 +486,26 @@ class StartupZoneController extends Controller
                 $draft->certificate_path = $sessionData['certificate_path'];
             }
 
-            // Handle landline: use national number if available
+            // Handle landline: format as country_code-national_number (e.g., 91-9801217815)
             $landlineData = [];
             if ($request->has('landline_national') && $request->input('landline_national')) {
-                $landlineData['landline'] = $request->input('landline_national');
-            } elseif ($request->has('landline')) {
-                $landlineData['landline'] = $request->input('landline');
+                $landlineNational = preg_replace('/\s+/', '', trim($request->input('landline_national'))); // Remove all spaces
+                $landlineCountryCode = $request->input('landline_country_code') ?: '91'; // Default to India
+                $landlineData['landline'] = $landlineCountryCode . '-' . $landlineNational;
+            } elseif ($request->has('landline') && $request->input('landline')) {
+                // If landline is provided directly, trim spaces and format
+                $landlineValue = preg_replace('/\s+/', '', trim($request->input('landline')));
+                // If already in format country_code-national_number, keep it; otherwise format it
+                if (!preg_match('/^\d{1,3}-\d+$/', $landlineValue)) {
+                    // Try to extract country code if present
+                    if (preg_match('/^\+?(\d{1,3})(\d+)$/', $landlineValue, $matches)) {
+                        $landlineData['landline'] = $matches[1] . '-' . $matches[2];
+                    } else {
+                        $landlineData['landline'] = '91-' . $landlineValue; // Default to India
+                    }
+                } else {
+                    $landlineData['landline'] = $landlineValue;
+                }
             }
             
             // Update draft with all form fields from session + request
@@ -514,14 +554,33 @@ class StartupZoneController extends Controller
             if (isset($sessionData['contact_data'])) {
                 $draft->contact_data = $sessionData['contact_data'];
             } else {
+                // Format mobile as country_code-national_number (e.g., 91-9801217815)
+                $mobileNational = '';
+                $mobileCountryCode = '91'; // Default to India
+                
+                if ($request->has('contact_mobile_national') && $request->input('contact_mobile_national')) {
+                    $mobileNational = preg_replace('/\s+/', '', trim($request->input('contact_mobile_national'))); // Remove all spaces
+                    $mobileCountryCode = $request->input('contact_country_code') ?: '91';
+                } elseif ($request->has('contact_mobile') && $request->input('contact_mobile')) {
+                    // If mobile is provided directly, extract and format
+                    $mobileValue = preg_replace('/\s+/', '', trim($request->input('contact_mobile')));
+                    // Try to extract country code if present
+                    if (preg_match('/^\+?(\d{1,3})(\d+)$/', $mobileValue, $matches)) {
+                        $mobileCountryCode = $matches[1];
+                        $mobileNational = $matches[2];
+                    } else {
+                        $mobileNational = $mobileValue;
+                    }
+                }
+                
                 $contactData = [
                     'title' => $request->input('contact_title'),
                     'first_name' => $request->input('contact_first_name'),
                     'last_name' => $request->input('contact_last_name'),
                     'designation' => $request->input('contact_designation'),
                     'email' => $request->input('contact_email'),
-                    'mobile' => $request->input('contact_mobile_national') ?: $request->input('contact_mobile'), // Use national number if available
-                    'country_code' => $request->input('contact_country_code'),
+                    'mobile' => $mobileNational ? ($mobileCountryCode . '-' . $mobileNational) : '', // Format as country_code-national_number
+                    'country_code' => $mobileCountryCode,
                 ];
                 $draft->contact_data = $contactData;
             }
@@ -638,13 +697,60 @@ class StartupZoneController extends Controller
                 throw new \Exception('Contact email or company email is required');
             }
             
+            // Get event_id from draft (default to 1 if not set)
+            $eventId = $draft->event_id ?? 1;
+            
+            // Check if user exists with this email (email must be unique in users table)
+            $user = \App\Models\User::where('email', $contactEmail)->first();
+            
+            // Check if an application already exists for this email and event
+            // IMPORTANT: This check only runs on final submission (restoreDraftToApplication), 
+            // NOT during auto-save (autoSave method). Auto-save only saves to session.
+            $existingApplication = null;
+            
+            // First, check by user_id if user exists (most reliable)
+            if ($user) {
+                $existingApplication = Application::where('application_type', 'startup-zone')
+                    ->where('event_id', $eventId)
+                    ->where('user_id', $user->id)
+                    ->first();
+            }
+            
+            // If not found by user_id, check by email addresses
+            if (!$existingApplication) {
+                $existingApplication = Application::where('application_type', 'startup-zone')
+                    ->where('event_id', $eventId)
+                    ->where(function($query) use ($contactEmail, $draft) {
+                        // Check by user's email
+                        $query->whereHas('user', function($userQuery) use ($contactEmail) {
+                            $userQuery->where('email', $contactEmail);
+                        })
+                        // Check by company email (contact email)
+                        ->orWhere('company_email', $contactEmail);
+                        
+                        // Also check company email if different from contact email
+                        if (!empty($draft->company_email) && $draft->company_email !== $contactEmail) {
+                            $query->orWhere('company_email', $draft->company_email);
+                        }
+                    })
+                    ->first();
+            }
+            
+            if ($existingApplication) {
+                DB::rollBack();
+                return response()->json([
+                    'success' => false,
+                    'message' => 'You have already registered for this event with this email address. Each email can only register once per event.',
+                    'errors' => [
+                        'email' => ['An application already exists for this email address and event. Please use a different email or contact support if you need to update your registration.']
+                    ]
+                ], 422);
+            }
+            
             $contactName = trim(($draft->contact_data['first_name'] ?? '') . ' ' . ($draft->contact_data['last_name'] ?? ''));
             if (empty($contactName)) {
                 $contactName = $draft->company_name;
             }
-            
-            // Check if user exists with this email (email must be unique in users table)
-            $user = \App\Models\User::where('email', $contactEmail)->first();
             $passwordGenerated = false;
             $password = null;
             

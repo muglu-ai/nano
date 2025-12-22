@@ -467,18 +467,25 @@ document.addEventListener('DOMContentLoaded', function() {
             const countryCode = iti.getSelectedCountryData().dialCode;
             const fullNumber = iti.getNumber();
             
-            // Get national number (without country code)
+            // Get national number (without country code) and remove all spaces
             let nationalNumber = '';
             if (window.intlTelInputUtils && iti.isValidNumber()) {
                 nationalNumber = iti.getNumber(window.intlTelInputUtils.numberFormat.NATIONAL);
-                nationalNumber = nationalNumber.replace(/\s/g, '').replace(/^0+/, '');
+                nationalNumber = nationalNumber.replace(/\s/g, '').replace(/^0+/, ''); // Remove all spaces and leading zeros
             } else {
                 // Fallback: extract number from full number
                 const dialCode = '+' + countryCode;
                 if (fullNumber.startsWith(dialCode)) {
                     nationalNumber = fullNumber.substring(dialCode.length).replace(/\s/g, '').replace(/^0+/, '');
+                } else {
+                    // If no country code prefix, try to extract from the input value
+                    const inputValue = mobileInput.value.replace(/\s/g, ''); // Remove all spaces
+                    nationalNumber = inputValue.replace(/^\+?\d{1,3}/, ''); // Remove country code if present
                 }
             }
+            
+            // Remove all spaces from national number
+            nationalNumber = nationalNumber.replace(/\s+/g, '');
             
             const countryCodeField = document.getElementById('contact_country_code');
             const mobileNationalField = document.getElementById('contact_mobile_national');
@@ -570,18 +577,25 @@ document.addEventListener('DOMContentLoaded', function() {
             const countryCode = itiLandline.getSelectedCountryData().dialCode;
             const fullNumber = itiLandline.getNumber();
             
-            // Get national number (without country code)
+            // Get national number (without country code) and remove all spaces
             let nationalNumber = '';
             if (window.intlTelInputUtils && itiLandline.isValidNumber()) {
                 nationalNumber = itiLandline.getNumber(window.intlTelInputUtils.numberFormat.NATIONAL);
-                nationalNumber = nationalNumber.replace(/\s/g, '').replace(/^0+/, '');
+                nationalNumber = nationalNumber.replace(/\s/g, '').replace(/^0+/, ''); // Remove all spaces and leading zeros
             } else {
                 // Fallback: extract number from full number
                 const dialCode = '+' + countryCode;
                 if (fullNumber.startsWith(dialCode)) {
                     nationalNumber = fullNumber.substring(dialCode.length).replace(/\s/g, '').replace(/^0+/, '');
+                } else {
+                    // If no country code prefix, try to extract from the input value
+                    const inputValue = landlineInput.value.replace(/\s/g, ''); // Remove all spaces
+                    nationalNumber = inputValue.replace(/^\+?\d{1,3}/, ''); // Remove country code if present
                 }
             }
+            
+            // Remove all spaces from national number
+            nationalNumber = nationalNumber.replace(/\s+/g, '');
             
             const countryCodeField = document.getElementById('landline_country_code');
             const landlineNationalField = document.getElementById('landline_national');
