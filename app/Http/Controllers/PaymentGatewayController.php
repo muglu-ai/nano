@@ -266,33 +266,37 @@ class PaymentGatewayController extends Controller
         // get the invoice details from the Invoice model where invoice_no = $id
         $invoice = Invoice::where('invoice_no', $orderID)->first();
 
-        //if invoice not found then redirect to route exhibitor.orders
+        //if invoice not found then redirect appropriately
         if (!$invoice) {
             return redirect()->route('exhibitor.orders');
         }
 
-        //if invoice is already paid then redirect to route exhibitor.orders
-        if ($invoice->payment_status == 'paid') {
-            return redirect()->route('exhibitor.orders');
-        }
-
-        // Get application to extract application_id (TIN) for order_id format
+        // Get application to check if it's startup-zone (before checking payment status)
         $application = null;
-        if ($invoice->application_id) {
-            $application = Application::find($invoice->application_id);
-        }
-
-        // Fetch billing detail - handle startup zone differently
-        $billingDetail = null;
         $isStartupZone = false;
-        
         if ($invoice->application_id) {
             $application = Application::find($invoice->application_id);
             if ($application && $application->application_type === 'startup-zone') {
                 $isStartupZone = true;
-                // For startup zone, get billing from EventContact
-                $eventContact = \App\Models\EventContact::where('application_id', $invoice->application_id)->first();
-                if ($eventContact && $application) {
+            }
+        }
+
+        //if invoice is already paid then redirect appropriately
+        if ($invoice->payment_status == 'paid') {
+            if ($isStartupZone && $application) {
+                return redirect()->route('startup-zone.confirmation', $application->application_id)
+                    ->with('info', 'Payment already completed');
+            }
+            return redirect()->route('exhibitor.orders');
+        }
+
+        // Fetch billing detail - handle startup zone differently
+        $billingDetail = null;
+        
+        if ($isStartupZone && $application) {
+            // For startup zone, get billing from EventContact
+            $eventContact = \App\Models\EventContact::where('application_id', $invoice->application_id)->first();
+            if ($eventContact && $application) {
                     // Build contact name properly (trim extra spaces)
                     $contactName = trim(($eventContact->salutation ?? '') . ' ' . ($eventContact->first_name ?? '') . ' ' . ($eventContact->last_name ?? ''));
                     
@@ -340,7 +344,6 @@ class PaymentGatewayController extends Controller
                         'city_name' => $cityName, // Add city name for billing_city
                     ];
                 }
-            }
         }
         
         // For non-startup-zone, use BillingDetail
