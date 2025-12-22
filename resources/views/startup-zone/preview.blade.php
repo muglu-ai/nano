@@ -82,7 +82,14 @@
                         </div>
                         <div class="col-md-6 mb-3">
                             <strong>Company Age:</strong><br>
-                            {{ ($application->how_old_startup ?? $draft->how_old_startup ?? 'N/A') }} Year(s)
+                            @php
+                                $companyAge = $application->companyYears ?? $application->how_old_startup ?? $draft->how_old_startup ?? null;
+                            @endphp
+                            @if($companyAge)
+                                {{ $companyAge }} Year{{ $companyAge > 1 ? 's' : '' }}
+                            @else
+                                N/A
+                            @endif
                         </div>
                     </div>
                 </div>
@@ -132,10 +139,10 @@
                         </div>
                         <div class="col-md-6 mb-3">
                             <strong>Subsector:</strong><br>
-                            @if(isset($application))
-                                {{ \DB::table('sub_sectors')->where('id', $application->subSector)->value('name') ?? 'N/A' }}
+                            @if(isset($application) && $application->subSector)
+                                {{ $application->subSector }}
                             @elseif(isset($draft) && $draft->subSector)
-                                {{ \DB::table('sub_sectors')->where('id', $draft->subSector)->value('name') ?? 'N/A' }}
+                                {{ $draft->subSector }}
                             @else
                                 N/A
                             @endif

@@ -22,6 +22,7 @@ class BillingDetail extends Model
         'country_id',
         'postal_code',
         'same_as_basic',
+        'gst_id',
     ];
 
     public function application()

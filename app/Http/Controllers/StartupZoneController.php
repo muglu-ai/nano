@@ -126,12 +126,36 @@ class StartupZoneController extends Controller
     }
 
     /**
+     * Normalize website URL - add https:// if protocol is missing
+     */
+    private function normalizeWebsiteUrl($url)
+    {
+        if (empty($url)) {
+            return $url;
+        }
+        
+        $url = trim($url);
+        
+        // If URL doesn't start with http:// or https://, add https://
+        if (!preg_match('/^https?:\/\//i', $url)) {
+            $url = 'https://' . $url;
+        }
+        
+        return $url;
+    }
+
+    /**
      * Store form data in session (lightweight, no database writes)
      */
     public function autoSave(Request $request)
     {
         // Store all form data in session - no database writes until submit
         $formData = $request->except(['_token', 'certificate']);
+        
+        // Normalize website URL - add https:// if missing
+        if (isset($formData['website']) && !empty($formData['website'])) {
+            $formData['website'] = $this->normalizeWebsiteUrl($formData['website']);
+        }
         
         // Handle landline: use national number if available, otherwise use full number
         if ($request->has('landline_national') && $request->input('landline_national')) {
@@ -454,6 +478,11 @@ class StartupZoneController extends Controller
                 'promocode', 'assoc_mem', 'RegSource', 'payment_mode'
             ]));
             
+            // Normalize website URL - add https:// if missing
+            if (isset($formFields['website']) && !empty($formFields['website'])) {
+                $formFields['website'] = $this->normalizeWebsiteUrl($formFields['website']);
+            }
+            
             // Validate foreign key relationships before saving
             if (isset($formFields['state_id']) && $formFields['state_id']) {
                 $stateExists = State::where('id', $formFields['state_id'])->exists();
@@ -660,13 +689,14 @@ class StartupZoneController extends Controller
                 'company_name' => $draft->company_name,
                 'certificate' => $draft->certificate_path,
                 'how_old_startup' => $draft->how_old_startup,
+                'companyYears' => $draft->how_old_startup, // Also save to companyYears field
                 'address' => $draft->address,
                 'city_id' => $draft->city_id,
                 'state_id' => $draft->state_id,
                 'postal_code' => $draft->postal_code,
                 'country_id' => $draft->country_id,
                 'landline' => $draft->landline,
-                'website' => $draft->website,
+                'website' => $this->normalizeWebsiteUrl($draft->website ?? ''),
                 'company_email' => $draft->company_email,
                 'gst_compliance' => $draft->gst_compliance,
                 'gst_no' => $draft->gst_no,
@@ -700,6 +730,27 @@ class StartupZoneController extends Controller
                 $contact->contact_number = $draft->contact_data['mobile'] ?? null;
                 $contact->save();
             }
+
+            // Create billing detail - use contact person details
+            $contactName = trim(($draft->contact_data['title'] ?? '') . ' ' . ($draft->contact_data['first_name'] ?? '') . ' ' . ($draft->contact_data['last_name'] ?? ''));
+            if (empty($contactName)) {
+                $contactName = $draft->company_name;
+            }
+            
+            $billingDetail = new \App\Models\BillingDetail();
+            $billingDetail->application_id = $application->id;
+            $billingDetail->billing_company = $draft->company_name ?? '';
+            $billingDetail->contact_name = $contactName;
+            $billingDetail->email = $contactEmail;
+            $billingDetail->phone = $draft->contact_data['mobile'] ?? $draft->landline ?? '';
+            $billingDetail->address = $draft->address ?? '';
+            $billingDetail->city_id = $draft->city_id ?? null;
+            $billingDetail->state_id = $draft->state_id ?? null;
+            $billingDetail->country_id = $draft->country_id ?? null;
+            $billingDetail->postal_code = $draft->postal_code ?? '';
+            $billingDetail->gst_id = $draft->gst_no ?? null; // Store GST number in billing detail
+            $billingDetail->same_as_basic = '0';
+            $billingDetail->save();
 
             // Create invoice
             $pricing = $this->calculatePricing($draft);
@@ -965,6 +1016,11 @@ class StartupZoneController extends Controller
 
         $fieldsToValidate = $stepFields[$step] ?? $allFields;
 
+        // Normalize website URL before validation (if present in allData)
+        if (isset($allData['website']) && !empty($allData['website'])) {
+            $allData['website'] = $this->normalizeWebsiteUrl($allData['website']);
+        }
+
         foreach ($fieldsToValidate as $field) {
             $config = $fieldConfigs->get($field);
             if ($config && $config->is_required) {
@@ -997,7 +1053,14 @@ class StartupZoneController extends Controller
             $rules['certificate'] = 'nullable|file|mimes:pdf|max:2048';
         }
         if (in_array('website', $fieldsToValidate)) {
-            $rules['website'] = 'required|url';
+            // Ensure url validation is present (website already normalized above)
+            if (isset($rules['website'])) {
+                if (strpos($rules['website'], 'url') === false) {
+                    $rules['website'] .= '|url';
+                }
+            } else {
+                $rules['website'] = 'required|url';
+            }
         }
         if (in_array('company_email', $fieldsToValidate)) {
             $rules['company_email'] = 'required|email';

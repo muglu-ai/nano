@@ -116,23 +116,51 @@ class PaymentGatewayController extends Controller
                 // For startup zone, get billing from EventContact
                 $eventContact = \App\Models\EventContact::where('application_id', $invoice->application_id)->first();
                 if ($eventContact && $application) {
+                    // Build contact name properly (trim extra spaces)
+                    $contactName = trim(($eventContact->salutation ?? '') . ' ' . ($eventContact->first_name ?? '') . ' ' . ($eventContact->last_name ?? ''));
+                    
+                    // Get phone number and strip country code if present (format: 91-9801217815 -> 9801217815)
+                    $phone = $eventContact->contact_number ?? $application->landline ?? '';
+                    $phone = preg_replace('/^.*-/', '', $phone); // Remove country code prefix
+                    
+                    // Get city name from city_id
+                    $cityName = '';
+                    if ($application->city_id) {
+                        $city = \DB::table('cities')->where('id', $application->city_id)->first();
+                        $cityName = $city->name ?? '';
+                    }
+                    
+                    // Get state and country names
+                    $stateName = '';
+                    if ($application->state_id) {
+                        $state = \App\Models\State::find($application->state_id);
+                        $stateName = $state->name ?? '';
+                    }
+                    
+                    $countryName = '';
+                    if ($application->country_id) {
+                        $country = \App\Models\Country::find($application->country_id);
+                        $countryName = $country->name ?? '';
+                    }
+                    
                     $billingDetail = (object) [
                         'billing_company' => $application->company_name ?? '',
-                        'contact_name' => ($eventContact->salutation ?? '') . ' ' . ($eventContact->first_name ?? '') . ' ' . ($eventContact->last_name ?? ''),
+                        'contact_name' => $contactName,
                         'email' => $eventContact->email ?? $application->company_email ?? '',
-                        'phone' => $eventContact->contact_number ?? $application->landline ?? '',
+                        'phone' => $phone,
                         'address' => $application->address ?? '',
                         'country_id' => $application->country_id ?? null,
                         'state_id' => $application->state_id ?? null,
                         'postal_code' => $application->postal_code ?? '',
-                        'state' => $application->state_id ? (object)['name' => optional(\App\Models\State::find($application->state_id))->name] : (object)['name' => ''],
-                        'country' => $application->country_id ? (object)[
-                            'name' => optional(\App\Models\Country::find($application->country_id))->name,
+                        'state' => (object)['name' => $stateName],
+                        'country' => (object)[
+                            'name' => $countryName,
                             'states' => collect()
-                        ] : (object)['name' => '', 'states' => collect()],
+                        ],
                         'gst' => $application->gst_no ?? null,
                         'pan_no' => $application->pan_no ?? null,
                         'city_id' => $application->city_id ?? null,
+                        'city_name' => $cityName, // Add city name for billing_city
                     ];
                 }
             }
@@ -155,13 +183,23 @@ class PaymentGatewayController extends Controller
 
         //if billingDetail 
         if ($requirementsBilling) {
+            // Get city name if billing_city is an ID
+            $cityName = '';
+            if (!empty($requirementsBilling->billing_city)) {
+                // Check if it's numeric (ID) or string (name)
+                if (is_numeric($requirementsBilling->billing_city)) {
+                    $city = \DB::table('cities')->where('id', $requirementsBilling->billing_city)->first();
+                    $cityName = $city->name ?? $requirementsBilling->billing_city;
+                } else {
+                    $cityName = $requirementsBilling->billing_city;
+                }
+            }
+            
             $billingDetail = (object) [
                 'billing_company' => $requirementsBilling->billing_company,
                 'contact_name' => $requirementsBilling->billing_name,
                 'email' => $requirementsBilling->billing_email,
-                // 'phone' => $requirementsBilling->billing_phone,
-                            'phone' => preg_replace('/^91-/', '', $requirementsBilling->billing_phone),
-
+                'phone' => preg_replace('/^91-/', '', $requirementsBilling->billing_phone),
                 'address' => $requirementsBilling->billing_address,
                 'country_id' => $requirementsBilling->country_id,
                 'state_id' => $requirementsBilling->state_id,
@@ -179,11 +217,29 @@ class PaymentGatewayController extends Controller
                 ],
                 'gst' => $requirementsBilling->gst_no ?? null,
                 'pan_no' => $requirementsBilling->pan_no ?? null,
-                'city_id' => $requirementsBilling->billing_city ?? $billingDetail->city_id,
-
+                'city_id' => $requirementsBilling->billing_city ?? null,
+                'city_name' => $cityName, // Add city name for billing_city
             ];
         }
 
+
+        // Ensure billingDetail exists
+        if (!$billingDetail) {
+            Log::error('CCAvenue Payment: Billing details not found', [
+                'invoice_id' => $invoice->id,
+                'invoice_no' => $orderID,
+                'application_id' => $invoice->application_id,
+                'is_startup_zone' => $isStartupZone
+            ]);
+            
+            if ($isStartupZone && $application) {
+                return redirect()->route('startup-zone.payment', $application->application_id)
+                    ->with('error', 'Billing details not found. Please contact support.');
+            }
+            
+            return redirect()->route('exhibitor.orders')
+                ->with('error', 'Billing details not found. Please contact support.');
+        }
 
         // Generate order_id with TIN prefix format: {application_id}_{timestamp}
         // If application exists, use application_id (TIN), otherwise use invoice_no
@@ -200,14 +256,14 @@ class PaymentGatewayController extends Controller
             'redirect_url' => $this->redirectUrl,
             'cancel_url' => $this->cancelUrl,
             'language' => 'EN',
-            'billing_name' => $billingDetail->contact_name,
-            'billing_address' => $billingDetail->address,
-            'billing_city' => $billingDetail->city_id,
-            'billing_state' => $billingDetail->state->name,
-            'billing_zip' => $billingDetail->postal_code,
-            'billing_country' => $billingDetail->country->name,
-            'billing_tel' => preg_replace('/^.*-/', '', $billingDetail->phone),
-            'billing_email' => $billingDetail->email,
+            'billing_name' => $billingDetail->contact_name ?? '',
+            'billing_address' => $billingDetail->address ?? '',
+            'billing_city' => isset($billingDetail->city_name) ? $billingDetail->city_name : ($billingDetail->city_id ?? ''),
+            'billing_state' => $billingDetail->state->name ?? '',
+            'billing_zip' => $billingDetail->postal_code ?? '',
+            'billing_country' => $billingDetail->country->name ?? '',
+            'billing_tel' => preg_replace('/^.*-/', '', $billingDetail->phone ?? ''),
+            'billing_email' => $billingDetail->email ?? '',
         ];
 
 

@@ -118,7 +118,7 @@
                         <div class="invalid-feedback"></div>
                     </div>
                     <div class="col-md-6" id="gst_no_container" style="display: none;">
-                        <label for="gst_no" class="form-label">GST Number</label>
+                        <label for="gst_no" class="form-label">GST Number <span class="text-danger" id="gst_required_indicator" style="display: none;">*</span></label>
                         <div class="input-group">
                             <input type="text" class="form-control" id="gst_no" name="gst_no" 
                                    value="{{ $draft->gst_no ?? '' }}" 
@@ -597,6 +597,41 @@ document.addEventListener('DOMContentLoaded', function() {
         setTimeout(window.updateLandlineFields, 100);
     }
 
+    // Normalize website URL - add https:// if protocol is missing
+    const websiteInput = document.getElementById('website');
+    if (websiteInput) {
+        function normalizeWebsiteUrl(url) {
+            if (!url) return url;
+            
+            url = url.trim();
+            
+            // If URL doesn't start with http:// or https://, add https://
+            if (!/^https?:\/\//i.test(url)) {
+                url = 'https://' + url;
+            }
+            
+            return url;
+        }
+        
+        websiteInput.addEventListener('blur', function() {
+            const currentValue = this.value.trim();
+            if (currentValue && !currentValue.match(/^https?:\/\//i)) {
+                const normalizedUrl = normalizeWebsiteUrl(currentValue);
+                this.value = normalizedUrl;
+                resetAutoSaveTimer();
+            }
+        });
+        
+        websiteInput.addEventListener('change', function() {
+            const currentValue = this.value.trim();
+            if (currentValue && !currentValue.match(/^https?:\/\//i)) {
+                const normalizedUrl = normalizeWebsiteUrl(currentValue);
+                this.value = normalizedUrl;
+                resetAutoSaveTimer();
+            }
+        });
+    }
+
     // Show/hide GST number field based on GST compliance
     const gstCompliance = document.getElementById('gst_compliance');
     const gstNoContainer = document.getElementById('gst_no_container');
@@ -605,13 +640,21 @@ document.addEventListener('DOMContentLoaded', function() {
     const gstFeedback = document.getElementById('gst_feedback');
     
     if (gstCompliance) {
+        const gstRequiredIndicator = document.getElementById('gst_required_indicator');
+        
         gstCompliance.addEventListener('change', function() {
             if (this.value === '1') {
                 gstNoContainer.style.display = 'block';
                 gstNo.setAttribute('required', 'required');
+                if (gstRequiredIndicator) {
+                    gstRequiredIndicator.style.display = 'inline';
+                }
             } else {
                 gstNoContainer.style.display = 'none';
                 gstNo.removeAttribute('required');
+                if (gstRequiredIndicator) {
+                    gstRequiredIndicator.style.display = 'none';
+                }
                 gstNo.value = '';
                 gstFeedback.innerHTML = '';
             }
@@ -622,6 +665,9 @@ document.addEventListener('DOMContentLoaded', function() {
         if (gstCompliance.value === '1') {
             gstNoContainer.style.display = 'block';
             gstNo.setAttribute('required', 'required');
+            if (gstRequiredIndicator) {
+                gstRequiredIndicator.style.display = 'inline';
+            }
         }
     }
     
@@ -831,7 +877,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Store form data in session after 30 seconds of inactivity (no database writes)
     let autoSaveTimer = null;
-    const AUTO_SAVE_DELAY = 30000; // 30 seconds
+    const AUTO_SAVE_DELAY = 10000; // 10 seconds
     
     // Function to reset auto-save timer
     function resetAutoSaveTimer() {
