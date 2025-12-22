@@ -204,7 +204,7 @@
 
                         <ul>
                             <li>
-                                Fill out the <strong>Exhibitor Directory Form</strong> to ensure your organisation is correctly featured in the official BTS 2025 directory.
+                                Fill out the <strong>Exhibitor Directory Form</strong> to ensure your organisation is correctly featured in the official "{{ config('constants.EVENT_NAME') }} {{config('constants.EVENT_YEAR')}}" directory.
                             </li>
                             <li>
                                 <strong>Upload your organisation’s logo</strong> in the specified section of the portal for use in official materials.
