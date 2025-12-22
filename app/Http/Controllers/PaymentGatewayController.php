@@ -2,27 +2,24 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
-use Carbon\Carbon;
-use App\Models\Invoice;
-use App\Models\BillingDetail;
-use App\Models\RequirementsOrder;
-use App\Models\Application;
-use App\Models\Payment;
 use App\Mail\ExtraRequirementsMail;
-use Illuminate\Support\Facades\Mail;
-use Illuminate\Support\Facades\Log;
-use App\Services\ExtraRequirementsMailService;
-use App\Services\CcAvenueService;
-use Illuminate\Support\Facades\Response;
-use Illuminate\Support\Facades\Auth;
-use App\Models\User;
+use App\Models\Application;
+use App\Models\BillingDetail;
+use App\Models\Invoice;
+use App\Models\Payment;
 use App\Models\RequirementsBilling;
+use App\Models\RequirementsOrder;
+use App\Models\User;
+use App\Services\CcAvenueService;
+use App\Services\ExtraRequirementsMailService;
 use Barryvdh\DomPDF\Facade\Pdf;
-
-
-
+use Carbon\Carbon;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Response;
 
 class PaymentGatewayController extends Controller
 {
@@ -33,7 +30,6 @@ class PaymentGatewayController extends Controller
     private $workingKey;
     private $redirectUrl;
     private $cancelUrl;
-
 
     // public function __construct()
     // {
@@ -46,14 +42,12 @@ class PaymentGatewayController extends Controller
 
     public function __construct()
     {
-        $this->merchantId  = '7700';
-        $this->accessCode  = 'AVJS71ME17AS68SJSA';
-        $this->workingKey  = '7AF39D44C8DC0DE71EDD69C288C96694';
+        $this->merchantId = '7700';
+        $this->accessCode = 'AVJS71ME17AS68SJSA';
+        $this->workingKey = '7AF39D44C8DC0DE71EDD69C288C96694';
         $this->redirectUrl = 'https://bengalurutechsummit.com/bts-portal/public/payment/ccavenue-success';
-        $this->cancelUrl   = 'https://bengalurutechsummit.com/bts-portal/public/payment/ccavenue-success';
+        $this->cancelUrl = 'https://bengalurutechsummit.com/bts-portal/public/payment/ccavenue-success';
     }
-
-
 
     public function handleResponse(Request $request)
     {
@@ -67,7 +61,7 @@ class PaymentGatewayController extends Controller
     private function encrypt($plainText, $key)
     {
         $key = pack('H*', md5($key));
-        $initVector = pack("C*", 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f);
+        $initVector = pack('C*', 0x0, 0x1, 0x2, 0x3, 0x4, 0x5, 0x6, 0x7, 0x8, 0x9, 0xA, 0xB, 0xC, 0xD, 0xE, 0xF);
         $encryptedText = bin2hex(openssl_encrypt($plainText, 'AES-128-CBC', $key, OPENSSL_RAW_DATA, $initVector));
         return $encryptedText;
     }
@@ -75,8 +69,8 @@ class PaymentGatewayController extends Controller
     private function decrypt($encryptedText, $key)
     {
         $key = pack('H*', md5($key));
-        $initVector = pack("C*", 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f);
-        $encryptedText = pack("H*", $encryptedText);
+        $initVector = pack('C*', 0x0, 0x1, 0x2, 0x3, 0x4, 0x5, 0x6, 0x7, 0x8, 0x9, 0xA, 0xB, 0xC, 0xD, 0xE, 0xF);
+        $encryptedText = pack('H*', $encryptedText);
         return openssl_decrypt($encryptedText, 'AES-128-CBC', $key, OPENSSL_RAW_DATA, $initVector);
     }
 
@@ -99,7 +93,8 @@ class PaymentGatewayController extends Controller
         if ($applicationTin) {
             $application = Application::where('application_id', $applicationTin)->first();
             if ($application && $application->application_type === 'startup-zone') {
-                return redirect()->route('startup-zone.payment', $application->application_id)
+                return redirect()
+                    ->route('startup-zone.payment', $application->application_id)
                     ->with('error', $message);
             }
         }
@@ -121,7 +116,8 @@ class PaymentGatewayController extends Controller
                 ) {
                     $tin = $application ? $application->application_id : $invoice->application_no;
                     if ($tin) {
-                        return redirect()->route('startup-zone.payment', $tin)
+                        return redirect()
+                            ->route('startup-zone.payment', $tin)
                             ->with('error', $message);
                     }
                 }
@@ -132,12 +128,14 @@ class PaymentGatewayController extends Controller
                     $invoice->requirementsOrder()->exists()
                 ) {
                     // User-facing extra requirements page
-                    return redirect()->route('extra_requirements.index')
+                    return redirect()
+                        ->route('extra_requirements.index')
                         ->with('error', $message);
                 }
 
                 // 2.c Fallback for exhibitor / other invoice types – send to lookup
-                return redirect()->route('payment.lookup')
+                return redirect()
+                    ->route('payment.lookup')
                     ->with('error', $message)
                     ->with('invoice_hint', $invoiceNo);
             }
@@ -156,7 +154,8 @@ class PaymentGatewayController extends Controller
 
         // 4. Final fallback – take user to lookup page where they can
         //    enter Application ID or Invoice No to resume payment.
-        return redirect()->route('payment.lookup')
+        return redirect()
+            ->route('payment.lookup')
             ->with('error', $message);
     }
 
@@ -168,10 +167,10 @@ class PaymentGatewayController extends Controller
     public function showPaymentLookup(Request $request)
     {
         $prefillInvoice = session('invoice_hint');
-        
+
         // Share association logo (if any) for the layout - set to null for lookup page
         view()->share('associationLogo', null);
-        
+
         return view('payment.lookup', [
             'prefillInvoice' => $prefillInvoice,
         ]);
@@ -185,8 +184,8 @@ class PaymentGatewayController extends Controller
     {
         $data = $request->validate([
             'application_id' => ['nullable', 'string'],
-            'tin_no'         => ['nullable', 'string'],
-            'invoice_no'    => ['nullable', 'string'],
+            'tin_no' => ['nullable', 'string'],
+            'invoice_no' => ['nullable', 'string'],
         ]);
 
         if (empty($data['application_id']) && empty($data['tin_no']) && empty($data['invoice_no'])) {
@@ -209,13 +208,13 @@ class PaymentGatewayController extends Controller
         // 2. Try by TIN No (can be in application_id field of Application or application_no field of Invoice)
         if (!$application && !empty($data['tin_no'])) {
             $tinNo = trim($data['tin_no']);
-            
+
             // Try to find by application_id in Application table
             $application = Application::where('application_id', $tinNo)->first();
             if ($application) {
                 $invoice = Invoice::where('application_id', $application->id)->first();
             }
-            
+
             // If not found, try to find invoice by application_no (which stores TIN)
             if (!$invoice) {
                 $invoice = Invoice::where('application_no', $tinNo)->first();
@@ -248,27 +247,35 @@ class PaymentGatewayController extends Controller
 
         // Extra requirement invoices – send to extra requirements list so they can retry from there
         if ($invoice && ($invoice->type === 'extra_requirement' || $invoice->requirementsOrder()->exists())) {
-            return redirect()->route('extra_requirements.index')
+            return redirect()
+                ->route('extra_requirements.index')
                 ->with('info', 'We found your extra requirements order. Please continue payment from the list.');
         }
 
         // Fallback: exhibitor orders page
-        return redirect()->route('exhibitor.orders')
+        return redirect()
+            ->route('exhibitor.orders')
             ->with('info', 'We found your order. Please continue from your orders list.');
     }
 
-    public function ccAvenuePayment($orderID, Request $request)
+    private function ccAvenuePayment($orderID, Request $request)
     {
+        dd($orderID);
         if (!$orderID) {
-            return redirect()->route('exhibitor.orders');
+            return redirect()
+                ->route('payment.lookup')
+                ->with('error', 'Invoice ID is required');
         }
 
         // get the invoice details from the Invoice model where invoice_no = $id
         $invoice = Invoice::where('invoice_no', $orderID)->first();
 
-        //if invoice not found then redirect appropriately
+        // if invoice not found then redirect appropriately
         if (!$invoice) {
-            return redirect()->route('exhibitor.orders');
+            return redirect()
+                ->route('payment.lookup')
+                ->with('error', 'Invoice not found w')
+                ->with('invoice_hint', $orderID);
         }
 
         // Get application to check if it's startup-zone (before checking payment status)
@@ -281,10 +288,11 @@ class PaymentGatewayController extends Controller
             }
         }
 
-        //if invoice is already paid then redirect appropriately
+        // if invoice is already paid then redirect appropriately
         if ($invoice->payment_status == 'paid') {
             if ($isStartupZone && $application) {
-                return redirect()->route('startup-zone.confirmation', $application->application_id)
+                return redirect()
+                    ->route('startup-zone.confirmation', $application->application_id)
                     ->with('info', 'Payment already completed');
             }
             return redirect()->route('exhibitor.orders');
@@ -292,60 +300,60 @@ class PaymentGatewayController extends Controller
 
         // Fetch billing detail - handle startup zone differently
         $billingDetail = null;
-        
+
         if ($isStartupZone && $application) {
             // For startup zone, get billing from EventContact
             $eventContact = \App\Models\EventContact::where('application_id', $invoice->application_id)->first();
             if ($eventContact && $application) {
-                    // Build contact name properly (trim extra spaces)
-                    $contactName = trim(($eventContact->salutation ?? '') . ' ' . ($eventContact->first_name ?? '') . ' ' . ($eventContact->last_name ?? ''));
-                    
-                    // Get phone number and strip country code if present (format: 91-9801217815 -> 9801217815)
-                    $phone = $eventContact->contact_number ?? $application->landline ?? '';
-                    $phone = preg_replace('/^.*-/', '', $phone); // Remove country code prefix
-                    
-                    // Get city name from city_id
-                    $cityName = '';
-                    if ($application->city_id) {
-                        $city = \DB::table('cities')->where('id', $application->city_id)->first();
-                        $cityName = $city->name ?? '';
-                    }
-                    
-                    // Get state and country names
-                    $stateName = '';
-                    if ($application->state_id) {
-                        $state = \App\Models\State::find($application->state_id);
-                        $stateName = $state->name ?? '';
-                    }
-                    
-                    $countryName = '';
-                    if ($application->country_id) {
-                        $country = \App\Models\Country::find($application->country_id);
-                        $countryName = $country->name ?? '';
-                    }
-                    
-                    $billingDetail = (object) [
-                        'billing_company' => $application->company_name ?? '',
-                        'contact_name' => $contactName,
-                        'email' => $eventContact->email ?? $application->company_email ?? '',
-                        'phone' => $phone,
-                        'address' => $application->address ?? '',
-                        'country_id' => $application->country_id ?? null,
-                        'state_id' => $application->state_id ?? null,
-                        'postal_code' => $application->postal_code ?? '',
-                        'state' => (object)['name' => $stateName],
-                        'country' => (object)[
-                            'name' => $countryName,
-                            'states' => collect()
-                        ],
-                        'gst' => $application->gst_no ?? null,
-                        'pan_no' => $application->pan_no ?? null,
-                        'city_id' => $application->city_id ?? null,
-                        'city_name' => $cityName, // Add city name for billing_city
-                    ];
+                // Build contact name properly (trim extra spaces)
+                $contactName = trim(($eventContact->salutation ?? '') . ' ' . ($eventContact->first_name ?? '') . ' ' . ($eventContact->last_name ?? ''));
+
+                // Get phone number and strip country code if present (format: 91-9801217815 -> 9801217815)
+                $phone = $eventContact->contact_number ?? $application->landline ?? '';
+                $phone = preg_replace('/^.*-/', '', $phone);  // Remove country code prefix
+
+                // Get city name from city_id
+                $cityName = '';
+                if ($application->city_id) {
+                    $city = \DB::table('cities')->where('id', $application->city_id)->first();
+                    $cityName = $city->name ?? '';
                 }
+
+                // Get state and country names
+                $stateName = '';
+                if ($application->state_id) {
+                    $state = \App\Models\State::find($application->state_id);
+                    $stateName = $state->name ?? '';
+                }
+
+                $countryName = '';
+                if ($application->country_id) {
+                    $country = \App\Models\Country::find($application->country_id);
+                    $countryName = $country->name ?? '';
+                }
+
+                $billingDetail = (object) [
+                    'billing_company' => $application->company_name ?? '',
+                    'contact_name' => $contactName,
+                    'email' => $eventContact->email ?? $application->company_email ?? '',
+                    'phone' => $phone,
+                    'address' => $application->address ?? '',
+                    'country_id' => $application->country_id ?? null,
+                    'state_id' => $application->state_id ?? null,
+                    'postal_code' => $application->postal_code ?? '',
+                    'state' => (object) ['name' => $stateName],
+                    'country' => (object) [
+                        'name' => $countryName,
+                        'states' => collect()
+                    ],
+                    'gst' => $application->gst_no ?? null,
+                    'pan_no' => $application->pan_no ?? null,
+                    'city_id' => $application->city_id ?? null,
+                    'city_name' => $cityName,  // Add city name for billing_city
+                ];
+            }
         }
-        
+
         // For non-startup-zone, use BillingDetail
         if (!$billingDetail) {
             $billingDetail = BillingDetail::where('application_id', $invoice->application_id)->first();
@@ -355,13 +363,9 @@ class PaymentGatewayController extends Controller
             ->where('invoice_id', $invoice->id)
             ->first();
 
-            //'phone' => $requirementsBilling->billing_phone, in this 91-9801217815 pass only 9801217815
+        // 'phone' => $requirementsBilling->billing_phone, in this 91-9801217815 pass only 9801217815
 
-
-
-
-
-        //if billingDetail 
+        // if billingDetail
         if ($requirementsBilling) {
             // Get city name if billing_city is an ID
             $cityName = '';
@@ -374,7 +378,7 @@ class PaymentGatewayController extends Controller
                     $cityName = $requirementsBilling->billing_city;
                 }
             }
-            
+
             $billingDetail = (object) [
                 'billing_company' => $requirementsBilling->billing_company,
                 'contact_name' => $requirementsBilling->billing_name,
@@ -385,11 +389,11 @@ class PaymentGatewayController extends Controller
                 'state_id' => $requirementsBilling->state_id,
                 'postal_code' => $requirementsBilling->zipcode,
                 // Add a dummy state object to mimic $billingDetail->state->name
-                'state' => (object)[
+                'state' => (object) [
                     'name' => optional(\App\Models\State::find($requirementsBilling->state_id))->name
                 ],
                 // Add a dummy country object to mimic $billingDetail->country->name
-                'country' => (object)[
+                'country' => (object) [
                     'name' => optional(\App\Models\Country::find($requirementsBilling->country_id))->name,
                     'states' => ($requirementsBilling->country_id)
                         ? optional(\App\Models\Country::with('states')->find($requirementsBilling->country_id))->states ?? collect()
@@ -398,10 +402,9 @@ class PaymentGatewayController extends Controller
                 'gst' => $requirementsBilling->gst_no ?? null,
                 'pan_no' => $requirementsBilling->pan_no ?? null,
                 'city_id' => $requirementsBilling->billing_city ?? null,
-                'city_name' => $cityName, // Add city name for billing_city
+                'city_name' => $cityName,  // Add city name for billing_city
             ];
         }
-
 
         // Ensure billingDetail exists
         if (!$billingDetail) {
@@ -411,20 +414,22 @@ class PaymentGatewayController extends Controller
                 'application_id' => $invoice->application_id,
                 'is_startup_zone' => $isStartupZone
             ]);
-            
+
             if ($isStartupZone && $application) {
-                return redirect()->route('startup-zone.payment', $application->application_id)
+                return redirect()
+                    ->route('startup-zone.payment', $application->application_id)
                     ->with('error', 'Billing details not found. Please contact support.');
             }
-            
-            return redirect()->route('exhibitor.orders')
+
+            return redirect()
+                ->route('exhibitor.orders')
                 ->with('error', 'Billing details not found. Please contact support.');
         }
 
         // Generate order_id with TIN prefix format: {application_id}_{timestamp}
         // If application exists, use application_id (TIN), otherwise use invoice_no
-        $tinPrefix = $application && $application->application_id 
-            ? $application->application_id 
+        $tinPrefix = $application && $application->application_id
+            ? $application->application_id
             : $orderID;
         $orderIdWithTimestamp = $tinPrefix . '_' . time();
 
@@ -446,12 +451,11 @@ class PaymentGatewayController extends Controller
             'billing_email' => $billingDetail->email ?? '',
         ];
 
-
         // dd($data);
 
         $merchantData = json_encode($data);
 
-        //insert into payment_gateway_response table
+        // insert into payment_gateway_response table
         \DB::table('payment_gateway_response')->insert([
             'merchant_data' => $merchantData,
             'order_id' => $data['order_id'],
@@ -487,11 +491,10 @@ class PaymentGatewayController extends Controller
 
     public function downloadInvoicePdf($invoiceId)
     {
-
         $service = new ExtraRequirementsMailService();
         $data = $service->prepareMailData($invoiceId);
-        //$mail = new ExtraRequirementsMail($data);
-        //render documents.extraOrder to HTML
+        // $mail = new ExtraRequirementsMail($data);
+        // render documents.extraOrder to HTML
         $pdf = Pdf::loadView('documents.extraOrder', $data)->setPaper('a3', 'portrait')->set_option('isRemoteEnabled', true);;
 
         // display the PDF in the browser or download it
@@ -502,7 +505,6 @@ class PaymentGatewayController extends Controller
         // return $pdf->stream('invoice_' . $invoiceId . '.pdf');
     }
 
-
     public function ccAvenueSuccess(Request $request)
     {
         // Log incoming request for debugging
@@ -512,8 +514,8 @@ class PaymentGatewayController extends Controller
         ]);
 
         // Check if encResp parameter exists
-        $encResponse = $request->input("encResp");
-        
+        $encResponse = $request->input('encResp');
+
         if (empty($encResponse)) {
             Log::warning('CCAvenue Success: Missing encResp parameter', [
                 'request_data' => $request->all(),
@@ -522,7 +524,7 @@ class PaymentGatewayController extends Controller
 
             // Try to resolve from session and redirect appropriately
             $invoiceNo = session('invoice_no');
-            $applicationTin = session('payment_application_id'); // TIN for startup-zone
+            $applicationTin = session('payment_application_id');  // TIN for startup-zone
 
             return $this->redirectForPaymentError(
                 $invoiceNo,
@@ -534,7 +536,7 @@ class PaymentGatewayController extends Controller
 
         // Decrypt response
         $workingKey = env('CCAVENUE_WORKING_KEY') ?: $this->workingKey;
-        
+
         try {
             $decryptedResponse = $this->decrypt($encResponse, $workingKey);
             parse_str($decryptedResponse, $responseArray);
@@ -546,7 +548,7 @@ class PaymentGatewayController extends Controller
 
             // Try to resolve from session and redirect appropriately
             $invoiceNo = session('invoice_no');
-            $applicationTin = session('payment_application_id'); // TIN for startup-zone
+            $applicationTin = session('payment_application_id');  // TIN for startup-zone
 
             return $this->redirectForPaymentError(
                 $invoiceNo,
@@ -555,7 +557,7 @@ class PaymentGatewayController extends Controller
                 'Payment response error. Please try again. If amount was deducted, please contact support.'
             );
         }
-        
+
         // Validate response array
         if (empty($responseArray) || !isset($responseArray['order_id'])) {
             Log::error('CCAvenue Success: Invalid response array', [
@@ -565,7 +567,7 @@ class PaymentGatewayController extends Controller
 
             // Try to resolve from session and redirect appropriately
             $invoiceNo = session('invoice_no');
-            $applicationTin = session('payment_application_id'); // TIN for startup-zone
+            $applicationTin = session('payment_application_id');  // TIN for startup-zone
 
             return $this->redirectForPaymentError(
                 $invoiceNo,
@@ -575,10 +577,8 @@ class PaymentGatewayController extends Controller
             );
         }
 
-
-
-        //dd($responseArray);
-        if ($responseArray['order_status'] == "Success") {
+        // dd($responseArray);
+        if ($responseArray['order_status'] == 'Success') {
             $trans_date = Carbon::createFromFormat('d/m/Y H:i:s', $responseArray['trans_date'])->format('Y-m-d H:i:s');
             // Update database with successful payment
             \DB::table('payment_gateway_response')
@@ -597,18 +597,18 @@ class PaymentGatewayController extends Controller
             $order_id = explode('_', $responseArray['order_id'])[0];
 
             $invoice = Invoice::where('invoice_no', $order_id)->first();
-            
+
             // Check if this is a startup zone invoice FIRST (before any other processing)
             // This helps us redirect correctly even if invoice is not found
             $isStartupZone = false;
             $application = null;
             $applicationId = session('payment_application_id');
-            
+
             if ($invoice && $invoice->application_id) {
                 $application = Application::find($invoice->application_id);
                 if ($application && $application->application_type === 'startup-zone') {
                     $isStartupZone = true;
-                    $applicationId = $application->application_id; // Update from invoice if found
+                    $applicationId = $application->application_id;  // Update from invoice if found
                 }
             } elseif ($applicationId) {
                 // Try to get application from session application_id
@@ -619,7 +619,7 @@ class PaymentGatewayController extends Controller
                     $isStartupZone = true;
                 }
             }
-            
+
             // If invoice not found, log and redirect
             if (!$invoice) {
                 Log::error('CCAvenue Success: Invoice not found', [
@@ -628,20 +628,22 @@ class PaymentGatewayController extends Controller
                     'is_startup_zone' => $isStartupZone,
                     'application_id' => $applicationId
                 ]);
-                
+
                 // If startup zone, redirect to confirmation page
                 if ($isStartupZone && $applicationId) {
-                    return redirect()->route('startup-zone.confirmation', $applicationId)
+                    return redirect()
+                        ->route('startup-zone.confirmation', $applicationId)
                         ->with('error', 'Invoice not found. Please contact support.')
                         ->with('payment_response', $responseArray);
                 }
-                
-                return redirect()->route('exhibitor.orders')
+
+                return redirect()
+                    ->route('exhibitor.orders')
                     ->with('error', 'Invoice not found. Please contact support.');
             }
 
-            //update the invoice table with the status as paid
-            if ($responseArray['order_status'] == "Success") {
+            // update the invoice table with the status as paid
+            if ($responseArray['order_status'] == 'Success') {
                 $invoice->update([
                     'payment_status' => 'paid',
                     'amount_paid' => $responseArray['mer_amount'],
@@ -649,14 +651,14 @@ class PaymentGatewayController extends Controller
                     'pending_amount' => 0,
                     'currency' => 'INR',
                 ]);
-                
+
                 // Create payment record for startup zone (only after payment is completed)
                 if ($isStartupZone && $application) {
                     // Check if payment record already exists (from webhook or previous attempt)
                     $payment = Payment::where('order_id', $responseArray['order_id'])
                         ->where('invoice_id', $invoice->id)
                         ->first();
-                    
+
                     if ($payment) {
                         // Update existing payment record
                         $payment->update([
@@ -690,16 +692,17 @@ class PaymentGatewayController extends Controller
                             'user_id' => $application->user_id ?? null,
                         ]);
                     }
-                    
+
                     Log::info('Startup Zone CCAvenue Payment Success', [
                         'application_id' => $application->application_id,
                         'invoice_no' => $invoice->invoice_no,
                         'amount' => $responseArray['mer_amount'],
                         'transaction_id' => $responseArray['tracking_id'] ?? null,
                     ]);
-                    
+
                     // Redirect to startup zone confirmation with payment response - MUST RETURN HERE
-                    return redirect()->route('startup-zone.confirmation', $application->application_id)
+                    return redirect()
+                        ->route('startup-zone.confirmation', $application->application_id)
                         ->with('success', 'Payment successful!')
                         ->with('payment_response', $responseArray);
                 } else {
@@ -718,7 +721,7 @@ class PaymentGatewayController extends Controller
             // Only authenticate for non-startup-zone invoices
             // IMPORTANT: If it's startup zone, we should have already returned above
             if (!$isStartupZone && $invoice) {
-                //check if the invoices doesn't have co_exhibitorID 
+                // check if the invoices doesn't have co_exhibitorID
                 if ($invoice->co_exhibitorID) {
                     // If co_exhibitor_id is present, authenticate as co-exhibitor user only
                     $coExhibitor = \DB::table('co_exhibitors')->where('id', $invoice->co_exhibitorID)->first();
@@ -746,17 +749,18 @@ class PaymentGatewayController extends Controller
                     Log::info('Application User ID: ' . $userId);
                 }
 
-                //put in session that paymeent is successful
+                // put in session that paymeent is successful
                 session(['payment_success' => true, 'invoice_no' => $order_id, 'payment_message' => 'Payment is successful.']);
                 return redirect()->route('exhibitor.orders');
             }
-            
+
             // IMPORTANT: Startup zone should have already redirected above (line 529-531)
             // This is a safety fallback in case something went wrong
             if ($isStartupZone) {
                 // Try to get application from various sources
                 if ($application && $application->application_id) {
-                    return redirect()->route('startup-zone.confirmation', $application->application_id)
+                    return redirect()
+                        ->route('startup-zone.confirmation', $application->application_id)
                         ->with('success', 'Payment successful!')
                         ->with('payment_response', $responseArray);
                 } elseif ($applicationId) {
@@ -765,7 +769,8 @@ class PaymentGatewayController extends Controller
                         ->where('application_type', 'startup-zone')
                         ->first();
                     if ($application) {
-                        return redirect()->route('startup-zone.confirmation', $application->application_id)
+                        return redirect()
+                            ->route('startup-zone.confirmation', $application->application_id)
                             ->with('success', 'Payment successful!')
                             ->with('payment_response', $responseArray);
                     }
@@ -773,14 +778,15 @@ class PaymentGatewayController extends Controller
                     // Try to get from invoice
                     $application = Application::find($invoice->application_id);
                     if ($application && $application->application_type === 'startup-zone' && $application->application_id) {
-                        return redirect()->route('startup-zone.confirmation', $application->application_id)
+                        return redirect()
+                            ->route('startup-zone.confirmation', $application->application_id)
                             ->with('success', 'Payment successful!')
                             ->with('payment_response', $responseArray);
                     }
                 }
             }
         } elseif (isset($responseArray)) {
-            //update the table with failed payment details
+            // update the table with failed payment details
             if (!empty($responseArray['trans_date'])) {
                 $trans_date = Carbon::createFromFormat('d/m/Y H:i:s', $responseArray['trans_date'])->format('Y-m-d H:i:s');
             } else {
@@ -800,9 +806,9 @@ class PaymentGatewayController extends Controller
                     'updated_at' => now(),
                 ]);
 
-            //order_id
+            // order_id
             $order_id = explode('_', $responseArray['order_id'])[0];
-            
+
             // Find invoice for failure handling
             $invoice = Invoice::where('invoice_no', $order_id)->first();
 
@@ -815,16 +821,17 @@ class PaymentGatewayController extends Controller
                     $isStartupZone = true;
                 }
             }
-            
+
             // If invoice not found, check session
             if (!$invoice) {
                 $applicationId = session('payment_application_id');
                 if ($applicationId) {
-                    return redirect()->route('startup-zone.payment', $applicationId)
+                    return redirect()
+                        ->route('startup-zone.payment', $applicationId)
                         ->with('error', 'Payment failed. Please try again.');
                 }
             }
-            
+
             if ($isStartupZone && $application) {
                 // Create failed payment record for startup zone
                 if ($invoice) {
@@ -846,22 +853,24 @@ class PaymentGatewayController extends Controller
                         'user_id' => $application->user_id ?? null,
                     ]);
                 }
-                
-                return redirect()->route('startup-zone.payment', $application->application_id)
+
+                return redirect()
+                    ->route('startup-zone.payment', $application->application_id)
                     ->with('error', 'Payment failed. Please try again.')
                     ->with('payment_response', $responseArray);
             }
-            
+
             // For non-startup-zone invoices or if invoice not found
             if ($invoice) {
                 return redirect('/payment/' . $order_id . '?status=failed');
             } else {
                 // If invoice not found, redirect to a safe page
-                return redirect()->route('exhibitor.orders')
+                return redirect()
+                    ->route('exhibitor.orders')
                     ->with('error', 'Payment failed. Invoice not found.');
             }
 
-            //return to /payment/{id} 
+            // return to /payment/{id}
         } else {
             // No response array or unexpected format
             Log::warning('CCAvenue Success: Unexpected response format', [
@@ -869,7 +878,7 @@ class PaymentGatewayController extends Controller
                 'response_array' => $responseArray ?? null,
                 'request_data' => $request->all(),
             ]);
-            
+
             // Try to get invoice from session
             $invoiceNo = session('invoice_no');
             if ($invoiceNo) {
@@ -877,12 +886,13 @@ class PaymentGatewayController extends Controller
                 if ($invoice && $invoice->application_id) {
                     $application = Application::find($invoice->application_id);
                     if ($application && $application->application_type === 'startup-zone') {
-                        return redirect()->route('startup-zone.payment', $application->application_id)
+                        return redirect()
+                            ->route('startup-zone.payment', $application->application_id)
                             ->with('error', 'Payment response incomplete. Please try again or contact support.');
                     }
                 }
             }
-            
+
             // If we have response array but no order_id, try to update what we can
             if (isset($responseArray) && isset($responseArray['order_id'])) {
                 \DB::table('payment_gateway_response')
@@ -895,27 +905,20 @@ class PaymentGatewayController extends Controller
         }
 
         // Final fallback redirect
-        return redirect()->route('exhibitor.orders')
+        return redirect()
+            ->route('exhibitor.orders')
             ->with('error', 'Payment response incomplete. Please contact support if payment was deducted.');
     }
-
 
     /**
      * Display the invoice email for testing purposes.
      */
-
     public function showInvoiceEmail($invoiceId)
     {
         $service = new ExtraRequirementsMailService();
         $data = $service->prepareMailData($invoiceId);
         $mail = new ExtraRequirementsMail($data);
         return $mail->render();
-
-
-
-
-
-
 
         //  dd($data);
 
@@ -933,7 +936,7 @@ class PaymentGatewayController extends Controller
         return response()->json($data);
         // Mail::to($toEmail)->send(new ExtraRequirementsMail($invoiceId));
         $email = $data['billingEmail'];
-        $email = "manish.sharma@interlinks.in";
+        $email = 'manish.sharma@interlinks.in';
         Mail::to($email)->send(new ExtraRequirementsMail($data));
         $end = microtime(true);
         return response()->json(['message' => 'Invoice email sent successfully!' . $end - $start]);
@@ -994,7 +997,7 @@ class PaymentGatewayController extends Controller
                     ->orderBy('created_at', 'desc')
                     ->first();
             }
-            
+
             // If invoice not found by application, try to extract from order_id
             // Order ID format might be: {invoice_no}_{timestamp} or {application_id}_{timestamp}
             if (!$invoice && strpos($orderId, '_') !== false) {
@@ -1125,7 +1128,6 @@ class PaymentGatewayController extends Controller
 
                 // Return success response to CCAvenue
                 return response()->json(['status' => 'success'], 200);
-
             } catch (\Exception $e) {
                 DB::rollBack();
                 Log::error('CCAvenue Webhook: Database update failed', [
@@ -1135,7 +1137,6 @@ class PaymentGatewayController extends Controller
                 ]);
                 return response()->json(['error' => 'Processing failed'], 500);
             }
-
         } catch (\Exception $e) {
             Log::error('CCAvenue Webhook: Exception', [
                 'error' => $e->getMessage(),
@@ -1157,11 +1158,12 @@ class PaymentGatewayController extends Controller
         // Search filters
         if ($request->filled('search')) {
             $search = $request->input('search');
-            $query->where(function($q) use ($search) {
-                $q->where('order_id', 'like', "%{$search}%")
-                  ->orWhere('transaction_id', 'like', "%{$search}%")
-                  ->orWhere('email', 'like', "%{$search}%")
-                  ->orWhere('reference_id', 'like', "%{$search}%");
+            $query->where(function ($q) use ($search) {
+                $q
+                    ->where('order_id', 'like', "%{$search}%")
+                    ->orWhere('transaction_id', 'like', "%{$search}%")
+                    ->orWhere('email', 'like', "%{$search}%")
+                    ->orWhere('reference_id', 'like', "%{$search}%");
             });
         }
 
@@ -1192,7 +1194,7 @@ class PaymentGatewayController extends Controller
         foreach ($transactions as $transaction) {
             $tinNumber = $ccAvenueService->extractTinFromOrderId($transaction->order_id);
             $transaction->tin_number = $tinNumber;
-            
+
             // Find application
             $application = Application::where('application_id', $tinNumber)->first();
             if ($application) {

@@ -889,8 +889,8 @@ class StartupZoneController extends Controller
             // Get contact for email
             $contact = EventContact::where('application_id', $application->id)->first();
             
-            // Send credentials email if user was just created
-            if ($passwordGenerated) {
+            // Send credentials email if user was just created and config allows it
+            if ($passwordGenerated && config('constants.SEND_CREDENTIALS_ON_REGISTRATION', false)) {
                 try {
                     $setupProfileUrl = config('app.url');
                     Mail::to($contactEmail)->send(new UserCredentialsMail(
@@ -1024,6 +1024,54 @@ class StartupZoneController extends Controller
 
         $invoice = Invoice::where('application_id', $application->id)->firstOrFail();
         $contact = EventContact::where('application_id', $application->id)->first();
+        
+        // Send credentials email after payment if config allows it
+        // Only send if payment was just completed (check session flag to avoid duplicate sends)
+        $paymentJustCompleted = session('payment_success', false);
+        
+        if ($invoice->payment_status === 'paid' && $application->user_id && $paymentJustCompleted && config('constants.SEND_CREDENTIALS_AFTER_PAYMENT', false)) {
+            $user = \App\Models\User::find($application->user_id);
+            if ($user && $user->simplePass) {
+                try {
+                    $contactEmail = $contact && $contact->email ? $contact->email : $application->company_email;
+                    $contactName = $contact ? trim(($contact->salutation ?? '') . ' ' . ($contact->first_name ?? '') . ' ' . ($contact->last_name ?? '')) : $application->company_name;
+                    
+                    if ($contactEmail) {
+                        $setupProfileUrl = config('app.url');
+                        Mail::to($contactEmail)->send(new UserCredentialsMail(
+                            $contactName,
+                            $setupProfileUrl,
+                            $contactEmail,
+                            $user->simplePass
+                        ));
+                    }
+                } catch (\Exception $e) {
+                    \Log::error('Failed to send credentials email after payment', [
+                        'email' => $contactEmail ?? 'unknown',
+                        'error' => $e->getMessage()
+                    ]);
+                    // Don't fail if email fails
+                }
+            }
+        }
+        
+        // Send updated registration confirmation email with paid status (will have correct subject)
+        // Only send if payment was just completed to avoid duplicate emails
+        if ($invoice->payment_status === 'paid' && $paymentJustCompleted) {
+            try {
+                $contactEmail = $contact && $contact->email ? $contact->email : $application->company_email;
+                if ($contactEmail) {
+                    $application->load(['country', 'state', 'eventContact']);
+                    Mail::to($contactEmail)->send(new ExhibitorRegistrationMail($application, $invoice, $contact));
+                }
+            } catch (\Exception $e) {
+                \Log::error('Failed to send registration confirmation email after payment', [
+                    'email' => $contactEmail ?? 'unknown',
+                    'error' => $e->getMessage()
+                ]);
+                // Don't fail if email fails
+            }
+        }
         
         // Clean up session data (drafts are kept in database for analytics)
         session()->forget('startup_zone_draft');

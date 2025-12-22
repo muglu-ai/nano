@@ -44,6 +44,9 @@ const EVENT_FAVICON = 'https://www.bengalurutechsummit.com/favicon-16x16.png';
 
 const EXTRA_REQUIREMENTS_ACTIVE = false; //true or false
 
+const SEND_CREDENTIALS_ON_REGISTRATION = false; // Set to true to send credentials email immediately on registration, false to disable
+const SEND_CREDENTIALS_AFTER_PAYMENT = false; // Set to true to send credentials email after payment is successful, false to disable
+
 const LATE_REGISTRATION_DEADLINE = '2026-11-19'; // last
 
 //custom registration link for exhibitors

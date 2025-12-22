@@ -46,8 +46,17 @@ class ExhibitorRegistrationMail extends Mailable
      */
     public function envelope(): Envelope
     {
+        // Set subject based on payment status
+        $isPaid = $this->invoice->payment_status === 'paid';
+        
+        if ($isPaid) {
+            $subject = config('constants.EVENT_NAME') . ' ' . config('constants.EVENT_YEAR') . ' - Startup Exhibitor Registration Confirmation & Payment';
+        } else {
+            $subject = config('constants.EVENT_NAME') . ' ' . config('constants.EVENT_YEAR') . ' - Startup Exhibitor Registration Initiated & Payment Link';
+        }
+        
         return new Envelope(
-            subject: config('constants.EVENT_NAME') . ' ' . config('constants.EVENT_YEAR') . ' - Registration Confirmation & Payment',
+            subject: $subject,
         );
     }
 

@@ -600,7 +600,7 @@ Route::get('/paypal/webhook', [PayPalController::class, 'webhook'])->withoutMidd
 
 /* Payment Gateway CCAvenue Routes
 */
-Route::get('/payment/ccavenue/{id}', [PaymentGatewayController::class, 'ccAvenuePayment'])->name('payment.ccavenue');
+Route::get('/payment/ccavenue/{id}', [PaymentGatewayController::class, 'ccAvenuePayment2'])->name('payment.ccavenue');
 Route::post('/payment/ccavenue/{id}', [PaymentGatewayController::class, 'ccAvenuePayment'])->name('payment.ccavenue.post');
 Route::post('/payment/ccavenue-success', [PaymentGatewayController::class, 'ccAvenueSuccess'])->withoutMiddleware([\App\Http\Middleware\VerifyCsrfToken::class]);
 Route::post('/ccavenue/webhook', [PaymentGatewayController::class, 'ccAvenueWebhook'])->withoutMiddleware([\App\Http\Middleware\VerifyCsrfToken::class])->name('ccavenue.webhook');
