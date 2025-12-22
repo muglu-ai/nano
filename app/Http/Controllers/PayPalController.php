@@ -408,6 +408,67 @@ private function formatBillingFromRequirements($billing)
     ];
 }
 
+/**
+ * Format billing detail object from EventContact for startup zone
+ */
+private function formatBillingFromEventContact($eventContact, $applicationId)
+{
+    $application = Application::find($applicationId);
+    if (!$application) {
+        return null;
+    }
+
+    // Build contact name properly (trim extra spaces)
+    $contactName = trim(($eventContact->salutation ?? '') . ' ' . ($eventContact->first_name ?? '') . ' ' . ($eventContact->last_name ?? ''));
+    if (empty($contactName)) {
+        $contactName = $application->company_name ?? '';
+    }
+
+    // Get phone number and strip country code if present (format: 91-9801217815 -> 9801217815)
+    $phone = $eventContact->contact_number ?? $application->landline ?? '';
+    $phone = preg_replace('/^.*-/', '', $phone); // Remove country code prefix
+
+    // Get city name from city_id
+    $cityName = '';
+    if ($application->city_id) {
+        $city = \DB::table('cities')->where('id', $application->city_id)->first();
+        $cityName = $city->name ?? '';
+    }
+
+    // Get state and country names
+    $stateName = '';
+    if ($application->state_id) {
+        $state = State::find($application->state_id);
+        $stateName = $state->name ?? '';
+    }
+
+    $countryName = '';
+    if ($application->country_id) {
+        $country = Country::find($application->country_id);
+        $countryName = $country->name ?? '';
+    }
+
+    return (object) [
+        'billing_company' => $application->company_name ?? '',
+        'contact_name'    => $contactName,
+        'email'           => $eventContact->email ?? $application->company_email ?? '',
+        'phone'           => $phone,
+        'address'         => $application->address ?? '',
+        'country_id'      => $application->country_id ?? null,
+        'state_id'        => $application->state_id ?? null,
+        'postal_code'     => $application->postal_code ?? '',
+        'state'           => (object)['name' => $stateName],
+        'country'         => (object)[
+            'name'   => $countryName,
+            'states' => optional(Country::with('states')->find($application->country_id))->states ?? collect(),
+        ],
+        'gst'             => $application->gst_no ?? null,
+        'pan_no'          => $application->pan_no ?? null,
+        'city_id'         => $application->city_id ?? null,
+        'city_name'       => $cityName,
+    ];
+}
+
 
 
 

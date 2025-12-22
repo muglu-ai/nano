@@ -11,22 +11,24 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('secondary_event_contacts', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('application_id')->constrained('applications')->onDelete('cascade');
-            $table->string('salutation', 25)->nullable();
-            $table->string('first_name')->nullable();
-            $table->string('last_name')->nullable();
-            $table->string('job_title')->nullable();
-            $table->string('email')->nullable();
-            $table->string('contact_number')->nullable();
-            $table->string('secondary_email')->nullable();
-            $table->string('designation')->nullable();
-            $table->timestamps();
+        if (!Schema::hasTable('secondary_event_contacts')) {
+            Schema::create('secondary_event_contacts', function (Blueprint $table) {
+                $table->id();
+                $table->foreignId('application_id')->constrained('applications')->onDelete('cascade');
+                $table->string('salutation', 25)->nullable();
+                $table->string('first_name')->nullable();
+                $table->string('last_name')->nullable();
+                $table->string('job_title')->nullable();
+                $table->string('email')->nullable();
+                $table->string('contact_number')->nullable();
+                $table->string('secondary_email')->nullable();
+                $table->string('designation')->nullable();
+                $table->timestamps();
 
-            // Indexes
-            $table->index('application_id');
-        });
+                // Indexes
+                $table->index('application_id');
+            });
+        }
     }
 
     /**

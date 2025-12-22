@@ -13,28 +13,27 @@ return new class extends Migration
     {
         if (!Schema::hasTable('meeting_room_bookings')) {
             Schema::create('meeting_room_bookings', function (Blueprint $table) {
-                $table->integerIncrements('id'); // int UNSIGNED AUTO_INCREMENT
-                $table->string('booking_id')->default('0');
-                $table->unsignedBigInteger('application_id')->nullable();
-                $table->unsignedBigInteger('user_id')->nullable();
-                // Make these UNSIGNED to be compatible with referenced IDs
-                $table->unsignedInteger('room_type_id')->nullable();
-                $table->unsignedInteger('slot_id')->nullable();
-                $table->date('booking_date')->nullable();
-                $table->boolean('is_member')->nullable();
-                $table->decimal('final_price', 10, 2)->nullable();
-                $table->enum('payment_status', ['pending', 'paid', 'cancelled'])->nullable();
-                $table->timestamp('created_at')->useCurrent();
-                $table->timestamp('updated_at')->useCurrent()->useCurrentOnUpdate();
-                $table->enum('confirmation_status', ['confirmed', 'pending', 'canceled', 'rejected'])->nullable();
+            $table->integerIncrements('id'); // int NOT NULL AUTO_INCREMENT in SQL
+            $table->string('booking_id')->default('0');
+            $table->unsignedBigInteger('application_id')->nullable();
+            $table->unsignedBigInteger('user_id')->nullable();
+            $table->integer('room_type_id')->nullable(); // int DEFAULT NULL in SQL
+            $table->integer('slot_id')->nullable(); // int DEFAULT NULL in SQL
+            $table->date('booking_date')->nullable();
+            $table->boolean('is_member')->nullable();
+            $table->decimal('final_price', 10, 2)->nullable();
+            $table->enum('payment_status', ['pending', 'paid', 'cancelled'])->nullable();
+            $table->timestamp('created_at')->useCurrent();
+            $table->timestamp('updated_at')->useCurrent()->useCurrentOnUpdate();
+            $table->enum('confirmation_status', ['confirmed', 'pending', 'canceled', 'rejected'])->nullable();
 
-                // Indexes
-                $table->index('application_id');
-                $table->index('user_id');
-                $table->index('room_type_id');
-                $table->index('slot_id');
-                $table->index('booking_id');
-
+            // Indexes
+            $table->index('application_id');
+            $table->index('user_id');
+            $table->index('room_type_id');
+            $table->index('slot_id');
+            $table->index('booking_id');
+            
                 // Foreign key constraints
                 $table->foreign('application_id')->references('id')->on('applications')->onDelete('set null');
                 $table->foreign('user_id')->references('id')->on('users')->onDelete('set null');
