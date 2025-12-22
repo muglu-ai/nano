@@ -20,7 +20,7 @@
                     @endif
 
                     <p class="mb-3">
-                        Please enter your <strong>Application ID (TIN)</strong> or <strong>Invoice Number</strong>.
+                        Please enter your <strong>Application ID</strong>, <strong>TIN No</strong>, or <strong>Invoice Number</strong>.
                         We will redirect you back to the correct payment page.
                     </p>
 
@@ -28,7 +28,7 @@
                         @csrf
 
                         <div class="mb-3">
-                            <label for="application_id" class="form-label">Application ID (TIN)</label>
+                            <label for="application_id" class="form-label">Application ID</label>
                             <input
                                 type="text"
                                 name="application_id"
@@ -40,6 +40,23 @@
                             @error('application_id')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
+                            <small class="form-text text-muted">Your unique application identifier</small>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="tin_no" class="form-label">TIN No</label>
+                            <input
+                                type="text"
+                                name="tin_no"
+                                id="tin_no"
+                                class="form-control @error('tin_no') is-invalid @enderror"
+                                value="{{ old('tin_no') }}"
+                                placeholder="e.g. BTS-2026-EXH-123456"
+                            >
+                            @error('tin_no')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                            <small class="form-text text-muted">Tax Identification Number</small>
                         </div>
 
                         <div class="mb-3">
@@ -55,6 +72,7 @@
                             @error('invoice_no')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
+                            <small class="form-text text-muted">Your invoice reference number</small>
                         </div>
 
                         <div class="d-flex justify-content-between">

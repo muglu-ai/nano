@@ -945,28 +945,8 @@ private function formatBillingFromRequirements($billing)
                 'created_at' => now(),
             ]);
 
-            // Create payment record with 'pending' status when payment is initiated
-            $application = null;
-            if ($invoice->application_id) {
-                $application = \App\Models\Application::find($invoice->application_id);
-            }
-            
-            Payment::create([
-                'invoice_id' => $invoice->id,
-                'order_id' => $data['order_id'],
-                'payment_method' => 'PayPal',
-                'amount' => $data['amount'],
-                'amount_paid' => 0,
-                'amount_received' => 0,
-                'transaction_id' => null,
-                'pg_result' => 'Pending',
-                'track_id' => $data['payment_id'],
-                'pg_response_json' => null,
-                'payment_date' => null,
-                'currency' => 'USD',
-                'status' => 'pending',
-                'user_id' => $application ? $application->user_id : null,
-            ]);
+            // Note: Payment record will be created only after payment is completed
+            // (in captureOrder method when we have transaction_id and payment status)
 
             return response()->json($apiResponse->getResult());
         } catch (\Exception $e) {
@@ -1055,7 +1035,7 @@ private function formatBillingFromRequirements($billing)
                 }
                 
                 if ($isStartupZone && $application) {
-                    // Find existing payment record by order_id
+                    // Check if payment record already exists (from previous attempt)
                     $payment = Payment::where('order_id', $orderData->order_id)
                         ->where('invoice_id', $invoice->id)
                         ->first();
@@ -1075,7 +1055,7 @@ private function formatBillingFromRequirements($billing)
                             'status' => 'successful',
                         ]);
                     } else {
-                        // Create payment record if not found (fallback)
+                        // Create new payment record (payment records are only created after payment completion)
                         Payment::create([
                             'invoice_id' => $invoice->id,
                             'payment_method' => 'PayPal',

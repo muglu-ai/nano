@@ -162,7 +162,7 @@ class PaymentGatewayController extends Controller
 
     /**
      * Show a simple page where the user can enter
-     * an Application ID (TIN) or Invoice Number to
+     * Application ID, TIN No, or Invoice Number to
      * be redirected to the appropriate payment page.
      */
     public function showPaymentLookup(Request $request)
@@ -181,19 +181,20 @@ class PaymentGatewayController extends Controller
     {
         $data = $request->validate([
             'application_id' => ['nullable', 'string'],
-            'invoice_no'     => ['nullable', 'string'],
+            'tin_no'         => ['nullable', 'string'],
+            'invoice_no'    => ['nullable', 'string'],
         ]);
 
-        if (empty($data['application_id']) && empty($data['invoice_no'])) {
+        if (empty($data['application_id']) && empty($data['tin_no']) && empty($data['invoice_no'])) {
             return back()
                 ->withInput()
-                ->with('error', 'Please enter an Application ID or an Invoice Number.');
+                ->with('error', 'Please enter an Application ID, TIN No, or Invoice Number.');
         }
 
         $application = null;
         $invoice = null;
 
-        // 1. Try by Application ID (TIN)
+        // 1. Try by Application ID (this is the TIN stored in applications table)
         if (!empty($data['application_id'])) {
             $application = Application::where('application_id', trim($data['application_id']))->first();
             if ($application) {
@@ -201,7 +202,26 @@ class PaymentGatewayController extends Controller
             }
         }
 
-        // 2. If still no invoice and invoice_no provided, try by Invoice No
+        // 2. Try by TIN No (can be in application_id field of Application or application_no field of Invoice)
+        if (!$application && !empty($data['tin_no'])) {
+            $tinNo = trim($data['tin_no']);
+            
+            // Try to find by application_id in Application table
+            $application = Application::where('application_id', $tinNo)->first();
+            if ($application) {
+                $invoice = Invoice::where('application_id', $application->id)->first();
+            }
+            
+            // If not found, try to find invoice by application_no (which stores TIN)
+            if (!$invoice) {
+                $invoice = Invoice::where('application_no', $tinNo)->first();
+                if ($invoice && !$application && $invoice->application_id) {
+                    $application = Application::find($invoice->application_id);
+                }
+            }
+        }
+
+        // 3. If still no invoice and invoice_no provided, try by Invoice No
         if (!$invoice && !empty($data['invoice_no'])) {
             $invoiceNo = trim($data['invoice_no']);
             $invoice = Invoice::where('invoice_no', $invoiceNo)->first();
@@ -437,23 +457,8 @@ class PaymentGatewayController extends Controller
             'created_at' => now(),
         ]);
 
-        // Create payment record with 'pending' status when payment is initiated
-        Payment::create([
-            'invoice_id' => $invoice->id,
-            'order_id' => $data['order_id'],
-            'payment_method' => 'CCAvenue',
-            'amount' => $data['amount'],
-            'amount_paid' => 0,
-            'amount_received' => 0,
-            'transaction_id' => null,
-            'pg_result' => 'Pending',
-            'track_id' => null,
-            'pg_response_json' => null,
-            'payment_date' => null,
-            'currency' => 'INR',
-            'status' => 'pending',
-            'user_id' => $application ? $application->user_id : null,
-        ]);
+        // Note: Payment record will be created only after payment is completed
+        // (in ccAvenueSuccess or ccAvenueWebhook methods when we have transaction_id)
 
         // dd($data);
 
@@ -638,9 +643,9 @@ class PaymentGatewayController extends Controller
                     'currency' => 'INR',
                 ]);
                 
-                // Update payment record for startup zone (created when payment was initiated)
+                // Create payment record for startup zone (only after payment is completed)
                 if ($isStartupZone && $application) {
-                    // Find existing payment record by order_id
+                    // Check if payment record already exists (from webhook or previous attempt)
                     $payment = Payment::where('order_id', $responseArray['order_id'])
                         ->where('invoice_id', $invoice->id)
                         ->first();
@@ -660,7 +665,7 @@ class PaymentGatewayController extends Controller
                             'status' => 'successful',
                         ]);
                     } else {
-                        // Create payment record if not found (fallback)
+                        // Create new payment record (payment records are only created after payment completion)
                         Payment::create([
                             'invoice_id' => $invoice->id,
                             'payment_method' => $responseArray['payment_mode'] ?? 'CCAvenue',
