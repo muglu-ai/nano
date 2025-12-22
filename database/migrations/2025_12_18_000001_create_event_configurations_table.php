@@ -11,7 +11,7 @@ return new class extends Migration
         Schema::create('event_configurations', function (Blueprint $table) {
             $table->id();
             $table->string('event_name')->default('Bengaluru Tech Summit');
-            $table->string('event_year')->default('2025');
+            $table->string('event_year')->default('2026');
             $table->string('short_name')->default('BTS');
             $table->string('event_website')->nullable();
             $table->string('event_date_start')->nullable();

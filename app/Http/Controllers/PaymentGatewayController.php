@@ -168,6 +168,10 @@ class PaymentGatewayController extends Controller
     public function showPaymentLookup(Request $request)
     {
         $prefillInvoice = session('invoice_hint');
+        
+        // Share association logo (if any) for the layout - set to null for lookup page
+        view()->share('associationLogo', null);
+        
         return view('payment.lookup', [
             'prefillInvoice' => $prefillInvoice,
         ]);

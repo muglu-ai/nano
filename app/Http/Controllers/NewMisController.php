@@ -80,7 +80,6 @@ class NewMisController extends Controller
                 return file_exists($pdfPath);
             });
 
-        //SEC-2025_Stallbooking_App_9d9e_invitation_letters.pdf
         // this exist or not check for it
 
         // Check for invitation letter PDFs with alternate naming pattern

@@ -1,4 +1,6 @@
-@extends('layouts.app')
+@extends('layouts.startup-zone')
+
+@section('title', 'Find Your Payment - ' . config('constants.EVENT_NAME') . ' ' . config('constants.EVENT_YEAR'))
 
 @section('content')
 <div class="container py-5">

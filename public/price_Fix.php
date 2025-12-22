@@ -38,7 +38,7 @@
                 ],
             ]
         ];
-        $early_bird_cutoff = '2025-03-31';
+        $early_bird_cutoff = '2026-03-31';
         $rate_type = (strtotime($submission_date) <= strtotime($early_bird_cutoff)) ? 'Early Bird' : 'Regular';
 
         // print_r([$currency, $membership, $stall_category, $booth_type, $rate_type, $sqm]); // Debugging line to check the parameters

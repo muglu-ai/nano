@@ -219,18 +219,7 @@ class PaymentReceiptController extends Controller
     {
         try {
 
-            //make an request data array as we are under teesting 
-            // $request->merge([
-            //     'app_id' => 'SEC-2025_Stallbooking_App_8797',
-            //     'invoice_no' => 'SEC-INVC-67841',
-            //     'user_id' => 73,
-            //     'payment_method' => 'Bank Transfer',
-            //     'amount_paid' => 1,
-            //     'currency' => 'INR',
-            //     'payment_date' => '2025-07-01',
-            //     'receipt_image' => '', // Simulating no image upload
-            //     'transaction_no' => 'd12d11d33dN12ds3c4s56'
-            // ]);
+            
 
             Log::info('Payment receipt upload request', [
                 'request' => $request->all(),

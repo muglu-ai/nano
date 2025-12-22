@@ -1,8 +1,8 @@
 <?php
 
-const MAIL_FROM_NAME = 'Bengaluru Tech Summit 2025';
-const APP_NAME = 'Bengaluru Tech Summit 2025';
-const APP_NAME_SHORT = 'BTS 2025';
+const MAIL_FROM_NAME = 'Bengaluru Tech Summit 2026';
+const APP_NAME = 'Bengaluru Tech Summit 2026';
+const APP_NAME_SHORT = 'BTS 2026';
 const EVENT_NAME = 'Bengaluru Tech Summit';
 const EVENT_YEAR = '2026';
 const SHORT_NAME = 'BTS';
@@ -13,8 +13,8 @@ const TIN_NO_PREFIX = SHORT_NAME . '-' . EVENT_YEAR . '-EXH-';
 const PIN_NO_PREFIX = SHORT_NAME . '-' . EVENT_YEAR . '-EXHP-';
 const EVENT_WEBSITE = 'https://www.bengalurutechsummit.com';
 //event dates
-const EVENT_DATE_START = '19-11-2025';
-const EVENT_DATE_END = '21-11-2025';
+const EVENT_DATE_START = '19-11-2026';
+const EVENT_DATE_END = '21-11-2026';
 const EVENT_VENUE = 'Bengaluru International Exhibition Centre (BIEC), Bengaluru, India';
 
 const APP_URL = 'http://bengalurutechsummit.com/portal/public';
@@ -44,7 +44,7 @@ const EVENT_FAVICON = 'https://www.bengalurutechsummit.com/favicon-16x16.png';
 
 const EXTRA_REQUIREMENTS_ACTIVE = false; //true or false
 
-const LATE_REGISTRATION_DEADLINE = '2025-11-19'; // last
+const LATE_REGISTRATION_DEADLINE = '2026-11-19'; // last
 
 //custom registration link for exhibitors
 const EXHIBITOR_REGISTRATION_LINK = 'https://www.bengalurutechsummit.com/web/it_forms/enquiry.php';
@@ -70,8 +70,8 @@ return [
     'APP_URL' => EVENT_WEBSITE . '/portal',
     'APP_NAME' => APP_NAME,
     'APP_NAME_SHORT' => SHORT_NAME,
-    'APPLICATION_ID_PREFIX' => 'TIN-BTS-2025-EXH-',
-    'SPONSORSHIP_ID_PREFIX' => 'TIN-BTS-2025-SPONSOR-',
+    'APPLICATION_ID_PREFIX' => 'TIN-BTS-2026-EXH-',
+    'SPONSORSHIP_ID_PREFIX' => 'TIN-BTS-2026-SPONSOR-',
     'TIN_NO_PREFIX' => TIN_NO_PREFIX,
     'PIN_NO_PREFIX' => PIN_NO_PREFIX,
     'COMPLIMENTARY_REG_ID_PREFIX' => 'TIN-' . SHORT_NAME . EVENT_YEAR . '-EXHC',

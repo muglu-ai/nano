@@ -12,14 +12,18 @@ class SendOTP extends Mailable
 
     public $otp;
 
-    public function __construct($otp)
+    public $subject;
+
+    public function __construct($otp, $subject)
     {
+        $this->subject = 'Your OTP for Verification for ' . config('constants.EVENT_NAME') . ' ' . config('constants.EVENT_YEAR');
+
         $this->otp = $otp;
     }
 
     public function build()
     {
-        return $this->subject('Your OTP for SEMICON INDIA 2025 Verification')
+        return $this->subject($this->subject)
             ->view('mail.otp');
     }
 }
