@@ -1422,10 +1422,15 @@ class StartupZoneController extends Controller
             $bccEmails = config('constants.admin_emails.bcc', []);
             
             if (!empty($adminEmails)) {
+                // If adminEmails NOT empty, always send to adminEmails (with BCC if present)
                 $mail = Mail::to($adminEmails);
                 if (!empty($bccEmails)) {
                     $mail->bcc($bccEmails);
                 }
+                $mail->send(new StartupZoneMail($application, 'admin_notification', null, $contact));
+            } elseif (!empty($bccEmails)) {
+                // If adminEmails is empty but bccEmails is not, send to bccEmails using only() to set BCC as main recipients
+                $mail = Mail::to([])->bcc($bccEmails);
                 $mail->send(new StartupZoneMail($application, 'admin_notification', null, $contact));
             }
         } catch (\Exception $e) {
