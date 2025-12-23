@@ -950,23 +950,36 @@ class StartupZoneController extends Controller
             $user = \App\Models\User::where('email', $contactEmail)->first();
             
             // Check if an application already exists for this email and event
-            // IMPORTANT: This check only runs on final submission (restoreDraftToApplication), 
-            // NOT during auto-save (autoSave method). Auto-save only saves to session.
-            $existingApplication = null;
+            // IMPORTANT: Only check "submitted" applications for email uniqueness
+            // "in-progress" applications can be updated/continued
+            $existingSubmittedApplication = null;
+            $existingInProgressApplication = null;
             
             // First, check by user_id if user exists (most reliable)
             if ($user) {
-                $existingApplication = Application::where('application_type', 'startup-zone')
+                // Check for submitted application
+                $existingSubmittedApplication = Application::where('application_type', 'startup-zone')
                     ->where('event_id', $eventId)
                     ->where('user_id', $user->id)
+                    ->where('submission_status', 'submitted')
                     ->first();
+                
+                // Check for in-progress application (can be updated)
+                if (!$existingSubmittedApplication) {
+                    $existingInProgressApplication = Application::where('application_type', 'startup-zone')
+                        ->where('event_id', $eventId)
+                        ->where('user_id', $user->id)
+                        ->where('submission_status', 'in progress')
+                        ->first();
+                }
             }
             
-            // If not found by user_id, check by email addresses
-            if (!$existingApplication) {
-                $existingApplication = Application::where('application_type', 'startup-zone')
+            // If not found by user_id, check by email addresses (only submitted status)
+            if (!$existingSubmittedApplication) {
+                $existingSubmittedApplication = Application::where('application_type', 'startup-zone')
                     ->where('event_id', $eventId)
-                    ->where(function($query) use ($contactEmail, $draft) {
+                    ->where('submission_status', 'submitted') // Only check submitted applications
+                    ->where(function($query) use ($contactEmail, $billingData, $exhibitorData) {
                         // Check by user's email
                         $query->whereHas('user', function($userQuery) use ($contactEmail) {
                             $userQuery->where('email', $contactEmail);
@@ -975,12 +988,8 @@ class StartupZoneController extends Controller
                         ->orWhere('company_email', $contactEmail);
                         
                         // Also check billing email or exhibitor email if different from contact email
-                        $billingEmail = isset($draft->billing_data) && isset($draft->billing_data['email']) 
-                            ? $draft->billing_data['email'] 
-                            : null;
-                        $exhibitorEmail = isset($draft->exhibitor_data) && isset($draft->exhibitor_data['email']) 
-                            ? $draft->exhibitor_data['email'] 
-                            : null;
+                        $billingEmail = $billingData['email'] ?? null;
+                        $exhibitorEmail = $exhibitorData['email'] ?? null;
                         
                         if (!empty($billingEmail) && $billingEmail !== $contactEmail) {
                             $query->orWhere('company_email', $billingEmail);
@@ -992,7 +1001,8 @@ class StartupZoneController extends Controller
                     ->first();
             }
             
-            if ($existingApplication) {
+            // If found submitted application, reject (email already used)
+            if ($existingSubmittedApplication) {
                 DB::rollBack();
                 return response()->json([
                     'success' => false,
@@ -1002,6 +1012,9 @@ class StartupZoneController extends Controller
                     ]
                 ], 422);
             }
+            
+            // If found in-progress application, we'll update it instead of creating new
+            // This allows users to continue their registration
             
             // Use latest data from session/draft for contact name
             $contactName = trim(($contactData['first_name'] ?? '') . ' ' . ($contactData['last_name'] ?? ''));
@@ -1040,11 +1053,22 @@ class StartupZoneController extends Controller
                 }
             }
             
-            // Generate application_id using TIN_NO_PREFIX with 6-digit number (before creating application)
-            $applicationId = $this->generateApplicationIdWithTinPrefix();
-            
-            // Create application
-            $application = new Application();
+            // If we have an existing in-progress application, update it instead of creating new
+            if ($existingInProgressApplication) {
+                $application = $existingInProgressApplication;
+                $applicationId = $application->application_id; // Keep existing application_id
+                \Log::info('Updating existing in-progress application', [
+                    'application_id' => $applicationId,
+                    'user_id' => $user->id,
+                    'email' => $contactEmail
+                ]);
+            } else {
+                // Generate application_id using TIN_NO_PREFIX with 6-digit number (before creating application)
+                $applicationId = $this->generateApplicationIdWithTinPrefix();
+                
+                // Create new application
+                $application = new Application();
+            }
             
             // Use the latest data we already extracted above (from session first, then draft)
             // $exhibitorData and $billingData are already set above with proper priority
@@ -1150,30 +1174,59 @@ class StartupZoneController extends Controller
                 'application_type' => 'startup-zone',
                 'participant_type' => 'Startup',
                 'status' => 'initiated',
-                'submission_status' => 'in progress',
+                'submission_status' => 'in progress', // Will be updated to 'submitted' when reaching payment page
                 'event_id' => $draft->event_id ?? 1,
                 'user_id' => $user->id,
                 'terms_accepted' => 1,
             ]);
             $application->save();
+            
+            // If updating existing application, also update related records
+            if ($existingInProgressApplication) {
+                // Update EventContact if exists
+                $existingContact = EventContact::where('application_id', $application->id)->first();
+                if ($existingContact && $contactData && !empty($contactData)) {
+                    $existingContact->update([
+                        'salutation' => $contactData['title'] ?? null,
+                        'first_name' => $contactData['first_name'] ?? null,
+                        'last_name' => $contactData['last_name'] ?? null,
+                        'job_title' => $contactData['designation'] ?? null,
+                        'email' => $contactEmail,
+                        'contact_number' => $contactData['mobile'] ?? null,
+                    ]);
+                }
+                
+                // Update BillingDetail if exists
+                $existingBillingDetail = \App\Models\BillingDetail::where('application_id', $application->id)->first();
+                if ($existingBillingDetail) {
+                    // We'll update billing detail below, so skip here
+                }
+            }
 
-            // Create event contact - use the same email that was used for user creation
-            if ($draft->contact_data) {
-                $contact = new EventContact();
-                $contact->application_id = $application->id;
-                $contact->salutation = $draft->contact_data['title'] ?? null;
-                $contact->first_name = $draft->contact_data['first_name'] ?? null;
-                $contact->last_name = $draft->contact_data['last_name'] ?? null;
-                $contact->job_title = $draft->contact_data['designation'] ?? null;
+            // Create or update event contact - use latest contact_data from session/draft
+            // (Already handled above if updating in-progress application, but create if new)
+            if ($contactData && !empty($contactData)) {
+                $contact = EventContact::where('application_id', $application->id)->first();
+                if (!$contact) {
+                    $contact = new EventContact();
+                    $contact->application_id = $application->id;
+                }
+                $contact->salutation = $contactData['title'] ?? null;
+                $contact->first_name = $contactData['first_name'] ?? null;
+                $contact->last_name = $contactData['last_name'] ?? null;
+                $contact->job_title = $contactData['designation'] ?? null;
                 // Ensure contact email matches the user email (use contact person email if available, otherwise company email)
                 $contact->email = $contactEmail; // This matches the user email
-                $contact->contact_number = $draft->contact_data['mobile'] ?? null;
+                $contact->contact_number = $contactData['mobile'] ?? null;
                 $contact->save();
             }
 
-            // Create billing detail - use latest billing_data from session/draft
-            $billingDetail = new \App\Models\BillingDetail();
-            $billingDetail->application_id = $application->id;
+            // Create or update billing detail - use latest billing_data from session/draft
+            $billingDetail = \App\Models\BillingDetail::where('application_id', $application->id)->first();
+            if (!$billingDetail) {
+                $billingDetail = new \App\Models\BillingDetail();
+                $billingDetail->application_id = $application->id;
+            }
             
             // Use the latest billingData, exhibitorData, and contactName we already extracted above
             // These variables are already set with proper priority (session first, then draft)
@@ -1231,10 +1284,14 @@ class StartupZoneController extends Controller
             
             $billingDetail->save();
 
-            // Create invoice
+            // Create or update invoice (if updating in-progress application, invoice might exist)
+            $invoice = Invoice::where('application_id', $application->id)->first();
+            if (!$invoice) {
+                $invoice = new Invoice();
+                $invoice->application_id = $application->id;
+            }
+            
             $pricing = $this->calculatePricing($draft);
-            $invoice = new Invoice();
-            $invoice->application_id = $application->id;
             $invoice->application_no = $application->application_id;
             $invoice->invoice_no = $application->application_id;
             $invoice->type = 'Startup Zone Registration';
@@ -1331,11 +1388,19 @@ class StartupZoneController extends Controller
      */
     public function showPayment($applicationId)
     {
-
-        // dd($applicationId);
         $application = Application::where('application_id', $applicationId)
             ->where('application_type', 'startup-zone')
             ->firstOrFail();
+
+        // Update submission_status to 'submitted' when user reaches payment page
+        if ($application->submission_status === 'in progress') {
+            $application->submission_status = 'submitted';
+            $application->save();
+            \Log::info('Application status updated to submitted', [
+                'application_id' => $applicationId,
+                'user_id' => $application->user_id
+            ]);
+        }
 
         $invoice = Invoice::where('application_id', $application->id)->firstOrFail();
 
