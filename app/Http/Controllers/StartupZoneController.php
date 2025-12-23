@@ -1323,28 +1323,6 @@ class StartupZoneController extends Controller
             
             // For startup zone: Send admin notification email when user confirms details (after preview)
             // Admin needs to approve before user can make payment
-            try {
-                // Reload application with relationships for email
-                $application->load(['country', 'state', 'eventContact']);
-                
-                // Get admin emails from config
-                $adminEmails = config('constants.admin_emails.to', []);
-                $bccEmails = config('constants.admin_emails.bcc', []);
-                
-                if (!empty($adminEmails)) {
-                    $mail = Mail::to($adminEmails);
-                    if (!empty($bccEmails)) {
-                        $mail->bcc($bccEmails);
-                    }
-                    $mail->send(new StartupZoneMail($application, 'admin_notification', null, $contact));
-                }
-            } catch (\Exception $e) {
-                \Log::error('Failed to send admin notification email for startup zone', [
-                    'application_id' => $application->application_id,
-                    'error' => $e->getMessage()
-                ]);
-                // Don't fail the transaction if email fails
-            }
             
             // NOTE: No user email is sent on submission - user will receive email only after admin approval
 
@@ -1434,6 +1412,29 @@ class StartupZoneController extends Controller
         view()->share('associationLogo', $associationLogo);
 
         $billingDetail = \App\Models\BillingDetail::where('application_id', $application->id)->first();
+        
+        try {
+            // Reload application with relationships for email
+            $application->load(['country', 'state', 'eventContact']);
+            
+            // Get admin emails from config
+            $adminEmails = config('constants.admin_emails.to', []);
+            $bccEmails = config('constants.admin_emails.bcc', []);
+            
+            if (!empty($adminEmails)) {
+                $mail = Mail::to($adminEmails);
+                if (!empty($bccEmails)) {
+                    $mail->bcc($bccEmails);
+                }
+                $mail->send(new StartupZoneMail($application, 'admin_notification', null, $contact));
+            }
+        } catch (\Exception $e) {
+            \Log::error('Failed to send admin notification email for startup zone', [
+                'application_id' => $application->application_id,
+                'error' => $e->getMessage()
+            ]);
+            // Don't fail the transaction if email fails
+        }
         
         return view('startup-zone.payment', compact('application', 'invoice', 'billingDetail'));
     }

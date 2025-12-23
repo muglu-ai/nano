@@ -279,7 +279,7 @@ return [
 
     // Admin Emails to receive notifications
     'admin_emails' => [
-        'to' => ['enquiry@bengalurutechsummit.com'],  // Primary recipient
+        //'to' => ['enquiry@bengalurutechsummit.com'],  // Primary recipient
         'bcc' => [    // BCC recipients
             'test.interlinks@gmail.com',
             'manish.sharma@interlinks.in'
