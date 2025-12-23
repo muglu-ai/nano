@@ -483,16 +483,7 @@
                     <i class="fas fa-info-circle"></i> <strong>Note:</strong> After submitting this form, you will be redirected to preview your registration details before making payment.
                 </div>
 
-                @if(config('constants.RECAPTCHA_ENABLED'))
-                {{-- Google reCAPTCHA --}}
-                <div class="mb-3">
-                    <div class="g-recaptcha" data-sitekey="{{ config('services.recaptcha.site_key') }}" id="recaptcha"></div>
-                    <div id="recaptcha-error" class="text-danger small mt-1" style="display: none;"></div>
-                    @error('g-recaptcha-response')
-                        <div class="text-danger small mt-1">{{ $message }}</div>
-                    @enderror
-                </div>
-                @endif
+                {{-- Google reCAPTCHA temporarily disabled --}}
 
                 {{-- Submit Button --}}
                 <div class="d-flex justify-content-end mt-4">
@@ -1779,28 +1770,8 @@ document.addEventListener('DOMContentLoaded', function() {
         
         const form = document.getElementById('startupZoneForm');
         
-        // Check reCAPTCHA (only if enabled)
-        @if(config('constants.RECAPTCHA_ENABLED'))
-        const recaptchaResponse = grecaptcha.getResponse();
-        if (!recaptchaResponse) {
-            document.getElementById('recaptcha-error').textContent = 'Please complete the reCAPTCHA verification.';
-            document.getElementById('recaptcha-error').style.display = 'block';
-            Swal.fire({
-                icon: 'error',
-                title: 'reCAPTCHA Required',
-                text: 'Please complete the reCAPTCHA verification before submitting.',
-                confirmButtonText: 'OK'
-            });
-            return;
-        }
-        
-        document.getElementById('recaptcha-error').style.display = 'none';
-        @endif
-        
         const formData = new FormData(form);
-        @if(config('constants.RECAPTCHA_ENABLED'))
-        formData.append('g-recaptcha-response', recaptchaResponse);
-        @endif
+        
         
         // Show loading state
         const submitBtn = document.getElementById('submitForm');
@@ -1893,16 +1864,7 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(response => {
             if (!response.ok) {
                 return response.json().then(data => {
-                    // Check if it's a validation error with reCAPTCHA
-                    @if(config('constants.RECAPTCHA_ENABLED'))
-                    if (data.errors && data.errors['g-recaptcha-response']) {
-                        throw { 
-                            type: 'validation', 
-                            message: data.message || 'Validation failed',
-                            errors: data.errors
-                        };
-                    }
-                    @endif
+                    // reCAPTCHA disabled
                     throw { 
                         type: response.status === 422 ? 'validation' : 'error', 
                         message: data.message || 'Failed to create application',
@@ -1954,17 +1916,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     // Get error message (first one if array, or the message itself)
                     const errorMsg = Array.isArray(errors[field]) ? errors[field][0] : errors[field];
                     
-                    // Handle reCAPTCHA errors specially
-                    @if(config('constants.RECAPTCHA_ENABLED'))
-                    if (field === 'g-recaptcha-response') {
-                        document.getElementById('recaptcha-error').textContent = errorMsg;
-                        document.getElementById('recaptcha-error').style.display = 'block';
-                        // Reset reCAPTCHA
-                        grecaptcha.reset();
-                        errorMessages.push('reCAPTCHA: ' + errorMsg);
-                        return;
-                    }
-                    @endif
+                    // reCAPTCHA disabled
                     
                     // Try to find the field element
                     let fieldElement = form.querySelector('[name="' + field + '"]');

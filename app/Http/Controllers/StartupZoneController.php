@@ -133,6 +133,9 @@ class StartupZoneController extends Controller
      */
     private function verifyRecaptcha($recaptchaResponse)
     {
+        // Temporarily bypass reCAPTCHA entirely
+        return true;
+
         // If disabled via config, always pass
         if (!config('constants.RECAPTCHA_ENABLED')) {
             return true;
@@ -523,20 +526,7 @@ class StartupZoneController extends Controller
     public function submitForm(Request $request)
     {
         try {
-            // Validate Google reCAPTCHA
-            if (config('constants.RECAPTCHA_ENABLED')) {
-                $recaptchaResponse = $request->input('g-recaptcha-response');
-                if (!$recaptchaResponse || !$this->verifyRecaptcha($recaptchaResponse)) {
-                    return response()->json([
-                        'success' => false,
-                        'message' => 'reCAPTCHA verification failed. Please complete the reCAPTCHA challenge.',
-                        'errors' => ['g-recaptcha-response' => ['reCAPTCHA verification failed. Please try again.']]
-                    ], 422);
-                }
-                
-                // Store reCAPTCHA validation in session (valid for 10 minutes)
-                session(['recaptcha_validated' => true, 'recaptcha_validated_at' => time()]);
-            }
+            // reCAPTCHA temporarily disabled
             
             // FIRST: Save latest form data to session before processing
             // This ensures we always use the latest values from the form
