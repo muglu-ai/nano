@@ -69,23 +69,28 @@
             border-radius: 3px;
         }
     </style>
-    <script src="https://www.google.com/recaptcha/api.js" async defer></script>
+    {{-- reCAPTCHA v3 / Enterprise style script, site key from .env via services.recaptcha.site_key --}}
+    <script src="https://www.google.com/recaptcha/enterprise.js?render={{ config('services.recaptcha.site_key') }}"></script>
 </head>
 <body>
     <div class="card">
         <h1>Google reCAPTCHA Test</h1>
         <p>
-            This page uses the site key from <code>.env</code> via <code>config('services.recaptcha.site_key')</code>.
+            This page uses the site key from <code>.env</code> via <code>config('services.recaptcha.site_key')</code>
+            and the reCAPTCHA v3 / Enterprise-style button integration.
         </p>
 
-        <div class="g-recaptcha"
-             data-sitekey="{{ config('services.recaptcha.site_key') }}"
-             data-callback="onCaptchaSuccess">
-        </div>
-
-        <button id="checkTokenBtn" onclick="checkCaptcha()" disabled>
-            Check Token
-        </button>
+        <form id="demo-form" action="#" method="POST" onsubmit="return false;">
+            @csrf
+            <button
+                id="recaptchaButton"
+                class="g-recaptcha"
+                data-sitekey="{{ config('services.recaptcha.site_key') }}"
+                data-callback="onSubmit"
+                data-action="submit">
+                Run reCAPTCHA v3
+            </button>
+        </form>
 
         <div id="tokenOutput" class="token-output" style="display:none;"></div>
 
@@ -95,25 +100,16 @@
     </div>
 
     <script>
-        function onCaptchaSuccess() {
-            var btn = document.getElementById('checkTokenBtn');
-            btn.disabled = false;
-            console.log('reCAPTCHA solved.');
-        }
-
-        function checkCaptcha() {
-            var token = grecaptcha.getResponse();
+        // Callback used by the button (see data-callback="onSubmit")
+        function onSubmit(token) {
             var output = document.getElementById('tokenOutput');
-
-            if (!token) {
-                alert('No token received. Please complete the reCAPTCHA.');
-                return;
-            }
 
             console.log('reCAPTCHA token:', token);
             output.style.display = 'block';
-            output.textContent = 'Received token: ' + token +
-                '\\n\\nThis confirms the widget works in the browser on this domain using the keys from .env.';
+            output.textContent =
+                'Received token from reCAPTCHA v3 / Enterprise-style button:\\n\\n'
+                + token +
+                '\\n\\nThis confirms the client-side integration works with the site key from .env.';
         }
     </script>
 </body>
