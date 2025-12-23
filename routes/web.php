@@ -649,6 +649,8 @@ Route::get('/application-detail', [DashboardController::class, 'applicantDetails
 Route::get('/price', [AdminController::class, 'price'])->name('price')->middleware(Auth::class);
 //approve application
 Route::post('/approve/{id}', [AdminController::class, 'approve'])->name('approve')->middleware(Auth::class);
+//approve startup zone application
+Route::post('/approve-startup-zone/{id}', [AdminController::class, 'approveStartupZone'])->name('approve.startup-zone')->middleware(Auth::class);
 //route get invoice list from dashboard controller invoiceDetails function
 Route::get('/invoice-list', [DashboardController::class, 'invoiceDetails'])->name('invoice.list')->middleware(Auth::class);
 // Route::view('/users/list', 'admin.users')->name('users.list')->middleware(Auth::class);

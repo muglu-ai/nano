@@ -23,6 +23,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use App\Mail\UserCredentialsMail;
 use App\Mail\ExhibitorRegistrationMail;
+use App\Mail\StartupZoneAdminNotificationMail;
 
 class StartupZoneController extends Controller
 {
@@ -673,7 +674,7 @@ class StartupZoneController extends Controller
             if (isset($sessionData['exhibitor_data'])) {
                 $draft->exhibitor_data = $sessionData['exhibitor_data'];
             }
-            
+
             // Store contact data as JSON (from session or request)
             if (isset($sessionData['contact_data'])) {
                 $draft->contact_data = $sessionData['contact_data'];
@@ -804,15 +805,15 @@ class StartupZoneController extends Controller
                 $this->saveFormDataToSession($request);
             }
             
-            $sessionId = session()->getId();
-            $draft = StartupZoneDraft::bySession($sessionId)->active()->firstOrFail();
+        $sessionId = session()->getId();
+        $draft = StartupZoneDraft::bySession($sessionId)->active()->firstOrFail();
 
             // Get field configurations for validation
-            $fieldConfigs = FormFieldConfiguration::currentVersion()
-                ->active()
-                ->byFormType('startup-zone')
-                ->get()
-                ->keyBy('field_name');
+        $fieldConfigs = FormFieldConfiguration::currentVersion()
+            ->active()
+            ->byFormType('startup-zone')
+            ->get()
+            ->keyBy('field_name');
 
             // Build validation rules
             $rules = $this->buildValidationRules($fieldConfigs, 'all');
@@ -894,14 +895,14 @@ class StartupZoneController extends Controller
                     }
                 }
                 
-                return response()->json([
-                    'success' => false,
+            return response()->json([
+                'success' => false,
                     'message' => 'Please fix the validation errors below.',
                     'errors' => $mappedErrors
-                ], 422);
-            }
+            ], 422);
+        }
 
-            DB::beginTransaction();
+        DB::beginTransaction();
             
             // Get fresh session data (just saved above) - it has the latest values
             $sessionData = session('startup_zone_draft', []);
@@ -970,7 +971,7 @@ class StartupZoneController extends Controller
                         ->where('event_id', $eventId)
                         ->where('user_id', $user->id)
                         ->where('submission_status', 'in progress')
-                        ->first();
+                    ->first();
                 }
             }
             
@@ -1063,11 +1064,11 @@ class StartupZoneController extends Controller
                     'email' => $contactEmail
                 ]);
             } else {
-                // Generate application_id using TIN_NO_PREFIX with 6-digit number (before creating application)
-                $applicationId = $this->generateApplicationIdWithTinPrefix();
-                
+            // Generate application_id using TIN_NO_PREFIX with 6-digit number (before creating application)
+            $applicationId = $this->generateApplicationIdWithTinPrefix();
+            
                 // Create new application
-                $application = new Application();
+            $application = new Application();
             }
             
             // Use the latest data we already extracted above (from session first, then draft)
@@ -1181,7 +1182,7 @@ class StartupZoneController extends Controller
                 'terms_accepted' => 1,
             ]);
             $application->save();
-            
+
             // If updating existing application, also update related records
             if ($existingInProgressApplication) {
                 // Update EventContact if exists
@@ -1209,8 +1210,8 @@ class StartupZoneController extends Controller
             if ($contactData && !empty($contactData)) {
                 $contact = EventContact::where('application_id', $application->id)->first();
                 if (!$contact) {
-                    $contact = new EventContact();
-                    $contact->application_id = $application->id;
+                $contact = new EventContact();
+                $contact->application_id = $application->id;
                 }
                 $contact->salutation = $contactData['title'] ?? null;
                 $contact->first_name = $contactData['first_name'] ?? null;
@@ -1225,8 +1226,8 @@ class StartupZoneController extends Controller
             // Create or update billing detail - use latest billing_data from session/draft
             $billingDetail = \App\Models\BillingDetail::where('application_id', $application->id)->first();
             if (!$billingDetail) {
-                $billingDetail = new \App\Models\BillingDetail();
-                $billingDetail->application_id = $application->id;
+            $billingDetail = new \App\Models\BillingDetail();
+            $billingDetail->application_id = $application->id;
             }
             
             // Use the latest billingData, exhibitorData, and contactName we already extracted above
@@ -1269,8 +1270,8 @@ class StartupZoneController extends Controller
                 } else {
                     // Last fallback: Use contact details
                     $billingDetail->billing_company = $contactName;
-                    $billingDetail->contact_name = $contactName;
-                    $billingDetail->email = $contactEmail;
+            $billingDetail->contact_name = $contactName;
+            $billingDetail->email = $contactEmail;
                     $billingDetail->phone = $draft->contact_data['mobile'] ?? '';
                     $billingDetail->address = '';
                     $billingDetail->city_id = null;
@@ -1287,8 +1288,8 @@ class StartupZoneController extends Controller
             // Create or update invoice (if updating in-progress application, invoice might exist)
             $invoice = Invoice::where('application_id', $application->id)->first();
             if (!$invoice) {
-                $invoice = new Invoice();
-                $invoice->application_id = $application->id;
+            $invoice = new Invoice();
+            $invoice->application_id = $application->id;
             }
             
             $pricing = $this->calculatePricing($draft);
@@ -1318,39 +1319,33 @@ class StartupZoneController extends Controller
 
             // Get contact for email
             $contact = EventContact::where('application_id', $application->id)->first();
+            $billingDetail = \App\Models\BillingDetail::where('application_id', $application->id)->first();
             
-            // Send credentials email if user was just created and config allows it
-            if ($passwordGenerated && config('constants.SEND_CREDENTIALS_ON_REGISTRATION', false)) {
-                try {
-                    $setupProfileUrl = config('app.url');
-                    Mail::to($contactEmail)->send(new UserCredentialsMail(
-                        $contactName,
-                        $setupProfileUrl,
-                        $contactEmail,
-                        $password
-                    ));
-                } catch (\Exception $e) {
-                    \Log::error('Failed to send credentials email', [
-                        'email' => $contactEmail,
-                        'error' => $e->getMessage()
-                    ]);
-                    // Don't fail the transaction if email fails
-                }
-            }
-
-            // Send exhibitor registration confirmation email with payment link
+            // For startup zone: Send admin notification email (NO user email until approved)
             try {
                 // Reload application with relationships for email
                 $application->load(['country', 'state', 'eventContact']);
-                $emailTo = $contact && $contact->email ? $contact->email : $contactEmail;
-                Mail::to($emailTo)->send(new ExhibitorRegistrationMail($application, $invoice, $contact));
+                
+                // Get admin emails from config
+                $adminEmails = config('constants.admin_emails.to', []);
+                $bccEmails = config('constants.admin_emails.bcc', []);
+                
+                if (!empty($adminEmails)) {
+                    $mail = Mail::to($adminEmails);
+                    if (!empty($bccEmails)) {
+                        $mail->bcc($bccEmails);
+                    }
+                    $mail->send(new StartupZoneAdminNotificationMail($application, $contact, $billingDetail));
+                }
             } catch (\Exception $e) {
-                \Log::error('Failed to send exhibitor registration email', [
-                    'email' => $emailTo ?? $contactEmail,
+                \Log::error('Failed to send admin notification email for startup zone', [
+                    'application_id' => $application->application_id,
                     'error' => $e->getMessage()
                 ]);
                 // Don't fail the transaction if email fails
             }
+            
+            // NOTE: No user email is sent on submission - user will receive email only after admin approval
 
             // Mark draft as converted to application (keep for analytics)
             $draft->update([

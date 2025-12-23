@@ -246,6 +246,12 @@
                                                             <i class="material-symbols-rounded text-secondary position-relative text-lg">visibility</i>
                                                             View
                                                         </button>
+                                                        @if($application->application_type === 'startup-zone' && $application->submission_status === 'submitted')
+                                                            <button type="button" data-bs-toggle="tooltip" data-bs-original-title="Approve Application" style="border:none; background:none; padding:0; margin-top: 5px; padding-right: 30px; gap:5px;" onclick="approveStartupZone({{ $application->id }}, {{ json_encode($application->company_name) }})">
+                                                                <i class="material-symbols-rounded text-success position-relative text-lg">check_circle</i>
+                                                                Approve
+                                                            </button>
+                                                        @endif
                                                     </div>
                                                 @else
                                                     <button type="submit" data-bs-toggle="tooltip" data-bs-original-title="Send Reminder" style="border:none; background:none; padding:0;" onclick="sendReminder('{{ $application->application_id }}','{{$application->billingDetail->email ?? $application->company_email}}', 'reminder')">
@@ -540,6 +546,55 @@
                                         });
                                 }
                             });
+                        }
+                    });
+                }
+            </script>
+
+            <script>
+                function approveStartupZone(applicationId, companyName) {
+                    Swal.fire({
+                        title: 'Approve Application',
+                        html: `Are you sure you want to approve the application for <strong>${companyName}</strong>?<br><br>Once approved, the user will be able to proceed with payment.`,
+                        icon: 'question',
+                        showCancelButton: true,
+                        confirmButtonText: 'Approve',
+                        cancelButtonText: 'Cancel',
+                        customClass: {
+                            confirmButton: 'btn bg-gradient-success',
+                            cancelButton: 'btn bg-gradient-danger'
+                        }
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            Swal.fire({
+                                title: 'Processing...',
+                                text: 'Please wait while we approve the application.',
+                                allowOutsideClick: false,
+                                didOpen: () => {
+                                    Swal.showLoading();
+                                }
+                            });
+
+                            fetch(`/approve-startup-zone/${applicationId}`, {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                                }
+                            })
+                                .then(response => response.json())
+                                .then(data => {
+                                    if (data.message) {
+                                        Swal.fire('Success', data.message, 'success').then(() => {
+                                            location.reload();
+                                        });
+                                    } else {
+                                        Swal.fire('Error', 'Failed to approve application', 'error');
+                                    }
+                                })
+                                .catch(error => {
+                                    Swal.fire('Error', 'Approval failed!', 'error');
+                                });
                         }
                     });
                 }

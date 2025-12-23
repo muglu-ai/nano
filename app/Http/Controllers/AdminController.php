@@ -236,6 +236,76 @@ class AdminController extends Controller
         return view('dashboard.list', compact('applications', 'slug'));
     }
 
+    /**
+     * Approve startup zone application
+     */
+    public function approveStartupZone(Request $request, $id)
+    {
+        //check user is logged in or not
+        if (!auth()->check() || auth()->user()->role !== 'admin') {
+            return redirect('/login');
+        }
+
+        $application = Application::find($id);
+        
+        if (!$application) {
+            return response()->json(['message' => 'Application not found'], 404);
+        }
+
+        // Check if it's a startup zone application
+        if ($application->application_type !== 'startup-zone') {
+            return response()->json(['message' => 'This method is only for startup zone applications'], 400);
+        }
+
+        // Check if already approved
+        if ($application->submission_status === 'approved') {
+            return response()->json(['message' => 'Application already approved', 'application_id' => $application->id, 'company_name' => $application->company_name]);
+        }
+
+        // Approve the application
+        $application->submission_status = 'approved';
+        $application->approved_date = now();
+        $application->approved_by = auth()->id();
+        $application->save();
+
+        \Log::info('Startup Zone Application Approved', [
+            'application_id' => $application->application_id,
+            'company_name' => $application->company_name,
+            'approved_by' => auth()->id()
+        ]);
+
+        // Send approval email to user with payment link
+        try {
+            $invoice = \App\Models\Invoice::where('application_id', $application->id)->first();
+            $contact = \App\Models\EventContact::where('application_id', $application->id)->first();
+            
+            if ($invoice && $contact) {
+                // Reload application with relationships for email
+                $application->load(['country', 'state', 'eventContact']);
+                
+                // Get user email
+                $userEmail = $contact->email ?? $application->company_email;
+                
+                if ($userEmail) {
+                    Mail::to($userEmail)->send(new \App\Mail\StartupZoneApprovalMail($application, $invoice, $contact));
+                }
+            }
+        } catch (\Exception $e) {
+            \Log::error('Failed to send approval email to user', [
+                'application_id' => $application->application_id,
+                'email' => $userEmail ?? 'unknown',
+                'error' => $e->getMessage()
+            ]);
+            // Don't fail the approval if email fails
+        }
+
+        return response()->json([
+            'message' => 'Application approved successfully',
+            'application_id' => $application->id,
+            'company_name' => $application->company_name
+        ]);
+    }
+
     public function applicationUpdate(Request $request, $id)
     {
 
