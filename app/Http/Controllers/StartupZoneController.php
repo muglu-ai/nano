@@ -475,6 +475,10 @@ class StartupZoneController extends Controller
     public function submitForm(Request $request)
     {
         try {
+            // FIRST: Save latest form data to session before processing
+            // This ensures we always use the latest values from the form
+            $this->saveFormDataToSession($request);
+            
             $fieldConfigs = FormFieldConfiguration::currentVersion()
                 ->active()
                 ->byFormType('startup-zone')
@@ -484,7 +488,8 @@ class StartupZoneController extends Controller
             // Build validation rules for all fields
             $rules = $this->buildValidationRules($fieldConfigs, 'all');
             
-            // Merge session data with request data for validation
+            // Get fresh session data (just saved above) and merge with request data
+            // Request data takes precedence over session data
             $sessionData = session('startup_zone_draft', []);
             $allData = array_merge($sessionData, $request->all());
             
@@ -784,43 +789,153 @@ class StartupZoneController extends Controller
 
     /**
      * Restore draft to application (final submission)
+     * Now accepts form data directly via POST for validation and processing
      */
     public function restoreDraftToApplication(Request $request)
     {
-        $sessionId = session()->getId();
-        $draft = StartupZoneDraft::bySession($sessionId)->active()->firstOrFail();
-
-        // Validate all required fields
-        $fieldConfigs = FormFieldConfiguration::currentVersion()
-            ->active()
-            ->byFormType('startup-zone')
-            ->get()
-            ->keyBy('field_name');
-
-        $validationResult = $this->validateDraft($draft, $fieldConfigs);
-        
-        if (!$validationResult['valid']) {
-            return response()->json([
-                'success' => false,
-                'errors' => $validationResult['errors']
-            ], 422);
-        }
-
-        DB::beginTransaction();
         try {
-            // Merge session data with draft data (billing_data and exhibitor_data are in session)
+            // FIRST: Always save latest form data to session (if provided)
+            // This ensures we always use the latest values from the form
+            if ($request->hasAny([
+                'billing_company_name', 'billing_email', 'billing_address',
+                'exhibitor_name', 'exhibitor_email', 'exhibitor_address',
+                'contact_email', 'contact_first_name', 'stall_category'
+            ])) {
+                $this->saveFormDataToSession($request);
+            }
+            
+            $sessionId = session()->getId();
+            $draft = StartupZoneDraft::bySession($sessionId)->active()->firstOrFail();
+
+            // Get field configurations for validation
+            $fieldConfigs = FormFieldConfiguration::currentVersion()
+                ->active()
+                ->byFormType('startup-zone')
+                ->get()
+                ->keyBy('field_name');
+
+            // Build validation rules
+            $rules = $this->buildValidationRules($fieldConfigs, 'all');
+            
+            // Get fresh session data (just saved above) and merge with request data
+            // Request data takes precedence (latest values)
             $sessionData = session('startup_zone_draft', []);
+            $allData = array_merge($sessionData, $request->all());
+            
+            // Map new billing field names to old field names for validation compatibility
+            if ($request->has('billing_postal_code')) {
+                $allData['postal_code'] = $request->input('billing_postal_code');
+            }
+            if ($request->has('billing_email')) {
+                $allData['company_email'] = $request->input('billing_email');
+            }
+            if ($request->has('billing_company_name')) {
+                $allData['company_name'] = $request->input('billing_company_name');
+            }
+            if ($request->has('billing_address')) {
+                $allData['address'] = $request->input('billing_address');
+            }
+            if ($request->has('billing_country_id')) {
+                $allData['country_id'] = $request->input('billing_country_id');
+            }
+            if ($request->has('billing_state_id')) {
+                $allData['state_id'] = $request->input('billing_state_id');
+            }
+            if ($request->has('billing_city')) {
+                $allData['city_id'] = $request->input('billing_city');
+            }
+            if ($request->has('billing_telephone_national') && !empty($request->input('billing_telephone_national'))) {
+                $allData['landline'] = $request->input('billing_telephone_national');
+            } elseif ($request->has('billing_telephone')) {
+                $allData['landline'] = $request->input('billing_telephone');
+            }
+            if ($request->has('billing_website')) {
+                $allData['website'] = $request->input('billing_website');
+            }
+            
+            // For intl-tel-input fields, validate the national number
+            if ($request->has('contact_mobile_national') && !empty($request->input('contact_mobile_national'))) {
+                $allData['contact_mobile'] = $request->input('contact_mobile_national');
+            }
+            if ($request->has('landline_national') && !empty($request->input('landline_national'))) {
+                $allData['landline'] = $request->input('landline_national');
+            }
+            
+            // Validate using request data (latest values)
+            $validator = Validator::make($allData, $rules);
+            
+            if ($validator->fails()) {
+                // Map validation errors back to frontend field names
+                $errors = $validator->errors();
+                $mappedErrors = [];
+                
+                foreach ($errors->messages() as $field => $messages) {
+                    // Map old field names back to new field names for frontend
+                    if ($field === 'postal_code') {
+                        $mappedErrors['billing_postal_code'] = $messages;
+                    } elseif ($field === 'company_email') {
+                        $mappedErrors['billing_email'] = $messages;
+                    } elseif ($field === 'company_name') {
+                        $mappedErrors['billing_company_name'] = $messages;
+                    } elseif ($field === 'address') {
+                        $mappedErrors['billing_address'] = $messages;
+                    } elseif ($field === 'country_id') {
+                        $mappedErrors['billing_country_id'] = $messages;
+                    } elseif ($field === 'state_id') {
+                        $mappedErrors['billing_state_id'] = $messages;
+                    } elseif ($field === 'city_id') {
+                        $mappedErrors['billing_city'] = $messages;
+                    } elseif ($field === 'landline') {
+                        $mappedErrors['billing_telephone'] = $messages;
+                    } elseif ($field === 'website') {
+                        $mappedErrors['billing_website'] = $messages;
+                    } else {
+                        $mappedErrors[$field] = $messages;
+                    }
+                }
+                
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Please fix the validation errors below.',
+                    'errors' => $mappedErrors
+                ], 422);
+            }
+
+            DB::beginTransaction();
+            
+            // Get fresh session data (just saved above) - it has the latest values
+            $sessionData = session('startup_zone_draft', []);
+            
+            // Update draft with latest session data (for database storage)
             if (isset($sessionData['billing_data'])) {
                 $draft->billing_data = $sessionData['billing_data'];
             }
             if (isset($sessionData['exhibitor_data'])) {
                 $draft->exhibitor_data = $sessionData['exhibitor_data'];
             }
+            if (isset($sessionData['contact_data'])) {
+                $draft->contact_data = $sessionData['contact_data'];
+            }
             
+            // ALWAYS use session data first (latest values), then fallback to draft
             // Get contact email - prioritize contact person email, fallback to billing email or exhibitor email
-            $contactPersonEmail = $draft->contact_data['email'] ?? null;
-            $billingEmail = $draft->billing_data['email'] ?? null;
-            $exhibitorEmail = $draft->exhibitor_data['email'] ?? null;
+            $contactData = $sessionData['contact_data'] ?? $draft->contact_data ?? null;
+            $contactData = is_string($contactData) ? json_decode($contactData, true) : $contactData;
+            
+            $billingDataSession = $sessionData['billing_data'] ?? null;
+            $billingDataDraft = $draft->billing_data ?? null;
+            $billingDataDraft = is_string($billingDataDraft) ? json_decode($billingDataDraft, true) : $billingDataDraft;
+            $billingData = $billingDataSession ?? $billingDataDraft;
+            
+            $exhibitorDataSession = $sessionData['exhibitor_data'] ?? null;
+            $exhibitorDataDraft = $draft->exhibitor_data ?? null;
+            $exhibitorDataDraft = is_string($exhibitorDataDraft) ? json_decode($exhibitorDataDraft, true) : $exhibitorDataDraft;
+            $exhibitorData = $exhibitorDataSession ?? $exhibitorDataDraft;
+            
+            // Get contact email with proper priority
+            $contactPersonEmail = $contactData['email'] ?? null;
+            $billingEmail = $billingData['email'] ?? null;
+            $exhibitorEmail = $exhibitorData['email'] ?? null;
             $contactEmail = $contactPersonEmail ?: $billingEmail ?: $exhibitorEmail;
             
             // Validate email is not empty
@@ -888,10 +1003,9 @@ class StartupZoneController extends Controller
                 ], 422);
             }
             
-            $contactName = trim(($draft->contact_data['first_name'] ?? '') . ' ' . ($draft->contact_data['last_name'] ?? ''));
+            // Use latest data from session/draft for contact name
+            $contactName = trim(($contactData['first_name'] ?? '') . ' ' . ($contactData['last_name'] ?? ''));
             if (empty($contactName)) {
-                $exhibitorData = $draft->exhibitor_data ?? null;
-                $billingData = $draft->billing_data ?? null;
                 $contactName = $exhibitorData['name'] ?? $billingData['company_name'] ?? $draft->company_name ?? '';
             }
             $passwordGenerated = false;
@@ -932,34 +1046,8 @@ class StartupZoneController extends Controller
             // Create application
             $application = new Application();
             
-            // Use exhibitor data if available, otherwise fallback to billing data, then old draft fields
-            // Get exhibitor_data - prefer session data (already merged above), then draft, then decode if needed
-            $exhibitorData = null;
-            if (isset($sessionData['exhibitor_data']) && is_array($sessionData['exhibitor_data'])) {
-                $exhibitorData = $sessionData['exhibitor_data'];
-            } else {
-                $exhibitorData = $draft->exhibitor_data ?? null;
-                if (is_string($exhibitorData)) {
-                    $exhibitorData = json_decode($exhibitorData, true);
-                }
-                if (!is_array($exhibitorData)) {
-                    $exhibitorData = null;
-                }
-            }
-            
-            // Get billing_data - prefer session data (already merged above), then draft, then decode if needed
-            $billingData = null;
-            if (isset($sessionData['billing_data']) && is_array($sessionData['billing_data'])) {
-                $billingData = $sessionData['billing_data'];
-            } else {
-                $billingData = $draft->billing_data ?? null;
-                if (is_string($billingData)) {
-                    $billingData = json_decode($billingData, true);
-                }
-                if (!is_array($billingData)) {
-                    $billingData = null;
-                }
-            }
+            // Use the latest data we already extracted above (from session first, then draft)
+            // $exhibitorData and $billingData are already set above with proper priority
             
             // Get company name with proper fallback chain
             $companyName = null;
@@ -1083,15 +1171,12 @@ class StartupZoneController extends Controller
                 $contact->save();
             }
 
-            // Create billing detail - use billing_data from form
+            // Create billing detail - use latest billing_data from session/draft
             $billingDetail = new \App\Models\BillingDetail();
             $billingDetail->application_id = $application->id;
             
-            $billingData = $draft->billing_data ?? null;
-            $contactName = trim(($draft->contact_data['title'] ?? '') . ' ' . ($draft->contact_data['first_name'] ?? '') . ' ' . ($draft->contact_data['last_name'] ?? ''));
-            if (empty($contactName)) {
-                $contactName = $billingData['company_name'] ?? $exhibitorData['name'] ?? '';
-            }
+            // Use the latest billingData, exhibitorData, and contactName we already extracted above
+            // These variables are already set with proper priority (session first, then draft)
             
             if ($billingData && !empty($billingData)) {
                 // Use billing data from form
@@ -1112,7 +1197,7 @@ class StartupZoneController extends Controller
                 $billingDetail->same_as_basic = '0'; // Different from exhibitor
             } else {
                 // Fallback: Use exhibitor data if billing data not available
-                $exhibitorData = $draft->exhibitor_data ?? null;
+                // Use the latest exhibitorData we already extracted above
                 if ($exhibitorData && !empty($exhibitorData)) {
                     $billingDetail->billing_company = $exhibitorData['name'] ?? '';
                     $billingDetail->contact_name = $contactName;
@@ -1332,12 +1417,12 @@ class StartupZoneController extends Controller
                     
                     if ($contactEmail) {
                         $setupProfileUrl = config('app.url');
-                        Mail::to($contactEmail)->send(new UserCredentialsMail(
-                            $contactName,
-                            $setupProfileUrl,
-                            $contactEmail,
-                            $user->simplePass
-                        ));
+                        // Mail::to($contactEmail)->send(new UserCredentialsMail(
+                        //     $contactName,
+                        //     $setupProfileUrl,
+                        //     $contactEmail,
+                        //     $user->simplePass
+                        // ));
                     }
                 } catch (\Exception $e) {
                     \Log::error('Failed to send credentials email after payment', [
@@ -1390,6 +1475,124 @@ class StartupZoneController extends Controller
         $billingDetail = \App\Models\BillingDetail::where('application_id', $application->id)->first();
         
         return view('startup-zone.confirmation', compact('application', 'invoice', 'contact', 'billingDetail'));
+    }
+
+    /**
+     * Helper: Save form data to session (extracted from autoSave for reuse)
+     * This ensures latest form values are always saved before processing
+     */
+    private function saveFormDataToSession(Request $request)
+    {
+        $formData = $request->except(['_token', 'certificate']);
+        
+        // Handle billing data
+        $billingTelephoneNational = '';
+        $billingTelephoneCountryCode = '91'; // Default to India
+        
+        if ($request->has('billing_telephone_national') && $request->input('billing_telephone_national')) {
+            $billingTelephoneNational = preg_replace('/\s+/', '', trim($request->input('billing_telephone_national')));
+            $billingTelephoneCountryCode = $request->input('billing_telephone_country_code') ?: '91';
+        } elseif ($request->has('billing_telephone') && $request->input('billing_telephone')) {
+            $billingTelephoneValue = preg_replace('/\s+/', '', trim($request->input('billing_telephone')));
+            if (preg_match('/^\+?(\d{1,3})(\d+)$/', $billingTelephoneValue, $matches)) {
+                $billingTelephoneCountryCode = $matches[1];
+                $billingTelephoneNational = $matches[2];
+            } else {
+                $billingTelephoneNational = $billingTelephoneValue;
+            }
+        }
+        
+        $billingData = [
+            'company_name' => $request->input('billing_company_name'),
+            'address' => $request->input('billing_address'),
+            'country_id' => $request->input('billing_country_id'),
+            'state_id' => $request->input('billing_state_id'),
+            'city' => $request->input('billing_city'),
+            'postal_code' => $request->input('billing_postal_code'),
+            'telephone' => $billingTelephoneNational ? ($billingTelephoneCountryCode . '-' . $billingTelephoneNational) : '',
+            'website' => $this->normalizeWebsiteUrl($request->input('billing_website') ?? ''),
+            'email' => $request->input('billing_email'),
+        ];
+        
+        if (!empty($billingData)) {
+            $formData['billing_data'] = $billingData;
+        }
+        
+        // Handle file upload separately (if provided)
+        if ($request->hasFile('certificate')) {
+            $file = $request->file('certificate');
+            $path = $file->store('startup-zone/certificates', 'public');
+            $formData['certificate_path'] = $path;
+        }
+        
+        // Build contact data from individual fields
+        $mobileNational = '';
+        $mobileCountryCode = '91'; // Default to India
+        
+        if ($request->has('contact_mobile_national') && $request->input('contact_mobile_national')) {
+            $mobileNational = preg_replace('/\s+/', '', trim($request->input('contact_mobile_national')));
+            $mobileCountryCode = $request->input('contact_country_code') ?: '91';
+        } elseif ($request->has('contact_mobile') && $request->input('contact_mobile')) {
+            $mobileValue = preg_replace('/\s+/', '', trim($request->input('contact_mobile')));
+            if (preg_match('/^\+?(\d{1,3})(\d+)$/', $mobileValue, $matches)) {
+                $mobileCountryCode = $matches[1];
+                $mobileNational = $matches[2];
+            } else {
+                $mobileNational = $mobileValue;
+            }
+        }
+        
+        $contactData = [
+            'title' => $request->input('contact_title'),
+            'first_name' => $request->input('contact_first_name'),
+            'last_name' => $request->input('contact_last_name'),
+            'designation' => $request->input('contact_designation'),
+            'email' => $request->input('contact_email'),
+            'mobile' => $mobileNational ? ($mobileCountryCode . '-' . $mobileNational) : '',
+            'country_code' => $mobileCountryCode,
+        ];
+        
+        if (!empty($contactData)) {
+            $formData['contact_data'] = $contactData;
+        }
+        
+        // Handle exhibitor data
+        $exhibitorTelephoneNational = '';
+        $exhibitorTelephoneCountryCode = '91'; // Default to India
+        
+        if ($request->has('exhibitor_telephone_national') && $request->input('exhibitor_telephone_national')) {
+            $exhibitorTelephoneNational = preg_replace('/\s+/', '', trim($request->input('exhibitor_telephone_national')));
+            $exhibitorTelephoneCountryCode = $request->input('exhibitor_telephone_country_code') ?: '91';
+        } elseif ($request->has('exhibitor_telephone') && $request->input('exhibitor_telephone')) {
+            $exhibitorTelephoneValue = preg_replace('/\s+/', '', trim($request->input('exhibitor_telephone')));
+            if (preg_match('/^\+?(\d{1,3})(\d+)$/', $exhibitorTelephoneValue, $matches)) {
+                $exhibitorTelephoneCountryCode = $matches[1];
+                $exhibitorTelephoneNational = $matches[2];
+            } else {
+                $exhibitorTelephoneNational = $exhibitorTelephoneValue;
+            }
+        }
+        
+        $exhibitorData = [
+            'name' => $request->input('exhibitor_name'),
+            'address' => $request->input('exhibitor_address'),
+            'country_id' => $request->input('exhibitor_country_id'),
+            'state_id' => $request->input('exhibitor_state_id'),
+            'city' => $request->input('exhibitor_city'),
+            'postal_code' => $request->input('exhibitor_postal_code'),
+            'telephone' => $exhibitorTelephoneNational ? ($exhibitorTelephoneCountryCode . '-' . $exhibitorTelephoneNational) : '',
+            'website' => $this->normalizeWebsiteUrl($request->input('exhibitor_website') ?? ''),
+            'email' => $request->input('exhibitor_email'),
+        ];
+        
+        if (!empty($exhibitorData)) {
+            $formData['exhibitor_data'] = $exhibitorData;
+        }
+        
+        // Store in session - merge with existing session data to preserve other fields
+        $existingSessionData = session('startup_zone_draft', []);
+        $mergedData = array_merge($existingSessionData, $formData);
+        session(['startup_zone_draft' => $mergedData]);
     }
 
     /**

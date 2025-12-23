@@ -1836,12 +1836,22 @@ document.addEventListener('DOMContentLoaded', function() {
         })
         .then(data => {
             if (data.success) {
-                // Restore draft to application
+                // Collect all form data before sending to restore-draft
+                const form = document.querySelector('form');
+                if (!form) {
+                    throw { type: 'error', message: 'Form not found' };
+                }
+                
+                // Create FormData from the form
+                const formData = new FormData(form);
+                
+                // Restore draft to application with form data
                 return fetch('{{ route("startup-zone.restore-draft") }}', {
                     method: 'POST',
                     headers: {
                         'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                    }
+                    },
+                    body: formData
                 });
             } else {
                 throw { type: 'error', message: data.message || 'Failed to submit form' };

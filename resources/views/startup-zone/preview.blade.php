@@ -416,24 +416,50 @@
 @if(!isset($application))
 <script>
 document.getElementById('confirmAndProceed')?.addEventListener('click', function() {
+    // Get form data from the form page (if available via session or hidden fields)
+    // Since we're on preview page, we'll send a POST request
+    // The backend will use the latest session data which was saved during submitForm
+    const formData = new FormData();
+    
     // Restore draft to application
     fetch('{{ route("startup-zone.restore-draft") }}', {
         method: 'POST',
         headers: {
             'X-CSRF-TOKEN': '{{ csrf_token() }}'
-        }
+        },
+        body: formData
     })
-    .then(response => response.json())
+    .then(response => {
+        if (!response.ok) {
+            return response.json().then(data => {
+                throw { message: data.message || 'Failed to create application', errors: data.errors };
+            });
+        }
+        return response.json();
+    })
     .then(data => {
         if (data.success) {
             window.location.href = data.redirect;
         } else {
-            alert('Error: ' + (data.message || 'Failed to create application'));
+            // Display validation errors if any
+            let errorMsg = data.message || 'Failed to create application';
+            if (data.errors) {
+                const errorList = Object.values(data.errors).flat().join('\\n');
+                errorMsg += '\\n\\n' + errorList;
+            }
+            alert('Error: ' + errorMsg);
         }
     })
     .catch(error => {
         console.error('Error:', error);
-        alert('An error occurred. Please try again.');
+        let errorMsg = 'An error occurred. Please try again.';
+        if (error.errors) {
+            const errorList = Object.values(error.errors).flat().join('\\n');
+            errorMsg += '\\n\\n' + errorList;
+        } else if (error.message) {
+            errorMsg = error.message;
+        }
+        alert(errorMsg);
     });
 });
 </script>
