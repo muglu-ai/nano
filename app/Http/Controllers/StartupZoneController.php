@@ -1119,15 +1119,16 @@ class StartupZoneController extends Controller
             // Get address with proper fallback chain
             $address = $exhibitorData['address'] ?? $billingData['address'] ?? $draft->address ?? '';
             
-            // Get city_id with proper fallback chain
-            $cityId = null;
+            // Get city as string (exact value from form) with proper fallback chain
+            $city = null;
             if ($exhibitorData && !empty($exhibitorData['city'])) {
-                $cityId = $this->getCityIdFromName($exhibitorData['city'], $exhibitorData['state_id'] ?? null);
+                $city = trim($exhibitorData['city']);
             } elseif ($billingData && !empty($billingData['city'])) {
-                $cityId = $this->getCityIdFromName($billingData['city'], $billingData['state_id'] ?? null);
+                $city = trim($billingData['city']);
             }
-            if (!$cityId) {
-                $cityId = $draft->city_id;
+            if (empty($city) && !empty($draft->city_id)) {
+                // If draft has city_id, use it (could be string or ID, but we'll store as string)
+                $city = is_numeric($draft->city_id) ? null : $draft->city_id;
             }
             
             // Get state_id with proper fallback chain
@@ -1155,7 +1156,7 @@ class StartupZoneController extends Controller
                 'how_old_startup' => $draft->how_old_startup,
                 'companyYears' => $draft->how_old_startup, // Also save to companyYears field
                 'address' => $address,
-                'city_id' => $cityId,
+                'city_id' => $city, // Store city name as string
                 'state_id' => $stateId,
                 'postal_code' => $postalCode,
                 'country_id' => $countryId,
@@ -1239,9 +1240,8 @@ class StartupZoneController extends Controller
                 $billingDetail->phone = $billingData['telephone'] ?? '';
                 $billingDetail->address = $billingData['address'] ?? '';
                 
-                // Handle city - try to find by name if provided as text
-                $billingCityId = $this->getCityIdFromName($billingData['city'] ?? null, $billingData['state_id'] ?? null);
-                $billingDetail->city_id = $billingCityId;
+                // Store city name as string (exact value from form)
+                $billingDetail->city_id = !empty($billingData['city']) ? trim($billingData['city']) : null;
                 
                 $billingDetail->state_id = $billingData['state_id'] ?? null;
                 $billingDetail->country_id = $billingData['country_id'] ?? null;
@@ -1258,8 +1258,8 @@ class StartupZoneController extends Controller
                     $billingDetail->phone = $exhibitorData['telephone'] ?? '';
                     $billingDetail->address = $exhibitorData['address'] ?? '';
                     
-                    $billingCityId = $this->getCityIdFromName($exhibitorData['city'] ?? null, $exhibitorData['state_id'] ?? null);
-                    $billingDetail->city_id = $billingCityId;
+                    // Store city name as string (exact value from form)
+                    $billingDetail->city_id = !empty($exhibitorData['city']) ? trim($exhibitorData['city']) : null;
                     
                     $billingDetail->state_id = $exhibitorData['state_id'] ?? null;
                     $billingDetail->country_id = $exhibitorData['country_id'] ?? null;
@@ -1370,7 +1370,7 @@ class StartupZoneController extends Controller
                 'success' => true,
                 'application_id' => $application->application_id,
                 'invoice_id' => $invoice->id,
-                'message' => $passwordGenerated ? 'Login credentials sent to your email.' : 'Registration successful!',
+                'message' => $passwordGenerated ? 'Registration successful!' : 'Registration successful!',
                 'redirect' => route('startup-zone.preview') . '?application_id=' . $application->application_id
             ]);
 
