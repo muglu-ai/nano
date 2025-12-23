@@ -1321,7 +1321,8 @@ class StartupZoneController extends Controller
             $contact = EventContact::where('application_id', $application->id)->first();
             $billingDetail = \App\Models\BillingDetail::where('application_id', $application->id)->first();
             
-            // For startup zone: Send admin notification email (NO user email until approved)
+            // For startup zone: Send admin notification email when user confirms details (after preview)
+            // Admin needs to approve before user can make payment
             try {
                 // Reload application with relationships for email
                 $application->load(['country', 'state', 'eventContact']);
@@ -1546,6 +1547,7 @@ class StartupZoneController extends Controller
                 ]);
                 // Don't fail if email fails
             }
+            
         }
         
         // Clean up session data (drafts are kept in database for analytics)
@@ -1874,7 +1876,39 @@ class StartupZoneController extends Controller
         return $prefix . $microtime;
     }
 
-    //generate pinno with 
+    /**
+     * Generate unique PIN number using PIN_NO_PREFIX
+     * Format: PRN-BTS-2026-EXHP-XXXXXX (6-digit random number)
+     */
+    private function generatePinNo()
+    {
+        $prefix = config('constants.PIN_NO_PREFIX');
+        $maxAttempts = 100; // Prevent infinite loop
+        $attempts = 0;
+        
+        while ($attempts < $maxAttempts) {
+            // Generate 6-digit random number
+            $randomNumber = str_pad(rand(100000, 999999), 6, '0', STR_PAD_LEFT);
+            $pinNo = $prefix . $randomNumber;
+            $attempts++;
+            
+            // Check if it already exists in invoices table
+            if (!\App\Models\Invoice::where('pin_no', $pinNo)->exists()) {
+                return $pinNo;
+            }
+        }
+        
+        // If we've tried too many times, use timestamp-based fallback
+        $timestamp = substr(time(), -6); // Last 6 digits of timestamp
+        $pinNo = $prefix . $timestamp;
+        if (!\App\Models\Invoice::where('pin_no', $pinNo)->exists()) {
+            return $pinNo;
+        }
+        
+        // Last resort: use microtime
+        $microtime = substr(str_replace('.', '', microtime(true)), -6);
+        return $prefix . $microtime;
+    }
 
     /**
      * Helper: Validate draft data

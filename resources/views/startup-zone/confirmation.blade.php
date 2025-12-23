@@ -228,8 +228,8 @@
                 <div class="card-body">
                     <table class="table table-bordered">
                         <tr>
-                            <td><strong>Invoice Number:</strong></td>
-                            <td>{{ $invoice->invoice_no ?? 'N/A' }}</td>
+                            <td><strong>PIN Number:</strong></td>
+                            <td>{{ $invoice->pin_no ?? 'N/A' }}</td>
                         </tr>
                         <tr>
                             <td><strong>Base Price:</strong></td>

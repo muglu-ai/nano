@@ -1142,6 +1142,12 @@ private function formatBillingFromEventContact($eventContact, $applicationId)
 
             //update the invoice table with the status as paid
             if ($conf_status == 'paid') {
+                // Generate PIN number if not already set
+                if (!$invoice->pin_no) {
+                    $pinNo = $this->generatePinNo();
+                    $invoice->pin_no = $pinNo;
+                }
+                
                 $invoice->update([
                     'payment_status' => $conf_status,
                     'amount_paid' => $amountPaid,
@@ -1231,6 +1237,7 @@ private function formatBillingFromEventContact($eventContact, $applicationId)
                         ]);
                         // Don't fail the payment if email fails
                     }
+                    
                     
                     // Return JSON with redirect URL for startup zone
                     return response()->json([
@@ -1362,5 +1369,39 @@ private function formatBillingFromEventContact($eventContact, $applicationId)
         // Default redirect for non-startup-zone
         return redirect()->route('exhibitor.orders')
             ->with('error', 'Payment was cancelled.');
+    }
+
+    /**
+     * Generate unique PIN number using PIN_NO_PREFIX
+     * Format: PRN-BTS-2026-EXHP-XXXXXX (6-digit random number)
+     */
+    private function generatePinNo()
+    {
+        $prefix = config('constants.PIN_NO_PREFIX');
+        $maxAttempts = 100; // Prevent infinite loop
+        $attempts = 0;
+        
+        while ($attempts < $maxAttempts) {
+            // Generate 6-digit random number
+            $randomNumber = str_pad(rand(100000, 999999), 6, '0', STR_PAD_LEFT);
+            $pinNo = $prefix . $randomNumber;
+            $attempts++;
+            
+            // Check if it already exists in invoices table
+            if (!Invoice::where('pin_no', $pinNo)->exists()) {
+                return $pinNo;
+            }
+        }
+        
+        // If we've tried too many times, use timestamp-based fallback
+        $timestamp = substr(time(), -6); // Last 6 digits of timestamp
+        $pinNo = $prefix . $timestamp;
+        if (!Invoice::where('pin_no', $pinNo)->exists()) {
+            return $pinNo;
+        }
+        
+        // Last resort: use microtime
+        $microtime = substr(str_replace('.', '', microtime(true)), -6);
+        return $prefix . $microtime;
     }
 }

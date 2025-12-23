@@ -654,6 +654,12 @@ class PaymentGatewayController extends Controller
 
             // update the invoice table with the status as paid
             if ($responseArray['order_status'] == 'Success') {
+                // Generate PIN number if not already set (for startup zone)
+                if (!$invoice->pin_no && $isStartupZone && $application) {
+                    $pinNo = $this->generatePinNo();
+                    $invoice->pin_no = $pinNo;
+                }
+                
                 $invoice->update([
                     'payment_status' => 'paid',
                     'amount_paid' => $responseArray['mer_amount'],
@@ -735,6 +741,7 @@ class PaymentGatewayController extends Controller
                         ]);
                         // Don't fail the payment if email fails
                     }
+                    
 
                     // Redirect to startup zone confirmation with payment response - MUST RETURN HERE
                     return redirect()
@@ -1272,5 +1279,39 @@ class PaymentGatewayController extends Controller
             'success' => true,
             'transaction' => $transaction,
         ]);
+    }
+
+    /**
+     * Generate unique PIN number using PIN_NO_PREFIX
+     * Format: PRN-BTS-2026-EXHP-XXXXXX (6-digit random number)
+     */
+    private function generatePinNo()
+    {
+        $prefix = config('constants.PIN_NO_PREFIX');
+        $maxAttempts = 100; // Prevent infinite loop
+        $attempts = 0;
+        
+        while ($attempts < $maxAttempts) {
+            // Generate 6-digit random number
+            $randomNumber = str_pad(rand(100000, 999999), 6, '0', STR_PAD_LEFT);
+            $pinNo = $prefix . $randomNumber;
+            $attempts++;
+            
+            // Check if it already exists in invoices table
+            if (!\App\Models\Invoice::where('pin_no', $pinNo)->exists()) {
+                return $pinNo;
+            }
+        }
+        
+        // If we've tried too many times, use timestamp-based fallback
+        $timestamp = substr(time(), -6); // Last 6 digits of timestamp
+        $pinNo = $prefix . $timestamp;
+        if (!\App\Models\Invoice::where('pin_no', $pinNo)->exists()) {
+            return $pinNo;
+        }
+        
+        // Last resort: use microtime
+        $microtime = substr(str_replace('.', '', microtime(true)), -6);
+        return $prefix . $microtime;
     }
 }

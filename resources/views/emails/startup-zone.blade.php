@@ -79,11 +79,11 @@
                             <div style="background-color: #f8f9fa; border-left: 4px solid #28a745; padding: 20px; margin: 25px 0; border-radius: 4px;">
                                 <h2 style="margin: 0 0 15px; font-size: 18px; color: #1a237e; font-weight: bold;">Payment Confirmation</h2>
                                 
-                                @if($invoice && $invoice->invoice_no)
+                                @if($invoice && $invoice->pin_no)
                                 <table role="presentation" width="100%" cellpadding="5" cellspacing="0" style="margin-bottom: 10px;">
                                     <tr>
-                                        <td style="width: 40%; font-weight: bold; color: #555555; padding: 5px 0;">Invoice Number:</td>
-                                        <td style="color: #333333; padding: 5px 0;"><strong>{{ $invoice->invoice_no }}</strong></td>
+                                        <td style="width: 40%; font-weight: bold; color: #555555; padding: 5px 0;">PIN Number:</td>
+                                        <td style="color: #333333; padding: 5px 0;"><strong>{{ $invoice->pin_no }}</strong></td>
                                     </tr>
                                 </table>
                                 @endif

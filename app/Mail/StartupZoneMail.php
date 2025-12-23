@@ -119,6 +119,7 @@ class StartupZoneMail extends Mailable
         
         return new Envelope(
             subject: $subject,
+            replyTo: null, // Disable reply-to
         );
     }
 

@@ -10,7 +10,7 @@ const SHORT_NAME = 'BTS';
 // TIN number prefix: event short name (SHORT_NAME), year, EXH, then 6-digit random number will be appended in code.
 const TIN_NO_PREFIX = SHORT_NAME . '-' . EVENT_YEAR . '-EXH-';
 
-const PIN_NO_PREFIX = SHORT_NAME . '-' . EVENT_YEAR . '-EXHP-';
+const PIN_NO_PREFIX = 'PRN-' . SHORT_NAME . '-' . EVENT_YEAR . '-EXHP-';
 const EVENT_WEBSITE = 'https://www.bengalurutechsummit.com';
 //event dates
 const EVENT_DATE_START = '19-11-2026';
