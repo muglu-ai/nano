@@ -174,6 +174,11 @@ Route::get('bulk-send-stall', [ApiRelayController::class, 'sendAllStallManningsT
 Route::get('/relay/help-tool', [ApiRelayController::class, 'enqueueToHelpTool']);
 Route::get('/relay/help-tool/{id}', [ApiRelayController::class, 'status']);
 
+// Simple reCAPTCHA test page (uses site key from .env via config('services.recaptcha.site_key'))
+Route::get('/recaptcha-test', function () {
+    return view('recaptcha-test');
+});
+
 
 
 Route::middleware(['auth'])->group(function () {

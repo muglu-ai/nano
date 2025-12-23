@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>reCAPTCHA Test</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f5f7fb;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .card {
+            background: #fff;
+            padding: 24px 28px;
+            border-radius: 8px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+            max-width: 420px;
+            width: 100%;
+            box-sizing: border-box;
+            text-align: center;
+        }
+        h1 {
+            font-size: 20px;
+            margin-top: 0;
+            margin-bottom: 12px;
+        }
+        p {
+            font-size: 14px;
+            color: #555;
+            margin-top: 0;
+            margin-bottom: 16px;
+        }
+        button {
+            margin-top: 16px;
+            padding: 10px 20px;
+            background: #4f46e5;
+            border: none;
+            border-radius: 4px;
+            color: #fff;
+            font-size: 14px;
+            cursor: pointer;
+        }
+        button:disabled {
+            background: #a5b4fc;
+            cursor: not-allowed;
+        }
+        .token-output {
+            margin-top: 16px;
+            font-size: 12px;
+            word-break: break-all;
+            color: #111827;
+            background: #f3f4f6;
+            padding: 8px;
+            border-radius: 4px;
+        }
+        .note {
+            font-size: 12px;
+            color: #6b7280;
+            margin-top: 12px;
+        }
+        code {
+            background: #e5e7eb;
+            padding: 2px 4px;
+            border-radius: 3px;
+        }
+    </style>
+    <script src="https://www.google.com/recaptcha/api.js" async defer></script>
+</head>
+<body>
+    <div class="card">
+        <h1>Google reCAPTCHA Test</h1>
+        <p>
+            This page uses the site key from <code>.env</code> via <code>config('services.recaptcha.site_key')</code>.
+        </p>
+
+        <div class="g-recaptcha"
+             data-sitekey="{{ config('services.recaptcha.site_key') }}"
+             data-callback="onCaptchaSuccess">
+        </div>
+
+        <button id="checkTokenBtn" onclick="checkCaptcha()" disabled>
+            Check Token
+        </button>
+
+        <div id="tokenOutput" class="token-output" style="display:none;"></div>
+
+        <div class="note">
+            Open the browser console to see detailed messages.
+        </div>
+    </div>
+
+    <script>
+        function onCaptchaSuccess() {
+            var btn = document.getElementById('checkTokenBtn');
+            btn.disabled = false;
+            console.log('reCAPTCHA solved.');
+        }
+
+        function checkCaptcha() {
+            var token = grecaptcha.getResponse();
+            var output = document.getElementById('tokenOutput');
+
+            if (!token) {
+                alert('No token received. Please complete the reCAPTCHA.');
+                return;
+            }
+
+            console.log('reCAPTCHA token:', token);
+            output.style.display = 'block';
+            output.textContent = 'Received token: ' + token +
+                '\\n\\nThis confirms the widget works in the browser on this domain using the keys from .env.';
+        }
+    </script>
+</body>
+</html>
+
+
