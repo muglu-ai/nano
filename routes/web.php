@@ -68,6 +68,20 @@ use App\Http\Controllers\CompanyLookupController;
 use App\Http\Controllers\FeedbackController;
 use App\Http\Controllers\SuperAdminController;
 
+/* Payment Gateway CCAvenue Routes
+*/
+Route::get('/payment/ccavenue/{id}', [PaymentGatewayController::class, 'ccAvenuePayment'])->name('payment.ccavenue');
+Route::post('/payment/ccavenue/{id}', [PaymentGatewayController::class, 'ccAvenuePayment'])->name('payment.ccavenue.post');
+Route::post('/payment/ccavenue-success', [PaymentGatewayController::class, 'ccAvenueSuccess'])->withoutMiddleware([\App\Http\Middleware\VerifyCsrfToken::class]);
+Route::post('/ccavenue/webhook', [PaymentGatewayController::class, 'ccAvenueWebhook'])->withoutMiddleware([\App\Http\Middleware\VerifyCsrfToken::class])->name('ccavenue.webhook');
+Route::get('/admin/ccavenue-transactions', [PaymentGatewayController::class, 'listTransactions'])->name('admin.ccavenue.transactions')->middleware(Auth::class);
+Route::get('/admin/ccavenue-transactions/{id}/details', [PaymentGatewayController::class, 'getTransactionDetails'])->name('admin.ccavenue.transactions.details')->middleware(Auth::class);
+
+/* Payment Gateway Routes Ends
+*/
+
+
+
 // Super Admin Routes
 Route::middleware(['auth'])->prefix('super-admin')->name('super-admin.')->group(function () {
     Route::get('/event-config', [SuperAdminController::class, 'eventConfig'])->name('event-config');
@@ -599,17 +613,7 @@ Route::get('/paypal/success', [PayPalController::class, 'success'])->name('paypa
 Route::get('/paypal/cancel', [PayPalController::class, 'cancel'])->name('paypal.cancel');
 Route::get('/paypal/webhook', [PayPalController::class, 'webhook'])->withoutMiddleware([\App\Http\Middleware\VerifyCsrfToken::class]);
 
-/* Payment Gateway CCAvenue Routes
-*/
-Route::get('/payment/ccavenue/{id}', [PaymentGatewayController::class, 'ccAvenuePayment2'])->name('payment.ccavenue');
-Route::post('/payment/ccavenue/{id}', [PaymentGatewayController::class, 'ccAvenuePayment'])->name('payment.ccavenue.post');
-Route::post('/payment/ccavenue-success', [PaymentGatewayController::class, 'ccAvenueSuccess'])->withoutMiddleware([\App\Http\Middleware\VerifyCsrfToken::class]);
-Route::post('/ccavenue/webhook', [PaymentGatewayController::class, 'ccAvenueWebhook'])->withoutMiddleware([\App\Http\Middleware\VerifyCsrfToken::class])->name('ccavenue.webhook');
-Route::get('/admin/ccavenue-transactions', [PaymentGatewayController::class, 'listTransactions'])->name('admin.ccavenue.transactions')->middleware(Auth::class);
-Route::get('/admin/ccavenue-transactions/{id}/details', [PaymentGatewayController::class, 'getTransactionDetails'])->name('admin.ccavenue.transactions.details')->middleware(Auth::class);
 
-/* Payment Gateway Routes Ends
-*/
 
 
 /* CoExhibitor Controller Routes

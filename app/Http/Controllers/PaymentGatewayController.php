@@ -74,193 +74,9 @@ class PaymentGatewayController extends Controller
         return openssl_decrypt($encryptedText, 'AES-128-CBC', $key, OPENSSL_RAW_DATA, $initVector);
     }
 
-    /**
-     * Centralized helper to decide where to send the user when
-     * something goes wrong in the payment response flow.
-     *
-     * It tries (in order):
-     *  - Startup Registration payment page
-     *  - Extra Requirements orders page
-     *  - Payment lookup page (user enters Application ID / Invoice No)
-     */
-    private function redirectForPaymentError(
-        ?string $invoiceNo,
-        ?string $applicationTin,
-        ?string $orderId,
-        string $message
-    ) {
-        // 1. If we have an application TIN in session, try startup-zone directly
-        if ($applicationTin) {
-            $application = Application::where('application_id', $applicationTin)->first();
-            if ($application && $application->application_type === 'startup-zone') {
-                return redirect()
-                    ->route('startup-zone.payment', $application->application_id)
-                    ->with('error', $message);
-            }
-        }
-
-        // 2. If we have an invoice_no, try to resolve the invoice and its type
-        if ($invoiceNo) {
-            $invoice = Invoice::where('invoice_no', $invoiceNo)->first();
-            if ($invoice) {
-                // Try to resolve application from invoice
-                $application = null;
-                if ($invoice->application_id) {
-                    $application = Application::find($invoice->application_id);
-                }
-
-                // 2.a Startup Zone Registration
-                if (
-                    ($invoice->type === 'Startup Zone Registration') ||
-                    ($application && $application->application_type === 'startup-zone')
-                ) {
-                    $tin = $application ? $application->application_id : $invoice->application_no;
-                    if ($tin) {
-                        return redirect()
-                            ->route('startup-zone.payment', $tin)
-                            ->with('error', $message);
-                    }
-                }
-
-                // 2.b Extra Requirements order (based on invoice type / relation)
-                if (
-                    $invoice->type === 'extra_requirement' ||
-                    $invoice->requirementsOrder()->exists()
-                ) {
-                    // User-facing extra requirements page
-                    return redirect()
-                        ->route('extra_requirements.index')
-                        ->with('error', $message);
-                }
-
-                // 2.c Fallback for exhibitor / other invoice types – send to lookup
-                return redirect()
-                    ->route('payment.lookup')
-                    ->with('error', $message)
-                    ->with('invoice_hint', $invoiceNo);
-            }
-        }
-
-        // 3. If we only have order_id (from gateway), try to derive invoice_no
-        if ($orderId) {
-            // Order ID formats we support:
-            //  - {invoice_no}_{timestamp}
-            //  - {application_id}_{timestamp}
-            $base = explode('_', $orderId)[0] ?? null;
-            if ($base) {
-                return $this->redirectForPaymentError($base, null, null, $message);
-            }
-        }
-
-        // 4. Final fallback – take user to lookup page where they can
-        //    enter Application ID or Invoice No to resume payment.
-        return redirect()
-            ->route('payment.lookup')
-            ->with('error', $message);
-    }
-
-    /**
-     * Show a simple page where the user can enter
-     * Application ID, TIN No, or Invoice Number to
-     * be redirected to the appropriate payment page.
-     */
-    public function showPaymentLookup(Request $request)
+    public function ccAvenuePayment($orderID, Request $request)
     {
-        $prefillInvoice = session('invoice_hint');
-
-        // Share association logo (if any) for the layout - set to null for lookup page
-        view()->share('associationLogo', null);
-
-        return view('payment.lookup', [
-            'prefillInvoice' => $prefillInvoice,
-        ]);
-    }
-
-    /**
-     * Handle lookup form submission and redirect user
-     * to the correct payment page based on what they provide.
-     */
-    public function handlePaymentLookup(Request $request)
-    {
-        $data = $request->validate([
-            'application_id' => ['nullable', 'string'],
-            'tin_no' => ['nullable', 'string'],
-            'invoice_no' => ['nullable', 'string'],
-        ]);
-
-        if (empty($data['application_id']) && empty($data['tin_no']) && empty($data['invoice_no'])) {
-            return back()
-                ->withInput()
-                ->with('error', 'Please enter an Application ID, TIN No, or Invoice Number.');
-        }
-
-        $application = null;
-        $invoice = null;
-
-        // 1. Try by Application ID (this is the TIN stored in applications table)
-        if (!empty($data['application_id'])) {
-            $application = Application::where('application_id', trim($data['application_id']))->first();
-            if ($application) {
-                $invoice = Invoice::where('application_id', $application->id)->first();
-            }
-        }
-
-        // 2. Try by TIN No (can be in application_id field of Application or application_no field of Invoice)
-        if (!$application && !empty($data['tin_no'])) {
-            $tinNo = trim($data['tin_no']);
-
-            // Try to find by application_id in Application table
-            $application = Application::where('application_id', $tinNo)->first();
-            if ($application) {
-                $invoice = Invoice::where('application_id', $application->id)->first();
-            }
-
-            // If not found, try to find invoice by application_no (which stores TIN)
-            if (!$invoice) {
-                $invoice = Invoice::where('application_no', $tinNo)->first();
-                if ($invoice && !$application && $invoice->application_id) {
-                    $application = Application::find($invoice->application_id);
-                }
-            }
-        }
-
-        // 3. If still no invoice and invoice_no provided, try by Invoice No
-        if (!$invoice && !empty($data['invoice_no'])) {
-            $invoiceNo = trim($data['invoice_no']);
-            $invoice = Invoice::where('invoice_no', $invoiceNo)->first();
-
-            if ($invoice && !$application && $invoice->application_id) {
-                $application = Application::find($invoice->application_id);
-            }
-        }
-
-        if (!$invoice && !$application) {
-            return back()
-                ->withInput()
-                ->with('error', 'No matching Application or Invoice found. Please check the details and try again.');
-        }
-
-        // If this is a startup-zone application, send to startup payment page
-        if ($application && $application->application_type === 'startup-zone') {
-            return redirect()->route('startup-zone.payment', $application->application_id);
-        }
-
-        // Extra requirement invoices – send to extra requirements list so they can retry from there
-        if ($invoice && ($invoice->type === 'extra_requirement' || $invoice->requirementsOrder()->exists())) {
-            return redirect()
-                ->route('extra_requirements.index')
-                ->with('info', 'We found your extra requirements order. Please continue payment from the list.');
-        }
-
-        // Fallback: exhibitor orders page
-        return redirect()
-            ->route('exhibitor.orders')
-            ->with('info', 'We found your order. Please continue from your orders list.');
-    }
-
-    private function ccAvenuePayment($orderID, Request $request)
-    {
-        dd($orderID);
+    //    dd($orderID); 
         if (!$orderID) {
             return redirect()
                 ->route('payment.lookup')
@@ -487,6 +303,191 @@ class PaymentGatewayController extends Controller
         return view('pgway.ccavenue', compact('encryptedData'));
     }
 
+    /**
+     * Centralized helper to decide where to send the user when
+     * something goes wrong in the payment response flow.
+     *
+     * It tries (in order):
+     *  - Startup Registration payment page
+     *  - Extra Requirements orders page
+     *  - Payment lookup page (user enters Application ID / Invoice No)
+     */
+    private function redirectForPaymentError(
+        ?string $invoiceNo,
+        ?string $applicationTin,
+        ?string $orderId,
+        string $message
+    ) {
+        // 1. If we have an application TIN in session, try startup-zone directly
+        if ($applicationTin) {
+            $application = Application::where('application_id', $applicationTin)->first();
+            if ($application && $application->application_type === 'startup-zone') {
+                return redirect()
+                    ->route('startup-zone.payment', $application->application_id)
+                    ->with('error', $message);
+            }
+        }
+
+        // 2. If we have an invoice_no, try to resolve the invoice and its type
+        if ($invoiceNo) {
+            $invoice = Invoice::where('invoice_no', $invoiceNo)->first();
+            if ($invoice) {
+                // Try to resolve application from invoice
+                $application = null;
+                if ($invoice->application_id) {
+                    $application = Application::find($invoice->application_id);
+                }
+
+                // 2.a Startup Zone Registration
+                if (
+                    ($invoice->type === 'Startup Zone Registration') ||
+                    ($application && $application->application_type === 'startup-zone')
+                ) {
+                    $tin = $application ? $application->application_id : $invoice->application_no;
+                    if ($tin) {
+                        return redirect()
+                            ->route('startup-zone.payment', $tin)
+                            ->with('error', $message);
+                    }
+                }
+
+                // 2.b Extra Requirements order (based on invoice type / relation)
+                if (
+                    $invoice->type === 'extra_requirement' ||
+                    $invoice->requirementsOrder()->exists()
+                ) {
+                    // User-facing extra requirements page
+                    return redirect()
+                        ->route('extra_requirements.index')
+                        ->with('error', $message);
+                }
+
+                // 2.c Fallback for exhibitor / other invoice types – send to lookup
+                return redirect()
+                    ->route('payment.lookup')
+                    ->with('error', $message)
+                    ->with('invoice_hint', $invoiceNo);
+            }
+        }
+
+        // 3. If we only have order_id (from gateway), try to derive invoice_no
+        if ($orderId) {
+            // Order ID formats we support:
+            //  - {invoice_no}_{timestamp}
+            //  - {application_id}_{timestamp}
+            $base = explode('_', $orderId)[0] ?? null;
+            if ($base) {
+                return $this->redirectForPaymentError($base, null, null, $message);
+            }
+        }
+
+        // 4. Final fallback – take user to lookup page where they can
+        //    enter Application ID or Invoice No to resume payment.
+        return redirect()
+            ->route('payment.lookup')
+            ->with('error', $message);
+    }
+
+    /**
+     * Show a simple page where the user can enter
+     * Application ID, TIN No, or Invoice Number to
+     * be redirected to the appropriate payment page.
+     */
+    public function showPaymentLookup(Request $request)
+    {
+        $prefillInvoice = session('invoice_hint');
+
+        // Share association logo (if any) for the layout - set to null for lookup page
+        view()->share('associationLogo', null);
+
+        return view('payment.lookup', [
+            'prefillInvoice' => $prefillInvoice,
+        ]);
+    }
+
+    /**
+     * Handle lookup form submission and redirect user
+     * to the correct payment page based on what they provide.
+     */
+    public function handlePaymentLookup(Request $request)
+    {
+        $data = $request->validate([
+            'application_id' => ['nullable', 'string'],
+            'tin_no' => ['nullable', 'string'],
+            'invoice_no' => ['nullable', 'string'],
+        ]);
+
+        if (empty($data['application_id']) && empty($data['tin_no']) && empty($data['invoice_no'])) {
+            return back()
+                ->withInput()
+                ->with('error', 'Please enter an Application ID, TIN No, or Invoice Number.');
+        }
+
+        $application = null;
+        $invoice = null;
+
+        // 1. Try by Application ID (this is the TIN stored in applications table)
+        if (!empty($data['application_id'])) {
+            $application = Application::where('application_id', trim($data['application_id']))->first();
+            if ($application) {
+                $invoice = Invoice::where('application_id', $application->id)->first();
+            }
+        }
+
+        // 2. Try by TIN No (can be in application_id field of Application or application_no field of Invoice)
+        if (!$application && !empty($data['tin_no'])) {
+            $tinNo = trim($data['tin_no']);
+
+            // Try to find by application_id in Application table
+            $application = Application::where('application_id', $tinNo)->first();
+            if ($application) {
+                $invoice = Invoice::where('application_id', $application->id)->first();
+            }
+
+            // If not found, try to find invoice by application_no (which stores TIN)
+            if (!$invoice) {
+                $invoice = Invoice::where('application_no', $tinNo)->first();
+                if ($invoice && !$application && $invoice->application_id) {
+                    $application = Application::find($invoice->application_id);
+                }
+            }
+        }
+
+        // 3. If still no invoice and invoice_no provided, try by Invoice No
+        if (!$invoice && !empty($data['invoice_no'])) {
+            $invoiceNo = trim($data['invoice_no']);
+            $invoice = Invoice::where('invoice_no', $invoiceNo)->first();
+
+            if ($invoice && !$application && $invoice->application_id) {
+                $application = Application::find($invoice->application_id);
+            }
+        }
+
+        if (!$invoice && !$application) {
+            return back()
+                ->withInput()
+                ->with('error', 'No matching Application or Invoice found. Please check the details and try again.');
+        }
+
+        // If this is a startup-zone application, send to startup payment page
+        if ($application && $application->application_type === 'startup-zone') {
+            return redirect()->route('startup-zone.payment', $application->application_id);
+        }
+
+        // Extra requirement invoices – send to extra requirements list so they can retry from there
+        if ($invoice && ($invoice->type === 'extra_requirement' || $invoice->requirementsOrder()->exists())) {
+            return redirect()
+                ->route('extra_requirements.index')
+                ->with('info', 'We found your extra requirements order. Please continue payment from the list.');
+        }
+
+        // Fallback: exhibitor orders page
+        return redirect()
+            ->route('exhibitor.orders')
+            ->with('info', 'We found your order. Please continue from your orders list.');
+    }
+
+    
     //
 
     public function downloadInvoicePdf($invoiceId)

@@ -1246,6 +1246,8 @@ class StartupZoneController extends Controller
      */
     public function showPayment($applicationId)
     {
+
+        // dd($applicationId);
         $application = Application::where('application_id', $applicationId)
             ->where('application_type', 'startup-zone')
             ->firstOrFail();
@@ -1278,7 +1280,9 @@ class StartupZoneController extends Controller
             ->where('application_type', 'startup-zone')
             ->firstOrFail();
 
+
         $invoice = Invoice::where('application_id', $application->id)->firstOrFail();
+
 
         if ($invoice->payment_status === 'paid') {
             return redirect()->route('startup-zone.confirmation', $applicationId)
