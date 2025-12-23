@@ -32,6 +32,20 @@
                     <h4 class="mb-0"><i class="fas fa-credit-card"></i> Payment</h4>
                 </div>
                 <div class="card-body">
+                    {{-- Approval Pending Message --}}
+                    @if(isset($approval_pending) && $approval_pending)
+                        <div class="alert alert-warning">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            <strong>Approval Pending:</strong> Your profile is not approved yet for payment. Please wait for admin approval. You will be notified once your application is approved.
+                        </div>
+                    @endif
+                    
+                    @if(session('error'))
+                        <div class="alert alert-danger">
+                            <i class="fas fa-exclamation-circle"></i> {{ session('error') }}
+                        </div>
+                    @endif
+                    
                     {{-- Application Summary --}}
                     <div class="alert alert-info">
                         <strong>Application ID:</strong> {{ $application->application_id }}<br>
@@ -186,6 +200,11 @@
                         <a href="{{ route('startup-zone.confirmation', $application->application_id) }}" class="btn btn-success">
                             View Confirmation <i class="fas fa-arrow-right"></i>
                         </a>
+                    @elseif(isset($approval_pending) && $approval_pending)
+                        {{-- Approval Pending - Disable Payment --}}
+                        <div class="alert alert-warning">
+                            <i class="fas fa-clock"></i> Payment options will be available once your application is approved by the admin.
+                        </div>
                     @else
                         {{-- Payment Options --}}
                         <h5 class="mb-3">Select Payment Method</h5>

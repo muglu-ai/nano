@@ -1402,6 +1402,27 @@ class StartupZoneController extends Controller
             ]);
         }
 
+        // Check if application is approved - payment only allowed after approval
+        if ($application->submission_status !== 'approved') {
+            $invoice = Invoice::where('application_id', $application->id)->first();
+            $billingDetail = \App\Models\BillingDetail::where('application_id', $application->id)->first();
+            
+            // Get association logo if promocode exists
+            $associationLogo = null;
+            if ($application->promocode) {
+                $association = AssociationPricingRule::where('promocode', $application->promocode)
+                    ->active()
+                    ->first();
+                if ($association && $association->logo_path) {
+                    $associationLogo = asset('storage/' . $association->logo_path);
+                }
+            }
+            view()->share('associationLogo', $associationLogo);
+            
+            return view('startup-zone.payment', compact('application', 'invoice', 'billingDetail'))
+                ->with('approval_pending', true);
+        }
+
         $invoice = Invoice::where('application_id', $application->id)->firstOrFail();
 
         // Get association logo if promocode exists
@@ -1430,9 +1451,13 @@ class StartupZoneController extends Controller
             ->where('application_type', 'startup-zone')
             ->firstOrFail();
 
+        // Check if application is approved - payment only allowed after approval
+        if ($application->submission_status !== 'approved') {
+            return redirect()->route('startup-zone.payment', $applicationId)
+                ->with('error', 'Your profile is not approved yet for payment. Please wait for admin approval.');
+        }
 
         $invoice = Invoice::where('application_id', $application->id)->firstOrFail();
-
 
         if ($invoice->payment_status === 'paid') {
             return redirect()->route('startup-zone.confirmation', $applicationId)

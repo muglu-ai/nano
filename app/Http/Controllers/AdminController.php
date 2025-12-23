@@ -163,48 +163,69 @@ class AdminController extends Controller
     }
 
     //fetch all application list
-    public function index($status = null)
+    public function index(Request $request, $status = null)
     {
         //check user is logged in or not
         if (!auth()->check()) {
             return redirect('/login');
         }
+        
+        // Get application type from request (default to 'exhibitor' for backward compatibility)
+        $applicationType = $request->input('type', 'exhibitor');
+        $paymentStatus = $request->input('payment_status'); // For filtering paid/unpaid
+        
         $slug = 'Application List';
+        if ($applicationType === 'startup-zone') {
+            $slug = 'Startup Zone - Application List';
+        }
 
         if ($status) {
             if ($status == 'in-progress') {
                 $status = 'in progress';
             }
-            $slug = $status . ' - Application List ';
-            //            $applications = Application::with('eventContact')->where('submission_status', $status)->whereDoesntHave('sponsorships')->get();
-            // $applications = Application::with('eventContact')->where('submission_status', $status)->where('application_type', 'exhibitor')->get();
-            $applications = Application::with('eventContact')
+            $slug = $status . ' - Application List';
+            if ($applicationType === 'startup-zone') {
+                $slug = $status . ' - Startup Zone Application List';
+            }
+            
+            $query = Application::with('eventContact')
                 ->where('submission_status', $status)
-                ->where('application_type', 'exhibitor')
-                ->orderBy('submission_date', 'desc') // or 'asc' for ascending order
-                ->get();
-
-            //can i get the query log for this query from $appliications
-            //Log::info('Applications Query Log', DB::getQueryLog());
+                ->where('application_type', $applicationType);
+            
+            // Filter by payment status if provided (for paid/unpaid)
+            if ($paymentStatus) {
+                if ($paymentStatus === 'paid') {
+                    $query->whereHas('invoices', function($q) {
+                        $q->where('payment_status', 'paid');
+                    });
+                } elseif ($paymentStatus === 'unpaid') {
+                    $query->where(function($q) {
+                        $q->whereDoesntHave('invoices')
+                          ->orWhereHas('invoices', function($invoiceQuery) {
+                              $invoiceQuery->where('payment_status', '!=', 'paid');
+                          });
+                    });
+                }
+            }
+            
+            $applications = $query->orderBy('submission_date', 'desc')->get();
         } else {
             $applications = Application::with('eventContact')
-                ->orderBy('submission_date', 'desc') // or 'asc' for ascending order
+                ->where('application_type', $applicationType)
+                ->orderBy('submission_date', 'desc')
                 ->get();
-            // $applications = Application::with('eventContact')->get();
-            // $applications = Application::with('eventContact')->whereDoesntHave('sponsorships')->get();
         }
 
         if ($status == 'approved') {
-            //    $applications = Application::with('eventContact', 'invoice')->where('submission_status', 'approved')->whereDoesntHave('sponsorships')->get();
-            // $applications = Application::with('eventContact', 'invoice')->where('submission_status', 'approved')->where('application_type', 'exhibitor')->get();
-            // $applications = Application::with('eventContact', 'invoice')->where('submission_status', 'approved')->get();
-            $applications = Application::with('eventContact', 'invoice')
+            $query = Application::with('eventContact', 'invoice')
                 ->where('submission_status', 'approved')
-                ->orderBy('submission_date', 'desc') // or 'asc' for ascending order
-                ->get();
-            // dd($applications);
+                ->where('application_type', $applicationType);
+            
+            $applications = $query->orderBy('submission_date', 'desc')->get();
+            
             //total revenue from all approved applications from price field in invoice table
-            $totalRevenue = Invoice::where('type', 'Stall Booking')
+            $invoiceType = $applicationType === 'startup-zone' ? 'Startup Zone Registration' : 'Stall Booking';
+            $totalRevenue = Invoice::where('type', $invoiceType)
                             ->whereIn('payment_status', ['paid'])
                             ->sum('total_final_price');
 

@@ -62,6 +62,12 @@ class PayPalController extends Controller
             return redirect()->route('startup-zone.confirmation', $application->application_id)
                 ->with('info', 'Payment already completed');
         }
+        
+        // Check if application is approved - payment only allowed after approval
+        if ($application->submission_status !== 'approved') {
+            return redirect()->route('startup-zone.payment', $application->application_id)
+                ->with('error', 'Your profile is not approved yet for payment. Please wait for admin approval.');
+        }
     }
     
     // For non-startup-zone invoices, check type
@@ -892,6 +898,13 @@ private function formatBillingFromEventContact($eventContact, $applicationId)
         //if invoice  type not extra_requirement and not startup-zone then return error
         if (!$isStartupZone && $invoice->type != 'extra_requirement') {
             return response()->json(['error' => 'Invalid invoice type'], 400);
+        }
+        
+        // For startup-zone, check if application is approved - payment only allowed after approval
+        if ($isStartupZone && $application) {
+            if ($application->submission_status !== 'approved') {
+                return response()->json(['error' => 'Your profile is not approved yet for payment. Please wait for admin approval.'], 403);
+            }
         }
 
         Log::info('Invoice Type: ' . $invoice->type);

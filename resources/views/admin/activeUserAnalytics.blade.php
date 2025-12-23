@@ -159,7 +159,7 @@
                         All Stall Categories
                     </div>
                     <div class="card-body card-body-custom bg-dark-custom">
-                        {{ array_sum($stallTypeCounts) }}
+                        {{ ($stallTypeCounts['bare_space_count'] ?? 0) + ($stallTypeCounts['shell_scheme_count'] ?? 0) }}
                     </div>
                     <div class="card-footer card-footer-custom">
                         Total Applications (All Stall Categories)

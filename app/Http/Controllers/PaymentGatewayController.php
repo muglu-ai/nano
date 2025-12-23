@@ -113,6 +113,15 @@ class PaymentGatewayController extends Controller
             }
             return redirect()->route('exhibitor.orders');
         }
+        
+        // For startup-zone, check if application is approved - payment only allowed after approval
+        if ($isStartupZone && $application) {
+            if ($application->submission_status !== 'approved') {
+                return redirect()
+                    ->route('startup-zone.payment', $application->application_id)
+                    ->with('error', 'Your profile is not approved yet for payment. Please wait for admin approval.');
+            }
+        }
 
         // Fetch billing detail - handle startup zone differently
         $billingDetail = null;
