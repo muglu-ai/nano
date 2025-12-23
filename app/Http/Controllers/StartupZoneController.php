@@ -1874,6 +1874,8 @@ class StartupZoneController extends Controller
         return $prefix . $microtime;
     }
 
+    //generate pinno with 
+
     /**
      * Helper: Validate draft data
      */

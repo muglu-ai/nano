@@ -575,7 +575,7 @@
                                 }
                             });
 
-                            fetch(`/approve-startup-zone/${applicationId}`, {
+                            fetch(`{{ route('approve.startup-zone', ['id' => 'APPLICATION_ID']) }}`.replace('APPLICATION_ID', applicationId), {
                                 method: 'POST',
                                 headers: {
                                     'Content-Type': 'application/json',
