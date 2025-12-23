@@ -43,8 +43,12 @@ return [
     ],
 
     'recaptcha' => [
-        'site_key' => env('RECAPTCHA_SITE_KEY'),
-        'secret_key' => env('RECAPTCHA_SECRET_KEY'),
+        'site_key'    => env('RECAPTCHA_SITE_KEY'),
+        // For legacy v2 usage (kept for backwards compatibility, not used in Enterprise flow)
+        'secret_key'  => env('RECAPTCHA_SECRET_KEY'),
+        // reCAPTCHA Enterprise / v3 server-side verification
+        'project_id'  => env('RECAPTCHA_PROJECT_ID'),
+        'api_key'     => env('RECAPTCHA_API_KEY'),
     ],
 
 ];

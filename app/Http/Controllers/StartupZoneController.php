@@ -133,45 +133,70 @@ class StartupZoneController extends Controller
      */
     private function verifyRecaptcha($recaptchaResponse)
     {
-        // Temporarily bypass reCAPTCHA entirely
-        return true;
-
         // If disabled via config, always pass
         if (!config('constants.RECAPTCHA_ENABLED')) {
             return true;
         }
 
-        $secretKey = config('services.recaptcha.secret_key');
-        
-        if (empty($secretKey) || empty($recaptchaResponse)) {
+        $siteKey   = config('services.recaptcha.site_key');
+        $projectId = config('services.recaptcha.project_id');
+        $apiKey    = config('services.recaptcha.api_key');
+        $expectedAction = 'submit';
+
+        if (empty($siteKey) || empty($projectId) || empty($apiKey) || empty($recaptchaResponse)) {
+            Log::warning('reCAPTCHA config or token missing', [
+                'siteKey' => !empty($siteKey),
+                'projectId' => $projectId,
+                'hasToken' => !empty($recaptchaResponse),
+            ]);
             return false;
         }
-        
+
+        $url = sprintf(
+            'https://recaptchaenterprise.googleapis.com/v1/projects/%s/assessments?key=%s',
+            $projectId,
+            $apiKey
+        );
+
         try {
-            $response = Http::asForm()->post('https://www.google.com/recaptcha/api/siteverify', [
-                'secret' => $secretKey,
-                'response' => $recaptchaResponse,
-                'remoteip' => request()->ip()
+            $response = Http::post($url, [
+                'event' => [
+                    'token'          => $recaptchaResponse,
+                    'expectedAction' => $expectedAction,
+                    'siteKey'        => $siteKey,
+                ],
             ]);
-            
+
             $result = $response->json();
-            
-            if ($response->successful() && isset($result['success']) && $result['success'] === true) {
-                return true;
+
+            if (!$response->successful()) {
+                Log::warning('reCAPTCHA Enterprise API error', [
+                    'status' => $response->status(),
+                    'response' => $result,
+                ]);
+                return false;
             }
-            
-            Log::warning('reCAPTCHA verification failed', [
-                'response' => $result,
-                'ip' => request()->ip()
-            ]);
-            
-            return false;
+
+            $tokenProps = $result['tokenProperties'] ?? null;
+
+            if (
+                !$tokenProps ||
+                ($tokenProps['valid'] ?? false) !== true ||
+                ($tokenProps['action'] ?? null) !== $expectedAction
+            ) {
+                Log::warning('reCAPTCHA Enterprise token invalid', [
+                    'tokenProperties' => $tokenProps,
+                ]);
+                return false;
+            }
+
+            // Optional: you can also check riskAnalysis.score if you want a threshold
+            return true;
         } catch (\Exception $e) {
-            Log::error('reCAPTCHA verification error', [
+            Log::error('reCAPTCHA Enterprise verification error', [
                 'error' => $e->getMessage(),
-                'ip' => request()->ip()
             ]);
-            
+
             return false;
         }
     }
@@ -1938,7 +1963,7 @@ class StartupZoneController extends Controller
             $rules['contact_mobile'] = 'required|regex:/^[0-9]{10}$/';
         }
         if (in_array('certificate', $fieldsToValidate)) {
-            $rules['certificate'] = 'nullable|file|mimes:pdf|max:2048';
+            $rules['certificate'] = 'required|file|mimes:pdf|max:2048';
         }
         if (in_array('website', $fieldsToValidate)) {
             // Ensure url validation is present (website already normalized above)

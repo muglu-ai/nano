@@ -74,7 +74,6 @@
                         <label for="interested_sqm" class="form-label">Booth Size <span class="text-danger">*</span></label>
                         <select class="form-select" id="interested_sqm" name="interested_sqm" required>
                             <option value="">Select Booth Size</option>
-                            <option value="Booth / POD" {{ ($draft->interested_sqm ?? '') == 'Booth / POD' ? 'selected' : '' }}>Booth / POD</option>
                             <option value="4 SQM" {{ ($draft->interested_sqm ?? '') == '4 SQM' ? 'selected' : '' }}>4 SQM</option>
                         </select>
                         <div class="invalid-feedback"></div>
@@ -181,9 +180,9 @@
                         <div class="invalid-feedback"></div>
                     </div>
                     <div class="col-md-6">
-                        <label for="certificate" class="form-label">Company Registration Certificate (PDF, Max 2MB)</label>
+                        <label for="certificate" class="form-label">Company Registration Certificate (PDF, Max 2MB) <span class="text-danger">*</span></label>
                         <input type="file" class="form-control" id="certificate" name="certificate" 
-                               accept=".pdf">
+                               accept=".pdf" required>
                         @if($draft && isset($draft->certificate_path) && $draft->certificate_path)
                         <small class="text-muted">Current file: {{ basename($draft->certificate_path) }}</small>
                         @endif
@@ -615,6 +614,7 @@
 @endpush
 
 @push('scripts')
+<script src="https://www.google.com/recaptcha/enterprise.js?render={{ config('services.recaptcha.site_key') }}"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     // Load draft data if exists
@@ -1769,25 +1769,29 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         const form = document.getElementById('startupZoneForm');
-        
-        const formData = new FormData(form);
-        
-        
-        // Show loading state
-        const submitBtn = document.getElementById('submitForm');
-        const originalText = submitBtn.innerHTML;
-        submitBtn.disabled = true;
-        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
-        
-        // Save all form data first
-        // Submit complete form
-        fetch('{{ route("startup-zone.submit-form") }}', {
-            method: 'POST',
-            body: formData,
-            headers: {
-                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+
+        // Prepare form data creator so we can call it after reCAPTCHA v3 token is ready
+        const createFormDataAndSubmit = function (recaptchaToken) {
+            const formData = new FormData(form);
+            if (recaptchaToken) {
+                formData.append('g-recaptcha-response', recaptchaToken);
             }
-        })
+
+            // Show loading state
+            const submitBtn = document.getElementById('submitForm');
+            const originalText = submitBtn.innerHTML;
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+
+            // Save all form data first
+            // Submit complete form
+            fetch('{{ route("startup-zone.submit-form") }}', {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                }
+            })
         .then(response => {
             // Check if response is ok (status 200-299)
             if (!response.ok) {
@@ -1984,6 +1988,30 @@ document.addEventListener('DOMContentLoaded', function() {
                 });
             }
         });
+        };
+
+        @if(config('constants.RECAPTCHA_ENABLED'))
+        // Use reCAPTCHA v3 / Enterprise style execution
+        if (typeof grecaptcha !== 'undefined' && grecaptcha.enterprise) {
+            grecaptcha.enterprise.ready(function () {
+                grecaptcha.enterprise.execute('{{ config('services.recaptcha.site_key') }}', { action: 'submit' })
+                    .then(function (token) {
+                        createFormDataAndSubmit(token);
+                    })
+                    .catch(function (err) {
+                        console.error('reCAPTCHA execution error:', err);
+                        // Fallback: submit without token (backend will fail if strictly required)
+                        createFormDataAndSubmit('');
+                    });
+            });
+        } else {
+            console.warn('reCAPTCHA v3 not loaded, submitting without token.');
+            createFormDataAndSubmit('');
+        }
+        @else
+        // reCAPTCHA disabled via config
+        createFormDataAndSubmit('');
+        @endif
     }
 });
 </script>
