@@ -140,7 +140,7 @@
                             <div class="d-flex justify-content-between">
                                 <div>
                                     <p class="text-m mb-0 text-capitalize font-weight-black font-weight-bold">Total Application</p>
-                                    <h4 class="mb-0 mt-1">{{ $analytics['totalApplications'] ?? 0 }}</h4>
+                                    <h4 class="mb-0 mt-1">{{ $analytics['startupZone']['total'] ?? 0 }}</h4>
                                 </div>
                                 <div class="icon icon-md icon-shape bg-gradient-dark shadow-dark shadow text-center border-radius-lg">
                                     <i class="material-symbols-rounded opacity-10">weekend</i>
@@ -161,7 +161,7 @@
                             <div class="d-flex justify-content-between">
                                 <div>
                                     <p class="text-m mb-0 text-capitalize font-weight-black font-weight-bold">Total Initiated</p>
-                                    <h4 class="mb-0 mt-1">{{ $analytics['applicationsByStatus']['in progress'] ?? 0 }}</h4>
+                                    <h4 class="mb-0 mt-1">{{ $analytics['startupZone']['initiated'] ?? 0 }}</h4>
                                 </div>
                                 <div
                                     class="icon icon-md icon-shape bg-gradient-dark shadow-dark shadow text-center border-radius-lg">
@@ -183,7 +183,7 @@
                             <div class="d-flex justify-content-between">
                                 <div>
                                     <p class="text-m mb-0 text-capitalize font-weight-black font-weight-bold">Total Submitted</p>
-                                    <h4 class="mb-0 mt-1">{{ $analytics['applicationsByStatus']['submitted'] ?? 0 }}</h4>
+                                    <h4 class="mb-0 mt-1">{{ $analytics['startupZone']['submitted'] ?? 0 }}</h4>
                                 </div>
                                 <div
                                     class="icon icon-md icon-shape bg-gradient-dark shadow-dark shadow text-center border-radius-lg">
@@ -205,7 +205,7 @@
                             <div class="d-flex justify-content-between">
                                 <div>
                                     <p class="text-m mb-0 text-capitalize font-weight-black font-weight-bold">Total Approved Application</p>
-                                    <h4 class="mb-0 mt-1">{{ $analytics['applicationsByStatus']['approved'] ?? 0 }}</h4>
+                                    <h4 class="mb-0 mt-1">{{ $analytics['startupZone']['approved'] ?? 0 }}</h4>
                                 </div>
                                 <div
                                     class="icon icon-md icon-shape bg-gradient-dark shadow-dark shadow text-center border-radius-lg">
@@ -226,8 +226,8 @@
                         <div class="card-header p-2 ps-3">
                             <div class="d-flex justify-content-between">
                                 <div>
-                                    <p class="text-m mb-0 text-capitalize font-weight-black font-weight-bold">Total Rejected Application</p>
-                                    <h4 class="mb-0 mt-1">{{ $analytics['applicationsByStatus']['rejected'] ?? 0 }}</h4>
+                                    <p class="text-m mb-0 text-capitalize font-weight-black font-weight-bold">Not Paid</p>
+                                    <h4 class="mb-0 mt-1">{{ $analytics['startupZone']['notPaid'] ?? 0 }}</h4>
                                 </div>
                                 <div
                                     class="icon icon-md icon-shape bg-gradient-dark shadow-dark shadow text-center border-radius-lg">
@@ -237,7 +237,29 @@
                         </div>
                         <hr class="dark horizontal my-0">
                         <div class="card-footer p-2 ps-3">
-                            <p class="mb-0 text-sm"><a href="/application-list/rejected"
+                            <p class="mb-0 text-sm"><a href="/application-list/submitted"
+                                                       class="text-success font-weight-bolder">Click here</a> for more
+                                info.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-xl-4 col-sm-6 mb-xl-0 mb-4 mt-2  mb-3">
+                    <div class="card">
+                        <div class="card-header p-2 ps-3">
+                            <div class="d-flex justify-content-between">
+                                <div>
+                                    <p class="text-m mb-0 text-capitalize font-weight-black font-weight-bold">Paid</p>
+                                    <h4 class="mb-0 mt-1">{{ $analytics['startupZone']['paid'] ?? 0 }}</h4>
+                                </div>
+                                <div
+                                    class="icon icon-md icon-shape bg-gradient-dark shadow-dark shadow text-center border-radius-lg">
+                                    <i class="material-symbols-rounded opacity-10">weekend</i>
+                                </div>
+                            </div>
+                        </div>
+                        <hr class="dark horizontal my-0">
+                        <div class="card-footer p-2 ps-3">
+                            <p class="mb-0 text-sm"><a href="/application-list/approved"
                                                        class="text-success font-weight-bolder">Click here</a> for more
                                 info.</p>
                         </div>

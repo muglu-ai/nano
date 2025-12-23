@@ -8,6 +8,7 @@ use App\Models\Application;
 use App\Models\CoExhibitor;
 use App\Models\User;
 use App\Models\Invoice;
+use Illuminate\Support\Facades\DB;
 
 
 
@@ -19,24 +20,56 @@ class AnalyticsServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->app->singleton('analytics', function () {
+            // Exhibition (exhibitor) applications
+            $exhibitorApplicationsByStatus = Application::select('submission_status', DB::raw('count(*) as count'))
+                ->where('application_type', 'exhibitor')
+                ->groupBy('submission_status')
+                ->pluck('count', 'submission_status')
+                ->toArray();
+            
+            // Startup Zone applications
+            $startupZoneApplicationsByStatus = Application::select('submission_status', DB::raw('count(*) as count'))
+                ->where('application_type', 'startup-zone')
+                ->groupBy('submission_status')
+                ->pluck('count', 'submission_status')
+                ->toArray();
+            
+            // Startup Zone payment statistics
+            $startupZoneSubmitted = Application::where('application_type', 'startup-zone')
+                ->where('submission_status', 'submitted')
+                ->count();
+            
+            $startupZonePaid = Application::where('application_type', 'startup-zone')
+                ->where('submission_status', 'submitted')
+                ->whereHas('invoices', function($query) {
+                    $query->where('payment_status', 'paid');
+                })
+                ->count();
+            
+            $startupZoneNotPaid = $startupZoneSubmitted - $startupZonePaid;
+            
             return [
-                'totalApplications' => Application::where('application_type', ['exhibitor', 'sponsor', 'exhibitor+sponsor'])->count(),
+                'totalApplications' => Application::whereIn('application_type', ['exhibitor', 'sponsor', 'exhibitor+sponsor'])->count(),
                 'totalCoExhibitors' => CoExhibitor::count(),
                 'totalUsers' => User::count(),
                 'totalInvoices' => Invoice::count(),
-                'applicationsByStatus' => Application::select('submission_status', \DB::raw('count(*) as count'))
-                    ->where('application_type', 'exhibitor')
-//                    ->where('interested_sqm', '!=', 0)
-//                    ->where('company_name', '!=', 'SCI Knowledge Interlinks Pvt. Ltd.')
-                    ->groupBy('submission_status')
-                    ->pluck('count', 'submission_status')
-                    ->toArray(),
+                'applicationsByStatus' => $exhibitorApplicationsByStatus,
+                // Startup Zone specific statistics
+                'startupZone' => [
+                    'total' => Application::where('application_type', 'startup-zone')->count(),
+                    'initiated' => $startupZoneApplicationsByStatus['in progress'] ?? 0,
+                    'submitted' => $startupZoneSubmitted,
+                    'approved' => $startupZoneApplicationsByStatus['approved'] ?? 0,
+                    'paid' => $startupZonePaid,
+                    'notPaid' => $startupZoneNotPaid,
+                    'byStatus' => $startupZoneApplicationsByStatus,
+                ],
                 'sponsors_count' => Sponsorship::whereHas('application')->count(),
-                'sponsorshipByStatus' => Sponsorship::select('status', \DB::raw('count(*) as count'))
+                'sponsorshipByStatus' => Sponsorship::select('status', DB::raw('count(*) as count'))
                     ->groupBy('status')
                     ->pluck('count', 'status')
                     ->toArray(),
-                'payments' => \DB::table('payments')->select(\DB::raw('count(*) as count'))->pluck('count')->toArray(),
+                'payments' => DB::table('payments')->select(DB::raw('count(*) as count'))->pluck('count')->toArray(),
                 // Declaration form statistics
                 'declarationsFilled' => Application::where('application_type', 'exhibitor')
                     ->where('declarationStatus', 1)
