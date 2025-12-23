@@ -856,26 +856,7 @@ class StartupZoneController extends Controller
     public function restoreDraftToApplication(Request $request)
     {
         try {
-            // Validate Google reCAPTCHA
-            // Check if reCAPTCHA was already validated in this session (from submitForm)
-            $recaptchaValidated = session('recaptcha_validated', false);
-            $recaptchaValidatedAt = session('recaptcha_validated_at', 0);
-            
-            // If validated more than 10 minutes ago, require re-validation
-            $needsRevalidation = !$recaptchaValidated || (time() - $recaptchaValidatedAt) > 600;
-            
-            if ($needsRevalidation) {
-                $recaptchaResponse = $request->input('g-recaptcha-response');
-                if (!$recaptchaResponse || !$this->verifyRecaptcha($recaptchaResponse)) {
-                    return response()->json([
-                        'success' => false,
-                        'message' => 'reCAPTCHA verification failed. Please complete the reCAPTCHA challenge.',
-                        'errors' => ['g-recaptcha-response' => ['reCAPTCHA verification failed. Please try again.']]
-                    ], 422);
-                }
-                // Store validation in session
-                session(['recaptcha_validated' => true, 'recaptcha_validated_at' => time()]);
-            }
+            // reCAPTCHA temporarily disabled for final submission
             
             // FIRST: Always save latest form data to session (if provided)
             // This ensures we always use the latest values from the form
