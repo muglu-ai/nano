@@ -133,6 +133,11 @@ class StartupZoneController extends Controller
      */
     private function verifyRecaptcha($recaptchaResponse)
     {
+        // If disabled via config, always pass
+        if (!config('constants.RECAPTCHA_ENABLED')) {
+            return true;
+        }
+
         $secretKey = config('services.recaptcha.secret_key');
         
         if (empty($secretKey) || empty($recaptchaResponse)) {
@@ -519,17 +524,19 @@ class StartupZoneController extends Controller
     {
         try {
             // Validate Google reCAPTCHA
-            $recaptchaResponse = $request->input('g-recaptcha-response');
-            if (!$recaptchaResponse || !$this->verifyRecaptcha($recaptchaResponse)) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'reCAPTCHA verification failed. Please complete the reCAPTCHA challenge.',
-                    'errors' => ['g-recaptcha-response' => ['reCAPTCHA verification failed. Please try again.']]
-                ], 422);
+            if (config('constants.RECAPTCHA_ENABLED')) {
+                $recaptchaResponse = $request->input('g-recaptcha-response');
+                if (!$recaptchaResponse || !$this->verifyRecaptcha($recaptchaResponse)) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'reCAPTCHA verification failed. Please complete the reCAPTCHA challenge.',
+                        'errors' => ['g-recaptcha-response' => ['reCAPTCHA verification failed. Please try again.']]
+                    ], 422);
+                }
+                
+                // Store reCAPTCHA validation in session (valid for 10 minutes)
+                session(['recaptcha_validated' => true, 'recaptcha_validated_at' => time()]);
             }
-            
-            // Store reCAPTCHA validation in session (valid for 10 minutes)
-            session(['recaptcha_validated' => true, 'recaptcha_validated_at' => time()]);
             
             // FIRST: Save latest form data to session before processing
             // This ensures we always use the latest values from the form

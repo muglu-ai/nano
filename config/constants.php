@@ -62,6 +62,8 @@ const DEFAULT_REGISTRATION_LINK = null;
 
 
 return [
+    // Feature toggles
+    'RECAPTCHA_ENABLED' => false, // Set true to enable Google reCAPTCHA on startup zone form
     'EVENT_NAME' => EVENT_NAME,
     'event_name' => EVENT_NAME,
     'EVENT_YEAR' => EVENT_YEAR,
