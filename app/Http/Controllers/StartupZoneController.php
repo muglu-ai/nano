@@ -21,6 +21,8 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use App\Mail\UserCredentialsMail;
 use App\Mail\ExhibitorRegistrationMail;
 use App\Mail\StartupZoneMail;
@@ -124,6 +126,46 @@ class StartupZoneController extends Controller
             'associationParam',
             'associationLogo'
         ));
+    }
+
+    /**
+     * Verify Google reCAPTCHA response
+     */
+    private function verifyRecaptcha($recaptchaResponse)
+    {
+        $secretKey = config('services.recaptcha.secret_key');
+        
+        if (empty($secretKey) || empty($recaptchaResponse)) {
+            return false;
+        }
+        
+        try {
+            $response = Http::asForm()->post('https://www.google.com/recaptcha/api/siteverify', [
+                'secret' => $secretKey,
+                'response' => $recaptchaResponse,
+                'remoteip' => request()->ip()
+            ]);
+            
+            $result = $response->json();
+            
+            if ($response->successful() && isset($result['success']) && $result['success'] === true) {
+                return true;
+            }
+            
+            Log::warning('reCAPTCHA verification failed', [
+                'response' => $result,
+                'ip' => request()->ip()
+            ]);
+            
+            return false;
+        } catch (\Exception $e) {
+            Log::error('reCAPTCHA verification error', [
+                'error' => $e->getMessage(),
+                'ip' => request()->ip()
+            ]);
+            
+            return false;
+        }
     }
 
     /**
@@ -476,6 +518,19 @@ class StartupZoneController extends Controller
     public function submitForm(Request $request)
     {
         try {
+            // Validate Google reCAPTCHA
+            $recaptchaResponse = $request->input('g-recaptcha-response');
+            if (!$recaptchaResponse || !$this->verifyRecaptcha($recaptchaResponse)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'reCAPTCHA verification failed. Please complete the reCAPTCHA challenge.',
+                    'errors' => ['g-recaptcha-response' => ['reCAPTCHA verification failed. Please try again.']]
+                ], 422);
+            }
+            
+            // Store reCAPTCHA validation in session (valid for 10 minutes)
+            session(['recaptcha_validated' => true, 'recaptcha_validated_at' => time()]);
+            
             // FIRST: Save latest form data to session before processing
             // This ensures we always use the latest values from the form
             $this->saveFormDataToSession($request);
@@ -745,7 +800,16 @@ class StartupZoneController extends Controller
         
         // Check if application_id is provided (after draft restoration)
         if ($request->has('application_id')) {
-            $application = Application::where('application_id', $request->application_id)
+            $applicationId = $request->query('application_id');
+            
+            // Security: Verify ownership using session
+            $sessionApplicationId = session('startup_zone_application_id');
+            if ($sessionApplicationId && $sessionApplicationId !== $applicationId) {
+                // Unauthorized access attempt
+                abort(403, 'Unauthorized access to this application');
+            }
+            
+            $application = Application::where('application_id', $applicationId)
                 ->where('application_type', 'startup-zone')
                 ->firstOrFail();
             
@@ -795,6 +859,27 @@ class StartupZoneController extends Controller
     public function restoreDraftToApplication(Request $request)
     {
         try {
+            // Validate Google reCAPTCHA
+            // Check if reCAPTCHA was already validated in this session (from submitForm)
+            $recaptchaValidated = session('recaptcha_validated', false);
+            $recaptchaValidatedAt = session('recaptcha_validated_at', 0);
+            
+            // If validated more than 10 minutes ago, require re-validation
+            $needsRevalidation = !$recaptchaValidated || (time() - $recaptchaValidatedAt) > 600;
+            
+            if ($needsRevalidation) {
+                $recaptchaResponse = $request->input('g-recaptcha-response');
+                if (!$recaptchaResponse || !$this->verifyRecaptcha($recaptchaResponse)) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'reCAPTCHA verification failed. Please complete the reCAPTCHA challenge.',
+                        'errors' => ['g-recaptcha-response' => ['reCAPTCHA verification failed. Please try again.']]
+                    ], 422);
+                }
+                // Store validation in session
+                session(['recaptcha_validated' => true, 'recaptcha_validated_at' => time()]);
+            }
+            
             // FIRST: Always save latest form data to session (if provided)
             // This ensures we always use the latest values from the form
             if ($request->hasAny([
@@ -1333,10 +1418,11 @@ class StartupZoneController extends Controller
                 'is_abandoned' => false, // Keep it active for analytics
             ]);
             
-            // Clear session data (draft data is no longer needed in session)
-            session()->forget('startup_zone_draft');
-            session()->forget('payment_application_id');
-            session()->forget('payment_application_type');
+            // Store application_id in session for security validation on payment page
+            session(['startup_zone_application_id' => $application->application_id]);
+            
+            // Keep session data for preview page, but will be cleared when user reaches payment page
+            // Don't clear draft yet - needed for preview page
 
             DB::commit();
 
@@ -1365,6 +1451,29 @@ class StartupZoneController extends Controller
         $application = Application::where('application_id', $applicationId)
             ->where('application_type', 'startup-zone')
             ->firstOrFail();
+        
+        // Security: Verify ownership using session
+        // Check if this application_id matches the one stored in session (from form submission)
+        $sessionApplicationId = session('startup_zone_application_id');
+        if ($sessionApplicationId && $sessionApplicationId !== $applicationId) {
+            // If session has a different application_id, this is unauthorized access attempt
+            \Log::warning('Unauthorized startup zone payment access attempt', [
+                'requested_application_id' => $applicationId,
+                'session_application_id' => $sessionApplicationId,
+                'ip' => request()->ip(),
+                'user_agent' => request()->userAgent()
+            ]);
+            abort(403, 'Unauthorized access to this application');
+        }
+        
+        // If no session, log for security monitoring (may be from approval email link)
+        if (!$sessionApplicationId) {
+            \Log::info('Startup zone payment access without session validation', [
+                'application_id' => $applicationId,
+                'ip' => request()->ip(),
+                'referer' => request()->header('referer')
+            ]);
+        }
 
         // Update submission_status to 'submitted' when user reaches payment page
         if ($application->submission_status === 'in progress') {
@@ -1413,6 +1522,14 @@ class StartupZoneController extends Controller
 
         $billingDetail = \App\Models\BillingDetail::where('application_id', $application->id)->first();
         
+        // Clear session data once user reaches payment page (final insert is done)
+        // This prevents editing fields after reaching payment page
+        session()->forget('startup_zone_draft');
+        session()->forget('startup_zone_application_id');
+        session()->forget('payment_application_id');
+        session()->forget('payment_application_type');
+        session()->forget('invoice_no');
+        
         try {
             // Reload application with relationships for email
             $application->load(['country', 'state', 'eventContact']);
@@ -1452,6 +1569,12 @@ class StartupZoneController extends Controller
         $application = Application::where('application_id', $applicationId)
             ->where('application_type', 'startup-zone')
             ->firstOrFail();
+        
+        // Security: Verify ownership using session
+        $sessionApplicationId = session('startup_zone_application_id');
+        if ($sessionApplicationId && $sessionApplicationId !== $applicationId) {
+            abort(403, 'Unauthorized access to this application');
+        }
 
         // Check if application is approved - payment only allowed after approval
         if ($application->submission_status !== 'approved') {
@@ -1492,6 +1615,19 @@ class StartupZoneController extends Controller
         $application = Application::where('application_id', $applicationId)
             ->where('application_type', 'startup-zone')
             ->firstOrFail();
+        
+        // Security: For confirmation page, we allow access after payment
+        // Session may have expired, but payment was successful, so allow access
+        // Log for security monitoring
+        $sessionApplicationId = session('startup_zone_application_id');
+        if (!$sessionApplicationId || $sessionApplicationId !== $applicationId) {
+            \Log::info('Startup zone confirmation access', [
+                'application_id' => $applicationId,
+                'session_app_id' => $sessionApplicationId,
+                'ip' => request()->ip(),
+                'payment_status' => $application->invoices()->where('payment_status', 'paid')->exists() ? 'paid' : 'unpaid'
+            ]);
+        }
 
         $invoice = Invoice::where('application_id', $application->id)->firstOrFail();
         $contact = EventContact::where('application_id', $application->id)->first();

@@ -483,6 +483,15 @@
                     <i class="fas fa-info-circle"></i> <strong>Note:</strong> After submitting this form, you will be redirected to preview your registration details before making payment.
                 </div>
 
+                {{-- Google reCAPTCHA --}}
+                <div class="mb-3">
+                    <div class="g-recaptcha" data-sitekey="{{ config('services.recaptcha.site_key') }}" id="recaptcha"></div>
+                    <div id="recaptcha-error" class="text-danger small mt-1" style="display: none;"></div>
+                    @error('g-recaptcha-response')
+                        <div class="text-danger small mt-1">{{ $message }}</div>
+                    @enderror
+                </div>
+
                 {{-- Submit Button --}}
                 <div class="d-flex justify-content-end mt-4">
                     <button type="button" class="btn btn-primary btn-lg" id="submitForm">
@@ -1767,7 +1776,25 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         const form = document.getElementById('startupZoneForm');
+        
+        // Check reCAPTCHA
+        const recaptchaResponse = grecaptcha.getResponse();
+        if (!recaptchaResponse) {
+            document.getElementById('recaptcha-error').textContent = 'Please complete the reCAPTCHA verification.';
+            document.getElementById('recaptcha-error').style.display = 'block';
+            Swal.fire({
+                icon: 'error',
+                title: 'reCAPTCHA Required',
+                text: 'Please complete the reCAPTCHA verification before submitting.',
+                confirmButtonText: 'OK'
+            });
+            return;
+        }
+        
+        document.getElementById('recaptcha-error').style.display = 'none';
+        
         const formData = new FormData(form);
+        formData.append('g-recaptcha-response', recaptchaResponse);
         
         // Show loading state
         const submitBtn = document.getElementById('submitForm');
@@ -1860,7 +1887,19 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(response => {
             if (!response.ok) {
                 return response.json().then(data => {
-                    throw { type: 'error', message: data.message || 'Failed to create application' };
+                    // Check if it's a validation error with reCAPTCHA
+                    if (data.errors && data.errors['g-recaptcha-response']) {
+                        throw { 
+                            type: 'validation', 
+                            message: data.message || 'Validation failed',
+                            errors: data.errors
+                        };
+                    }
+                    throw { 
+                        type: response.status === 422 ? 'validation' : 'error', 
+                        message: data.message || 'Failed to create application',
+                        errors: data.errors || {}
+                    };
                 });
             }
             return response.json();
@@ -1906,6 +1945,16 @@ document.addEventListener('DOMContentLoaded', function() {
                 Object.keys(errors).forEach(field => {
                     // Get error message (first one if array, or the message itself)
                     const errorMsg = Array.isArray(errors[field]) ? errors[field][0] : errors[field];
+                    
+                    // Handle reCAPTCHA errors specially
+                    if (field === 'g-recaptcha-response') {
+                        document.getElementById('recaptcha-error').textContent = errorMsg;
+                        document.getElementById('recaptcha-error').style.display = 'block';
+                        // Reset reCAPTCHA
+                        grecaptcha.reset();
+                        errorMessages.push('reCAPTCHA: ' + errorMsg);
+                        return;
+                    }
                     
                     // Try to find the field element
                     let fieldElement = form.querySelector('[name="' + field + '"]');
