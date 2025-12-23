@@ -33,7 +33,7 @@
                 <div class="card-body">
                     <div class="row">
                         <div class="col-md-6 mb-3">
-                            <strong>Application ID:</strong><br>
+                            <strong>TIN Number:</strong><br>
                             {{ $application->application_id }}
                         </div>
                         <div class="col-md-6 mb-3">
