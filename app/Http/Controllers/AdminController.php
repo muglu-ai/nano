@@ -287,7 +287,7 @@ class AdminController extends Controller
                 $userEmail = $contact->email ?? $application->company_email;
                 
                 if ($userEmail) {
-                    Mail::to($userEmail)->send(new \App\Mail\StartupZoneApprovalMail($application, $invoice, $contact));
+                    Mail::to($userEmail)->send(new \App\Mail\StartupZoneMail($application, 'approval', $invoice, $contact));
                 }
             }
         } catch (\Exception $e) {

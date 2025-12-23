@@ -710,6 +710,32 @@ class PaymentGatewayController extends Controller
                         'transaction_id' => $responseArray['tracking_id'] ?? null,
                     ]);
 
+                    // Send thank you email after payment confirmation
+                    try {
+                        $contact = \App\Models\EventContact::where('application_id', $application->id)->first();
+                        $application->load(['country', 'state', 'eventContact']);
+                        
+                        $userEmail = $contact && $contact->email ? $contact->email : $application->company_email;
+                        
+                        if ($userEmail) {
+                            $paymentDetails = [
+                                'transaction_id' => $responseArray['tracking_id'] ?? null,
+                                'payment_method' => $responseArray['payment_mode'] ?? 'CCAvenue',
+                                'amount' => $responseArray['mer_amount'],
+                                'currency' => 'INR',
+                            ];
+                            
+                            Mail::to($userEmail)->send(new \App\Mail\StartupZoneMail($application, 'payment_thank_you', $invoice, $contact, $paymentDetails));
+                        }
+                    } catch (\Exception $e) {
+                        Log::error('Failed to send payment thank you email', [
+                            'application_id' => $application->application_id,
+                            'email' => $userEmail ?? 'unknown',
+                            'error' => $e->getMessage()
+                        ]);
+                        // Don't fail the payment if email fails
+                    }
+
                     // Redirect to startup zone confirmation with payment response - MUST RETURN HERE
                     return redirect()
                         ->route('startup-zone.confirmation', $application->application_id)

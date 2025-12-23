@@ -23,7 +23,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use App\Mail\UserCredentialsMail;
 use App\Mail\ExhibitorRegistrationMail;
-use App\Mail\StartupZoneAdminNotificationMail;
+use App\Mail\StartupZoneMail;
 
 class StartupZoneController extends Controller
 {
@@ -1335,7 +1335,7 @@ class StartupZoneController extends Controller
                     if (!empty($bccEmails)) {
                         $mail->bcc($bccEmails);
                     }
-                    $mail->send(new StartupZoneAdminNotificationMail($application, $contact, $billingDetail));
+                    $mail->send(new StartupZoneMail($application, 'admin_notification', null, $contact));
                 }
             } catch (\Exception $e) {
                 \Log::error('Failed to send admin notification email for startup zone', [
@@ -1519,17 +1519,28 @@ class StartupZoneController extends Controller
             }
         }
         
-        // Send updated registration confirmation email with paid status (will have correct subject)
-        // Only send if payment was just completed to avoid duplicate emails
+        // Send thank you email after payment confirmation
+        // Note: Payment thank you email is sent from PayPalController and PaymentGatewayController
+        // This is a fallback in case payment was completed elsewhere
         if ($invoice->payment_status === 'paid' && $paymentJustCompleted) {
             try {
                 $contactEmail = $contact && $contact->email ? $contact->email : $application->company_email;
                 if ($contactEmail) {
                     $application->load(['country', 'state', 'eventContact']);
-                    Mail::to($contactEmail)->send(new ExhibitorRegistrationMail($application, $invoice, $contact));
+                    
+                    // Get payment details from session if available
+                    $paymentResponse = session('payment_response', []);
+                    $paymentDetails = [
+                        'transaction_id' => $paymentResponse['tracking_id'] ?? $paymentResponse['transaction_id'] ?? null,
+                        'payment_method' => $paymentResponse['payment_mode'] ?? 'Payment Gateway',
+                        'amount' => $invoice->total_final_price,
+                        'currency' => $invoice->currency,
+                    ];
+                    
+                    Mail::to($contactEmail)->send(new \App\Mail\StartupZoneMail($application, 'payment_thank_you', $invoice, $contact, $paymentDetails));
                 }
             } catch (\Exception $e) {
-                \Log::error('Failed to send registration confirmation email after payment', [
+                \Log::error('Failed to send payment thank you email', [
                     'email' => $contactEmail ?? 'unknown',
                     'error' => $e->getMessage()
                 ]);

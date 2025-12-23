@@ -1206,6 +1206,32 @@ private function formatBillingFromEventContact($eventContact, $applicationId)
                         'amount' => $amountPaid
                     ]);
                     
+                    // Send thank you email after payment confirmation
+                    try {
+                        $contact = \App\Models\EventContact::where('application_id', $application->id)->first();
+                        $application->load(['country', 'state', 'eventContact']);
+                        
+                        $userEmail = $contact && $contact->email ? $contact->email : $application->company_email;
+                        
+                        if ($userEmail) {
+                            $paymentDetails = [
+                                'transaction_id' => $apiDecodedResponse['purchase_units'][0]['payments']['captures'][0]['id'] ?? null,
+                                'payment_method' => 'PayPal',
+                                'amount' => $amountPaid,
+                                'currency' => 'USD',
+                            ];
+                            
+                            Mail::to($userEmail)->send(new \App\Mail\StartupZoneMail($application, 'payment_thank_you', $invoice, $contact, $paymentDetails));
+                        }
+                    } catch (\Exception $e) {
+                        Log::error('Failed to send payment thank you email', [
+                            'application_id' => $application->application_id,
+                            'email' => $userEmail ?? 'unknown',
+                            'error' => $e->getMessage()
+                        ]);
+                        // Don't fail the payment if email fails
+                    }
+                    
                     // Return JSON with redirect URL for startup zone
                     return response()->json([
                         'status' => 'success',
