@@ -48,7 +48,7 @@
                     
                     {{-- Application Summary --}}
                     <div class="alert alert-info">
-                        <strong>Application ID:</strong> {{ $application->application_id }}<br>
+                        <strong>TIN Number:</strong> {{ $application->application_id }}<br>
                         <strong>Exhibitor:</strong> {{ $application->company_name }}
                     </div>
 
@@ -228,7 +228,8 @@
                                         </div>
                                     </div>
                                 </div>
-                                
+                                <?php 
+                                /*
                                 <div class="col-md-6 mb-3">
                                     <div class="card payment-option-card {{ $invoice->currency === 'USD' ? 'border-primary' : '' }}" 
                                          onclick="document.getElementById('paypal').checked = true;">
@@ -244,8 +245,11 @@
                                         </div>
                                     </div>
                                 </div>
+                                */
+                                 ?>
                             </div>
-                            
+                            <?php 
+                                /*
                             <div class="mb-3">
                                 <div class="form-check">
                                     <input class="form-check-input" type="radio" name="payment_method" id="bank_transfer" 
@@ -255,6 +259,8 @@
                                     </label>
                                 </div>
                             </div>
+
+                            */ ?>
 
                             <div class="alert alert-warning">
                                 <strong>Note:</strong> After clicking "Proceed to Payment", you will be redirected to the payment gateway.

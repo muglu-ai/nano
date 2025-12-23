@@ -14,7 +14,7 @@
                 <div class="card-body text-center">
                     <p class="lead">Thank you for registering for the Startup Zone at {{ config('constants.EVENT_NAME') }} {{ config('constants.EVENT_YEAR') }}!</p>
                     <p class="alert alert-info">
-                        <strong>Application ID:</strong> {{ $application->application_id }}<br>
+                        <strong>TIN Number:</strong> {{ $application->application_id }}<br>
                         <strong>Status:</strong> 
                         @if($invoice->payment_status === 'paid')
                             <span class="badge bg-success">Payment Completed</span>

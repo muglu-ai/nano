@@ -1991,6 +1991,23 @@ class StartupZoneController extends Controller
     }
 
     /**
+     * Helper: Round amount to whole number
+     * .8 and above → round up to 1, .4 and below → round down to 0
+     */
+    private function roundAmount($amount)
+    {
+        $decimal = $amount - floor($amount);
+        if ($decimal >= 0.8) {
+            return ceil($amount); // Round up if .8 or higher (e.g., 52000.8 → 52001)
+        } elseif ($decimal <= 0.4) {
+            return floor($amount); // Round down if .4 or lower (e.g., 52000.4 → 52000)
+        } else {
+            // For .5 to .7, round up (standard rounding behavior)
+            return round($amount, 0);
+        }
+    }
+
+    /**
      * Helper: Calculate pricing based on association
      */
     private function calculatePricing($draft)
@@ -2024,11 +2041,11 @@ class StartupZoneController extends Controller
         $total = $basePrice + $gst + $processingCharges;
 
         return [
-            'base_price' => round($basePrice, 2),
-            'gst' => round($gst, 2),
-            'processing_charges' => round($processingCharges, 2),
+            'base_price' => $this->roundAmount($basePrice), // Round to whole number (.8 up, .4 down)
+            'gst' => $this->roundAmount($gst), // Round to whole number (.8 up, .4 down)
+            'processing_charges' => $this->roundAmount($processingCharges), // Round to whole number (.8 up, .4 down)
             'processing_rate' => $processingRate * 100,
-            'total' => round($total, 2),
+            'total' => $this->roundAmount($total), // Round to whole number (.8 up, .4 down)
             'currency' => $currency
         ];
     }
