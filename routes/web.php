@@ -1005,7 +1005,7 @@ Route::get('/email-preview/credentials/{email}', [EmailPreviewController::class,
 Route::get('/email-preview/exhibitor-registration/{applicationId}', [EmailPreviewController::class, 'showExhibitorRegistrationEmail'])->name('email-preview.exhibitor-registration');
 
 // Startup Zone Email Previews (Admin Only)
-Route::middleware([Auth::class])->group(function () {
+Route::middleware(['auth', Auth::class])->group(function () {
     Route::get('/admin/startup-zone-emails', [EmailPreviewController::class, 'startupZoneEmailsList'])->name('admin.startup-zone-emails');
     Route::get('/admin/startup-zone-emails/preview/admin-notification/{applicationId?}', [EmailPreviewController::class, 'previewStartupZoneAdminNotification'])->name('email-preview.startup-zone.admin-notification')->where('applicationId', '.*');
     Route::get('/admin/startup-zone-emails/preview/approval/{applicationId?}', [EmailPreviewController::class, 'previewStartupZoneApproval'])->name('email-preview.startup-zone.approval')->where('applicationId', '.*');
