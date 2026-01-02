@@ -90,7 +90,7 @@ class EmailPreviewController extends Controller
     public function startupZoneEmailsList()
     {
         // Check admin access
-        if (!auth()->check() || auth()->user()->role !== 'admin') {
+        if (!auth()->check() || !in_array(auth()->user()->role, ['admin', 'super-admin'])) {
             return redirect('/login');
         }
 
@@ -168,7 +168,7 @@ class EmailPreviewController extends Controller
     public function previewStartupZoneAdminNotification($applicationId = null)
     {
         // Check admin access
-        if (!auth()->check() || auth()->user()->role !== 'admin') {
+        if (!auth()->check() || !in_array(auth()->user()->role, ['admin', 'super-admin'])) {
             return redirect('/login');
         }
 
@@ -207,7 +207,7 @@ class EmailPreviewController extends Controller
     public function previewStartupZoneApproval($applicationId = null)
     {
         // Check admin access
-        if (!auth()->check() || auth()->user()->role !== 'admin') {
+        if (!auth()->check() || !in_array(auth()->user()->role, ['admin', 'super-admin'])) {
             return redirect('/login');
         }
 
@@ -256,7 +256,7 @@ class EmailPreviewController extends Controller
     public function previewStartupZonePaymentThankYou($applicationId = null)
     {
         // Check admin access
-        if (!auth()->check() || auth()->user()->role !== 'admin') {
+        if (!auth()->check() || !in_array(auth()->user()->role, ['admin', 'super-admin'])) {
             return redirect('/login');
         }
 

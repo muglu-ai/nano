@@ -25,10 +25,10 @@ class ImportData extends Controller
     // Remote DB connection
     public function dbConnection()
     {
-        $host = "localhost";
-        $username = "btsblnl265_asd1d_bengaluruite";
-        $password = "Disl#vhfj#Af#DhW65";
-        $database = "btsblnl265_asd1d_bengaluruite";
+        $host = "";
+        $username = "";
+        $password = "";
+        $database = "";
 
         $connection = new mysqli($host, $username, $password, $database);
         if ($connection->connect_error) {

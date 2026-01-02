@@ -1236,6 +1236,22 @@ class StartupZoneController extends Controller
             $website = $exhibitorData['website'] ?? $billingData['website'] ?? $draft->website ?? '';
             $website = $this->normalizeWebsiteUrl($website);
             
+            // Check if this is a complimentary registration
+            $isComplimentary = false;
+            if ($draft->promocode) {
+                $association = AssociationPricingRule::where('promocode', $draft->promocode)
+                    ->active()
+                    ->valid()
+                    ->first();
+                if ($association && $association->is_complimentary) {
+                    $isComplimentary = true;
+                }
+            }
+            
+            // Set application status based on whether it's complimentary
+            $applicationStatus = $isComplimentary ? 'approved' : 'initiated';
+            $submissionStatus = $isComplimentary ? 'approved' : 'in progress';
+            
             $application->fill([
                 'application_id' => $applicationId,
                 'stall_category' => $draft->stall_category ?? 'Startup Booth',
@@ -1263,12 +1279,20 @@ class StartupZoneController extends Controller
                 'RegSource' => $draft->RegSource,
                 'application_type' => 'startup-zone',
                 'participant_type' => 'Startup',
-                'status' => 'initiated',
-                'submission_status' => 'in progress', // Will be updated to 'submitted' when reaching payment page
+                'status' => $applicationStatus,
+                'submission_status' => $submissionStatus,
                 'event_id' => $draft->event_id ?? 1,
                 'user_id' => $user->id,
                 'terms_accepted' => 1,
+                'userActive' => $isComplimentary ? true : false, // Activate user for complimentary registrations
             ]);
+            
+            // Set approval details if complimentary
+            if ($isComplimentary) {
+                $application->approved_date = now();
+                $application->approved_by = 'System (Complimentary)';
+            }
+            
             $application->save();
 
             // If updating existing application, also update related records
@@ -1384,17 +1408,34 @@ class StartupZoneController extends Controller
             $invoice->application_no = $application->application_id;
             $invoice->invoice_no = $application->application_id;
             $invoice->type = 'Startup Zone Registration';
-            $invoice->amount = $pricing['total']; // Required field - total amount
-            $invoice->price = $pricing['base_price'];
-            $invoice->gst = $pricing['gst'];
-            $invoice->processing_charges = $pricing['processing_charges'];
-            $invoice->processing_chargesRate = $pricing['processing_rate'];
-            $invoice->total_final_price = $pricing['total'];
-            $invoice->currency = $draft->payment_mode === 'PayPal' ? 'USD' : 'INR';
-            $invoice->payment_status = 'unpaid';
-            $invoice->payment_due_date = now()->addDays(5); // Required field - payment due date
-            $invoice->pending_amount = $pricing['total']; // Set pending amount to total initially
-            $invoice->amount_paid = 0; // No amount paid initially
+            
+            // If complimentary, set all amounts to 0 and mark as paid
+            if ($isComplimentary) {
+                $invoice->amount = 0;
+                $invoice->price = 0;
+                $invoice->gst = 0;
+                $invoice->processing_charges = 0;
+                $invoice->processing_chargesRate = 0;
+                $invoice->total_final_price = 0;
+                $invoice->currency = 'INR';
+                $invoice->payment_status = 'paid';
+                $invoice->payment_due_date = now(); // Set to current date for complimentary
+                $invoice->pending_amount = 0;
+                $invoice->amount_paid = 0; // No payment needed, but status is 'paid'
+            } else {
+                $invoice->amount = $pricing['total']; // Required field - total amount
+                $invoice->price = $pricing['base_price'];
+                $invoice->gst = $pricing['gst'];
+                $invoice->processing_charges = $pricing['processing_charges'];
+                $invoice->processing_chargesRate = $pricing['processing_rate'];
+                $invoice->total_final_price = $pricing['total'];
+                $invoice->currency = $draft->payment_mode === 'PayPal' ? 'USD' : 'INR';
+                $invoice->payment_status = 'unpaid';
+                $invoice->payment_due_date = now()->addDays(5); // Required field - payment due date
+                $invoice->pending_amount = $pricing['total']; // Set pending amount to total initially
+                $invoice->amount_paid = 0; // No amount paid initially
+            }
+            
             $invoice->save();
 
             // Update association registration count
@@ -1409,10 +1450,30 @@ class StartupZoneController extends Controller
             $contact = EventContact::where('application_id', $application->id)->first();
             $billingDetail = \App\Models\BillingDetail::where('application_id', $application->id)->first();
             
-            // For startup zone: Send admin notification email when user confirms details (after preview)
-            // Admin needs to approve before user can make payment
-            
-            // NOTE: No user email is sent on submission - user will receive email only after admin approval
+            // For complimentary registrations: Send confirmation email immediately
+            // For regular registrations: Send admin notification email when user confirms details (after preview)
+            if ($isComplimentary) {
+                // Send confirmation email to user for complimentary registration
+                // Use 'approval' type since it's already approved and shows confirmation
+                try {
+                    Mail::to($contactEmail)->send(new StartupZoneMail($application, 'approval', $invoice, $contact));
+                    
+                    \Log::info('Complimentary Registration Confirmation Email Sent', [
+                        'application_id' => $application->application_id,
+                        'email' => $contactEmail
+                    ]);
+                } catch (\Exception $e) {
+                    \Log::error('Failed to send complimentary registration email', [
+                        'application_id' => $application->application_id,
+                        'error' => $e->getMessage()
+                    ]);
+                }
+            } else {
+                // For startup zone: Send admin notification email when user confirms details (after preview)
+                // Admin needs to approve before user can make payment
+                
+                // NOTE: No user email is sent on submission - user will receive email only after admin approval
+            }
 
             // Mark draft as converted to application (keep for analytics)
             $draft->update([
@@ -1429,12 +1490,21 @@ class StartupZoneController extends Controller
 
             DB::commit();
 
+            // For complimentary registrations, redirect to confirmation page
+            // For regular registrations, redirect to preview page (then payment)
+            $redirectRoute = $isComplimentary 
+                ? route('startup-zone.confirmation', $application->application_id)
+                : route('startup-zone.preview') . '?application_id=' . $application->application_id;
+
             return response()->json([
                 'success' => true,
                 'application_id' => $application->application_id,
                 'invoice_id' => $invoice->id,
-                'message' => $passwordGenerated ? 'Registration successful!' : 'Registration successful!',
-                'redirect' => route('startup-zone.preview') . '?application_id=' . $application->application_id
+                'message' => $isComplimentary 
+                    ? 'Complimentary registration successful! You now have access to the portal.' 
+                    : ($passwordGenerated ? 'Registration successful!' : 'Registration successful!'),
+                'redirect' => $redirectRoute,
+                'is_complimentary' => $isComplimentary
             ]);
 
         } catch (\Exception $e) {

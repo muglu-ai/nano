@@ -1,0 +1,217 @@
+<?php
+
+namespace App\Models\Ticket;
+
+use App\Models\Events;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+
+class TicketType extends Model
+{
+    protected $table = 'ticket_types';
+
+    protected $fillable = [
+        'event_id',
+        'category_id',
+        'subcategory_id',
+        'name',
+        'description',
+        'early_bird_price', // Early bird price
+        'regular_price', // Regular price after early bird ends
+        'early_bird_end_date', // When early bird pricing ends
+        'capacity', // null for unlimited
+        'sale_start_at',
+        'sale_end_at',
+        'is_active',
+        'all_days_access', // If true, ticket grants access to all event days
+        'sort_order',
+        'early_bird_reminder_sent', // Track if sales team has been reminded
+    ];
+
+    protected $casts = [
+        'early_bird_price' => 'decimal:2',
+        'regular_price' => 'decimal:2',
+        'early_bird_end_date' => 'date',
+        'capacity' => 'integer',
+        'sale_start_at' => 'datetime',
+        'sale_end_at' => 'datetime',
+        'is_active' => 'boolean',
+        'all_days_access' => 'boolean',
+        'sort_order' => 'integer',
+        'early_bird_reminder_sent' => 'boolean',
+    ];
+
+    /**
+     * Get the event that owns this ticket type
+     */
+    public function event(): BelongsTo
+    {
+        return $this->belongsTo(Events::class, 'event_id');
+    }
+
+    /**
+     * Get the category for this ticket type
+     */
+    public function category(): BelongsTo
+    {
+        return $this->belongsTo(TicketCategory::class, 'category_id');
+    }
+
+    /**
+     * Get the subcategory for this ticket type
+     */
+    public function subcategory(): BelongsTo
+    {
+        return $this->belongsTo(TicketSubcategory::class, 'subcategory_id');
+    }
+
+    /**
+     * Get event days this ticket type has access to
+     */
+    public function eventDays(): BelongsToMany
+    {
+        return $this->belongsToMany(
+            EventDay::class,
+            'ticket_type_day_access',
+            'ticket_type_id',
+            'event_day_id'
+        );
+    }
+
+    /**
+     * Get inventory for this ticket type
+     */
+    public function inventory(): HasOne
+    {
+        return $this->hasOne(TicketInventory::class, 'ticket_type_id');
+    }
+
+    /**
+     * Get early bird reminders for this ticket type
+     */
+    public function earlyBirdReminders(): HasMany
+    {
+        return $this->hasMany(TicketEarlyBirdReminder::class, 'ticket_type_id');
+    }
+
+    /**
+     * Check if ticket is currently on sale
+     */
+    public function isOnSale(): bool
+    {
+        if (!$this->is_active) {
+            return false;
+        }
+
+        $now = now();
+        
+        if ($this->sale_start_at && $now->lt($this->sale_start_at)) {
+            return false;
+        }
+
+        if ($this->sale_end_at && $now->gt($this->sale_end_at)) {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Get current price based on early bird status
+     */
+    public function getCurrentPrice(): float
+    {
+        if ($this->early_bird_end_date && now()->lte($this->early_bird_end_date)) {
+            return (float) $this->early_bird_price;
+        }
+        return (float) $this->regular_price;
+    }
+
+    /**
+     * Check if early bird pricing is active
+     */
+    public function isEarlyBirdActive(): bool
+    {
+        if (!$this->early_bird_end_date) {
+            return false;
+        }
+        return now()->lte($this->early_bird_end_date);
+    }
+
+    /**
+     * Check if early bird reminder should be sent (within 7 days of end date)
+     */
+    public function shouldSendEarlyBirdReminder(): bool
+    {
+        if (!$this->early_bird_end_date || $this->early_bird_reminder_sent) {
+            return false;
+        }
+        
+        $daysUntilEnd = now()->diffInDays($this->early_bird_end_date, false);
+        return $daysUntilEnd <= 7 && $daysUntilEnd >= 0;
+    }
+
+    /**
+     * Get available quantity
+     */
+    public function getAvailableQuantity(): ?int
+    {
+        if ($this->capacity === null) {
+            return null; // Unlimited
+        }
+
+        $inventory = $this->inventory;
+        if (!$inventory) {
+            return $this->capacity;
+        }
+
+        return $this->capacity - $inventory->reserved_qty - $inventory->sold_qty;
+    }
+
+    /**
+     * Check if ticket is sold out
+     */
+    public function isSoldOut(): bool
+    {
+        if ($this->capacity === null) {
+            return false; // Unlimited
+        }
+
+        return $this->getAvailableQuantity() <= 0;
+    }
+
+    /**
+     * Get all accessible event days for this ticket type
+     * If all_days_access is true, returns all event days
+     * Otherwise returns the specific days assigned
+     */
+    public function getAllAccessibleDays()
+    {
+        if ($this->all_days_access) {
+            return EventDay::where('event_id', $this->event_id)
+                ->orderBy('sort_order')
+                ->orderBy('date')
+                ->get();
+        }
+        
+        return $this->eventDays()->orderBy('sort_order')->orderBy('date')->get();
+    }
+
+    /**
+     * Check if ticket has access to a specific day
+     */
+    public function hasAccessToDay($dayId): bool
+    {
+        if ($this->all_days_access) {
+            return EventDay::where('event_id', $this->event_id)
+                ->where('id', $dayId)
+                ->exists();
+        }
+        
+        return $this->eventDays()->where('event_days.id', $dayId)->exists();
+    }
+}
+

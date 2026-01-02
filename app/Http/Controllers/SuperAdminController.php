@@ -6,8 +6,11 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use App\Models\Events;
+use App\Models\AssociationPricingRule;
+use App\Models\Application;
 
 class SuperAdminController extends Controller
 {
@@ -343,6 +346,185 @@ class SuperAdminController extends Controller
         $event->delete();
 
         return redirect()->route('super-admin.events')->with('success', 'Event deleted successfully!');
+    }
+
+    // Association Pricing Rules Methods
+    public function associationPricing()
+    {
+        $associations = AssociationPricingRule::orderBy('association_name')->get();
+        
+        // Get registration counts for each association
+        foreach ($associations as $association) {
+            $association->registration_count = Application::where('promocode', $association->promocode)
+                ->where('application_type', 'startup-zone')
+                ->whereIn('status', ['submitted', 'approved'])
+                ->count();
+        }
+        
+        return view('super-admin.association-pricing.index', compact('associations'));
+    }
+
+    public function storeAssociationPricing(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'association_name' => 'required|string|max:255|unique:association_pricing_rules,association_name',
+            'display_name' => 'required|string|max:255',
+            'promocode' => 'nullable|string|max:100|unique:association_pricing_rules,promocode',
+            'base_price' => 'required|numeric|min:0',
+            'special_price' => 'nullable|numeric|min:0',
+            'is_complimentary' => 'boolean',
+            'max_registrations' => 'nullable|integer|min:1',
+            'is_active' => 'boolean',
+            'description' => 'nullable|string',
+            'entitlements' => 'nullable|string',
+            'valid_from' => 'nullable|date',
+            'valid_until' => 'nullable|date|after_or_equal:valid_from',
+            'logo' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+        ]);
+
+        if ($validator->fails()) {
+            return back()->withErrors($validator)->withInput();
+        }
+
+        $data = $request->only([
+            'association_name', 'display_name', 'promocode', 'base_price',
+            'special_price', 'is_complimentary', 'max_registrations', 'is_active',
+            'description', 'entitlements', 'valid_from', 'valid_until'
+        ]);
+
+        // Handle boolean fields
+        $data['is_complimentary'] = $request->has('is_complimentary');
+        $data['is_active'] = $request->has('is_active');
+
+        // Handle logo upload
+        if ($request->hasFile('logo')) {
+            $logo = $request->file('logo');
+            $logoName = time() . '_' . Str::slug($request->association_name) . '.' . $logo->getClientOriginalExtension();
+            $logoPath = $logo->storeAs('association-logos', $logoName, 'public');
+            $data['logo_path'] = $logoPath;
+        }
+
+        AssociationPricingRule::create($data);
+
+        return redirect()->route('super-admin.association-pricing')
+            ->with('success', 'Association pricing rule created successfully!');
+    }
+
+    public function editAssociationPricing($id)
+    {
+        $association = AssociationPricingRule::findOrFail($id);
+        
+        // Get registration count
+        $association->registration_count = Application::where('promocode', $association->promocode)
+            ->where('application_type', 'startup-zone')
+            ->whereIn('status', ['submitted', 'approved'])
+            ->count();
+        
+        return view('super-admin.association-pricing.edit', compact('association'));
+    }
+
+    public function updateAssociationPricing(Request $request, $id)
+    {
+        $association = AssociationPricingRule::findOrFail($id);
+
+        $validator = Validator::make($request->all(), [
+            'association_name' => 'required|string|max:255|unique:association_pricing_rules,association_name,' . $id,
+            'display_name' => 'required|string|max:255',
+            'promocode' => 'nullable|string|max:100|unique:association_pricing_rules,promocode,' . $id,
+            'base_price' => 'required|numeric|min:0',
+            'special_price' => 'nullable|numeric|min:0',
+            'is_complimentary' => 'boolean',
+            'max_registrations' => 'nullable|integer|min:1',
+            'is_active' => 'boolean',
+            'description' => 'nullable|string',
+            'entitlements' => 'nullable|string',
+            'valid_from' => 'nullable|date',
+            'valid_until' => 'nullable|date|after_or_equal:valid_from',
+            'logo' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+        ]);
+
+        if ($validator->fails()) {
+            return back()->withErrors($validator)->withInput();
+        }
+
+        $data = $request->only([
+            'association_name', 'display_name', 'promocode', 'base_price',
+            'special_price', 'is_complimentary', 'max_registrations', 'is_active',
+            'description', 'entitlements', 'valid_from', 'valid_until'
+        ]);
+
+        // Handle boolean fields
+        $data['is_complimentary'] = $request->has('is_complimentary');
+        $data['is_active'] = $request->has('is_active');
+
+        // Handle logo upload
+        if ($request->hasFile('logo')) {
+            // Delete old logo if exists
+            if ($association->logo_path && Storage::disk('public')->exists($association->logo_path)) {
+                Storage::disk('public')->delete($association->logo_path);
+            }
+
+            $logo = $request->file('logo');
+            $logoName = time() . '_' . Str::slug($request->association_name) . '.' . $logo->getClientOriginalExtension();
+            $logoPath = $logo->storeAs('association-logos', $logoName, 'public');
+            $data['logo_path'] = $logoPath;
+        }
+
+        $association->update($data);
+
+        return redirect()->route('super-admin.association-pricing')
+            ->with('success', 'Association pricing rule updated successfully!');
+    }
+
+    public function deleteAssociationPricing($id)
+    {
+        $association = AssociationPricingRule::findOrFail($id);
+
+        // Check if promocode is being used
+        $usageCount = Application::where('promocode', $association->promocode)
+            ->where('application_type', 'startup-zone')
+            ->count();
+
+        if ($usageCount > 0) {
+            return back()->with('error', "Cannot delete association. Promocode '{$association->promocode}' is being used by {$usageCount} application(s).");
+        }
+
+        // Delete logo if exists
+        if ($association->logo_path && Storage::disk('public')->exists($association->logo_path)) {
+            Storage::disk('public')->delete($association->logo_path);
+        }
+
+        $association->delete();
+
+        return redirect()->route('super-admin.association-pricing')
+            ->with('success', 'Association pricing rule deleted successfully!');
+    }
+
+    public function uploadAssociationLogo(Request $request, $id)
+    {
+        $association = AssociationPricingRule::findOrFail($id);
+
+        $validator = Validator::make($request->all(), [
+            'logo' => 'required|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+        ]);
+
+        if ($validator->fails()) {
+            return back()->withErrors($validator);
+        }
+
+        // Delete old logo if exists
+        if ($association->logo_path && Storage::disk('public')->exists($association->logo_path)) {
+            Storage::disk('public')->delete($association->logo_path);
+        }
+
+        // Upload new logo
+        $logo = $request->file('logo');
+        $logoName = time() . '_' . Str::slug($association->association_name) . '.' . $logo->getClientOriginalExtension();
+        $logoPath = $logo->storeAs('association-logos', $logoName, 'public');
+
+        $association->update(['logo_path' => $logoPath]);
+
+        return back()->with('success', 'Logo uploaded successfully!');
     }
 
     private function updateConstantsFile(array $data)

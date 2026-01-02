@@ -236,10 +236,9 @@ class SponsorController extends Controller
 
         return view('sponsor.items_new', compact('eventExists', 'sponsorItems', 'categories', 'verified'));
     }
-    public function listing()
+    public function listing($event)
     {
 
-        $event = 'semicon-2025';
 
         $eventExists = Events::where('slug', $event)->first(['event_name', 'event_year']);
 

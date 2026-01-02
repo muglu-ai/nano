@@ -24,6 +24,8 @@ use Illuminate\Support\Collection;
 use App\Models\AttendeeLog;
 use App\Models\Attendee;
 use App\Models\Ticket;
+use App\Models\Invoice;
+use App\Models\AssociationPricingRule;
 
 
 class PassesController extends Controller
@@ -529,6 +531,154 @@ class PassesController extends Controller
     }
 
 
+    /**
+     * Sync and find applications that are paid/complimentary but don't have passes allocated
+     */
+    public function syncPassesAllocation(Request $request)
+    {
+        try {
+            // Find applications that are:
+            // 1. Paid (invoice payment_status = 'paid' OR partial with 40%+ paid)
+            // 2. Complimentary (has promocode with is_complimentary = true)
+            // 3. Don't have ExhibitionParticipant OR have ExhibitionParticipant but no passes allocated
+            
+            $paidApplications = Application::whereHas('invoice', function ($query) {
+                $query->where(function ($q) {
+                    $q->where('payment_status', 'paid')
+                      ->orWhere(function ($partial) {
+                          $partial->where('payment_status', 'partial')
+                                  ->whereRaw('(amount_paid >= (amount * 0.4) OR amount_paid >= (total_final_price * 0.4))');
+                      });
+                });
+            })
+            ->where(function ($query) {
+                $query->where('allocated_sqm', '>', 0)
+                    ->orWhere('allocated_sqm', '=', 'Startup Booth')
+                    ->orWhere('allocated_sqm', '=', 'Booth / POD')
+                    ->orWhere('application_type', '=', 'exhibitor')
+                    ->orWhere('application_type', '=', 'pavilion')
+                    ->orWhere('application_type', '=', 'sponsor')
+                    ->orWhere('application_type', '=', 'sponsor+exhibitor');
+            })
+            ->where(function ($query) {
+                $query->whereDoesntHave('exhibitionParticipant')
+                      ->orWhereHas('exhibitionParticipant', function ($ep) {
+                          $ep->where(function ($q) {
+                              $q->where(function ($count) {
+                                  $count->where('stall_manning_count', '<=', 0)
+                                        ->where('complimentary_delegate_count', '<=', 0);
+                              })
+                              ->where(function ($ticket) {
+                                  $ticket->whereNull('ticketAllocation')
+                                         ->orWhere('ticketAllocation', '=', '')
+                                         ->orWhereRaw("TRIM(ticketAllocation) = ''");
+                              });
+                          });
+                      });
+            })
+            ->whereIn('submission_status', ['approved', 'submitted'])
+            ->with(['invoice', 'exhibitionParticipant'])
+            ->get();
+
+            // Find complimentary applications
+            $complimentaryApplications = Application::whereNotNull('promocode')
+                ->where(function ($query) {
+                    $query->where('allocated_sqm', '>', 0)
+                        ->orWhere('allocated_sqm', '=', 'Startup Booth')
+                        ->orWhere('allocated_sqm', '=', 'Booth / POD')
+                        ->orWhere('application_type', '=', 'exhibitor')
+                        ->orWhere('application_type', '=', 'pavilion')
+                        ->orWhere('application_type', '=', 'sponsor')
+                        ->orWhere('application_type', '=', 'sponsor+exhibitor');
+                })
+                ->where(function ($query) {
+                    $query->whereDoesntHave('exhibitionParticipant')
+                          ->orWhereHas('exhibitionParticipant', function ($ep) {
+                              $ep->where(function ($q) {
+                                  $q->where(function ($count) {
+                                      $count->where('stall_manning_count', '<=', 0)
+                                            ->where('complimentary_delegate_count', '<=', 0);
+                                  })
+                                  ->where(function ($ticket) {
+                                      $ticket->whereNull('ticketAllocation')
+                                             ->orWhere('ticketAllocation', '=', '')
+                                             ->orWhereRaw("TRIM(ticketAllocation) = ''");
+                                  });
+                              });
+                          });
+                })
+                ->whereIn('submission_status', ['approved', 'submitted'])
+                ->with(['invoice', 'exhibitionParticipant'])
+                ->get()
+                ->filter(function ($app) {
+                    // Check if promocode is for a complimentary association
+                    if ($app->promocode) {
+                        $association = AssociationPricingRule::where('promocode', $app->promocode)
+                            ->where('is_complimentary', true)
+                            ->active()
+                            ->valid()
+                            ->first();
+                        return $association !== null;
+                    }
+                    return false;
+                });
+
+            // Merge and deduplicate by application id
+            $allApplications = $paidApplications->merge($complimentaryApplications)
+                ->unique('id')
+                ->values();
+
+            // Mark each application with its status
+            foreach ($allApplications as $app) {
+                $app->is_paid = $app->invoice && in_array($app->invoice->payment_status, ['paid', 'partial']);
+                $app->is_complimentary = false;
+                
+                if ($app->promocode) {
+                    $association = AssociationPricingRule::where('promocode', $app->promocode)
+                        ->where('is_complimentary', true)
+                        ->active()
+                        ->valid()
+                        ->first();
+                    $app->is_complimentary = $association !== null;
+                }
+                
+                $app->needs_allocation = !$app->exhibitionParticipant || 
+                    ($app->exhibitionParticipant && 
+                     ($app->exhibitionParticipant->stall_manning_count <= 0 && 
+                      $app->exhibitionParticipant->complimentary_delegate_count <= 0 && 
+                      empty($app->exhibitionParticipant->ticketAllocation)));
+            }
+
+            return response()->json([
+                'success' => true,
+                'count' => $allApplications->count(),
+                'applications' => $allApplications->map(function ($app) {
+                    return [
+                        'id' => $app->id,
+                        'application_id' => $app->application_id,
+                        'company_name' => $app->company_name,
+                        'is_paid' => $app->is_paid ?? false,
+                        'is_complimentary' => $app->is_complimentary ?? false,
+                        'allocated_sqm' => $app->allocated_sqm,
+                        'stall_category' => $app->stall_category,
+                        'has_exhibition_participant' => $app->exhibitionParticipant !== null,
+                        'needs_allocation' => $app->needs_allocation ?? true,
+                    ];
+                })
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error syncing passes allocation', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'An error occurred while syncing: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
     public function passesAllocation(Request $request)
     {
         // Get search query and sorting parameters
@@ -536,6 +686,9 @@ class PassesController extends Controller
         $perPage = $request->get('per_page', 15);
         $sortField = $request->get('sort', 'company_name');
         $sortOrder = $request->get('order', 'asc');
+        
+        // Check if sync was requested
+        $syncRequested = $request->has('sync') && $request->get('sync') === '1';
 
         try {
 

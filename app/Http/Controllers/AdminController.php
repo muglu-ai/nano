@@ -107,7 +107,7 @@ class AdminController extends Controller
     public function getUsers(Request $request)
     {
         // Check if the user is logged in and has an admin role
-        if (!auth()->check() || auth()->user()->role !== 'admin') {
+        if (!auth()->check() || !in_array(auth()->user()->role, ['admin', 'super-admin'])) {
             return response()->json(['error' => 'Unauthorized'], 403);
         }
 
@@ -242,7 +242,7 @@ class AdminController extends Controller
     public function approveStartupZone(Request $request, $id)
     {
         //check user is logged in or not
-        if (!auth()->check() || auth()->user()->role !== 'admin') {
+        if (!auth()->check() || !in_array(auth()->user()->role, ['admin', 'super-admin'])) {
             return redirect('/login');
         }
 
@@ -494,7 +494,7 @@ class AdminController extends Controller
     public function approve_old(Request $request)
     {
         //check user is logged in or not
-        if (!auth()->check() || auth()->user()->role !== 'admin') {
+        if (!auth()->check() || !in_array(auth()->user()->role, ['admin', 'super-admin'])) {
             return redirect('/login');
         }
 
@@ -607,7 +607,7 @@ class AdminController extends Controller
     public function approve_v2(Request $request)
     {
         //check user is logged in or not
-        if (!auth()->check() || auth()->user()->role !== 'admin') {
+        if (!auth()->check() || !in_array(auth()->user()->role, ['admin', 'super-admin'])) {
             return redirect('/login');
         }
         //log the request
@@ -728,7 +728,7 @@ class AdminController extends Controller
     public function approve(Request $request)
     {
         //check user is logged in or not
-        if (!auth()->check() || auth()->user()->role !== 'admin') {
+        if (!auth()->check() || !in_array(auth()->user()->role, ['admin', 'super-admin'])) {
             return redirect('/login');
         }
         //log the request
@@ -1001,7 +1001,7 @@ class AdminController extends Controller
     public function sponsorship_approve(Request $request)
     {
         //check user is logged in or not
-        if (!auth()->check() || auth()->user()->role !== 'admin') {
+        if (!auth()->check() || !in_array(auth()->user()->role, ['admin', 'super-admin'])) {
             return redirect('/login');
         }
 
@@ -1103,7 +1103,7 @@ class AdminController extends Controller
     public function reject(Request $request)
     {
         //check user is logged in or not
-        if (!auth()->check() || auth()->user()->role !== 'admin') {
+        if (!auth()->check() || !in_array(auth()->user()->role, ['admin', 'super-admin'])) {
             return redirect('/login');
         }
 
@@ -1125,7 +1125,7 @@ class AdminController extends Controller
     public function sponsorship_reject(Request $request)
     {
         //check user is logged in or not
-        if (!auth()->check() || auth()->user()->role !== 'admin') {
+        if (!auth()->check() || !in_array(auth()->user()->role, ['admin', 'super-admin'])) {
             return redirect('/login');
         }
 
@@ -1652,7 +1652,7 @@ class AdminController extends Controller
      */
     public function boothManagement(Request $request)
     {
-        if (!auth()->check() || auth()->user()->role !== 'admin') {
+        if (!auth()->check() || !in_array(auth()->user()->role, ['admin', 'super-admin'])) {
             return redirect('/login');
         }
 
@@ -1702,7 +1702,7 @@ class AdminController extends Controller
      */
     public function exportMissingExhibitorDirectory(Request $request)
     {
-        if (!auth()->check() || auth()->user()->role !== 'admin') {
+        if (!auth()->check() || !in_array(auth()->user()->role, ['admin', 'super-admin'])) {
             return redirect('/login');
         }
 
@@ -1773,7 +1773,7 @@ class AdminController extends Controller
      */
     public function exportBoothTemplate(Request $request)
     {
-        if (!auth()->check() || auth()->user()->role !== 'admin') {
+        if (!auth()->check() || !in_array(auth()->user()->role, ['admin', 'super-admin'])) {
             return redirect('/login');
         }
 
@@ -1872,7 +1872,7 @@ class AdminController extends Controller
      */
     public function importBoothUpdates(Request $request)
     {
-        if (!auth()->check() || auth()->user()->role !== 'admin') {
+        if (!auth()->check() || !in_array(auth()->user()->role, ['admin', 'super-admin'])) {
             return redirect('/login');
         }
 
@@ -1979,7 +1979,7 @@ class AdminController extends Controller
      */
     public function exportFasciaDetails(Request $request)
     {
-        if (!auth()->check() || auth()->user()->role !== 'admin') {
+        if (!auth()->check() || !in_array(auth()->user()->role, ['admin', 'super-admin'])) {
             return redirect('/login');
         }
 
@@ -2086,7 +2086,7 @@ class AdminController extends Controller
      */
     public function updateBooth(Request $request, $id)
     {
-        if (!auth()->check() || auth()->user()->role !== 'admin') {
+        if (!auth()->check() || !in_array(auth()->user()->role, ['admin', 'super-admin'])) {
             return response()->json(['error' => 'Unauthorized'], 403);
         }
 
@@ -2141,7 +2141,7 @@ class AdminController extends Controller
      */
     public function bulkUpdateBooths(Request $request)
     {
-        if (!auth()->check() || auth()->user()->role !== 'admin') {
+        if (!auth()->check() || !in_array(auth()->user()->role, ['admin', 'super-admin'])) {
             return response()->json(['error' => 'Unauthorized'], 403);
         }
 
@@ -2463,7 +2463,7 @@ class AdminController extends Controller
      */
     public function showExhibitorDirectoryExportPage()
     {
-        if (!auth()->check() || auth()->user()->role !== 'admin') {
+        if (!auth()->check() || !in_array(auth()->user()->role, ['admin', 'super-admin'])) {
             return redirect('/login');
         }
         return view('admin.exhibitor_directory_export');
@@ -2474,7 +2474,7 @@ class AdminController extends Controller
      */
     public function runExhibitorDirectoryExport(Request $request)
     {
-        if (!auth()->check() || auth()->user()->role !== 'admin') {
+        if (!auth()->check() || !in_array(auth()->user()->role, ['admin', 'super-admin'])) {
             return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
         }
 

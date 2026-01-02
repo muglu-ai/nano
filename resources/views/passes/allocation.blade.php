@@ -383,11 +383,46 @@
                      <h4 class="mb-1">Passes Allocation - All</h4>
                      <p class="text-muted mb-0">View approved exhibitors who need passes allocated</p>
                  </div>
-                {{-- <div>
-                    <a href="{{ route('invoice.list') }}" class="btn btn-outline-primary">
-                        <i class="fas fa-arrow-left me-2"></i>Back to Invoices
-                    </a>
-                </div> --}}
+                <div>
+                    <button type="button" class="btn btn-success" id="syncPassesBtn" onclick="syncPassesAllocation()">
+                        <i class="fas fa-sync-alt me-2"></i>Sync Paid/Complimentary
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Sync Results Alert -->
+            <div id="syncResultsAlert" class="alert alert-info alert-dismissible fade" role="alert" style="display: none;">
+                <strong id="syncResultsMessage"></strong>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            
+            <!-- Synced Applications Table (Hidden by default) -->
+            <div id="syncedApplicationsSection" class="card mb-4" style="display: none;">
+                <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="fas fa-check-circle me-2"></i>Applications Ready for Pass Allocation</h5>
+                    <button type="button" class="btn btn-light btn-sm" onclick="hideSyncedApplications()">
+                        <i class="fas fa-times"></i> Close
+                    </button>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped" id="syncedApplicationsTable">
+                            <thead>
+                                <tr>
+                                    <th>Application ID</th>
+                                    <th>Company Name</th>
+                                    <th>Status</th>
+                                    <th>Stall Category</th>
+                                    <th>Allocated SQM</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="syncedApplicationsBody">
+                                <!-- Will be populated by JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
 
                          <!-- Search Box -->
@@ -848,6 +883,112 @@ document.addEventListener('DOMContentLoaded', function() {
                  });
      });
  });
+
+ // Sync Passes Allocation Function
+ function syncPassesAllocation() {
+     const syncBtn = document.getElementById('syncPassesBtn');
+     const originalText = syncBtn.innerHTML;
+     syncBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Syncing...';
+     syncBtn.disabled = true;
+     
+     fetch('{{ route("passes.sync-allocation") }}', {
+         method: 'GET',
+         headers: {
+             'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+             'Accept': 'application/json'
+         }
+     })
+     .then(response => response.json())
+     .then(data => {
+         syncBtn.innerHTML = originalText;
+         syncBtn.disabled = false;
+         
+         if (data.success) {
+             const count = data.count || 0;
+             const message = count > 0 
+                 ? `Found ${count} application(s) that are paid or complimentary and need passes allocation.`
+                 : 'No applications found that need passes allocation.';
+             
+             // Show alert
+             const alertDiv = document.getElementById('syncResultsAlert');
+             const messageDiv = document.getElementById('syncResultsMessage');
+             messageDiv.textContent = message;
+             alertDiv.classList.remove('alert-info', 'alert-warning');
+             alertDiv.classList.add(count > 0 ? 'alert-info' : 'alert-warning');
+             alertDiv.style.display = 'block';
+             
+             // Show synced applications table if there are results
+             if (count > 0 && data.applications) {
+                 displaySyncedApplications(data.applications);
+             }
+             
+             // Scroll to results
+             alertDiv.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+         } else {
+             Swal.fire({
+                 icon: 'error',
+                 title: 'Sync Failed',
+                 text: data.message || 'An error occurred while syncing.'
+             });
+         }
+     })
+     .catch(error => {
+         syncBtn.innerHTML = originalText;
+         syncBtn.disabled = false;
+         console.error('Error:', error);
+         Swal.fire({
+             icon: 'error',
+             title: 'Sync Failed',
+             text: 'An error occurred while syncing. Please try again.'
+         });
+     });
+ }
+ 
+ function displaySyncedApplications(applications) {
+     const tbody = document.getElementById('syncedApplicationsBody');
+     const section = document.getElementById('syncedApplicationsSection');
+     
+     // Clear existing rows
+     tbody.innerHTML = '';
+     
+     // Add rows for each application
+     applications.forEach(app => {
+         const row = document.createElement('tr');
+         const statusBadge = app.is_complimentary 
+             ? '<span class="badge bg-success">Complimentary</span>'
+             : app.is_paid 
+                 ? '<span class="badge bg-primary">Paid</span>'
+                 : '<span class="badge bg-secondary">Unknown</span>';
+         
+         row.innerHTML = `
+             <td>${app.application_id || 'N/A'}</td>
+             <td>${app.company_name || 'N/A'}</td>
+             <td>${statusBadge}</td>
+             <td>${app.stall_category || 'N/A'}</td>
+             <td>${app.allocated_sqm || 'N/A'}</td>
+             <td>
+                 <button class="btn btn-sm btn-primary" onclick="openUpdateModalForSynced(${app.id}, '${app.company_name.replace(/'/g, "\\'")}', 0, 0, '{}')">
+                     <i class="fas fa-edit"></i> Allocate Passes
+                 </button>
+             </td>
+         `;
+         tbody.appendChild(row);
+     });
+     
+     // Show the section
+     section.style.display = 'block';
+     section.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+ }
+ 
+ function hideSyncedApplications() {
+     document.getElementById('syncedApplicationsSection').style.display = 'none';
+ }
+ 
+ function openUpdateModalForSynced(applicationId, companyName, stallManningCount, complimentaryCount, ticketAllocation) {
+     openUpdateModal(applicationId, companyName, stallManningCount, complimentaryCount, ticketAllocation);
+     // Hide synced applications section after opening modal
+     hideSyncedApplications();
+ }
 
  // Passes Allocation Functions
  function openUpdateModal(applicationId, companyName, stallManningCount, complimentaryCount, ticketAllocation) {

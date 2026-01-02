@@ -77,12 +77,14 @@
                 </a>
                 <div class="collapse" id="documentsDropdown">
                     <ul class="nav">
-                        <li class="nav-item">
+                        {{-- Exhibitor Manual --}}
+                       {{--  <li class="nav-item">
                             <a class="nav-link text-dark" href="{{ route('exhibitor_manual') }}">
                                 <span class="sidenav-mini-icon"> EM </span>
                                 <span class="sidenav-normal ms-1 ps-1">Exhibitor Manual</span>
                             </a>
                         </li>
+                    --}}
 
                         {{--                        <li class="nav-item">--}}
                         {{--                            <a class="nav-link text-dark" href="{{ route('faqs') }}">--}}
@@ -112,6 +114,8 @@
                                 <span class="sidenav-normal ms-1 ps-1">Portal Guide</span>
                             </a>
                         </li>
+                        {{-- Portal Guide --}}
+                        {{--  
                         <li class="nav-item">
                             <a data-bs-toggle="collapse" href="#floorPlanDocs" class="nav-link text-dark"
                                aria-controls="floorPlanDocs" role="button" aria-expanded="false">
@@ -141,6 +145,7 @@
                                 </ul>
                             </div>
                         </li>
+                        --}}
                     </ul>
                 </div>
             </li>

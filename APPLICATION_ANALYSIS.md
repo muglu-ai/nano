@@ -32,7 +32,7 @@ The portal manages:
 - Meeting room bookings
 - Extra requirements ordering
 - Exhibitor directory generation
-- Visitor registration
+- Free Visitor registration
 
 ---
 

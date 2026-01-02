@@ -22,7 +22,7 @@ class DashboardController extends Controller
     //construct function to check if user is logged in
     public function __construct()
     {
-        if (auth()->check() && auth()->user()->role !== 'admin') {
+        if (auth()->check() && !in_array(auth()->user()->role, ['admin', 'super-admin'])) {
             return redirect('/login');
         }
     }
@@ -122,10 +122,18 @@ class DashboardController extends Controller
             //get the no of exhibitors and delegate from the exhibitionParticipation table who's id is application id with same user id
             //get the application id from the application table where user id is same as the logged in user id
             $applicationId = Application::where('user_id', auth()->id())->value('id');
+            
+            // Handle case when applicationId is null
+            if (!$applicationId) {
+                return redirect()->route('event.list')->with('error', 'No application found. Please submit an application first.');
+            }
+            
             //get the application
             $application = Application::where('user_id', auth()->id())->first();
+            
             //get the exhibitor and delegate count from the exhibitionParticipation table where application id is same as the application id
             $exhibitionParticipant = ExhibitionParticipant::where('application_id', $applicationId)->first();
+            
             // get the ticketAllocation value from the exhibitionParticipant table and get the ticket details from the tickets table with id and count from the ticketAllocation value
             // Handle case when $exhibitionParticipant is null to avoid error when accessing property
             try {
@@ -162,34 +170,43 @@ class DashboardController extends Controller
             }
 
             // Used count of each category
-            // Get the Stall Manning Count from stall_manning table using same id
-            $stallManningCount = StallManning::where('exhibition_participant_id', $exhibitionParticipant->id)->count();
-            $ticketSummary = [];
-            foreach ($ticketDetails as $ticket) {
-                $usedCount = DB::table('complimentary_delegates')
-                    ->where('exhibition_participant_id', $exhibitionParticipant->id)
-                    ->where('ticketType', $ticket['name'])
-                    ->count();
+            // Handle case when $exhibitionParticipant is null
+            if (!$exhibitionParticipant) {
+                // If no exhibition participant exists, set default values
+                $stallManningCount = 0;
+                $ticketSummary = [];
+            } else {
+                // Get the Stall Manning Count from stall_manning table using same id
+                $stallManningCount = StallManning::where('exhibition_participant_id', $exhibitionParticipant->id)->count();
+                $ticketSummary = [];
+                
+                foreach ($ticketDetails as $ticket) {
+                    $usedCount = DB::table('complimentary_delegates')
+                        ->where('exhibition_participant_id', $exhibitionParticipant->id)
+                        ->where('ticketType', $ticket['name'])
+                        ->count();
 
-                $remainingCount = $ticket['count'] - $usedCount;
+                    $remainingCount = $ticket['count'] - $usedCount;
 
+                    $ticketSummary[] = [
+                        'name' => $ticket['name'],
+                        'count' => $ticket['count'],
+                        'usedCount' => $usedCount,
+                        'remainingCount' => $remainingCount,
+                        'slug' => $ticket['slug'],
+                    ];
+                }
+
+                //merge the stall manning count to ticket summmary with ticket type as Exhibitor
+                $stallManningCountValue = $exhibitionParticipant->stall_manning_count ?? 0;
                 $ticketSummary[] = [
-                    'name' => $ticket['name'],
-                    'count' => $ticket['count'],
-                    'usedCount' => $usedCount,
-                    'remainingCount' => $remainingCount,
-                    'slug' => $ticket['slug'],
+                    'name' => 'Exhibitor',
+                    'count' => $stallManningCountValue,
+                    'usedCount' => $stallManningCount,
+                    'remainingCount' => max(0, $stallManningCountValue - $stallManningCount),
+                    'slug' => 'stall_manning',
                 ];
             }
-
-            //merge the stall manning count to ticket summmary with ticket type as Exhibitor
-            $ticketSummary[] = [
-                'name' => 'Exhibitor',
-                'count' => $exhibitionParticipant->stall_manning_count,
-                'usedCount' => $stallManningCount,
-                'remainingCount' => $exhibitionParticipant->stall_manning_count - $stallManningCount,
-                'slug' => 'stall_manning',
-            ];
 
 
 
@@ -257,13 +274,25 @@ class DashboardController extends Controller
             //get the no of exhibitors and delegate from the exhibitionParticipation table who's id is application id with same user id
             //get the application id from the application table where user id is same as the logged in user id
             $applicationId = Application::where('user_id', auth()->id())->value('id');
+            
+            // Handle case when applicationId is null
+            if (!$applicationId) {
+                return redirect()->route('event.list')->with('error', 'No application found. Please submit an application first.');
+            }
+            
             //get the application
             $application = Application::where('user_id', auth()->id())->first();
+            
             //get the exhibitor and delegate count from the exhibitionParticipation table where application id is same as the application id
             $exhibitionParticipant = ExhibitionParticipant::where('application_id', $applicationId)->first();
-            $directoryFilled = ExhibitorInfo::where('application_id', $applicationId)
-                                ->where('submission_status', 1)
-                                ->exists();
+            
+            // Handle case when exhibitionParticipant is null for directory check
+            $directoryFilled = false;
+            if ($applicationId) {
+                $directoryFilled = ExhibitorInfo::where('application_id', $applicationId)
+                                    ->where('submission_status', 1)
+                                    ->exists();
+            }
 
         //    dd($directoryFilled);
 
@@ -411,14 +440,43 @@ class DashboardController extends Controller
     {
         $this->__construct();
         $slug = 'Participant Details';
-        $applicationId = Application::where('user_id', auth()->id())->first();
-        // dd($applicationId);
+        $application = Application::where('user_id', auth()->id())->first();
+        
+        // Handle case when application is null
+        if (!$application) {
+            return redirect()->route('event.list')->with('error', 'No application found. Please submit an application first.');
+        }
+        
+        // dd($application);
+        $contactPerson = '';
+        if ($application->eventContact) {
+            $contactPerson = trim(
+                ($application->eventContact->salutation ?? '') . ' ' .
+                ($application->eventContact->first_name ?? '') . ' ' .
+                ($application->eventContact->last_name ?? '')
+            );
+        }
+        
+        $address = $application->address ?? '';
+        if ($application->city_id) {
+            $address .= ' ' . $application->city_id;
+        }
+        if ($application->state && $application->state->name) {
+            $address .= ', ' . $application->state->name;
+        }
+        if ($application->postal_code) {
+            $address .= '- ' . $application->postal_code;
+        }
+        if ($application->country && $application->country->name) {
+            $address .= ' ' . $application->country->name;
+        }
+        
         $data = [
-            'application_id' => $applicationId->application_id,
-            'contact_person' => $applicationId->eventContact->salutation . ' ' . $applicationId->eventContact->first_name . ' ' . $applicationId->eventContact->last_name,
-            'company_name' => $applicationId->company_name,
-            'address' => $applicationId->address . ' ' . $applicationId->city_id . ', ' . $applicationId->state->name . '- ' . $applicationId->postal_code . ' ' . $applicationId->country->name,
-            'booth_no' => $applicationId->stallNumber,
+            'application_id' => $application->application_id ?? '',
+            'contact_person' => $contactPerson,
+            'company_name' => $application->company_name ?? '',
+            'address' => trim($address),
+            'booth_no' => $application->stallNumber ?? '',
 
         ];
 

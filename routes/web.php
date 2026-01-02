@@ -67,6 +67,7 @@ use App\Http\Controllers\EmailPreviewController;
 use App\Http\Controllers\CompanyLookupController;
 use App\Http\Controllers\FeedbackController;
 use App\Http\Controllers\SuperAdminController;
+use App\Http\Controllers\Ticket\AdminTicketConfigController;
 
 /* Payment Gateway CCAvenue Routes
 */
@@ -107,6 +108,60 @@ Route::middleware(['auth'])->prefix('super-admin')->name('super-admin.')->group(
     Route::post('/org-types', [SuperAdminController::class, 'addOrgType'])->name('org-types.add');
     Route::post('/org-types/{id}', [SuperAdminController::class, 'updateOrgType'])->name('org-types.update');
     Route::delete('/org-types/{id}', [SuperAdminController::class, 'deleteOrgType'])->name('org-types.delete');
+    
+    // Association Pricing Rules Routes
+    Route::get('/association-pricing', [SuperAdminController::class, 'associationPricing'])->name('association-pricing');
+    Route::post('/association-pricing', [SuperAdminController::class, 'storeAssociationPricing'])->name('association-pricing.store');
+    Route::get('/association-pricing/{id}/edit', [SuperAdminController::class, 'editAssociationPricing'])->name('association-pricing.edit');
+    Route::put('/association-pricing/{id}', [SuperAdminController::class, 'updateAssociationPricing'])->name('association-pricing.update');
+    Route::delete('/association-pricing/{id}', [SuperAdminController::class, 'deleteAssociationPricing'])->name('association-pricing.delete');
+    Route::post('/association-pricing/{id}/upload-logo', [SuperAdminController::class, 'uploadAssociationLogo'])->name('association-pricing.upload-logo');
+});
+
+// Admin Ticket Configuration Routes
+Route::middleware(['auth', Auth::class])->prefix('admin/tickets')->name('admin.tickets.')->group(function () {
+    // Event Selection/Configuration
+    Route::get('/events', [AdminTicketConfigController::class, 'events'])->name('events');
+    Route::get('/events/{eventId}/setup', [AdminTicketConfigController::class, 'setup'])->name('events.setup');
+    Route::post('/events/{eventId}/config', [AdminTicketConfigController::class, 'updateConfig'])->name('events.config.update');
+    
+    // Event Days Management
+    Route::get('/events/{eventId}/days', [AdminTicketConfigController::class, 'days'])->name('events.days');
+    Route::post('/events/{eventId}/days', [AdminTicketConfigController::class, 'storeDay'])->name('events.days.store');
+    Route::post('/events/{eventId}/days/generate-all', [AdminTicketConfigController::class, 'generateAllDays'])->name('events.days.generate-all');
+    Route::put('/events/{eventId}/days/{dayId}', [AdminTicketConfigController::class, 'updateDay'])->name('events.days.update');
+    Route::delete('/events/{eventId}/days/{dayId}', [AdminTicketConfigController::class, 'deleteDay'])->name('events.days.delete');
+    
+    // Registration Categories
+    Route::get('/events/{eventId}/registration-categories', [AdminTicketConfigController::class, 'registrationCategories'])->name('events.registration-categories');
+    Route::post('/events/{eventId}/registration-categories', [AdminTicketConfigController::class, 'storeRegistrationCategory'])->name('events.registration-categories.store');
+    Route::put('/events/{eventId}/registration-categories/{categoryId}', [AdminTicketConfigController::class, 'updateRegistrationCategory'])->name('events.registration-categories.update');
+    Route::delete('/events/{eventId}/registration-categories/{categoryId}', [AdminTicketConfigController::class, 'deleteRegistrationCategory'])->name('events.registration-categories.delete');
+    
+    // Ticket Categories
+    Route::get('/events/{eventId}/categories', [AdminTicketConfigController::class, 'categories'])->name('events.categories');
+    Route::post('/events/{eventId}/categories', [AdminTicketConfigController::class, 'storeCategory'])->name('events.categories.store');
+    Route::put('/events/{eventId}/categories/{categoryId}', [AdminTicketConfigController::class, 'updateCategory'])->name('events.categories.update');
+    Route::delete('/events/{eventId}/categories/{categoryId}', [AdminTicketConfigController::class, 'deleteCategory'])->name('events.categories.delete');
+    
+    // Ticket Subcategories
+    Route::get('/events/{eventId}/categories/{categoryId}/subcategories', [AdminTicketConfigController::class, 'subcategories'])->name('events.subcategories');
+    Route::post('/events/{eventId}/categories/{categoryId}/subcategories', [AdminTicketConfigController::class, 'storeSubcategory'])->name('events.subcategories.store');
+    Route::put('/events/{eventId}/subcategories/{subcategoryId}', [AdminTicketConfigController::class, 'updateSubcategory'])->name('events.subcategories.update');
+    Route::delete('/events/{eventId}/subcategories/{subcategoryId}', [AdminTicketConfigController::class, 'deleteSubcategory'])->name('events.subcategories.delete');
+    
+    // Ticket Types
+    Route::get('/events/{eventId}/ticket-types', [AdminTicketConfigController::class, 'ticketTypes'])->name('events.ticket-types');
+    Route::get('/events/{eventId}/ticket-types/create', [AdminTicketConfigController::class, 'createTicketType'])->name('events.ticket-types.create');
+    Route::post('/events/{eventId}/ticket-types', [AdminTicketConfigController::class, 'storeTicketType'])->name('events.ticket-types.store');
+    Route::get('/events/{eventId}/ticket-types/{ticketTypeId}/edit', [AdminTicketConfigController::class, 'editTicketType'])->name('events.ticket-types.edit');
+    Route::put('/events/{eventId}/ticket-types/{ticketTypeId}', [AdminTicketConfigController::class, 'updateTicketType'])->name('events.ticket-types.update');
+    Route::delete('/events/{eventId}/ticket-types/{ticketTypeId}', [AdminTicketConfigController::class, 'deleteTicketType'])->name('events.ticket-types.delete');
+    
+    // Ticket Rules
+    Route::get('/events/{eventId}/rules', [AdminTicketConfigController::class, 'rules'])->name('events.rules');
+    Route::post('/events/{eventId}/rules', [AdminTicketConfigController::class, 'storeRule'])->name('events.rules.store');
+    Route::delete('/events/{eventId}/rules/{ruleId}', [AdminTicketConfigController::class, 'deleteRule'])->name('events.rules.delete');
 });
 
 Route::get('send-exhibitor-chkdin2', [AdminController::  class, 'sendAllData'])->name('send.exhibitor.chkdin')->middleware(Auth::class);
@@ -539,6 +594,7 @@ Route::options('companies/{letter}', function () {
 Route::get('/passes-allocation', [PassesController::class, 'passesAllocation'])->name('passes.allocation')->middleware(Auth::class);
 Route::post('/update-passes-allocation', [PassesController::class, 'updatePassesAllocation'])->name('passes.update-allocation')->middleware(Auth::class);
 Route::post('/auto-allocate-passes', [PassesController::class, 'autoAllocatePasses'])->name('passes.auto-allocate')->middleware(Auth::class);
+Route::get('/sync-passes-allocation', [PassesController::class, 'syncPassesAllocation'])->name('passes.sync-allocation')->middleware(Auth::class);
 Route::get('/resend-invite-emails', [PassesController::class, 'resendInviteEmails'])->name('passes.resend-invites')->middleware(Auth::class);
 
 
@@ -765,7 +821,7 @@ Route::get('/invoice/{id}', [InvoicesController::class, 'show'])->name('invoice.
 * Sponsorship Controller
 */
 Route::get('/{event}/sponsorship_test', [SponsorController::class, 'new_up'])->name('list_sponsorship_test')->middleware(CheckUser::class);
-Route::get('/{event}/sponsorship_new', [SponsorshipController::class, 'listing'])->name('list_sponsorship_new')->middleware(CheckUser::class);
+Route::get('/{event}/sponsorship_new/{id}', [SponsorshipController::class, 'listing'])->name('list_sponsorship_new')->middleware(CheckUser::class);
 Route::get('/{event}/sponsorship_state', [SponsorshipController::class, 'listing_state'])->name('list_sponsorship_new')->middleware(CheckUser::class);
 Route::post('/submit_sponsor', [SponsorshipController::class, 'store'])->name('sponsor.store')->middleware(CheckUser::class);
 Route::get('/sponsor/preview', [SponsorshipController::class, 'confirmation'])->name('sponsor.review')->middleware(CheckUser::class);
@@ -901,7 +957,7 @@ Route::middleware(['auth'])->group(function () {
 });
 
 Route::middleware(['auth', Auth::class])->group(function () {
-    Route::get('/admin/dashboard_old', [DashboardController::class, 'exhibitorDashboard'])->name('dashboard.admin');
+    Route::get('/admin/dashboard_old', [DashboardController::class, 'exhibitorDashboard'])->name('dashboard.admin.old');
 });
 Route::middleware(['auth', Auth::class])->group(function () {
     Route::get('/admin/dashboard', [DashboardController::class, 'exhibitorDashboard_new'])->name('dashboard.admin');
@@ -1042,3 +1098,6 @@ Route::prefix('startup')->name('startup-zone.')->group(function () {
     Route::post('/payment/{applicationId}/process', [StartupZoneController::class, 'processPayment'])->name('payment.process');
     Route::get('/confirmation/{applicationId}', [StartupZoneController::class, 'showConfirmation'])->name('confirmation');
 });
+
+// Ticket Registration Routes (Public) - Separate route file
+require __DIR__.'/tickets.php';

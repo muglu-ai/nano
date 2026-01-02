@@ -15,8 +15,8 @@ class Auth
      */
     public function handle(Request $request, Closure $next): Response
     {
-        //verify if user is logged in and user type is admin
-        if (auth()->check() && auth()->user()->role !== 'admin') {
+        //verify if user is logged in and user type is admin or super-admin
+        if (auth()->check() && !in_array(auth()->user()->role, ['admin', 'super-admin'])) {
             return redirect('/');
         }
         return $next($request);
