@@ -84,8 +84,8 @@
             gap: 1rem;
         }
 
-        .header-logo img {
-            max-height: 60px;
+        header-logo img {
+            max-height: 80px;
             width: auto;
             object-fit: contain;
         }
