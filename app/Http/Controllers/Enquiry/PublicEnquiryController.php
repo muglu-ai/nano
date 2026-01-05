@@ -43,40 +43,23 @@ class PublicEnquiryController extends Controller
         }
 
         // Get sectors list (same as exhibitor registration)
-        $sectors = [
-            'Information Technology',
-            'Electronics & Semiconductor',
-            'Drones & Robotics',
-            'EV, Energy, Climate, Water, Soil, GSDI',
-            'Telecommunications',
-            'Cybersecurity',
-            'Artificial Intelligence',
-            'Cloud Services',
-            'E-Commerce',
-            'Automation',
-            'AVGC',
-            'Aerospace, Defence & Space Tech',
-            'Mobility Tech',
-            'Infrastructure',
-            'Biotech',
-            'Agritech',
-            'Medtech',
-            'Fintech',
-            'Healthtech',
-            'Edutech',
-            'Startup',
-            'Unicorn/ VCs',
-            'Academia & University',
-            'Tech Parks / Co-Working Spaces of India',
-            'Banking / Insurance',
-            'R&D and Central Govt.',
-            'Others'
-        ];
-
-        // Get India country for state loading
+        $sectors = config('constants.sectors', []);
+        
+        // Get all countries from database
+        $countries = Country::orderBy('name')->get(['id', 'name', 'code']);
+        
+        // Get India country for default state loading
         $indiaCountry = Country::where('code', 'IN')->first();
+        $defaultStateId = null;
+        if ($indiaCountry) {
+            // Get a default state for India (first state alphabetically)
+            $defaultState = \App\Models\State::where('country_id', $indiaCountry->id)->orderBy('name')->first();
+            if ($defaultState) {
+                $defaultStateId = $defaultState->name;
+            }
+        }
 
-        return view('enquiry.form', compact('event', 'preSelectedInterests', 'sectors', 'indiaCountry'));
+        return view('enquiry.form', compact('event', 'preSelectedInterests', 'sectors', 'countries', 'indiaCountry', 'defaultStateId'));
     }
 
     /**
@@ -101,7 +84,7 @@ class PublicEnquiryController extends Controller
             'designation' => 'required|string|max:255',
             'email' => 'required|email|max:255',
             'phone_country_code' => 'nullable|string|max:5',
-            'phone_number' => 'required|string|max:20',
+            'phone_number' => 'required|string|max:15|regex:/^[0-9]+$/',
             'state' => 'required|string|max:100',
             'city' => 'required|string|max:100',
             'country' => 'required|string|max:100',
@@ -120,6 +103,8 @@ class PublicEnquiryController extends Controller
             'email.required' => 'Email address is required.',
             'email.email' => 'Please enter a valid email address.',
             'phone_number.required' => 'Contact number is required.',
+            'phone_number.regex' => 'Contact number must contain only numbers.',
+            'phone_number.max' => 'Contact number cannot exceed 15 digits.',
             'state.required' => 'State is required.',
             'city.required' => 'City is required.',
             'country.required' => 'Country is required.',

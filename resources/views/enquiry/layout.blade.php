@@ -280,6 +280,141 @@
             outline: none;
         }
 
+        /* Fix intl-tel-input alignment to match other form fields */
+        .iti {
+            width: 100%;
+            display: block;
+            position: relative;
+        }
+
+        .iti__flag-container {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            left: 0;
+            z-index: 1;
+            width: auto;
+            min-width: 95px;
+            max-width: 100px;
+        }
+
+        #phone_number {
+            width: 100% !important;
+            padding-left: 105px !important;
+            padding-right: 0.75rem !important;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            padding-top: 0.75rem;
+            padding-bottom: 0.75rem;
+            box-sizing: border-box;
+        }
+
+        #phone_number:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(32, 178, 170, 0.1);
+            outline: none;
+        }
+
+        .iti__selected-flag {
+            padding: 0 10px 0 12px !important;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            border-right: 2px solid #e0e0e0;
+            background-color: #f8f9fa;
+            border-radius: 8px 0 0 8px;
+            min-width: 95px;
+            max-width: 100px;
+            box-sizing: border-box;
+            overflow: visible;
+        }
+
+        .iti__selected-flag:hover {
+            background-color: #e9ecef;
+        }
+
+        .iti__flag {
+            margin-right: 8px !important;
+            width: 20px !important;
+            height: 15px !important;
+            flex-shrink: 0;
+        }
+
+        .iti__selected-dial-code {
+            margin-left: 0 !important;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+
+        .iti__arrow {
+            margin-left: 6px;
+            width: 0;
+            height: 0;
+            border-left: 4px solid transparent;
+            border-right: 4px solid transparent;
+            border-top: 4px solid #555;
+            margin-top: 2px;
+        }
+
+        /* Ensure the wrapper doesn't break layout */
+        .form-section .iti {
+            margin-bottom: 0;
+        }
+
+        /* Responsive adjustments for smaller screens */
+        @media (max-width: 768px) {
+            #phone_number {
+                padding-left: 100px !important;
+            }
+
+            .iti__flag-container {
+                min-width: 90px;
+                max-width: 95px;
+            }
+
+            .iti__selected-flag {
+                padding: 0 8px 0 10px !important;
+                min-width: 90px;
+                max-width: 95px;
+            }
+
+            .iti__flag {
+                margin-right: 6px !important;
+            }
+
+            .iti__selected-dial-code {
+                font-size: 0.9rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            #phone_number {
+                padding-left: 95px !important;
+            }
+
+            .iti__flag-container {
+                min-width: 85px;
+                max-width: 90px;
+            }
+
+            .iti__selected-flag {
+                padding: 0 6px 0 8px !important;
+                min-width: 85px;
+                max-width: 90px;
+            }
+
+            .iti__flag {
+                margin-right: 5px !important;
+                width: 18px !important;
+                height: 13px !important;
+            }
+
+            .iti__selected-dial-code {
+                font-size: 0.85rem;
+            }
+        }
+
         .checkbox-group {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -454,9 +589,8 @@
                 <p>&copy; Copyright {{ date('Y') }} - {{ config('constants.EVENT_NAME', 'Event') }}. All Rights Reserved.</p>
             </div>
             <div class="footer-links">
-                <a href="#">Privacy Policy</a>
-                <a href="#">Terms & Conditions</a>
-                <a href="#">Contact Us</a>
+                <a href="https://www.bengalurutechsummit.com/privacy-policy.php">Privacy Policy</a>
+                <a href="https://www.bengalurutechsummit.com/contact.php">Contact Us</a>
             </div>
         </div>
     </footer>

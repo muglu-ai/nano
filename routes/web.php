@@ -1091,10 +1091,11 @@ Route::get('/feedback/thankyou', [FeedbackController::class, 'thankyou'])->name(
 Route::get('/feedback/reload-captcha', [FeedbackController::class, 'reloadCaptcha'])->name('feedback.reload.captcha');
 
 // Enquiry Routes (Public Access - No Authentication Required)
+// IMPORTANT: More specific routes must come before wildcard routes
+Route::get('/enquiry/thankyou', [PublicEnquiryController::class, 'thankyou'])->name('enquiry.thankyou');
 Route::get('/enquiry', [PublicEnquiryController::class, 'showForm'])->name('enquiry.form');
 Route::get('/enquiry/{eventSlug}', [PublicEnquiryController::class, 'showForm'])->name('enquiry.form.event');
 Route::post('/enquiry', [PublicEnquiryController::class, 'submit'])->name('enquiry.submit');
-Route::get('/enquiry/thankyou', [PublicEnquiryController::class, 'thankyou'])->name('enquiry.thankyou');
 
 // Startup Zone Registration Routes
 Route::prefix('startup')->name('startup-zone.')->group(function () {

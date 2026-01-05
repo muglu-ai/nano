@@ -54,15 +54,31 @@ class GeoController extends Controller
 
     public function states($country)
     {
-        // $country may be ISO2 code or numeric ID; support both
+        // $country may be ISO2 code, numeric ID, or country name; support all
         try {
             $countryId = null;
+            $countryCode = null;
+            
             if (is_numeric($country)) {
                 $countryId = (int) $country;
+                $countryModel = Country::find($countryId);
+                $countryCode = $countryModel ? $countryModel->code : null;
             } else {
-                $countryModel = Country::where('code', $country)->first();
-                $countryId = $countryModel ? $countryModel->id : null;
+                // Try to find by code first (most common case)
+                $countryModel = Country::where('code', strtoupper($country))->first();
+                if ($countryModel) {
+                    $countryId = $countryModel->id;
+                    $countryCode = $countryModel->code;
+                } else {
+                    // Try to find by name
+                    $countryModel = Country::where('name', $country)->first();
+                    if ($countryModel) {
+                        $countryId = $countryModel->id;
+                        $countryCode = $countryModel->code;
+                    }
+                }
             }
+            
             if ($countryId) {
                 $states = State::where('country_id', $countryId)->orderBy('name')->get(['id', 'name']);
                 if ($states->count() > 0) {
@@ -80,9 +96,24 @@ class GeoController extends Controller
                         ->header('Vary', 'Origin');
                 }
             }
+            
+            // If we found a country code but no states in DB, try external API with code
+            if ($countryCode) {
+                $res = Http::withHeaders($this->headers)->get("https://api.countrystatecity.in/v1/countries/{$countryCode}/states")->json();
+                if ($res && is_array($res) && count($res) > 0) {
+                    return response()->json($res)
+                        ->header('Access-Control-Allow-Origin', '*')
+                        ->header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
+                        ->header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With')
+                        ->header('Access-Control-Allow-Credentials', 'true')
+                        ->header('Vary', 'Origin');
+                }
+            }
         } catch (\Throwable $e) {
             Log::warning('states(): local DB fetch failed, trying external API', ['country' => $country, 'error' => $e->getMessage()]);
         }
+        
+        // Fallback to external API (may accept code or name)
         $res = Http::withHeaders($this->headers)->get("https://api.countrystatecity.in/v1/countries/{$country}/states")->json();
         return response()->json($res)
             ->header('Access-Control-Allow-Origin', '*')

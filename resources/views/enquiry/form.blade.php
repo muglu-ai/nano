@@ -190,6 +190,9 @@
                        class="form-control" 
                        value="{{ old('phone_number') }}" 
                        placeholder=""
+                       maxlength="15"
+                       pattern="[0-9]*"
+                       inputmode="numeric"
                        required>
                 <input type="hidden" name="phone_country_code" id="phone_country_code">
                 @error('phone_number')
@@ -217,18 +220,11 @@
                 <label class="form-label">Country <span class="required">*</span></label>
                 <select name="country" id="country" class="form-select" required>
                     <option value="">-- Select Country --</option>
-                    <option value="India" {{ old('country', 'India') == 'India' ? 'selected' : '' }}>India</option>
-                    <option value="United States">United States</option>
-                    <option value="United Kingdom">United Kingdom</option>
-                    <option value="Canada">Canada</option>
-                    <option value="Australia">Australia</option>
-                    <option value="Germany">Germany</option>
-                    <option value="France">France</option>
-                    <option value="Japan">Japan</option>
-                    <option value="China">China</option>
-                    <option value="Singapore">Singapore</option>
-                    <option value="United Arab Emirates">United Arab Emirates</option>
-                    <option value="Other">Other</option>
+                    @foreach($countries ?? [] as $country)
+                        <option value="{{ $country->name }}" {{ old('country', 'India') == $country->name ? 'selected' : '' }}>
+                            {{ $country->name }}
+                        </option>
+                    @endforeach
                 </select>
                 @error('country')
                     <div class="error-message">{{ $message }}</div>
@@ -240,6 +236,9 @@
                 <label class="form-label">State <span class="required">*</span></label>
                 <select name="state" id="state" class="form-select" required>
                     <option value="">-- Select State --</option>
+                    @if(isset($defaultStateId) && $defaultStateId)
+                        <option value="{{ $defaultStateId }}" {{ old('state', $defaultStateId) == $defaultStateId ? 'selected' : '' }}>{{ $defaultStateId }}</option>
+                    @endif
                 </select>
                 @error('state')
                     <div class="error-message">{{ $message }}</div>
@@ -354,6 +353,51 @@
         setTimeout(function() {
             phoneInput.placeholder = '';
         }, 300);
+
+        // Restrict input to numbers only and limit length
+        phoneInput.addEventListener('input', function(e) {
+            // Remove any non-numeric characters
+            let value = e.target.value.replace(/[^0-9]/g, '');
+            
+            // Limit to 15 digits (max length for phone numbers)
+            if (value.length > 15) {
+                value = value.substring(0, 15);
+            }
+            
+            // Update the input value
+            if (e.target.value !== value) {
+                e.target.value = value;
+            }
+        });
+
+        // Prevent non-numeric characters on keypress
+        phoneInput.addEventListener('keypress', function(e) {
+            // Allow: backspace, delete, tab, escape, enter, and numbers
+            if ([46, 8, 9, 27, 13, 110, 190].indexOf(e.keyCode) !== -1 ||
+                // Allow: Ctrl+A, Ctrl+C, Ctrl+V, Ctrl+X
+                (e.keyCode === 65 && e.ctrlKey === true) ||
+                (e.keyCode === 67 && e.ctrlKey === true) ||
+                (e.keyCode === 86 && e.ctrlKey === true) ||
+                (e.keyCode === 88 && e.ctrlKey === true) ||
+                // Allow: home, end, left, right
+                (e.keyCode >= 35 && e.keyCode <= 39)) {
+                return;
+            }
+            // Ensure that it is a number and stop the keypress
+            if ((e.shiftKey || (e.keyCode < 48 || e.keyCode > 57)) && (e.keyCode < 96 || e.keyCode > 105)) {
+                e.preventDefault();
+            }
+        });
+
+        // Prevent paste of non-numeric characters
+        phoneInput.addEventListener('paste', function(e) {
+            e.preventDefault();
+            const paste = (e.clipboardData || window.clipboardData).getData('text');
+            const numbers = paste.replace(/[^0-9]/g, '');
+            const currentValue = phoneInput.value.replace(/[^0-9]/g, '');
+            const newValue = (currentValue + numbers).substring(0, 15);
+            phoneInput.value = newValue;
+        });
 
         phoneInput.addEventListener('countrychange', function() {
             const countryData = iti.getSelectedCountryData();
@@ -556,59 +600,12 @@
     });
     updateProgress();
 
-    // Load states based on country selection
+    // Load states based on country selection using GeoController API
     const countrySelect = document.getElementById('country');
     const stateSelect = document.getElementById('state');
     
-    // Country name to ID mapping (we'll fetch India's ID dynamically)
-    const countryNameToIdMap = {
-        'India': null, // Will be fetched
-        'United States': null,
-        'United Kingdom': null,
-        'Canada': null,
-        'Australia': null,
-        'Germany': null,
-        'France': null,
-        'Japan': null,
-        'China': null,
-        'Singapore': null,
-        'United Arab Emirates': null,
-        'Other': null
-    };
-    
-    // Fetch country ID from name (for India, use code 'IN')
-    function getCountryId(countryName, callback) {
-        if (!countryName || countryName === 'Other') {
-            callback(null);
-            return;
-        }
-        
-        // For India, use the country ID from the backend
-        if (countryName === 'India') {
-            @if(isset($indiaCountry) && $indiaCountry)
-                callback({{ $indiaCountry->id }});
-            @else
-                // Fallback: try to find India by code
-                fetch('{{ url("/api/country-by-code/IN") }}', {
-                    method: 'GET',
-                    headers: {
-                        'Accept': 'application/json'
-                    }
-                })
-                .then(response => response.json())
-                .then(data => {
-                    callback(data && data.id ? data.id : null);
-                })
-                .catch(() => callback(null));
-            @endif
-        } else {
-            // For other countries, we might not have states, so just return null
-            callback(null);
-        }
-    }
-    
     function loadStatesForCountry(countryName) {
-        if (!countryName || countryName === 'Other') {
+        if (!countryName || countryName === 'Other' || countryName === '') {
             stateSelect.innerHTML = '<option value="">-- Select State --</option>';
             stateSelect.disabled = false;
             return;
@@ -617,53 +614,54 @@
         stateSelect.innerHTML = '<option value="">Loading states...</option>';
         stateSelect.disabled = true;
         
-        // Get country ID first
-        getCountryId(countryName, function(countryId) {
-            if (!countryId) {
-                // No country ID found or not India, show empty state dropdown
-                stateSelect.innerHTML = '<option value="">-- Select State --</option>';
-                stateSelect.disabled = false;
-                return;
+        // Use the GeoController API route: /api/states/{country}
+        // GeoController handles country names, codes, or IDs automatically
+        const countryParam = encodeURIComponent(countryName);
+        fetch(`{{ url('/api/states') }}/${countryParam}`, {
+            method: 'GET',
+            headers: {
+                'Accept': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
             }
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Failed to fetch states');
+            }
+            return response.json();
+        })
+        .then(data => {
+            stateSelect.innerHTML = '<option value="">-- Select State --</option>';
+            if (data && Array.isArray(data) && data.length > 0) {
+                data.forEach(state => {
+                    const option = document.createElement('option');
+                    // Store state name (not ID) to match the form requirement
+                    const stateName = state.name || state.state_name || state;
+                    option.value = stateName;
+                    option.textContent = stateName;
+                    stateSelect.appendChild(option);
+                });
+            }
+            stateSelect.disabled = false;
             
-            // Fetch states using AJAX
-            const formData = new FormData();
-            formData.append('country_id', countryId);
-            formData.append('_token', '{{ csrf_token() }}');
-            
-            fetch('{{ route("get.states") }}', {
-                method: 'POST',
-                headers: {
-                    'X-Requested-With': 'XMLHttpRequest',
-                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                },
-                body: formData
-            })
-            .then(response => response.json())
-            .then(data => {
-                stateSelect.innerHTML = '<option value="">-- Select State --</option>';
-                if (data && Array.isArray(data) && data.length > 0) {
-                    data.forEach(state => {
-                        const option = document.createElement('option');
-                        // Store state name (not ID) to match the form requirement
-                        option.value = state.name;
-                        option.textContent = state.name;
-                        stateSelect.appendChild(option);
-                    });
+            // Restore old value if exists
+            const oldState = '{{ old("state") }}';
+            if (oldState) {
+                stateSelect.value = oldState;
+            } else if (stateSelect.options.length > 1 && countryName === 'India') {
+                // If no old value but states are loaded and country is India, select first state as default
+                const defaultState = '{{ $defaultStateId ?? "" }}';
+                if (defaultState) {
+                    stateSelect.value = defaultState;
+                } else if (stateSelect.options[1]) {
+                    stateSelect.value = stateSelect.options[1].value;
                 }
-                stateSelect.disabled = false;
-                
-                // Restore old value if exists
-                const oldState = '{{ old("state") }}';
-                if (oldState) {
-                    stateSelect.value = oldState;
-                }
-            })
-            .catch(error => {
-                console.error('Error loading states:', error);
-                stateSelect.innerHTML = '<option value="">-- Select State --</option>';
-                stateSelect.disabled = false;
-            });
+            }
+        })
+        .catch(error => {
+            console.error('Error loading states:', error);
+            stateSelect.innerHTML = '<option value="">-- Select State --</option>';
+            stateSelect.disabled = false;
         });
     }
     
@@ -673,7 +671,7 @@
             loadStatesForCountry(this.value);
         });
         
-        // Load states on page load if country is pre-selected (India)
+        // Load states on page load if country is pre-selected (India by default)
         const initialCountry = countrySelect.value;
         if (initialCountry && initialCountry === 'India') {
             loadStatesForCountry(initialCountry);
