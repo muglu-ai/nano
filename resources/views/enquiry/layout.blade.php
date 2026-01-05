@@ -43,6 +43,12 @@
             --progress-active: #20b2aa; /* Teal */
             --progress-inactive: #e0e0e0;
             --progress-bg: #f0f0f0;
+
+            --primary-color: #6A1B9A;        
+            --primary-color-dark: #4A0072;   
+            --primary-color-light: #9C4DCC;  
+            --accent-color: #E91E63;         
+            --progress-active: #6A1B9A;
         }
 
         body {
