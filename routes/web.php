@@ -913,6 +913,9 @@ Route::get('/terms-conditions', function () {
 Route::get('/invoice/details', [InvoicesController::class, 'view'])->name('invoice.details');
 
 Route::get('/', function () {
+    // redirect to event webiste from constants.EVENT_WEBSITE
+    return redirect(config('constants.EVENT_WEBSITE'));
+    
     return redirect()->route('login');
 });
 
