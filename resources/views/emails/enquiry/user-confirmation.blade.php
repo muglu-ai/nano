@@ -10,9 +10,20 @@
         <tr>
             <td align="center">
                 <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="background-color: #ffffff; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                    <!-- Logo -->
+                    @if(config('constants.EVENT_LOGO'))
+                    <tr>
+                        <td style="padding: 20px 30px; background-color: #ffffff; border-radius: 8px 8px 0 0;">
+                            <img src="{{ config('constants.EVENT_LOGO') }}" 
+                                 alt="{{ config('constants.EVENT_NAME', 'Event') }} Logo" 
+                                 style="max-width: 200px; height: auto; display: block;">
+                        </td>
+                    </tr>
+                    @endif
+                    
                     <!-- Header -->
                     <tr>
-                        <td style="padding: 30px; background-color: #ffffff; border-radius: 8px 8px 0 0; border-bottom: 2px solid #667eea;">
+                        <td style="padding: 30px; background-color: #ffffff; border-top: {{ config('constants.EVENT_LOGO') ? '2px solid #667eea' : 'none' }}; border-bottom: 2px solid #667eea;">
                             <h1 style="margin: 0; color: #667eea; font-size: 24px; font-weight: bold; text-align: center;">
                                 Thank You for Your Enquiry
                             </h1>
