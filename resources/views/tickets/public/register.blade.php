@@ -10,6 +10,10 @@
         padding: 2rem 1rem;
     }
 
+    .registration-container .registration-progress {
+        margin-bottom: 2rem;
+    }
+
     .registration-card {
         background: rgba(255, 255, 255, 0.05);
         border-radius: 20px;
@@ -117,6 +121,9 @@
 
 @section('content')
 <div class="registration-container">
+    <!-- Progress Bar -->
+    @include('tickets.public.partials.progress-bar', ['currentStep' => 1])
+    
     <div class="registration-card">
         <h2 class="text-center mb-4" style="background: var(--primary-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">
             Register for {{ $event->event_name }}
@@ -201,18 +208,6 @@
                             <div class="text-danger">{{ $message }}</div>
                         @enderror
                     </div>
-                </div>
-            </div>
-
-            <!-- Delegates Information Section -->
-            <div class="form-section" id="delegates_section" style="display: none;">
-                <h4 class="section-title">
-                    <i class="fas fa-users me-2"></i>
-                    Delegates Information
-                </h4>
-                <p class="text-muted mb-3">Please provide details for each delegate attending the event.</p>
-                <div id="delegates_container">
-                    <!-- Delegates will be dynamically added here -->
                 </div>
             </div>
 
@@ -324,6 +319,18 @@
                 </div>
             </div>
 
+            <!-- Delegates Information Section -->
+            <div class="form-section" id="delegates_section" style="display: {{ old('delegate_count', 1) >= 1 ? 'block' : 'none' }};">
+                <h4 class="section-title">
+                    <i class="fas fa-users me-2"></i>
+                    Delegates Information
+                </h4>
+                <p class="text-muted mb-3">Please provide details for each delegate attending the event.</p>
+                <div id="delegates_container">
+                    <!-- Delegates will be dynamically added here -->
+                </div>
+            </div>
+
             <!-- GST Information Section -->
             <div class="form-section">
                 <h4 class="section-title">
@@ -409,19 +416,20 @@
                 </div>
             </div>
 
-            <!-- Primary Contact Information -->
-            <div class="form-section">
+            <!-- Primary Contact Information (Only for GST) -->
+            <div class="form-section" id="primary_contact_section" style="display: none;">
                 <h4 class="section-title">
                     <i class="fas fa-user me-2"></i>
                     Primary Contact Information
                 </h4>
+                <p class="text-muted mb-3">Required for GST invoice generation</p>
 
                 <div class="row">
                     <div class="col-md-6 mb-3">
                         <label class="form-label required-field">Full Name</label>
                         <input type="text" name="contact_name" class="form-control" 
                                value="{{ old('contact_name') }}" 
-                               placeholder="Enter full name" required>
+                               placeholder="Enter full name" id="contact_name">
                         @error('contact_name')
                             <div class="text-danger">{{ $message }}</div>
                         @enderror
@@ -431,7 +439,7 @@
                         <label class="form-label required-field">Email Address</label>
                         <input type="email" name="contact_email" class="form-control" 
                                value="{{ old('contact_email') }}" 
-                               placeholder="Enter email address" required>
+                               placeholder="Enter email address" id="contact_email">
                         @error('contact_email')
                             <div class="text-danger">{{ $message }}</div>
                         @enderror
@@ -443,7 +451,7 @@
                         <label class="form-label required-field">Phone Number</label>
                         <input type="tel" name="contact_phone" class="form-control" 
                                value="{{ old('contact_phone') }}" 
-                               placeholder="Enter phone number" required>
+                               placeholder="Enter phone number" id="contact_phone">
                         @error('contact_phone')
                             <div class="text-danger">{{ $message }}</div>
                         @enderror
@@ -451,11 +459,22 @@
                 </div>
             </div>
 
+            <!-- reCAPTCHA Token (hidden) -->
+            @if(config('constants.RECAPTCHA_ENABLED', false))
+            <input type="hidden" name="g-recaptcha-response" id="g-recaptcha-response">
+            @error('recaptcha')
+                <div class="alert alert-danger mt-3">
+                    <i class="fas fa-exclamation-circle me-2"></i>
+                    {{ $message }}
+                </div>
+            @enderror
+            @endif
+
             <!-- Submit Button -->
             <div class="text-center mt-4">
-                <button type="submit" class="btn btn-primary btn-lg">
+                <button type="submit" class="btn btn-primary btn-lg" id="submitBtn">
                     <i class="fas fa-arrow-right me-2"></i>
-                    Continue to Payment
+                    Continue to Preview
                 </button>
             </div>
         </form>
@@ -475,96 +494,132 @@
         // You can update a price display element here if needed
     });
 
-    // Handle delegate count change - dynamically show/hide delegate fields
+    // Handle delegate count change - always show delegate fields
     document.getElementById('delegate_count')?.addEventListener('change', function() {
         const count = parseInt(this.value) || 1;
         const delegatesSection = document.getElementById('delegates_section');
         const delegatesContainer = document.getElementById('delegates_container');
         
-        if (count > 1) {
-            delegatesSection.style.display = 'block';
-            delegatesContainer.innerHTML = '';
-            
-            // Generate delegate forms
-            for (let i = 1; i <= count; i++) {
-                const delegateHtml = `
-                    <div class="delegate-form mb-4 p-3" style="background: rgba(255, 255, 255, 0.02); border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.1);">
-                        <h6 class="mb-3" style="color: #667eea;">
-                            <i class="fas fa-user me-2"></i>Delegate ${i}
-                        </h6>
-                        <div class="row">
-                            <div class="col-md-2 mb-3">
-                                <label class="form-label">Salutation</label>
-                                <select name="delegates[${i}][salutation]" class="form-select">
-                                    <option value="">Select</option>
-                                    <option value="Mr">Mr</option>
-                                    <option value="Mrs">Mrs</option>
-                                    <option value="Ms">Ms</option>
-                                    <option value="Dr">Dr</option>
-                                    <option value="Prof">Prof</option>
-                                </select>
-                            </div>
-                            <div class="col-md-5 mb-3">
-                                <label class="form-label required-field">First Name</label>
-                                <input type="text" name="delegates[${i}][first_name]" class="form-control" 
-                                       placeholder="Enter first name" required>
-                            </div>
-                            <div class="col-md-5 mb-3">
-                                <label class="form-label required-field">Last Name</label>
-                                <input type="text" name="delegates[${i}][last_name]" class="form-control" 
-                                       placeholder="Enter last name" required>
-                            </div>
+        // Always show delegates section (even for count = 1)
+        delegatesSection.style.display = 'block';
+        delegatesContainer.innerHTML = '';
+        
+        // Get old delegate values if available
+        const oldDelegates = @json(old('delegates', []));
+        
+        // Generate delegate forms for all counts (including 1)
+        for (let i = 1; i <= count; i++) {
+            const oldDelegate = oldDelegates[i] || {};
+            const delegateHtml = `
+                <div class="delegate-form mb-4 p-3" style="background: rgba(255, 255, 255, 0.02); border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.1);">
+                    <h6 class="mb-3" style="color: #667eea;">
+                        <i class="fas fa-user me-2"></i>Delegate ${i}${count === 1 ? ' (Attendee)' : ''}
+                    </h6>
+                    <div class="row">
+                        <div class="col-md-2 mb-3">
+                            <label class="form-label">Salutation</label>
+                            <select name="delegates[${i}][salutation]" class="form-select">
+                                <option value="">Select</option>
+                                <option value="Mr" ${oldDelegate.salutation === 'Mr' ? 'selected' : ''}>Mr</option>
+                                <option value="Mrs" ${oldDelegate.salutation === 'Mrs' ? 'selected' : ''}>Mrs</option>
+                                <option value="Ms" ${oldDelegate.salutation === 'Ms' ? 'selected' : ''}>Ms</option>
+                                <option value="Dr" ${oldDelegate.salutation === 'Dr' ? 'selected' : ''}>Dr</option>
+                                <option value="Prof" ${oldDelegate.salutation === 'Prof' ? 'selected' : ''}>Prof</option>
+                            </select>
                         </div>
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label required-field">Email</label>
-                                <input type="email" name="delegates[${i}][email]" class="form-control" 
-                                       placeholder="Enter email address" required>
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Phone</label>
-                                <input type="tel" name="delegates[${i}][phone]" class="form-control" 
-                                       placeholder="Enter phone number">
-                            </div>
+                        <div class="col-md-5 mb-3">
+                            <label class="form-label required-field">First Name</label>
+                            <input type="text" name="delegates[${i}][first_name]" class="form-control" 
+                                   placeholder="Enter first name" value="${oldDelegate.first_name || ''}" required>
                         </div>
-                        <div class="row">
-                            <div class="col-md-12 mb-3">
-                                <label class="form-label">Job Title</label>
-                                <input type="text" name="delegates[${i}][job_title]" class="form-control" 
-                                       placeholder="Enter job title">
-                            </div>
+                        <div class="col-md-5 mb-3">
+                            <label class="form-label required-field">Last Name</label>
+                            <input type="text" name="delegates[${i}][last_name]" class="form-control" 
+                                   placeholder="Enter last name" value="${oldDelegate.last_name || ''}" required>
                         </div>
                     </div>
-                `;
-                delegatesContainer.innerHTML += delegateHtml;
-            }
-        } else {
-            delegatesSection.style.display = 'none';
-            delegatesContainer.innerHTML = '';
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label required-field">Email</label>
+                            <input type="email" name="delegates[${i}][email]" class="form-control" 
+                                   placeholder="Enter email address" value="${oldDelegate.email || ''}" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Phone</label>
+                            <input type="tel" name="delegates[${i}][phone]" class="form-control" 
+                                   placeholder="Enter phone number" value="${oldDelegate.phone || ''}">
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-12 mb-3">
+                            <label class="form-label">Job Title</label>
+                            <input type="text" name="delegates[${i}][job_title]" class="form-control" 
+                                   placeholder="Enter job title" value="${oldDelegate.job_title || ''}">
+                        </div>
+                    </div>
+                </div>
+            `;
+            delegatesContainer.innerHTML += delegateHtml;
         }
     });
 
-    // Trigger on page load if delegate_count has a value > 1
+    // Trigger on page load to show delegates section
     document.addEventListener('DOMContentLoaded', function() {
         const delegateCount = document.getElementById('delegate_count');
-        if (delegateCount && parseInt(delegateCount.value) > 1) {
+        if (delegateCount) {
+            // Get current value or default to 1
+            const currentValue = parseInt(delegateCount.value) || 1;
+            delegateCount.value = currentValue;
+            // Trigger change event to generate delegate forms
             delegateCount.dispatchEvent(new Event('change'));
         }
     });
 
-    // Toggle GST fields based on GST Required selection
+    // Toggle GST fields and Primary Contact based on GST Required selection
     document.getElementById('gst_required')?.addEventListener('change', function() {
         const gstFields = document.getElementById('gst_fields');
+        const primaryContactSection = document.getElementById('primary_contact_section');
+        const contactName = document.getElementById('contact_name');
+        const contactEmail = document.getElementById('contact_email');
+        const contactPhone = document.getElementById('contact_phone');
+        
         if (this.value == '1') {
             gstFields.style.display = 'block';
+            primaryContactSection.style.display = 'block';
+            // Make contact fields required
+            if (contactName) contactName.setAttribute('required', 'required');
+            if (contactEmail) contactEmail.setAttribute('required', 'required');
+            if (contactPhone) contactPhone.setAttribute('required', 'required');
         } else {
             gstFields.style.display = 'none';
+            primaryContactSection.style.display = 'none';
             // Clear GST fields when hidden
             document.getElementById('gstin_input').value = '';
             document.getElementById('gst_legal_name').value = '';
             document.getElementById('gst_address').value = '';
             document.getElementById('gst_state').value = '';
             document.getElementById('gst_feedback').innerHTML = '';
+            // Clear and remove required from contact fields
+            if (contactName) {
+                contactName.value = '';
+                contactName.removeAttribute('required');
+            }
+            if (contactEmail) {
+                contactEmail.value = '';
+                contactEmail.removeAttribute('required');
+            }
+            if (contactPhone) {
+                contactPhone.value = '';
+                contactPhone.removeAttribute('required');
+            }
+        }
+    });
+
+    // Trigger on page load if GST is already selected
+    document.addEventListener('DOMContentLoaded', function() {
+        const gstRequired = document.getElementById('gst_required');
+        if (gstRequired && gstRequired.value == '1') {
+            gstRequired.dispatchEvent(new Event('change'));
         }
     });
 
@@ -703,8 +758,14 @@
         @endif
     });
 
-    // Handle form submission with AJAX for better error handling
+    // Handle form submission with reCAPTCHA
     document.getElementById('registrationForm')?.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const form = this;
+        const submitBtn = document.getElementById('submitBtn');
+        const originalBtnText = submitBtn.innerHTML;
+        
         // Clear previous validation
         document.querySelectorAll('.is-invalid').forEach(el => {
             el.classList.remove('is-invalid');
@@ -712,6 +773,92 @@
         document.querySelectorAll('.invalid-feedback').forEach(el => {
             el.remove();
         });
+        
+        // Log delegate data before submission
+        const delegateCount = parseInt(document.getElementById('delegate_count').value) || 1;
+        const delegateInputs = form.querySelectorAll('[name^="delegates["]');
+        const delegatesData = {};
+        
+        delegateInputs.forEach(input => {
+            const name = input.name;
+            const match = name.match(/delegates\[(\d+)\]\[(\w+)\]/);
+            if (match) {
+                const index = match[1];
+                const field = match[2];
+                if (!delegatesData[index]) {
+                    delegatesData[index] = {};
+                }
+                delegatesData[index][field] = input.value;
+            }
+        });
+        
+        console.log('Delegate Count:', delegateCount);
+        console.log('Delegates Data Before Submit:', delegatesData);
+        console.log('Number of delegate entries:', Object.keys(delegatesData).length);
+        
+        // Validate delegates are filled
+        const filledDelegates = Object.keys(delegatesData).filter(index => {
+            const delegate = delegatesData[index];
+            return delegate.first_name && delegate.last_name && delegate.email;
+        });
+        
+        console.log('Filled Delegates:', filledDelegates.length);
+        
+        if (filledDelegates.length !== delegateCount) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Validation Error',
+                text: 'Please provide complete information for all ' + delegateCount + ' delegate(s).',
+                confirmButtonText: 'OK',
+                confirmButtonColor: '#667eea'
+            });
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = originalBtnText;
+            return;
+        }
+        
+        // Disable submit button
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Processing...';
+        
+        @if(config('constants.RECAPTCHA_ENABLED', false))
+        // Execute reCAPTCHA Enterprise v3
+        if (typeof grecaptcha !== 'undefined' && grecaptcha.enterprise) {
+            grecaptcha.enterprise.ready(function() {
+                grecaptcha.enterprise.execute('{{ config('services.recaptcha.site_key') }}', { action: 'submit' })
+                    .then(function(token) {
+                        // Set token in hidden input
+                        document.getElementById('g-recaptcha-response').value = token;
+                        
+                        // Log before final submit
+                        console.log('Submitting form with delegates:', delegatesData);
+                        
+                        // Submit form
+                        form.submit();
+                    })
+                    .catch(function(err) {
+                        console.error('reCAPTCHA execution error:', err);
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'reCAPTCHA Error',
+                            text: 'reCAPTCHA verification failed. Please try again.',
+                            confirmButtonText: 'OK',
+                            confirmButtonColor: '#667eea'
+                        });
+                        submitBtn.disabled = false;
+                        submitBtn.innerHTML = originalBtnText;
+                    });
+            });
+        } else {
+            console.warn('reCAPTCHA Enterprise not loaded, submitting without token.');
+            console.log('Submitting form with delegates:', delegatesData);
+            form.submit();
+        }
+        @else
+        // reCAPTCHA disabled, submit directly
+        console.log('Submitting form with delegates:', delegatesData);
+        form.submit();
+        @endif
     });
 </script>
 

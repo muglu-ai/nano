@@ -111,7 +111,7 @@ class PaymentGatewayController extends Controller
                     ->route('startup-zone.confirmation', $application->application_id)
                     ->with('info', 'Payment already completed');
             }
-            return redirect()->route('exhibitor.orders');
+            return redirect()->route('payment.lookup');
         }
         
         // For startup-zone, check if application is approved - payment only allowed after approval
@@ -247,7 +247,7 @@ class PaymentGatewayController extends Controller
             }
 
             return redirect()
-                ->route('exhibitor.orders')
+                ->route('payment.lookup')
                 ->with('error', 'Billing details not found. Please contact support.');
         }
 
@@ -648,7 +648,7 @@ class PaymentGatewayController extends Controller
                 }
 
                 return redirect()
-                    ->route('exhibitor.orders')
+                    ->route('payment.lookup')
                     ->with('error', 'Invoice not found. Please contact support.');
             }
 
@@ -794,7 +794,7 @@ class PaymentGatewayController extends Controller
 
                 // put in session that paymeent is successful
                 session(['payment_success' => true, 'invoice_no' => $order_id, 'payment_message' => 'Payment is successful.']);
-                return redirect()->route('exhibitor.orders');
+                return redirect()->route('payment.lookup');
             }
 
             // IMPORTANT: Startup zone should have already redirected above (line 529-531)
@@ -909,7 +909,7 @@ class PaymentGatewayController extends Controller
             } else {
                 // If invoice not found, redirect to a safe page
                 return redirect()
-                    ->route('exhibitor.orders')
+                    ->route('payment.lookup')
                     ->with('error', 'Payment failed. Invoice not found.');
             }
 

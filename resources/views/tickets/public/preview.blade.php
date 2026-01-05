@@ -10,6 +10,10 @@
         padding: 2rem 1rem;
     }
 
+    .preview-container .registration-progress {
+        margin-bottom: 2rem;
+    }
+
     .preview-card {
         background: rgba(255, 255, 255, 0.05);
         border-radius: 20px;
@@ -106,6 +110,9 @@
 
 @section('content')
 <div class="preview-container">
+    <!-- Progress Bar -->
+    @include('tickets.public.partials.progress-bar', ['currentStep' => 2])
+    
     <div class="preview-card">
         <h2 class="text-center mb-4" style="background: var(--primary-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">
             Review Your Registration
@@ -219,11 +226,12 @@
         </div>
         @endif
 
-        <!-- Contact Information -->
+        <!-- Contact Information (Only shown if GST is required) -->
+        @if($registrationData['gst_required'] == '1' && !empty($registrationData['contact_name']))
         <div class="preview-section">
             <h4 class="section-title">
                 <i class="fas fa-user me-2"></i>
-                Primary Contact Information
+                Primary Contact Information (For GST Invoice)
             </h4>
             <div class="info-row">
                 <span class="info-label">Name:</span>
@@ -238,6 +246,7 @@
                 <span class="info-value">{{ $registrationData['contact_phone'] }}</span>
             </div>
         </div>
+        @endif
 
         <!-- Price Breakdown -->
         <div class="price-breakdown">

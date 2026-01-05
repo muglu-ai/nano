@@ -2,31 +2,25 @@
 
 namespace App\Mail;
 
+use App\Models\Enquiry;
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
 
-class UserCredentialsMail extends Mailable
+class EnquiryAdminNotificationMail extends Mailable
 {
     use Queueable, SerializesModels;
 
-    public $name;
-    public $setupProfileUrl;
-    public $username;
-    public $password;
+    public $enquiry;
 
     /**
      * Create a new message instance.
      */
-    public function __construct($name, $setupProfileUrl, $username, $password)
+    public function __construct(Enquiry $enquiry)
     {
-        $this->name = $name;
-        $this->setupProfileUrl = $setupProfileUrl;
-        $this->username = $username;
-        $this->password = $password;
+        $this->enquiry = $enquiry;
     }
 
     /**
@@ -34,8 +28,11 @@ class UserCredentialsMail extends Mailable
      */
     public function envelope(): Envelope
     {
+        $eventName = $this->enquiry->event ? $this->enquiry->event->event_name : config('constants.EVENT_NAME', 'Event');
+        $eventYear = $this->enquiry->event_year ?? config('constants.EVENT_YEAR', date('Y'));
+        
         return new Envelope(
-            subject: config('constants.EVENT_NAME') . ' ' . config('constants.EVENT_YEAR') . ' - Login Credentials',
+            subject: "New Enquiry Received - {$eventName} {$eventYear}",
         );
     }
 
@@ -45,12 +42,9 @@ class UserCredentialsMail extends Mailable
     public function content(): Content
     {
         return new Content(
-            view: 'emails.credentials',
+            view: 'emails.enquiry.admin-notification',
             with: [
-                'name' => $this->name,
-                'setupProfileUrl' => $this->setupProfileUrl,
-                'username' => $this->username,
-                'password' => $this->password,
+                'enquiry' => $this->enquiry,
             ],
         );
     }

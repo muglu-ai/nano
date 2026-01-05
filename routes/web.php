@@ -12,6 +12,7 @@ use App\Http\Controllers\DocumentsContoller;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ExhibitorController;
 use App\Http\Controllers\ExhibitorInfoController;
+use App\Http\Controllers\ExhibitorRegistrationController;
 use App\Http\Controllers\ExtraRequirementController;
 use App\Http\Controllers\ExportController;
 use App\Http\Controllers\FileUploadController;
@@ -68,6 +69,7 @@ use App\Http\Controllers\CompanyLookupController;
 use App\Http\Controllers\FeedbackController;
 use App\Http\Controllers\SuperAdminController;
 use App\Http\Controllers\Ticket\AdminTicketConfigController;
+use App\Http\Controllers\Enquiry\PublicEnquiryController;
 
 /* Payment Gateway CCAvenue Routes
 */
@@ -1085,6 +1087,12 @@ Route::post('/feedback', [FeedbackController::class, 'store'])->name('feedback.s
 Route::get('/feedback/thankyou', [FeedbackController::class, 'thankyou'])->name('feedback.thankyou');
 Route::get('/feedback/reload-captcha', [FeedbackController::class, 'reloadCaptcha'])->name('feedback.reload.captcha');
 
+// Enquiry Routes (Public Access - No Authentication Required)
+Route::get('/enquiry', [PublicEnquiryController::class, 'showForm'])->name('enquiry.form');
+Route::get('/enquiry/{eventSlug}', [PublicEnquiryController::class, 'showForm'])->name('enquiry.form.event');
+Route::post('/enquiry', [PublicEnquiryController::class, 'submit'])->name('enquiry.submit');
+Route::get('/enquiry/thankyou', [PublicEnquiryController::class, 'thankyou'])->name('enquiry.thankyou');
+
 // Startup Zone Registration Routes
 Route::prefix('startup')->name('startup-zone.')->group(function () {
     Route::get('/register', [StartupZoneController::class, 'showForm'])->name('register');
@@ -1097,6 +1105,21 @@ Route::prefix('startup')->name('startup-zone.')->group(function () {
     Route::get('/payment/{applicationId}', [StartupZoneController::class, 'showPayment'])->name('payment');
     Route::post('/payment/{applicationId}/process', [StartupZoneController::class, 'processPayment'])->name('payment.process');
     Route::get('/confirmation/{applicationId}', [StartupZoneController::class, 'showConfirmation'])->name('confirmation');
+});
+
+// Exhibitor Registration Routes
+Route::prefix('exhibitor')->name('exhibitor-registration.')->group(function () {
+    Route::get('/registration', [ExhibitorRegistrationController::class, 'showForm'])->name('register');
+    Route::post('/auto-save', [ExhibitorRegistrationController::class, 'autoSave'])->name('auto-save');
+    Route::post('/calculate-price', [ExhibitorRegistrationController::class, 'calculatePrice'])->name('calculate-price');
+    Route::get('/booth-sizes', [ExhibitorRegistrationController::class, 'getBoothSizes'])->name('booth-sizes');
+    Route::post('/fetch-gst-details', [ExhibitorRegistrationController::class, 'fetchGstDetails'])->name('fetch-gst-details');
+    Route::post('/submit-form', [ExhibitorRegistrationController::class, 'submitForm'])->name('submit-form');
+    Route::get('/preview', [ExhibitorRegistrationController::class, 'showPreview'])->name('preview');
+    Route::post('/create-application', [ExhibitorRegistrationController::class, 'createApplicationFromSession'])->name('create-application');
+    Route::get('/payment/{applicationId}', [ExhibitorRegistrationController::class, 'showPayment'])->name('payment')->where('applicationId', '[A-Z0-9-]+');
+    Route::post('/payment/{applicationId}/process', [ExhibitorRegistrationController::class, 'processPayment'])->name('payment.process')->where('applicationId', '[A-Z0-9-]+');
+    Route::get('/confirmation/{applicationId}', [ExhibitorRegistrationController::class, 'showConfirmation'])->name('confirmation')->where('applicationId', '[A-Z0-9-]+');
 });
 
 // Ticket Registration Routes (Public) - Separate route file

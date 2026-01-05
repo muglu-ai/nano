@@ -63,14 +63,34 @@ class TicketPaymentController extends Controller
             $processingChargeAmount = (($subtotal + $gstAmount) * $processingChargeRate) / 100;
             $total = $subtotal + $gstAmount + $processingChargeAmount;
 
-            // Create or get contact
-            $contact = TicketContact::firstOrCreate(
-                ['email' => $registrationData['contact_email']],
-                [
-                    'name' => $registrationData['contact_name'],
-                    'phone' => $registrationData['contact_phone'],
-                ]
-            );
+            // Create or get contact (use first delegate email if contact email not provided)
+            $contactEmail = $registrationData['contact_email'] ?? ($registrationData['delegates'][0]['email'] ?? null);
+            $contactName = $registrationData['contact_name'] ?? ($registrationData['delegates'][0]['first_name'] . ' ' . ($registrationData['delegates'][0]['last_name'] ?? ''));
+            $contactPhone = $registrationData['contact_phone'] ?? ($registrationData['delegates'][0]['phone'] ?? null);
+            
+            if ($contactEmail) {
+                $contact = TicketContact::firstOrCreate(
+                    ['email' => $contactEmail],
+                    [
+                        'name' => $contactName,
+                        'phone' => $contactPhone,
+                    ]
+                );
+            } else {
+                // Fallback: use first delegate
+                $firstDelegate = $registrationData['delegates'][0] ?? null;
+                if ($firstDelegate) {
+                    $contact = TicketContact::firstOrCreate(
+                        ['email' => $firstDelegate['email']],
+                        [
+                            'name' => $firstDelegate['first_name'] . ' ' . ($firstDelegate['last_name'] ?? ''),
+                            'phone' => $firstDelegate['phone'] ?? null,
+                        ]
+                    );
+                } else {
+                    throw new \Exception('Unable to create contact: No contact email or delegate email provided.');
+                }
+            }
 
             // Create registration
             $registration = TicketRegistration::create([
@@ -122,7 +142,7 @@ class TicketPaymentController extends Controller
                 'pricing_type' => $ticketType->isEarlyBirdActive() ? 'early_bird' : 'regular',
             ]);
 
-            // Create delegates if provided
+            // Create delegates (always required now)
             $delegates = $registrationData['delegates'] ?? [];
             if (count($delegates) > 0) {
                 foreach ($delegates as $delegateData) {
@@ -137,16 +157,15 @@ class TicketPaymentController extends Controller
                     ]);
                 }
             } else {
-                // If no delegates provided but count > 1, create placeholder delegates
-                // Or if count = 1, create one delegate from contact info
-                if ($quantity == 1) {
-                    // Create single delegate from contact information
+                // Fallback: This should not happen as validation requires delegates
+                // But if it does, create from contact info (only if GST is required)
+                if ($registrationData['gst_required'] == '1' && isset($registrationData['contact_name'])) {
                     TicketDelegate::create([
                         'registration_id' => $registration->id,
                         'first_name' => $registrationData['contact_name'],
                         'last_name' => '',
-                        'email' => $registrationData['contact_email'],
-                        'phone' => $registrationData['contact_phone'],
+                        'email' => $registrationData['contact_email'] ?? $contact->email,
+                        'phone' => $registrationData['contact_phone'] ?? $contact->phone,
                     ]);
                 }
             }
@@ -156,21 +175,25 @@ class TicketPaymentController extends Controller
             // Clear session data
             session()->forget('ticket_registration_data');
 
-            // Prepare payment gateway data
+            // Prepare payment gateway data (use contact info if GST required, else use first delegate)
+            $billingName = $registrationData['contact_name'] ?? ($registrationData['delegates'][0]['first_name'] . ' ' . ($registrationData['delegates'][0]['last_name'] ?? ''));
+            $billingEmail = $registrationData['contact_email'] ?? $registrationData['delegates'][0]['email'];
+            $billingPhone = $registrationData['contact_phone'] ?? ($registrationData['delegates'][0]['phone'] ?? $registrationData['phone']);
+            
             $paymentData = [
                 'order_id' => $order->order_no . '_' . time(),
                 'amount' => number_format($total, 2, '.', ''),
                 'currency' => 'INR',
                 'redirect_url' => route('tickets.payment.callback', $order->id),
                 'cancel_url' => route('tickets.payment', $order->id),
-                'billing_name' => $registrationData['contact_name'],
+                'billing_name' => $billingName,
                 'billing_address' => $registrationData['organisation_name'],
                 'billing_city' => $registrationData['city'] ?? '',
                 'billing_state' => $registrationData['state'] ?? '',
                 'billing_zip' => '',
                 'billing_country' => $registrationData['country'],
-                'billing_tel' => $registrationData['contact_phone'],
-                'billing_email' => $registrationData['contact_email'],
+                'billing_tel' => $billingPhone,
+                'billing_email' => $billingEmail,
             ];
 
             // Initiate payment gateway

@@ -11,6 +11,8 @@ use App\Models\Ticket\EventDay;
 use App\Models\Ticket\TicketRegistrationCategory;
 use App\Models\GstLookup;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 
 class PublicTicketController extends Controller
 {
@@ -110,6 +112,16 @@ class PublicTicketController extends Controller
     {
         $event = Events::where('slug', $eventSlug)->orWhere('id', $eventSlug)->firstOrFail();
         
+        // Verify reCAPTCHA if enabled
+        if (config('constants.RECAPTCHA_ENABLED', false)) {
+            $recaptchaResponse = $request->input('g-recaptcha-response');
+            if (!$this->verifyRecaptcha($recaptchaResponse)) {
+                return redirect()->back()
+                    ->withInput()
+                    ->withErrors(['recaptcha' => 'reCAPTCHA verification failed. Please try again.']);
+            }
+        }
+        
         // Validate the request
         $validated = $request->validate([
             'registration_category_id' => 'required|exists:ticket_registration_categories,id',
@@ -129,13 +141,13 @@ class PublicTicketController extends Controller
             'gst_legal_name' => 'nullable|string|max:255',
             'gst_address' => 'nullable|string',
             'gst_state' => 'nullable|string|max:255',
-            'contact_name' => 'required|string|max:255',
-            'contact_email' => 'required|email|max:255',
-            'contact_phone' => 'required|string|max:20',
-            'delegates' => 'nullable|array',
-            'delegates.*.first_name' => 'required_with:delegates|string|max:255',
-            'delegates.*.last_name' => 'required_with:delegates|string|max:255',
-            'delegates.*.email' => 'required_with:delegates|email|max:255',
+            'contact_name' => 'nullable|string|max:255',
+            'contact_email' => 'nullable|email|max:255',
+            'contact_phone' => 'nullable|string|max:20',
+            'delegates' => 'required|array|min:1',
+            'delegates.*.first_name' => 'required|string|max:255',
+            'delegates.*.last_name' => 'required|string|max:255',
+            'delegates.*.email' => 'required|email|max:255',
             'delegates.*.phone' => 'nullable|string|max:20',
             'delegates.*.salutation' => 'nullable|string|max:10',
             'delegates.*.job_title' => 'nullable|string|max:255',
@@ -146,9 +158,11 @@ class PublicTicketController extends Controller
             'organisation_type.required' => 'Please select an organisation type.',
             'gst_required.required' => 'Please specify if GST is required.',
             'gstin.regex' => 'Invalid GSTIN format. Please enter a valid 15-digit GSTIN.',
-            'delegates.*.first_name.required_with' => 'First name is required for all delegates.',
-            'delegates.*.last_name.required_with' => 'Last name is required for all delegates.',
-            'delegates.*.email.required_with' => 'Email is required for all delegates.',
+            'delegates.required' => 'Please provide delegate information.',
+            'delegates.min' => 'At least one delegate is required.',
+            'delegates.*.first_name.required' => 'First name is required for all delegates.',
+            'delegates.*.last_name.required' => 'Last name is required for all delegates.',
+            'delegates.*.email.required' => 'Email is required for all delegates.',
             'delegates.*.email.email' => 'Please enter a valid email address for all delegates.',
         ]);
 
@@ -156,34 +170,64 @@ class PublicTicketController extends Controller
         $delegateCount = $validated['delegate_count'];
         $delegates = $request->input('delegates', []);
         
-        if ($delegateCount > 1) {
-            if (count($delegates) !== $delegateCount) {
-                return redirect()->back()
-                    ->withInput()
-                    ->withErrors(['delegate_count' => 'Please provide information for all ' . $delegateCount . ' delegates.']);
-            }
+        // Log for debugging
+        Log::info('Ticket Registration - Delegate Validation', [
+            'delegate_count' => $delegateCount,
+            'delegates_received' => count($delegates),
+            'delegates_data' => $delegates,
+            'all_request_data' => $request->except(['_token', 'g-recaptcha-response']),
+        ]);
+        
+        // Filter out empty delegate entries (in case form has empty fields)
+        $delegates = array_filter($delegates, function($delegate) {
+            return !empty($delegate['first_name']) || !empty($delegate['last_name']) || !empty($delegate['email']);
+        });
+        
+        // Log after filtering
+        Log::info('Ticket Registration - After Filtering', [
+            'delegates_count_after_filter' => count($delegates),
+            'delegates_after_filter' => $delegates,
+        ]);
+        
+        // Always validate delegates (even for count = 1)
+        if (count($delegates) !== $delegateCount) {
+            Log::warning('Ticket Registration - Delegate Count Mismatch', [
+                'expected_count' => $delegateCount,
+                'received_count' => count($delegates),
+                'delegates_data' => $delegates,
+            ]);
             
-            // Validate all delegate emails are unique
-            $emails = array_column($delegates, 'email');
-            if (count($emails) !== count(array_unique($emails))) {
-                return redirect()->back()
-                    ->withInput()
-                    ->withErrors(['delegates' => 'Each delegate must have a unique email address.']);
-            }
+            return redirect()->back()
+                ->withInput()
+                ->withErrors(['delegate_count' => 'Please provide information for all ' . $delegateCount . ' delegate(s).']);
+        }
+        
+        // Validate all delegate emails are unique
+        $emails = array_column($delegates, 'email');
+        if (count($emails) !== count(array_unique($emails))) {
+            return redirect()->back()
+                ->withInput()
+                ->withErrors(['delegates' => 'Each delegate must have a unique email address.']);
         }
 
-        // If GST is required, validate GST fields
+        // If GST is required, validate GST fields and primary contact
         if ($validated['gst_required'] == '1') {
             $request->validate([
                 'gstin' => 'required|string|max:15|regex:/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/',
                 'gst_legal_name' => 'required|string|max:255',
                 'gst_address' => 'required|string',
                 'gst_state' => 'required|string|max:255',
+                'contact_name' => 'required|string|max:255',
+                'contact_email' => 'required|email|max:255',
+                'contact_phone' => 'required|string|max:20',
             ], [
                 'gstin.required' => 'GSTIN is required when GST is applicable.',
                 'gst_legal_name.required' => 'GST legal name is required.',
                 'gst_address.required' => 'GST address is required.',
                 'gst_state.required' => 'GST state is required.',
+                'contact_name.required' => 'Primary contact name is required for GST invoice.',
+                'contact_email.required' => 'Primary contact email is required for GST invoice.',
+                'contact_phone.required' => 'Primary contact phone is required for GST invoice.',
             ]);
         }
 
@@ -308,6 +352,77 @@ class PublicTicketController extends Controller
                 'success' => false,
                 'message' => 'Error validating GST: ' . $e->getMessage()
             ], 500);
+        }
+    }
+
+    /**
+     * Verify Google reCAPTCHA Enterprise v3 response
+     */
+    private function verifyRecaptcha($recaptchaResponse)
+    {
+        // If disabled via config, always pass
+        if (!config('constants.RECAPTCHA_ENABLED', false)) {
+            return true;
+        }
+
+        $siteKey = config('services.recaptcha.site_key');
+        $projectId = config('services.recaptcha.project_id');
+        $apiKey = config('services.recaptcha.api_key');
+        $expectedAction = 'submit';
+
+        if (empty($siteKey) || empty($projectId) || empty($apiKey) || empty($recaptchaResponse)) {
+            Log::warning('reCAPTCHA config or token missing', [
+                'siteKey' => !empty($siteKey),
+                'projectId' => !empty($projectId),
+                'hasToken' => !empty($recaptchaResponse),
+            ]);
+            return false;
+        }
+
+        $url = sprintf(
+            'https://recaptchaenterprise.googleapis.com/v1/projects/%s/assessments?key=%s',
+            $projectId,
+            $apiKey
+        );
+
+        try {
+            $response = Http::post($url, [
+                'event' => [
+                    'token' => $recaptchaResponse,
+                    'expectedAction' => $expectedAction,
+                    'siteKey' => $siteKey,
+                ],
+            ]);
+
+            $result = $response->json();
+
+            if (!$response->successful()) {
+                Log::warning('reCAPTCHA Enterprise API error', [
+                    'status' => $response->status(),
+                    'response' => $result,
+                ]);
+                return false;
+            }
+
+            $tokenProps = $result['tokenProperties'] ?? null;
+
+            if (
+                !$tokenProps ||
+                ($tokenProps['valid'] ?? false) !== true ||
+                ($tokenProps['action'] ?? null) !== $expectedAction
+            ) {
+                Log::warning('reCAPTCHA Enterprise token invalid', [
+                    'tokenProperties' => $tokenProps,
+                ]);
+                return false;
+            }
+
+            return true;
+        } catch (\Exception $e) {
+            Log::error('reCAPTCHA verification error: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString()
+            ]);
+            return false;
         }
     }
 

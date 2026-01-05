@@ -24,7 +24,13 @@
                             <!-- Event Name and Year -->
                             <div style="text-align: center; padding-top: 15px; border-top: 1px solid #e9ecef;">
                                 <h1 style="margin: 0; color: #1a237e; font-size: 24px; font-weight: bold;">{{ config('constants.EVENT_NAME') }} {{ config('constants.EVENT_YEAR') }}</h1>
-                                <p style="margin: 10px 0 0; color: #666666; font-size: 16px; font-weight: 600;">Exhibitor Registration - Provisional Receipt</p>
+                                <p style="margin: 10px 0 0; color: #666666; font-size: 16px; font-weight: 600;">
+                                    @if($application->application_type === 'exhibitor-registration')
+                                        Exhibitor Registration - Provisional Receipt
+                                    @else
+                                        Startup Exhibitor Registration - Provisional Receipt
+                                    @endif
+                                </p>
                             </div>
                         </td>
                     </tr>

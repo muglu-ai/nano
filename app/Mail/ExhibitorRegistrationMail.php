@@ -33,7 +33,13 @@ class ExhibitorRegistrationMail extends Mailable
         $this->invoice = $invoice;
         $this->contact = $contact;
         $this->billingDetail = \App\Models\BillingDetail::where('application_id', $application->id)->first();
-        $this->paymentUrl = route('startup-zone.payment', $application->application_id);
+        
+        // Determine payment URL based on application type
+        if ($application->application_type === 'exhibitor-registration') {
+            $this->paymentUrl = route('exhibitor-registration.payment', $application->application_id);
+        } else {
+            $this->paymentUrl = route('startup-zone.payment', $application->application_id);
+        }
         
         // Get sector name if sector_id exists
         $this->sectorName = null;
@@ -48,13 +54,24 @@ class ExhibitorRegistrationMail extends Mailable
      */
     public function envelope(): Envelope
     {
-        // Set subject based on payment status
+        // Set subject based on payment status and application type
         $isPaid = $this->invoice->payment_status === 'paid';
+        $isExhibitorRegistration = $this->application->application_type === 'exhibitor-registration';
         
-        if ($isPaid) {
-            $subject = config('constants.EVENT_NAME') . ' ' . config('constants.EVENT_YEAR') . ' - Startup Exhibitor Registration Confirmation & Payment';
+        if ($isExhibitorRegistration) {
+            // Exhibitor Registration emails
+            if ($isPaid) {
+                $subject = config('constants.EVENT_NAME') . ' ' . config('constants.EVENT_YEAR') . ' - Exhibitor Registration Confirmation & Payment';
+            } else {
+                $subject = config('constants.EVENT_NAME') . ' ' . config('constants.EVENT_YEAR') . ' - Exhibitor Registration Initiated & Payment Link';
+            }
         } else {
-            $subject = config('constants.EVENT_NAME') . ' ' . config('constants.EVENT_YEAR') . ' - Startup Exhibitor Registration Initiated & Payment Link';
+            // Startup Zone emails
+            if ($isPaid) {
+                $subject = config('constants.EVENT_NAME') . ' ' . config('constants.EVENT_YEAR') . ' - Startup Exhibitor Registration Confirmation & Payment';
+            } else {
+                $subject = config('constants.EVENT_NAME') . ' ' . config('constants.EVENT_YEAR') . ' - Startup Exhibitor Registration Initiated & Payment Link';
+            }
         }
         
         return new Envelope(

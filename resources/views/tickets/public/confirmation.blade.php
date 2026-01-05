@@ -10,6 +10,10 @@
         padding: 2rem 1rem;
     }
 
+    .confirmation-container .registration-progress {
+        margin-bottom: 2rem;
+    }
+
     .confirmation-card {
         background: rgba(255, 255, 255, 0.05);
         border-radius: 20px;
@@ -57,6 +61,9 @@
 
 @section('content')
 <div class="confirmation-container">
+    <!-- Progress Bar -->
+    @include('tickets.public.partials.progress-bar', ['currentStep' => 3])
+    
     <div class="confirmation-card">
         <div class="success-icon">
             <i class="fas fa-check-circle"></i>

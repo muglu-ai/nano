@@ -70,6 +70,18 @@ class SuperAdminController extends Controller
             $data['social_links'] = json_encode($request->social_links);
         }
 
+        // Handle booth sizes
+        if ($request->has('booth_sizes_raw') || $request->has('booth_sizes_shell')) {
+            $boothSizes = [
+                'Raw' => array_filter(explode(',', $request->input('booth_sizes_raw', ''))),
+                'Shell' => array_filter(explode(',', $request->input('booth_sizes_shell', '')))
+            ];
+            // Remove empty values and trim
+            $boothSizes['Raw'] = array_values(array_map('trim', array_filter($boothSizes['Raw'])));
+            $boothSizes['Shell'] = array_values(array_map('trim', array_filter($boothSizes['Shell'])));
+            $data['booth_sizes'] = json_encode($boothSizes);
+        }
+
         $data['updated_at'] = now();
 
         DB::table('event_configurations')->updateOrInsert(

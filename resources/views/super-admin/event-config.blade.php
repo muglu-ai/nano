@@ -331,6 +331,41 @@
                     </div>
                 </div>
 
+                <!-- Booth Sizes Configuration -->
+                <div class="form-section">
+                    <h5 class="form-section-title">
+                        <i class="fas fa-cube"></i>
+                        Booth Sizes Configuration
+                    </h5>
+                    <div class="row">
+                        <div class="col-md-6 mb-4">
+                            <label class="form-label">Raw Space Sizes (comma-separated, e.g., 36,48,54,72,108,135)</label>
+                            <div class="input-group-custom">
+                                @php
+                                    $boothSizes = json_decode($config->booth_sizes ?? '{}', true);
+                                    $rawSizes = isset($boothSizes['Raw']) ? implode(',', $boothSizes['Raw']) : '36,48,54,72,108,135';
+                                @endphp
+                                <input type="text" class="form-control" name="booth_sizes_raw" 
+                                       value="{{ old('booth_sizes_raw', $rawSizes) }}"
+                                       placeholder="36,48,54,72,108,135">
+                            </div>
+                            <small class="form-text text-muted">Enter booth sizes in sqm separated by commas</small>
+                        </div>
+                        <div class="col-md-6 mb-4">
+                            <label class="form-label">Shell Space Sizes (comma-separated, e.g., 9,12,15,18,27)</label>
+                            <div class="input-group-custom">
+                                @php
+                                    $shellSizes = isset($boothSizes['Shell']) ? implode(',', $boothSizes['Shell']) : '9,12,15,18,27';
+                                @endphp
+                                <input type="text" class="form-control" name="booth_sizes_shell" 
+                                       value="{{ old('booth_sizes_shell', $shellSizes) }}"
+                                       placeholder="9,12,15,18,27">
+                            </div>
+                            <small class="form-text text-muted">Enter booth sizes in sqm separated by commas</small>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="mt-5 pt-3 border-top">
                     <button type="submit" class="btn btn-save">
                         <i class="fas fa-save me-2"></i>

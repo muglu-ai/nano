@@ -281,6 +281,12 @@
     @endif
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Google reCAPTCHA Enterprise v3 -->
+    @if(config('constants.RECAPTCHA_ENABLED', false))
+    <script src="https://www.google.com/recaptcha/enterprise.js?render={{ config('services.recaptcha.site_key') }}"></script>
+    @endif
+    
     @stack('scripts')
 </body>
 </html>

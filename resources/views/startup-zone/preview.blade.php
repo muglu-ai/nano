@@ -395,7 +395,7 @@
             <div class="d-flex justify-content-between">
                 @if(isset($application))
                     <a href="{{ route('startup-zone.register') }}" class="btn btn-secondary">
-                        <i class="fas fa-arrow-left"></i> Back to Form
+                        <i class="fas fa-arrow-left"></i> Edit Details
                     </a>
                     <a href="{{ route('startup-zone.payment', $application->application_id) }}" class="btn btn-success btn-lg">
                         Proceed to Payment <i class="fas fa-arrow-right"></i>
