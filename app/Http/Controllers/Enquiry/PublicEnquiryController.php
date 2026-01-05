@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Enquiry;
 use App\Models\EnquiryInterest;
 use App\Models\Events;
+use App\Models\Country;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
@@ -41,7 +42,41 @@ class PublicEnquiryController extends Controller
             }
         }
 
-        return view('enquiry.form', compact('event', 'preSelectedInterests'));
+        // Get sectors list (same as exhibitor registration)
+        $sectors = [
+            'Information Technology',
+            'Electronics & Semiconductor',
+            'Drones & Robotics',
+            'EV, Energy, Climate, Water, Soil, GSDI',
+            'Telecommunications',
+            'Cybersecurity',
+            'Artificial Intelligence',
+            'Cloud Services',
+            'E-Commerce',
+            'Automation',
+            'AVGC',
+            'Aerospace, Defence & Space Tech',
+            'Mobility Tech',
+            'Infrastructure',
+            'Biotech',
+            'Agritech',
+            'Medtech',
+            'Fintech',
+            'Healthtech',
+            'Edutech',
+            'Startup',
+            'Unicorn/ VCs',
+            'Academia & University',
+            'Tech Parks / Co-Working Spaces of India',
+            'Banking / Insurance',
+            'R&D and Central Govt.',
+            'Others'
+        ];
+
+        // Get India country for state loading
+        $indiaCountry = Country::where('code', 'IN')->first();
+
+        return view('enquiry.form', compact('event', 'preSelectedInterests', 'sectors', 'indiaCountry'));
     }
 
     /**
@@ -59,6 +94,7 @@ class PublicEnquiryController extends Controller
 
         // Validate the request
         $validated = $request->validate([
+            'sector' => 'required|string|max:200',
             'title' => 'nullable|string|max:10',
             'name' => 'required|string|max:255',
             'organisation' => 'required|string|max:255',
@@ -66,22 +102,25 @@ class PublicEnquiryController extends Controller
             'email' => 'required|email|max:255',
             'phone_country_code' => 'nullable|string|max:5',
             'phone_number' => 'required|string|max:20',
+            'state' => 'required|string|max:100',
             'city' => 'required|string|max:100',
             'country' => 'required|string|max:100',
             'comments' => 'required|string|max:1000',
             'referral_source' => 'required|string|max:100',
             'interests' => 'required|array|min:1',
-            'interests.*' => 'in:delegate,speaking,exhibiting,sponsoring,b2b,visitor,conference,other',
+            'interests.*' => 'in:delegate,startup_pod,speaking,exhibition,sponsoring,b2b,visitor,poster,other',
             'interest_other' => 'required_if:interests.*,other|nullable|string|max:255',
             'event_id' => 'nullable|exists:events,id',
             'event_year' => 'nullable|string|max:10',
         ], [
+            'sector.required' => 'Please select a sector.',
             'name.required' => 'Name is required.',
             'organisation.required' => 'Organisation is required.',
             'designation.required' => 'Designation is required.',
             'email.required' => 'Email address is required.',
             'email.email' => 'Please enter a valid email address.',
             'phone_number.required' => 'Contact number is required.',
+            'state.required' => 'State is required.',
             'city.required' => 'City is required.',
             'country.required' => 'Country is required.',
             'comments.required' => 'Comment is required.',
@@ -122,13 +161,13 @@ class PublicEnquiryController extends Controller
                 'full_name' => $fullName,
                 'organisation' => $validated['organisation'],
                 'designation' => $validated['designation'],
-                'sector' => null,
+                'sector' => $validated['sector'] ?? null,
                 'email' => $validated['email'],
                 'phone_country_code' => $validated['phone_country_code'] ?? null,
                 'phone_number' => $validated['phone_number'],
                 'phone_full' => $phoneFull,
                 'city' => $validated['city'],
-                'state' => null,
+                'state' => $validated['state'] ?? null,
                 'country' => $validated['country'],
                 'postal_code' => null,
                 'address' => null,

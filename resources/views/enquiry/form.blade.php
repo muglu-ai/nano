@@ -71,6 +71,20 @@
             <input type="hidden" name="event_id" value="{{ $event->id ?? '' }}">
             <input type="hidden" name="event_year" value="{{ $event->event_year ?? date('Y') }}">
 
+            <!-- Select Sector -->
+            <div class="form-section">
+                <label class="form-label">Select Sector <span class="required">*</span></label>
+                <select name="sector" class="form-select" required>
+                    <option value="">-- Select Sector --</option>
+                    @foreach($sectors ?? [] as $sector)
+                        <option value="{{ $sector }}" {{ old('sector') == $sector ? 'selected' : '' }}>{{ $sector }}</option>
+                    @endforeach
+                </select>
+                @error('sector')
+                    <div class="error-message">{{ $message }}</div>
+                @enderror
+            </div>
+
             <!-- Want Information About -->
             <div class="form-section">
                 <label class="form-label">Want Information About <span class="required">*</span></label>
@@ -198,24 +212,10 @@
                 @enderror
             </div>
 
-            <!-- City -->
-            <div class="form-section">
-                <label class="form-label">City <span class="required">*</span></label>
-                <input type="text" 
-                       name="city" 
-                       class="form-control" 
-                       placeholder="City" 
-                       value="{{ old('city') }}" 
-                       required>
-                @error('city')
-                    <div class="error-message">{{ $message }}</div>
-                @enderror
-            </div>
-
             <!-- Country -->
             <div class="form-section">
                 <label class="form-label">Country <span class="required">*</span></label>
-                <select name="country" class="form-select" required>
+                <select name="country" id="country" class="form-select" required>
                     <option value="">-- Select Country --</option>
                     <option value="India" {{ old('country', 'India') == 'India' ? 'selected' : '' }}>India</option>
                     <option value="United States">United States</option>
@@ -235,17 +235,49 @@
                 @enderror
             </div>
 
+            <!-- State -->
+            <div class="form-section">
+                <label class="form-label">State <span class="required">*</span></label>
+                <select name="state" id="state" class="form-select" required>
+                    <option value="">-- Select State --</option>
+                </select>
+                @error('state')
+                    <div class="error-message">{{ $message }}</div>
+                @enderror
+            </div>
+
+            <!-- City -->
+            <div class="form-section">
+                <label class="form-label">City <span class="required">*</span></label>
+                <input type="text" 
+                       name="city" 
+                       class="form-control" 
+                       placeholder="City" 
+                       value="{{ old('city') }}" 
+                       required>
+                @error('city')
+                    <div class="error-message">{{ $message }}</div>
+                @enderror
+            </div>
+
             <!-- How did you know about this event? -->
             <div class="form-section">
                 <label class="form-label">How did you know about this event? <span class="required">*</span></label>
                 <select name="referral_source" class="form-select" required>
                     <option value="">-- Select --</option>
-                    <option value="Website" {{ old('referral_source') == 'Website' ? 'selected' : '' }}>Website</option>
-                    <option value="Social Media" {{ old('referral_source') == 'Social Media' ? 'selected' : '' }}>Social Media</option>
-                    <option value="Email" {{ old('referral_source') == 'Email' ? 'selected' : '' }}>Email</option>
-                    <option value="Friend/Colleague" {{ old('referral_source') == 'Friend/Colleague' ? 'selected' : '' }}>Friend/Colleague</option>
-                    <option value="Advertisement" {{ old('referral_source') == 'Advertisement' ? 'selected' : '' }}>Advertisement</option>
-                    <option value="Other" {{ old('referral_source') == 'Other' ? 'selected' : '' }}>Other</option>
+                    <option value="Brochure" {{ old('referral_source') == 'Brochure' ? 'selected' : '' }}>Brochure</option>
+                    <option value="Colleague" {{ old('referral_source') == 'Colleague' ? 'selected' : '' }}>Colleague</option>
+                    <option value="Link on Site" {{ old('referral_source') == 'Link on Site' ? 'selected' : '' }}>Link on Site</option>
+                    <option value="Previous Attendee" {{ old('referral_source') == 'Previous Attendee' ? 'selected' : '' }}>Previous Attendee</option>
+                    <option value="Internet search" {{ old('referral_source') == 'Internet search' ? 'selected' : '' }}>Internet search</option>
+                    <option value="Sales Call" {{ old('referral_source') == 'Sales Call' ? 'selected' : '' }}>Sales Call</option>
+                    <option value="Association" {{ old('referral_source') == 'Association' ? 'selected' : '' }}>Association</option>
+                    <option value="Direct Mailer" {{ old('referral_source') == 'Direct Mailer' ? 'selected' : '' }}>Direct Mailer</option>
+                    <option value="News Paper Ad" {{ old('referral_source') == 'News Paper Ad' ? 'selected' : '' }}>News Paper Ad</option>
+                    <option value="Trade Publication" {{ old('referral_source') == 'Trade Publication' ? 'selected' : '' }}>Trade Publication</option>
+                    <option value="Invitation from Exhibitor" {{ old('referral_source') == 'Invitation from Exhibitor' ? 'selected' : '' }}>Invitation from Exhibitor</option>
+                    <option value="Hoarding" {{ old('referral_source') == 'Hoarding' ? 'selected' : '' }}>Hoarding</option>
+                    <option value="Others" {{ old('referral_source') == 'Others' ? 'selected' : '' }}>Others</option>
                 </select>
                 @error('referral_source')
                     <div class="error-message">{{ $message }}</div>
@@ -523,5 +555,129 @@
         element.addEventListener('change', updateProgress);
     });
     updateProgress();
+
+    // Load states based on country selection
+    const countrySelect = document.getElementById('country');
+    const stateSelect = document.getElementById('state');
+    
+    // Country name to ID mapping (we'll fetch India's ID dynamically)
+    const countryNameToIdMap = {
+        'India': null, // Will be fetched
+        'United States': null,
+        'United Kingdom': null,
+        'Canada': null,
+        'Australia': null,
+        'Germany': null,
+        'France': null,
+        'Japan': null,
+        'China': null,
+        'Singapore': null,
+        'United Arab Emirates': null,
+        'Other': null
+    };
+    
+    // Fetch country ID from name (for India, use code 'IN')
+    function getCountryId(countryName, callback) {
+        if (!countryName || countryName === 'Other') {
+            callback(null);
+            return;
+        }
+        
+        // For India, use the country ID from the backend
+        if (countryName === 'India') {
+            @if(isset($indiaCountry) && $indiaCountry)
+                callback({{ $indiaCountry->id }});
+            @else
+                // Fallback: try to find India by code
+                fetch('{{ url("/api/country-by-code/IN") }}', {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    callback(data && data.id ? data.id : null);
+                })
+                .catch(() => callback(null));
+            @endif
+        } else {
+            // For other countries, we might not have states, so just return null
+            callback(null);
+        }
+    }
+    
+    function loadStatesForCountry(countryName) {
+        if (!countryName || countryName === 'Other') {
+            stateSelect.innerHTML = '<option value="">-- Select State --</option>';
+            stateSelect.disabled = false;
+            return;
+        }
+        
+        stateSelect.innerHTML = '<option value="">Loading states...</option>';
+        stateSelect.disabled = true;
+        
+        // Get country ID first
+        getCountryId(countryName, function(countryId) {
+            if (!countryId) {
+                // No country ID found or not India, show empty state dropdown
+                stateSelect.innerHTML = '<option value="">-- Select State --</option>';
+                stateSelect.disabled = false;
+                return;
+            }
+            
+            // Fetch states using AJAX
+            const formData = new FormData();
+            formData.append('country_id', countryId);
+            formData.append('_token', '{{ csrf_token() }}');
+            
+            fetch('{{ route("get.states") }}', {
+                method: 'POST',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                },
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                stateSelect.innerHTML = '<option value="">-- Select State --</option>';
+                if (data && Array.isArray(data) && data.length > 0) {
+                    data.forEach(state => {
+                        const option = document.createElement('option');
+                        // Store state name (not ID) to match the form requirement
+                        option.value = state.name;
+                        option.textContent = state.name;
+                        stateSelect.appendChild(option);
+                    });
+                }
+                stateSelect.disabled = false;
+                
+                // Restore old value if exists
+                const oldState = '{{ old("state") }}';
+                if (oldState) {
+                    stateSelect.value = oldState;
+                }
+            })
+            .catch(error => {
+                console.error('Error loading states:', error);
+                stateSelect.innerHTML = '<option value="">-- Select State --</option>';
+                stateSelect.disabled = false;
+            });
+        });
+    }
+    
+    if (countrySelect && stateSelect) {
+        // Load states on country change
+        countrySelect.addEventListener('change', function() {
+            loadStatesForCountry(this.value);
+        });
+        
+        // Load states on page load if country is pre-selected (India)
+        const initialCountry = countrySelect.value;
+        if (initialCountry && initialCountry === 'India') {
+            loadStatesForCountry(initialCountry);
+        }
+    }
 </script>
 @endpush
