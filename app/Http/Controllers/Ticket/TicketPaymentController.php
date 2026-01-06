@@ -230,9 +230,11 @@ class TicketPaymentController extends Controller
     /**
      * Show payment page (if payment fails or user cancels)
      */
-    public function show($orderId)
+    public function show($token)
     {
-        $order = TicketOrder::with(['registration.event', 'items.ticketType'])->findOrFail($orderId);
+        $order = TicketOrder::where('secure_token', $token)
+            ->with(['registration.event', 'items.ticketType'])
+            ->firstOrFail();
         
         return view('tickets.payment.show', compact('order'));
     }
@@ -240,9 +242,11 @@ class TicketPaymentController extends Controller
     /**
      * Payment callback from gateway
      */
-    public function callback(Request $request, $orderId)
+    public function callback(Request $request, $token)
     {
-        $order = TicketOrder::with(['registration.event'])->findOrFail($orderId);
+        $order = TicketOrder::where('secure_token', $token)
+            ->with(['registration.event'])
+            ->firstOrFail();
         
         // Handle CCAvenue response
         $encResponse = $request->input('encResp');
@@ -262,37 +266,38 @@ class TicketPaymentController extends Controller
                     
                     return redirect()->route('tickets.confirmation', [
                         'eventSlug' => $order->registration->event->slug ?? $order->registration->event->id,
-                        'orderId' => $order->id
+                        'token' => $order->secure_token
                     ])->with('success', 'Payment successful!');
                 } else {
                     // Payment failed
                     $failureMessage = $responseArray['failure_message'] ?? 'Payment failed. Please try again.';
-                    return redirect()->route('tickets.payment', $order->id)
+                    return redirect()->route('tickets.payment', $order->secure_token)
                         ->with('error', $failureMessage);
                 }
             } catch (\Exception $e) {
                 Log::error('Payment callback error: ' . $e->getMessage(), [
                     'order_id' => $order->id,
+                    'token' => $order->secure_token,
                     'trace' => $e->getTraceAsString()
                 ]);
                 
-                return redirect()->route('tickets.payment', $order->id)
+                return redirect()->route('tickets.payment', $order->secure_token)
                     ->with('error', 'Error processing payment response. Please contact support.');
             }
         }
 
-        return redirect()->route('tickets.payment', $order->id)
+        return redirect()->route('tickets.payment', $order->secure_token)
             ->with('error', 'Invalid payment response.');
     }
 
     /**
      * Show confirmation page
      */
-    public function confirmation($eventSlug, $orderId)
+    public function confirmation($eventSlug, $token)
     {
         $event = Events::where('slug', $eventSlug)->orWhere('id', $eventSlug)->firstOrFail();
         $order = TicketOrder::with(['registration.contact', 'items.ticketType', 'registration.registrationCategory'])
-            ->where('id', $orderId)
+            ->where('secure_token', $token)
             ->whereHas('registration', function($q) use ($event) {
                 $q->where('event_id', $event->id);
             })
@@ -304,13 +309,15 @@ class TicketPaymentController extends Controller
     /**
      * Process payment - Initiate payment gateway and redirect
      */
-    public function process(Request $request, $orderId)
+    public function process(Request $request, $token)
     {
-        $order = TicketOrder::with(['registration.event', 'registration.contact', 'items.ticketType'])->findOrFail($orderId);
+        $order = TicketOrder::where('secure_token', $token)
+            ->with(['registration.event', 'registration.contact', 'items.ticketType'])
+            ->firstOrFail();
         
         // Only allow processing if order is pending
         if ($order->status !== 'pending') {
-            return redirect()->route('tickets.payment', $order->id)
+            return redirect()->route('tickets.payment', $order->secure_token)
                 ->with('error', 'This order has already been processed.');
         }
 
@@ -327,8 +334,8 @@ class TicketPaymentController extends Controller
                 'order_id' => $order->order_no . '_' . time(),
                 'amount' => number_format($order->total, 2, '.', ''),
                 'currency' => 'INR',
-                'redirect_url' => route('tickets.payment.callback', $order->id),
-                'cancel_url' => route('tickets.payment', $order->id),
+                'redirect_url' => route('tickets.payment.callback', $order->secure_token),
+                'cancel_url' => route('tickets.payment', $order->secure_token),
                 'billing_name' => $billingName,
                 'billing_address' => $registration->company_name,
                 'billing_city' => $registration->company_city ?? '',
@@ -357,20 +364,24 @@ class TicketPaymentController extends Controller
                 $errorMessage = $result['error'] ?? $result['message'] ?? 'Unknown error';
                 Log::error('Ticket Payment - Gateway initiation failed', [
                     'order_id' => $order->id,
+                    'order_no' => $order->order_no,
                     'error' => $errorMessage,
+                    'result' => $result,
+                    'payment_data' => $paymentData,
                 ]);
                 
-                return redirect()->route('tickets.payment', $order->id)
+                return redirect()->route('tickets.payment', $order->secure_token)
                     ->with('error', 'Failed to initiate payment: ' . $errorMessage);
             }
 
         } catch (\Exception $e) {
             Log::error('Ticket payment process error: ' . $e->getMessage(), [
                 'order_id' => $order->id,
+                'token' => $order->secure_token,
                 'trace' => $e->getTraceAsString()
             ]);
 
-            return redirect()->route('tickets.payment', $order->id)
+            return redirect()->route('tickets.payment', $order->secure_token)
                 ->with('error', 'An error occurred while processing your payment. Please try again.');
         }
     }

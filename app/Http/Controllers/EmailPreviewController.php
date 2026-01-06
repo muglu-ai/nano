@@ -316,24 +316,25 @@ class EmailPreviewController extends Controller
     }
 
     /**
-     * Preview ticket registration email by TIN (order number)
+     * Preview ticket registration email by TIN (order number) or secure token
      */
-    public function showTicketRegistrationEmail($tin)
+    public function showTicketRegistrationEmail($identifier)
     {
-        // Find order by TIN (order_no)
-        $order = TicketOrder::where('order_no', $tin)
+        // Try to find by secure token first, then by TIN (order_no)
+        $order = TicketOrder::where('secure_token', $identifier)
+            ->orWhere('order_no', $identifier)
             ->with(['registration.contact', 'items.ticketType', 'registration.delegates', 'registration.registrationCategory'])
             ->first();
 
         if (!$order) {
-            abort(404, 'Order not found with TIN: ' . $tin);
+            abort(404, 'Order not found with identifier: ' . $identifier);
         }
 
         // Get event
         $event = Events::find($order->registration->event_id);
         
         if (!$event) {
-            abort(404, 'Event not found for order: ' . $tin);
+            abort(404, 'Event not found for order: ' . $identifier);
         }
 
         // Return the email view

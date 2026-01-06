@@ -14,6 +14,7 @@ class TicketOrder extends Model
     protected $fillable = [
         'registration_id',
         'order_no',
+        'secure_token',
         'subtotal', // Sum of all item subtotals
         'gst_total', // Total GST across all items
         'processing_charge_total', // Total processing charges across all items
@@ -22,6 +23,17 @@ class TicketOrder extends Model
         'total', // Final total: subtotal + gst_total + processing_charge_total - discount_amount
         'status', // 'pending', 'paid', 'cancelled', 'refunded'
     ];
+    
+    protected static function boot()
+    {
+        parent::boot();
+        
+        static::creating(function ($order) {
+            if (empty($order->secure_token)) {
+                $order->secure_token = bin2hex(random_bytes(32));
+            }
+        });
+    }
 
     protected $casts = [
         'subtotal' => 'decimal:2',

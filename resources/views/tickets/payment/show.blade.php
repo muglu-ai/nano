@@ -70,7 +70,7 @@
         </div>
 
         <div class="text-center">
-            <form action="{{ route('tickets.payment.process', $order->id) }}" method="POST">
+            <form action="{{ route('tickets.payment.process', $order->secure_token) }}" method="POST">
                 @csrf
                 <button type="submit" class="btn btn-primary btn-lg">
                     <i class="fas fa-credit-card me-2"></i>

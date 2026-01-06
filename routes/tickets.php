@@ -34,10 +34,10 @@ Route::post('/tickets/{eventSlug}/payment/initiate', [TicketPaymentController::c
 // New payment flow with auto gateway selection (handles Pay Now click)
 Route::get('/tickets/{eventSlug}/payment/{orderNo}', [\App\Http\Controllers\RegistrationPaymentController::class, 'processTicketPayment'])->name('tickets.payment.process');
 Route::get('/tickets/{eventSlug}/payment/{tin}', [TicketPaymentController::class, 'initiateByTin'])->name('tickets.payment.by-tin');
-Route::get('/ticket-payment/{orderId}', [TicketPaymentController::class, 'show'])->name('tickets.payment');
-Route::get('/ticket-payment/{orderId}/callback', [TicketPaymentController::class, 'callback'])->name('tickets.payment.callback');
-Route::post('/ticket-payment/{orderId}/process', [TicketPaymentController::class, 'process'])->name('tickets.payment.process');
-Route::get('/tickets/{eventSlug}/confirmation/{orderId}', [TicketPaymentController::class, 'confirmation'])->name('tickets.confirmation');
+Route::get('/ticket-payment/{token}', [TicketPaymentController::class, 'show'])->name('tickets.payment');
+Route::get('/ticket-payment/{token}/callback', [TicketPaymentController::class, 'callback'])->name('tickets.payment.callback');
+Route::post('/ticket-payment/{token}/process', [TicketPaymentController::class, 'process'])->name('tickets.payment.process.old'); // Old route - kept for backward compatibility
+Route::get('/tickets/{eventSlug}/confirmation/{token}', [TicketPaymentController::class, 'confirmation'])->name('tickets.confirmation');
 Route::post('/ticket-payment/webhook', [TicketPaymentController::class, 'webhook'])->name('tickets.payment.webhook')
     ->withoutMiddleware([\App\Http\Middleware\VerifyCsrfToken::class]);
 

@@ -656,11 +656,17 @@ class RegistrationPaymentController extends Controller
                 ->with(['registration.contact', 'registration.event', 'items.ticketType'])
                 ->firstOrFail();
 
+            // Ensure secure_token exists
+            if (empty($order->secure_token)) {
+                $order->secure_token = bin2hex(random_bytes(32));
+                $order->save();
+            }
+
             // Check if already paid
             if ($order->status === 'paid') {
                 return redirect()->route('tickets.confirmation', [
                     'eventSlug' => $event->slug ?? $event->id,
-                    'orderId' => $order->id
+                    'token' => $order->secure_token ?? $order->id
                 ])->with('info', 'Payment already completed.');
             }
 
@@ -721,6 +727,22 @@ class RegistrationPaymentController extends Controller
             $event = $order->registration->event;
             $eventSlug = $event->slug ?? $event->id;
             
+            // Validate required fields
+            if (empty($billingEmail)) {
+                Log::error('Ticket CCAvenue Payment - Missing billing email', [
+                    'order_id' => $order->id,
+                    'order_no' => $order->order_no,
+                ]);
+                return redirect()->back()->with('error', 'Billing email is required for payment.');
+            }
+
+            if (empty($billingName)) {
+                Log::warning('Ticket CCAvenue Payment - Missing billing name, using company name', [
+                    'order_id' => $order->id,
+                ]);
+                $billingName = $registration->company_name ?? 'Customer';
+            }
+            
             $paymentData = [
                 'order_id' => $orderId,
                 'amount' => number_format($amount, 2, '.', ''),
@@ -737,6 +759,13 @@ class RegistrationPaymentController extends Controller
                 'billing_email' => $billingEmail,
             ];
 
+            Log::info('Ticket CCAvenue Payment - Initiating transaction', [
+                'order_id' => $order->id,
+                'order_no' => $order->order_no,
+                'amount' => $amount,
+                'currency' => $currency,
+            ]);
+
             $result = $this->ccAvenueService->initiateTransaction($paymentData);
 
             if ($result['success']) {
@@ -752,16 +781,30 @@ class RegistrationPaymentController extends Controller
                     'created_at' => now(),
                 ]);
 
+                Log::info('Ticket CCAvenue Payment - Success, redirecting to gateway', [
+                    'order_id' => $order->id,
+                    'payment_url' => $result['payment_url'],
+                ]);
+
                 return redirect($result['payment_url']);
             } else {
-                return redirect()->back()->with('error', 'Failed to initiate payment: ' . ($result['error'] ?? 'Unknown error'));
+                $errorMessage = $result['error'] ?? $result['message'] ?? 'Unknown error';
+                Log::error('Ticket CCAvenue Payment - Gateway initiation failed', [
+                    'order_id' => $order->id,
+                    'order_no' => $order->order_no,
+                    'error' => $errorMessage,
+                    'result' => $result,
+                ]);
+                return redirect()->back()->with('error', 'Failed to initiate payment: ' . $errorMessage);
             }
         } catch (\Exception $e) {
             Log::error('Ticket CCAvenue Payment Error', [
                 'error' => $e->getMessage(),
                 'order_id' => $order->id,
+                'order_no' => $order->order_no ?? null,
+                'trace' => $e->getTraceAsString(),
             ]);
-            return redirect()->back()->with('error', 'An error occurred while initiating payment.');
+            return redirect()->back()->with('error', 'An error occurred while initiating payment: ' . $e->getMessage());
         }
     }
 
@@ -959,7 +1002,7 @@ class RegistrationPaymentController extends Controller
 
                 return redirect()->route('tickets.confirmation', [
                     'eventSlug' => $event->slug ?? $event->id,
-                    'orderId' => $order->id
+                    'token' => $order->secure_token
                 ])->with('success', 'Payment successful!')
                   ->with('payment_details', [
                       'gateway' => 'CCAvenue',
@@ -1076,7 +1119,7 @@ class RegistrationPaymentController extends Controller
 
                 return redirect()->route('tickets.confirmation', [
                     'eventSlug' => $event->slug ?? $event->id,
-                    'orderId' => $order->id
+                    'token' => $order->secure_token
                 ])->with('success', 'Payment successful!')
                   ->with('payment_details', [
                       'gateway' => 'PayPal',

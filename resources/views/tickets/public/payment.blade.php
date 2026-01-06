@@ -307,13 +307,10 @@
 
         <!-- Pay Now Button -->
         <div class="text-center mt-4">
-            <form action="{{ route('tickets.payment.process', $order->id) }}" method="POST" id="paymentForm">
-                @csrf
-                <button type="submit" class="btn btn-pay-now" id="payNowBtn">
-                    <i class="fas fa-credit-card me-2"></i>
-                    Pay Now ₹{{ number_format($order->total, 2) }}
-                </button>
-            </form>
+            <a href="{{ route('tickets.payment.process', ['eventSlug' => $event->slug ?? $event->id, 'orderNo' => $order->order_no]) }}" class="btn btn-pay-now" id="payNowBtn">
+                <i class="fas fa-credit-card me-2"></i>
+                Pay Now ₹{{ number_format($order->total, 2) }}
+            </a>
         </div>
     </div>
 </div>
@@ -324,16 +321,16 @@
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <script>
-    document.getElementById('paymentForm')?.addEventListener('submit', function(e) {
+    document.getElementById('payNowBtn')?.addEventListener('click', function(e) {
         e.preventDefault();
         
-        const form = this;
-        const submitBtn = document.getElementById('payNowBtn');
-        const originalBtnText = submitBtn.innerHTML;
+        const btn = this;
+        const originalBtnText = btn.innerHTML;
+        const paymentUrl = btn.href;
         
         // Disable button
-        submitBtn.disabled = true;
-        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Processing...';
+        btn.style.pointerEvents = 'none';
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Processing...';
         
         Swal.fire({
             title: 'Redirecting to Payment Gateway',
@@ -344,8 +341,8 @@
             }
         });
 
-        // Submit the form
-        form.submit();
+        // Redirect to payment gateway
+        window.location.href = paymentUrl;
     });
 </script>
 @endpush
