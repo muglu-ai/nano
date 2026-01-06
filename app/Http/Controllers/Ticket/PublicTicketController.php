@@ -167,12 +167,13 @@ class PublicTicketController extends Controller
         ]);
 
         // Validate delegate count matches delegates array
-        $delegateCount = $validated['delegate_count'];
+        $delegateCount = (int) $validated['delegate_count']; // Cast to integer for comparison
         $delegates = $request->input('delegates', []);
         
         // Log for debugging
         Log::info('Ticket Registration - Delegate Validation', [
             'delegate_count' => $delegateCount,
+            'delegate_count_type' => gettype($delegateCount),
             'delegates_received' => count($delegates),
             'delegates_data' => $delegates,
             'all_request_data' => $request->except(['_token', 'g-recaptcha-response']),
@@ -183,6 +184,9 @@ class PublicTicketController extends Controller
             return !empty($delegate['first_name']) || !empty($delegate['last_name']) || !empty($delegate['email']);
         });
         
+        // Re-index array to ensure sequential keys (0, 1, 2, ...)
+        $delegates = array_values($delegates);
+        
         // Log after filtering
         Log::info('Ticket Registration - After Filtering', [
             'delegates_count_after_filter' => count($delegates),
@@ -190,10 +194,13 @@ class PublicTicketController extends Controller
         ]);
         
         // Always validate delegates (even for count = 1)
-        if (count($delegates) !== $delegateCount) {
+        $delegatesCount = count($delegates);
+        if ($delegatesCount !== $delegateCount) {
             Log::warning('Ticket Registration - Delegate Count Mismatch', [
                 'expected_count' => $delegateCount,
-                'received_count' => count($delegates),
+                'expected_count_type' => gettype($delegateCount),
+                'received_count' => $delegatesCount,
+                'received_count_type' => gettype($delegatesCount),
                 'delegates_data' => $delegates,
             ]);
             
@@ -201,6 +208,11 @@ class PublicTicketController extends Controller
                 ->withInput()
                 ->withErrors(['delegate_count' => 'Please provide information for all ' . $delegateCount . ' delegate(s).']);
         }
+        
+        Log::info('Ticket Registration - Delegate Validation Passed', [
+            'delegate_count' => $delegateCount,
+            'delegates_count' => $delegatesCount,
+        ]);
         
         // Validate all delegate emails are unique
         $emails = array_column($delegates, 'email');

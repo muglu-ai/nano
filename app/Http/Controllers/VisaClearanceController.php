@@ -4,15 +4,28 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use App\Models\Events;
+use App\Models\Country;
 
 class VisaClearanceController extends Controller
 {
     /**
      * Show the Visa Clearance Registration form (public).
      */
-    public function showForm(Request $request)
+    public function showForm(Request $request, $eventSlug = null)
     {
-        return view('visa.clearance-form');
+        $event = null;
+
+        if ($eventSlug) {
+            $event = Events::where('slug', $eventSlug)
+                ->orWhere('id', $eventSlug)
+                ->first();
+        }
+
+        // Get all countries for nationality and country dropdowns
+        $countries = Country::orderBy('name')->get(['id', 'name', 'code']);
+
+        return view('visa.clearance-form', compact('event', 'countries'));
     }
 
     /**
@@ -24,6 +37,8 @@ class VisaClearanceController extends Controller
     public function submit(Request $request)
     {
         $validated = $request->validate([
+            'event_id'                => 'nullable|exists:events,id',
+            'event_year'              => 'nullable|string|max:10',
             'organisation_name'       => 'required|string|max:255',
             'designation'             => 'required|string|max:255',
             'passport_name'           => 'required|string|max:255',
@@ -50,6 +65,8 @@ class VisaClearanceController extends Controller
 
         // TODO: Persist and/or email the data if required.
         Log::info('Visa Clearance form submitted', [
+            'event_id' => $validated['event_id'] ?? null,
+            'event_year' => $validated['event_year'] ?? null,
             'email' => $validated['email'] ?? null,
         ]);
 

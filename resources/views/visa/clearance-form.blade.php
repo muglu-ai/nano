@@ -50,6 +50,8 @@
 
         <form action="{{ route('visa.clearance.submit') }}" method="POST" id="visaClearanceForm">
             @csrf
+            <input type="hidden" name="event_id" value="{{ $event->id ?? '' }}">
+            <input type="hidden" name="event_year" value="{{ $event->event_year ?? date('Y') }}">
 
             <!-- Delegate Details -->
             <div class="form-section">
@@ -96,9 +98,17 @@
                     </div>
                     <div class="col-md-4 mb-3">
                         <label class="form-label">Nationality <span class="required">*</span></label>
-                        <input type="text" name="nationality" class="form-control"
-                               placeholder="e.g. United States"
-                               value="{{ old('nationality') }}" required>
+                        <select name="nationality" id="nationality" class="form-select" required>
+                            <option value="">-- Select Nationality --</option>
+                            @foreach($countries ?? [] as $country)
+                                <option value="{{ $country->name }}" {{ old('nationality') == $country->name ? 'selected' : '' }}>
+                                    {{ $country->name }}
+                                </option>
+                            @endforeach
+                        </select>
+                        @error('nationality')
+                            <div class="error-message">{{ $message }}</div>
+                        @enderror
                     </div>
                 </div>
             </div>
@@ -197,16 +207,32 @@
                         <label class="form-label">City <span class="required">*</span></label>
                         <input type="text" name="city" class="form-control"
                                value="{{ old('city') }}" required>
+                        @error('city')
+                            <div class="error-message">{{ $message }}</div>
+                        @enderror
                     </div>
                     <div class="col-md-4 mb-3">
                         <label class="form-label">State <span class="required">*</span></label>
-                        <input type="text" name="state" class="form-control"
-                               value="{{ old('state') }}" required>
+                        <select name="state" id="state" class="form-select" required>
+                            <option value="">-- Select State --</option>
+                        </select>
+                        @error('state')
+                            <div class="error-message">{{ $message }}</div>
+                        @enderror
                     </div>
                     <div class="col-md-4 mb-3">
                         <label class="form-label">Country <span class="required">*</span></label>
-                        <input type="text" name="country" class="form-control"
-                               value="{{ old('country') }}" required>
+                        <select name="country" id="country" class="form-select" required>
+                            <option value="">-- Select Country --</option>
+                            @foreach($countries ?? [] as $country)
+                                <option value="{{ $country->name }}" {{ old('country') == $country->name ? 'selected' : '' }}>
+                                    {{ $country->name }}
+                                </option>
+                            @endforeach
+                        </select>
+                        @error('country')
+                            <div class="error-message">{{ $message }}</div>
+                        @enderror
                     </div>
                 </div>
 
@@ -273,21 +299,91 @@
     // Simple progress bar update
     const formVisa = document.getElementById('visaClearanceForm');
     function updateProgressVisa() {
-        const inputs = formVisa.querySelectorAll('input[required]');
+        const inputs = formVisa.querySelectorAll('input[required], select[required]');
         let filled = 0;
         inputs.forEach(input => {
-            if (input.value.trim() !== '') {
+            if (input.value && input.value.trim() !== '' && input.value !== '-- Select Country --' && input.value !== '-- Select State --' && input.value !== '-- Select Nationality --') {
                 filled++;
             }
         });
         const progress = (filled / inputs.length) * 100;
         document.getElementById('progressFill').style.width = progress + '%';
     }
-    formVisa.querySelectorAll('input').forEach(el => {
+    formVisa.querySelectorAll('input, select').forEach(el => {
         el.addEventListener('input', updateProgressVisa);
         el.addEventListener('change', updateProgressVisa);
     });
     updateProgressVisa();
+
+    // Load states based on country selection using GeoController API (similar to enquiry form)
+    const countrySelect = document.getElementById('country');
+    const stateSelect = document.getElementById('state');
+    
+    function loadStatesForCountry(countryName) {
+        if (!countryName || countryName === '' || countryName === '-- Select Country --') {
+            stateSelect.innerHTML = '<option value="">-- Select State --</option>';
+            stateSelect.disabled = false;
+            return;
+        }
+        
+        stateSelect.innerHTML = '<option value="">Loading states...</option>';
+        stateSelect.disabled = true;
+        
+        // Use the GeoController API route: /api/states/{country}
+        // GeoController handles country names, codes, or IDs automatically
+        const countryParam = encodeURIComponent(countryName);
+        fetch(`{{ url('/api/states') }}/${countryParam}`, {
+            method: 'GET',
+            headers: {
+                'Accept': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Failed to fetch states');
+            }
+            return response.json();
+        })
+        .then(data => {
+            stateSelect.innerHTML = '<option value="">-- Select State --</option>';
+            if (data && Array.isArray(data) && data.length > 0) {
+                data.forEach(state => {
+                    const option = document.createElement('option');
+                    // Store state name (not ID) to match the form requirement
+                    const stateName = state.name || state.state_name || state;
+                    option.value = stateName;
+                    option.textContent = stateName;
+                    stateSelect.appendChild(option);
+                });
+            }
+            stateSelect.disabled = false;
+            
+            // Restore old value if exists
+            const oldState = '{{ old("state") }}';
+            if (oldState) {
+                stateSelect.value = oldState;
+            }
+        })
+        .catch(error => {
+            console.error('Error loading states:', error);
+            stateSelect.innerHTML = '<option value="">-- Select State --</option>';
+            stateSelect.disabled = false;
+        });
+    }
+    
+    if (countrySelect && stateSelect) {
+        // Load states on country change
+        countrySelect.addEventListener('change', function() {
+            loadStatesForCountry(this.value);
+        });
+        
+        // Load states on page load if country is pre-selected
+        const initialCountry = countrySelect.value;
+        if (initialCountry && initialCountry !== '' && initialCountry !== '-- Select Country --') {
+            loadStatesForCountry(initialCountry);
+        }
+    }
 </script>
 @endpush
 

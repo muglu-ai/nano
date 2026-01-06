@@ -1100,6 +1100,7 @@ Route::post('/enquiry', [PublicEnquiryController::class, 'submit'])->name('enqui
 
 // Visa Clearance Registration (public, similar layout as enquiry form)
 Route::get('/visa-clearance', [VisaClearanceController::class, 'showForm'])->name('visa.clearance.form');
+Route::get('/visa-clearance/{eventSlug}', [VisaClearanceController::class, 'showForm'])->name('visa.clearance.form.event');
 Route::post('/visa-clearance', [VisaClearanceController::class, 'submit'])->name('visa.clearance.submit');
 
 // Startup Zone Registration Routes

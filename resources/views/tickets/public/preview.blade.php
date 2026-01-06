@@ -69,6 +69,29 @@
         margin-top: 1.5rem;
     }
 
+    .delegates-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 0.5rem;
+    }
+
+    .delegates-table th,
+    .delegates-table td {
+        padding: 0.6rem 0.75rem;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        color: #fff;
+        font-size: 0.95rem;
+    }
+
+    .delegates-table th {
+        background: rgba(255, 255, 255, 0.06);
+        font-weight: 600;
+    }
+
+    .delegates-table tr:last-child td {
+        border-bottom: none;
+    }
+
     .price-row {
         display: flex;
         justify-content: space-between;
@@ -133,26 +156,49 @@
                 <span class="info-value">{{ $ticketType->name }}</span>
             </div>
             <div class="info-row">
-                <span class="info-label">Number of Delegates:</span>
-                <span class="info-value">{{ $quantity }}</span>
-            </div>
-            @if(isset($registrationData['delegates']) && count($registrationData['delegates']) > 0)
-            <div class="info-row">
-                <span class="info-label">Delegates:</span>
-                <span class="info-value">
-                    <ul class="list-unstyled mb-0" style="text-align: right;">
-                        @foreach($registrationData['delegates'] as $delegate)
-                            <li>{{ ($delegate['salutation'] ?? '') }} {{ $delegate['first_name'] }} {{ $delegate['last_name'] }} ({{ $delegate['email'] }})</li>
-                        @endforeach
-                    </ul>
-                </span>
-            </div>
-            @endif
-            <div class="info-row">
                 <span class="info-label">Nationality:</span>
                 <span class="info-value">{{ $registrationData['nationality'] }}</span>
             </div>
         </div>
+
+        <!-- Delegate Details -->
+        @if(isset($registrationData['delegates']) && count($registrationData['delegates']) > 0)
+        <div class="preview-section">
+            <h4 class="section-title">
+                <i class="fas fa-users me-2"></i>
+                Delegate Details
+            </h4>
+            <div class="info-row">
+                <span class="info-label">Number of Delegates:</span>
+                <span class="info-value">{{ $quantity }}</span>
+            </div>
+
+            <div class="table-responsive mt-3">
+                <table class="delegates-table">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Delegate Name</th>
+                            <th>Email</th>
+                            <th>Phone</th>
+                            <th>Job Title</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach($registrationData['delegates'] as $index => $delegate)
+                            <tr>
+                                <td>{{ $loop->iteration }}</td>
+                                <td>{{ $delegate['salutation'] }} {{ $delegate['first_name'] }} {{ $delegate['last_name'] }}</td>
+                                <td>{{ $delegate['email'] }}</td>
+                                <td>{{ $delegate['phone'] ?? '-' }}</td>
+                                <td>{{ $delegate['job_title'] ?? '-' }}</td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        @endif
 
         <!-- Organisation Information -->
         <div class="preview-section">
@@ -278,10 +324,10 @@
                 <i class="fas fa-arrow-left me-2"></i>
                 Edit Registration
             </a>
-            <form action="{{ route('tickets.payment.initiate', $event->slug ?? $event->id) }}" method="POST" id="paymentForm">
+            <form action="{{ route('tickets.payment.initiate', $event->slug ?? $event->id) }}" method="POST" id="proceedToPaymentForm">
                 @csrf
                 <button type="submit" class="btn btn-primary btn-lg">
-                    <i class="fas fa-credit-card me-2"></i>
+                    <i class="fas fa-arrow-right me-2"></i>
                     Proceed to Payment
                 </button>
             </form>
@@ -295,12 +341,12 @@
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <script>
-    document.getElementById('paymentForm')?.addEventListener('submit', function(e) {
+    document.getElementById('proceedToPaymentForm')?.addEventListener('submit', function(e) {
         e.preventDefault();
         
         Swal.fire({
-            title: 'Processing...',
-            text: 'Please wait while we prepare your payment.',
+            title: 'Creating Order...',
+            text: 'Please wait while we create your order.',
             allowOutsideClick: false,
             didOpen: () => {
                 Swal.showLoading();

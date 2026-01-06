@@ -26,7 +26,7 @@ class TicketPaymentController extends Controller
     }
 
     /**
-     * Initiate payment - Create order and redirect to payment gateway
+     * Initiate payment - Create order and show payment page
      */
     public function initiate(Request $request, $eventSlug)
     {
@@ -34,8 +34,21 @@ class TicketPaymentController extends Controller
         
         // Get registration data from session
         $registrationData = session('ticket_registration_data');
+
+        // Log for debugging when initiating payment
+        Log::info('Ticket Payment - Initiate called', [
+            'event_id' => $event->id,
+            'event_slug' => $event->slug,
+            'has_registration_data' => $registrationData !== null,
+            'registration_event_id' => $registrationData['event_id'] ?? null,
+            'registration_data_keys' => $registrationData ? array_keys($registrationData) : [],
+        ]);
         
         if (!$registrationData || $registrationData['event_id'] != $event->id) {
+            Log::warning('Ticket Payment - Missing or mismatched registration data', [
+                'event_id' => $event->id,
+                'registration_event_id' => $registrationData['event_id'] ?? null,
+            ]);
             return redirect()->route('tickets.register', $event->slug ?? $event->id)
                 ->with('error', 'Please complete the registration form first.');
         }
@@ -46,6 +59,7 @@ class TicketPaymentController extends Controller
             // Load ticket type
             $ticketType = TicketType::where('id', $registrationData['ticket_type_id'])
                 ->where('event_id', $event->id)
+                ->with(['category', 'subcategory'])
                 ->firstOrFail();
 
             // Calculate pricing
@@ -171,44 +185,18 @@ class TicketPaymentController extends Controller
             }
 
             DB::commit();
-
-            // Clear session data
+            
+            // Clear session data after order creation
             session()->forget('ticket_registration_data');
 
-            // Prepare payment gateway data (use contact info if GST required, else use first delegate)
-            $billingName = $registrationData['contact_name'] ?? ($registrationData['delegates'][0]['first_name'] . ' ' . ($registrationData['delegates'][0]['last_name'] ?? ''));
-            $billingEmail = $registrationData['contact_email'] ?? $registrationData['delegates'][0]['email'];
-            $billingPhone = $registrationData['contact_phone'] ?? ($registrationData['delegates'][0]['phone'] ?? $registrationData['phone']);
+            // Load registration category for display
+            $registrationCategory = TicketRegistrationCategory::find($registration->registration_category_id);
             
-            $paymentData = [
-                'order_id' => $order->order_no . '_' . time(),
-                'amount' => number_format($total, 2, '.', ''),
-                'currency' => 'INR',
-                'redirect_url' => route('tickets.payment.callback', $order->id),
-                'cancel_url' => route('tickets.payment', $order->id),
-                'billing_name' => $billingName,
-                'billing_address' => $registrationData['organisation_name'],
-                'billing_city' => $registrationData['city'] ?? '',
-                'billing_state' => $registrationData['state'] ?? '',
-                'billing_zip' => '',
-                'billing_country' => $registrationData['country'],
-                'billing_tel' => $billingPhone,
-                'billing_email' => $billingEmail,
-            ];
+            // Reload order with relationships
+            $order->load(['registration.contact', 'items.ticketType', 'registration.delegates', 'registration.registrationCategory']);
 
-            // Initiate payment gateway
-            $result = $this->ccAvenueService->initiateTransaction($paymentData);
-
-            if ($result['success']) {
-                // Store payment gateway order ID in session for callback
-                session(['payment_order_id' => $paymentData['order_id'], 'ticket_order_id' => $order->id]);
-                
-                // Redirect to payment gateway
-                return redirect($result['payment_url']);
-            } else {
-                return redirect()->route('tickets.preview', $event->slug ?? $event->id)
-                    ->with('error', 'Failed to initiate payment: ' . ($result['message'] ?? 'Unknown error'));
-            }
+            // Show payment page with all order details
+            return view('tickets.public.payment', compact('event', 'order', 'ticketType', 'registrationCategory', 'registrationData'));
 
         } catch (\Exception $e) {
             DB::rollBack();
@@ -298,14 +286,77 @@ class TicketPaymentController extends Controller
     }
 
     /**
-     * Process payment
+     * Process payment - Initiate payment gateway and redirect
      */
     public function process(Request $request, $orderId)
     {
-        // This can be used for retry payment
-        $order = TicketOrder::with(['registration.event'])->findOrFail($orderId);
+        $order = TicketOrder::with(['registration.event', 'registration.contact', 'items.ticketType'])->findOrFail($orderId);
         
-        return $this->initiate($request, $order->registration->event->slug ?? $order->registration->event->id);
+        // Only allow processing if order is pending
+        if ($order->status !== 'pending') {
+            return redirect()->route('tickets.payment', $order->id)
+                ->with('error', 'This order has already been processed.');
+        }
+
+        try {
+            $event = $order->registration->event;
+            $registration = $order->registration;
+            
+            // Prepare payment gateway data
+            $billingName = $registration->contact->name ?? '';
+            $billingEmail = $registration->contact->email ?? '';
+            $billingPhone = $registration->contact->phone ?? $registration->company_phone;
+            
+            $paymentData = [
+                'order_id' => $order->order_no . '_' . time(),
+                'amount' => number_format($order->total, 2, '.', ''),
+                'currency' => 'INR',
+                'redirect_url' => route('tickets.payment.callback', $order->id),
+                'cancel_url' => route('tickets.payment', $order->id),
+                'billing_name' => $billingName,
+                'billing_address' => $registration->company_name,
+                'billing_city' => $registration->company_city ?? '',
+                'billing_state' => $registration->company_state ?? '',
+                'billing_zip' => '',
+                'billing_country' => $registration->company_country,
+                'billing_tel' => $billingPhone,
+                'billing_email' => $billingEmail,
+            ];
+
+            // Initiate payment gateway
+            $result = $this->ccAvenueService->initiateTransaction($paymentData);
+
+            if ($result['success']) {
+                // Store payment gateway order ID in session for callback
+                session(['payment_order_id' => $paymentData['order_id'], 'ticket_order_id' => $order->id]);
+                
+                Log::info('Ticket Payment - Redirecting to gateway', [
+                    'order_id' => $order->id,
+                    'payment_order_id' => $paymentData['order_id'],
+                ]);
+                
+                // Redirect to payment gateway
+                return redirect($result['payment_url']);
+            } else {
+                $errorMessage = $result['error'] ?? $result['message'] ?? 'Unknown error';
+                Log::error('Ticket Payment - Gateway initiation failed', [
+                    'order_id' => $order->id,
+                    'error' => $errorMessage,
+                ]);
+                
+                return redirect()->route('tickets.payment', $order->id)
+                    ->with('error', 'Failed to initiate payment: ' . $errorMessage);
+            }
+
+        } catch (\Exception $e) {
+            Log::error('Ticket payment process error: ' . $e->getMessage(), [
+                'order_id' => $order->id,
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return redirect()->route('tickets.payment', $order->id)
+                ->with('error', 'An error occurred while processing your payment. Please try again.');
+        }
     }
 
     /**
