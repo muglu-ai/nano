@@ -17,12 +17,15 @@ class CcAvenueService
     }
 
     /**
-     * Get API URL based on environment
+     * Get Hosted Payment Page URL based on environment
      */
-    public function getApiUrl()
+    public function getHostedPaymentUrl()
     {
         $env = config('constants.ccavenue.environment', 'production');
-        return config("constants.ccavenue.{$env}.api_url", 'https://api.ccavenue.com/apis/servlet/DoWebTrans');
+        if ($env === 'test') {
+            return 'https://test.ccavenue.com/transaction/transaction.do?command=initiateTransaction';
+        }
+        return 'https://secure.ccavenue.com/transaction/transaction.do?command=initiateTransaction';
     }
 
     /**
@@ -62,16 +65,16 @@ class CcAvenueService
     }
 
     /**
-     * Initiate transaction via CCAvenue API
+     * Initiate transaction using hosted payment page (same approach as PaymentGatewayController)
+     * Returns encrypted data that should be used in a form POST to CCAvenue hosted page
      * 
      * @param array $orderData Order data including merchant_id, order_id, amount, etc.
-     * @return array Response with payment URL or error
+     * @return array Response with encrypted_data, access_code, and hosted_payment_url
      */
     public function initiateTransaction($orderData)
     {
         try {
             $credentials = $this->getCredentials();
-            $apiUrl = $this->getApiUrl();
 
             // Validate credentials
             if (empty($credentials['merchant_id']) || empty($credentials['access_code']) || empty($credentials['working_key'])) {
@@ -113,178 +116,24 @@ class CcAvenueService
                 $requestData['billing_email'] = $orderData['billing_email'] ?? '';
             }
 
-            // Build query string and encrypt
+            // Build query string and encrypt (same as PaymentGatewayController)
             $queryString = http_build_query($requestData);
             $encryptedData = $this->encrypt($queryString, $credentials['working_key']);
 
-            // Prepare API request
-            $apiRequest = [
-                'enc_request' => $encryptedData,
-                'access_code' => $credentials['access_code'],
-                'command' => 'initiateTransaction',
-                'request_type' => 'JSON',
-                'response_type' => 'JSON',
-                'version' => '1.1',
-            ];
-
-            // Log request details (without sensitive data)
-            Log::info('CCAvenue API Request', [
-                'api_url' => $apiUrl,
+            Log::info('CCAvenue - Transaction prepared', [
                 'order_id' => $orderData['order_id'],
                 'amount' => $orderData['amount'],
                 'currency' => $orderData['currency'] ?? 'INR',
-                'has_access_code' => !empty($credentials['access_code']),
-                'has_working_key' => !empty($credentials['working_key']),
             ]);
 
-            // Make API call
-            $response = Http::timeout(30)
-                ->asForm()
-                ->post($apiUrl, $apiRequest);
-
-            // Log raw response
-            $responseBody = $response->body();
-            Log::info('CCAvenue API Raw Response', [
-                'status_code' => $response->status(),
-                'successful' => $response->successful(),
-                'body_length' => strlen($responseBody),
-                'body_preview' => substr($responseBody, 0, 500), // First 500 chars
-            ]);
-
-            if ($response->successful()) {
-                // Try to parse as JSON
-                try {
-                    $responseData = $response->json();
-                } catch (\Exception $e) {
-                    Log::error('CCAvenue API - Failed to parse JSON response', [
-                        'error' => $e->getMessage(),
-                        'body' => $responseBody,
-                    ]);
-                    return [
-                        'success' => false,
-                        'error' => 'Invalid response format from payment gateway: ' . $e->getMessage(),
-                    ];
-                }
-                
-                // Check if response data is valid
-                if (empty($responseData)) {
-                    Log::error('CCAvenue API - Empty response data', [
-                        'status_code' => $response->status(),
-                        'body' => $responseBody,
-                    ]);
-                    return [
-                        'success' => false,
-                        'error' => 'Empty response from payment gateway',
-                    ];
-                }
-                
-                // Log full response for debugging
-                Log::info('CCAvenue API Response', [
-                    'status' => $responseData['status'] ?? null,
-                    'has_enc_response' => isset($responseData['enc_response']),
-                    'enc_error_code' => $responseData['enc_error_code'] ?? null,
-                    'full_response' => $responseData,
-                ]);
-                
-                // Check if API call was successful
-                if (isset($responseData['status']) && $responseData['status'] == '0') {
-                    // Decrypt response
-                    try {
-                        $decryptedResponse = $this->decrypt($responseData['enc_response'], $credentials['working_key']);
-                        $responseArray = json_decode($decryptedResponse, true);
-                        
-                        if (isset($responseArray['payment_url'])) {
-                            return [
-                                'success' => true,
-                                'payment_url' => $responseArray['payment_url'],
-                                'order_id' => $orderData['order_id'],
-                                'data' => $responseArray,
-                            ];
-                        } else {
-                            Log::error('CCAvenue API - Missing payment_url in response', [
-                                'response_array' => $responseArray,
-                            ]);
-                            return [
-                                'success' => false,
-                                'error' => 'Payment URL not received from gateway',
-                            ];
-                        }
-                    } catch (\Exception $e) {
-                        Log::error('CCAvenue API - Decryption failed', [
-                            'error' => $e->getMessage(),
-                        ]);
-                        return [
-                            'success' => false,
-                            'error' => 'Failed to decrypt gateway response: ' . $e->getMessage(),
-                        ];
-                    }
-                }
-                
-                // Handle error response
-                // Try to decrypt error response if it's encrypted
-                $errorMessage = 'Unknown error';
-                
-                if (isset($responseData['enc_response']) && !empty($responseData['enc_response'])) {
-                    try {
-                        // Try to decrypt the error response
-                        $decryptedError = $this->decrypt($responseData['enc_response'], $credentials['working_key']);
-                        $errorMessage = $decryptedError;
-                    } catch (\Exception $e) {
-                        // If decryption fails, use the raw response
-                        $errorMessage = $responseData['enc_response'];
-                    }
-                } elseif (isset($responseData['message'])) {
-                    $errorMessage = $responseData['message'];
-                } elseif (isset($responseData['error'])) {
-                    $errorMessage = $responseData['error'];
-                }
-                
-                if (isset($responseData['enc_error_code'])) {
-                    $errorMessage = "Error Code: {$responseData['enc_error_code']} - {$errorMessage}";
-                }
-                
-                Log::error('CCAvenue API - Error response', [
-                    'status' => $responseData['status'] ?? null,
-                    'error_code' => $responseData['enc_error_code'] ?? null,
-                    'error_message' => $errorMessage,
-                    'has_enc_response' => isset($responseData['enc_response']),
-                    'enc_response_length' => isset($responseData['enc_response']) ? strlen($responseData['enc_response']) : 0,
-                    'full_response' => $responseData,
-                ]);
-                
-                return [
-                    'success' => false,
-                    'error' => $errorMessage,
-                ];
-            }
-
-            $errorBody = $response->body();
-            $errorMessage = 'API request failed: HTTP ' . $response->status();
-            
-            // Try to parse error if it's JSON
-            try {
-                $errorData = $response->json();
-                if (isset($errorData['message'])) {
-                    $errorMessage .= ' - ' . $errorData['message'];
-                } elseif (isset($errorData['error'])) {
-                    $errorMessage .= ' - ' . $errorData['error'];
-                }
-            } catch (\Exception $e) {
-                // If not JSON, use body as is
-                if (!empty($errorBody)) {
-                    $errorMessage .= ' - ' . substr($errorBody, 0, 200); // Limit length
-                }
-            }
-
-            Log::error('CCAvenue API - HTTP request failed', [
-                'status' => $response->status(),
-                'body' => $errorBody,
-                'error_message' => $errorMessage,
-            ]);
-
+            // Return encrypted data and access code for form submission
+            // The caller should use this to create a form POST to the hosted payment page
             return [
-                'success' => false,
-                'error' => $errorMessage,
+                'success' => true,
+                'encrypted_data' => $encryptedData,
+                'access_code' => $credentials['access_code'],
+                'hosted_payment_url' => $this->getHostedPaymentUrl(),
+                'order_id' => $orderData['order_id'],
             ];
 
         } catch (\Exception $e) {

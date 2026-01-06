@@ -781,12 +781,16 @@ class RegistrationPaymentController extends Controller
                     'created_at' => now(),
                 ]);
 
-                Log::info('Ticket CCAvenue Payment - Success, redirecting to gateway', [
+                Log::info('Ticket CCAvenue Payment - Success, showing payment form', [
                     'order_id' => $order->id,
-                    'payment_url' => $result['payment_url'],
+                    'order_no' => $order->order_no,
                 ]);
 
-                return redirect($result['payment_url']);
+                // Return view with form that auto-submits to CCAvenue (same as PaymentGatewayController)
+                return view('pgway.ccavenue', [
+                    'encryptedData' => $result['encrypted_data'],
+                    'access_code' => $result['access_code']
+                ]);
             } else {
                 $errorMessage = $result['error'] ?? $result['message'] ?? 'Unknown error';
                 Log::error('Ticket CCAvenue Payment - Gateway initiation failed', [

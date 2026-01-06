@@ -353,13 +353,16 @@ class TicketPaymentController extends Controller
                 // Store payment gateway order ID in session for callback
                 session(['payment_order_id' => $paymentData['order_id'], 'ticket_order_id' => $order->id]);
                 
-                Log::info('Ticket Payment - Redirecting to gateway', [
+                Log::info('Ticket Payment - Showing payment form', [
                     'order_id' => $order->id,
                     'payment_order_id' => $paymentData['order_id'],
                 ]);
                 
-                // Redirect to payment gateway
-                return redirect($result['payment_url']);
+                // Return view with form that auto-submits to CCAvenue (same as PaymentGatewayController)
+                return view('pgway.ccavenue', [
+                    'encryptedData' => $result['encrypted_data'],
+                    'access_code' => $result['access_code']
+                ]);
             } else {
                 $errorMessage = $result['error'] ?? $result['message'] ?? 'Unknown error';
                 Log::error('Ticket Payment - Gateway initiation failed', [
