@@ -1099,6 +1099,7 @@ Route::get('/enquiry/{eventSlug}', [PublicEnquiryController::class, 'showForm'])
 Route::post('/enquiry', [PublicEnquiryController::class, 'submit'])->name('enquiry.submit');
 
 // Visa Clearance Registration (public, similar layout as enquiry form)
+Route::get('/visa-clearance/thankyou', [VisaClearanceController::class, 'thankyou'])->name('visa.clearance.thankyou');
 Route::get('/visa-clearance', [VisaClearanceController::class, 'showForm'])->name('visa.clearance.form');
 Route::get('/visa-clearance/{eventSlug}', [VisaClearanceController::class, 'showForm'])->name('visa.clearance.form.event');
 Route::post('/visa-clearance', [VisaClearanceController::class, 'submit'])->name('visa.clearance.submit');

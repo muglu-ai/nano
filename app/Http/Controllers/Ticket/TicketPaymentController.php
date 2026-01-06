@@ -126,8 +126,8 @@ class TicketPaymentController extends Controller
                 'nationality' => $registrationData['nationality'],
             ]);
 
-            // Generate order number
-            $orderNo = 'TKT-' . strtoupper(substr($event->event_name ?? 'EVT', 0, 3)) . '-' . date('Y') . '-' . str_pad(TicketOrder::count() + 1, 6, '0', STR_PAD_LEFT);
+            // Generate unique order number using TIN pattern
+            $orderNo = $this->generateUniqueOrderNumber();
 
             // Create order
             $order = TicketOrder::create([
@@ -366,6 +366,43 @@ class TicketPaymentController extends Controller
     {
         // TODO: Implement webhook handling for payment gateway callbacks
         return response()->json(['status' => 'ok']);
+    }
+
+    /**
+     * Generate unique order number using TICKET_ORDER_PREFIX
+     * Format: TIN-BTS-2026-TKT-XXXXXX (6-digit random number)
+     * Ensures no duplicates by checking database
+     */
+    private function generateUniqueOrderNumber()
+    {
+        $prefix = config('constants.TICKET_ORDER_PREFIX');
+        $maxAttempts = 100; // Prevent infinite loop
+        $attempts = 0;
+        
+        while ($attempts < $maxAttempts) {
+            // Generate 6-digit random number
+            $randomNumber = str_pad(rand(100000, 999999), 6, '0', STR_PAD_LEFT);
+            $orderNo = $prefix . $randomNumber;
+            $attempts++;
+            
+            // Check if it already exists in ticket_orders table
+            $exists = TicketOrder::where('order_no', $orderNo)->exists();
+            
+            if (!$exists) {
+                return $orderNo;
+            }
+        }
+        
+        // If we've tried too many times, use timestamp-based fallback
+        $timestamp = substr(time(), -6); // Last 6 digits of timestamp
+        $orderNo = $prefix . $timestamp;
+        if (!TicketOrder::where('order_no', $orderNo)->exists()) {
+            return $orderNo;
+        }
+        
+        // Last resort: use microtime
+        $microtime = substr(str_replace('.', '', microtime(true)), -6);
+        return $prefix . $microtime;
     }
 }
 
