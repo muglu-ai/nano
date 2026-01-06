@@ -37,6 +37,16 @@
         .toggle-btn.active {
             background: var(--pink-gradient);
             border-color: transparent;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        .toggle-btn:hover {
+            background: rgba(255, 255, 255, 0.15);
+            transform: translateY(-2px);
+        }
+        
+        .toggle-btn i {
+            margin-right: 0.5rem;
         }
 
         /* Event Selection */
@@ -126,6 +136,17 @@
             margin-bottom: 1rem;
             color: #fff;
         }
+        
+        .ticket-price .currency {
+            font-size: 1.5rem;
+            vertical-align: top;
+            margin-right: 0.25rem;
+        }
+        
+        .early-bird-info,
+        .regular-price-info {
+            margin-top: 0.5rem;
+        }
 
         .ticket-status {
             display: inline-block;
@@ -202,8 +223,12 @@
 
         <!-- Toggle: Indian/International -->
         <div class="toggle-section">
-            <button class="toggle-btn active" id="toggle-indian">Indian</button>
-            <button class="toggle-btn" id="toggle-international">International</button>
+            <button class="toggle-btn active" id="toggle-indian" data-nationality="national">
+                <i class="fas fa-flag"></i> Indian (INR)
+            </button>
+            <button class="toggle-btn" id="toggle-international" data-nationality="international">
+                <i class="fas fa-globe"></i> International (USD)
+            </button>
         </div>
 
         <!-- Event Selection -->
@@ -222,19 +247,48 @@
         </div>
 
         <!-- Ticket Cards -->
-        <div class="tickets-grid">
+        <div class="tickets-grid" id="tickets-grid">
             @forelse($ticketTypes as $ticketType)
                 @php
-                    $currentPrice = $ticketType->getCurrentPrice();
                     $isSoldOut = $ticketType->isSoldOut();
                     $isEarlyBird = $ticketType->isEarlyBirdActive();
                 @endphp
                 <div class="ticket-card {{ $isSoldOut ? 'sold-out' : '' }}" 
+                     data-ticket-id="{{ $ticketType->id }}"
                      onclick="{{ !$isSoldOut ? "selectTicket({$ticketType->id})" : '' }}">
                     <div class="ticket-name">{{ $ticketType->name }}</div>
-                    <div class="ticket-price">₹{{ number_format($currentPrice, 0) }}</div>
-                    @if($isEarlyBird && $ticketType->early_bird_price)
-                        <small style="opacity: 0.8;">Early Bird: ₹{{ number_format($ticketType->early_bird_price, 0) }}</small>
+                    <div class="ticket-price" data-nationality="national">
+                        <span class="currency">₹</span>
+                        <span class="price-national">{{ number_format($ticketType->getCurrentPrice('national'), 0) }}</span>
+                    </div>
+                    <div class="ticket-price" data-nationality="international" style="display: none;">
+                        <span class="currency">$</span>
+                        <span class="price-international">{{ number_format($ticketType->getCurrentPrice('international'), 2) }}</span>
+                    </div>
+                    @if($isEarlyBird)
+                        <div class="early-bird-info" data-nationality="national">
+                            <small style="opacity: 0.8; display: block; margin-top: 0.5rem;">
+                                Early Bird: ₹{{ number_format($ticketType->getEarlyBirdPrice('national') ?? 0, 0) }}
+                            </small>
+                            <small style="opacity: 0.7; font-size: 0.75rem;">Regular: ₹{{ number_format($ticketType->getRegularPrice('national'), 0) }}</small>
+                        </div>
+                        <div class="early-bird-info" data-nationality="international" style="display: none;">
+                            <small style="opacity: 0.8; display: block; margin-top: 0.5rem;">
+                                Early Bird: ${{ number_format($ticketType->getEarlyBirdPrice('international') ?? 0, 2) }}
+                            </small>
+                            <small style="opacity: 0.7; font-size: 0.75rem;">Regular: ${{ number_format($ticketType->getRegularPrice('international'), 2) }}</small>
+                        </div>
+                    @else
+                        <div class="regular-price-info" data-nationality="national">
+                            <small style="opacity: 0.7; font-size: 0.875rem; display: block; margin-top: 0.5rem;">
+                                Regular Price
+                            </small>
+                        </div>
+                        <div class="regular-price-info" data-nationality="international" style="display: none;">
+                            <small style="opacity: 0.7; font-size: 0.875rem; display: block; margin-top: 0.5rem;">
+                                Regular Price
+                            </small>
+                        </div>
                     @endif
                     <div class="ticket-status {{ $isSoldOut ? 'sold-out' : 'available' }}">
                         {{ $isSoldOut ? 'Sold Out' : 'Available' }}
@@ -297,20 +351,57 @@
 
 @push('scripts')
 <script>
+        let currentNationality = 'national'; // Default to national
+        
         // Toggle functionality
         document.getElementById('toggle-indian').addEventListener('click', function() {
             this.classList.add('active');
             document.getElementById('toggle-international').classList.remove('active');
+            currentNationality = 'national';
+            updatePrices('national');
         });
 
         document.getElementById('toggle-international').addEventListener('click', function() {
             this.classList.add('active');
             document.getElementById('toggle-indian').classList.remove('active');
+            currentNationality = 'international';
+            updatePrices('international');
         });
+
+        // Update prices based on nationality
+        function updatePrices(nationality) {
+            const ticketCards = document.querySelectorAll('.ticket-card');
+            
+            ticketCards.forEach(card => {
+                // Show/hide price elements
+                const priceNational = card.querySelector('.ticket-price[data-nationality="national"]');
+                const priceInternational = card.querySelector('.ticket-price[data-nationality="international"]');
+                const earlyBirdNational = card.querySelector('.early-bird-info[data-nationality="national"]');
+                const earlyBirdInternational = card.querySelector('.early-bird-info[data-nationality="international"]');
+                const regularNational = card.querySelector('.regular-price-info[data-nationality="national"]');
+                const regularInternational = card.querySelector('.regular-price-info[data-nationality="international"]');
+                
+                if (nationality === 'national') {
+                    if (priceNational) priceNational.style.display = 'block';
+                    if (priceInternational) priceInternational.style.display = 'none';
+                    if (earlyBirdNational) earlyBirdNational.style.display = 'block';
+                    if (earlyBirdInternational) earlyBirdInternational.style.display = 'none';
+                    if (regularNational) regularNational.style.display = 'block';
+                    if (regularInternational) regularInternational.style.display = 'none';
+                } else {
+                    if (priceNational) priceNational.style.display = 'none';
+                    if (priceInternational) priceInternational.style.display = 'block';
+                    if (earlyBirdNational) earlyBirdNational.style.display = 'none';
+                    if (earlyBirdInternational) earlyBirdInternational.style.display = 'block';
+                    if (regularNational) regularNational.style.display = 'none';
+                    if (regularInternational) regularInternational.style.display = 'block';
+                }
+            });
+        }
 
         // Ticket selection
         function selectTicket(ticketTypeId) {
-            window.location.href = '{{ route("tickets.register", $event->slug ?? $event->id) }}?ticket=' + ticketTypeId;
+            window.location.href = '{{ route("tickets.register", $event->slug ?? $event->id) }}?ticket=' + ticketTypeId + '&nationality=' + currentNationality;
         }
     </script>
 @endpush

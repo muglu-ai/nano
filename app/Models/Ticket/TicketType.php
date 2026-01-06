@@ -19,8 +19,12 @@ class TicketType extends Model
         'subcategory_id',
         'name',
         'description',
-        'early_bird_price', // Early bird price
-        'regular_price', // Regular price after early bird ends
+        'early_bird_price', // Early bird price (legacy, kept for backward compatibility)
+        'early_bird_price_national', // Early bird price for national users
+        'early_bird_price_international', // Early bird price for international users
+        'regular_price', // Regular price after early bird ends (legacy, kept for backward compatibility)
+        'regular_price_national', // Regular price for national users
+        'regular_price_international', // Regular price for international users
         'early_bird_end_date', // When early bird pricing ends
         'capacity', // null for unlimited
         'sale_start_at',
@@ -33,7 +37,11 @@ class TicketType extends Model
 
     protected $casts = [
         'early_bird_price' => 'decimal:2',
+        'early_bird_price_national' => 'decimal:2',
+        'early_bird_price_international' => 'decimal:2',
         'regular_price' => 'decimal:2',
+        'regular_price_national' => 'decimal:2',
+        'regular_price_international' => 'decimal:2',
         'early_bird_end_date' => 'date',
         'capacity' => 'integer',
         'sale_start_at' => 'datetime',
@@ -120,14 +128,55 @@ class TicketType extends Model
     }
 
     /**
-     * Get current price based on early bird status
+     * Get current price based on early bird status and nationality
+     * 
+     * @param string $nationality 'national' or 'international'
+     * @return float
      */
-    public function getCurrentPrice(): float
+    public function getCurrentPrice(string $nationality = 'national'): float
     {
-        if ($this->early_bird_end_date && now()->lte($this->early_bird_end_date)) {
-            return (float) $this->early_bird_price;
+        $isEarlyBird = $this->early_bird_end_date && now()->lte($this->early_bird_end_date);
+        
+        if ($nationality === 'international') {
+            if ($isEarlyBird && $this->early_bird_price_international) {
+                return (float) $this->early_bird_price_international;
+            }
+            return (float) ($this->regular_price_international ?? 0);
+        } else {
+            // National pricing
+            if ($isEarlyBird && $this->early_bird_price_national) {
+                return (float) $this->early_bird_price_national;
+            }
+            return (float) ($this->regular_price_national ?? 0);
         }
-        return (float) $this->regular_price;
+    }
+    
+    /**
+     * Get early bird price for a specific nationality
+     * 
+     * @param string $nationality 'national' or 'international'
+     * @return float|null
+     */
+    public function getEarlyBirdPrice(string $nationality = 'national'): ?float
+    {
+        if ($nationality === 'international') {
+            return $this->early_bird_price_international ? (float) $this->early_bird_price_international : null;
+        }
+        return $this->early_bird_price_national ? (float) $this->early_bird_price_national : null;
+    }
+    
+    /**
+     * Get regular price for a specific nationality
+     * 
+     * @param string $nationality 'national' or 'international'
+     * @return float
+     */
+    public function getRegularPrice(string $nationality = 'national'): float
+    {
+        if ($nationality === 'international') {
+            return (float) ($this->regular_price_international ?? 0);
+        }
+        return (float) ($this->regular_price_national ?? 0);
     }
 
     /**

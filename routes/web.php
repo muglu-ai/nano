@@ -70,6 +70,7 @@ use App\Http\Controllers\FeedbackController;
 use App\Http\Controllers\SuperAdminController;
 use App\Http\Controllers\Ticket\AdminTicketConfigController;
 use App\Http\Controllers\Enquiry\PublicEnquiryController;
+use App\Http\Controllers\VisaClearanceController;
 
 /* Payment Gateway CCAvenue Routes
 */
@@ -1096,6 +1097,10 @@ Route::get('/enquiry/thankyou', [PublicEnquiryController::class, 'thankyou'])->n
 Route::get('/enquiry', [PublicEnquiryController::class, 'showForm'])->name('enquiry.form');
 Route::get('/enquiry/{eventSlug}', [PublicEnquiryController::class, 'showForm'])->name('enquiry.form.event');
 Route::post('/enquiry', [PublicEnquiryController::class, 'submit'])->name('enquiry.submit');
+
+// Visa Clearance Registration (public, similar layout as enquiry form)
+Route::get('/visa-clearance', [VisaClearanceController::class, 'showForm'])->name('visa.clearance.form');
+Route::post('/visa-clearance', [VisaClearanceController::class, 'submit'])->name('visa.clearance.submit');
 
 // Startup Zone Registration Routes
 Route::prefix('startup')->name('startup-zone.')->group(function () {

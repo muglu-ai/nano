@@ -75,39 +75,101 @@
     </div>
 </div>
 
-<div class="row">
-    <div class="col-md-4">
-        <div class="form-group mb-3">
-            <label class="form-label">Early Bird Price</label>
-            <input type="number" name="early_bird_price" class="form-control" 
-                   value="{{ $isEdit ? $ticketType->early_bird_price : old('early_bird_price') }}" 
-                   step="0.01" min="0" placeholder="0.00">
-            @error('early_bird_price')
-                <div class="text-danger">{{ $message }}</div>
-            @enderror
+<!-- Pricing Section -->
+<div class="form-section mb-4" style="background: linear-gradient(135deg, #fff5e6 0%, #fff9f0 100%); border: 2px solid #ff9800; border-radius: 12px; padding: 1.5rem;">
+    <h5 class="form-section-title" style="border-bottom-color: #ff9800; margin-bottom: 1.5rem;">
+        <i class="fas fa-dollar-sign"></i>
+        Pricing Configuration
+    </h5>
+
+    <!-- Early Bird Pricing -->
+    <div class="mb-4">
+        <h6 style="color: #ff9800; font-weight: 600; margin-bottom: 1rem;">
+            <i class="fas fa-clock"></i> Early Bird Pricing
+        </h6>
+        <div class="row">
+            <div class="col-md-6">
+                <div class="form-group mb-3">
+                    <label class="form-label">
+                        <i class="fas fa-flag"></i> National Price (INR)
+                    </label>
+                    <input type="number" name="early_bird_price_national" class="form-control" 
+                           value="{{ $isEdit ? $ticketType->early_bird_price_national : old('early_bird_price_national') }}" 
+                           step="0.01" min="0" placeholder="0.00">
+                    <small class="text-muted">Early bird price for Indian nationals</small>
+                    @error('early_bird_price_national')
+                        <div class="text-danger">{{ $message }}</div>
+                    @enderror
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <div class="form-group mb-3">
+                    <label class="form-label">
+                        <i class="fas fa-globe"></i> International Price (USD)
+                    </label>
+                    <input type="number" name="early_bird_price_international" class="form-control" 
+                           value="{{ $isEdit ? $ticketType->early_bird_price_international : old('early_bird_price_international') }}" 
+                           step="0.01" min="0" placeholder="0.00">
+                    <small class="text-muted">Early bird price for international users</small>
+                    @error('early_bird_price_international')
+                        <div class="text-danger">{{ $message }}</div>
+                    @enderror
+                </div>
+            </div>
         </div>
     </div>
 
-    <div class="col-md-4">
-        <div class="form-group mb-3">
-            <label class="form-label">Regular Price <span class="text-danger">*</span></label>
-            <input type="number" name="regular_price" class="form-control" 
-                   value="{{ $isEdit ? $ticketType->regular_price : old('regular_price') }}" 
-                   step="0.01" min="0" required placeholder="0.00">
-            @error('regular_price')
-                <div class="text-danger">{{ $message }}</div>
-            @enderror
+    <!-- Regular Pricing -->
+    <div class="mb-3">
+        <h6 style="color: #ff9800; font-weight: 600; margin-bottom: 1rem;">
+            <i class="fas fa-calendar-alt"></i> Regular Pricing
+        </h6>
+        <div class="row">
+            <div class="col-md-6">
+                <div class="form-group mb-3">
+                    <label class="form-label">
+                        <i class="fas fa-flag"></i> National Price (INR) <span class="text-danger">*</span>
+                    </label>
+                    <input type="number" name="regular_price_national" class="form-control" 
+                           value="{{ $isEdit ? $ticketType->regular_price_national : old('regular_price_national') }}" 
+                           step="0.01" min="0" required placeholder="0.00">
+                    <small class="text-muted">Regular price for Indian nationals</small>
+                    @error('regular_price_national')
+                        <div class="text-danger">{{ $message }}</div>
+                    @enderror
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <div class="form-group mb-3">
+                    <label class="form-label">
+                        <i class="fas fa-globe"></i> International Price (USD) <span class="text-danger">*</span>
+                    </label>
+                    <input type="number" name="regular_price_international" class="form-control" 
+                           value="{{ $isEdit ? $ticketType->regular_price_international : old('regular_price_international') }}" 
+                           step="0.01" min="0" required placeholder="0.00">
+                    <small class="text-muted">Regular price for international users</small>
+                    @error('regular_price_international')
+                        <div class="text-danger">{{ $message }}</div>
+                    @enderror
+                </div>
+            </div>
         </div>
     </div>
 
-    <div class="col-md-4">
-        <div class="form-group mb-3">
-            <label class="form-label">Early Bird End Date</label>
-            <input type="date" name="early_bird_end_date" class="form-control" 
-                   value="{{ $isEdit && $ticketType->early_bird_end_date ? $ticketType->early_bird_end_date->format('Y-m-d') : old('early_bird_end_date') }}">
-            @error('early_bird_end_date')
-                <div class="text-danger">{{ $message }}</div>
-            @enderror
+    <!-- Early Bird End Date -->
+    <div class="row">
+        <div class="col-md-6">
+            <div class="form-group mb-3">
+                <label class="form-label">Early Bird End Date</label>
+                <input type="date" name="early_bird_end_date" class="form-control" 
+                       value="{{ $isEdit && $ticketType->early_bird_end_date ? $ticketType->early_bird_end_date->format('Y-m-d') : old('early_bird_end_date') }}">
+                <small class="text-muted">Date when early bird pricing ends</small>
+                @error('early_bird_end_date')
+                    <div class="text-danger">{{ $message }}</div>
+                @enderror
+            </div>
         </div>
     </div>
 </div>
