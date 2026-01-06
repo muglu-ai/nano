@@ -12,9 +12,11 @@ use App\Models\Ticket\TicketType;
 use App\Models\Ticket\TicketRegistrationCategory;
 use App\Models\Ticket\TicketDelegate;
 use App\Services\CcAvenueService;
+use App\Mail\TicketRegistrationMail;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 
 class TicketPaymentController extends Controller
 {
@@ -195,6 +197,20 @@ class TicketPaymentController extends Controller
             // Reload order with relationships
             $order->load(['registration.contact', 'items.ticketType', 'registration.delegates', 'registration.registrationCategory']);
 
+            // Send registration confirmation email with payment link
+            try {
+                $contactEmail = $order->registration->contact->email ?? null;
+                if ($contactEmail) {
+                    Mail::to($contactEmail)->send(new TicketRegistrationMail($order, $event));
+                }
+            } catch (\Exception $e) {
+                Log::error('Failed to send ticket registration email', [
+                    'order_id' => $order->id,
+                    'error' => $e->getMessage(),
+                ]);
+                // Don't fail the transaction if email fails
+            }
+
             // Show payment page with all order details
             return view('tickets.public.payment', compact('event', 'order', 'ticketType', 'registrationCategory', 'registrationData'));
 
@@ -366,6 +382,35 @@ class TicketPaymentController extends Controller
     {
         // TODO: Implement webhook handling for payment gateway callbacks
         return response()->json(['status' => 'ok']);
+    }
+
+    /**
+     * Initiate payment by TIN (order number) - for direct access via email link
+     */
+    public function initiateByTin($eventSlug, $tin)
+    {
+        $event = Events::where('slug', $eventSlug)->orWhere('id', $eventSlug)->firstOrFail();
+        
+        // Find order by TIN (order_no)
+        $order = TicketOrder::where('order_no', $tin)
+            ->whereHas('registration', function($q) use ($event) {
+                $q->where('event_id', $event->id);
+            })
+            ->with(['registration.contact', 'items.ticketType', 'registration.delegates', 'registration.registrationCategory'])
+            ->firstOrFail();
+        
+        // Only allow access if order is pending
+        if ($order->status !== 'pending') {
+            return redirect()->route('tickets.payment', $order->id)
+                ->with('error', 'This order has already been processed.');
+        }
+        
+        // Load related data
+        $ticketType = $order->items->first()->ticketType ?? null;
+        $registrationCategory = $order->registration->registrationCategory;
+        
+        // Show payment page
+        return view('tickets.public.payment', compact('event', 'order', 'ticketType', 'registrationCategory'));
     }
 
     /**

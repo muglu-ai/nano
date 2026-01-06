@@ -31,6 +31,9 @@ Route::post('/manage-booking/verify-otp', [GuestTicketController::class, 'verify
 
 // Payment
 Route::post('/tickets/{eventSlug}/payment/initiate', [TicketPaymentController::class, 'initiate'])->name('tickets.payment.initiate');
+// New payment flow with auto gateway selection (handles Pay Now click)
+Route::get('/tickets/{eventSlug}/payment/{orderNo}', [\App\Http\Controllers\RegistrationPaymentController::class, 'processTicketPayment'])->name('tickets.payment.process');
+Route::get('/tickets/{eventSlug}/payment/{tin}', [TicketPaymentController::class, 'initiateByTin'])->name('tickets.payment.by-tin');
 Route::get('/ticket-payment/{orderId}', [TicketPaymentController::class, 'show'])->name('tickets.payment');
 Route::get('/ticket-payment/{orderId}/callback', [TicketPaymentController::class, 'callback'])->name('tickets.payment.callback');
 Route::post('/ticket-payment/{orderId}/process', [TicketPaymentController::class, 'process'])->name('tickets.payment.process');

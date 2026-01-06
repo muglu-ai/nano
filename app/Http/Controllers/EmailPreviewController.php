@@ -8,6 +8,8 @@ use App\Models\Application;
 use App\Models\Invoice;
 use App\Models\EventContact;
 use App\Models\Sector;
+use App\Models\Ticket\TicketOrder;
+use App\Models\Events;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\UserCredentialsMail;
 use App\Mail\ExhibitorRegistrationMail;
@@ -311,6 +313,31 @@ class EmailPreviewController extends Controller
 
         $mail = new StartupZoneMail($application, 'payment_thank_you', $invoice, $contact, $paymentDetails);
         return view($mail->content()->view, $mail->content()->with);
+    }
+
+    /**
+     * Preview ticket registration email by TIN (order number)
+     */
+    public function showTicketRegistrationEmail($tin)
+    {
+        // Find order by TIN (order_no)
+        $order = TicketOrder::where('order_no', $tin)
+            ->with(['registration.contact', 'items.ticketType', 'registration.delegates', 'registration.registrationCategory'])
+            ->first();
+
+        if (!$order) {
+            abort(404, 'Order not found with TIN: ' . $tin);
+        }
+
+        // Get event
+        $event = Events::find($order->registration->event_id);
+        
+        if (!$event) {
+            abort(404, 'Event not found for order: ' . $tin);
+        }
+
+        // Return the email view
+        return view('emails.tickets.registration', compact('order', 'event'));
     }
 }
 

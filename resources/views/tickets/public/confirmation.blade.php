@@ -107,21 +107,83 @@
             </div>
         </div>
 
+        @if(session('payment_details'))
+            @php
+                $paymentDetails = session('payment_details');
+                $primaryPayment = $order->primaryPayment();
+            @endphp
+            <div class="order-details mt-3">
+                <h5 class="mb-3"><i class="fas fa-credit-card me-2"></i>Payment Gateway Details</h5>
+                <div class="detail-row">
+                    <span class="detail-label">Payment Gateway:</span>
+                    <span class="detail-value">
+                        <strong>{{ $paymentDetails['gateway'] ?? ($primaryPayment ? ucfirst($primaryPayment->gateway_name) : 'N/A') }}</strong>
+                    </span>
+                </div>
+                @if(isset($paymentDetails['transaction_id']) || ($primaryPayment && $primaryPayment->gateway_txn_id))
+                    <div class="detail-row">
+                        <span class="detail-label">Transaction ID:</span>
+                        <span class="detail-value">
+                            {{ $paymentDetails['transaction_id'] ?? $primaryPayment->gateway_txn_id }}
+                        </span>
+                    </div>
+                @endif
+                @if(isset($paymentDetails['amount']))
+                    <div class="detail-row">
+                        <span class="detail-label">Amount Paid:</span>
+                        <span class="detail-value">
+                            <strong>{{ $paymentDetails['currency'] ?? 'INR' }} {{ number_format($paymentDetails['amount'], 2) }}</strong>
+                        </span>
+                    </div>
+                @endif
+                @if($primaryPayment && $primaryPayment->paid_at)
+                    <div class="detail-row">
+                        <span class="detail-label">Payment Date:</span>
+                        <span class="detail-value">
+                            {{ $primaryPayment->paid_at->format('d M Y, h:i A') }}
+                        </span>
+                    </div>
+                @endif
+            </div>
+        @elseif($order->primaryPayment())
+            @php $primaryPayment = $order->primaryPayment(); @endphp
+            <div class="order-details mt-3">
+                <h5 class="mb-3"><i class="fas fa-credit-card me-2"></i>Payment Gateway Details</h5>
+                <div class="detail-row">
+                    <span class="detail-label">Payment Gateway:</span>
+                    <span class="detail-value">
+                        <strong>{{ ucfirst($primaryPayment->gateway_name) }}</strong>
+                    </span>
+                </div>
+                @if($primaryPayment->gateway_txn_id)
+                    <div class="detail-row">
+                        <span class="detail-label">Transaction ID:</span>
+                        <span class="detail-value">
+                            {{ $primaryPayment->gateway_txn_id }}
+                        </span>
+                    </div>
+                @endif
+                @if($primaryPayment->paid_at)
+                    <div class="detail-row">
+                        <span class="detail-label">Payment Date:</span>
+                        <span class="detail-value">
+                            {{ $primaryPayment->paid_at->format('d M Y, h:i A') }}
+                        </span>
+                    </div>
+                @endif
+            </div>
+        @endif
+
         <div class="mt-4">
             <p style="color: rgba(255, 255, 255, 0.8);">
-                A confirmation email has been sent to <strong>{{ $order->registration->contact->email }}</strong>
+                A payment acknowledgement email has been sent to <strong>{{ $order->registration->contact->email }}</strong>
             </p>
             <p style="color: rgba(255, 255, 255, 0.6); font-size: 0.9rem;">
                 Please check your email for the receipt and further instructions.
             </p>
         </div>
 
-        <div class="mt-4">
-            <a href="{{ route('tickets.discover', $event->slug ?? $event->id) }}" class="btn btn-primary">
-                <i class="fas fa-home me-2"></i>
-                Back to Event Page
-            </a>
-        </div>
+       
     </div>
 </div>
 @endsection

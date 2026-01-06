@@ -666,6 +666,19 @@ Route::get('/send-invoice/{invoiceId}/{email}', function ($invoiceId, $email) {
 Route::get('/payment/lookup', [PaymentGatewayController::class, 'showPaymentLookup'])->name('payment.lookup');
 Route::post('/payment/lookup', [PaymentGatewayController::class, 'handlePaymentLookup'])->name('payment.lookup.submit');
 
+// Registration Payment Routes (New - TIN and Email Lookup)
+Route::get('/registration/payment/lookup', [\App\Http\Controllers\RegistrationPaymentController::class, 'showLookup'])->name('registration.payment.lookup');
+Route::post('/registration/payment/lookup', [\App\Http\Controllers\RegistrationPaymentController::class, 'lookupOrder'])->name('registration.payment.lookup.submit');
+Route::get('/registration/payment/{invoiceNo}/select', [\App\Http\Controllers\RegistrationPaymentController::class, 'showPaymentSelection'])->name('registration.payment.select');
+Route::post('/registration/payment/{invoiceNo}/process', [\App\Http\Controllers\RegistrationPaymentController::class, 'processPayment'])->name('registration.payment.process');
+Route::get('/registration/payment/callback/{gateway}', [\App\Http\Controllers\RegistrationPaymentController::class, 'handleCallback'])->name('registration.payment.callback')->withoutMiddleware([\App\Http\Middleware\VerifyCsrfToken::class]);
+Route::post('/registration/payment/callback/{gateway}', [\App\Http\Controllers\RegistrationPaymentController::class, 'handleCallback'])->name('registration.payment.callback.post')->withoutMiddleware([\App\Http\Middleware\VerifyCsrfToken::class]);
+Route::get('/registration/payment/success', [\App\Http\Controllers\RegistrationPaymentController::class, 'showSuccess'])->name('registration.payment.success');
+
+// Ticket Payment Callback Routes (Auto gateway selection)
+Route::get('/tickets/{eventSlug}/payment/callback/{gateway}', [\App\Http\Controllers\RegistrationPaymentController::class, 'handleTicketPaymentCallback'])->name('registration.ticket.payment.callback')->withoutMiddleware([\App\Http\Middleware\VerifyCsrfToken::class]);
+Route::post('/tickets/{eventSlug}/payment/callback/{gateway}', [\App\Http\Controllers\RegistrationPaymentController::class, 'handleTicketPaymentCallback'])->name('registration.ticket.payment.callback.post')->withoutMiddleware([\App\Http\Middleware\VerifyCsrfToken::class]);
+
 // PayPal routes (constrain {id} to avoid matching 'lookup')
 Route::get('/payment/{id}', [PayPalController::class, 'showPaymentForm'])
     ->where('id', '^(?!lookup$).*')
@@ -1062,7 +1075,16 @@ Route::get('/send-invite-mail-custom', function () {
         ->send(new CoExhibitorInvoiceMail($coExhibitorco_exhibitor_id));
 });
 
-Route::get('enquiries', [EnquiryController::class, 'index'])->name('enquiries.index');
+// Admin Enquiry Management Routes
+Route::middleware(['auth', Auth::class])->prefix('admin/enquiries')->name('enquiries.')->group(function () {
+    Route::get('/', [EnquiryController::class, 'index'])->name('index');
+    Route::get('/{id}', [EnquiryController::class, 'show'])->name('show');
+    Route::put('/{id}/status', [EnquiryController::class, 'updateStatus'])->name('status');
+    Route::put('/{id}/assign', [EnquiryController::class, 'assign'])->name('assign');
+    Route::post('/{id}/followup', [EnquiryController::class, 'addFollowup'])->name('followup');
+    Route::post('/{id}/note', [EnquiryController::class, 'addNote'])->name('note');
+    Route::delete('/{id}', [EnquiryController::class, 'destroy'])->name('destroy');
+});
 
 // Registration Count Dashboard
 Route::get('/registration-count', [AttendeeController::class, 'registrationCount'])->name('registration.count')->middleware(Auth::class);
@@ -1070,6 +1092,7 @@ Route::get('/api/registration-count-data', [AttendeeController::class, 'getRegis
 
 Route::get('/email-preview/credentials/{email}', [EmailPreviewController::class, 'showCredentialsEmail']);
 Route::get('/email-preview/exhibitor-registration/{applicationId}', [EmailPreviewController::class, 'showExhibitorRegistrationEmail'])->name('email-preview.exhibitor-registration');
+Route::get('/email-preview/ticket-registration/{tin}', [EmailPreviewController::class, 'showTicketRegistrationEmail'])->name('email-preview.ticket-registration');
 
 // Startup Zone Email Previews (Admin Only)
 Route::middleware(['auth', Auth::class])->group(function () {

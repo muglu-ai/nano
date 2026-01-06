@@ -19,7 +19,30 @@ return Application::configure(basePath: dirname(__DIR__))
         //
         // Don't append Auth middleware globally - apply it only to specific routes
         // $middleware->append(Auth::class);
-        $middleware->validateCsrfTokens(except: ['/payment/ccavenue-success']);
+        
+        // Exclude payment gateway callbacks from CSRF verification
+        // Payment gateways (CCAvenue, PayPal) redirect back via POST without CSRF tokens
+        $middleware->validateCsrfTokens(except: [
+            // CCAvenue payment callbacks
+            '/payment/ccavenue-success',           // POST - CCAvenue success callback
+            '/ccavenue/webhook',                   // POST - CCAvenue webhook
+            
+            // PayPal payment callbacks
+            '/paypal/success',                     // GET - PayPal success redirect
+            '/paypal/cancel',                      // GET - PayPal cancel redirect
+            '/paypal/webhook',                     // GET/POST - PayPal webhook
+            '/paypal/capture-order/*',             // POST - PayPal order capture
+            
+            // Registration payment callbacks (RegistrationPaymentController)
+            '/registration/payment/callback/*',    // GET/POST - Registration payment callbacks (ccavenue/paypal)
+            
+            // Ticket payment callbacks (RegistrationPaymentController)
+            '/tickets/*/payment/callback/*',       // GET/POST - Ticket payment callbacks (ccavenue/paypal)
+            
+            // Legacy ticket payment callbacks
+            '/ticket-payment/*/callback',          // GET - Old ticket payment callback
+            '/ticket-payment/webhook',             // POST - Ticket payment webhook
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
         //

@@ -77,7 +77,7 @@ class PublicEnquiryController extends Controller
 
         // Validate the request
         $validated = $request->validate([
-            'sector' => 'required|string|max:200',
+            'sector' => 'required|string|max:255',
             'title' => 'nullable|string|max:10',
             'name' => 'required|string|max:255',
             'organisation' => 'required|string|max:255',
@@ -85,8 +85,8 @@ class PublicEnquiryController extends Controller
             'email' => 'required|email|max:255',
             'phone_country_code' => 'nullable|string|max:5',
             'phone_number' => 'required|string|max:15|regex:/^[0-9]+$/',
-            'state' => 'required|string|max:100',
             'city' => 'required|string|max:100',
+            'state' => 'required|string|max:100',
             'country' => 'required|string|max:100',
             'comments' => 'required|string|max:1000',
             'referral_source' => 'required|string|max:100',

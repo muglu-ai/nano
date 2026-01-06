@@ -39,7 +39,7 @@ const ORGANIZER_PHONE = '+91-8069328400';
 const ORGANIZER_EMAIL = 'enquiry@bengalurutechsummit.com';
 const ORGANIZER_WEBSITE = 'https://mmactiv.in/';
 const ORGANIZER_LOGO = 'https://www.mmactiv.in/images/mma.jpg';
-const EVENT_LOGO = 'https://bengalurutechsummit.com/web/it_forms/images/logo2.png';
+const EVENT_LOGO = 'https://bengalurutechsummit.com/web/it_forms/images/logo2026.png';
 const EVENT_FAVICON = 'https://www.bengalurutechsummit.com/favicon-16x16.png';
 
 const EXTRA_REQUIREMENTS_ACTIVE = false; //true or false
@@ -298,7 +298,6 @@ return [
             ],
             (array) (config('admin_emails.to') ?? [])
         ),
-
     ],
 
     //extra requirements details
