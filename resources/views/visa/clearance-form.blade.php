@@ -203,24 +203,7 @@
                 </div>
 
                 <div class="row">
-                    <div class="col-md-4 mb-3">
-                        <label class="form-label">City <span class="required">*</span></label>
-                        <input type="text" name="city" class="form-control"
-                               value="{{ old('city') }}" required>
-                        @error('city')
-                            <div class="error-message">{{ $message }}</div>
-                        @enderror
-                    </div>
-                    <div class="col-md-4 mb-3">
-                        <label class="form-label">State <span class="required">*</span></label>
-                        <select name="state" id="state" class="form-select" required>
-                            <option value="">-- Select State --</option>
-                        </select>
-                        @error('state')
-                            <div class="error-message">{{ $message }}</div>
-                        @enderror
-                    </div>
-                    <div class="col-md-4 mb-3">
+                <div class="col-md-4 mb-3">
                         <label class="form-label">Country <span class="required">*</span></label>
                         <select name="country" id="country" class="form-select" required>
                             <option value="">-- Select Country --</option>
@@ -234,6 +217,25 @@
                             <div class="error-message">{{ $message }}</div>
                         @enderror
                     </div>
+                   
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label">State <span class="required">*</span></label>
+                        <select name="state" id="state" class="form-select" required>
+                            <option value="">-- Select State --</option>
+                        </select>
+                        @error('state')
+                            <div class="error-message">{{ $message }}</div>
+                        @enderror
+                    </div>
+                     <div class="col-md-4 mb-3">
+                        <label class="form-label">City <span class="required">*</span></label>
+                        <input type="text" name="city" class="form-control"
+                               value="{{ old('city') }}" required>
+                        @error('city')
+                            <div class="error-message">{{ $message }}</div>
+                        @enderror
+                    </div>
+                    
                 </div>
 
                 <div class="row">
