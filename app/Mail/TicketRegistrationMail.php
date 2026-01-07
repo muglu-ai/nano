@@ -35,7 +35,7 @@ class TicketRegistrationMail extends Mailable
         $eventYear = $this->event->event_year ?? config('constants.EVENT_YEAR', date('Y'));
         
         return new Envelope(
-            subject: "Complete Your Payment - {$eventName} {$eventYear} - Order #{$this->order->order_no}",
+            subject: "Payment Confirmation - {$eventName} {$eventYear} - Order #{$this->order->order_no}",
         );
     }
 

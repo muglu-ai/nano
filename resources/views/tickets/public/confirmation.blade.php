@@ -107,6 +107,106 @@
             </div>
         </div>
 
+        <!-- Contact Information -->
+        <div class="order-details">
+            <h5 class="mb-3"><i class="fas fa-user me-2"></i>Contact Information</h5>
+            <div class="detail-row">
+                <span class="detail-label">Name:</span>
+                <span class="detail-value">{{ $order->registration->contact->name }}</span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">Email:</span>
+                <span class="detail-value">{{ $order->registration->contact->email }}</span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">Phone:</span>
+                <span class="detail-value">{{ $order->registration->contact->phone }}</span>
+            </div>
+        </div>
+
+        <!-- Company Information -->
+        <div class="order-details">
+            <h5 class="mb-3"><i class="fas fa-building me-2"></i>Company Information</h5>
+            <div class="detail-row">
+                <span class="detail-label">Company Name:</span>
+                <span class="detail-value">{{ $order->registration->company_name ?? 'N/A' }}</span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">Country:</span>
+                <span class="detail-value">{{ $order->registration->company_country ?? 'N/A' }}</span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">State:</span>
+                <span class="detail-value">{{ $order->registration->company_state ?? 'N/A' }}</span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">City:</span>
+                <span class="detail-value">{{ $order->registration->company_city ?? 'N/A' }}</span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">Phone:</span>
+                <span class="detail-value">{{ $order->registration->company_phone ?? 'N/A' }}</span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">Industry Sector:</span>
+                <span class="detail-value">{{ $order->registration->industry_sector ?? 'N/A' }}</span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">Organisation Type:</span>
+                <span class="detail-value">{{ $order->registration->organisation_type ?? 'N/A' }}</span>
+            </div>
+            @if($order->registration->gst_required)
+                <div class="detail-row">
+                    <span class="detail-label">GST Required:</span>
+                    <span class="detail-value">Yes</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">GSTIN:</span>
+                    <span class="detail-value">{{ $order->registration->gstin ?? 'N/A' }}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">GST Legal Name:</span>
+                    <span class="detail-value">{{ $order->registration->gst_legal_name ?? 'N/A' }}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">GST Address:</span>
+                    <span class="detail-value">{{ $order->registration->gst_address ?? 'N/A' }}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">GST State:</span>
+                    <span class="detail-value">{{ $order->registration->gst_state ?? 'N/A' }}</span>
+                </div>
+            @endif
+        </div>
+
+        <!-- Delegates Information -->
+        @if($order->registration->delegates->count() > 0)
+            <div class="order-details">
+                <h5 class="mb-3"><i class="fas fa-users me-2"></i>Delegate Information</h5>
+                @foreach($order->registration->delegates as $index => $delegate)
+                    <div class="mb-3" style="border-bottom: 1px solid rgba(255, 255, 255, 0.1); padding-bottom: 1rem;">
+                        <h6>Delegate {{ $index + 1 }}</h6>
+                        <div class="detail-row">
+                            <span class="detail-label">Name:</span>
+                            <span class="detail-value">{{ $delegate->salutation }} {{ $delegate->first_name }} {{ $delegate->last_name }}</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Email:</span>
+                            <span class="detail-value">{{ $delegate->email }}</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Phone:</span>
+                            <span class="detail-value">{{ $delegate->phone }}</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Job Title:</span>
+                            <span class="detail-value">{{ $delegate->job_title ?? 'N/A' }}</span>
+                        </div>
+                    </div>
+                @endforeach
+            </div>
+        @endif
+
         @if(session('payment_details'))
             @php
                 $paymentDetails = session('payment_details');

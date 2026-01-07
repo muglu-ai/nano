@@ -296,7 +296,7 @@ class TicketPaymentController extends Controller
     public function confirmation($eventSlug, $token)
     {
         $event = Events::where('slug', $eventSlug)->orWhere('id', $eventSlug)->firstOrFail();
-        $order = TicketOrder::with(['registration.contact', 'items.ticketType', 'registration.registrationCategory'])
+        $order = TicketOrder::with(['registration.contact', 'items.ticketType', 'registration.registrationCategory', 'registration.delegates'])
             ->where('secure_token', $token)
             ->whereHas('registration', function($q) use ($event) {
                 $q->where('event_id', $event->id);

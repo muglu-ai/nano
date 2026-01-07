@@ -1391,6 +1391,25 @@ class RegistrationPaymentController extends Controller
                 try {
                     $contactEmail = $order->registration->contact->email ?? null;
                     if ($contactEmail) {
+                        
+                        $adminEmails = config('constants.ADMIN_EMAILS', []);
+                        $mail = Mail::to($contactEmail);
+                        if (!empty($adminEmails)) {
+                            $mail->bcc($adminEmails);
+                        }
+                        $mail->send(new TicketRegistrationMail($order, $event));
+                    }
+                } catch (\Exception $e) {
+                    Log::error('Failed to send ticket payment acknowledgement email', [
+                        'order_id' => $order->id,
+                        'error' => $e->getMessage()
+                    ]);
+                }
+
+                // Send payment acknowledgement email
+                try {
+                    $contactEmail = $order->registration->contact->email ?? null;
+                    if ($contactEmail) {
                         Mail::to($contactEmail)->send(new TicketRegistrationMail($order, $event));
                     }
                 } catch (\Exception $e) {
