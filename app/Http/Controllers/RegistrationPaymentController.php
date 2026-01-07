@@ -1020,6 +1020,7 @@ class RegistrationPaymentController extends Controller
      */
     public function handleTicketPaymentCallback(Request $request, $eventSlug, $gateway)
     {
+        Log::info('Ticket Payment Callback', ['request' => $request->all(), 'eventSlug' => $eventSlug, 'gateway' => $gateway]);
         $orderId = session('ticket_order_id');
         $orderNo = session('ticket_order_no');
 

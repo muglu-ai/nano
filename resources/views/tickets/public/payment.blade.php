@@ -308,8 +308,8 @@
         <!-- Pay Now Button -->
         <div class="text-center mt-4">
             <a href="{{ route('tickets.payment.process', ['eventSlug' => $event->slug ?? $event->id, 'orderNo' => $order->order_no]) }}" class="btn btn-pay-now" id="payNowBtn">
-                <i class="fas fa-credit-card me-2"></i>
-                Pay Now ₹{{ number_format($order->total, 2) }}
+                    <i class="fas fa-credit-card me-2"></i>
+                    Pay Now ₹{{ number_format($order->total, 2) }}
             </a>
         </div>
     </div>
