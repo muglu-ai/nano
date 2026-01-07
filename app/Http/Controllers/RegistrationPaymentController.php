@@ -856,6 +856,7 @@ class RegistrationPaymentController extends Controller
                     'amount'          => $amount,
                     'amount_paid'     => 0,
                     'amount_received' => 0,
+                    'transaction_id'  => $orderIdWithTimestamp, // Set transaction_id to order_id for pending payments
                     'status'          => 'pending',
                     'order_id'        => $orderIdWithTimestamp,
                     'currency'        => $currency,
