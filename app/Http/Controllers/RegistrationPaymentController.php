@@ -797,6 +797,27 @@ class RegistrationPaymentController extends Controller
                 ])->with('info', 'Payment already completed.');
             }
 
+            // Create invoice only when user proceeds to payment (avoid premature entries)
+            $invoice = Invoice::where('invoice_no', $order->order_no)
+                ->where('type', 'ticket_registration')
+                ->first();
+
+            if (!$invoice) {
+                $invoice = Invoice::create([
+                    'invoice_no'         => $order->order_no,
+                    'type'               => 'ticket_registration',
+                    'application_id'     => $order->registration_id, // link to registration for traceability
+                    'currency'           => $order->registration->event->currency ?? 'INR',
+                    'price'              => $order->total,
+                    'gst'                => $order->gst_total ?? 0,
+                    'processing_charges' => $order->processing_charge_total ?? 0,
+                    'total_final_price'  => $order->total,
+                    'amount_paid'        => 0,
+                    'pending_amount'     => $order->total,
+                    'payment_status'     => 'unpaid',
+                ]);
+            }
+
             // Determine payment gateway based on country
             $registration = $order->registration;
             $isIndian = strtolower($registration->company_country ?? '') === 'india' 
@@ -820,6 +841,28 @@ class RegistrationPaymentController extends Controller
                 $amount = $amount / $usdRate;
             }
 
+            // Create or reuse a pending payment entry (like PaymentGatewayController style validation)
+            $existingPayment = Payment::where('invoice_id', $invoice->id)
+                ->where('status', 'pending')
+                ->latest()
+                ->first();
+
+            if (!$existingPayment) {
+                $existingPayment = Payment::create([
+                    'invoice_id'      => $invoice->id,
+                    'payment_method'  => $paymentGateway,
+                    'amount'          => $amount,
+                    'amount_paid'     => 0,
+                    'amount_received' => 0,
+                    'status'          => 'pending',
+                    'order_id'        => $orderIdWithTimestamp,
+                    'currency'        => $currency,
+                ]);
+            } else {
+                // reuse existing order_id to keep gateway correlation consistent
+                $orderIdWithTimestamp = $existingPayment->order_id ?? $orderIdWithTimestamp;
+            }
+
             // Store in session
             session([
                 'ticket_order_id' => $order->id,
@@ -829,9 +872,9 @@ class RegistrationPaymentController extends Controller
             ]);
 
             if ($paymentGateway === 'CCAvenue') {
-                return $this->processTicketCcAvenue($order, $orderIdWithTimestamp, $amount, $currency, $billingName, $billingEmail, $billingPhone, $registration);
+                return $this->processTicketCcAvenue($order, $orderIdWithTimestamp, $amount, $currency, $billingName, $billingEmail, $billingPhone, $registration, $invoice);
             } else {
-                return $this->processTicketPayPal($order, $orderIdWithTimestamp, $amount, $currency, $billingName, $billingEmail, $billingPhone, $registration);
+                return $this->processTicketPayPal($order, $orderIdWithTimestamp, $amount, $currency, $billingName, $billingEmail, $billingPhone, $registration, $invoice);
             }
 
         } catch (\Exception $e) {
@@ -848,7 +891,7 @@ class RegistrationPaymentController extends Controller
     /**
      * Process ticket payment via CCAvenue
      */
-    private function processTicketCcAvenue($order, $orderId, $amount, $currency, $billingName, $billingEmail, $billingPhone, $registration)
+    private function processTicketCcAvenue($order, $orderId, $amount, $currency, $billingName, $billingEmail, $billingPhone, $registration, $invoice)
     {
         try {
             $event = $order->registration->event;
@@ -880,7 +923,7 @@ class RegistrationPaymentController extends Controller
                 'billing_address' => $registration->company_name ?? '',
                 'billing_city' => $registration->company_city ?? '',
                 'billing_state' => $registration->company_state ?? '',
-                'billing_zip' => '',
+                'billing_zip' => $registration->postal_code ?? '',
                 'billing_country' => $registration->company_country ?? 'India',
                 'billing_tel' => $billingPhone,
                 'billing_email' => $billingEmail,
@@ -942,7 +985,7 @@ class RegistrationPaymentController extends Controller
     /**
      * Process ticket payment via PayPal
      */
-    private function processTicketPayPal($order, $orderId, $amount, $currency, $billingName, $billingEmail, $billingPhone, $registration)
+    private function processTicketPayPal($order, $orderId, $amount, $currency, $billingName, $billingEmail, $billingPhone, $registration, $invoice)
     {
         try {
             $event = $order->registration->event;
@@ -1021,51 +1064,88 @@ class RegistrationPaymentController extends Controller
     public function handleTicketPaymentCallback(Request $request, $eventSlug, $gateway)
     {
         Log::info('Ticket Payment Callback', ['request' => $request->all(), 'eventSlug' => $eventSlug, 'gateway' => $gateway]);
-        $orderId = session('ticket_order_id');
-        $orderNo = session('ticket_order_no');
-
-        if (!$orderId) {
-            return redirect()->route('registration.payment.lookup')
-                ->with('error', 'Session expired. Please lookup your order again.');
-        }
-
-        $order = TicketOrder::with(['registration.contact', 'registration.event', 'items.ticketType'])->findOrFail($orderId);
-        $event = $order->registration->event;
+        $event = Events::where('slug', $eventSlug)->orWhere('id', $eventSlug)->firstOrFail();
 
         if ($gateway === 'ccavenue') {
-            return $this->handleTicketCcAvenueCallback($request, $order, $event);
+            $encResponse = $request->input('encResp');
+            if (empty($encResponse)) {
+                return redirect()->route('tickets.payment.lookup', $eventSlug)
+                    ->with('error', 'Payment response incomplete.');
+            }
+
+            $credentials = $this->ccAvenueService->getCredentials();
+            $decryptedResponse = $this->ccAvenueService->decrypt($encResponse, $credentials['working_key']);
+            parse_str($decryptedResponse, $responseArray);
+
+            $orderIdFromGateway = $responseArray['order_id'] ?? null;
+            $orderNo = $orderIdFromGateway ? explode('_', $orderIdFromGateway)[0] : null;
+
+            if (!$orderNo) {
+                return redirect()->route('tickets.payment.lookup', $eventSlug)
+                    ->with('error', 'Order not found for payment callback.');
+            }
+
+            $order = TicketOrder::with(['registration.contact', 'registration.event', 'items.ticketType'])
+                ->where('order_no', $orderNo)
+                ->whereHas('registration', function($q) use ($event) {
+                    $q->where('event_id', $event->id);
+                })
+                ->firstOrFail();
+
+            return $this->handleTicketCcAvenueCallback($request, $order, $event, $responseArray);
         } elseif ($gateway === 'paypal') {
-            return $this->handleTicketPayPalCallback($request, $order, $event);
+            $paypalOrderId = $request->input('token');
+            $pgRow = DB::table('payment_gateway_response')->where('payment_id', $paypalOrderId)->first();
+            $orderIdFromGateway = $pgRow->order_id ?? null;
+            $orderNo = $orderIdFromGateway ? explode('_', $orderIdFromGateway)[0] : null;
+
+            if (!$orderNo) {
+                return redirect()->route('tickets.payment.lookup', $eventSlug)
+                    ->with('error', 'Order not found for payment callback.');
+            }
+
+            $order = TicketOrder::with(['registration.contact', 'registration.event', 'items.ticketType'])
+                ->where('order_no', $orderNo)
+                ->whereHas('registration', function($q) use ($event) {
+                    $q->where('event_id', $event->id);
+                })
+                ->firstOrFail();
+
+            return $this->handleTicketPayPalCallback($request, $order, $event, $paypalOrderId);
         }
 
-        return redirect()->route('registration.payment.lookup')
+        return redirect()->route('tickets.payment.lookup', $eventSlug)
             ->with('error', 'Invalid payment gateway.');
     }
 
     /**
      * Handle ticket CCAvenue callback
      */
-    private function handleTicketCcAvenueCallback($request, $order, $event)
+    private function handleTicketCcAvenueCallback($request, $order, $event, $responseArray = null)
     {
-        $encResponse = $request->input('encResp');
-
-        if (empty($encResponse)) {
-            return redirect()->route('tickets.payment.by-tin', [
-                'eventSlug' => $event->slug ?? $event->id,
-                'tin' => $order->order_no
-            ])->with('error', 'Payment response incomplete.');
-        }
-
         try {
-            $credentials = $this->ccAvenueService->getCredentials();
-            $decryptedResponse = $this->ccAvenueService->decrypt($encResponse, $credentials['working_key']);
-            parse_str($decryptedResponse, $responseArray);
+            if (!$responseArray) {
+                $encResponse = $request->input('encResp');
+                if (empty($encResponse)) {
+                    return redirect()->route('tickets.payment.by-tin', [
+                        'eventSlug' => $event->slug ?? $event->id,
+                        'tin' => $order->order_no
+                    ])->with('error', 'Payment response incomplete.');
+                }
+                $credentials = $this->ccAvenueService->getCredentials();
+                $decryptedResponse = $this->ccAvenueService->decrypt($encResponse, $credentials['working_key']);
+                parse_str($decryptedResponse, $responseArray);
+            }
 
             $orderStatus = $responseArray['order_status'] ?? null;
-            $orderId = $responseArray['order_id'] ?? session('ticket_payment_order_id');
+            $orderId = $responseArray['order_id'] ?? null;
             $transDate = isset($responseArray['trans_date'])
                 ? Carbon::createFromFormat('d/m/Y H:i:s', $responseArray['trans_date'])->format('Y-m-d H:i:s')
                 : now();
+
+            $invoice = Invoice::where('invoice_no', $order->order_no)
+                ->where('type', 'ticket_registration')
+                ->first();
 
             // Update payment gateway response
             DB::table('payment_gateway_response')
@@ -1086,7 +1166,7 @@ class RegistrationPaymentController extends Controller
                 $order->update(['status' => 'paid']);
 
                 // Create ticket payment record
-                $ticketPayment = TicketPayment::create([
+                TicketPayment::create([
                     'order_ids_json' => [$order->id],
                     'method' => strtolower($responseArray['payment_mode'] ?? 'card'),
                     'amount' => $responseArray['mer_amount'] ?? $order->total,
@@ -1099,22 +1179,55 @@ class RegistrationPaymentController extends Controller
                     'pg_webhook_json' => [],
                 ]);
 
-                // Create payment record in payments table
-                Payment::create([
-                    'invoice_id' => null, // No invoice for tickets
-                    'payment_method' => $responseArray['payment_mode'] ?? 'CCAvenue',
-                    'amount' => $responseArray['mer_amount'] ?? $order->total,
-                    'amount_paid' => $responseArray['mer_amount'] ?? $order->total,
-                    'amount_received' => $responseArray['mer_amount'] ?? $order->total,
-                    'transaction_id' => $responseArray['tracking_id'] ?? null,
-                    'pg_result' => $orderStatus,
-                    'track_id' => $responseArray['tracking_id'] ?? null,
-                    'pg_response_json' => json_encode($responseArray),
-                    'payment_date' => $transDate,
-                    'currency' => 'INR',
-                    'status' => 'successful',
-                    'order_id' => $orderId,
-                ]);
+                // Update payments table (prefer updating the pending row)
+                $payment = null;
+                if ($invoice) {
+                    $payment = Payment::where('invoice_id', $invoice->id)
+                        ->where('order_id', $orderId)
+                        ->latest()
+                        ->first();
+                }
+                if (!$payment) {
+                    $payment = Payment::create([
+                        'invoice_id' => $invoice->id ?? null,
+                        'payment_method' => $responseArray['payment_mode'] ?? 'CCAvenue',
+                        'amount' => $responseArray['mer_amount'] ?? $order->total,
+                        'amount_paid' => $responseArray['mer_amount'] ?? $order->total,
+                        'amount_received' => $responseArray['mer_amount'] ?? $order->total,
+                        'transaction_id' => $responseArray['tracking_id'] ?? null,
+                        'pg_result' => $orderStatus,
+                        'track_id' => $responseArray['tracking_id'] ?? null,
+                        'pg_response_json' => json_encode($responseArray),
+                        'payment_date' => $transDate,
+                        'currency' => 'INR',
+                        'status' => 'successful',
+                        'order_id' => $orderId,
+                    ]);
+                } else {
+                    $payment->update([
+                        'payment_method' => $responseArray['payment_mode'] ?? 'CCAvenue',
+                        'amount' => $responseArray['mer_amount'] ?? $order->total,
+                        'amount_paid' => $responseArray['mer_amount'] ?? $order->total,
+                        'amount_received' => $responseArray['mer_amount'] ?? $order->total,
+                        'transaction_id' => $responseArray['tracking_id'] ?? null,
+                        'pg_result' => $orderStatus,
+                        'track_id' => $responseArray['tracking_id'] ?? null,
+                        'pg_response_json' => json_encode($responseArray),
+                        'payment_date' => $transDate,
+                        'currency' => 'INR',
+                        'status' => 'successful',
+                    ]);
+                }
+
+                // Update invoice status/amounts if present
+                if ($invoice) {
+                    $paidAmount = $responseArray['mer_amount'] ?? $order->total;
+                    $invoice->update([
+                        'amount_paid' => $paidAmount,
+                        'pending_amount' => max(0, ($invoice->total_final_price ?? $paidAmount) - $paidAmount),
+                        'payment_status' => 'paid',
+                    ]);
+                }
 
                 // Send payment acknowledgement email
                 try {
@@ -1162,10 +1275,8 @@ class RegistrationPaymentController extends Controller
     /**
      * Handle ticket PayPal callback
      */
-    private function handleTicketPayPalCallback($request, $order, $event)
+    private function handleTicketPayPalCallback($request, $order, $event, $paypalOrderId = null)
     {
-        $paypalOrderId = $request->input('token') ?? session('ticket_paypal_order_id');
-
         if (!$paypalOrderId) {
             return redirect()->route('tickets.payment.by-tin', [
                 'eventSlug' => $event->slug ?? $event->id,
@@ -1178,6 +1289,10 @@ class RegistrationPaymentController extends Controller
             $captureResponse = $this->paypalClient->getOrdersController()->ordersCapture($paypalOrderId);
             $captureResult = $captureResponse->getResult();
             $status = $captureResult->getStatus();
+
+            $invoice = Invoice::where('invoice_no', $order->order_no)
+                ->where('type', 'ticket_registration')
+                ->first();
 
             // Update payment gateway response
             DB::table('payment_gateway_response')
@@ -1203,7 +1318,7 @@ class RegistrationPaymentController extends Controller
                 $order->update(['status' => 'paid']);
 
                 // Create ticket payment record
-                $ticketPayment = TicketPayment::create([
+                TicketPayment::create([
                     'order_ids_json' => [$order->id],
                     'method' => 'card',
                     'amount' => $amount * (config('constants.USD_RATE', 83)), // Convert back to INR for storage
@@ -1216,22 +1331,57 @@ class RegistrationPaymentController extends Controller
                     'pg_webhook_json' => [],
                 ]);
 
-                // Create payment record in payments table
-                Payment::create([
-                    'invoice_id' => null,
-                    'payment_method' => 'PayPal',
-                    'amount' => $amount * (config('constants.USD_RATE', 83)),
-                    'amount_paid' => $amount * (config('constants.USD_RATE', 83)),
-                    'amount_received' => $amount * (config('constants.USD_RATE', 83)),
-                    'transaction_id' => $paypalOrderId,
-                    'pg_result' => $status,
-                    'track_id' => $paypalOrderId,
-                    'pg_response_json' => json_encode($captureResult),
-                    'payment_date' => now(),
-                    'currency' => 'USD',
-                    'status' => 'successful',
-                    'order_id' => session('ticket_payment_order_id'),
-                ]);
+                // Update payments table (prefer updating pending row)
+                $payment = null;
+                if ($invoice) {
+                    $payment = Payment::where('invoice_id', $invoice->id)
+                        ->where('order_id', $orderIdFromGateway ?? null)
+                        ->latest()
+                        ->first();
+                }
+
+                $inrAmount = $amount * (config('constants.USD_RATE', 83));
+
+                if (!$payment) {
+                    $payment = Payment::create([
+                        'invoice_id' => $invoice->id ?? null,
+                        'payment_method' => 'PayPal',
+                        'amount' => $inrAmount,
+                        'amount_paid' => $inrAmount,
+                        'amount_received' => $inrAmount,
+                        'transaction_id' => $paypalOrderId,
+                        'pg_result' => $status,
+                        'track_id' => $paypalOrderId,
+                        'pg_response_json' => json_encode($captureResult),
+                        'payment_date' => now(),
+                        'currency' => 'USD',
+                        'status' => 'successful',
+                        'order_id' => $orderIdFromGateway ?? null,
+                    ]);
+                } else {
+                    $payment->update([
+                        'payment_method' => 'PayPal',
+                        'amount' => $inrAmount,
+                        'amount_paid' => $inrAmount,
+                        'amount_received' => $inrAmount,
+                        'transaction_id' => $paypalOrderId,
+                        'pg_result' => $status,
+                        'track_id' => $paypalOrderId,
+                        'pg_response_json' => json_encode($captureResult),
+                        'payment_date' => now(),
+                        'currency' => 'USD',
+                        'status' => 'successful',
+                        'order_id' => $orderIdFromGateway ?? $payment->order_id,
+                    ]);
+                }
+
+                if ($invoice) {
+                    $invoice->update([
+                        'amount_paid' => $inrAmount,
+                        'pending_amount' => max(0, ($invoice->total_final_price ?? $inrAmount) - $inrAmount),
+                        'payment_status' => 'paid',
+                    ]);
+                }
 
                 // Send payment acknowledgement email
                 try {
