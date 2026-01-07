@@ -860,6 +860,7 @@ class RegistrationPaymentController extends Controller
                     'status'          => 'pending',
                     'order_id'        => $orderIdWithTimestamp,
                     'currency'        => $currency,
+                    'payment_date'    => now(), // Set payment_date for pending payments
                 ]);
             } else {
                 // reuse existing order_id to keep gateway correlation consistent
