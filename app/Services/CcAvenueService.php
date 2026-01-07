@@ -18,6 +18,7 @@ class CcAvenueService
 
     /**
      * Get Hosted Payment Page URL based on environment
+     * Same endpoint as PaymentGatewayController uses
      */
     public function getHostedPaymentUrl()
     {
@@ -26,6 +27,19 @@ class CcAvenueService
             return 'https://test.ccavenue.com/transaction/transaction.do?command=initiateTransaction';
         }
         return 'https://secure.ccavenue.com/transaction/transaction.do?command=initiateTransaction';
+    }
+
+    /**
+     * Get API URL based on environment (for status checks and other API calls)
+     * Uses the same pattern as getHostedPaymentUrl()
+     */
+    public function getApiUrl()
+    {
+        $env = config('constants.ccavenue.environment', 'production');
+        if ($env === 'test') {
+            return config("constants.ccavenue.test.api_url", 'https://apitest.ccavenue.com/apis/servlet/DoWebTrans');
+        }
+        return config("constants.ccavenue.production.api_url", 'https://api.ccavenue.com/apis/servlet/DoWebTrans');
     }
 
     /**
@@ -87,10 +101,9 @@ class CcAvenueService
                 throw new \Exception('CCAvenue credentials not configured. Please check your configuration.');
             }
 
-            Log::info('CCAvenue API - Using credentials', [
+            Log::info('CCAvenue - Using credentials', [
                 'merchant_id' => $credentials['merchant_id'],
                 'access_code' => substr($credentials['access_code'], 0, 5) . '...', // Partial for security
-                'api_url' => $apiUrl,
             ]);
 
             // Build request data

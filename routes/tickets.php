@@ -30,9 +30,12 @@ Route::post('/manage-booking/request-link', [GuestTicketController::class, 'requ
 Route::post('/manage-booking/verify-otp', [GuestTicketController::class, 'verifyOtp'])->name('tickets.verify-otp');
 
 // Payment
+// POST route for initiating payment (must come before GET route to avoid conflict)
 Route::post('/tickets/{eventSlug}/payment/initiate', [TicketPaymentController::class, 'initiate'])->name('tickets.payment.initiate');
-// New payment flow with auto gateway selection (handles Pay Now click)
-Route::get('/tickets/{eventSlug}/payment/{orderNo}', [\App\Http\Controllers\RegistrationPaymentController::class, 'processTicketPayment'])->name('tickets.payment.process');
+// New payment flow with auto gateway selection (handles Pay Now click) - GET route for order numbers
+Route::get('/tickets/{eventSlug}/payment/{orderNo}', [\App\Http\Controllers\RegistrationPaymentController::class, 'processTicketPayment'])
+    ->where('orderNo', '[A-Z0-9-]+') // Only match order numbers (alphanumeric with dashes), not "initiate"
+    ->name('tickets.payment.process');
 Route::get('/tickets/{eventSlug}/payment/{tin}', [TicketPaymentController::class, 'initiateByTin'])->name('tickets.payment.by-tin');
 Route::get('/ticket-payment/{token}', [TicketPaymentController::class, 'show'])->name('tickets.payment');
 Route::get('/ticket-payment/{token}/callback', [TicketPaymentController::class, 'callback'])->name('tickets.payment.callback');

@@ -646,6 +646,12 @@ class RegistrationPaymentController extends Controller
     public function processTicketPayment($eventSlug, $orderNo)
     {
         try {
+            // Prevent "initiate" from being treated as order number
+            if ($orderNo === 'initiate') {
+                return redirect()->route('tickets.register', $eventSlug)
+                    ->with('error', 'Invalid payment request. Please complete registration first.');
+            }
+
             $event = Events::where('slug', $eventSlug)->orWhere('id', $eventSlug)->firstOrFail();
             
             // Find ticket order by order_no
