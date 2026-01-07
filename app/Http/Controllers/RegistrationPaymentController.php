@@ -717,6 +717,50 @@ class RegistrationPaymentController extends Controller
     }
 
     /**
+     * Show ticket lookup form
+     */
+    public function showTicketLookup($eventSlug)
+    {
+        $event = Events::where('slug', $eventSlug)->orWhere('id', $eventSlug)->firstOrFail();
+        return view('payment.ticket-lookup', compact('event'));
+    }
+
+    /**
+     * Handle ticket order lookup by TIN (order number)
+     */
+    public function lookupTicketOrder(Request $request, $eventSlug)
+    {
+        $event = Events::where('slug', $eventSlug)->orWhere('id', $eventSlug)->firstOrFail();
+        
+        $request->validate([
+            'tin_no' => 'required|string',
+        ], [
+            'tin_no.required' => 'Please enter your Order Number (TIN).',
+        ]);
+
+        $tinNo = trim($request->tin_no);
+
+        // Find ticket order by order_no (TIN)
+        $order = TicketOrder::where('order_no', $tinNo)
+            ->whereHas('registration', function($q) use ($event) {
+                $q->where('event_id', $event->id);
+            })
+            ->with(['registration.contact', 'registration.event', 'items.ticketType', 'registration.registrationCategory'])
+            ->first();
+
+        if (!$order) {
+            return back()
+                ->withInput()
+                ->with('error', 'No ticket order found with the provided Order Number.');
+        }
+
+        // Get email from registration contact
+        $email = $order->registration->contact->email ?? $order->registration->company_email ?? 'N/A';
+
+        return view('payment.ticket-order-details', compact('event', 'order', 'email'));
+    }
+
+    /**
      * Process ticket payment - Auto-select gateway based on country
      * URL: tickets/{eventSlug}/payment/{orderNo}
      */

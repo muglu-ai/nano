@@ -29,6 +29,10 @@ Route::get('/manage-booking/{token}', [GuestTicketController::class, 'manage'])-
 Route::post('/manage-booking/request-link', [GuestTicketController::class, 'requestLink'])->name('tickets.request-link');
 Route::post('/manage-booking/verify-otp', [GuestTicketController::class, 'verifyOtp'])->name('tickets.verify-otp');
 
+// Ticket Payment Lookup
+Route::get('/tickets/{eventSlug}/payment/lookup', [\App\Http\Controllers\RegistrationPaymentController::class, 'showTicketLookup'])->name('tickets.payment.lookup');
+Route::post('/tickets/{eventSlug}/payment/lookup', [\App\Http\Controllers\RegistrationPaymentController::class, 'lookupTicketOrder'])->name('tickets.payment.lookup.submit');
+
 // Payment
 // POST route for initiating payment (must come before GET route to avoid conflict)
 Route::post('/tickets/{eventSlug}/payment/initiate', [TicketPaymentController::class, 'initiate'])->name('tickets.payment.initiate');
