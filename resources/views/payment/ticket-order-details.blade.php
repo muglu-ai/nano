@@ -1,440 +1,256 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Complete Your Payment - {{ config('constants.EVENT_NAME') }} {{ config('constants.EVENT_YEAR') }}</title>
-    <style>
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            line-height: 1.5;
-            color: #333333;
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 20px;
-            background-color: #f5f5f5;
-            font-size: 13px;
-        }
-        .email-container {
-            background: #ffffff;
-            border-radius: 0;
-            overflow: hidden;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-        }
-        .header {
-            background: #ffffff;
-            color: #333333;
-            padding: 20px;
-            border-bottom: 2px solid #e0e0e0;
-            display: table;
-            width: 100%;
-            table-layout: fixed;
-            box-sizing: border-box;
-        }
-        .header-left,
-        .header-right {
-            display: table-cell;
-            vertical-align: middle;
-            padding: 0 10px;
-        }
-        .header-left {
-            width: 65%;
-            text-align: left;
-        }
-        .header-right {
-            width: 35%;
-            text-align: right;
-            padding-right: 0;
-        }
-        .event-logo {
-            max-width: 100%;
-            height: auto;
-            max-height: 80px;
-        }
-        .social-links {
-            display: inline-block;
-            white-space: nowrap;
-        }
-        .social-links a {
-            display: inline-block;
-            margin: 0 4px;
-            text-decoration: none;
-            vertical-align: middle;
-            line-height: 0;
-        }
-        .social-links img {
-            width: 20px;
-            height: 20px;
-            display: block;
-            object-fit: contain;
-        }
-        .receipt-header {
-            display: table;
-            width: 100%;
-            padding: 15px 20px;
-            background: #f5f5f5;
-            border-bottom: 1px solid #e0e0e0;
-            table-layout: fixed;
-            box-sizing: border-box;
-        }
-        .receipt-left,
-        .receipt-right {
-            display: table-cell;
-            vertical-align: middle;
-            padding: 0 10px;
-            word-wrap: break-word;
-        }
-        .receipt-left {
-            width: 50%;
-            text-align: left;
-        }
-        .receipt-right {
-            width: 50%;
-            text-align: right;
-            padding-right: 0;
-        }
-        .receipt-type {
-            background: #ffffff;
-            color: #333333;
-            padding: 6px 15px;
-            border-radius: 0;
-            display: inline-block;
-            font-weight: 700;
-            font-size: 12px;
-            border: 1px solid #d0d0d0;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            white-space: nowrap;
-        }
-        .receipt-date {
-            font-size: 12px;
-            color: #666666;
-            white-space: nowrap;
-            display: inline-block;
-        }
-        .content {
-            padding: 20px;
-        }
-        .order-info {
-            background: #f5f5f5;
-            border-left: 3px solid #666666;
-            padding: 12px 15px;
-            margin: 15px 0;
-            border-radius: 0;
-        }
-        .order-info strong {
-            color: #333333;
-            font-size: 14px;
-        }
-        .order-info p {
-            margin: 5px 0 0 0;
-            font-size: 11px;
-            color: #666666;
-        }
-        .section {
-            margin: 20px 0;
-            padding-bottom: 15px;
-            border-bottom: 1px solid #e0e0e0;
-        }
-        .section:last-child {
-            border-bottom: none;
-        }
-        .section-title {
-            color: #333333;
-            font-size: 14px;
-            font-weight: 600;
-            margin-bottom: 12px;
-            display: flex;
-            align-items: center;
-            border-bottom: 1px solid #e0e0e0;
-            padding-bottom: 8px;
-        }
-        .section-title i {
-            margin-right: 8px;
-            color: #666666;
-            font-size: 12px;
-        }
-        .info-row {
-            display: flex;
-            justify-content: space-between;
-            padding: 6px 0;
-            border-bottom: 1px solid #f0f0f0;
-            font-size: 12px;
-        }
-        .info-row:last-child {
-            border-bottom: none;
-        }
-        .info-label {
-            font-weight: 600;
-            color: #666666;
-            flex: 1;
-        }
-        .info-value {
-            color: #333333;
-            flex: 1;
-            text-align: right;
-        }
-        .delegates-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 8px;
-            font-size: 11px;
-        }
-        .delegates-table th,
-        .delegates-table td {
-            padding: 8px;
-            text-align: left;
-            border-bottom: 1px solid #e0e0e0;
-        }
-        .delegates-table th {
-            background: #f5f5f5;
-            color: #333333;
-            font-weight: 600;
-            font-size: 11px;
-        }
-        .price-breakdown {
-            background: #f5f5f5;
-            border-radius: 0;
-            padding: 15px;
-            margin: 15px 0;
-            border: 1px solid #e0e0e0;
-        }
-        .price-row {
-            display: flex;
-            justify-content: space-between;
-            padding: 6px 0;
-            color: #333333;
-            font-size: 12px;
-        }
-        .price-row.total {
-            font-size: 16px;
-            font-weight: 700;
-            padding-top: 12px;
-            margin-top: 12px;
-            border-top: 2px solid #666666;
-            color: #333333;
-        }
-        .btn-container {
-            text-align: center;
-            margin: 25px 0;
-        }
-        .btn-pay-now {
-            display: inline-block;
-            background: #333333;
-            color: #ffffff !important;
-            padding: 12px 30px;
-            text-decoration: none;
-            border-radius: 0;
-            font-weight: 600;
-            font-size: 14px;
-            border: 1px solid #333333;
-            transition: all 0.3s ease;
-        }
-        .btn-pay-now:hover {
-            background: #666666;
-            border-color: #666666;
-        }
-        .footer {
-            background: #f5f5f5;
-            padding: 15px 20px;
-            text-align: center;
-            font-size: 11px;
-            color: #666666;
-            border-top: 2px solid #e0e0e0;
-        }
-        .organizer-logo {
-            max-width: 220px;
-            height: auto;
-            margin-bottom: 10px;
-        }
-        .footer-content {
-            margin-top: 10px;
-        }
-        .footer-content a {
-            color: #333333;
-            text-decoration: underline;
-        }
-        .secretariat-info {
-            display: table;
-            width: 100%;
-            margin-top: 15px;
-            border-top: 1px solid #e0e0e0;
-            padding-top: 15px;
-        }
-        .secretariat-left,
-        .secretariat-right {
-            display: table-cell;
-            vertical-align: top;
-        }
-        .secretariat-left {
-            width: 40%;
-            padding: 0 15px;
-            border-right: 1px solid #e0e0e0;
-            text-align: center;
-            vertical-align: middle;
-        }
-        .secretariat-right {
-            width: 60%;
-            padding: 0 10px 0 20px;
-        }
-        .secretariat-title {
-            color: #333333;
-            font-size: 12px;
-            font-weight: 600;
-            margin-bottom: 8px;
-        }
-        .secretariat-details {
-            font-size: 11px;
-            color: #666666;
-            line-height: 1.6;
-        }
-        .secretariat-details p {
-            margin: 2px 0;
-        }
-        .secretariat-details strong {
-            color: #333333;
-        }
-        .secretariat-details a {
-            color: #333333;
-            text-decoration: underline;
-        }
-        .alert {
-            background: #f5f5f5;
-            border-left: 3px solid #666666;
-            padding: 12px;
-            margin: 15px 0;
-            border-radius: 0;
-            font-size: 12px;
-        }
-        .alert p {
-            margin: 0;
-            color: #333333;
-        }
-        .success-alert {
-            background: #f5f5f5;
-            border-left: 3px solid #666666;
-            padding: 12px;
-            margin: 15px 0;
-            border-radius: 0;
-            font-size: 12px;
-        }
-        .success-alert p {
-            margin: 0;
-            color: #333333;
-        }
-        .payment-status {
-            display: inline-block;
-            padding: 4px 10px;
-            border-radius: 0;
-            font-size: 11px;
-            font-weight: 600;
-            text-transform: uppercase;
-        }
-        .payment-status.paid {
-            background: #f5f5f5;
-            color: #333333;
-            border: 1px solid #666666;
-        }
-        .payment-status.pending {
-            background: #f5f5f5;
-            color: #666666;
-            border: 1px solid #d0d0d0;
-        }
-        .back-link {
-            text-align: center;
-            margin: 20px 0;
-        }
-        .back-link a {
-            color: #666666;
-            text-decoration: underline;
-            font-size: 12px;
-        }
-        @media only screen and (max-width: 600px) {
-            .receipt-left,
-            .receipt-right,
-            .secretariat-left,
-            .secretariat-right {
-                display: block;
-                width: 100%;
-                padding: 10px 0;
-                text-align: left !important;
-            }
-            .receipt-right {
-                text-align: left !important;
-            }
-            .secretariat-left {
-                border-right: none;
-                border-bottom: 1px solid #e0e0e0;
-                text-align: center !important;
-            }
-        }
-    </style>
-</head>
-<body>
-    <div class="email-container">
-        <!-- Header -->
-        <div class="header">
-            <div class="header-left">
-                @if(config('constants.event_logo'))
-                <img src="{{ config('constants.event_logo') }}" alt="{{ config('constants.EVENT_NAME') }}" class="event-logo">
-                @endif
-            </div>
-            <div class="header-right">
-                <div class="social-links">
-                    @if(config('constants.SOCIAL_LINKS.facebook'))
-                    <a href="{{ config('constants.SOCIAL_LINKS.facebook') }}" target="_blank" title="Facebook">
-                        <img src="https://upload.wikimedia.org/wikipedia/commons/5/51/Facebook_f_logo_%282019%29.svg" alt="Facebook" style="width: 32px; height: 32px; display: block;">
-                    </a>
-                    @endif
-                    @if(config('constants.SOCIAL_LINKS.twitter'))
-                    <a href="{{ config('constants.SOCIAL_LINKS.twitter') }}" target="_blank" title="Twitter/X">
-                        <img src="https://upload.wikimedia.org/wikipedia/commons/6/6f/Logo_of_Twitter.svg" alt="Twitter" style="width: 32px; height: 32px; display: block;">
-                    </a>
-                    @endif
-                    @if(config('constants.SOCIAL_LINKS.linkedin'))
-                    <a href="{{ config('constants.SOCIAL_LINKS.linkedin') }}" target="_blank" title="LinkedIn">
-                        <img src="https://upload.wikimedia.org/wikipedia/commons/c/ca/LinkedIn_logo_initials.png" alt="LinkedIn" style="width: 32px; height: 32px; display: block;">
-                    </a>
-                    @endif
-                    @if(config('constants.SOCIAL_LINKS.instagram'))
-                    <a href="{{ config('constants.SOCIAL_LINKS.instagram') }}" target="_blank" title="Instagram">
-                        <img src="https://upload.wikimedia.org/wikipedia/commons/a/a5/Instagram_icon.png" alt="Instagram" style="width: 32px; height: 32px; display: block;">
-                    </a>
-                    @endif
-                </div>
-            </div>
-        </div>
+@extends('enquiry.layout')
 
+@section('title', 'Order Details - ' . ($order->order_no ?? ''))
+
+@push('styles')
+<style>
+    .receipt-header {
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 10px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+        border: 1px solid #e0e0e0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+
+    .receipt-type {
+        background: var(--primary-color);
+        color: white;
+        padding: 0.5rem 1.5rem;
+        border-radius: 8px;
+        font-weight: 700;
+        font-size: 0.875rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .receipt-date {
+        color: var(--text-secondary);
+        font-size: 0.875rem;
+    }
+
+    .order-info-box {
+        background: #f8f9fa;
+        border-left: 4px solid var(--primary-color);
+        border-radius: 10px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .order-info-box strong {
+        color: var(--text-primary);
+        font-size: 1.1rem;
+        display: block;
+        margin-bottom: 0.5rem;
+    }
+
+    .order-info-box p {
+        color: var(--text-secondary);
+        font-size: 0.875rem;
+        margin: 0.5rem 0 0 0;
+    }
+
+    .payment-status-badge {
+        display: inline-block;
+        padding: 0.5rem 1rem;
+        border-radius: 8px;
+        font-size: 0.875rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        margin-left: 0.5rem;
+    }
+
+    .payment-status-badge.paid {
+        background: #d4edda;
+        color: #155724;
+        border: 1px solid #c3e6cb;
+    }
+
+    .payment-status-badge.pending {
+        background: #fff3cd;
+        color: #856404;
+        border: 1px solid #ffeaa7;
+    }
+
+    .details-section {
+        background: #f8f9fa;
+        border-radius: 10px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        border: 1px solid #e0e0e0;
+    }
+
+    .section-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        margin-bottom: 1.5rem;
+        color: var(--text-primary);
+        padding-bottom: 0.75rem;
+        border-bottom: 2px solid var(--progress-inactive);
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .section-title i {
+        color: var(--primary-color);
+    }
+
+    .info-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 0.75rem 0;
+        border-bottom: 1px solid #e0e0e0;
+    }
+
+    .info-row:last-child {
+        border-bottom: none;
+    }
+
+    .info-label {
+        font-weight: 600;
+        color: var(--text-secondary);
+        flex: 1;
+    }
+
+    .info-value {
+        color: var(--text-primary);
+        flex: 1;
+        text-align: right;
+    }
+
+    .delegates-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 1rem;
+    }
+
+    .delegates-table th,
+    .delegates-table td {
+        padding: 0.75rem;
+        text-align: left;
+        border-bottom: 1px solid #e0e0e0;
+    }
+
+    .delegates-table th {
+        background: #f8f9fa;
+        color: var(--text-primary);
+        font-weight: 600;
+        font-size: 0.875rem;
+    }
+
+    .delegates-table td {
+        color: var(--text-secondary);
+        font-size: 0.875rem;
+    }
+
+    .price-breakdown {
+        background: #f8f9fa;
+        border-radius: 10px;
+        padding: 1.5rem;
+        margin-top: 1.5rem;
+        border: 1px solid #e0e0e0;
+    }
+
+    .price-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 0.75rem 0;
+        font-size: 1rem;
+        color: var(--text-primary);
+    }
+
+    .price-row.total {
+        font-size: 1.5rem;
+        font-weight: 700;
+        padding-top: 1rem;
+        margin-top: 1rem;
+        border-top: 2px solid var(--primary-color);
+        color: var(--text-primary);
+    }
+
+    .alert-box {
+        background: #fff3cd;
+        border-left: 4px solid #ffc107;
+        border-radius: 10px;
+        padding: 1rem 1.5rem;
+        margin: 1.5rem 0;
+    }
+
+    .alert-box.success {
+        background: #d4edda;
+        border-left-color: #28a745;
+    }
+
+    .alert-box p {
+        margin: 0;
+        color: var(--text-primary);
+        font-size: 0.875rem;
+    }
+
+    .btn-pay-now {
+        background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-color-dark) 100%);
+        color: white !important;
+        padding: 1rem 2.5rem;
+        border-radius: 10px;
+        font-weight: 600;
+        font-size: 1.1rem;
+        text-decoration: none;
+        display: inline-block;
+        transition: all 0.3s ease;
+        border: none;
+    }
+
+    .btn-pay-now:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+        color: white !important;
+    }
+
+    .btn-back {
+        color: var(--text-secondary);
+        text-decoration: none;
+        font-size: 0.875rem;
+        transition: color 0.3s ease;
+    }
+
+    .btn-back:hover {
+        color: var(--primary-color);
+    }
+</style>
+@endpush
+
+@section('content')
+<div class="form-card">
+    <div class="form-header">
+        <h2><i class="fas fa-receipt me-2"></i>Order Details</h2>
+        <p>{{ $event->event_name ?? config('constants.EVENT_NAME', 'Event') }} {{ $event->event_year ?? config('constants.EVENT_YEAR', date('Y')) }}</p>
+    </div>
+
+    <div class="form-body">
         <!-- Receipt Header -->
         <div class="receipt-header">
-            <div class="receipt-left">
-                <div class="receipt-type">
-                    @if($order->status === 'paid')
-                        ✓ CONFIRMATION RECEIPT
-                    @else
-                        ⏳ PROVISIONAL RECEIPT
-                    @endif
-                </div>
+            <div class="receipt-type">
+                @if($order->status === 'paid')
+                    ✓ CONFIRMATION RECEIPT
+                @else
+                    ⏳ PROVISIONAL RECEIPT
+                @endif
             </div>
-            <div class="receipt-right">
-                <div class="receipt-date">
-                    <strong>Date of Registration:</strong> {{ $order->created_at->format('d-m-Y') }}
-                </div>
+            <div class="receipt-date">
+                <strong>Date of Registration:</strong> {{ $order->created_at->format('d-m-Y') }}
             </div>
         </div>
 
-        <!-- Content -->
-        <div class="content">
-            <p style="font-size: 12px; margin-bottom: 15px;">Dear {{ $order->registration->contact->name ?? 'Valued Customer' }},</p>
-            
-            <p style="font-size: 12px; margin-bottom: 15px;">Thank you for registering for <strong>{{ config('constants.EVENT_NAME') }} {{ config('constants.EVENT_YEAR') }}</strong>. Your registration has been successfully received.</p>
-
-            <!-- TIN and PIN Information -->
-            <div class="order-info">
-                <strong>TIN No.: {{ $order->order_no }}</strong>
-                @if($order->status === 'paid')
+        <!-- Order Info -->
+        <div class="order-info-box">
+            <strong>TIN No.: {{ $order->order_no }}</strong>
+            @if($order->status === 'paid')
                 @php
-                    // Generate or retrieve PIN number for paid orders
                     $pinNo = $order->pin_no ?? null;
                     if (!$pinNo && $order->status === 'paid') {
                         $prefix = config('constants.PIN_NO_PREFIX', 'PRN-BTS-2026-EXHP-');
@@ -443,280 +259,273 @@
                     }
                 @endphp
                 @if($pinNo)
-                <p style="margin-top: 8px;"><strong>PIN No.:</strong> {{ $pinNo }}</p>
+                <p><strong>PIN No.:</strong> {{ $pinNo }}</p>
                 @endif
-                @endif
-                <p style="margin-top: 8px;">Please keep this TIN number for your records.</p>
-            </div>
-
-            <!-- Payment Status -->
-            <div class="order-info" style="margin-top: 10px;">
-                <div style="margin-bottom: 8px;">
-                    <strong>Payment Status:</strong> 
-                    <span class="payment-status {{ $order->status === 'paid' ? 'paid' : 'pending' }}">
-                        {{ ucfirst($order->status) }}
-                    </span>
-                </div>
-                @if($order->status === 'paid')
+            @endif
+            <p style="margin-top: 0.75rem;">
+                <strong>Payment Status:</strong>
+                <span class="payment-status-badge {{ $order->status === 'paid' ? 'paid' : 'pending' }}">
+                    {{ ucfirst($order->status) }}
+                </span>
+            </p>
+            @if($order->status === 'paid')
                 @php
                     $payment = $order->primaryPayment();
                     $paymentMethod = $payment ? ($payment->payment_method ?? 'Credit Card') : 'Credit Card';
                 @endphp
-                <div style="margin-top: 8px;">
-                    <strong>Payment Method:</strong> 
-                    <span style="font-size: 12px; color: #333333;">{{ $paymentMethod }}</span>
-                </div>
-                @endif
-            </div>
+                <p style="margin-top: 0.5rem;">
+                    <strong>Payment Method:</strong> {{ $paymentMethod }}
+                </p>
+            @endif
+        </div>
 
-            <!-- Alert (only show if unpaid) -->
-            @if($order->status !== 'paid')
-            <div class="alert">
-                <p><strong>⚠️ Action Required:</strong> Your order is pending payment. Please complete the payment to confirm your registration.</p>
+        <!-- Alert -->
+        @if($order->status !== 'paid')
+        <div class="alert-box">
+            <p><strong>⚠️ Action Required:</strong> Your order is pending payment. Please complete the payment to confirm your registration.</p>
+        </div>
+        @else
+        <div class="alert-box success">
+            <p><strong>✓ Payment Confirmed:</strong> Your registration has been confirmed. Thank you for your payment!</p>
+        </div>
+        @endif
+
+        <!-- Registration Information -->
+        <div class="details-section">
+            <h4 class="section-title">
+                <i class="fas fa-clipboard-list"></i>
+                Registration Information
+            </h4>
+            <div class="info-row">
+                <span class="info-label">Registration Category:</span>
+                <span class="info-value">{{ $order->registration->registrationCategory->name ?? 'N/A' }}</span>
             </div>
-            @else
-            <div class="success-alert">
-                <p><strong>✓ Payment Confirmed:</strong> Your registration has been confirmed. Thank you for your payment!</p>
+            <div class="info-row">
+                <span class="info-label">Ticket Type:</span>
+                <span class="info-value">{{ $order->items->first()->ticketType->name ?? 'N/A' }}</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Number of Delegates:</span>
+                <span class="info-value">{{ $order->items->sum('quantity') }}</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Nationality:</span>
+                <span class="info-value">{{ $order->registration->nationality }}</span>
+            </div>
+        </div>
+
+        <!-- Organisation Information -->
+        <div class="details-section">
+            <h4 class="section-title">
+                <i class="fas fa-building"></i>
+                Organisation Information
+            </h4>
+            <div class="info-row">
+                <span class="info-label">Organisation Name:</span>
+                <span class="info-value">{{ $order->registration->company_name }}</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Industry Sector:</span>
+                <span class="info-value">{{ $order->registration->industry_sector }}</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Organisation Type:</span>
+                <span class="info-value">{{ $order->registration->organisation_type }}</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Country:</span>
+                <span class="info-value">{{ $order->registration->company_country }}</span>
+            </div>
+            @if($order->registration->company_state)
+            <div class="info-row">
+                <span class="info-label">State:</span>
+                <span class="info-value">{{ $order->registration->company_state }}</span>
             </div>
             @endif
-
-            <!-- Registration Information -->
-            <div class="section">
-                <div class="section-title">
-                    <i>📋</i> Registration Information
-                </div>
-                <div class="info-row">
-                    <span class="info-label">Registration Category:</span>
-                    <span class="info-value">{{ $order->registration->registrationCategory->name ?? 'N/A' }}</span>
-                </div>
-                <div class="info-row">
-                    <span class="info-label">Ticket Type:</span>
-                    <span class="info-value">{{ $order->items->first()->ticketType->name ?? 'N/A' }}</span>
-                </div>
-                <div class="info-row">
-                    <span class="info-label">Number of Delegates:</span>
-                    <span class="info-value">{{ $order->items->sum('quantity') }}</span>
-                </div>
-                <div class="info-row">
-                    <span class="info-label">Nationality:</span>
-                    <span class="info-value">{{ $order->registration->nationality }}</span>
-                </div>
-            </div>
-
-            <!-- Organisation Information -->
-            <div class="section">
-                <div class="section-title">
-                    <i>🏢</i> Organisation Information
-                </div>
-                <div class="info-row">
-                    <span class="info-label">Organisation Name:</span>
-                    <span class="info-value">{{ $order->registration->company_name }}</span>
-                </div>
-                <div class="info-row">
-                    <span class="info-label">Industry Sector:</span>
-                    <span class="info-value">{{ $order->registration->industry_sector }}</span>
-                </div>
-                <div class="info-row">
-                    <span class="info-label">Organisation Type:</span>
-                    <span class="info-value">{{ $order->registration->organisation_type }}</span>
-                </div>
-                <div class="info-row">
-                    <span class="info-label">Country:</span>
-                    <span class="info-value">{{ $order->registration->company_country }}</span>
-                </div>
-                @if($order->registration->company_state)
-                <div class="info-row">
-                    <span class="info-label">State:</span>
-                    <span class="info-value">{{ $order->registration->company_state }}</span>
-                </div>
-                @endif
-                @if($order->registration->company_city)
-                <div class="info-row">
-                    <span class="info-label">City:</span>
-                    <span class="info-value">{{ $order->registration->company_city }}</span>
-                </div>
-                @endif
-                <div class="info-row">
-                    <span class="info-label">Phone:</span>
-                    <span class="info-value">{{ $order->registration->company_phone }}</span>
-                </div>
-                <div class="info-row">
-                    <span class="info-label">Email:</span>
-                    <span class="info-value">{{ $email }}</span>
-                </div>
-            </div>
-
-            <!-- Organisation Details for Raising the Invoice (Only if GST required) -->
-            @if($order->registration->gst_required)
-            <div class="section">
-                <div class="section-title">
-                    <i>🧾</i> Organisation Details for Raising the Invoice
-                </div>
-                <div class="info-row">
-                    <span class="info-label">Organisation Name (To create invoice in the name of):</span>
-                    <span class="info-value">{{ $order->registration->gst_legal_name ?? $order->registration->company_name }}</span>
-                </div>
-                <div class="info-row">
-                    <span class="info-label">Invoice Address:</span>
-                    <span class="info-value">{{ $order->registration->gst_address ?? '-' }}</span>
-                </div>
-                <div class="info-row">
-                    <span class="info-label">Organisation GST Registration No:</span>
-                    <span class="info-value">{{ $order->registration->gstin ?? '-' }}</span>
-                </div>
-                @php
-                    $panNo = $order->registration->gstin ? substr($order->registration->gstin, 2, 10) : null;
-                @endphp
-                @if($panNo)
-                <div class="info-row">
-                    <span class="info-label">Organisation PAN No:</span>
-                    <span class="info-value">{{ $panNo }}</span>
-                </div>
-                @endif
-                @if($order->registration->gst_state)
-                <div class="info-row">
-                    <span class="info-label">State:</span>
-                    <span class="info-value">{{ $order->registration->gst_state }}</span>
-                </div>
-                @endif
-                @php
-                    $contactName = $order->registration->contact->name ?? null;
-                    $contactPhone = $order->registration->contact->phone ?? $order->registration->company_phone ?? null;
-                @endphp
-                @if($contactName)
-                <div class="info-row">
-                    <span class="info-label">Contact Person Name:</span>
-                    <span class="info-value">{{ $contactName }}</span>
-                </div>
-                @endif
-                @if($contactPhone)
-                <div class="info-row">
-                    <span class="info-label">Phone No:</span>
-                    <span class="info-value">{{ $contactPhone }}</span>
-                </div>
-                @endif
+            @if($order->registration->company_city)
+            <div class="info-row">
+                <span class="info-label">City:</span>
+                <span class="info-value">{{ $order->registration->company_city }}</span>
             </div>
             @endif
+            <div class="info-row">
+                <span class="info-label">Phone:</span>
+                <span class="info-value">{{ $order->registration->company_phone }}</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Email:</span>
+                <span class="info-value">{{ $email }}</span>
+            </div>
+        </div>
 
-            <!-- Delegate Details -->
-            @if($order->registration->delegates && $order->registration->delegates->count() > 0)
-            <div class="section">
-                <div class="section-title">
-                    <i>👥</i> Delegate Details
-                </div>
-                <table class="delegates-table">
-                    <thead>
-                        <tr>
-                            <th>#</th>
-                            <th>Delegate Name</th>
-                            <th>Email</th>
-                            <th>Phone</th>
-                            <th>Job Title</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach($order->registration->delegates as $delegate)
-                        <tr>
-                            <td>{{ $loop->iteration }}</td>
-                            <td>{{ $delegate->salutation }} {{ $delegate->first_name }} {{ $delegate->last_name }}</td>
-                            <td>{{ $delegate->email }}</td>
-                            <td>{{ $delegate->phone ?? '-' }}</td>
-                            <td>{{ $delegate->job_title ?? '-' }}</td>
-                        </tr>
-                        @endforeach
-                    </tbody>
-                </table>
+        <!-- Organisation Details for Invoice (GST) -->
+        @if($order->registration->gst_required)
+        <div class="details-section">
+            <h4 class="section-title">
+                <i class="fas fa-file-invoice-dollar"></i>
+                Organisation Details for Raising the Invoice
+            </h4>
+            <div class="info-row">
+                <span class="info-label">Organisation Name (To create invoice in the name of):</span>
+                <span class="info-value">{{ $order->registration->gst_legal_name ?? $order->registration->company_name }}</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Invoice Address:</span>
+                <span class="info-value">{{ $order->registration->gst_address ?? '-' }}</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Organisation GST Registration No:</span>
+                <span class="info-value">{{ $order->registration->gstin ?? '-' }}</span>
+            </div>
+            @php
+                $panNo = $order->registration->gstin ? substr($order->registration->gstin, 2, 10) : null;
+            @endphp
+            @if($panNo)
+            <div class="info-row">
+                <span class="info-label">Organisation PAN No:</span>
+                <span class="info-value">{{ $panNo }}</span>
             </div>
             @endif
-
-            <!-- Price Breakdown -->
-            <div class="price-breakdown">
-                <div class="section-title" style="margin-top: 0;">
-                    <i>💰</i> Price Breakdown
-                </div>
-                @foreach($order->items as $item)
-                <div class="price-row">
-                    <span>Ticket Price ({{ $item->quantity }} × ₹{{ number_format($item->unit_price, 2) }}):</span>
-                    <span>₹{{ number_format($item->subtotal, 2) }}</span>
-                </div>
-                <div class="price-row">
-                    <span>GST ({{ $item->gst_rate }}%):</span>
-                    <span>₹{{ number_format($item->gst_amount, 2) }}</span>
-                </div>
-                <div class="price-row">
-                    <span>Processing Charge ({{ $item->processing_charge_rate }}%):</span>
-                    <span>₹{{ number_format($item->processing_charge_amount, 2) }}</span>
-                </div>
-                @endforeach
-                <div class="price-row total">
-                    <span>Total Amount:</span>
-                    <span>₹{{ number_format($order->total, 2) }}</span>
-                </div>
+            @if($order->registration->gst_state)
+            <div class="info-row">
+                <span class="info-label">State:</span>
+                <span class="info-value">{{ $order->registration->gst_state }}</span>
             </div>
-
-            <!-- Pay Now Button (only show if unpaid) -->
-            @if($order->status !== 'paid')
-            <div class="btn-container">
-                <a href="{{ route('tickets.payment.process', ['eventSlug' => $event->slug ?? $event->id, 'orderNo' => $order->order_no]) }}" class="btn-pay-now">
-                    Complete Payment - ₹{{ number_format($order->total, 2) }}
-                </a>
+            @endif
+            @php
+                $contactName = $order->registration->contact->name ?? null;
+                $contactPhone = $order->registration->contact->phone ?? $order->registration->company_phone ?? null;
+            @endphp
+            @if($contactName)
+            <div class="info-row">
+                <span class="info-label">Contact Person Name:</span>
+                <span class="info-value">{{ $contactName }}</span>
             </div>
+            @endif
+            @if($contactPhone)
+            <div class="info-row">
+                <span class="info-label">Phone No:</span>
+                <span class="info-value">{{ $contactPhone }}</span>
+            </div>
+            @endif
+        </div>
+        @endif
 
-            <p style="text-align: center; color: #666666; font-size: 11px; margin-top: 15px;">
+        <!-- Delegate Details -->
+        @if($order->registration->delegates && $order->registration->delegates->count() > 0)
+        <div class="details-section">
+            <h4 class="section-title">
+                <i class="fas fa-users"></i>
+                Delegate Details
+            </h4>
+            <table class="delegates-table">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Delegate Name</th>
+                        <th>Email</th>
+                        <th>Phone</th>
+                        <th>Job Title</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach($order->registration->delegates as $delegate)
+                    <tr>
+                        <td>{{ $loop->iteration }}</td>
+                        <td>{{ $delegate->salutation }} {{ $delegate->first_name }} {{ $delegate->last_name }}</td>
+                        <td>{{ $delegate->email }}</td>
+                        <td>{{ $delegate->phone ?? '-' }}</td>
+                        <td>{{ $delegate->job_title ?? '-' }}</td>
+                    </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        </div>
+        @endif
+
+        <!-- Price Breakdown -->
+        <div class="price-breakdown">
+            <h4 class="section-title" style="margin-top: 0; border-bottom: none;">
+                <i class="fas fa-calculator"></i>
+                Price Breakdown
+            </h4>
+            @foreach($order->items as $item)
+            <div class="price-row">
+                <span>Ticket Price ({{ $item->quantity }} × ₹{{ number_format($item->unit_price, 2) }}):</span>
+                <span>₹{{ number_format($item->subtotal, 2) }}</span>
+            </div>
+            <div class="price-row">
+                <span>GST ({{ $item->gst_rate }}%):</span>
+                <span>₹{{ number_format($item->gst_amount, 2) }}</span>
+            </div>
+            <div class="price-row">
+                <span>Processing Charge ({{ $item->processing_charge_rate }}%):</span>
+                <span>₹{{ number_format($item->processing_charge_amount, 2) }}</span>
+            </div>
+            @endforeach
+            <div class="price-row total">
+                <span>Total Amount:</span>
+                <span>₹{{ number_format($order->total, 2) }}</span>
+            </div>
+        </div>
+
+        <!-- Pay Now Button (only if unpaid) -->
+        @if($order->status !== 'paid')
+        <div class="text-center mt-4">
+            <a href="{{ route('tickets.payment.process', ['eventSlug' => $event->slug ?? $event->id, 'orderNo' => $order->order_no]) }}" class="btn-pay-now" id="payNowBtn">
+                <i class="fas fa-credit-card me-2"></i>
+                Complete Payment - ₹{{ number_format($order->total, 2) }}
+            </a>
+            <p style="text-align: center; color: var(--text-secondary); font-size: 0.875rem; margin-top: 1rem;">
                 Click the button above to complete your payment securely. Payment gateway will be automatically selected based on your country.
             </p>
-            <p style="text-align: center; color: #666666; font-size: 10px; margin-top: 8px; font-style: italic;">
-                <strong>Note:</strong> After payment realization, a final payment acknowledgement receipt will be provided.
-            </p>
-            @else
-            <div style="background: #f5f5f5; padding: 15px; border: 1px solid #e0e0e0; margin: 15px 0; text-align: center;">
-                <p style="margin: 0; color: #333333; font-size: 13px; font-weight: 600;">
-                    ✓ Payment Completed Successfully
-                </p>
-                <p style="margin: 8px 0 0 0; color: #666666; font-size: 11px;">
-                    Your registration is confirmed. You will receive further communication regarding the event.
-                </p>
-                <p style="margin: 15px 0 0 0;">
-                    <a href="{{ route('tickets.confirmation', ['eventSlug' => $event->slug ?? $event->id, 'token' => $order->secure_token]) }}" style="color: #333333; text-decoration: underline; font-size: 12px;">
-                        View Confirmation Details
-                    </a>
-                </p>
-            </div>
-            @endif
-
         </div>
-
-        <!-- Secretariat Information -->
-        <div class="secretariat-info">
-            <div class="secretariat-left">
-                @if(config('constants.organizer_logo'))
-                <img src="{{ config('constants.organizer_logo') }}" alt="{{ config('constants.organizer.name') }}" class="organizer-logo" style="max-width: 150px; height: auto; margin-bottom: 10px;">
-                @endif
-            </div>
-            <div class="secretariat-right">
-                <div class="secretariat-title">{{ config('constants.EVENT_NAME') }} Secretariat</div>
-                <div class="secretariat-details">
-                    <p><strong>{{ config('constants.organizer.name') }}</strong></p>
-                    <p>{!! config('constants.organizer.address') !!}</p>
-                    <p><strong>Tel:</strong> {{ config('constants.organizer.phone') }}</p>
-                    <p><strong>Email:</strong> <a href="mailto:{{ config('constants.organizer.email') }}">{{ config('constants.organizer.email') }}</a></p>
-                    <p><strong>Website:</strong> <a href="{{ config('constants.EVENT_WEBSITE') }}">{{ config('constants.EVENT_WEBSITE') }}</a></p>
-                </div>
-            </div>
+        @else
+        <div class="text-center mt-4">
+            <a href="{{ route('tickets.confirmation', ['eventSlug' => $event->slug ?? $event->id, 'token' => $order->secure_token]) }}" class="btn-pay-now" style="background: #28a745; border: none;">
+                <i class="fas fa-check-circle me-2"></i>
+                View Confirmation Details
+            </a>
         </div>
-
-        <!-- Footer -->
-        <div class="footer">
-            <div class="footer-content">
-                <p style="margin: 5px 0; font-size: 10px; color: #999999;">&copy; {{ date('Y') }} {{ config('constants.organizer.name') }}. All rights reserved.</p>
-            </div>
-        </div>
+        @endif
 
         <!-- Back Link -->
-        <div class="back-link">
-            <a href="{{ route('tickets.payment.lookup', $event->slug ?? $event->id) }}">← Back to Lookup</a>
+        <div class="text-center mt-4">
+            <a href="{{ route('tickets.payment.lookup', $event->slug ?? $event->id) }}" class="btn-back">
+                <i class="fas fa-arrow-left me-2"></i>Back to Lookup
+            </a>
         </div>
     </div>
-</body>
-</html>
+</div>
+@endsection
 
+@push('scripts')
+<!-- SweetAlert2 -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<script>
+    document.getElementById('payNowBtn')?.addEventListener('click', function(e) {
+        e.preventDefault();
+        
+        const btn = this;
+        const originalBtnText = btn.innerHTML;
+        const paymentUrl = btn.href;
+        
+        // Disable button
+        btn.style.pointerEvents = 'none';
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Processing...';
+        
+        Swal.fire({
+            title: 'Redirecting to Payment Gateway',
+            text: 'Please wait while we redirect you to the secure payment page.',
+            allowOutsideClick: false,
+            didOpen: () => {
+                Swal.showLoading();
+            }
+        });
+
+        // Redirect to payment gateway
+        window.location.href = paymentUrl;
+    });
+</script>
+@endpush

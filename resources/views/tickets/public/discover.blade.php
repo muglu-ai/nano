@@ -1,4 +1,4 @@
-@extends('tickets.public.layout')
+@extends('enquiry.layout')
 
 @section('title', 'Select Your Ticket')
 
@@ -9,10 +9,7 @@
             font-weight: 700;
             text-align: center;
             margin-bottom: 2rem;
-            background: var(--primary-gradient);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
+            color: var(--primary-color);
         }
 
         /* Toggle Section */
@@ -24,9 +21,9 @@
         }
 
         .toggle-btn {
-            background: rgba(255, 255, 255, 0.1);
-            border: 2px solid rgba(255, 255, 255, 0.2);
-            color: #fff;
+            background: #f8f9fa;
+            border: 2px solid var(--progress-inactive);
+            color: var(--text-primary);
             padding: 0.75rem 2rem;
             border-radius: 25px;
             font-weight: 600;
@@ -35,14 +32,19 @@
         }
 
         .toggle-btn.active {
-            background: var(--pink-gradient);
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-color-dark) 100%);
             border-color: transparent;
-            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+            color: white;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
         }
         
         .toggle-btn:hover {
-            background: rgba(255, 255, 255, 0.15);
+            background: #e9ecef;
             transform: translateY(-2px);
+        }
+        
+        .toggle-btn.active:hover {
+            background: linear-gradient(135deg, var(--primary-color-dark) 0%, var(--primary-color) 100%);
         }
         
         .toggle-btn i {
@@ -63,9 +65,9 @@
         }
 
         .event-radio-label {
-            background: rgba(255, 255, 255, 0.05);
-            border: 2px solid rgba(255, 255, 255, 0.2);
-            color: #fff;
+            background: #f8f9fa;
+            border: 2px solid var(--progress-inactive);
+            color: var(--text-primary);
             padding: 1rem 1.5rem;
             border-radius: 12px;
             cursor: pointer;
@@ -75,8 +77,9 @@
         }
 
         .event-radio:checked + .event-radio-label {
-            background: var(--primary-gradient);
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-color-dark) 100%);
             border-color: transparent;
+            color: white;
         }
 
         /* Ticket Cards */
@@ -88,18 +91,19 @@
         }
 
         .ticket-card {
-            background: var(--primary-gradient);
-            border-radius: 20px;
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-color-dark) 100%);
+            border-radius: 15px;
             padding: 2rem;
             position: relative;
             overflow: hidden;
             transition: all 0.3s;
             cursor: pointer;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
         }
 
         .ticket-card:hover {
             transform: translateY(-5px);
-            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
         }
 
         .ticket-card::before {
@@ -164,10 +168,11 @@
 
         /* Entitlements Table */
         .entitlements-section {
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 20px;
+            background: #f8f9fa;
+            border-radius: 15px;
             padding: 2rem;
             margin-top: 3rem;
+            border: 1px solid #e0e0e0;
         }
 
         .entitlements-title {
@@ -175,6 +180,7 @@
             font-weight: 700;
             margin-bottom: 1.5rem;
             text-align: center;
+            color: var(--text-primary);
         }
 
         .entitlements-table {
@@ -186,17 +192,17 @@
         .entitlements-table td {
             padding: 1rem;
             text-align: center;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            border-bottom: 1px solid #e0e0e0;
         }
 
         .entitlements-table th {
-            background: rgba(102, 126, 234, 0.2);
+            background: var(--primary-color);
             font-weight: 600;
-            color: #fff;
+            color: white;
         }
 
         .entitlements-table td {
-            color: #ccc;
+            color: var(--text-secondary);
         }
 
         .check-icon {
@@ -218,8 +224,14 @@
 @endpush
 
 @section('content')
-<div class="ticket-page-container">
-        <h1 class="page-title">Select Your Ticket</h1>
+<div class="form-card">
+    <div class="form-header">
+        <h2><i class="fas fa-ticket-alt me-2"></i>Select Your Ticket</h2>
+        <p>{{ $event->event_name ?? config('constants.EVENT_NAME', 'Event') }} {{ $event->event_year ?? config('constants.EVENT_YEAR', date('Y')) }}</p>
+    </div>
+
+    <div class="form-body">
+        <h1 class="page-title" style="font-size: 1.75rem; margin-bottom: 1.5rem;">Choose Your Ticket Type</h1>
 
         <!-- Toggle: Indian/International -->
         <div class="toggle-section">

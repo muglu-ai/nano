@@ -1,4 +1,4 @@
-@extends('tickets.public.layout')
+@extends('enquiry.layout')
 
 @section('title', 'Payment Confirmation')
 

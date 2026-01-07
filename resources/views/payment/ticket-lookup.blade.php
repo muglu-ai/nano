@@ -35,6 +35,9 @@
         color: var(--primary-color);
         font-weight: 600;
         margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
     }
 
     .help-section ul {
@@ -45,6 +48,10 @@
     .help-section li {
         margin-bottom: 0.5rem;
         color: var(--text-secondary);
+    }
+
+    .required {
+        color: #dc3545;
     }
 </style>
 @endpush
@@ -57,6 +64,19 @@
     </div>
 
     <div class="form-body">
+
+        @if(session('error'))
+            <div class="alert alert-danger">
+                <i class="fas fa-exclamation-circle me-2"></i>{{ session('error') }}
+            </div>
+        @endif
+
+        @if(session('success'))
+            <div class="alert alert-success">
+                <i class="fas fa-check-circle me-2"></i>{{ session('success') }}
+            </div>
+        @endif
+
         @if(session('error'))
             <div class="alert alert-danger">
                 <i class="fas fa-exclamation-circle me-2"></i>{{ session('error') }}
@@ -117,7 +137,7 @@
         </form>
 
         <div class="help-section">
-            <h6><i class="fas fa-question-circle me-2"></i>Need Help?</h6>
+            <h6><i class="fas fa-question-circle"></i>Need Help?</h6>
             <p class="mb-2" style="color: var(--text-secondary);">
                 If you cannot find your order, please check:
             </p>
@@ -130,4 +150,3 @@
     </div>
 </div>
 @endsection
-

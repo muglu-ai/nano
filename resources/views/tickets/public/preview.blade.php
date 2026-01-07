@@ -1,4 +1,4 @@
-@extends('tickets.public.layout')
+@extends('enquiry.layout')
 
 @section('title', 'Review Registration')
 
@@ -14,36 +14,35 @@
         margin-bottom: 2rem;
     }
 
-    .preview-card {
-        background: rgba(255, 255, 255, 0.05);
-        border-radius: 20px;
-        padding: 2.5rem;
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        margin-bottom: 2rem;
-    }
-
     .preview-section {
-        background: rgba(255, 255, 255, 0.03);
-        border-radius: 12px;
+        background: #f8f9fa;
+        border-radius: 10px;
         padding: 1.5rem;
         margin-bottom: 1.5rem;
-        border: 1px solid rgba(255, 255, 255, 0.1);
+        border: 1px solid #e0e0e0;
     }
 
     .section-title {
         font-size: 1.25rem;
-        font-weight: 700;
+        font-weight: 600;
         margin-bottom: 1.5rem;
-        color: #fff;
+        color: var(--text-primary);
         padding-bottom: 0.75rem;
-        border-bottom: 2px solid rgba(102, 126, 234, 0.5);
+        border-bottom: 2px solid var(--progress-inactive);
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .section-title i {
+        color: var(--primary-color);
     }
 
     .info-row {
         display: flex;
         justify-content: space-between;
         padding: 0.75rem 0;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        border-bottom: 1px solid #e0e0e0;
     }
 
     .info-row:last-child {
@@ -52,21 +51,22 @@
 
     .info-label {
         font-weight: 600;
-        color: rgba(255, 255, 255, 0.7);
+        color: var(--text-secondary);
         flex: 1;
     }
 
     .info-value {
-        color: #fff;
+        color: var(--text-primary);
         flex: 1;
         text-align: right;
     }
 
     .price-breakdown {
-        background: rgba(102, 126, 234, 0.1);
-        border-radius: 12px;
+        background: #f8f9fa;
+        border-radius: 10px;
         padding: 1.5rem;
         margin-top: 1.5rem;
+        border: 1px solid #e0e0e0;
     }
 
     .delegates-table {
@@ -78,13 +78,14 @@
     .delegates-table th,
     .delegates-table td {
         padding: 0.6rem 0.75rem;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-        color: #fff;
+        border-bottom: 1px solid #e0e0e0;
+        color: var(--text-primary);
         font-size: 0.95rem;
     }
 
     .delegates-table th {
-        background: rgba(255, 255, 255, 0.06);
+        background: var(--primary-color);
+        color: white;
         font-weight: 600;
     }
 
@@ -132,14 +133,15 @@
 @endpush
 
 @section('content')
-<div class="preview-container">
-    <!-- Progress Bar -->
-    @include('tickets.public.partials.progress-bar', ['currentStep' => 2])
-    
-    <div class="preview-card">
-        <h2 class="text-center mb-4" style="background: var(--primary-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">
-            Review Your Registration
-        </h2>
+<div class="form-card">
+    <div class="form-header">
+        <h2><i class="fas fa-eye me-2"></i>Review Your Registration</h2>
+        <p>{{ $event->event_name ?? config('constants.EVENT_NAME', 'Event') }} {{ $event->event_year ?? config('constants.EVENT_YEAR', date('Y')) }}</p>
+    </div>
+
+    <div class="form-body">
+        <!-- Progress Bar -->
+        @include('tickets.public.partials.progress-bar', ['currentStep' => 2])
 
         <!-- Registration Information -->
         <div class="preview-section">

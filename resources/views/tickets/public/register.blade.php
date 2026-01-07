@@ -1,4 +1,4 @@
-@extends('tickets.public.layout')
+@extends('enquiry.layout')
 
 @section('title', 'Register for Tickets')
 
@@ -7,147 +7,178 @@
     .registration-container {
         max-width: 1200px;
         margin: 0 auto;
-        padding: 2rem 1rem;
     }
 
     .registration-container .registration-progress {
         margin-bottom: 2rem;
     }
 
-    .registration-card {
-        background: rgba(255, 255, 255, 0.05);
-        border-radius: 20px;
-        padding: 2.5rem;
-        border: 1px solid rgba(255, 255, 255, 0.1);
-    }
-
     .form-section {
-        background: rgba(255, 255, 255, 0.03);
-        border-radius: 12px;
+        background: #f8f9fa;
+        border-radius: 10px;
         padding: 1.5rem;
         margin-bottom: 2rem;
-        border: 1px solid rgba(255, 255, 255, 0.1);
+        border: 1px solid #e0e0e0;
     }
 
     .section-title {
         font-size: 1.25rem;
-        font-weight: 700;
+        font-weight: 600;
         margin-bottom: 1.5rem;
-        color: #fff;
+        color: var(--text-primary);
         padding-bottom: 0.75rem;
-        border-bottom: 2px solid rgba(102, 126, 234, 0.5);
+        border-bottom: 2px solid var(--progress-inactive);
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .section-title i {
+        color: var(--primary-color);
     }
 
     .form-label {
         font-weight: 600;
-        color: #fff;
+        color: var(--text-primary);
         margin-bottom: 0.5rem;
         font-size: 0.95rem;
     }
 
     .form-control, .form-select {
-        background: rgba(255, 255, 255, 0.1);
-        border: 2px solid rgba(255, 255, 255, 0.2);
+        background: #ffffff;
+        border: 1px solid #ced4da;
         border-radius: 8px;
         padding: 0.75rem 1rem;
-        color: #fff;
+        color: var(--text-primary);
         transition: all 0.3s;
     }
 
     .form-control:focus, .form-select:focus {
-        background: rgba(255, 255, 255, 0.15);
-        border-color: #667eea;
-        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
-        color: #fff;
+        background: #ffffff;
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 0.2rem rgba(106, 27, 154, 0.25);
+        color: var(--text-primary);
         outline: none;
     }
 
     .form-control::placeholder {
-        color: rgba(255, 255, 255, 0.5);
+        color: var(--text-light);
     }
 
     .form-control option {
-        background: #1a1a2e;
-        color: #fff;
+        background: #ffffff;
+        color: var(--text-primary);
     }
 
     .btn-primary {
-        background: var(--primary-gradient);
+        background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-color-dark) 100%);
         color: white;
         border: none;
         border-radius: 8px;
         padding: 0.75rem 2rem;
         font-weight: 600;
         transition: all 0.3s;
-        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
     }
 
     .btn-primary:hover {
         transform: translateY(-2px);
-        box-shadow: 0 6px 20px rgba(102, 126, 234, 0.3);
-        color: white;
-    }
-
-    .ticket-summary {
-        background: var(--primary-gradient);
-        border-radius: 12px;
-        padding: 1.5rem;
-        margin-bottom: 2rem;
-    }
-
-    .ticket-summary h5 {
-        color: #fff;
-        font-weight: 700;
-        margin-bottom: 1rem;
-    }
-
-    .ticket-summary p {
-        color: rgba(255, 255, 255, 0.9);
-        margin-bottom: 0.5rem;
-    }
-
-    .text-danger {
-        color: #f5576c;
-        font-size: 0.875rem;
-        margin-top: 0.25rem;
+        box-shadow: 0 6px 20px rgba(0,0,0,0.15);
     }
 
     .required-field::after {
         content: " *";
-        color: #f5576c;
+        color: #dc3545;
+    }
+
+    .delegate-form {
+        background: #ffffff;
+        border-radius: 8px;
+        border: 1px solid #e0e0e0;
+        padding: 1rem;
+        margin-bottom: 1rem;
+    }
+
+    .text-danger {
+        color: #dc3545;
+        font-size: 0.875rem;
+        margin-top: 0.25rem;
+    }
+
+    .text-muted {
+        color: var(--text-secondary);
+    }
+
+    .alert {
+        border-radius: 10px;
+        padding: 1rem 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .alert-danger {
+        background: #f8d7da;
+        border-left: 4px solid #dc3545;
+        color: #721c24;
+    }
+
+    .alert-success {
+        background: #d4edda;
+        border-left: 4px solid #28a745;
+        color: #155724;
+    }
+
+    .btn-submit {
+        background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-color-dark) 100%);
+        color: white;
+        border: none;
+        border-radius: 10px;
+        padding: 1rem 3rem;
+        font-weight: 600;
+        font-size: 1.1rem;
+        transition: all 0.3s;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+
+    .btn-submit:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+    }
+
+    .btn-submit:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
     }
 </style>
 @endpush
 
 @section('content')
-<div class="registration-container">
-    <!-- Progress Bar -->
-    @include('tickets.public.partials.progress-bar', ['currentStep' => 1])
-    
-    <div class="registration-card">
-        <h2 class="text-center mb-4" style="background: var(--primary-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">
-            Register for {{ $event->event_name }}
-        </h2>
+<div class="form-card">
+    <div class="form-header">
+        <h2><i class="fas fa-ticket-alt me-2"></i>Register for Tickets</h2>
+        <p>{{ $event->event_name ?? config('constants.EVENT_NAME', 'Event') }} {{ $event->event_year ?? config('constants.EVENT_YEAR', date('Y')) }}</p>
+    </div>
 
-        @if($selectedTicketType)
-            <div class="ticket-summary">
-                <h5><i class="fas fa-ticket-alt me-2"></i>Selected Ticket</h5>
-                <p><strong>{{ $selectedTicketType->name }}</strong></p>
-                <p>Price: ₹{{ number_format($selectedTicketType->getCurrentPrice(), 2) }}</p>
-                @if($selectedTicketType->description)
-                    <p class="mb-0">{{ $selectedTicketType->description }}</p>
-                @endif
+    <div class="form-body">
+        <!-- Progress Bar -->
+        @include('tickets.public.partials.progress-bar', ['currentStep' => 1])
+        
+        @if ($errors->any())
+            <div class="alert alert-danger">
+                <ul class="mb-0">
+                    @foreach ($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
             </div>
         @endif
 
         <form action="{{ route('tickets.store', $event->slug ?? $event->id) }}" method="POST" id="registrationForm">
             @csrf
-            <input type="hidden" name="ticket_type_id" value="{{ $selectedTicketType->id ?? '' }}">
 
             <!-- Registration Information Section -->
             <div class="form-section">
                 <h4 class="section-title">
-                    <i class="fas fa-info-circle me-2"></i>
+                    <i class="fas fa-info-circle"></i>
                     Registration Information
                 </h4>
 
@@ -169,13 +200,13 @@
 
                     <div class="col-md-6 mb-3">
                         <label class="form-label required-field">Ticket Type</label>
-                        <select name="ticket_type_id" class="form-select" required id="ticket_type_id">
+                        <select name="ticket_type_id" class="form-select" required>
                             <option value="">Select Ticket Type</option>
                             @foreach($ticketTypes as $ticketType)
                                 <option value="{{ $ticketType->id }}" 
-                                        {{ ($selectedTicketType && $selectedTicketType->id == $ticketType->id) || old('ticket_type_id') == $ticketType->id ? 'selected' : '' }}
-                                        data-price="{{ $ticketType->getCurrentPrice() }}">
-                                    {{ $ticketType->name }} - ₹{{ number_format($ticketType->getCurrentPrice(), 2) }}
+                                        data-price="{{ $ticketType->getCurrentPrice('national') }}"
+                                        {{ old('ticket_type_id') == $ticketType->id ? 'selected' : '' }}>
+                                    {{ $ticketType->name }} - ₹{{ number_format($ticketType->getCurrentPrice('national'), 0) }}
                                 </option>
                             @endforeach
                         </select>
@@ -190,8 +221,10 @@
                         <label class="form-label required-field">Number of Delegates</label>
                         <input type="number" name="delegate_count" class="form-control" 
                                value="{{ old('delegate_count', 1) }}" 
-                               min="1" max="100" required id="delegate_count">
-                        <small class="form-text text-muted">Enter the number of delegates attending</small>
+                               min="1" 
+                               max="50" 
+                               required 
+                               id="delegate_count">
                         @error('delegate_count')
                             <div class="text-danger">{{ $message }}</div>
                         @enderror
@@ -201,8 +234,8 @@
                         <label class="form-label required-field">Nationality</label>
                         <select name="nationality" class="form-select" required>
                             <option value="">Select Nationality</option>
-                            <option value="Indian" {{ old('nationality') == 'Indian' ? 'selected' : '' }}>Indian</option>
-                            <option value="International" {{ old('nationality') == 'International' ? 'selected' : '' }}>International</option>
+                            <option value="national" {{ old('nationality') == 'national' ? 'selected' : '' }}>Indian</option>
+                            <option value="international" {{ old('nationality') == 'international' ? 'selected' : '' }}>International</option>
                         </select>
                         @error('nationality')
                             <div class="text-danger">{{ $message }}</div>
@@ -214,7 +247,7 @@
             <!-- Organisation Information Section -->
             <div class="form-section">
                 <h4 class="section-title">
-                    <i class="fas fa-building me-2"></i>
+                    <i class="fas fa-building"></i>
                     Organisation Information
                 </h4>
 
@@ -235,11 +268,12 @@
                         <label class="form-label required-field">Industry Sector</label>
                         <select name="industry_sector" class="form-select" required>
                             <option value="">Select Industry Sector</option>
-                            @foreach(config('constants.sectors') as $sector)
-                                <option value="{{ $sector }}" {{ old('industry_sector') == $sector ? 'selected' : '' }}>
-                                    {{ $sector }}
-                                </option>
-                            @endforeach
+                            <option value="Technology" {{ old('industry_sector') == 'Technology' ? 'selected' : '' }}>Technology</option>
+                            <option value="Healthcare" {{ old('industry_sector') == 'Healthcare' ? 'selected' : '' }}>Healthcare</option>
+                            <option value="Finance" {{ old('industry_sector') == 'Finance' ? 'selected' : '' }}>Finance</option>
+                            <option value="Education" {{ old('industry_sector') == 'Education' ? 'selected' : '' }}>Education</option>
+                            <option value="Manufacturing" {{ old('industry_sector') == 'Manufacturing' ? 'selected' : '' }}>Manufacturing</option>
+                            <option value="Other" {{ old('industry_sector') == 'Other' ? 'selected' : '' }}>Other</option>
                         </select>
                         @error('industry_sector')
                             <div class="text-danger">{{ $message }}</div>
@@ -250,11 +284,12 @@
                         <label class="form-label required-field">Organisation Type</label>
                         <select name="organisation_type" class="form-select" required>
                             <option value="">Select Organisation Type</option>
-                            @foreach(config('constants.organization_types') as $orgType)
-                                <option value="{{ $orgType }}" {{ old('organisation_type') == $orgType ? 'selected' : '' }}>
-                                    {{ $orgType }}
-                                </option>
-                            @endforeach
+                            <option value="Corporate" {{ old('organisation_type') == 'Corporate' ? 'selected' : '' }}>Corporate</option>
+                            <option value="Startup" {{ old('organisation_type') == 'Startup' ? 'selected' : '' }}>Startup</option>
+                            <option value="Government" {{ old('organisation_type') == 'Government' ? 'selected' : '' }}>Government</option>
+                            <option value="NGO" {{ old('organisation_type') == 'NGO' ? 'selected' : '' }}>NGO</option>
+                            <option value="Academic" {{ old('organisation_type') == 'Academic' ? 'selected' : '' }}>Academic</option>
+                            <option value="Other" {{ old('organisation_type') == 'Other' ? 'selected' : '' }}>Other</option>
                         </select>
                         @error('organisation_type')
                             <div class="text-danger">{{ $message }}</div>
@@ -263,34 +298,47 @@
                 </div>
 
                 <div class="row">
-                    <div class="col-md-4 mb-3">
+                    <div class="col-md-6 mb-3">
                         <label class="form-label required-field">Country</label>
-                        <select name="country" class="form-select" required id="country">
-                            <option value="">Select Country</option>
-                            <option value="India" {{ old('country') == 'India' ? 'selected' : '' }}>India</option>
-                            <!-- Add more countries as needed -->
+                        <input type="text" name="company_country" class="form-control" id="company_country"
+                               value="{{ old('company_country', 'India') }}" 
+                               placeholder="Enter country" required>
+                        @error('company_country')
+                            <div class="text-danger">{{ $message }}</div>
+                        @enderror
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label required-field">State</label>
+                        <select name="company_state" class="form-select" id="company_state" required>
+                            <option value="">-- Select State --</option>
+                            @if(old('company_state'))
+                                <option value="{{ old('company_state') }}" selected>{{ old('company_state') }}</option>
+                            @endif
                         </select>
-                        @error('country')
+                        @error('company_state')
+                            <div class="text-danger">{{ $message }}</div>
+                        @enderror
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label required-field">City</label>
+                        <input type="text" name="company_city" class="form-control" 
+                               value="{{ old('company_city') }}" 
+                               placeholder="Enter city" required>
+                        @error('company_city')
                             <div class="text-danger">{{ $message }}</div>
                         @enderror
                     </div>
 
-                    <div class="col-md-4 mb-3">
-                        <label class="form-label">State</label>
-                        <input type="text" name="state" class="form-control" 
-                               value="{{ old('state') }}" 
-                               placeholder="Enter state">
-                        @error('state')
-                            <div class="text-danger">{{ $message }}</div>
-                        @enderror
-                    </div>
-
-                    <div class="col-md-4 mb-3">
-                        <label class="form-label">City</label>
-                        <input type="text" name="city" class="form-control" 
-                               value="{{ old('city') }}" 
-                               placeholder="Enter city">
-                        @error('city')
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label required-field">Postal Code</label>
+                        <input type="text" name="postal_code" class="form-control" 
+                               value="{{ old('postal_code') }}" 
+                               placeholder="Enter postal code" required>
+                        @error('postal_code')
                             <div class="text-danger">{{ $message }}</div>
                         @enderror
                     </div>
@@ -299,19 +347,20 @@
                 <div class="row">
                     <div class="col-md-6 mb-3">
                         <label class="form-label required-field">Phone Number</label>
-                        <input type="tel" name="phone" class="form-control" 
+                        <input type="tel" name="phone" class="form-control" id="company_phone" 
                                value="{{ old('phone') }}" 
                                placeholder="Enter phone number" required>
+                        <input type="hidden" name="phone_country_code" id="company_phone_country_code" value="{{ old('phone_country_code', '+91') }}">
                         @error('phone')
                             <div class="text-danger">{{ $message }}</div>
                         @enderror
                     </div>
 
                     <div class="col-md-6 mb-3">
-                        <label class="form-label">Email</label>
+                        <label class="form-label required-field">Email</label>
                         <input type="email" name="email" class="form-control" 
                                value="{{ old('email') }}" 
-                               placeholder="Enter email address">
+                               placeholder="Enter email address" required>
                         @error('email')
                             <div class="text-danger">{{ $message }}</div>
                         @enderror
@@ -322,7 +371,7 @@
             <!-- Delegates Information Section -->
             <div class="form-section" id="delegates_section" style="display: {{ old('delegate_count', 1) >= 1 ? 'block' : 'none' }};">
                 <h4 class="section-title">
-                    <i class="fas fa-users me-2"></i>
+                    <i class="fas fa-users"></i>
                     Delegates Information
                 </h4>
                 <p class="text-muted mb-3">Please provide details for each delegate attending the event.</p>
@@ -334,15 +383,15 @@
             <!-- GST Information Section -->
             <div class="form-section">
                 <h4 class="section-title">
-                    <i class="fas fa-file-invoice-dollar me-2"></i>
+                    <i class="fas fa-file-invoice-dollar"></i>
                     GST Information
                 </h4>
 
                 <div class="row">
-                    <div class="col-md-6 mb-3">
-                        <label class="form-label required-field">GST Required</label>
+                    <div class="col-md-12 mb-3">
+                        <label class="form-label required-field">Do you require GST Invoice?</label>
                         <select name="gst_required" class="form-select" id="gst_required" required>
-                            <option value="0" {{ old('gst_required', '0') == '0' ? 'selected' : '' }}>No</option>
+                            <option value="0" {{ old('gst_required') == '0' ? 'selected' : '' }}>No</option>
                             <option value="1" {{ old('gst_required') == '1' ? 'selected' : '' }}>Yes</option>
                         </select>
                         @error('gst_required')
@@ -353,26 +402,18 @@
 
                 <div id="gst_fields" style="display: {{ old('gst_required') == '1' ? 'block' : 'none' }};">
                     <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label">GSTIN Number</label>
-                            <div class="input-group">
-                                <input type="text" name="gstin" class="form-control" 
-                                       value="{{ old('gstin') }}" 
-                                       pattern="[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}"
-                                       placeholder="Enter 15-digit GSTIN" 
-                                       id="gstin_input">
-                                <button type="button" class="btn btn-outline-primary" id="validateGstBtn">
-                                    <i class="fas fa-search"></i> Validate
-                                </button>
-                            </div>
-                            <div id="gst_loading" class="d-none mt-1">
-                                <small class="text-info"><i class="fas fa-spinner fa-spin"></i> Fetching details...</small>
-                            </div>
-                            <div id="gst_feedback" class="mt-1"></div>
+                        <div class="col-md-12 mb-3">
+                            <label class="form-label">GSTIN</label>
+                            <input type="text" name="gstin" class="form-control" 
+                                   value="{{ old('gstin') }}" 
+                                   placeholder="Enter GSTIN" 
+                                   id="gstin_input"
+                                   maxlength="15">
+                            <small class="form-text text-muted">Enter 15-character GSTIN for validation</small>
                             @error('gstin')
                                 <div class="text-danger">{{ $message }}</div>
                             @enderror
-                            <small class="form-text text-muted">Click "Validate" to auto-fill company details from GST database</small>
+                            <div id="gst_validation_message" class="mt-2"></div>
                         </div>
                     </div>
 
@@ -381,8 +422,7 @@
                             <label class="form-label">GST Legal Name</label>
                             <input type="text" name="gst_legal_name" class="form-control" 
                                    value="{{ old('gst_legal_name') }}" 
-                                   placeholder="Legal name as per GST certificate" 
-                                   id="gst_legal_name">
+                                   placeholder="Enter legal name for invoice">
                             @error('gst_legal_name')
                                 <div class="text-danger">{{ $message }}</div>
                             @enderror
@@ -393,8 +433,7 @@
                         <div class="col-md-12 mb-3">
                             <label class="form-label">GST Address</label>
                             <textarea name="gst_address" class="form-control" rows="3" 
-                                      placeholder="Address as per GST certificate" 
-                                      id="gst_address">{{ old('gst_address') }}</textarea>
+                                      placeholder="Enter address for invoice">{{ old('gst_address') }}</textarea>
                             @error('gst_address')
                                 <div class="text-danger">{{ $message }}</div>
                             @enderror
@@ -406,8 +445,7 @@
                             <label class="form-label">GST State</label>
                             <input type="text" name="gst_state" class="form-control" 
                                    value="{{ old('gst_state') }}" 
-                                   placeholder="State as per GST certificate" 
-                                   id="gst_state">
+                                   placeholder="Enter state">
                             @error('gst_state')
                                 <div class="text-danger">{{ $message }}</div>
                             @enderror
@@ -416,13 +454,13 @@
                 </div>
             </div>
 
-            <!-- Primary Contact Information (Only for GST) -->
-            <div class="form-section" id="primary_contact_section" style="display: none;">
+            <!-- Primary Contact Information Section (Only shown when GST is required) -->
+            <div class="form-section" id="primary_contact_section" style="display: {{ old('gst_required') == '1' ? 'block' : 'none' }};">
                 <h4 class="section-title">
-                    <i class="fas fa-user me-2"></i>
+                    <i class="fas fa-user"></i>
                     Primary Contact Information
                 </h4>
-                <p class="text-muted mb-3">Required for GST invoice generation</p>
+                <p class="text-muted mb-3">Contact person details for invoice purposes.</p>
 
                 <div class="row">
                     <div class="col-md-6 mb-3">
@@ -448,10 +486,11 @@
 
                 <div class="row">
                     <div class="col-md-6 mb-3">
-                        <label class="form-label required-field">Phone Number</label>
+                        <label class="form-label required-field">Mobile Number</label>
                         <input type="tel" name="contact_phone" class="form-control" 
                                value="{{ old('contact_phone') }}" 
-                               placeholder="Enter phone number" id="contact_phone">
+                               placeholder="Enter mobile number" id="contact_phone">
+                        <input type="hidden" name="contact_phone_country_code" id="contact_phone_country_code" value="{{ old('contact_phone_country_code', '+91') }}">
                         @error('contact_phone')
                             <div class="text-danger">{{ $message }}</div>
                         @enderror
@@ -463,18 +502,14 @@
             @if(config('constants.RECAPTCHA_ENABLED', false))
             <input type="hidden" name="g-recaptcha-response" id="g-recaptcha-response">
             @error('recaptcha')
-                <div class="alert alert-danger mt-3">
-                    <i class="fas fa-exclamation-circle me-2"></i>
-                    {{ $message }}
-                </div>
+                <div class="alert alert-danger">{{ $message }}</div>
             @enderror
             @endif
 
             <!-- Submit Button -->
             <div class="text-center mt-4">
-                <button type="submit" class="btn btn-primary btn-lg" id="submitBtn">
-                    <i class="fas fa-arrow-right me-2"></i>
-                    Continue to Preview
+                <button type="submit" class="btn-submit" id="submitBtn">
+                    <i class="fas fa-arrow-right me-2"></i>Continue to Preview
                 </button>
             </div>
         </form>
@@ -486,407 +521,375 @@
 <!-- SweetAlert2 -->
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
-<script>
-    // Update ticket price display when ticket type changes
-    document.getElementById('ticket_type_id')?.addEventListener('change', function() {
-        const selectedOption = this.options[this.selectedIndex];
-        const price = selectedOption.getAttribute('data-price');
-        // You can update a price display element here if needed
-    });
+@if(config('constants.RECAPTCHA_ENABLED', false))
+<script src="https://www.google.com/recaptcha/enterprise.js?render={{ config('services.recaptcha.site_key') }}"></script>
+@endif
 
-    // Handle delegate count change - always show delegate fields
-    document.getElementById('delegate_count')?.addEventListener('change', function() {
-        const count = parseInt(this.value) || 1;
-        const delegatesSection = document.getElementById('delegates_section');
-        const delegatesContainer = document.getElementById('delegates_container');
-        
-        // Always show delegates section (even for count = 1)
-        delegatesSection.style.display = 'block';
+<script>
+    // Delegate form generation
+    const delegateCountInput = document.getElementById('delegate_count');
+    const delegatesContainer = document.getElementById('delegates_container');
+    const delegatesSection = document.getElementById('delegates_section');
+    
+    // Old values from validation errors
+    const oldDelegates = @json(old('delegates', []));
+    const oldDelegateCount = {{ old('delegate_count', 1) }};
+
+    function generateDelegateForms(count) {
         delegatesContainer.innerHTML = '';
         
-        // Get old delegate values if available
-        const oldDelegates = @json(old('delegates', []));
-        
-        // Generate delegate forms for all counts (including 1)
-        for (let i = 1; i <= count; i++) {
-            const oldDelegate = oldDelegates[i] || {};
-            const delegateHtml = `
-                <div class="delegate-form mb-4 p-3" style="background: rgba(255, 255, 255, 0.02); border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.1);">
-                    <h6 class="mb-3" style="color: #667eea;">
-                        <i class="fas fa-user me-2"></i>Delegate ${i}${count === 1 ? ' (Attendee)' : ''}
-                    </h6>
-                    <div class="row">
-                        <div class="col-md-2 mb-3">
-                            <label class="form-label">Salutation</label>
-                            <select name="delegates[${i}][salutation]" class="form-select">
-                                <option value="">Select</option>
-                                <option value="Mr" ${oldDelegate.salutation === 'Mr' ? 'selected' : ''}>Mr</option>
-                                <option value="Mrs" ${oldDelegate.salutation === 'Mrs' ? 'selected' : ''}>Mrs</option>
-                                <option value="Ms" ${oldDelegate.salutation === 'Ms' ? 'selected' : ''}>Ms</option>
-                                <option value="Dr" ${oldDelegate.salutation === 'Dr' ? 'selected' : ''}>Dr</option>
-                                <option value="Prof" ${oldDelegate.salutation === 'Prof' ? 'selected' : ''}>Prof</option>
-                            </select>
-                        </div>
-                        <div class="col-md-5 mb-3">
-                            <label class="form-label required-field">First Name</label>
-                            <input type="text" name="delegates[${i}][first_name]" class="form-control" 
-                                   placeholder="Enter first name" value="${oldDelegate.first_name || ''}" required>
-                        </div>
-                        <div class="col-md-5 mb-3">
-                            <label class="form-label required-field">Last Name</label>
-                            <input type="text" name="delegates[${i}][last_name]" class="form-control" 
-                                   placeholder="Enter last name" value="${oldDelegate.last_name || ''}" required>
-                        </div>
+        for (let i = 0; i < count; i++) {
+            const delegateData = oldDelegates[i] || {};
+            const delegateForm = document.createElement('div');
+            delegateForm.className = 'delegate-form';
+            delegateForm.innerHTML = `
+                <h5 class="mb-3" style="color: var(--text-primary);">Delegate ${i + 1}</h5>
+                <div class="row">
+                    <div class="col-md-2 mb-3">
+                        <label class="form-label required-field">Salutation</label>
+                        <select name="delegates[${i}][salutation]" class="form-select" required>
+                            <option value="">Select</option>
+                            <option value="Mr" ${delegateData.salutation === 'Mr' ? 'selected' : ''}>Mr</option>
+                            <option value="Mrs" ${delegateData.salutation === 'Mrs' ? 'selected' : ''}>Mrs</option>
+                            <option value="Ms" ${delegateData.salutation === 'Ms' ? 'selected' : ''}>Ms</option>
+                            <option value="Dr" ${delegateData.salutation === 'Dr' ? 'selected' : ''}>Dr</option>
+                        </select>
                     </div>
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label required-field">Email</label>
-                            <input type="email" name="delegates[${i}][email]" class="form-control" 
-                                   placeholder="Enter email address" value="${oldDelegate.email || ''}" required>
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label">Phone</label>
-                            <input type="tel" name="delegates[${i}][phone]" class="form-control" 
-                                   placeholder="Enter phone number" value="${oldDelegate.phone || ''}">
-                        </div>
+                    <div class="col-md-5 mb-3">
+                        <label class="form-label required-field">First Name</label>
+                        <input type="text" name="delegates[${i}][first_name]" class="form-control" 
+                               value="${delegateData.first_name || ''}" 
+                               placeholder="Enter first name" required>
                     </div>
-                    <div class="row">
-                        <div class="col-md-12 mb-3">
-                            <label class="form-label">Job Title</label>
-                            <input type="text" name="delegates[${i}][job_title]" class="form-control" 
-                                   placeholder="Enter job title" value="${oldDelegate.job_title || ''}">
-                        </div>
+                    <div class="col-md-5 mb-3">
+                        <label class="form-label required-field">Last Name</label>
+                        <input type="text" name="delegates[${i}][last_name]" class="form-control" 
+                               value="${delegateData.last_name || ''}" 
+                               placeholder="Enter last name" required>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label required-field">Email</label>
+                        <input type="email" name="delegates[${i}][email]" class="form-control" 
+                               value="${delegateData.email || ''}" 
+                               placeholder="Enter email" required>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label required-field">Mobile Number</label>
+                        <input type="tel" name="delegates[${i}][phone]" class="form-control delegate-phone" 
+                               id="delegate_phone_${i}"
+                               value="${delegateData.phone || ''}" 
+                               placeholder="Enter mobile number" required>
+                        <input type="hidden" name="delegates[${i}][phone_country_code]" id="delegate_phone_country_code_${i}" value="${delegateData.phone_country_code || '+91'}">
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-12 mb-3">
+                        <label class="form-label required-field">Job Title</label>
+                        <input type="text" name="delegates[${i}][job_title]" class="form-control" 
+                               value="${delegateData.job_title || ''}" 
+                               placeholder="Enter job title" required>
                     </div>
                 </div>
             `;
-            delegatesContainer.innerHTML += delegateHtml;
+            delegatesContainer.appendChild(delegateForm);
+            
+            // Initialize intl-tel-input for delegate phone after a short delay to ensure DOM is ready
+            setTimeout(() => {
+                const delegatePhoneInput = document.getElementById(`delegate_phone_${i}`);
+                const delegatePhoneCountryCode = document.getElementById(`delegate_phone_country_code_${i}`);
+                if (delegatePhoneInput && window.intlTelInput) {
+                    delegatePhoneInput.placeholder = '';
+                    const itiDelegate = window.intlTelInput(delegatePhoneInput, {
+                        initialCountry: 'in',
+                        preferredCountries: ['in', 'us', 'gb'],
+                        utilsScript: "https://cdn.jsdelivr.net/npm/intl-tel-input@18.1.1/build/js/utils.js",
+                        separateDialCode: true,
+                        nationalMode: false,
+                        autoPlaceholder: 'off',
+                    });
+                    
+                    // Set old value if exists
+                    if (delegateData.phone) {
+                        itiDelegate.setNumber(delegateData.phone);
+                    }
+                    
+                    delegatePhoneInput.addEventListener('countrychange', function () {
+                        const countryData = itiDelegate.getSelectedCountryData();
+                        delegatePhoneCountryCode.value = '+' + countryData.dialCode;
+                    });
+                    
+                    const initialCountryData = itiDelegate.getSelectedCountryData();
+                    if (delegateData.phone_country_code) {
+                        delegatePhoneCountryCode.value = delegateData.phone_country_code;
+                    } else {
+                        delegatePhoneCountryCode.value = '+' + initialCountryData.dialCode;
+                    }
+                }
+            }, 100);
         }
-    });
+    }
 
-    // Trigger on page load to show delegates section
-    document.addEventListener('DOMContentLoaded', function() {
-        const delegateCount = document.getElementById('delegate_count');
-        if (delegateCount) {
-            // Get current value or default to 1
-            const currentValue = parseInt(delegateCount.value) || 1;
-            delegateCount.value = currentValue;
-            // Trigger change event to generate delegate forms
-            delegateCount.dispatchEvent(new Event('change'));
+    // Initialize delegate forms
+    generateDelegateForms(oldDelegateCount);
+
+    // Update delegate forms when count changes
+    delegateCountInput.addEventListener('change', function() {
+        const count = parseInt(this.value) || 1;
+        generateDelegateForms(count);
+        delegatesSection.style.display = 'block';
+    });
+    
+    // Load states for company country
+    const companyCountryInput = document.querySelector('input[name="company_country"]');
+    const companyStateSelect = document.getElementById('company_state');
+    
+    function loadStatesForCountry(countryName) {
+        if (!countryName || countryName === '' || !companyStateSelect) {
+            if (companyStateSelect) {
+                companyStateSelect.innerHTML = '<option value="">-- Select State --</option>';
+            }
+            return;
         }
-    });
-
-    // Toggle GST fields and Primary Contact based on GST Required selection
-    document.getElementById('gst_required')?.addEventListener('change', function() {
-        const gstFields = document.getElementById('gst_fields');
-        const primaryContactSection = document.getElementById('primary_contact_section');
-        const contactName = document.getElementById('contact_name');
-        const contactEmail = document.getElementById('contact_email');
-        const contactPhone = document.getElementById('contact_phone');
         
-        if (this.value == '1') {
+        companyStateSelect.innerHTML = '<option value="">Loading states...</option>';
+        companyStateSelect.disabled = true;
+        
+        const countryParam = encodeURIComponent(countryName);
+        fetch(`{{ url('/api/states') }}/${countryParam}`, {
+            method: 'GET',
+            headers: {
+                'Accept': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Failed to fetch states');
+            }
+            return response.json();
+        })
+        .then(data => {
+            companyStateSelect.innerHTML = '<option value="">-- Select State --</option>';
+            if (data && Array.isArray(data) && data.length > 0) {
+                data.forEach(state => {
+                    const option = document.createElement('option');
+                    const stateName = state.name || state.state_name || state;
+                    option.value = stateName;
+                    option.textContent = stateName;
+                    if ('{{ old("company_state") }}' === stateName) {
+                        option.selected = true;
+                    }
+                    companyStateSelect.appendChild(option);
+                });
+            }
+            companyStateSelect.disabled = false;
+        })
+        .catch(error => {
+            console.error('Error loading states:', error);
+            companyStateSelect.innerHTML = '<option value="">-- Select State --</option>';
+            companyStateSelect.disabled = false;
+        });
+    }
+    
+    // Load states when country changes
+    if (companyCountryInput && companyStateSelect) {
+        companyCountryInput.addEventListener('change', function() {
+            loadStatesForCountry(this.value);
+        });
+        
+        // Load states on page load if country is already set
+        if (companyCountryInput.value) {
+            loadStatesForCountry(companyCountryInput.value);
+        }
+    }
+    
+    // Initialize intl-tel-input for company phone
+    const companyPhoneInput = document.getElementById('company_phone');
+    const companyPhoneCountryCode = document.getElementById('company_phone_country_code');
+    
+    if (companyPhoneInput && window.intlTelInput) {
+        companyPhoneInput.placeholder = '';
+        const itiCompany = window.intlTelInput(companyPhoneInput, {
+            initialCountry: 'in',
+            preferredCountries: ['in', 'us', 'gb'],
+            utilsScript: "https://cdn.jsdelivr.net/npm/intl-tel-input@18.1.1/build/js/utils.js",
+            separateDialCode: true,
+            nationalMode: false,
+            autoPlaceholder: 'off',
+        });
+        
+        companyPhoneInput.addEventListener('countrychange', function () {
+            const countryData = itiCompany.getSelectedCountryData();
+            companyPhoneCountryCode.value = '+' + countryData.dialCode;
+        });
+        
+        const initialCountryData = itiCompany.getSelectedCountryData();
+        companyPhoneCountryCode.value = '+' + initialCountryData.dialCode;
+    }
+    
+    // Initialize intl-tel-input for contact phone (primary contact)
+    const contactPhoneInput = document.getElementById('contact_phone');
+    const contactPhoneCountryCode = document.getElementById('contact_phone_country_code');
+    
+    if (contactPhoneInput && window.intlTelInput) {
+        contactPhoneInput.placeholder = '';
+        const itiContact = window.intlTelInput(contactPhoneInput, {
+            initialCountry: 'in',
+            preferredCountries: ['in', 'us', 'gb'],
+            utilsScript: "https://cdn.jsdelivr.net/npm/intl-tel-input@18.1.1/build/js/utils.js",
+            separateDialCode: true,
+            nationalMode: false,
+            autoPlaceholder: 'off',
+        });
+        
+        contactPhoneInput.addEventListener('countrychange', function () {
+            const countryData = itiContact.getSelectedCountryData();
+            contactPhoneCountryCode.value = '+' + countryData.dialCode;
+        });
+        
+        const initialCountryData = itiContact.getSelectedCountryData();
+        contactPhoneCountryCode.value = '+' + initialCountryData.dialCode;
+    }
+
+    // GST toggle
+    const gstRequired = document.getElementById('gst_required');
+    const gstFields = document.getElementById('gst_fields');
+    const primaryContactSection = document.getElementById('primary_contact_section');
+    const contactName = document.getElementById('contact_name');
+    const contactEmail = document.getElementById('contact_email');
+    const contactPhone = document.getElementById('contact_phone');
+
+    gstRequired.addEventListener('change', function() {
+        if (this.value === '1') {
             gstFields.style.display = 'block';
             primaryContactSection.style.display = 'block';
-            // Make contact fields required
-            if (contactName) contactName.setAttribute('required', 'required');
-            if (contactEmail) contactEmail.setAttribute('required', 'required');
-            if (contactPhone) contactPhone.setAttribute('required', 'required');
+            if (contactName) contactName.required = true;
+            if (contactEmail) contactEmail.required = true;
+            if (contactPhone) contactPhone.required = true;
         } else {
             gstFields.style.display = 'none';
             primaryContactSection.style.display = 'none';
-            // Clear GST fields when hidden
-            document.getElementById('gstin_input').value = '';
-            document.getElementById('gst_legal_name').value = '';
-            document.getElementById('gst_address').value = '';
-            document.getElementById('gst_state').value = '';
-            document.getElementById('gst_feedback').innerHTML = '';
-            // Clear and remove required from contact fields
-            if (contactName) {
-                contactName.value = '';
-                contactName.removeAttribute('required');
-            }
-            if (contactEmail) {
-                contactEmail.value = '';
-                contactEmail.removeAttribute('required');
-            }
-            if (contactPhone) {
-                contactPhone.value = '';
-                contactPhone.removeAttribute('required');
-            }
+            if (contactName) contactName.required = false;
+            if (contactEmail) contactEmail.required = false;
+            if (contactPhone) contactPhone.required = false;
         }
     });
 
-    // Trigger on page load if GST is already selected
-    document.addEventListener('DOMContentLoaded', function() {
-        const gstRequired = document.getElementById('gst_required');
-        if (gstRequired && gstRequired.value == '1') {
-            gstRequired.dispatchEvent(new Event('change'));
-        }
-    });
+    // GST validation
+    const gstinInput = document.getElementById('gstin_input');
+    const gstValidationMessage = document.getElementById('gst_validation_message');
 
-    // GST Validation
-    document.getElementById('validateGstBtn')?.addEventListener('click', function() {
-        const gstin = document.getElementById('gstin_input').value.trim();
-        const loadingDiv = document.getElementById('gst_loading');
-        const feedbackDiv = document.getElementById('gst_feedback');
-        const btn = this;
-
-        // Validate format
-        const gstPattern = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/;
-        if (!gstPattern.test(gstin)) {
-            feedbackDiv.innerHTML = '<small class="text-danger"><i class="fas fa-times-circle"></i> Invalid GSTIN format. Please enter a valid 15-digit GSTIN.</small>';
-            return;
-        }
-
-        // Show loading
-        loadingDiv.classList.remove('d-none');
-        feedbackDiv.innerHTML = '';
-        btn.disabled = true;
-
-        // Make API call
-        fetch('{{ route("tickets.validate-gst") }}', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': '{{ csrf_token() }}'
-            },
-            body: JSON.stringify({ gstin: gstin })
-        })
-        .then(response => response.json())
-        .then(data => {
-            loadingDiv.classList.add('d-none');
-            btn.disabled = false;
-
-            if (data.success && data.gst) {
-                // Auto-fill fields
-                document.getElementById('gst_legal_name').value = data.gst.company_name || '';
-                document.getElementById('gst_address').value = data.gst.billing_address || '';
-                document.getElementById('gst_state').value = data.gst.state_name || '';
-                
-                feedbackDiv.innerHTML = '<small class="text-success"><i class="fas fa-check-circle"></i> GST details fetched successfully!</small>';
+    if (gstinInput) {
+        let gstValidationTimeout;
+        gstinInput.addEventListener('input', function() {
+            clearTimeout(gstValidationTimeout);
+            const gstin = this.value.trim();
+            
+            if (gstin.length === 15) {
+                gstValidationTimeout = setTimeout(() => {
+                    fetch('{{ route("tickets.validate-gst") }}', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                        },
+                        body: JSON.stringify({ gstin: gstin })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.valid) {
+                            gstValidationMessage.innerHTML = '<span class="text-success"><i class="fas fa-check-circle"></i> Valid GSTIN</span>';
+                            if (data.legal_name && !document.querySelector('input[name="gst_legal_name"]').value) {
+                                document.querySelector('input[name="gst_legal_name"]').value = data.legal_name;
+                            }
+                            if (data.address && !document.querySelector('textarea[name="gst_address"]').value) {
+                                document.querySelector('textarea[name="gst_address"]').value = data.address;
+                            }
+                            if (data.state && !document.querySelector('input[name="gst_state"]').value) {
+                                document.querySelector('input[name="gst_state"]').value = data.state;
+                            }
+                        } else {
+                            gstValidationMessage.innerHTML = '<span class="text-danger"><i class="fas fa-times-circle"></i> Invalid GSTIN</span>';
+                        }
+                    })
+                    .catch(error => {
+                        console.error('GST validation error:', error);
+                    });
+                }, 500);
+            } else if (gstin.length > 0) {
+                gstValidationMessage.innerHTML = '<span class="text-warning">GSTIN must be 15 characters</span>';
             } else {
-                feedbackDiv.innerHTML = '<small class="text-danger"><i class="fas fa-times-circle"></i> ' + (data.message || 'Could not fetch GST details. Please enter manually.') + '</small>';
+                gstValidationMessage.innerHTML = '';
             }
-        })
-        .catch(error => {
-            loadingDiv.classList.add('d-none');
-            btn.disabled = false;
-            feedbackDiv.innerHTML = '<small class="text-danger"><i class="fas fa-times-circle"></i> Error validating GST. Please try again or enter manually.</small>';
-            console.error('GST validation error:', error);
         });
-    });
+    }
 
-    // Handle validation errors and success messages
-    document.addEventListener('DOMContentLoaded', function() {
-        @if($errors->any())
-            // Clear previous validation errors
-            document.querySelectorAll('.is-invalid').forEach(el => {
-                el.classList.remove('is-invalid');
-            });
-            document.querySelectorAll('.invalid-feedback').forEach(el => {
-                el.remove();
-            });
+    // Form submission with reCAPTCHA
+    const registrationForm = document.getElementById('registrationForm');
+    const submitBtn = document.getElementById('submitBtn');
 
-            // Collect error messages
-            let errorMessages = [];
-            const errors = @json($errors->getMessages());
-
-            // Mark invalid fields and collect messages
-            Object.keys(errors).forEach(field => {
-                const errorMsg = Array.isArray(errors[field]) ? errors[field][0] : errors[field];
-                errorMessages.push(errorMsg);
-
-                // Find the field element
-                let fieldElement = document.querySelector('[name="' + field + '"]');
-                if (fieldElement) {
-                    fieldElement.classList.add('is-invalid');
-                    
-                    // Add invalid feedback
-                    let feedback = fieldElement.nextElementSibling;
-                    if (!feedback || !feedback.classList.contains('invalid-feedback')) {
-                        feedback = document.createElement('div');
-                        feedback.className = 'invalid-feedback';
-                        feedback.style.color = '#f5576c';
-                        feedback.style.fontSize = '0.875rem';
-                        feedback.style.marginTop = '0.25rem';
-                        fieldElement.parentNode.insertBefore(feedback, fieldElement.nextSibling);
-                    }
-                    feedback.textContent = errorMsg;
-                }
-            });
-
-            // Show SweetAlert with all errors
-            if (errorMessages.length > 0) {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Validation Error',
-                    html: '<div style="text-align: left; max-height: 400px; overflow-y: auto;"><ul style="margin: 0; padding-left: 20px; color: #333;"><li>' + errorMessages.join('</li><li>') + '</li></ul></div>',
-                    confirmButtonText: 'OK',
-                    confirmButtonColor: '#667eea',
-                    width: '600px',
-                    customClass: {
-                        popup: 'swal2-popup-dark'
-                    }
-                }).then(() => {
-                    // Scroll to first error field
-                    const firstError = document.querySelector('.is-invalid');
-                    if (firstError) {
-                        firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                        firstError.focus();
-                    }
-                });
-            }
-        @endif
-
-        @if(session('success'))
-            Swal.fire({
-                icon: 'success',
-                title: 'Success!',
-                text: '{{ session('success') }}',
-                confirmButtonText: 'OK',
-                confirmButtonColor: '#667eea'
-            });
-        @endif
-
-        @if(session('error'))
-            Swal.fire({
-                icon: 'error',
-                title: 'Error',
-                text: '{{ session('error') }}',
-                confirmButtonText: 'OK',
-                confirmButtonColor: '#667eea'
-            });
-        @endif
-    });
-
-    // Handle form submission with reCAPTCHA
-    document.getElementById('registrationForm')?.addEventListener('submit', function(e) {
+    registrationForm.addEventListener('submit', function(e) {
         e.preventDefault();
         
-        const form = this;
-        const submitBtn = document.getElementById('submitBtn');
-        const originalBtnText = submitBtn.innerHTML;
+        // Update phone numbers with full international format before submission
+        // Company phone
+        if (companyPhoneInput && window.intlTelInput) {
+            const itiCompany = window.intlTelInput.getInstance(companyPhoneInput);
+            if (itiCompany && itiCompany.isValidNumber()) {
+                companyPhoneInput.value = itiCompany.getNumber();
+            }
+        }
         
-        // Clear previous validation
-        document.querySelectorAll('.is-invalid').forEach(el => {
-            el.classList.remove('is-invalid');
-        });
-        document.querySelectorAll('.invalid-feedback').forEach(el => {
-            el.remove();
-        });
+        // Contact phone
+        if (contactPhoneInput && window.intlTelInput) {
+            const itiContact = window.intlTelInput.getInstance(contactPhoneInput);
+            if (itiContact && itiContact.isValidNumber()) {
+                contactPhoneInput.value = itiContact.getNumber();
+            }
+        }
         
-        // Log delegate data before submission
-        const delegateCount = parseInt(document.getElementById('delegate_count').value) || 1;
-        const delegateInputs = form.querySelectorAll('[name^="delegates["]');
-        const delegatesData = {};
-        
-        delegateInputs.forEach(input => {
-            const name = input.name;
-            const match = name.match(/delegates\[(\d+)\]\[(\w+)\]/);
-            if (match) {
-                const index = match[1];
-                const field = match[2];
-                if (!delegatesData[index]) {
-                    delegatesData[index] = {};
+        // Delegate phones
+        document.querySelectorAll('.delegate-phone').forEach(function(phoneInput) {
+            if (window.intlTelInput) {
+                const iti = window.intlTelInput.getInstance(phoneInput);
+                if (iti && iti.isValidNumber()) {
+                    phoneInput.value = iti.getNumber();
                 }
-                delegatesData[index][field] = input.value;
             }
         });
         
-        console.log('Delegate Count:', delegateCount);
-        console.log('Delegates Data Before Submit:', delegatesData);
-        console.log('Number of delegate entries:', Object.keys(delegatesData).length);
-        
-        // Validate delegates are filled
-        const filledDelegates = Object.keys(delegatesData).filter(index => {
-            const delegate = delegatesData[index];
-            return delegate.first_name && delegate.last_name && delegate.email;
-        });
-        
-        console.log('Filled Delegates:', filledDelegates.length);
-        
-        if (filledDelegates.length !== delegateCount) {
-            Swal.fire({
-                icon: 'error',
-                title: 'Validation Error',
-                text: 'Please provide complete information for all ' + delegateCount + ' delegate(s).',
-                confirmButtonText: 'OK',
-                confirmButtonColor: '#667eea'
-            });
-            submitBtn.disabled = false;
-            submitBtn.innerHTML = originalBtnText;
-            return;
-        }
-        
-        // Disable submit button
         submitBtn.disabled = true;
         submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Processing...';
-        
+
         @if(config('constants.RECAPTCHA_ENABLED', false))
-        // Execute reCAPTCHA Enterprise v3
-        if (typeof grecaptcha !== 'undefined' && grecaptcha.enterprise) {
-            grecaptcha.enterprise.ready(function() {
-                grecaptcha.enterprise.execute('{{ config('services.recaptcha.site_key') }}', { action: 'submit' })
-                    .then(function(token) {
-                        // Set token in hidden input
-                        document.getElementById('g-recaptcha-response').value = token;
-                        
-                        // Log before final submit
-                        console.log('Submitting form with delegates:', delegatesData);
-                        
-                        // Submit form
-                        form.submit();
-                    })
-                    .catch(function(err) {
-                        console.error('reCAPTCHA execution error:', err);
-                        Swal.fire({
-                            icon: 'error',
-                            title: 'reCAPTCHA Error',
-                            text: 'reCAPTCHA verification failed. Please try again.',
-                            confirmButtonText: 'OK',
-                            confirmButtonColor: '#667eea'
-                        });
-                        submitBtn.disabled = false;
-                        submitBtn.innerHTML = originalBtnText;
-                    });
-            });
-        } else {
-            console.warn('reCAPTCHA Enterprise not loaded, submitting without token.');
-            console.log('Submitting form with delegates:', delegatesData);
-            form.submit();
-        }
+        grecaptcha.enterprise.ready(function() {
+            grecaptcha.enterprise.execute('{{ config("services.recaptcha.site_key") }}', {action: 'submit'})
+                .then(function(token) {
+                    document.getElementById('g-recaptcha-response').value = token;
+                    registrationForm.submit();
+                });
+        });
         @else
-        // reCAPTCHA disabled, submit directly
-        console.log('Submitting form with delegates:', delegatesData);
-        form.submit();
+        registrationForm.submit();
         @endif
     });
+
+    // Display validation errors with SweetAlert
+    @if($errors->any())
+        Swal.fire({
+            icon: 'error',
+            title: 'Validation Error',
+            html: '<ul style="text-align: left;">@foreach($errors->all() as $error)<li>{{ $error }}</li>@endforeach</ul>',
+            confirmButtonColor: 'var(--primary-color)'
+        }).then(() => {
+            // Scroll to first error
+            const firstError = document.querySelector('.is-invalid, .text-danger');
+            if (firstError) {
+                firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        });
+    @endif
 </script>
-
-<style>
-    .is-invalid {
-        border-color: #f5576c !important;
-        background: rgba(245, 87, 108, 0.1) !important;
-    }
-
-    .invalid-feedback {
-        display: block;
-        color: #f5576c;
-        font-size: 0.875rem;
-        margin-top: 0.25rem;
-    }
-
-    .swal2-popup {
-        background: #1a1a2e !important;
-        color: #fff !important;
-    }
-
-    .swal2-title {
-        color: #fff !important;
-    }
-
-    .swal2-content {
-        color: #fff !important;
-    }
-</style>
 @endpush
-

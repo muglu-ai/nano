@@ -13,7 +13,7 @@
                     <span>1</span>
                 @endif
             </div>
-            <div class="step-label">Details Collection</div>
+            <div class="step-label">Delegate Information</div>
         </div>
         
         <!-- Step 2: Preview -->
@@ -63,7 +63,7 @@
     left: 0;
     right: 0;
     height: 3px;
-    background: rgba(255, 255, 255, 0.1);
+    background: var(--progress-inactive);
     z-index: 0;
 }
 
@@ -80,46 +80,47 @@
     width: 50px;
     height: 50px;
     border-radius: 50%;
-    background: rgba(255, 255, 255, 0.1);
-    border: 3px solid rgba(255, 255, 255, 0.2);
+    background: var(--progress-inactive);
+    border: 3px solid var(--progress-inactive);
     display: flex;
     align-items: center;
     justify-content: center;
     font-weight: 700;
     font-size: 1.1rem;
-    color: rgba(255, 255, 255, 0.5);
+    color: var(--text-secondary);
     transition: all 0.3s ease;
     margin-bottom: 0.75rem;
 }
 
 .progress-step.active .step-circle {
-    background: var(--primary-gradient);
-    border-color: #667eea;
-    color: #fff;
-    box-shadow: 0 0 20px rgba(102, 126, 234, 0.5);
+    background: var(--progress-active);
+    border-color: var(--progress-active);
+    color: white;
+    box-shadow: 0 4px 12px rgba(106, 27, 154, 0.3);
     transform: scale(1.1);
 }
 
 .progress-step.completed .step-circle {
     background: #28a745;
     border-color: #28a745;
-    color: #fff;
+    color: white;
 }
 
 .step-label {
     font-size: 0.9rem;
     font-weight: 600;
-    color: rgba(255, 255, 255, 0.5);
+    color: var(--text-secondary);
     text-align: center;
     transition: color 0.3s ease;
 }
 
 .progress-step.active .step-label {
-    color: #fff;
+    color: var(--progress-active);
+    font-weight: 700;
 }
 
 .progress-step.completed .step-label {
-    color: rgba(255, 255, 255, 0.8);
+    color: var(--text-primary);
 }
 
 /* Progress line between steps */
@@ -130,7 +131,7 @@
     left: 50%;
     width: 100%;
     height: 3px;
-    background: rgba(255, 255, 255, 0.1);
+    background: var(--progress-inactive);
     z-index: -1;
     transition: background 0.3s ease;
 }
@@ -140,7 +141,11 @@
 }
 
 .progress-step.active:not(:last-child)::after {
-    background: linear-gradient(to right, #28a745 0%, rgba(255, 255, 255, 0.1) 100%);
+    background: linear-gradient(to right, #28a745 0%, var(--progress-active) 50%, var(--progress-inactive) 100%);
+}
+
+.progress-step.completed.active:not(:last-child)::after {
+    background: linear-gradient(to right, #28a745 0%, var(--progress-inactive) 100%);
 }
 
 /* Responsive */
@@ -164,4 +169,3 @@
     }
 }
 </style>
-
