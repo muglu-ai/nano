@@ -807,7 +807,7 @@ class RegistrationPaymentController extends Controller
                 $invoice = Invoice::create([
                     'invoice_no'         => $order->order_no,
                     'type'               => 'ticket_registration',
-                    'application_id'     => $order->registration_id, // link to registration for traceability
+                    'registration_id'    => $order->registration_id, // link to ticket registration for traceability
                     'currency'           => $order->registration->event->currency ?? 'INR',
                     'amount'             => $orderTotal, // base amount required by DB
                     'price'              => $orderTotal,

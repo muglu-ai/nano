@@ -13,6 +13,7 @@ class Invoice extends Model
         'id',
         'application_id',
         'sponsorship_id',
+        'registration_id',
         'amount',
         'int_amount_value',
         'usd_rate',
@@ -92,5 +93,10 @@ class Invoice extends Model
         return $this->hasOne(Payment::class)->where('status', 'Successful')->whereHas('invoice', function ($query) {
             $query->where('type', 'Stall Booking');
         })->latestOfMany();
+    }
+
+    public function ticketRegistration()
+    {
+        return $this->belongsTo(\App\Models\Ticket\TicketRegistration::class, 'registration_id');
     }
 }
