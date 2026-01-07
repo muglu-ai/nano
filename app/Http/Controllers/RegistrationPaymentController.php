@@ -803,17 +803,19 @@ class RegistrationPaymentController extends Controller
                 ->first();
 
             if (!$invoice) {
+                $orderTotal = $order->total ?? 0;
                 $invoice = Invoice::create([
                     'invoice_no'         => $order->order_no,
                     'type'               => 'ticket_registration',
                     'application_id'     => $order->registration_id, // link to registration for traceability
                     'currency'           => $order->registration->event->currency ?? 'INR',
-                    'price'              => $order->total,
+                    'amount'             => $orderTotal, // base amount required by DB
+                    'price'              => $orderTotal,
                     'gst'                => $order->gst_total ?? 0,
                     'processing_charges' => $order->processing_charge_total ?? 0,
-                    'total_final_price'  => $order->total,
+                    'total_final_price'  => $orderTotal,
                     'amount_paid'        => 0,
-                    'pending_amount'     => $order->total,
+                    'pending_amount'     => $orderTotal,
                     'payment_status'     => 'unpaid',
                 ]);
             }
@@ -1427,4 +1429,3 @@ class RegistrationPaymentController extends Controller
         }
     }
 }
-
