@@ -70,11 +70,24 @@
         @endif
 
         <p class="mb-4" style="color: var(--text-secondary);">
-            Enter your <strong>TIN Number</strong> and <strong>Email Address</strong> to find your order and make payment.
+            Enter your <strong>TIN Number</strong> <strong>OR</strong> <strong>Email Address</strong> to find your order and make payment.
         </p>
 
         <form method="POST" action="{{ route('registration.payment.lookup.submit') }}" id="lookupForm">
             @csrf
+            
+            <script>
+                document.getElementById('lookupForm').addEventListener('submit', function(e) {
+                    const tinNo = document.getElementById('tin_no').value.trim();
+                    const email = document.getElementById('email').value.trim();
+                    
+                    if (!tinNo && !email) {
+                        e.preventDefault();
+                        alert('Please provide either TIN Number or Email Address.');
+                        return false;
+                    }
+                });
+            </script>
 
             <div class="form-section">
                 <div class="section-title">
@@ -85,7 +98,7 @@
                 <div class="row">
                     <div class="col-md-12 mb-3">
                         <label for="tin_no" class="form-label">
-                            TIN Number <span class="required">*</span>
+                            TIN Number <span class="text-muted">(Optional)</span>
                         </label>
                         <input
                             type="text"
@@ -94,7 +107,6 @@
                             class="form-control @error('tin_no') is-invalid @enderror"
                             value="{{ old('tin_no') }}"
                             placeholder="e.g. BTS-2026-EXH-123456"
-                            required
                             autofocus
                         >
                         @error('tin_no')
@@ -108,8 +120,16 @@
 
                 <div class="row">
                     <div class="col-md-12 mb-3">
+                        <label class="form-label" style="color: var(--text-secondary);">
+                            <strong>OR</strong>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-12 mb-3">
                         <label for="email" class="form-label">
-                            Email Address <span class="required">*</span>
+                            Email Address <span class="text-muted">(Optional)</span>
                         </label>
                         <input
                             type="email"
@@ -118,7 +138,6 @@
                             class="form-control @error('email') is-invalid @enderror"
                             value="{{ old('email') }}"
                             placeholder="your.email@example.com"
-                            required
                         >
                         @error('email')
                             <div class="invalid-feedback">{{ $message }}</div>
@@ -132,9 +151,9 @@
 
             <div class="form-actions">
                 <div class="d-flex justify-content-between align-items-center">
-                    <a href="{{ url('/') }}" class="btn btn-secondary">
+                   {{-- <a href="{{ url('/') }}" class="btn btn-secondary">
                         <i class="fas fa-arrow-left me-2"></i>Back to Home
-                    </a>
+                    </a> --}}
                     <button type="submit" class="btn btn-primary">
                         <i class="fas fa-search me-2"></i>Lookup Order
                     </button>
@@ -148,6 +167,7 @@
                 If you cannot find your order, please check:
             </p>
             <ul>
+                <li>Provide either your TIN number OR email address (at least one is required)</li>
                 <li>Your TIN number is correct (check your registration confirmation email)</li>
                 <li>You're using the same email address used during registration</li>
                 <li>Your payment is still pending (already paid orders won't appear)</li>

@@ -55,32 +55,137 @@ class RegistrationPaymentController extends Controller
     }
 
     /**
-     * Handle order lookup by TIN and email
+     * Handle order lookup by TIN or email (either one is sufficient)
      */
     public function lookupOrder(Request $request)
     {
         $request->validate([
-            'tin_no' => 'required|string',
-            'email' => 'required|email',
+            'tin_no' => 'nullable|string',
+            'email' => 'nullable|email',
+        ], [
+            'email.email' => 'Please enter a valid email address.',
         ]);
 
-        $tinNo = trim($request->tin_no);
-        $email = trim($request->email);
+        $tinNo = trim($request->tin_no ?? '');
+        $email = trim($request->email ?? '');
 
-        // Try to find application by TIN (application_id)
-        $application = Application::where('application_id', $tinNo)->first();
+        // At least one field must be provided
+        if (empty($tinNo) && empty($email)) {
+            return back()
+                ->withInput()
+                ->with('error', 'Please provide either TIN Number or Email Address.');
+        }
+
+        $application = null;
+        $invoice = null;
+
+        // Search by TIN if provided
+        if (!empty($tinNo)) {
+            $application = Application::where('application_id', $tinNo)->first();
+            
+            if ($application) {
+                // Find invoice for this application
+                $invoice = Invoice::where('application_id', $application->id)
+                    ->where('payment_status', '!=', 'paid')
+                    ->orderBy('created_at', 'desc')
+                    ->first();
+            }
+        }
+
+        // If not found by TIN, or if only email provided, search by email
+        if (!$application || !$invoice) {
+            $applicationsByEmail = collect();
+
+            // Search in EventContact
+            $eventContacts = \App\Models\EventContact::where('email', 'like', '%' . $email . '%')
+                ->when(!empty($email), function($q) use ($email) {
+                    $q->whereRaw('LOWER(email) = ?', [strtolower($email)]);
+                })
+                ->get();
+
+            foreach ($eventContacts as $contact) {
+                if ($contact->application_id) {
+                    $app = Application::find($contact->application_id);
+                    if ($app) {
+                        $applicationsByEmail->push($app);
+                    }
+                }
+            }
+
+            // Search in Application company_email
+            if (!empty($email)) {
+                $appsByCompanyEmail = Application::whereRaw('LOWER(company_email) = ?', [strtolower($email)])->get();
+                $applicationsByEmail = $applicationsByEmail->merge($appsByCompanyEmail);
+            }
+
+            // Search in BillingDetail
+            if (!empty($email)) {
+                $billingDetails = BillingDetail::whereRaw('LOWER(email) = ?', [strtolower($email)])->get();
+                foreach ($billingDetails as $billing) {
+                    if ($billing->application_id) {
+                        $app = Application::find($billing->application_id);
+                        if ($app) {
+                            $applicationsByEmail->push($app);
+                        }
+                    }
+                }
+            }
+
+            // Remove duplicates
+            $applicationsByEmail = $applicationsByEmail->unique('id');
+
+            // If we have applications by email, find the one with unpaid invoice
+            if ($applicationsByEmail->isNotEmpty()) {
+                foreach ($applicationsByEmail as $app) {
+                    $inv = Invoice::where('application_id', $app->id)
+                        ->where('payment_status', '!=', 'paid')
+                        ->orderBy('created_at', 'desc')
+                        ->first();
+                    
+                    if ($inv) {
+                        $application = $app;
+                        $invoice = $inv;
+                        break;
+                    }
+                }
+            }
+        }
+
+        // If both TIN and email provided, verify they match
+        if (!empty($tinNo) && !empty($email) && $application) {
+            $emailMatches = false;
+            
+            // Check EventContact email
+            $eventContact = \App\Models\EventContact::where('application_id', $application->id)->first();
+            if ($eventContact && strtolower($eventContact->email) === strtolower($email)) {
+                $emailMatches = true;
+            }
+
+            // Check company email
+            if (!$emailMatches && $application->company_email && strtolower($application->company_email) === strtolower($email)) {
+                $emailMatches = true;
+            }
+
+            // Check BillingDetail email
+            if (!$emailMatches) {
+                $billingDetail = BillingDetail::where('application_id', $application->id)->first();
+                if ($billingDetail && strtolower($billingDetail->email) === strtolower($email)) {
+                    $emailMatches = true;
+                }
+            }
+
+            if (!$emailMatches) {
+                return back()
+                    ->withInput()
+                    ->with('error', 'TIN Number and Email do not match. Please verify your details.');
+            }
+        }
 
         if (!$application) {
             return back()
                 ->withInput()
-                ->with('error', 'No registration found with the provided TIN number.');
+                ->with('error', 'No registration found with the provided information.');
         }
-
-        // Find invoice for this application
-        $invoice = Invoice::where('application_id', $application->id)
-            ->where('payment_status', '!=', 'paid')
-            ->orderBy('created_at', 'desc')
-            ->first();
 
         if (!$invoice) {
             return back()
@@ -88,38 +193,10 @@ class RegistrationPaymentController extends Controller
                 ->with('error', 'No pending payment found for this registration.');
         }
 
-        // Verify email matches
-        $emailMatches = false;
-        
-        // Check EventContact email
-        $eventContact = \App\Models\EventContact::where('application_id', $application->id)->first();
-        if ($eventContact && strtolower($eventContact->email) === strtolower($email)) {
-            $emailMatches = true;
-        }
-
-        // Check company email
-        if (!$emailMatches && $application->company_email && strtolower($application->company_email) === strtolower($email)) {
-            $emailMatches = true;
-        }
-
-        // Check BillingDetail email
-        if (!$emailMatches) {
-            $billingDetail = BillingDetail::where('application_id', $application->id)->first();
-            if ($billingDetail && strtolower($billingDetail->email) === strtolower($email)) {
-                $emailMatches = true;
-            }
-        }
-
-        if (!$emailMatches) {
-            return back()
-                ->withInput()
-                ->with('error', 'Email does not match the registration. Please use the email associated with this registration.');
-        }
-
         // Store in session for payment processing
         session([
-            'payment_tin' => $tinNo,
-            'payment_email' => $email,
+            'payment_tin' => $application->application_id,
+            'payment_email' => $email ?: ($eventContact->email ?? $application->company_email ?? ''),
             'payment_invoice_id' => $invoice->id,
             'payment_application_id' => $application->id,
         ]);
