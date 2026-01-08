@@ -191,8 +191,11 @@ class TicketPaymentController extends Controller
             // Clear session data after order creation
             session()->forget('ticket_registration_data');
 
-            // Load registration category for display
-            $registrationCategory = TicketRegistrationCategory::find($registration->registration_category_id);
+            // Load registration category for display (may be null)
+            $registrationCategory = null;
+            if ($registration->registration_category_id) {
+                $registrationCategory = TicketRegistrationCategory::find($registration->registration_category_id);
+            }
             
             // Reload order with relationships
             $order->load(['registration.contact', 'items.ticketType', 'registration.delegates', 'registration.registrationCategory']);

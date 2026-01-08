@@ -183,33 +183,28 @@
                 </h4>
 
                 <div class="row">
-                    <div class="col-md-6 mb-3">
-                        <label class="form-label required-field">Registration Category</label>
-                        <select name="registration_category_id" class="form-select" required>
-                            <option value="">Select Category</option>
-                            @foreach($registrationCategories as $category)
-                                <option value="{{ $category->id }}" {{ old('registration_category_id') == $category->id ? 'selected' : '' }}>
-                                    {{ $category->name }}
-                                </option>
-                            @endforeach
-                        </select>
-                        @error('registration_category_id')
-                            <div class="text-danger">{{ $message }}</div>
-                        @enderror
-                    </div>
-
-                    <div class="col-md-6 mb-3">
+                    <div class="col-md-12 mb-3">
                         <label class="form-label required-field">Ticket Type</label>
-                        <select name="ticket_type_id" class="form-select" required>
-                            <option value="">Select Ticket Type</option>
-                            @foreach($ticketTypes as $ticketType)
-                                <option value="{{ $ticketType->id }}" 
-                                        data-price="{{ $ticketType->getCurrentPrice('national') }}"
-                                        {{ old('ticket_type_id') == $ticketType->id ? 'selected' : '' }}>
-                                    {{ $ticketType->name }} - ₹{{ number_format($ticketType->getCurrentPrice('national'), 0) }}
-                                </option>
-                            @endforeach
-                        </select>
+                        @if(isset($isTicketTypeLocked) && $isTicketTypeLocked)
+                            {{-- Hidden field to submit the value --}}
+                            <input type="hidden" name="ticket_type_id" value="{{ $selectedTicketType->slug }}">
+                            {{-- Display field (readonly) --}}
+                            <input type="text" class="form-control" 
+                                   value="{{ $selectedTicketType->name }} - ₹{{ number_format($selectedTicketType->getCurrentPrice($selectedNationality ?? 'national'), 0) }}" 
+                                   readonly 
+                                   style="background-color: #e9ecef; cursor: not-allowed;">
+                        @else
+                            <select name="ticket_type_id" class="form-select" required>
+                                <option value="">Select Ticket Type</option>
+                                @foreach($ticketTypes as $ticketType)
+                                    <option value="{{ $ticketType->slug }}" 
+                                            data-price="{{ $ticketType->getCurrentPrice('national') }}"
+                                            {{ (old('ticket_type_id') == $ticketType->slug || (isset($selectedTicketType) && $selectedTicketType && $selectedTicketType->id == $ticketType->id)) ? 'selected' : '' }}>
+                                        {{ $ticketType->name }} - ₹{{ number_format($ticketType->getCurrentPrice('national'), 0) }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        @endif
                         @error('ticket_type_id')
                             <div class="text-danger">{{ $message }}</div>
                         @enderror
@@ -232,11 +227,21 @@
 
                     <div class="col-md-6 mb-3">
                         <label class="form-label required-field">Nationality</label>
-                        <select name="nationality" class="form-select" required>
-                            <option value="">Select Nationality</option>
-                            <option value="national" {{ old('nationality') == 'national' ? 'selected' : '' }}>Indian</option>
-                            <option value="international" {{ old('nationality') == 'international' ? 'selected' : '' }}>International</option>
-                        </select>
+                        @if(isset($isNationalityLocked) && $isNationalityLocked)
+                            {{-- Hidden field to submit the value --}}
+                            <input type="hidden" name="nationality" value="{{ $selectedNationality }}">
+                            {{-- Display field (readonly) --}}
+                            <input type="text" class="form-control" 
+                                   value="{{ $selectedNationality == 'national' ? 'Indian' : 'International' }}" 
+                                   readonly 
+                                   style="background-color: #e9ecef; cursor: not-allowed;">
+                        @else
+                            <select name="nationality" class="form-select" required>
+                                <option value="">Select Nationality</option>
+                                <option value="national" {{ old('nationality', $selectedNationality ?? '') == 'national' ? 'selected' : '' }}>Indian</option>
+                                <option value="international" {{ old('nationality', $selectedNationality ?? '') == 'international' ? 'selected' : '' }}>International</option>
+                            </select>
+                        @endif
                         @error('nationality')
                             <div class="text-danger">{{ $message }}</div>
                         @enderror

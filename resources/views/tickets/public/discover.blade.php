@@ -267,7 +267,8 @@
                 @endphp
                 <div class="ticket-card {{ $isSoldOut ? 'sold-out' : '' }}" 
                      data-ticket-id="{{ $ticketType->id }}"
-                     onclick="{{ !$isSoldOut ? "selectTicket({$ticketType->id})" : '' }}">
+                     data-ticket-slug="{{ $ticketType->slug }}"
+                     onclick="{{ !$isSoldOut ? "selectTicket('{$ticketType->slug}')" : '' }}">
                     <div class="ticket-name">{{ $ticketType->name }}</div>
                     <div class="ticket-price" data-nationality="national">
                         <span class="currency">₹</span>
@@ -412,8 +413,8 @@
         }
 
         // Ticket selection
-        function selectTicket(ticketTypeId) {
-            window.location.href = '{{ route("tickets.register", $event->slug ?? $event->id) }}?ticket=' + ticketTypeId + '&nationality=' + currentNationality;
+        function selectTicket(ticketSlug) {
+            window.location.href = '{{ route("tickets.register", $event->slug ?? $event->id) }}?ticket=' + ticketSlug + '&nationality=' + currentNationality;
         }
     </script>
 @endpush

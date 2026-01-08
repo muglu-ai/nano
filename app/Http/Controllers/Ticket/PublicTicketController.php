@@ -68,8 +68,9 @@ class PublicTicketController extends Controller
             abort(404, 'Ticket registration is not available for this event.');
         }
         
-        // Get selected ticket type from query parameter
-        $selectedTicketTypeId = request()->query('ticket');
+        // Get selected ticket type from query parameter (can be slug or ID for backward compatibility)
+        $selectedTicketParam = request()->query('ticket');
+        $selectedNationality = request()->query('nationality'); // Get nationality from URL
         
         // Load ticket types
         $ticketTypes = TicketType::where('event_id', $event->id)
@@ -90,10 +91,20 @@ class PublicTicketController extends Controller
             ->orderBy('date')
             ->get();
         
-        // Get selected ticket type if provided
-        $selectedTicketType = $selectedTicketTypeId 
-            ? $ticketTypes->find($selectedTicketTypeId) 
-            : null;
+        // Get selected ticket type if provided (try slug first, then ID for backward compatibility)
+        $selectedTicketType = null;
+        if ($selectedTicketParam) {
+            // Try to find by slug first
+            $selectedTicketType = $ticketTypes->firstWhere('slug', $selectedTicketParam);
+            // If not found by slug, try ID (for backward compatibility)
+            if (!$selectedTicketType && is_numeric($selectedTicketParam)) {
+                $selectedTicketType = $ticketTypes->find($selectedTicketParam);
+            }
+        }
+        
+        // Determine if fields should be disabled (when passed via URL)
+        $isTicketTypeLocked = !empty($selectedTicketParam) && $selectedTicketType !== null;
+        $isNationalityLocked = !empty($selectedNationality) && in_array($selectedNationality, ['national', 'international']);
         
         return view('tickets.public.register', compact(
             'event', 
@@ -101,7 +112,10 @@ class PublicTicketController extends Controller
             'ticketTypes', 
             'registrationCategories', 
             'eventDays', 
-            'selectedTicketType'
+            'selectedTicketType',
+            'selectedNationality',
+            'isTicketTypeLocked',
+            'isNationalityLocked'
         ));
     }
 
@@ -124,10 +138,26 @@ class PublicTicketController extends Controller
         
         // Validate the request
         $validated = $request->validate([
-            'registration_category_id' => 'required|exists:ticket_registration_categories,id',
-            'ticket_type_id' => 'required|exists:ticket_types,id',
+            'registration_category_id' => 'nullable|exists:ticket_registration_categories,id',
+            'ticket_type_id' => [
+                'required',
+                function ($attribute, $value, $fail) use ($event) {
+                    // Check if ticket type exists by slug or ID, and belongs to this event
+                    $ticketType = TicketType::where('event_id', $event->id)
+                        ->where(function($query) use ($value) {
+                            $query->where('slug', $value)
+                                  ->orWhere('id', $value);
+                        })
+                        ->where('is_active', true)
+                        ->first();
+                    
+                    if (!$ticketType) {
+                        $fail('The selected ticket type is invalid.');
+                    }
+                },
+            ],
             'delegate_count' => 'required|integer|min:1|max:100',
-            'nationality' => 'required|in:Indian,International',
+            'nationality' => 'required|in:national,international,Indian,International',
             'organisation_name' => 'required|string|max:255',
             'industry_sector' => 'required|string|max:255',
             'organisation_type' => 'required|string|max:255',
@@ -152,7 +182,6 @@ class PublicTicketController extends Controller
             'delegates.*.salutation' => 'nullable|string|max:10',
             'delegates.*.job_title' => 'nullable|string|max:255',
         ], [
-            'registration_category_id.required' => 'Please select a registration category.',
             'ticket_type_id.required' => 'Please select a ticket type.',
             'industry_sector.required' => 'Please select an industry sector.',
             'organisation_type.required' => 'Please select an organisation type.',
@@ -243,11 +272,78 @@ class PublicTicketController extends Controller
             ]);
         }
 
-        // Verify ticket type belongs to this event
-        $ticketType = TicketType::where('id', $validated['ticket_type_id'])
-            ->where('event_id', $event->id)
+        // Verify ticket type belongs to this event (can be slug or ID)
+        $ticketType = TicketType::where('event_id', $event->id)
+            ->where(function($query) use ($validated) {
+                $query->where('slug', $validated['ticket_type_id'])
+                      ->orWhere('id', $validated['ticket_type_id']);
+            })
             ->where('is_active', true)
             ->firstOrFail();
+        
+        // Store ticket type ID (not slug) in validated data for consistency
+        $validated['ticket_type_id'] = $ticketType->id;
+        
+        // Normalize nationality value (convert 'national'/'international' to 'Indian'/'International')
+        if (isset($validated['nationality'])) {
+            if ($validated['nationality'] === 'national') {
+                $validated['nationality'] = 'Indian';
+            } elseif ($validated['nationality'] === 'international') {
+                $validated['nationality'] = 'International';
+            }
+        }
+        
+        // Auto-set registration category if not provided
+        // Try to get from ticket rules first, otherwise use default (first active category)
+        if (empty($validated['registration_category_id'])) {
+            // Try to find registration category from ticket rules
+            $ticketRule = \App\Models\Ticket\TicketCategoryTicketRule::where('ticket_type_id', $ticketType->id)
+                ->whereHas('registrationCategory', function($q) use ($event) {
+                    $q->where('event_id', $event->id)->where('is_active', true);
+                })
+                ->with('registrationCategory')
+                ->first();
+            
+            if ($ticketRule && $ticketRule->registrationCategory) {
+                $validated['registration_category_id'] = $ticketRule->registrationCategory->id;
+            } else {
+                // Use default: first active registration category for this event
+                $defaultCategory = TicketRegistrationCategory::where('event_id', $event->id)
+                    ->where('is_active', true)
+                    ->orderBy('sort_order')
+                    ->first();
+                
+                if ($defaultCategory) {
+                    $validated['registration_category_id'] = $defaultCategory->id;
+                }
+            }
+        }
+        
+        // Auto-set registration category if not provided
+        // Try to get from ticket rules first, otherwise use default (first active category)
+        if (empty($validated['registration_category_id'])) {
+            // Try to find registration category from ticket rules
+            $ticketRule = \App\Models\Ticket\TicketCategoryTicketRule::where('ticket_type_id', $ticketType->id)
+                ->whereHas('registrationCategory', function($q) use ($event) {
+                    $q->where('event_id', $event->id)->where('is_active', true);
+                })
+                ->with('registrationCategory')
+                ->first();
+            
+            if ($ticketRule && $ticketRule->registrationCategory) {
+                $validated['registration_category_id'] = $ticketRule->registrationCategory->id;
+            } else {
+                // Use default: first active registration category for this event
+                $defaultCategory = TicketRegistrationCategory::where('event_id', $event->id)
+                    ->where('is_active', true)
+                    ->orderBy('sort_order')
+                    ->first();
+                
+                if ($defaultCategory) {
+                    $validated['registration_category_id'] = $defaultCategory->id;
+                }
+            }
+        }
 
         // Store form data in session for preview (including delegates)
         $registrationData = array_merge($validated, [

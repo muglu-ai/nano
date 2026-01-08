@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Str;
 
 class TicketType extends Model
 {
@@ -18,6 +19,7 @@ class TicketType extends Model
         'category_id',
         'subcategory_id',
         'name',
+        'slug',
         'description',
         'early_bird_price', // Early bird price (legacy, kept for backward compatibility)
         'early_bird_price_national', // Early bird price for national users
@@ -261,6 +263,52 @@ class TicketType extends Model
         }
         
         return $this->eventDays()->where('event_days.id', $dayId)->exists();
+    }
+    
+    /**
+     * Boot method to auto-generate slug
+     */
+    protected static function boot()
+    {
+        parent::boot();
+        
+        static::creating(function ($ticketType) {
+            if (empty($ticketType->slug)) {
+                $baseSlug = Str::slug($ticketType->name);
+                $slug = $baseSlug;
+                $counter = 1;
+                
+                // Ensure uniqueness within the event
+                while (static::where('event_id', $ticketType->event_id)
+                    ->where('slug', $slug)
+                    ->exists()) {
+                    $slug = $baseSlug . '-' . $counter;
+                    $counter++;
+                }
+                
+                $ticketType->slug = $slug;
+            }
+        });
+        
+        static::updating(function ($ticketType) {
+            // If name changed and slug is empty or matches old name, regenerate slug
+            if ($ticketType->isDirty('name') && (empty($ticketType->slug) || $ticketType->getOriginal('slug') === Str::slug($ticketType->getOriginal('name')))) {
+                $baseSlug = Str::slug($ticketType->name);
+                $slug = $baseSlug;
+                $counter = 1;
+                
+                // Ensure uniqueness within the event
+                while (static::where('event_id', $ticketType->event_id)
+                    ->where('slug', $slug)
+                    ->where('id', '!=', $ticketType->id)
+                    ->exists()) {
+                    $slug = $baseSlug . '-' . $counter;
+                    $counter++;
+                }
+                
+                $ticketType->slug = $slug;
+            }
+        });
     }
 }
 
