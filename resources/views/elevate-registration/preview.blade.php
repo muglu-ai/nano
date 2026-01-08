@@ -22,9 +22,15 @@
                     <td>{{ $formData['company_name'] }}</td>
                 </tr>
                 <tr>
+                    <th>Sector:</th>
+                    <td>{{ $formData['sector'] ?? '-' }}</td>
+                </tr>
+                @if(!empty($formData['address']))
+                <tr>
                     <th>Address:</th>
                     <td>{{ $formData['address'] }}</td>
                 </tr>
+                @endif
                 <tr>
                     <th>City:</th>
                     <td>{{ $formData['city'] }}</td>
@@ -108,7 +114,7 @@
                         <td>{{ $attendee['email'] }}</td>
                     </tr>
                     <tr>
-                        <th>Phone Number:</th>
+                        <th>Mobile Number:</th>
                         <td>{{ $attendee['phone_number'] }}</td>
                     </tr>
                 </table>

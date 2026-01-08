@@ -191,6 +191,82 @@
 <script async defer src="https://buttons.github.io/buttons.js"></script>
 <!-- Control Center for Material Dashboard: parallax effects, scripts for the example pages etc -->
 <script src="/asset/js/material-dashboard.min.js?v=3.1.0"></script>
+
+<style>
+    /* Sidebar toggle styles */
+    body.g-sidenav-hidden #sidenav-main {
+        transform: translateX(-100%) !important;
+        transition: transform 0.3s ease !important;
+    }
+    
+    body.g-sidenav-show #sidenav-main {
+        transform: translateX(0) !important;
+        transition: transform 0.3s ease !important;
+    }
+    
+    body.g-sidenav-hidden .main-content {
+        margin-left: 0 !important;
+        transition: margin-left 0.3s ease !important;
+    }
+    
+    body.g-sidenav-show .main-content {
+        margin-left: 250px !important;
+        transition: margin-left 0.3s ease !important;
+    }
+    
+    body.g-sidenav-minimized .main-content {
+        margin-left: 80px !important;
+        transition: margin-left 0.3s ease !important;
+    }
+    
+    @media (max-width: 1200px) {
+        body.g-sidenav-show .main-content,
+        body.g-sidenav-minimized .main-content {
+            margin-left: 0 !important;
+        }
+    }
+</style>
+
+<script>
+    // Sidebar toggle functionality with three states: expanded -> minimized -> hidden
+    function toggleSidebar() {
+        const body = document.querySelector('body');
+        const sidenav = document.getElementById('sidenav-main');
+        
+        if (body.classList.contains('g-sidenav-show')) {
+            // From expanded to minimized
+            body.classList.remove('g-sidenav-show');
+            body.classList.add('g-sidenav-minimized');
+            if (sidenav) {
+                sidenav.classList.add('sidenav-minimized');
+            }
+        } else if (body.classList.contains('g-sidenav-minimized')) {
+            // From minimized to hidden
+            body.classList.remove('g-sidenav-minimized');
+            body.classList.add('g-sidenav-hidden');
+            if (sidenav) {
+                sidenav.classList.remove('sidenav-minimized');
+            }
+        } else {
+            // From hidden to expanded
+            body.classList.remove('g-sidenav-hidden');
+            body.classList.add('g-sidenav-show');
+            if (sidenav) {
+                sidenav.classList.remove('sidenav-minimized');
+            }
+        }
+    }
+    
+    // Handle mobile sidebar toggle
+    document.addEventListener('DOMContentLoaded', function() {
+        const iconNavbarSidenav = document.getElementById('iconNavbarSidenav');
+        if (iconNavbarSidenav) {
+            iconNavbarSidenav.addEventListener('click', function() {
+                toggleSidebar();
+            });
+        }
+    });
+</script>
 <script defer src="https://static.cloudflareinsights.com/beacon.min.js/vcd15cbe7772f49c399c6a5babf22c1241717689176015" integrity="sha512-ZpsOmlRQV6y907TI0dKBHq9Md29nnaEIPlkf84rnaERnq6zvWvPUqr2ft8M1aS28oN72PdrCzSjY4U6VaAw1EQ==" data-cf-beacon='{"rayId":"9065de7f3b3040e7","serverTiming":{"name":{"cfExtPri":true,"cfL4":true,"cfSpeedBrain":true,"cfCacheStatus":true}},"version":"2025.1.0","token":"1b7cbb72744b40c580f8633c6b62637e"}' crossorigin="anonymous"></script>
 </body>
 

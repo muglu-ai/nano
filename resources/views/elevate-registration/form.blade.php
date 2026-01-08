@@ -110,12 +110,26 @@
 
                 <div class="row mb-3">
                     <div class="col-md-12">
-                        <label for="address" class="form-label">Address <span class="required">*</span></label>
+                        <label for="sector" class="form-label">Sector <span class="required">*</span></label>
+                        <input type="text" 
+                               class="form-control @error('sector') is-invalid @enderror" 
+                               id="sector" 
+                               name="sector" 
+                               value="{{ old('sector', $formData['sector'] ?? '') }}" 
+                               required>
+                        @error('sector')
+                            <div class="error-message">{{ $message }}</div>
+                        @enderror
+                    </div>
+                </div>
+
+                <div class="row mb-3" style="display: none;">
+                    <div class="col-md-12">
+                        <label for="address" class="form-label">Address</label>
                         <textarea class="form-control @error('address') is-invalid @enderror" 
                                   id="address" 
                                   name="address" 
-                                  rows="3" 
-                                  required>{{ old('address', $formData['address'] ?? '') }}</textarea>
+                                  rows="3">{{ old('address', $formData['address'] ?? '') }}</textarea>
                         @error('address')
                             <div class="error-message">{{ $message }}</div>
                         @enderror
@@ -574,7 +588,7 @@
             
             <div class="row mb-3">
                 <div class="col-md-12">
-                    <label class="form-label">Phone Number ${isFirst ? '<span class="required">*</span>' : ''}</label>
+                    <label class="form-label">Mobile Number ${isFirst ? '<span class="required">*</span>' : ''}</label>
                     <input type="tel" 
                            class="form-control attendee-phone-input" 
                            id="attendee_phone_${attendeeIndex}" 
@@ -731,7 +745,7 @@
                     } else {
                         const errorDiv = document.getElementById(`phone_error_${attendeeIndex}`);
                         if (errorDiv) {
-                            errorDiv.textContent = 'Please enter a valid phone number (6-15 digits)';
+                            errorDiv.textContent = 'Please enter a valid mobile number (6-15 digits)';
                             errorDiv.style.display = 'block';
                         }
                         phoneInput.classList.add('is-invalid');
@@ -739,7 +753,7 @@
                 } else if (phoneInput.value.trim() !== '') {
                     const errorDiv = document.getElementById(`phone_error_${attendeeIndex}`);
                     if (errorDiv) {
-                        errorDiv.textContent = 'Please enter a valid phone number';
+                        errorDiv.textContent = 'Please enter a valid mobile number';
                         errorDiv.style.display = 'block';
                     }
                     phoneInput.classList.add('is-invalid');
@@ -1019,8 +1033,8 @@
         if (phoneValidationError) {
             Swal.fire({
                 icon: 'error',
-                title: 'Invalid Phone Number',
-                text: 'Please enter valid phone numbers for all attendees/contacts.',
+                title: 'Invalid Mobile Number',
+                text: 'Please enter valid mobile numbers for all attendees/contacts.',
                 confirmButtonText: 'OK',
                 confirmButtonColor: '#6A1B9A'
             });

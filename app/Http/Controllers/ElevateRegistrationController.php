@@ -16,6 +16,70 @@ use Illuminate\Support\Facades\Http;
 class ElevateRegistrationController extends Controller
 {
     /**
+     * List all elevate registrations (Admin)
+     */
+    public function index(Request $request)
+    {
+        // Check if user is admin
+        if (!auth()->check() || !in_array(auth()->user()->role, ['admin', 'super-admin'])) {
+            return redirect('/login');
+        }
+
+        $query = ElevateRegistration::with('attendees');
+
+        // Search functionality
+        if ($request->has('search') && !empty($request->search)) {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('company_name', 'like', "%{$search}%")
+                  ->orWhere('elevate_2025_id', 'like', "%{$search}%")
+                  ->orWhere('city', 'like', "%{$search}%")
+                  ->orWhere('postal_code', 'like', "%{$search}%")
+                  ->orWhereHas('attendees', function($attendeeQuery) use ($search) {
+                      $attendeeQuery->where('email', 'like', "%{$search}%")
+                                    ->orWhere('first_name', 'like', "%{$search}%")
+                                    ->orWhere('last_name', 'like', "%{$search}%");
+                  });
+            });
+        }
+
+        // Filter by attendance
+        if ($request->has('attendance') && !empty($request->attendance)) {
+            $query->where('attendance', $request->attendance);
+        }
+
+        // Sorting
+        $sortField = $request->get('sort', 'created_at');
+        $sortDirection = $request->get('direction', 'desc');
+
+        if (in_array($sortField, ['company_name', 'elevate_2025_id', 'attendance', 'created_at'])) {
+            $query->orderBy($sortField, $sortDirection);
+        }
+
+        // Pagination
+        $perPage = $request->get('per_page', 25);
+        $registrations = $query->paginate($perPage);
+        $registrations->appends($request->query());
+
+        return view('admin.elevate-registrations.index', compact('registrations'));
+    }
+
+    /**
+     * Show single registration details (Admin)
+     */
+    public function show($id)
+    {
+        // Check if user is admin
+        if (!auth()->check() || !in_array(auth()->user()->role, ['admin', 'super-admin'])) {
+            return redirect('/login');
+        }
+
+        $registration = ElevateRegistration::with('attendees')->findOrFail($id);
+
+        return view('admin.elevate-registrations.show', compact('registration'));
+    }
+
+    /**
      * Show the registration form
      */
     public function showForm()
@@ -63,7 +127,8 @@ class ElevateRegistrationController extends Controller
         $validated = $request->validate([
             // Company Information
             'company_name' => 'required|string|max:255',
-            'address' => 'required|string|max:500',
+            'sector' => 'required|string|max:255',
+            'address' => 'nullable|string|max:500',
             'country' => 'nullable|string|max:100',
             'state' => 'nullable|string|max:100',
             'city' => 'required|string|max:100',
@@ -89,7 +154,7 @@ class ElevateRegistrationController extends Controller
             'attendees.*.phone_country_code' => 'required_with:attendees|string|max:5',
         ], [
             'company_name.required' => 'Company name is required.',
-            'address.required' => 'Address is required.',
+            'sector.required' => 'Sector is required.',
             'city.required' => 'City is required.',
             'postal_code.required' => 'Postal code is required.',
             'elevate_application_call_names.required' => 'Please select at least one Elevate Application Call Name.',
@@ -107,7 +172,7 @@ class ElevateRegistrationController extends Controller
             'attendees.*.job_title.required_with' => 'Designation is required for all attendees/contacts.',
             'attendees.*.email.required_with' => 'Email is required for all attendees.',
             'attendees.*.email.email' => 'Please enter a valid email address.',
-            'attendees.*.phone_number.required_with' => 'Phone number is required for all attendees.',
+            'attendees.*.phone_number.required_with' => 'Mobile number is required for all attendees.',
         ]);
 
         // Validate duplicate emails within the same submission and check existing emails
@@ -172,7 +237,8 @@ class ElevateRegistrationController extends Controller
             // Prepare form data for storage
             $formData = [
                 'company_name' => $validated['company_name'],
-                'address' => $validated['address'],
+                'sector' => $validated['sector'],
+                'address' => $validated['address'] ?? null,
                 'country' => $validated['country'],
                 'state' => $validated['state'],
                 'city' => $validated['city'],
@@ -266,9 +332,10 @@ class ElevateRegistrationController extends Controller
             // Create registration from session data
             $registration = ElevateRegistration::create([
                 'company_name' => $formData['company_name'],
-                'address' => $formData['address'],
-                'country' => $formData['country'],
-                'state' => $formData['state'],
+                'sector' => $formData['sector'],
+                'address' => $formData['address'] ?? null,
+                'country' => $formData['country'] ?? null,
+                'state' => $formData['state'] ?? null,
                 'city' => $formData['city'],
                 'postal_code' => $formData['postal_code'],
                 'elevate_application_call_names' => $formData['elevate_application_call_names'],

@@ -14,6 +14,7 @@ class ElevateRegistration extends Model
 
     protected $fillable = [
         'company_name',
+        'sector',
         'address',
         'country',
         'state',

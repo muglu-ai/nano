@@ -1130,6 +1130,12 @@ Route::post('/elevate-registration/save-preview', [ElevateRegistrationController
 Route::post('/elevate-registration', [ElevateRegistrationController::class, 'submit'])->name('elevate-registration.submit');
 Route::get('/elevate-registration/get-states', [ElevateRegistrationController::class, 'getStates'])->name('elevate-registration.get-states');
 
+// ELEVATE Registration Admin Routes (Admin Access Required)
+Route::middleware(['auth', Auth::class])->prefix('admin/elevate-registrations')->name('admin.elevate-registrations.')->group(function () {
+    Route::get('/', [ElevateRegistrationController::class, 'index'])->name('index');
+    Route::get('/{id}', [ElevateRegistrationController::class, 'show'])->name('show');
+});
+
 // Visa Clearance Registration (public, similar layout as enquiry form)
 Route::get('/visa-clearance/thankyou', [VisaClearanceController::class, 'thankyou'])->name('visa.clearance.thankyou');
 Route::get('/visa-clearance', [VisaClearanceController::class, 'showForm'])->name('visa.clearance.form');

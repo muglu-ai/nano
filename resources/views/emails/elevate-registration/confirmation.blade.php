@@ -56,9 +56,15 @@
                                         <td style="color: #333333; padding: 5px 0;">{{ $registration->company_name }}</td>
                                     </tr>
                                     <tr>
+                                        <td style="font-weight: bold; color: #555555; padding: 5px 0;">Sector:</td>
+                                        <td style="color: #333333; padding: 5px 0;">{{ $registration->sector ?? '-' }}</td>
+                                    </tr>
+                                    @if(!empty($registration->address))
+                                    <tr>
                                         <td style="font-weight: bold; color: #555555; padding: 5px 0;">Address:</td>
                                         <td style="color: #333333; padding: 5px 0;">{{ $registration->address }}</td>
                                     </tr>
+                                    @endif
                                     <tr>
                                         <td style="font-weight: bold; color: #555555; padding: 5px 0;">City:</td>
                                         <td style="color: #333333; padding: 5px 0;">{{ $registration->city }}</td>
@@ -126,7 +132,7 @@
                                             <td style="color: #333333; padding: 5px 0;">{{ $attendee->email }}</td>
                                         </tr>
                                         <tr>
-                                            <td style="font-weight: bold; color: #555555; padding: 5px 0;">Phone:</td>
+                                            <td style="font-weight: bold; color: #555555; padding: 5px 0;">Mobile Number:</td>
                                             <td style="color: #333333; padding: 5px 0;">{{ $attendee->phone_number }}</td>
                                         </tr>
                                     </table>

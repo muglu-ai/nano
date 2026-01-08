@@ -31,6 +31,7 @@
             @php
                 $data = $registration ? [
                     'company_name' => $registration->company_name,
+                    'sector' => $registration->sector,
                     'address' => $registration->address,
                     'country' => $registration->country,
                     'state' => $registration->state,
@@ -65,9 +66,15 @@
                         <td>{{ $data['company_name'] }}</td>
                     </tr>
                     <tr>
+                        <th>Sector:</th>
+                        <td>{{ $data['sector'] ?? '-' }}</td>
+                    </tr>
+                    @if(!empty($data['address']))
+                    <tr>
                         <th>Address:</th>
                         <td>{{ $data['address'] }}</td>
                     </tr>
+                    @endif
                     <tr>
                         <th>City:</th>
                         <td>{{ $data['city'] }}</td>
@@ -151,7 +158,7 @@
                             <td>{{ $attendee['email'] }}</td>
                         </tr>
                         <tr>
-                            <th>Phone Number:</th>
+                            <th>Mobile Number:</th>
                             <td>{{ $attendee['phone_number'] }}</td>
                         </tr>
                     </table>
