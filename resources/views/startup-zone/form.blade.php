@@ -58,6 +58,54 @@
                     <h5 id="associationName"></h5>
                     <p id="associationPrice"></p>
                 </div>
+                {{-- -Entitlement --}}
+                <h5 class="mb-3 border-bottom pb-2"><i class="fas fa-cube"></i> Entitlement</h5>
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <table class="table table-bordered">
+                            <thead>
+                                <tr>
+                                    <th>TYPE</th>
+                                    <th>Price</th>
+                                    <th>Special Offer</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>Startup Booth / POD.</td>
+                                    @if($hasTV)
+                                    <td ><s>₹ 60000</s></td>
+                                    <td>₹ 37500</td>
+                                    @elseif(!$hasTV)
+                                    <td><s>₹ 52000</s></td>
+                                    <td>₹ 30000</td>
+                                    @endif
+
+                                </tr>
+                            </tbody>
+                        </table>
+                        <ul >
+                            <li>Startup Booth / POD.</li>
+                            {{-- passing the tv parameter in the URL will show the TV screen in the form --}}
+                            @if($hasTV)
+                            <li>43" TV Screen.</li>
+                            @endif
+                            {{-- end passing the tv parameter in the URL will show the TV screen in the form --}}
+                            <li>One Standard Delegate Registration.</li>
+                            <li>Two Exhibitor Badges.</li>
+                            <li>Listing of Organization in the e-directory.</li>
+                        </ul>
+                       
+                       
+                    </div>
+                    <div class="col-md-6">
+                        @if($hasTV)
+                        <img src="{{ asset('asset/img/POD-V01.png') }}" alt="TV" class="img-fluid" style="width: 100%; height: 90%;">
+                        @else
+                        <img src="{{ asset('asset/img/POD-V02.png') }}" alt="TV" class="img-fluid" style="width: 100%; height: 90%;">
+                        @endif
+                    </div>
+                </div>
 
                 {{-- Booth Information --}}
                 <h5 class="mb-3 border-bottom pb-2"><i class="fas fa-cube"></i> Booth Information</h5>
@@ -74,7 +122,11 @@
                         <label for="interested_sqm" class="form-label">Booth Size <span class="text-danger">*</span></label>
                         <select class="form-select" id="interested_sqm" name="interested_sqm" required>
                             <option value="">Select Booth Size</option>
-                            <option value="4 SQM" {{ ($draft->interested_sqm ?? '') == '4 SQM' ? 'selected' : '' }}>4 SQM</option>
+                            @if($hasTV)
+                            <option value="POD with TV" {{ ($draft->interested_sqm ?? '') == 'POD with TV' ? 'selected' : '' }}>POD</option>
+                            @else
+                            <option value="POD" {{ ($draft->interested_sqm ?? '') == 'POD' ? 'selected' : '' }}>POD</option>
+                            @endif
                         </select>
                         <div class="invalid-feedback"></div>
                     </div>
@@ -462,8 +514,8 @@
                 </div>
 
                 {{-- Promocode Section --}}
-                <h5 class="mb-3 mt-4 border-bottom pb-2"><i class="fas fa-ticket-alt"></i> Promocode (Optional)</h5>
-                <div class="row mb-3">
+                <!-- <h5 class="mb-3 mt-4 border-bottom pb-2"><i class="fas fa-ticket-alt" style="display: none;"></i> Promocode (Optional)</h5> -->
+                <div class="row mb-3" style="display: none;">
                     <div class="col-md-6">
                         <label for="promocode" class="form-label">Promocode</label>
                         <div class="input-group">
@@ -1905,6 +1957,27 @@ document.addEventListener('DOMContentLoaded', function() {
             console.error('Error errors:', error.errors);
             submitBtn.disabled = false;
             submitBtn.innerHTML = originalText;
+            
+            // CRITICAL: Check if email already exists error
+            if (error.errors && error.errors.contact_email) {
+                const contactEmailInput = document.getElementById('contact_email');
+                if (contactEmailInput) {
+                    contactEmailInput.classList.add('is-invalid');
+                    const feedback = contactEmailInput.nextElementSibling;
+                    if (feedback && feedback.classList.contains('invalid-feedback')) {
+                        feedback.textContent = 'Email already exists';
+                    }
+                    contactEmailInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    contactEmailInput.focus();
+                }
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Email Already Exists',
+                    text: error.message || 'This email is already registered. Please use a different email address.',
+                    confirmButtonText: 'OK'
+                });
+                return; // Stop here, don't show other errors
+            }
             
             // Handle validation errors
             if (error.type === 'validation' && error.errors) {

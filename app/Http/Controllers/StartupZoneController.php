@@ -36,6 +36,40 @@ class StartupZoneController extends Controller
     {
         // Get association from URL parameter
         $associationParam = $request->query('association');
+
+        // Passing (tv) parameter in the URL will show the TV screen in the form
+        
+        // Check for TV parameter (case-insensitive for parameter name)
+        // Check all possible case variations: tv, TV, Tv, tV
+        $hasTV = false;
+        
+        // Method 1: Check using request->has() for common case variations
+        if ($request->has('tv') || $request->has('TV') || $request->has('Tv') || $request->has('tV')) {
+            $hasTV = true;
+            session(['startup_zone_has_tv' => true]);
+        } else {
+            // Method 2: Check all query parameters case-insensitively
+            $allQueryParams = $request->query();
+            foreach ($allQueryParams as $key => $value) {
+                if (strtolower($key) === 'tv') {
+                    $hasTV = true;
+                    session(['startup_zone_has_tv' => true]);
+                    break;
+                }
+            }
+        }
+        
+        // If TV parameter is NOT present in URL, clear the session flag
+        // This ensures normal behavior when ?tv is removed
+        if (!$hasTV) {
+            session()->forget('startup_zone_has_tv');
+        }
+
+        // Log the hasTV value
+        Log::info('hasTV value: ' . ($hasTV ? 'true' : 'false'));
+
+        
+        // end tv parameter check
         
         // Get draft data from session (if exists)
         $sessionData = session('startup_zone_draft', []);
@@ -124,7 +158,8 @@ class StartupZoneController extends Controller
             'states',
             'countries',
             'associationParam',
-            'associationLogo'
+            'associationLogo',
+            'hasTV'
         ));
     }
 
@@ -612,7 +647,25 @@ class StartupZoneController extends Controller
                 $allData['landline'] = $request->input('landline_national');
             }
             
-            $validator = Validator::make($allData, $rules);
+            // CRITICAL: Check if contact email already exists in users table - BLOCK SUBMISSION
+            $contactEmail = $request->input('contact_email');
+            if (!empty($contactEmail) && $this->checkEmailExists(trim($contactEmail))) {
+                // Email already exists - return error immediately and STOP processing
+                return response()->json([
+                    'success' => false,
+                    'message' => 'This email is already registered. Please use a different email address.',
+                    'errors' => [
+                        'contact_email' => ['Email already exists']
+                    ]
+                ], 422);
+            }
+            
+            // Custom validation messages
+            $customMessages = [
+                'certificate.max' => 'The certificate field must not be greater than 2mb.',
+            ];
+            
+            $validator = Validator::make($allData, $rules, $customMessages);
 
             if ($validator->fails()) {
                 // Log validation errors for debugging
@@ -950,8 +1003,34 @@ class StartupZoneController extends Controller
                 $allData['landline'] = $request->input('landline_national');
             }
             
+            // CRITICAL: Check if contact email already exists in users table - BLOCK SUBMISSION
+            $contactEmail = $request->input('contact_email');
+            if (empty($contactEmail)) {
+                // Get from session data if not in request
+                $sessionData = session('startup_zone_draft', []);
+                $contactData = $sessionData['contact_data'] ?? null;
+                $contactData = is_string($contactData) ? json_decode($contactData, true) : $contactData;
+                $contactEmail = $contactData['email'] ?? null;
+            }
+            
+            if (!empty($contactEmail) && $this->checkEmailExists(trim($contactEmail))) {
+                // Email already exists - return error immediately and STOP processing
+                return response()->json([
+                    'success' => false,
+                    'message' => 'This email is already registered. Please use a different email address.',
+                    'errors' => [
+                        'contact_email' => ['Email already exists']
+                    ]
+                ], 422);
+            }
+            
+            // Custom validation messages
+            $customMessages = [
+                'certificate.max' => 'The certificate field must not be greater than 2mb.',
+            ];
+            
             // Validate using request data (latest values)
-            $validator = Validator::make($allData, $rules);
+            $validator = Validator::make($allData, $rules, $customMessages);
             
             if ($validator->fails()) {
                 // Map validation errors back to frontend field names
@@ -2221,12 +2300,17 @@ class StartupZoneController extends Controller
      */
     private function calculatePricing($draft)
     {
-        $basePrice = 52000.00; // Default price
+        // Check if TV parameter is set (from session or draft)
+        $hasTV = session('startup_zone_has_tv', false);
+        
+        // Base price: 60000 if TV is present, otherwise 52000
+        $basePrice = $hasTV ? 60000.00 : 52000.00;
         $processingRate = 0.03; // 3% for Indian payments
         $currency = 'INR';
 
         // Get association pricing if promocode exists
-        if ($draft->promocode) {
+        // Note: TV pricing takes precedence over association pricing
+        if ($draft->promocode && !$hasTV) {
             $association = AssociationPricingRule::where('promocode', $draft->promocode)
                 ->active()
                 ->valid()
@@ -2282,4 +2366,34 @@ class StartupZoneController extends Controller
         
         return $city ? $city->id : null;
     }
+
+    private function checkEmailExists($email)
+    {
+        $user = \App\Models\User::where('email', $email)->first();
+        return $user !== null;
+    }
+
+    /**
+     * Check if email already exists in users table (AJAX endpoint)
+     */
+    public function checkEmail(Request $request)
+    {
+        $email = $request->input('email');
+        
+        if (empty($email)) {
+            return response()->json([
+                'exists' => false,
+                'message' => ''
+            ]);
+        }
+        
+        $exists = $this->checkEmailExists(trim($email));
+        
+        return response()->json([
+            'exists' => $exists,
+            'message' => $exists ? 'Email already exists' : ''
+        ]);
+    }
 }
+
+

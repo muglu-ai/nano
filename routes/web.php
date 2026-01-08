@@ -1132,6 +1132,7 @@ Route::prefix('startup')->name('startup-zone.')->group(function () {
     Route::get('/register', [StartupZoneController::class, 'showForm'])->name('register');
     Route::post('/auto-save', [StartupZoneController::class, 'autoSave'])->name('auto-save');
     Route::post('/validate-promocode', [StartupZoneController::class, 'validatePromocode'])->name('validate-promocode');
+    Route::post('/check-email', [StartupZoneController::class, 'checkEmail'])->name('check-email');
     Route::post('/fetch-gst-details', [StartupZoneController::class, 'fetchGstDetails'])->name('fetch-gst-details');
     Route::post('/submit-form', [StartupZoneController::class, 'submitForm'])->name('submit-form');
     Route::get('/preview', [StartupZoneController::class, 'showPreview'])->name('preview');
