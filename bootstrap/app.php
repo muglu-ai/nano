@@ -15,6 +15,7 @@ return Application::configure(basePath: dirname(__DIR__))
         // Define route middleware aliases
         $middleware->alias([
             'admin' => \App\Http\Middleware\AdminMiddleware::class,
+            'validate.ticket.flow' => \App\Http\Middleware\ValidateTicketRegistrationFlow::class,
         ]);
         //
         // Don't append Auth middleware globally - apply it only to specific routes
