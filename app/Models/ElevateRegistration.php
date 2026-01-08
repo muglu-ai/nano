@@ -19,11 +19,14 @@ class ElevateRegistration extends Model
         'state',
         'city',
         'postal_code',
+        'elevate_application_call_names',
+        'elevate_2025_id',
         'attendance',
         'attendance_reason',
     ];
 
     protected $casts = [
+        'elevate_application_call_names' => 'array',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
         'deleted_at' => 'datetime',

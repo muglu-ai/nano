@@ -22,12 +22,11 @@
 @section('content')
 <div class="form-card">
     <div class="form-header">
-        <h2><i class="fas fa-file-alt me-2"></i>Felicitation Ceremony Registration</h2>
-        <p>ELEVATE 2025, ELEVATE Unnati 2025 & ELEVATE Minorities 2025 Winners</p>
+        <h2><i class="fas fa-file-alt me-2"></i>Felicitation Ceremony for ELEVATE 2025, ELEVATE Unnati 2025 & ELEVATE Minorities 2025 Winners</h2>
     </div>
 
     <div class="form-body">
-        <form action="{{ route('elevate-registration.submit') }}" method="POST" id="elevateRegistrationForm">
+        <form action="{{ route('elevate-registration.save-preview') }}" method="POST" id="elevateRegistrationForm">
             @csrf
 
             <!-- Company Information Section -->
@@ -43,7 +42,7 @@
                                class="form-control @error('company_name') is-invalid @enderror" 
                                id="company_name" 
                                name="company_name" 
-                               value="{{ old('company_name') }}" 
+                               value="{{ old('company_name', $formData['company_name'] ?? '') }}" 
                                required>
                         @error('company_name')
                             <div class="error-message">{{ $message }}</div>
@@ -58,7 +57,7 @@
                                   id="address" 
                                   name="address" 
                                   rows="3" 
-                                  required>{{ old('address') }}</textarea>
+                                  required>{{ old('address', $formData['address'] ?? '') }}</textarea>
                         @error('address')
                             <div class="error-message">{{ $message }}</div>
                         @enderror
@@ -75,7 +74,7 @@
                             <option value="">-- Select Country --</option>
                             @foreach($countries as $country)
                                 <option value="{{ $country->name }}" 
-                                        {{ old('country') == $country->name ? 'selected' : '' }}
+                                        {{ (old('country', $formData['country'] ?? '') == $country->name) ? 'selected' : '' }}
                                         data-country-id="{{ $country->id }}">
                                     {{ $country->name }}
                                 </option>
@@ -136,6 +135,61 @@
                         @enderror
                     </div>
                 </div>
+
+                <div class="row mb-3">
+                    <div class="col-md-12">
+                        <label class="form-label">Elevate Application Call Name <span class="required">*</span></label>
+                        <div class="checkbox-group" id="elevateCallNamesGroup">
+                            <div class="checkbox-item">
+                                <input type="checkbox" 
+                                       name="elevate_application_call_names[]" 
+                                       id="elevate_2025" 
+                                       value="ELEVATE 2025"
+                                       {{ in_array('ELEVATE 2025', old('elevate_application_call_names', $formData['elevate_application_call_names'] ?? [])) ? 'checked' : '' }}
+                                       class="elevate-call-checkbox">
+                                <label for="elevate_2025">ELEVATE 2025</label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" 
+                                       name="elevate_application_call_names[]" 
+                                       id="elevate_unnati_2025" 
+                                       value="ELEVATE Unnati 2025"
+                                       {{ in_array('ELEVATE Unnati 2025', old('elevate_application_call_names', $formData['elevate_application_call_names'] ?? [])) ? 'checked' : '' }}
+                                       class="elevate-call-checkbox">
+                                <label for="elevate_unnati_2025">ELEVATE Unnati 2025</label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" 
+                                       name="elevate_application_call_names[]" 
+                                       id="elevate_minorities_2025" 
+                                       value="ELEVATE MINORITIES 2025"
+                                       {{ in_array('ELEVATE MINORITIES 2025', old('elevate_application_call_names', $formData['elevate_application_call_names'] ?? [])) ? 'checked' : '' }}
+                                       class="elevate-call-checkbox">
+                                <label for="elevate_minorities_2025">ELEVATE MINORITIES 2025</label>
+                            </div>
+                        </div>
+                        <small class="text-muted" id="elevateCallNamesError" style="display: none; color: #dc3545;">Maximum 2 selections allowed</small>
+                        @error('elevate_application_call_names')
+                            <div class="error-message">{{ $message }}</div>
+                        @enderror
+                    </div>
+                </div>
+
+                <div class="row mb-3">
+                    <div class="col-md-12">
+                        <label for="elevate_2025_id" class="form-label">ELEVATE 2025 ID (For Ex: EL20250000XXX) <span class="required">*</span></label>
+                        <input type="text" 
+                               class="form-control @error('elevate_2025_id') is-invalid @enderror" 
+                               id="elevate_2025_id" 
+                               name="elevate_2025_id" 
+                               value="{{ old('elevate_2025_id', $formData['elevate_2025_id'] ?? '') }}" 
+                               placeholder="EL20250000XXX"
+                               required>
+                        @error('elevate_2025_id')
+                            <div class="error-message">{{ $message }}</div>
+                        @enderror
+                    </div>
+                </div>
             </div>
 
             <!-- Attendance Section -->
@@ -151,7 +205,7 @@
                                id="attendance_yes" 
                                name="attendance" 
                                value="yes" 
-                               {{ old('attendance') == 'yes' ? 'checked' : '' }}
+                               {{ (old('attendance', $formData['attendance'] ?? '') == 'yes') ? 'checked' : '' }}
                                required>
                         <label for="attendance_yes">Yes</label>
                     </div>
@@ -160,7 +214,7 @@
                                id="attendance_no" 
                                name="attendance" 
                                value="no" 
-                               {{ old('attendance') == 'no' ? 'checked' : '' }}
+                               {{ (old('attendance', $formData['attendance'] ?? '') == 'no') ? 'checked' : '' }}
                                required>
                         <label for="attendance_no">No</label>
                     </div>
@@ -175,7 +229,7 @@
                     <textarea class="form-control @error('attendance_reason') is-invalid @enderror" 
                               id="attendance_reason" 
                               name="attendance_reason" 
-                              rows="3">{{ old('attendance_reason') }}</textarea>
+                              rows="3">{{ old('attendance_reason', $formData['attendance_reason'] ?? '') }}</textarea>
                     @error('attendance_reason')
                         <div class="error-message">{{ $message }}</div>
                     @enderror
@@ -200,7 +254,7 @@
             <!-- Submit Button -->
             <div class="form-section mt-4">
                 <button type="submit" class="btn-submit" id="submitBtn">
-                    <i class="fas fa-paper-plane me-2"></i>Submit Registration
+                    <i class="fas fa-eye me-2"></i>Preview Registration
                 </button>
             </div>
         </form>
@@ -211,6 +265,27 @@
 <script>
     let attendeeCount = 0;
     const salutations = @json($salutations);
+
+    // Handle Elevate Application Call Names checkboxes (max 2)
+    const elevateCheckboxes = document.querySelectorAll('.elevate-call-checkbox');
+    const elevateErrorMsg = document.getElementById('elevateCallNamesError');
+    const maxSelections = 2;
+
+    elevateCheckboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+            const checkedCount = document.querySelectorAll('.elevate-call-checkbox:checked').length;
+            
+            if (checkedCount > maxSelections) {
+                this.checked = false;
+                elevateErrorMsg.style.display = 'block';
+                setTimeout(() => {
+                    elevateErrorMsg.style.display = 'none';
+                }, 3000);
+            } else {
+                elevateErrorMsg.style.display = 'none';
+            }
+        });
+    });
 
     // Handle attendance radio buttons
     document.querySelectorAll('input[name="attendance"]').forEach(radio => {
@@ -240,20 +315,23 @@
         });
     });
 
-    // Initialize based on old input
-    @if(old('attendance') == 'yes')
+    // Initialize based on old input or session data
+    const attendanceValue = @json(old('attendance', $formData['attendance'] ?? ''));
+    const attendeesData = @json(old('attendees', $formData['attendees'] ?? []));
+    
+    if (attendanceValue === 'yes') {
         document.getElementById('attendeesSection').style.display = 'block';
-        @if(old('attendees'))
-            @foreach(old('attendees') as $index => $attendee)
-                addAttendeeBlock({{ $index }}, @json($attendee));
-            @endforeach
-        @else
+        if (attendeesData && attendeesData.length > 0) {
+            attendeesData.forEach((attendee, index) => {
+                addAttendeeBlock(index, attendee);
+            });
+        } else {
             addAttendeeBlock();
-        @endif
-    @elseif(old('attendance') == 'no')
+        }
+    } else if (attendanceValue === 'no') {
         document.getElementById('justificationSection').classList.add('show');
         document.getElementById('attendance_reason').setAttribute('required', 'required');
-    @endif
+    }
 
     // Add attendee block
     function addAttendeeBlock(index = null, data = null) {

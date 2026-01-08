@@ -1124,7 +1124,9 @@ Route::post('/enquiry', [PublicEnquiryController::class, 'submit'])->name('enqui
 
 // ELEVATE Registration Routes (Public Access - No Authentication Required)
 Route::get('/elevate-registration/thankyou', [ElevateRegistrationController::class, 'thankyou'])->name('elevate-registration.thankyou');
+Route::get('/elevate-registration/preview', [ElevateRegistrationController::class, 'preview'])->name('elevate-registration.preview');
 Route::get('/elevate-registration', [ElevateRegistrationController::class, 'showForm'])->name('elevate-registration.form');
+Route::post('/elevate-registration/save-preview', [ElevateRegistrationController::class, 'saveAndPreview'])->name('elevate-registration.save-preview');
 Route::post('/elevate-registration', [ElevateRegistrationController::class, 'submit'])->name('elevate-registration.submit');
 Route::get('/elevate-registration/get-states', [ElevateRegistrationController::class, 'getStates'])->name('elevate-registration.get-states');
 
