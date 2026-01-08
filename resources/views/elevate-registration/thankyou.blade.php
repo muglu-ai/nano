@@ -208,4 +208,60 @@
     }
 </style>
 @endpush
+
+@push('scripts')
+<script>
+    // Clear all browser-side session data after successful submission
+    (function() {
+        try {
+            // Clear localStorage
+            localStorage.clear();
+            
+            // Clear sessionStorage
+            sessionStorage.clear();
+            
+            // Clear any form data stored in browser cache
+            // Clear all form inputs if any are cached
+            if (typeof Storage !== 'undefined') {
+                // Clear any custom keys we might have used
+                const keysToRemove = [];
+                for (let i = 0; i < localStorage.length; i++) {
+                    const key = localStorage.key(i);
+                    if (key && (key.includes('elevate') || key.includes('registration') || key.includes('form'))) {
+                        keysToRemove.push(key);
+                    }
+                }
+                keysToRemove.forEach(key => localStorage.removeItem(key));
+                
+                // Same for sessionStorage
+                const sessionKeysToRemove = [];
+                for (let i = 0; i < sessionStorage.length; i++) {
+                    const key = sessionStorage.key(i);
+                    if (key && (key.includes('elevate') || key.includes('registration') || key.includes('form'))) {
+                        sessionKeysToRemove.push(key);
+                    }
+                }
+                sessionKeysToRemove.forEach(key => sessionStorage.removeItem(key));
+            }
+            
+            // Clear browser form autofill cache for this form
+            // This helps prevent browser from auto-filling old data
+            if (document.forms && document.forms.length > 0) {
+                document.forms.forEach(form => {
+                    if (form.id === 'elevateRegistrationForm' || form.action.includes('elevate-registration')) {
+                        form.reset();
+                    }
+                });
+            }
+            
+            // Set a flag to indicate form was submitted successfully
+            sessionStorage.setItem('elevate_registration_submitted', 'true');
+            sessionStorage.setItem('elevate_registration_submitted_at', new Date().getTime().toString());
+            
+        } catch (e) {
+            console.error('Error clearing browser storage:', e);
+        }
+    })();
+</script>
+@endpush
 @endsection

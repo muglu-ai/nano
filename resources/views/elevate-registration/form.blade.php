@@ -266,6 +266,75 @@
 
 @push('scripts')
 <script>
+    // Clear any cached form data if coming from successful submission
+    (function() {
+        try {
+            const wasSubmitted = sessionStorage.getItem('elevate_registration_submitted');
+            if (wasSubmitted === 'true') {
+                // Clear the flag
+                sessionStorage.removeItem('elevate_registration_submitted');
+                sessionStorage.removeItem('elevate_registration_submitted_at');
+                
+                // Clear any remaining form-related storage
+                localStorage.removeItem('elevate_registration_draft');
+                sessionStorage.removeItem('elevate_registration_draft');
+                
+                // Force form reset to ensure no old data
+                setTimeout(() => {
+                    const form = document.getElementById('elevateRegistrationForm');
+                    if (form) {
+                        form.reset();
+                        // Clear all input values manually
+                        const inputs = form.querySelectorAll('input, textarea, select');
+                        inputs.forEach(input => {
+                            if (input.type !== 'hidden' && input.type !== 'submit' && input.type !== 'button') {
+                                input.value = '';
+                                if (input.type === 'checkbox' || input.type === 'radio') {
+                                    input.checked = false;
+                                }
+                            }
+                        });
+                        
+                        // Clear attendees container
+                        const attendeesContainer = document.getElementById('attendeesContainer');
+                        if (attendeesContainer) {
+                            attendeesContainer.innerHTML = '';
+                        }
+                        
+                        // Reset attendee count
+                        if (typeof attendeeCount !== 'undefined') {
+                            attendeeCount = 0;
+                        }
+                    }
+                }, 100);
+            }
+            
+            // Prevent browser back/forward cache from restoring form data
+            window.addEventListener('pageshow', function(event) {
+                if (event.persisted) {
+                    // Page was loaded from cache (back/forward button)
+                    const form = document.getElementById('elevateRegistrationForm');
+                    if (form) {
+                        form.reset();
+                        // Clear any restored values
+                        const inputs = form.querySelectorAll('input, textarea, select');
+                        inputs.forEach(input => {
+                            if (input.type !== 'hidden' && input.type !== 'submit' && input.type !== 'button') {
+                                if (input.type === 'checkbox' || input.type === 'radio') {
+                                    input.checked = false;
+                                } else {
+                                    input.value = '';
+                                }
+                            }
+                        });
+                    }
+                }
+            });
+        } catch (e) {
+            console.error('Error clearing form cache:', e);
+        }
+    })();
+    
     let attendeeCount = 0;
     const salutations = @json($salutations);
 

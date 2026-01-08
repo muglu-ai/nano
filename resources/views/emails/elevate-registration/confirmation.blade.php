@@ -108,14 +108,18 @@
                                 </table>
                             </div>
 
-                            @if($registration->attendance == 'yes' && $registration->attendees->count() > 0)
-                            <!-- Attendees Details -->
+                            @if($registration->attendees->count() > 0)
+                            <!-- Attendees/Contact Details -->
                             <div style="background-color: #f8f9fa; border-left: 4px solid #6A1B9A; padding: 20px; margin: 25px 0; border-radius: 4px;">
-                                <h2 style="margin: 0 0 15px; font-size: 18px; color: #6A1B9A; font-weight: bold;">Attendees Information</h2>
+                                <h2 style="margin: 0 0 15px; font-size: 18px; color: #6A1B9A; font-weight: bold;">
+                                    {{ $registration->attendance == 'yes' ? 'Attendees Information' : 'Contact Information' }}
+                                </h2>
                                 
                                 @foreach($registration->attendees as $index => $attendee)
                                 <div style="margin-bottom: 15px; padding-bottom: 15px; {{ !$loop->last ? 'border-bottom: 1px solid #e0e0e0;' : '' }}">
-                                    <h3 style="margin: 0 0 10px; font-size: 16px; color: #6A1B9A; font-weight: bold;">Attendee {{ $index + 1 }}</h3>
+                                    <h3 style="margin: 0 0 10px; font-size: 16px; color: #6A1B9A; font-weight: bold;">
+                                        {{ $registration->attendance == 'yes' ? 'Attendee' : 'Contact' }} {{ $index + 1 }}
+                                    </h3>
                                     <table role="presentation" width="100%" cellpadding="5" cellspacing="0">
                                         <tr>
                                             <td style="width: 40%; font-weight: bold; color: #555555; padding: 5px 0;">Name:</td>
