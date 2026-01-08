@@ -187,7 +187,7 @@
                 @enderror
 
                 <!-- Justification (shown when No is selected) -->
-                <div class="justification-section" id="justificationSection">
+                <div class="justification-section" id="justificationSection" style="display: none;">
                     <label for="attendance_reason" class="form-label">If no, justify the reason <span class="required">*</span></label>
                     <textarea class="form-control @error('attendance_reason') is-invalid @enderror" 
                               id="attendance_reason" 
@@ -331,8 +331,12 @@
             if (this.value === 'yes') {
                 attendeesSection.style.display = 'block';
                 attendeesSectionTitle.textContent = 'Attendees Information';
+                // Hide justification section
                 justificationSection.classList.remove('show');
+                justificationSection.style.display = 'none';
+                // Remove required attribute and clear value
                 attendanceReason.removeAttribute('required');
+                attendanceReason.value = '';
                 
                 // Add first attendee if none exist
                 if (attendeeCount === 0) {
@@ -341,15 +345,24 @@
             } else {
                 attendeesSection.style.display = 'block';
                 attendeesSectionTitle.textContent = 'Contact Information';
+                // Show justification section
                 justificationSection.classList.add('show');
+                justificationSection.style.display = 'block';
+                // Add required attribute
                 attendanceReason.setAttribute('required', 'required');
+                
+                // Hide "Add Another" button immediately for contact (only one contact allowed)
+                const addBtn = document.getElementById('addAttendeeBtn');
+                if (addBtn) {
+                    addBtn.style.display = 'none';
+                }
                 
                 // Clear attendees and add one contact
                 document.getElementById('attendeesContainer').innerHTML = '';
                 attendeeCount = 0;
                 addAttendeeBlock();
                 
-                // Hide "Add Another" button for contact (only one contact allowed)
+                // Ensure button stays hidden
                 updateAddAttendeeButton();
             }
         });
@@ -361,6 +374,18 @@
     
     if (attendanceValue === 'yes') {
         document.getElementById('attendeesSection').style.display = 'block';
+        // Hide justification section
+        const justificationSection = document.getElementById('justificationSection');
+        const attendanceReason = document.getElementById('attendance_reason');
+        if (justificationSection) {
+            justificationSection.classList.remove('show');
+            justificationSection.style.display = 'none';
+        }
+        if (attendanceReason) {
+            attendanceReason.removeAttribute('required');
+            attendanceReason.value = '';
+        }
+        
         if (attendeesData && attendeesData.length > 0) {
             attendeesData.forEach((attendee, index) => {
                 addAttendeeBlock(index, attendee);
@@ -394,8 +419,24 @@
     } else if (attendanceValue === 'no') {
         document.getElementById('attendeesSection').style.display = 'block';
         document.getElementById('attendeesSectionTitle').textContent = 'Contact Information';
-        document.getElementById('justificationSection').classList.add('show');
-        document.getElementById('attendance_reason').setAttribute('required', 'required');
+        
+        // Show justification section and make it required
+        const justificationSection = document.getElementById('justificationSection');
+        const attendanceReason = document.getElementById('attendance_reason');
+        if (justificationSection) {
+            justificationSection.classList.add('show');
+            justificationSection.style.display = 'block';
+        }
+        if (attendanceReason) {
+            attendanceReason.setAttribute('required', 'required');
+        }
+        
+        // Hide "Add Another" button immediately for contact (only one contact allowed)
+        const addBtn = document.getElementById('addAttendeeBtn');
+        if (addBtn) {
+            addBtn.style.display = 'none';
+        }
+        
         if (attendeesData && attendeesData.length > 0) {
             // Only take first contact if multiple exist (only one contact allowed)
             addAttendeeBlock(0, attendeesData[0]);
@@ -404,7 +445,8 @@
             addAttendeeBlock();
         }
         setTimeout(() => {
-            updateAddAttendeeButton(); // Hide "Add Another" button for contact
+            // Ensure button stays hidden
+            updateAddAttendeeButton();
             // Initialize intlTelInput for existing phone fields
             document.querySelectorAll('.attendee-phone-input').forEach(phoneInput => {
                 if (!phoneInput.closest('.iti')) {
@@ -671,7 +713,17 @@
         }
         
         // Update "Add Another Attendee" button visibility
-        updateAddAttendeeButton();
+        // Check attendance status before updating button
+        const attendanceValue = document.querySelector('input[name="attendance"]:checked')?.value || '';
+        const isContact = attendanceValue === 'no';
+        const addBtn = document.getElementById('addAttendeeBtn');
+        
+        if (isContact && addBtn) {
+            // Immediately hide button if it's a contact (attendance = no)
+            addBtn.style.display = 'none';
+        } else {
+            updateAddAttendeeButton();
+        }
         
         // Check for email errors and highlight fields
         setTimeout(() => {
