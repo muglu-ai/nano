@@ -11,6 +11,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Http;
 
 class ElevateRegistrationController extends Controller
 {
@@ -50,6 +51,14 @@ class ElevateRegistrationController extends Controller
      */
     public function saveAndPreview(Request $request)
     {
+        // Verify reCAPTCHA
+        $recaptchaResponse = $request->input('g-recaptcha-response');
+        if (!$this->verifyRecaptcha($recaptchaResponse)) {
+            return redirect()->back()
+                ->withInput()
+                ->withErrors(['recaptcha' => 'reCAPTCHA verification failed. Please try again.']);
+        }
+
         // Validate the request
         $validated = $request->validate([
             // Company Information
@@ -69,8 +78,8 @@ class ElevateRegistrationController extends Controller
             'attendance' => 'required|in:yes,no',
             'attendance_reason' => 'required_if:attendance,no|nullable|string|max:1000',
             
-            // Attendees (if attending)
-            'attendees' => 'required_if:attendance,yes|array|min:1',
+            // Attendees/Contacts (required for both yes and no)
+            'attendees' => 'required|array|min:1',
             'attendees.*.salutation' => 'required_with:attendees|string|max:10',
             'attendees.*.first_name' => 'required_with:attendees|string|max:255',
             'attendees.*.last_name' => 'required_with:attendees|string|max:255',
@@ -91,8 +100,8 @@ class ElevateRegistrationController extends Controller
             'elevate_2025_id.required' => 'ELEVATE 2025 ID is required.',
             'attendance.required' => 'Please indicate if you will be attending.',
             'attendance_reason.required_if' => 'Please provide a reason if you are not attending.',
-            'attendees.required_if' => 'At least one attendee is required if you are attending.',
-            'attendees.min' => 'At least one attendee is required.',
+            'attendees.required' => 'At least one attendee/contact is required.',
+            'attendees.min' => 'At least one attendee/contact is required.',
             'attendees.*.salutation.required_with' => 'Salutation is required for all attendees.',
             'attendees.*.first_name.required_with' => 'First name is required for all attendees.',
             'attendees.*.last_name.required_with' => 'Last name is required for all attendees.',
@@ -100,6 +109,28 @@ class ElevateRegistrationController extends Controller
             'attendees.*.email.email' => 'Please enter a valid email address.',
             'attendees.*.phone_number.required_with' => 'Phone number is required for all attendees.',
         ]);
+
+        // Validate duplicate emails within the same submission
+        if (!empty($validated['attendees'])) {
+            $emails = array_map(function($attendee) {
+                return strtolower(trim($attendee['email'] ?? ''));
+            }, $validated['attendees']);
+            
+            $uniqueEmails = array_unique($emails);
+            if (count($emails) !== count($uniqueEmails)) {
+                return redirect()->back()
+                    ->withInput()
+                    ->withErrors(['email_duplicate' => 'The same email address cannot be used for multiple attendees/contacts.']);
+            }
+            
+            // Check if any email already exists in database
+            $existingEmails = ElevateAttendee::whereIn('email', $emails)->pluck('email')->toArray();
+            if (!empty($existingEmails)) {
+                return redirect()->back()
+                    ->withInput()
+                    ->withErrors(['email_exists' => 'One or more email addresses are already registered. Please use different email addresses.']);
+            }
+        }
 
         try {
             $sessionId = session()->getId();
@@ -175,6 +206,13 @@ class ElevateRegistrationController extends Controller
      */
     public function submit(Request $request)
     {
+        // Verify reCAPTCHA
+        $recaptchaResponse = $request->input('g-recaptcha-response');
+        if (!$this->verifyRecaptcha($recaptchaResponse)) {
+            return redirect()->back()
+                ->withErrors(['recaptcha' => 'reCAPTCHA verification failed. Please try again.']);
+        }
+
         $sessionId = $request->get('session_id') ?? session()->getId();
         
         $session = ElevateRegistrationSession::bySession($sessionId)
@@ -290,5 +328,77 @@ class ElevateRegistrationController extends Controller
             ->get(['id', 'name']);
 
         return response()->json(['states' => $states]);
+    }
+
+    /**
+     * Verify Google reCAPTCHA response
+     */
+    private function verifyRecaptcha($recaptchaResponse)
+    {
+        // If disabled via config, always pass
+        if (!config('constants.RECAPTCHA_ENABLED', false)) {
+            return true;
+        }
+
+        $siteKey = config('services.recaptcha.site_key');
+        $projectId = config('services.recaptcha.project_id');
+        $apiKey = config('services.recaptcha.api_key');
+        $expectedAction = 'submit';
+
+        if (empty($siteKey) || empty($projectId) || empty($apiKey) || empty($recaptchaResponse)) {
+            Log::warning('reCAPTCHA config or token missing', [
+                'siteKey' => !empty($siteKey),
+                'projectId' => !empty($projectId),
+                'hasToken' => !empty($recaptchaResponse),
+            ]);
+            return false;
+        }
+
+        $url = sprintf(
+            'https://recaptchaenterprise.googleapis.com/v1/projects/%s/assessments?key=%s',
+            $projectId,
+            $apiKey
+        );
+
+        try {
+            $response = Http::post($url, [
+                'event' => [
+                    'token' => $recaptchaResponse,
+                    'expectedAction' => $expectedAction,
+                    'siteKey' => $siteKey,
+                ],
+            ]);
+
+            $result = $response->json();
+
+            if (!$response->successful()) {
+                Log::warning('reCAPTCHA Enterprise API error', [
+                    'status' => $response->status(),
+                    'response' => $result,
+                ]);
+                return false;
+            }
+
+            $tokenProps = $result['tokenProperties'] ?? null;
+
+            if (
+                !$tokenProps ||
+                ($tokenProps['valid'] ?? false) !== true ||
+                ($tokenProps['action'] ?? null) !== $expectedAction
+            ) {
+                Log::warning('reCAPTCHA Enterprise token invalid', [
+                    'tokenProperties' => $tokenProps,
+                ]);
+                return false;
+            }
+
+            return true;
+        } catch (\Exception $e) {
+            Log::error('reCAPTCHA Enterprise verification error', [
+                'error' => $e->getMessage(),
+            ]);
+
+            return false;
+        }
     }
 }

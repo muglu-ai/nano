@@ -123,7 +123,7 @@
                                         </tr>
                                         @if($attendee->job_title)
                                         <tr>
-                                            <td style="font-weight: bold; color: #555555; padding: 5px 0;">Job Title:</td>
+                                            <td style="font-weight: bold; color: #555555; padding: 5px 0;">Designation:</td>
                                             <td style="color: #333333; padding: 5px 0;">{{ $attendee->job_title }}</td>
                                         </tr>
                                         @endif

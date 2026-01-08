@@ -107,7 +107,7 @@
                     </tr>
                     @if(!empty($attendee['job_title']))
                     <tr>
-                        <th>Job Title:</th>
+                        <th>Designation:</th>
                         <td>{{ $attendee['job_title'] }}</td>
                     </tr>
                     @endif
@@ -200,9 +200,49 @@
 @push('scripts')
 <script>
     document.getElementById('finalSubmitForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const form = this;
         const submitBtn = this.querySelector('button[type="submit"]');
+        
         submitBtn.disabled = true;
         submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Submitting...';
+        
+        @if(config('constants.RECAPTCHA_ENABLED', false))
+        // Execute reCAPTCHA
+        if (typeof grecaptcha !== 'undefined' && grecaptcha.enterprise) {
+            grecaptcha.enterprise.ready(function() {
+                grecaptcha.enterprise.execute('{{ config('services.recaptcha.site_key') }}', { action: 'submit' })
+                    .then(function(token) {
+                        // Add token to form
+                        const tokenInput = document.createElement('input');
+                        tokenInput.type = 'hidden';
+                        tokenInput.name = 'g-recaptcha-response';
+                        tokenInput.value = token;
+                        form.appendChild(tokenInput);
+                        
+                        // Submit form
+                        form.submit();
+                    })
+                    .catch(function(err) {
+                        console.error('reCAPTCHA error:', err);
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'reCAPTCHA Error',
+                            text: 'reCAPTCHA verification failed. Please try again.',
+                            confirmButtonText: 'OK',
+                            confirmButtonColor: '#6A1B9A'
+                        });
+                        submitBtn.disabled = false;
+                        submitBtn.innerHTML = '<i class="fas fa-check me-2"></i>Confirm & Submit';
+                    });
+            });
+        } else {
+            form.submit();
+        }
+        @else
+        form.submit();
+        @endif
     });
 </script>
 @endpush

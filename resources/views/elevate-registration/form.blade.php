@@ -22,7 +22,7 @@
 @section('content')
 <div class="form-card">
     <div class="form-header">
-        <h2><i class="fas fa-file-alt me-2"></i>Felicitation Ceremony for ELEVATE 2025, ELEVATE Unnati 2025 & ELEVATE Minorities 2025 Winners</h2>
+        <h2><i class="fas fa-file-alt me-2"></i>Register for Felicitation Ceremony for ELEVATE 2025, ELEVATE Unnati 2025 & ELEVATE Minorities 2025 Winners</h2>
     </div>
 
     <div class="form-body">
@@ -31,10 +31,6 @@
 
             <!-- Elevate Application Information Section (Moved to Top) -->
             <div class="form-section">
-                <div class="section-header">
-                    <h5>Elevate Application Information</h5>
-                </div>
-
                 <div class="row mb-3">
                     <div class="col-md-12">
                         <label class="form-label">Elevate Application Call Name <span class="required">*</span></label>
@@ -243,10 +239,10 @@
                 </div>
             </div>
 
-            <!-- Attendees Information Section (shown when Yes is selected) -->
+            <!-- Attendees/Contact Information Section -->
             <div class="form-section" id="attendeesSection" style="display: none;">
                 <div class="section-header">
-                    <h5>Attendees Information</h5>
+                    <h5 id="attendeesSectionTitle">Attendees Information</h5>
                 </div>
 
                 <div id="attendeesContainer">
@@ -301,8 +297,11 @@
             const justificationSection = document.getElementById('justificationSection');
             const attendanceReason = document.getElementById('attendance_reason');
             
+            const attendeesSectionTitle = document.getElementById('attendeesSectionTitle');
+            
             if (this.value === 'yes') {
                 attendeesSection.style.display = 'block';
+                attendeesSectionTitle.textContent = 'Attendees Information';
                 justificationSection.classList.remove('show');
                 attendanceReason.removeAttribute('required');
                 
@@ -311,13 +310,15 @@
                     addAttendeeBlock();
                 }
             } else {
-                attendeesSection.style.display = 'none';
+                attendeesSection.style.display = 'block';
+                attendeesSectionTitle.textContent = 'Contact Information';
                 justificationSection.classList.add('show');
                 attendanceReason.setAttribute('required', 'required');
                 
-                // Clear attendees
+                // Clear attendees and add one contact
                 document.getElementById('attendeesContainer').innerHTML = '';
                 attendeeCount = 0;
+                addAttendeeBlock();
             }
         });
     });
@@ -357,8 +358,47 @@
             });
         }, 200);
     } else if (attendanceValue === 'no') {
+        document.getElementById('attendeesSection').style.display = 'block';
+        document.getElementById('attendeesSectionTitle').textContent = 'Contact Information';
         document.getElementById('justificationSection').classList.add('show');
         document.getElementById('attendance_reason').setAttribute('required', 'required');
+        if (attendeesData && attendeesData.length > 0) {
+            attendeesData.forEach((attendee, index) => {
+                addAttendeeBlock(index, attendee);
+            });
+        } else {
+            addAttendeeBlock();
+        }
+        setTimeout(() => {
+            updateAddAttendeeButton();
+            // Initialize intlTelInput for existing phone fields
+            document.querySelectorAll('.attendee-phone-input').forEach(phoneInput => {
+                if (!phoneInput.closest('.iti')) {
+                    phoneInput.placeholder = '';
+                    const iti = window.intlTelInput(phoneInput, {
+                        initialCountry: 'in',
+                        preferredCountries: ['in', 'us', 'gb'],
+                        utilsScript: "https://cdn.jsdelivr.net/npm/intl-tel-input@18.1.1/build/js/utils.js",
+                        separateDialCode: true,
+                        nationalMode: false,
+                        autoPlaceholder: 'off',
+                    });
+                    setTimeout(() => {
+                        phoneInput.placeholder = '';
+                    }, 100);
+                    // Format phone number on blur
+                    phoneInput.addEventListener('blur', function() {
+                        const countryData = iti.getSelectedCountryData();
+                        const dialCode = countryData.dialCode;
+                        const number = iti.getNumber(intlTelInputUtils.numberFormat.NATIONAL);
+                        const cleanNumber = number.replace(/\D/g, '');
+                        if (cleanNumber) {
+                            phoneInput.value = dialCode + '-' + cleanNumber;
+                        }
+                    });
+                }
+            });
+        }, 200);
     }
 
     // Add attendee block
@@ -366,6 +406,9 @@
         attendeeCount++;
         const attendeeIndex = index !== null ? index : attendeeCount - 1;
         const isFirst = attendeeCount === 1;
+        const attendanceValue = document.querySelector('input[name="attendance"]:checked')?.value || '';
+        const isContact = attendanceValue === 'no';
+        const titleText = isContact ? `Name of the Contact ${attendeeCount}` : `Name of the Attendees ${attendeeCount}`;
         
         const attendeeBlock = document.createElement('div');
         attendeeBlock.className = 'attendee-block';
@@ -373,7 +416,7 @@
         
         attendeeBlock.innerHTML = `
             <div class="attendee-header">
-                <div class="attendee-title">Name of the Attendees ${attendeeCount} ${isFirst ? '<span class="required">*</span>' : ''}</div>
+                <div class="attendee-title">${titleText} ${isFirst ? '<span class="required">*</span>' : ''}</div>
                 ${!isFirst ? '<button type="button" class="btn-remove-attendee" onclick="removeAttendee(' + attendeeIndex + ')"><i class="fas fa-times"></i> Remove</button>' : ''}
             </div>
             
@@ -399,7 +442,7 @@
             
             <div class="row mb-3">
                 <div class="col-md-6">
-                    <label class="form-label">Job Title</label>
+                    <label class="form-label">Designation</label>
                     <input type="text" class="form-control" name="attendees[${attendeeIndex}][job_title]" 
                            value="${data ? (data.job_title || '') : ''}">
                 </div>
@@ -438,6 +481,17 @@
             setTimeout(() => {
                 phoneInput.placeholder = '';
             }, 100);
+            
+            // Format phone number as countryCode-number before form submission
+            phoneInput.addEventListener('blur', function() {
+                const countryData = iti.getSelectedCountryData();
+                const dialCode = countryData.dialCode;
+                const number = iti.getNumber(intlTelInputUtils.numberFormat.NATIONAL);
+                const cleanNumber = number.replace(/\D/g, ''); // Remove all non-digits
+                if (cleanNumber) {
+                    phoneInput.value = dialCode + '-' + cleanNumber;
+                }
+            });
         }
         
         // Update "Add Another Attendee" button visibility
@@ -503,11 +557,137 @@
         }
     });
 
-    // Form submission
+    // Validate Elevate Application Call Name
+    function validateElevateCallNames() {
+        const checkedCount = document.querySelectorAll('.elevate-call-checkbox:checked').length;
+        if (checkedCount === 0) {
+            elevateErrorMsg.style.display = 'block';
+            elevateErrorMsg.textContent = 'Please select at least one Elevate Application Call Name';
+            elevateErrorMsg.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            return false;
+        }
+        elevateErrorMsg.style.display = 'none';
+        return true;
+    }
+
+    // Validate duplicate emails in attendees
+    function validateDuplicateEmails() {
+        const emailInputs = document.querySelectorAll('input[name*="[email]"]');
+        const emails = [];
+        const duplicateEmails = [];
+        
+        emailInputs.forEach(input => {
+            const email = input.value.trim().toLowerCase();
+            if (email) {
+                if (emails.includes(email)) {
+                    duplicateEmails.push(email);
+                } else {
+                    emails.push(email);
+                }
+            }
+        });
+        
+        if (duplicateEmails.length > 0) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Duplicate Email',
+                text: 'The same email address cannot be used for multiple attendees/contacts.',
+                confirmButtonText: 'OK',
+                confirmButtonColor: '#6A1B9A'
+            });
+            return false;
+        }
+        return true;
+    }
+
+    // Form submission with reCAPTCHA
     document.getElementById('elevateRegistrationForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const form = this;
         const submitBtn = document.getElementById('submitBtn');
+        
+        // Validate Elevate Application Call Name
+        if (!validateElevateCallNames()) {
+            return;
+        }
+        
+        // Validate duplicate emails
+        if (!validateDuplicateEmails()) {
+            return;
+        }
+        
+        // Format all phone numbers as countryCode-number before submission
+        document.querySelectorAll('.attendee-phone-input').forEach(phoneInput => {
+            // Get the intlTelInput instance - try multiple methods
+            let itiInstance = null;
+            if (window.intlTelInput && typeof window.intlTelInput.getInstance === 'function') {
+                itiInstance = window.intlTelInput.getInstance(phoneInput);
+            } else if (window.intlTelInputGlobals && typeof window.intlTelInputGlobals.getInstance === 'function') {
+                itiInstance = window.intlTelInputGlobals.getInstance(phoneInput);
+            } else if (phoneInput.intlTelInput) {
+                itiInstance = phoneInput.intlTelInput;
+            }
+            
+            if (itiInstance && typeof itiInstance.getSelectedCountryData === 'function') {
+                try {
+                    const countryData = itiInstance.getSelectedCountryData();
+                    const dialCode = countryData.dialCode;
+                    const number = itiInstance.getNumber(intlTelInputUtils.numberFormat.NATIONAL);
+                    const cleanNumber = number.replace(/\D/g, ''); // Remove all non-digits
+                    if (cleanNumber && dialCode) {
+                        phoneInput.value = dialCode + '-' + cleanNumber;
+                    }
+                } catch (e) {
+                    console.error('Error formatting phone number:', e);
+                }
+            }
+        });
+        
+        // Basic form validation
+        if (!form.checkValidity()) {
+            form.reportValidity();
+            return;
+        }
+        
         submitBtn.disabled = true;
-        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Submitting...';
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Processing...';
+        
+        @if(config('constants.RECAPTCHA_ENABLED', false))
+        // Execute reCAPTCHA
+        if (typeof grecaptcha !== 'undefined' && grecaptcha.enterprise) {
+            grecaptcha.enterprise.ready(function() {
+                grecaptcha.enterprise.execute('{{ config('services.recaptcha.site_key') }}', { action: 'submit' })
+                    .then(function(token) {
+                        // Add token to form
+                        const tokenInput = document.createElement('input');
+                        tokenInput.type = 'hidden';
+                        tokenInput.name = 'g-recaptcha-response';
+                        tokenInput.value = token;
+                        form.appendChild(tokenInput);
+                        
+                        // Submit form
+                        form.submit();
+                    })
+                    .catch(function(err) {
+                        console.error('reCAPTCHA error:', err);
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'reCAPTCHA Error',
+                            text: 'reCAPTCHA verification failed. Please try again.',
+                            confirmButtonText: 'OK',
+                            confirmButtonColor: '#6A1B9A'
+                        });
+                        submitBtn.disabled = false;
+                        submitBtn.innerHTML = '<i class="fas fa-eye me-2"></i>Preview Registration';
+                    });
+            });
+        } else {
+            form.submit();
+        }
+        @else
+        form.submit();
+        @endif
     });
 </script>
 @endpush

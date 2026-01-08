@@ -5,6 +5,7 @@ namespace App\Mail;
 use App\Models\ElevateRegistration;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
+use Illuminate\Mail\Mailables\Address;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
@@ -29,7 +30,8 @@ class ElevateRegistrationConfirmationMail extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: "ELEVATE Registration Confirmation - Felicitation Ceremony 2025",
+            from: new Address(config('mail.from.address'), 'ELEVATE 2025'),
+            subject: "ELEVATE Registration Confirmation - Felicitation Ceremony for ELEVATE 2025, ELEVATE Unnati 2025 & ELEVATE Minorities 2025 Winners",
         );
     }
 
