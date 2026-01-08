@@ -106,6 +106,10 @@ class PublicTicketController extends Controller
         $isTicketTypeLocked = !empty($selectedTicketParam) && $selectedTicketType !== null;
         $isNationalityLocked = !empty($selectedNationality) && in_array($selectedNationality, ['national', 'international']);
         
+        // Get sectors and organization types from config
+        $sectors = config('constants.sectors', []);
+        $organizationTypes = config('constants.organization_types', []);
+        
         return view('tickets.public.register', compact(
             'event', 
             'config', 
@@ -115,7 +119,9 @@ class PublicTicketController extends Controller
             'selectedTicketType',
             'selectedNationality',
             'isTicketTypeLocked',
-            'isNationalityLocked'
+            'isNationalityLocked',
+            'sectors',
+            'organizationTypes'
         ));
     }
 
