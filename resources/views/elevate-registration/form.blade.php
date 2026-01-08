@@ -185,7 +185,25 @@
                 @error('attendance')
                     <div class="error-message">{{ $message }}</div>
                 @enderror
+            </div>
 
+            <!-- Attendees Information Section (shown when Yes is selected) -->
+            <div class="form-section" id="attendeesSection" style="display: none;">
+                <div class="section-header">
+                    <h5>Attendees Information</h5>
+                </div>
+
+                <div id="attendeesContainer">
+                    <!-- Attendee blocks will be added here dynamically -->
+                </div>
+
+                <button type="button" class="btn-add-attendee" id="addAttendeeBtn">
+                    <i class="fas fa-plus me-2"></i>Add Another Attendee
+                </button>
+            </div>
+
+            <!-- Contact Information Section (shown when No is selected) -->
+            <div class="form-section" id="contactSection" style="display: none;">
                 <!-- Justification (shown when No is selected) -->
                 <div class="justification-section" id="justificationSection" style="display: none;">
                     <label for="attendance_reason" class="form-label">If no, justify the reason <span class="required">*</span></label>
@@ -197,21 +215,15 @@
                         <div class="error-message">{{ $message }}</div>
                     @enderror
                 </div>
-            </div>
 
-            <!-- Attendees/Contact Information Section -->
-            <div class="form-section" id="attendeesSection" style="display: none;">
-                <div class="section-header">
-                    <h5 id="attendeesSectionTitle">Attendees Information</h5>
+                <!-- Contact Information -->
+                <div class="section-header" style="margin-top: 1.5rem;">
+                    <h5>Contact Information</h5>
                 </div>
 
-                <div id="attendeesContainer">
-                    <!-- Attendee blocks will be added here dynamically -->
+                <div id="contactContainer">
+                    <!-- Contact blocks will be added here dynamically -->
                 </div>
-
-                <button type="button" class="btn-add-attendee" id="addAttendeeBtn">
-                    <i class="fas fa-plus me-2"></i>Add Another Attendee
-                </button>
             </div>
 
             <!-- Submit Button -->
@@ -323,47 +335,65 @@
     document.querySelectorAll('input[name="attendance"]').forEach(radio => {
         radio.addEventListener('change', function() {
             const attendeesSection = document.getElementById('attendeesSection');
+            const contactSection = document.getElementById('contactSection');
             const justificationSection = document.getElementById('justificationSection');
             const attendanceReason = document.getElementById('attendance_reason');
-            
-            const attendeesSectionTitle = document.getElementById('attendeesSectionTitle');
+            const attendeesContainer = document.getElementById('attendeesContainer');
+            const contactContainer = document.getElementById('contactContainer');
             
             if (this.value === 'yes') {
+                // Show attendees section, hide contact section
                 attendeesSection.style.display = 'block';
-                attendeesSectionTitle.textContent = 'Attendees Information';
+                contactSection.style.display = 'none';
+                
                 // Hide justification section
-                justificationSection.classList.remove('show');
                 justificationSection.style.display = 'none';
                 // Remove required attribute and clear value
                 attendanceReason.removeAttribute('required');
                 attendanceReason.value = '';
                 
-                // Add first attendee if none exist
-                if (attendeeCount === 0) {
-                    addAttendeeBlock();
+                // Clear contact container if it has any data
+                if (contactContainer) {
+                    contactContainer.innerHTML = '';
                 }
+                
+                // Reset attendee count and add first attendee
+                attendeeCount = 0;
+                if (attendeesContainer) {
+                    // Clear any existing attendees (in case switching from no to yes)
+                    attendeesContainer.innerHTML = '';
+                }
+                addAttendeeBlock();
+                
+                // Show "Add Another Attendee" button
+                const addBtn = document.getElementById('addAttendeeBtn');
+                if (addBtn) {
+                    addBtn.style.display = 'block';
+                }
+                
+                // Update button visibility
+                updateAddAttendeeButton();
             } else {
-                attendeesSection.style.display = 'block';
-                attendeesSectionTitle.textContent = 'Contact Information';
-                // Show justification section
-                justificationSection.classList.add('show');
+                // Hide attendees section, show contact section
+                attendeesSection.style.display = 'none';
+                contactSection.style.display = 'block';
+                
+                // Show justification section first
                 justificationSection.style.display = 'block';
                 // Add required attribute
                 attendanceReason.setAttribute('required', 'required');
                 
-                // Hide "Add Another" button immediately for contact (only one contact allowed)
-                const addBtn = document.getElementById('addAttendeeBtn');
-                if (addBtn) {
-                    addBtn.style.display = 'none';
+                // Clear attendees container
+                if (attendeesContainer) {
+                    attendeesContainer.innerHTML = '';
                 }
-                
-                // Clear attendees and add one contact
-                document.getElementById('attendeesContainer').innerHTML = '';
+                // Clear contact container and add one contact
+                if (contactContainer) {
+                    contactContainer.innerHTML = '';
+                }
                 attendeeCount = 0;
-                addAttendeeBlock();
-                
-                // Ensure button stays hidden
-                updateAddAttendeeButton();
+                // Use addAttendeeBlock but append to contactContainer
+                addAttendeeBlock(null, null, contactContainer);
             }
         });
     });
@@ -374,11 +404,12 @@
     
     if (attendanceValue === 'yes') {
         document.getElementById('attendeesSection').style.display = 'block';
+        document.getElementById('contactSection').style.display = 'none';
+        
         // Hide justification section
         const justificationSection = document.getElementById('justificationSection');
         const attendanceReason = document.getElementById('attendance_reason');
         if (justificationSection) {
-            justificationSection.classList.remove('show');
             justificationSection.style.display = 'none';
         }
         if (attendanceReason) {
@@ -417,32 +448,26 @@
             checkAndDisplayEmailErrors();
         }, 200);
     } else if (attendanceValue === 'no') {
-        document.getElementById('attendeesSection').style.display = 'block';
-        document.getElementById('attendeesSectionTitle').textContent = 'Contact Information';
+        document.getElementById('attendeesSection').style.display = 'none';
+        document.getElementById('contactSection').style.display = 'block';
         
         // Show justification section and make it required
         const justificationSection = document.getElementById('justificationSection');
         const attendanceReason = document.getElementById('attendance_reason');
         if (justificationSection) {
-            justificationSection.classList.add('show');
             justificationSection.style.display = 'block';
         }
         if (attendanceReason) {
             attendanceReason.setAttribute('required', 'required');
         }
         
-        // Hide "Add Another" button immediately for contact (only one contact allowed)
-        const addBtn = document.getElementById('addAttendeeBtn');
-        if (addBtn) {
-            addBtn.style.display = 'none';
-        }
-        
+        const contactContainer = document.getElementById('contactContainer');
         if (attendeesData && attendeesData.length > 0) {
             // Only take first contact if multiple exist (only one contact allowed)
-            addAttendeeBlock(0, attendeesData[0]);
+            addAttendeeBlock(0, attendeesData[0], contactContainer);
             attendeeCount = 1; // Reset count to 1
         } else {
-            addAttendeeBlock();
+            addAttendeeBlock(null, null, contactContainer);
         }
         setTimeout(() => {
             // Ensure button stays hidden
@@ -479,16 +504,26 @@
         }, 200);
     }
 
-    // Add attendee block
-    function addAttendeeBlock(index = null, data = null) {
+    // Add attendee/contact block
+    function addAttendeeBlock(index = null, data = null, container = null) {
         attendeeCount++;
         const attendeeIndex = index !== null ? index : attendeeCount - 1;
         const isFirst = attendeeCount === 1;
-        const attendanceValue = document.querySelector('input[name="attendance"]:checked')?.value || '';
-        const isContact = attendanceValue === 'no';
+        const currentAttendanceValue = document.querySelector('input[name="attendance"]:checked')?.value || '';
+        const isContact = currentAttendanceValue === 'no';
         const titleText = isContact ? `Name of the Contact ${attendeeCount}` : `Name of the Attendees ${attendeeCount}`;
         // For contacts (attendance = no), never show remove button (only one contact allowed)
         const showRemoveButton = !isContact && !isFirst;
+        
+        // Determine which container to use
+        let targetContainer = container;
+        if (!targetContainer) {
+            if (isContact) {
+                targetContainer = document.getElementById('contactContainer');
+            } else {
+                targetContainer = document.getElementById('attendeesContainer');
+            }
+        }
         
         const attendeeBlock = document.createElement('div');
         attendeeBlock.className = 'attendee-block';
@@ -558,7 +593,16 @@
             </div>
         `;
         
-        document.getElementById('attendeesContainer').appendChild(attendeeBlock);
+        // Append to the correct container
+        if (targetContainer) {
+            targetContainer.appendChild(attendeeBlock);
+        } else {
+            // Fallback to attendeesContainer if targetContainer not set
+            const fallbackContainer = document.getElementById('attendeesContainer') || document.getElementById('contactContainer');
+            if (fallbackContainer) {
+                fallbackContainer.appendChild(attendeeBlock);
+            }
+        }
         
         // Initialize intlTelInput for the new phone field
         const phoneInput = document.getElementById(`attendee_phone_${attendeeIndex}`);
@@ -714,11 +758,11 @@
         
         // Update "Add Another Attendee" button visibility
         // Check attendance status before updating button
-        const attendanceValue = document.querySelector('input[name="attendance"]:checked')?.value || '';
-        const isContact = attendanceValue === 'no';
+        const currentAttendanceCheck = document.querySelector('input[name="attendance"]:checked')?.value || '';
+        const isContactCheck = currentAttendanceCheck === 'no';
         const addBtn = document.getElementById('addAttendeeBtn');
         
-        if (isContact && addBtn) {
+        if (isContactCheck && addBtn) {
             // Immediately hide button if it's a contact (attendance = no)
             addBtn.style.display = 'none';
         } else {
@@ -795,11 +839,11 @@
     function updateAddAttendeeButton() {
         const addBtn = document.getElementById('addAttendeeBtn');
         if (addBtn) {
-            const attendanceValue = document.querySelector('input[name="attendance"]:checked')?.value || '';
-            const isContact = attendanceValue === 'no';
+            const currentAttendanceBtn = document.querySelector('input[name="attendance"]:checked')?.value || '';
+            const isContactBtn = currentAttendanceBtn === 'no';
             
             // Hide button if: attendance is "no" (only one contact allowed) OR attendee count is 2 or more
-            if (isContact || attendeeCount >= 2) {
+            if (isContactBtn || attendeeCount >= 2) {
                 addBtn.style.display = 'none';
             } else {
                 addBtn.style.display = 'block';
@@ -822,11 +866,11 @@
     const addAttendeeBtn = document.getElementById('addAttendeeBtn');
     if (addAttendeeBtn) {
         addAttendeeBtn.addEventListener('click', function() {
-            const attendanceValue = document.querySelector('input[name="attendance"]:checked')?.value || '';
-            const isContact = attendanceValue === 'no';
+            const currentAttendanceClick = document.querySelector('input[name="attendance"]:checked')?.value || '';
+            const isContactClick = currentAttendanceClick === 'no';
             
             // Don't allow adding if it's a contact (attendance = no) or if already 2 attendees
-            if (!isContact && attendeeCount < 2) {
+            if (!isContactClick && attendeeCount < 2) {
                 addAttendeeBlock();
             }
         });
