@@ -319,6 +319,9 @@
                 document.getElementById('attendeesContainer').innerHTML = '';
                 attendeeCount = 0;
                 addAttendeeBlock();
+                
+                // Hide "Add Another" button for contact (only one contact allowed)
+                updateAddAttendeeButton();
             }
         });
     });
@@ -356,6 +359,8 @@
                     }, 100);
                 }
             });
+            // Check and display email errors
+            checkAndDisplayEmailErrors();
         }, 200);
     } else if (attendanceValue === 'no') {
         document.getElementById('attendeesSection').style.display = 'block';
@@ -363,14 +368,14 @@
         document.getElementById('justificationSection').classList.add('show');
         document.getElementById('attendance_reason').setAttribute('required', 'required');
         if (attendeesData && attendeesData.length > 0) {
-            attendeesData.forEach((attendee, index) => {
-                addAttendeeBlock(index, attendee);
-            });
+            // Only take first contact if multiple exist (only one contact allowed)
+            addAttendeeBlock(0, attendeesData[0]);
+            attendeeCount = 1; // Reset count to 1
         } else {
             addAttendeeBlock();
         }
         setTimeout(() => {
-            updateAddAttendeeButton();
+            updateAddAttendeeButton(); // Hide "Add Another" button for contact
             // Initialize intlTelInput for existing phone fields
             document.querySelectorAll('.attendee-phone-input').forEach(phoneInput => {
                 if (!phoneInput.closest('.iti')) {
@@ -398,6 +403,8 @@
                     });
                 }
             });
+            // Check and display email errors
+            checkAndDisplayEmailErrors();
         }, 200);
     }
 
@@ -409,6 +416,8 @@
         const attendanceValue = document.querySelector('input[name="attendance"]:checked')?.value || '';
         const isContact = attendanceValue === 'no';
         const titleText = isContact ? `Name of the Contact ${attendeeCount}` : `Name of the Attendees ${attendeeCount}`;
+        // For contacts (attendance = no), never show remove button (only one contact allowed)
+        const showRemoveButton = !isContact && !isFirst;
         
         const attendeeBlock = document.createElement('div');
         attendeeBlock.className = 'attendee-block';
@@ -417,7 +426,7 @@
         attendeeBlock.innerHTML = `
             <div class="attendee-header">
                 <div class="attendee-title">${titleText} ${isFirst ? '<span class="required">*</span>' : ''}</div>
-                ${!isFirst ? '<button type="button" class="btn-remove-attendee" onclick="removeAttendee(' + attendeeIndex + ')"><i class="fas fa-times"></i> Remove</button>' : ''}
+                ${showRemoveButton ? '<button type="button" class="btn-remove-attendee" onclick="removeAttendee(' + attendeeIndex + ')"><i class="fas fa-times"></i> Remove</button>' : ''}
             </div>
             
             <div class="row mb-3">
@@ -448,16 +457,32 @@
                 </div>
                 <div class="col-md-6">
                     <label class="form-label">Email ${isFirst ? '<span class="required">*</span>' : ''}</label>
-                    <input type="email" class="form-control" name="attendees[${attendeeIndex}][email]" 
-                           value="${data ? (data.email || '') : ''}" ${isFirst ? 'required' : ''}>
+                    <input type="email" class="form-control attendee-email-input" 
+                           id="attendee_email_${attendeeIndex}" 
+                           name="attendees[${attendeeIndex}][email]" 
+                           value="${data ? (data.email || '') : ''}" 
+                           ${isFirst ? 'required' : ''}>
+                    <div class="error-message" id="email_error_${attendeeIndex}" style="display: none;"></div>
                 </div>
             </div>
             
             <div class="row mb-3">
                 <div class="col-md-12">
                     <label class="form-label">Phone Number ${isFirst ? '<span class="required">*</span>' : ''}</label>
-                    <input type="tel" class="form-control attendee-phone-input" id="attendee_phone_${attendeeIndex}" name="attendees[${attendeeIndex}][phone_number]" 
-                           value="${data ? (data.phone_number || '') : ''}" ${isFirst ? 'required' : ''}>
+                    <input type="tel" 
+                           class="form-control attendee-phone-input" 
+                           id="attendee_phone_${attendeeIndex}" 
+                           name="attendees[${attendeeIndex}][phone_number]" 
+                           value="" 
+                           ${isFirst ? 'required' : ''}
+                           pattern="[0-9-]+"
+                           inputmode="numeric">
+                    <input type="hidden" 
+                           class="attendee-phone-country-code" 
+                           id="attendee_phone_country_code_${attendeeIndex}" 
+                           name="attendees[${attendeeIndex}][phone_country_code]" 
+                           value="">
+                    <div class="error-message" id="phone_error_${attendeeIndex}" style="display: none;"></div>
                 </div>
             </div>
         `;
@@ -468,8 +493,58 @@
         const phoneInput = document.getElementById(`attendee_phone_${attendeeIndex}`);
         if (phoneInput && window.intlTelInput) {
             phoneInput.placeholder = '';
+            
+            // Parse existing phone number if data exists
+            let initialValue = '';
+            let initialCountry = 'in';
+            let initialCountryCode = '91';
+            const countryCodeInput = document.getElementById(`attendee_phone_country_code_${attendeeIndex}`);
+            
+            if (data && data.phone_number) {
+                const phoneValue = data.phone_number.toString().trim();
+                // Handle format like "91-9878787878"
+                if (phoneValue.includes('-')) {
+                    const parts = phoneValue.split('-');
+                    if (parts.length === 2) {
+                        const dialCode = parts[0];
+                        const nationalNumber = parts[1];
+                        initialCountryCode = dialCode;
+                        // Try to get country from dial code
+                        if (dialCode === '91') {
+                            initialCountry = 'in';
+                        } else if (dialCode === '1') {
+                            initialCountry = 'us';
+                        } else if (dialCode === '44') {
+                            initialCountry = 'gb';
+                        }
+                        initialValue = nationalNumber;
+                    } else {
+                        // Malformed, try to extract
+                        const match = phoneValue.match(/^(\d{1,3})-(.+)$/);
+                        if (match) {
+                            initialCountryCode = match[1];
+                            initialValue = match[2];
+                        }
+                    }
+                } else {
+                    // No dash - might be just number or full number with country code
+                    if (phoneValue.startsWith('91') && phoneValue.length > 10) {
+                        initialCountry = 'in';
+                        initialCountryCode = '91';
+                        initialValue = phoneValue.substring(2);
+                    } else if (phoneValue.length <= 15) {
+                        initialValue = phoneValue;
+                    }
+                }
+                
+                // Set country code in hidden field
+                if (countryCodeInput && initialCountryCode) {
+                    countryCodeInput.value = initialCountryCode;
+                }
+            }
+            
             const iti = window.intlTelInput(phoneInput, {
-                initialCountry: 'in',
+                initialCountry: initialCountry,
                 preferredCountries: ['in', 'us', 'gb'],
                 utilsScript: "https://cdn.jsdelivr.net/npm/intl-tel-input@18.1.1/build/js/utils.js",
                 separateDialCode: true,
@@ -477,32 +552,173 @@
                 autoPlaceholder: 'off',
             });
             
+            // Set the national number if we have initial value
+            if (initialValue) {
+                setTimeout(() => {
+                    const dialCode = iti.getSelectedCountryData().dialCode;
+                    iti.setNumber('+' + dialCode + initialValue);
+                    // Ensure country code is set
+                    if (countryCodeInput) {
+                        countryCodeInput.value = dialCode;
+                    }
+                }, 200);
+            }
+            
             // Ensure placeholder stays empty
             setTimeout(() => {
                 phoneInput.placeholder = '';
             }, 100);
             
-            // Format phone number as countryCode-number before form submission
-            phoneInput.addEventListener('blur', function() {
-                const countryData = iti.getSelectedCountryData();
-                const dialCode = countryData.dialCode;
-                const number = iti.getNumber(intlTelInputUtils.numberFormat.NATIONAL);
-                const cleanNumber = number.replace(/\D/g, ''); // Remove all non-digits
-                if (cleanNumber) {
-                    phoneInput.value = dialCode + '-' + cleanNumber;
+            // Restrict input to numbers only (intlTelInput handles this, but add extra protection)
+            phoneInput.addEventListener('keypress', function(e) {
+                // Allow: backspace, delete, tab, escape, enter, and numbers
+                if ([46, 8, 9, 27, 13, 110, 190].indexOf(e.keyCode) !== -1 ||
+                    // Allow: Ctrl+A, Ctrl+C, Ctrl+V, Ctrl+X
+                    (e.keyCode === 65 && e.ctrlKey === true) ||
+                    (e.keyCode === 67 && e.ctrlKey === true) ||
+                    (e.keyCode === 86 && e.ctrlKey === true) ||
+                    (e.keyCode === 88 && e.ctrlKey === true) ||
+                    // Allow: home, end, left, right
+                    (e.keyCode >= 35 && e.keyCode <= 39)) {
+                    return;
                 }
+                // Ensure that it is a number and stop the keypress
+                if ((e.shiftKey || (e.keyCode < 48 || e.keyCode > 57)) && (e.keyCode < 96 || e.keyCode > 105)) {
+                    e.preventDefault();
+                }
+            });
+            
+            // Store country code and national number separately on blur
+            phoneInput.addEventListener('blur', function() {
+                const countryCodeInput = document.getElementById(`attendee_phone_country_code_${attendeeIndex}`);
+                
+                if (iti.isValidNumber()) {
+                    const countryData = iti.getSelectedCountryData();
+                    const dialCode = countryData.dialCode;
+                    // Get only the national number (without country code)
+                    const nationalNumber = iti.getNumber(intlTelInputUtils.numberFormat.NATIONAL);
+                    const cleanNumber = nationalNumber.replace(/\D/g, ''); // Remove all non-digits
+                    
+                    // Validate length (should be reasonable, e.g., 6-15 digits)
+                    if (cleanNumber.length >= 6 && cleanNumber.length <= 15) {
+                        // Store country code in hidden field
+                        if (countryCodeInput) {
+                            countryCodeInput.value = dialCode;
+                        }
+                        // Store only national number in visible field
+                        phoneInput.value = cleanNumber;
+                        
+                        const errorDiv = document.getElementById(`phone_error_${attendeeIndex}`);
+                        if (errorDiv) {
+                            errorDiv.style.display = 'none';
+                        }
+                        phoneInput.classList.remove('is-invalid');
+                    } else {
+                        const errorDiv = document.getElementById(`phone_error_${attendeeIndex}`);
+                        if (errorDiv) {
+                            errorDiv.textContent = 'Please enter a valid phone number (6-15 digits)';
+                            errorDiv.style.display = 'block';
+                        }
+                        phoneInput.classList.add('is-invalid');
+                    }
+                } else if (phoneInput.value.trim() !== '') {
+                    const errorDiv = document.getElementById(`phone_error_${attendeeIndex}`);
+                    if (errorDiv) {
+                        errorDiv.textContent = 'Please enter a valid phone number';
+                        errorDiv.style.display = 'block';
+                    }
+                    phoneInput.classList.add('is-invalid');
+                }
+            });
+            
+            // Clear error on input
+            phoneInput.addEventListener('input', function() {
+                const errorDiv = document.getElementById(`phone_error_${attendeeIndex}`);
+                if (errorDiv) {
+                    errorDiv.style.display = 'none';
+                }
+                this.classList.remove('is-invalid');
             });
         }
         
         // Update "Add Another Attendee" button visibility
         updateAddAttendeeButton();
+        
+        // Check for email errors and highlight fields
+        setTimeout(() => {
+            checkAndDisplayEmailErrors();
+        }, 100);
     }
     
-    // Update "Add Another Attendee" button visibility based on attendee count
+    // Function to check and display email field errors
+    function checkAndDisplayEmailErrors() {
+        const emailErrors = @json($errors->get('attendees.*.email'));
+        const allErrors = @json($errors->all());
+        
+        // Parse errors for attendees.{index}.email pattern
+        const attendeeEmailErrors = {};
+        allErrors.forEach((error, index) => {
+            // Check if error key matches attendees.{index}.email pattern
+            const errorKey = Object.keys(@json($errors->getMessageBag()->toArray()))[index];
+            if (errorKey && errorKey.match(/^attendees\.(\d+)\.email$/)) {
+                const match = errorKey.match(/^attendees\.(\d+)\.email$/);
+                if (match) {
+                    attendeeEmailErrors[match[1]] = error;
+                }
+            }
+        });
+        
+        // Also check direct error keys
+        @php
+            $emailErrorMap = [];
+            foreach($errors->getMessageBag()->toArray() as $key => $messages) {
+                if (preg_match('/^attendees\.(\d+)\.email$/', $key, $matches)) {
+                    $emailErrorMap[$matches[1]] = $messages[0] ?? '';
+                }
+            }
+        @endphp
+        
+        const emailErrorMap = @json($emailErrorMap);
+        
+        // Apply errors to email fields
+        Object.keys(emailErrorMap).forEach(index => {
+            const emailInput = document.getElementById(`attendee_email_${index}`);
+            const errorDiv = document.getElementById(`email_error_${index}`);
+            
+            if (emailInput) {
+                emailInput.classList.add('is-invalid');
+                emailInput.style.borderColor = '#dc3545';
+                emailInput.style.borderWidth = '2px';
+                
+                if (errorDiv) {
+                    errorDiv.textContent = emailErrorMap[index];
+                    errorDiv.style.display = 'block';
+                    errorDiv.style.color = '#dc3545';
+                }
+            }
+        });
+        
+        // Scroll to first error field
+        const firstErrorIndex = Object.keys(emailErrorMap)[0];
+        if (firstErrorIndex !== undefined) {
+            const firstErrorInput = document.getElementById(`attendee_email_${firstErrorIndex}`);
+            if (firstErrorInput) {
+                setTimeout(() => {
+                    firstErrorInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }, 300);
+            }
+        }
+    }
+    
+    // Update "Add Another Attendee" button visibility based on attendee count and attendance
     function updateAddAttendeeButton() {
         const addBtn = document.getElementById('addAttendeeBtn');
         if (addBtn) {
-            if (attendeeCount >= 2) {
+            const attendanceValue = document.querySelector('input[name="attendance"]:checked')?.value || '';
+            const isContact = attendanceValue === 'no';
+            
+            // Hide button if: attendance is "no" (only one contact allowed) OR attendee count is 2 or more
+            if (isContact || attendeeCount >= 2) {
                 addBtn.style.display = 'none';
             } else {
                 addBtn.style.display = 'block';
@@ -525,7 +741,11 @@
     const addAttendeeBtn = document.getElementById('addAttendeeBtn');
     if (addAttendeeBtn) {
         addAttendeeBtn.addEventListener('click', function() {
-            if (attendeeCount < 2) {
+            const attendanceValue = document.querySelector('input[name="attendance"]:checked')?.value || '';
+            const isContact = attendanceValue === 'no';
+            
+            // Don't allow adding if it's a contact (attendance = no) or if already 2 attendees
+            if (!isContact && attendeeCount < 2) {
                 addAttendeeBlock();
             }
         });
@@ -617,7 +837,8 @@
             return;
         }
         
-        // Format all phone numbers as countryCode-number before submission
+        // Ensure country code and phone number are set separately before submission
+        let phoneValidationError = false;
         document.querySelectorAll('.attendee-phone-input').forEach(phoneInput => {
             // Get the intlTelInput instance - try multiple methods
             let itiInstance = null;
@@ -629,20 +850,83 @@
                 itiInstance = phoneInput.intlTelInput;
             }
             
+            // Find the corresponding country code input
+            const phoneInputId = phoneInput.id;
+            const attendeeIndex = phoneInputId.replace('attendee_phone_', '');
+            const countryCodeInput = document.getElementById(`attendee_phone_country_code_${attendeeIndex}`);
+            
             if (itiInstance && typeof itiInstance.getSelectedCountryData === 'function') {
                 try {
+                    // Check if number is valid
+                    if (!itiInstance.isValidNumber() && phoneInput.value.trim() !== '') {
+                        phoneInput.classList.add('is-invalid');
+                        phoneInput.style.borderColor = '#dc3545';
+                        phoneValidationError = true;
+                        return;
+                    }
+                    
                     const countryData = itiInstance.getSelectedCountryData();
                     const dialCode = countryData.dialCode;
-                    const number = itiInstance.getNumber(intlTelInputUtils.numberFormat.NATIONAL);
-                    const cleanNumber = number.replace(/\D/g, ''); // Remove all non-digits
-                    if (cleanNumber && dialCode) {
-                        phoneInput.value = dialCode + '-' + cleanNumber;
+                    // Get only the national number (without country code)
+                    const nationalNumber = itiInstance.getNumber(intlTelInputUtils.numberFormat.NATIONAL);
+                    const cleanNumber = nationalNumber.replace(/\D/g, ''); // Remove all non-digits
+                    
+                    // Validate length (6-15 digits)
+                    if (cleanNumber && dialCode && cleanNumber.length >= 6 && cleanNumber.length <= 15) {
+                        // Set country code in hidden field
+                        if (countryCodeInput) {
+                            countryCodeInput.value = dialCode;
+                        }
+                        // Set only national number in visible field
+                        phoneInput.value = cleanNumber;
+                        phoneInput.classList.remove('is-invalid');
+                    } else if (cleanNumber && dialCode) {
+                        // Invalid length
+                        phoneInput.classList.add('is-invalid');
+                        phoneInput.style.borderColor = '#dc3545';
+                        phoneValidationError = true;
                     }
                 } catch (e) {
                     console.error('Error formatting phone number:', e);
+                    phoneInput.classList.add('is-invalid');
+                    phoneValidationError = true;
+                }
+            } else if (phoneInput.value.trim() !== '') {
+                // If intlTelInput not available, validate format manually
+                const phoneValue = phoneInput.value.trim();
+                // Check if we have country code
+                if (countryCodeInput && countryCodeInput.value) {
+                    const countryCode = countryCodeInput.value;
+                    const phonePattern = /^\d{6,15}$/;
+                    if (!phonePattern.test(phoneValue)) {
+                        phoneInput.classList.add('is-invalid');
+                        phoneInput.style.borderColor = '#dc3545';
+                        phoneValidationError = true;
+                    }
+                } else {
+                    // No country code, try to validate combined format
+                    const phonePattern = /^\d{1,3}-\d{6,15}$/;
+                    if (!phonePattern.test(phoneValue)) {
+                        phoneInput.classList.add('is-invalid');
+                        phoneInput.style.borderColor = '#dc3545';
+                        phoneValidationError = true;
+                    }
                 }
             }
         });
+        
+        if (phoneValidationError) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Invalid Phone Number',
+                text: 'Please enter valid phone numbers for all attendees/contacts.',
+                confirmButtonText: 'OK',
+                confirmButtonColor: '#6A1B9A'
+            });
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<i class="fas fa-eye me-2"></i>Preview Registration';
+            return;
+        }
         
         // Basic form validation
         if (!form.checkValidity()) {

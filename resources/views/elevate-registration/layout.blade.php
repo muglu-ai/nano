@@ -115,8 +115,8 @@
         .section-header {
             background: var(--section-bg);
             padding: 1rem 1.5rem;
-            border-radius: 8px 8px 0 0;
-            margin: -2.5rem -2.5rem 1.5rem -2.5rem;
+            border-radius: 8px;
+            margin-bottom: 1.5rem;
             border-bottom: 2px solid var(--primary-color);
         }
 
@@ -151,10 +151,17 @@
             outline: none;
         }
 
+        .form-control.is-invalid {
+            border-color: #dc3545 !important;
+            border-width: 2px !important;
+            box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.1) !important;
+        }
+
         .error-message {
             color: #dc3545;
             font-size: 0.875rem;
             margin-top: 0.25rem;
+            display: block;
         }
 
         /* Attendee Section */
@@ -365,10 +372,6 @@
         @media (max-width: 768px) {
             .form-body {
                 padding: 1.5rem;
-            }
-
-            .section-header {
-                margin: -1.5rem -1.5rem 1.5rem -1.5rem;
             }
 
             .radio-group {

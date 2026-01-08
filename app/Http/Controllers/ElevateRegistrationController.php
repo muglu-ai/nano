@@ -86,6 +86,7 @@ class ElevateRegistrationController extends Controller
             'attendees.*.job_title' => 'nullable|string|max:255',
             'attendees.*.email' => 'required_with:attendees|email|max:255',
             'attendees.*.phone_number' => 'required_with:attendees|string|max:20',
+            'attendees.*.phone_country_code' => 'required_with:attendees|string|max:5',
         ], [
             'company_name.required' => 'Company name is required.',
             'address.required' => 'Address is required.',
@@ -110,25 +111,59 @@ class ElevateRegistrationController extends Controller
             'attendees.*.phone_number.required_with' => 'Phone number is required for all attendees.',
         ]);
 
-        // Validate duplicate emails within the same submission
+        // Validate duplicate emails within the same submission and check existing emails
         if (!empty($validated['attendees'])) {
-            $emails = array_map(function($attendee) {
-                return strtolower(trim($attendee['email'] ?? ''));
-            }, $validated['attendees']);
+            $emails = [];
+            $emailIndexMap = []; // Map email to attendee index for error reporting
             
+            // Collect all emails with their indices
+            foreach ($validated['attendees'] as $index => $attendee) {
+                $email = strtolower(trim($attendee['email'] ?? ''));
+                if (!empty($email)) {
+                    $emails[] = $email;
+                    if (!isset($emailIndexMap[$email])) {
+                        $emailIndexMap[$email] = [];
+                    }
+                    $emailIndexMap[$email][] = $index;
+                }
+            }
+            
+            // Check for duplicate emails within the same submission
             $uniqueEmails = array_unique($emails);
             if (count($emails) !== count($uniqueEmails)) {
+                $duplicateEmails = array_diff_assoc($emails, $uniqueEmails);
+                $errors = [];
+                foreach ($duplicateEmails as $dupEmail) {
+                    foreach ($emailIndexMap[$dupEmail] as $index) {
+                        $errors["attendees.{$index}.email"] = 'This email address is already used for another attendee/contact. Please use a different email address.';
+                    }
+                }
                 return redirect()->back()
                     ->withInput()
-                    ->withErrors(['email_duplicate' => 'The same email address cannot be used for multiple attendees/contacts.']);
+                    ->withErrors($errors);
             }
             
             // Check if any email already exists in database
-            $existingEmails = ElevateAttendee::whereIn('email', $emails)->pluck('email')->toArray();
-            if (!empty($existingEmails)) {
-                return redirect()->back()
-                    ->withInput()
-                    ->withErrors(['email_exists' => 'One or more email addresses are already registered. Please use different email addresses.']);
+            if (!empty($emails)) {
+                $existingEmails = ElevateAttendee::whereIn('email', $emails)
+                    ->pluck('email')
+                    ->map(function($email) {
+                        return strtolower($email);
+                    })
+                    ->toArray();
+                
+                if (!empty($existingEmails)) {
+                    $errors = [];
+                    foreach ($validated['attendees'] as $index => $attendee) {
+                        $email = strtolower(trim($attendee['email'] ?? ''));
+                        if (in_array($email, $existingEmails)) {
+                            $errors["attendees.{$index}.email"] = 'This email address is already registered. Please use a different email address.';
+                        }
+                    }
+                    return redirect()->back()
+                        ->withInput()
+                        ->withErrors($errors);
+                }
             }
         }
 
@@ -243,8 +278,8 @@ class ElevateRegistrationController extends Controller
                 'attendance_reason' => $formData['attendance_reason'] ?? null,
             ]);
 
-            // Create attendees if attending
-            if ($formData['attendance'] === 'yes' && !empty($formData['attendees'])) {
+            // Create attendees/contacts (required for both yes and no)
+            if (!empty($formData['attendees'])) {
                 foreach ($formData['attendees'] as $attendeeData) {
                     ElevateAttendee::create([
                         'registration_id' => $registration->id,
@@ -269,8 +304,8 @@ class ElevateRegistrationController extends Controller
             // Reload registration with attendees relationship
             $registration->load('attendees');
 
-            // Send confirmation email to all attendees if attending
-            if ($registration->attendance === 'yes' && $registration->attendees->count() > 0) {
+            // Send confirmation email to all attendees/contacts
+            if ($registration->attendees->count() > 0) {
                 try {
                     foreach ($registration->attendees as $attendee) {
                         $mail = Mail::to($attendee->email);
@@ -287,6 +322,9 @@ class ElevateRegistrationController extends Controller
                 }
             }
 
+            // Store registration ID in session for thank you page
+            session(['last_registration_id' => $registration->id]);
+            
             return redirect()->route('elevate-registration.thankyou')
                 ->with('success', 'Thank you for your registration! Your information has been submitted successfully. A confirmation email has been sent to your registered email address.');
 
@@ -309,7 +347,39 @@ class ElevateRegistrationController extends Controller
      */
     public function thankyou()
     {
-        return view('elevate-registration.thankyou');
+        $registration = null;
+        $formData = null;
+        
+        // Try to get registration from session
+        $registrationId = session('last_registration_id');
+        if ($registrationId) {
+            $registration = ElevateRegistration::with('attendees')->find($registrationId);
+        }
+        
+        // If no registration found, try to get from converted session
+        if (!$registration) {
+            $sessionId = session()->getId();
+            $session = ElevateRegistrationSession::bySession($sessionId)
+                ->whereNotNull('converted_at')
+                ->orderBy('updated_at', 'desc')
+                ->first();
+            
+            if ($session) {
+                // Try to get the registration that was just created
+                $registration = ElevateRegistration::with('attendees')
+                    ->where('company_name', $session->form_data['company_name'] ?? '')
+                    ->where('elevate_2025_id', $session->form_data['elevate_2025_id'] ?? '')
+                    ->orderBy('created_at', 'desc')
+                    ->first();
+                
+                // If no registration found, use session data
+                if (!$registration) {
+                    $formData = $session->form_data;
+                }
+            }
+        }
+        
+        return view('elevate-registration.thankyou', compact('registration', 'formData'));
     }
 
     /**

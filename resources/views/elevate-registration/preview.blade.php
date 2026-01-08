@@ -90,16 +90,18 @@
             </table>
         </div>
 
-        @if($formData['attendance'] == 'yes' && !empty($formData['attendees']))
-        <!-- Attendees Information -->
+        @if(!empty($formData['attendees']))
+        <!-- Attendees/Contact Information -->
         <div class="form-section">
             <div class="section-header">
-                <h5>Attendees Information</h5>
+                <h5>{{ $formData['attendance'] == 'yes' ? 'Attendees Information' : 'Contact Information' }}</h5>
             </div>
 
             @foreach($formData['attendees'] as $index => $attendee)
             <div class="attendee-block" style="margin-bottom: 1.5rem;">
-                <h6 style="color: var(--primary-color); margin-bottom: 1rem;">Attendee {{ $index + 1 }}</h6>
+                <h6 style="color: var(--primary-color); margin-bottom: 1rem;">
+                    {{ $formData['attendance'] == 'yes' ? 'Attendee' : 'Contact' }} {{ $index + 1 }}
+                </h6>
                 <table class="table table-bordered">
                     <tr>
                         <th style="width: 40%;">Name:</th>
