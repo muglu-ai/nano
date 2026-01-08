@@ -557,9 +557,9 @@
             
             <div class="row mb-3">
                 <div class="col-md-6">
-                    <label class="form-label">Designation</label>
+                    <label class="form-label">Designation ${isFirst ? '<span class="required">*</span>' : ''}</label>
                     <input type="text" class="form-control" name="attendees[${attendeeIndex}][job_title]" 
-                           value="${data ? (data.job_title || '') : ''}">
+                           value="${data ? (data.job_title || '') : ''}" ${isFirst ? 'required' : ''}>
                 </div>
                 <div class="col-md-6">
                     <label class="form-label">Email ${isFirst ? '<span class="required">*</span>' : ''}</label>

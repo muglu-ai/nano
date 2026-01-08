@@ -26,14 +26,6 @@
                     <td>{{ $formData['address'] }}</td>
                 </tr>
                 <tr>
-                    <th>Country:</th>
-                    <td>{{ $formData['country'] }}</td>
-                </tr>
-                <tr>
-                    <th>State:</th>
-                    <td>{{ $formData['state'] }}</td>
-                </tr>
-                <tr>
                     <th>City:</th>
                     <td>{{ $formData['city'] }}</td>
                 </tr>
@@ -107,12 +99,10 @@
                         <th style="width: 40%;">Name:</th>
                         <td>{{ $attendee['salutation'] }} {{ $attendee['first_name'] }} {{ $attendee['last_name'] }}</td>
                     </tr>
-                    @if(!empty($attendee['job_title']))
                     <tr>
                         <th>Designation:</th>
-                        <td>{{ $attendee['job_title'] }}</td>
+                        <td>{{ $attendee['job_title'] ?? '-' }}</td>
                     </tr>
-                    @endif
                     <tr>
                         <th>Email:</th>
                         <td>{{ $attendee['email'] }}</td>

@@ -64,14 +64,6 @@
                                         <td style="color: #333333; padding: 5px 0;">{{ $registration->city }}</td>
                                     </tr>
                                     <tr>
-                                        <td style="font-weight: bold; color: #555555; padding: 5px 0;">State:</td>
-                                        <td style="color: #333333; padding: 5px 0;">{{ $registration->state }}</td>
-                                    </tr>
-                                    <tr>
-                                        <td style="font-weight: bold; color: #555555; padding: 5px 0;">Country:</td>
-                                        <td style="color: #333333; padding: 5px 0;">{{ $registration->country }}</td>
-                                    </tr>
-                                    <tr>
                                         <td style="font-weight: bold; color: #555555; padding: 5px 0;">Postal Code:</td>
                                         <td style="color: #333333; padding: 5px 0;">{{ $registration->postal_code }}</td>
                                     </tr>
@@ -125,12 +117,10 @@
                                             <td style="width: 40%; font-weight: bold; color: #555555; padding: 5px 0;">Name:</td>
                                             <td style="color: #333333; padding: 5px 0;">{{ $attendee->salutation }} {{ $attendee->first_name }} {{ $attendee->last_name }}</td>
                                         </tr>
-                                        @if($attendee->job_title)
                                         <tr>
                                             <td style="font-weight: bold; color: #555555; padding: 5px 0;">Designation:</td>
-                                            <td style="color: #333333; padding: 5px 0;">{{ $attendee->job_title }}</td>
+                                            <td style="color: #333333; padding: 5px 0;">{{ $attendee->job_title ?? '-' }}</td>
                                         </tr>
-                                        @endif
                                         <tr>
                                             <td style="font-weight: bold; color: #555555; padding: 5px 0;">Email:</td>
                                             <td style="color: #333333; padding: 5px 0;">{{ $attendee->email }}</td>
