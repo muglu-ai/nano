@@ -70,6 +70,7 @@ use App\Http\Controllers\FeedbackController;
 use App\Http\Controllers\SuperAdminController;
 use App\Http\Controllers\Ticket\AdminTicketConfigController;
 use App\Http\Controllers\Enquiry\PublicEnquiryController;
+use App\Http\Controllers\ElevateRegistrationController;
 use App\Http\Controllers\VisaClearanceController;
 
 /* Payment Gateway CCAvenue Routes
@@ -1120,6 +1121,12 @@ Route::get('/enquiry/thankyou', [PublicEnquiryController::class, 'thankyou'])->n
 Route::get('/enquiry', [PublicEnquiryController::class, 'showForm'])->name('enquiry.form');
 Route::get('/enquiry/{eventSlug}', [PublicEnquiryController::class, 'showForm'])->name('enquiry.form.event');
 Route::post('/enquiry', [PublicEnquiryController::class, 'submit'])->name('enquiry.submit');
+
+// ELEVATE Registration Routes (Public Access - No Authentication Required)
+Route::get('/elevate-registration/thankyou', [ElevateRegistrationController::class, 'thankyou'])->name('elevate-registration.thankyou');
+Route::get('/elevate-registration', [ElevateRegistrationController::class, 'showForm'])->name('elevate-registration.form');
+Route::post('/elevate-registration', [ElevateRegistrationController::class, 'submit'])->name('elevate-registration.submit');
+Route::get('/elevate-registration/get-states', [ElevateRegistrationController::class, 'getStates'])->name('elevate-registration.get-states');
 
 // Visa Clearance Registration (public, similar layout as enquiry form)
 Route::get('/visa-clearance/thankyou', [VisaClearanceController::class, 'thankyou'])->name('visa.clearance.thankyou');

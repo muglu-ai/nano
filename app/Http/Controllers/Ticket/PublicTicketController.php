@@ -249,12 +249,58 @@ class PublicTicketController extends Controller
             'delegates_count' => $delegatesCount,
         ]);
         
-        // Validate all delegate emails are unique
+        // Validate all delegate emails are unique within the registration
         $emails = array_column($delegates, 'email');
         if (count($emails) !== count(array_unique($emails))) {
             return redirect()->back()
                 ->withInput()
                 ->withErrors(['delegates' => 'Each delegate must have a unique email address.']);
+        }
+        
+        // Collect all emails to check (organization, contact, and all delegates)
+        $allEmailsToCheck = [];
+        
+        // Add organization email if provided
+        if (!empty($validated['email'])) {
+            $allEmailsToCheck[] = $validated['email'];
+        }
+        
+        // Add contact email if GST is required
+        if (!empty($validated['gst_required']) && $validated['gst_required'] == '1' && !empty($validated['contact_email'])) {
+            $allEmailsToCheck[] = $validated['contact_email'];
+        }
+        
+        // Add all delegate emails
+        foreach ($delegates as $delegate) {
+            if (!empty($delegate['email'])) {
+                $allEmailsToCheck[] = $delegate['email'];
+            }
+        }
+        
+        // Check if any email already exists in ticket_delegates table for this event
+        // Same email cannot be used for multiple ticket registrations/categories
+        foreach ($allEmailsToCheck as $email) {
+            $existingDelegate = \App\Models\Ticket\TicketDelegate::where('email', $email)
+                ->whereHas('registration', function($query) use ($event) {
+                    $query->where('event_id', $event->id);
+                })
+                ->exists();
+            
+            if ($existingDelegate) {
+                // Determine which field to show error for
+                $errorField = 'delegates';
+                $errorMessage = "The email address '{$email}' has already been used for ticket registration. Each email can only be used once per event.";
+                
+                if ($email === ($validated['email'] ?? null)) {
+                    $errorField = 'email';
+                } elseif ($email === ($validated['contact_email'] ?? null)) {
+                    $errorField = 'contact_email';
+                }
+                
+                return redirect()->back()
+                    ->withInput()
+                    ->withErrors([$errorField => $errorMessage]);
+            }
         }
 
         // If GST is required, validate GST fields and primary contact
