@@ -122,49 +122,9 @@
                     </div>
                 </div>
 
-                <div class="row mb-3">
-                    <div class="col-md-6">
-                        <label for="country" class="form-label">Country <span class="required">*</span></label>
-                        <select class="form-select @error('country') is-invalid @enderror" 
-                                id="country" 
-                                name="country" 
-                                required>
-                            <option value="">-- Select Country --</option>
-                            @foreach($countries as $country)
-                                <option value="{{ $country->name }}" 
-                                        {{ (old('country', $formData['country'] ?? '') == $country->name) ? 'selected' : '' }}
-                                        data-country-id="{{ $country->id }}">
-                                    {{ $country->name }}
-                                </option>
-                            @endforeach
-                        </select>
-                        @error('country')
-                            <div class="error-message">{{ $message }}</div>
-                        @enderror
-                    </div>
-
-                    <div class="col-md-6">
-                        <label for="state" class="form-label">State <span class="required">*</span></label>
-                        <select class="form-select @error('state') is-invalid @enderror" 
-                                id="state" 
-                                name="state" 
-                                required>
-                            <option value="">-- Select State --</option>
-                            @if($indiaCountry && $states)
-                                @foreach($states as $state)
-                                    <option value="{{ $state->name }}" 
-                                            {{ old('state') == $state->name ? 'selected' : '' }}
-                                            data-state-id="{{ $state->id }}">
-                                        {{ $state->name }}
-                                    </option>
-                                @endforeach
-                            @endif
-                        </select>
-                        @error('state')
-                            <div class="error-message">{{ $message }}</div>
-                        @enderror
-                    </div>
-                </div>
+                <!-- Country and State fields hidden - non-mandatory -->
+                <input type="hidden" name="country" value="{{ old('country', $formData['country'] ?? '') }}">
+                <input type="hidden" name="state" value="{{ old('state', $formData['state'] ?? '') }}">
 
                 <div class="row mb-3">
                     <div class="col-md-6">
@@ -820,31 +780,7 @@
         });
     }
 
-    // Handle country change to load states
-    document.getElementById('country').addEventListener('change', function() {
-        const countryId = this.options[this.selectedIndex].dataset.countryId;
-        const stateSelect = document.getElementById('state');
-        
-        if (countryId) {
-            fetch(`{{ route('elevate-registration.get-states') }}?country_id=${countryId}`)
-                .then(response => response.json())
-                .then(data => {
-                    stateSelect.innerHTML = '<option value="">-- Select State --</option>';
-                    data.states.forEach(state => {
-                        const option = document.createElement('option');
-                        option.value = state.name;
-                        option.textContent = state.name;
-                        option.dataset.stateId = state.id;
-                        stateSelect.appendChild(option);
-                    });
-                })
-                .catch(error => {
-                    console.error('Error loading states:', error);
-                });
-        } else {
-            stateSelect.innerHTML = '<option value="">-- Select State --</option>';
-        }
-    });
+    // Country and State fields are hidden - no need for state loading logic
 
     // Validate Elevate Application Call Name
     function validateElevateCallNames() {

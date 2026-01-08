@@ -64,8 +64,8 @@ class ElevateRegistrationController extends Controller
             // Company Information
             'company_name' => 'required|string|max:255',
             'address' => 'required|string|max:500',
-            'country' => 'required|string|max:100',
-            'state' => 'required|string|max:100',
+            'country' => 'nullable|string|max:100',
+            'state' => 'nullable|string|max:100',
             'city' => 'required|string|max:100',
             'postal_code' => 'required|string|max:20',
             
@@ -90,8 +90,6 @@ class ElevateRegistrationController extends Controller
         ], [
             'company_name.required' => 'Company name is required.',
             'address.required' => 'Address is required.',
-            'country.required' => 'Country is required.',
-            'state.required' => 'State is required.',
             'city.required' => 'City is required.',
             'postal_code.required' => 'Postal code is required.',
             'elevate_application_call_names.required' => 'Please select at least one Elevate Application Call Name.',
