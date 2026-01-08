@@ -171,11 +171,11 @@
             @endif
         @endif
 
-        <div class="form-section mt-4 text-center">
+        {{-- <div class="form-section mt-4 text-center">
             <a href="{{ route('elevate-registration.form') }}" class="btn-submit" style="display: inline-block; width: auto; padding: 0.75rem 2rem;">
                 Submit Another Registration
             </a>
-        </div>
+        </div> --}}
     </div>
 </div>
 
