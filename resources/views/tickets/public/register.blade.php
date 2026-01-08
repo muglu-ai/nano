@@ -273,12 +273,11 @@
                         <label class="form-label required-field">Industry Sector</label>
                         <select name="industry_sector" class="form-select" required>
                             <option value="">Select Industry Sector</option>
-                            <option value="Technology" {{ old('industry_sector') == 'Technology' ? 'selected' : '' }}>Technology</option>
-                            <option value="Healthcare" {{ old('industry_sector') == 'Healthcare' ? 'selected' : '' }}>Healthcare</option>
-                            <option value="Finance" {{ old('industry_sector') == 'Finance' ? 'selected' : '' }}>Finance</option>
-                            <option value="Education" {{ old('industry_sector') == 'Education' ? 'selected' : '' }}>Education</option>
-                            <option value="Manufacturing" {{ old('industry_sector') == 'Manufacturing' ? 'selected' : '' }}>Manufacturing</option>
-                            <option value="Other" {{ old('industry_sector') == 'Other' ? 'selected' : '' }}>Other</option>
+                            @foreach($sectors as $sector)
+                                <option value="{{ $sector }}" {{ old('industry_sector') == $sector ? 'selected' : '' }}>
+                                    {{ $sector }}
+                                </option>
+                            @endforeach
                         </select>
                         @error('industry_sector')
                             <div class="text-danger">{{ $message }}</div>
@@ -289,12 +288,11 @@
                         <label class="form-label required-field">Organisation Type</label>
                         <select name="organisation_type" class="form-select" required>
                             <option value="">Select Organisation Type</option>
-                            <option value="Corporate" {{ old('organisation_type') == 'Corporate' ? 'selected' : '' }}>Corporate</option>
-                            <option value="Startup" {{ old('organisation_type') == 'Startup' ? 'selected' : '' }}>Startup</option>
-                            <option value="Government" {{ old('organisation_type') == 'Government' ? 'selected' : '' }}>Government</option>
-                            <option value="NGO" {{ old('organisation_type') == 'NGO' ? 'selected' : '' }}>NGO</option>
-                            <option value="Academic" {{ old('organisation_type') == 'Academic' ? 'selected' : '' }}>Academic</option>
-                            <option value="Other" {{ old('organisation_type') == 'Other' ? 'selected' : '' }}>Other</option>
+                            @foreach($organizationTypes as $orgType)
+                                <option value="{{ $orgType }}" {{ old('organisation_type') == $orgType ? 'selected' : '' }}>
+                                    {{ $orgType }}
+                                </option>
+                            @endforeach
                         </select>
                         @error('organisation_type')
                             <div class="text-danger">{{ $message }}</div>
