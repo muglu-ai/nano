@@ -29,6 +29,68 @@
         <form action="{{ route('elevate-registration.save-preview') }}" method="POST" id="elevateRegistrationForm">
             @csrf
 
+            <!-- Elevate Application Information Section (Moved to Top) -->
+            <div class="form-section">
+                <div class="section-header">
+                    <h5>Elevate Application Information</h5>
+                </div>
+
+                <div class="row mb-3">
+                    <div class="col-md-12">
+                        <label class="form-label">Elevate Application Call Name <span class="required">*</span></label>
+                        <div class="checkbox-group" id="elevateCallNamesGroup">
+                            <div class="checkbox-item">
+                                <input type="checkbox" 
+                                       name="elevate_application_call_names[]" 
+                                       id="elevate_2025" 
+                                       value="ELEVATE 2025"
+                                       {{ in_array('ELEVATE 2025', old('elevate_application_call_names', $formData['elevate_application_call_names'] ?? [])) ? 'checked' : '' }}
+                                       class="elevate-call-checkbox">
+                                <label for="elevate_2025">ELEVATE 2025</label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" 
+                                       name="elevate_application_call_names[]" 
+                                       id="elevate_unnati_2025" 
+                                       value="ELEVATE Unnati 2025"
+                                       {{ in_array('ELEVATE Unnati 2025', old('elevate_application_call_names', $formData['elevate_application_call_names'] ?? [])) ? 'checked' : '' }}
+                                       class="elevate-call-checkbox">
+                                <label for="elevate_unnati_2025">ELEVATE Unnati 2025</label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" 
+                                       name="elevate_application_call_names[]" 
+                                       id="elevate_minorities_2025" 
+                                       value="ELEVATE MINORITIES 2025"
+                                       {{ in_array('ELEVATE MINORITIES 2025', old('elevate_application_call_names', $formData['elevate_application_call_names'] ?? [])) ? 'checked' : '' }}
+                                       class="elevate-call-checkbox">
+                                <label for="elevate_minorities_2025">ELEVATE MINORITIES 2025</label>
+                            </div>
+                        </div>
+                        <small class="text-muted" id="elevateCallNamesError" style="display: none; color: #dc3545;">Maximum 2 selections allowed</small>
+                        @error('elevate_application_call_names')
+                            <div class="error-message">{{ $message }}</div>
+                        @enderror
+                    </div>
+                </div>
+
+                <div class="row mb-3">
+                    <div class="col-md-12">
+                        <label for="elevate_2025_id" class="form-label">ELEVATE 2025 ID (For Ex: EL20250000XXX) <span class="required">*</span></label>
+                        <input type="text" 
+                               class="form-control @error('elevate_2025_id') is-invalid @enderror" 
+                               id="elevate_2025_id" 
+                               name="elevate_2025_id" 
+                               value="{{ old('elevate_2025_id', $formData['elevate_2025_id'] ?? '') }}" 
+                               placeholder="EL20250000XXX"
+                               required>
+                        @error('elevate_2025_id')
+                            <div class="error-message">{{ $message }}</div>
+                        @enderror
+                    </div>
+                </div>
+            </div>
+
             <!-- Company Information Section -->
             <div class="form-section">
                 <div class="section-header">
@@ -131,61 +193,6 @@
                                value="{{ old('postal_code') }}" 
                                required>
                         @error('postal_code')
-                            <div class="error-message">{{ $message }}</div>
-                        @enderror
-                    </div>
-                </div>
-
-                <div class="row mb-3">
-                    <div class="col-md-12">
-                        <label class="form-label">Elevate Application Call Name <span class="required">*</span></label>
-                        <div class="checkbox-group" id="elevateCallNamesGroup">
-                            <div class="checkbox-item">
-                                <input type="checkbox" 
-                                       name="elevate_application_call_names[]" 
-                                       id="elevate_2025" 
-                                       value="ELEVATE 2025"
-                                       {{ in_array('ELEVATE 2025', old('elevate_application_call_names', $formData['elevate_application_call_names'] ?? [])) ? 'checked' : '' }}
-                                       class="elevate-call-checkbox">
-                                <label for="elevate_2025">ELEVATE 2025</label>
-                            </div>
-                            <div class="checkbox-item">
-                                <input type="checkbox" 
-                                       name="elevate_application_call_names[]" 
-                                       id="elevate_unnati_2025" 
-                                       value="ELEVATE Unnati 2025"
-                                       {{ in_array('ELEVATE Unnati 2025', old('elevate_application_call_names', $formData['elevate_application_call_names'] ?? [])) ? 'checked' : '' }}
-                                       class="elevate-call-checkbox">
-                                <label for="elevate_unnati_2025">ELEVATE Unnati 2025</label>
-                            </div>
-                            <div class="checkbox-item">
-                                <input type="checkbox" 
-                                       name="elevate_application_call_names[]" 
-                                       id="elevate_minorities_2025" 
-                                       value="ELEVATE MINORITIES 2025"
-                                       {{ in_array('ELEVATE MINORITIES 2025', old('elevate_application_call_names', $formData['elevate_application_call_names'] ?? [])) ? 'checked' : '' }}
-                                       class="elevate-call-checkbox">
-                                <label for="elevate_minorities_2025">ELEVATE MINORITIES 2025</label>
-                            </div>
-                        </div>
-                        <small class="text-muted" id="elevateCallNamesError" style="display: none; color: #dc3545;">Maximum 2 selections allowed</small>
-                        @error('elevate_application_call_names')
-                            <div class="error-message">{{ $message }}</div>
-                        @enderror
-                    </div>
-                </div>
-
-                <div class="row mb-3">
-                    <div class="col-md-12">
-                        <label for="elevate_2025_id" class="form-label">ELEVATE 2025 ID (For Ex: EL20250000XXX) <span class="required">*</span></label>
-                        <input type="text" 
-                               class="form-control @error('elevate_2025_id') is-invalid @enderror" 
-                               id="elevate_2025_id" 
-                               name="elevate_2025_id" 
-                               value="{{ old('elevate_2025_id', $formData['elevate_2025_id'] ?? '') }}" 
-                               placeholder="EL20250000XXX"
-                               required>
-                        @error('elevate_2025_id')
                             <div class="error-message">{{ $message }}</div>
                         @enderror
                     </div>
@@ -328,6 +335,27 @@
         } else {
             addAttendeeBlock();
         }
+        // Update button visibility after loading
+        setTimeout(() => {
+            updateAddAttendeeButton();
+            // Initialize intlTelInput for existing phone fields
+            document.querySelectorAll('.attendee-phone-input').forEach(phoneInput => {
+                if (!phoneInput.closest('.iti')) {
+                    phoneInput.placeholder = '';
+                    window.intlTelInput(phoneInput, {
+                        initialCountry: 'in',
+                        preferredCountries: ['in', 'us', 'gb'],
+                        utilsScript: "https://cdn.jsdelivr.net/npm/intl-tel-input@18.1.1/build/js/utils.js",
+                        separateDialCode: true,
+                        nationalMode: false,
+                        autoPlaceholder: 'off',
+                    });
+                    setTimeout(() => {
+                        phoneInput.placeholder = '';
+                    }, 100);
+                }
+            });
+        }, 200);
     } else if (attendanceValue === 'no') {
         document.getElementById('justificationSection').classList.add('show');
         document.getElementById('attendance_reason').setAttribute('required', 'required');
@@ -385,13 +413,47 @@
             <div class="row mb-3">
                 <div class="col-md-12">
                     <label class="form-label">Phone Number ${isFirst ? '<span class="required">*</span>' : ''}</label>
-                    <input type="tel" class="form-control" name="attendees[${attendeeIndex}][phone_number]" 
+                    <input type="tel" class="form-control attendee-phone-input" id="attendee_phone_${attendeeIndex}" name="attendees[${attendeeIndex}][phone_number]" 
                            value="${data ? (data.phone_number || '') : ''}" ${isFirst ? 'required' : ''}>
                 </div>
             </div>
         `;
         
         document.getElementById('attendeesContainer').appendChild(attendeeBlock);
+        
+        // Initialize intlTelInput for the new phone field
+        const phoneInput = document.getElementById(`attendee_phone_${attendeeIndex}`);
+        if (phoneInput && window.intlTelInput) {
+            phoneInput.placeholder = '';
+            const iti = window.intlTelInput(phoneInput, {
+                initialCountry: 'in',
+                preferredCountries: ['in', 'us', 'gb'],
+                utilsScript: "https://cdn.jsdelivr.net/npm/intl-tel-input@18.1.1/build/js/utils.js",
+                separateDialCode: true,
+                nationalMode: false,
+                autoPlaceholder: 'off',
+            });
+            
+            // Ensure placeholder stays empty
+            setTimeout(() => {
+                phoneInput.placeholder = '';
+            }, 100);
+        }
+        
+        // Update "Add Another Attendee" button visibility
+        updateAddAttendeeButton();
+    }
+    
+    // Update "Add Another Attendee" button visibility based on attendee count
+    function updateAddAttendeeButton() {
+        const addBtn = document.getElementById('addAttendeeBtn');
+        if (addBtn) {
+            if (attendeeCount >= 2) {
+                addBtn.style.display = 'none';
+            } else {
+                addBtn.style.display = 'block';
+            }
+        }
     }
 
     // Remove attendee block
@@ -400,13 +462,20 @@
         if (attendeeBlock) {
             attendeeBlock.remove();
             attendeeCount--;
+            // Update button visibility
+            updateAddAttendeeButton();
         }
     }
 
     // Add attendee button
-    document.getElementById('addAttendeeBtn').addEventListener('click', function() {
-        addAttendeeBlock();
-    });
+    const addAttendeeBtn = document.getElementById('addAttendeeBtn');
+    if (addAttendeeBtn) {
+        addAttendeeBtn.addEventListener('click', function() {
+            if (attendeeCount < 2) {
+                addAttendeeBlock();
+            }
+        });
+    }
 
     // Handle country change to load states
     document.getElementById('country').addEventListener('change', function() {

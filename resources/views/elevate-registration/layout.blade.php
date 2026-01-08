@@ -261,6 +261,65 @@
             font-weight: normal;
         }
 
+        /* intlTelInput Styling */
+        .iti {
+            width: 100%;
+            display: block;
+            position: relative;
+        }
+
+        .iti__flag-container {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            left: 0;
+            z-index: 1;
+            width: auto;
+            min-width: 95px;
+            max-width: 100px;
+        }
+
+        .attendee-phone-input {
+            width: 100% !important;
+            padding-left: 105px !important;
+            padding-right: 0.75rem !important;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            padding-top: 0.75rem;
+            padding-bottom: 0.75rem;
+            box-sizing: border-box;
+        }
+
+        .attendee-phone-input:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(106, 27, 154, 0.1);
+            outline: none;
+        }
+
+        .iti__selected-flag {
+            padding: 0 10px 0 12px !important;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            border-right: 2px solid #e0e0e0;
+            background-color: #f8f9fa;
+            border-radius: 8px 0 0 8px;
+            min-width: 95px;
+            max-width: 100px;
+            box-sizing: border-box;
+        }
+
+        .iti__selected-flag:hover {
+            background-color: #e9ecef;
+        }
+
+        .iti__flag {
+            margin-right: 8px !important;
+            width: 20px !important;
+            height: 15px !important;
+        }
+
         /* Submit Button */
         .btn-submit {
             background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-color-dark) 100%);
@@ -345,8 +404,11 @@
         </div>
     </footer>
 
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/intl-tel-input@18.1.1/build/css/intlTelInput.min.css">
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdn.jsdelivr.net/npm/intl-tel-input@18.1.1/build/js/intlTelInput.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/intl-tel-input@18.1.1/build/js/utils.js"></script>
     @stack('scripts')
 </body>
 </html>
