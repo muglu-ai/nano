@@ -106,6 +106,14 @@
     color: white;
 }
 
+/* Ensure completed overrides active when both are present */
+.progress-step.completed.active .step-circle {
+    background: #28a745;
+    border-color: #28a745;
+    color: white;
+    box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
+}
+
 .step-label {
     font-size: 0.9rem;
     font-weight: 600;

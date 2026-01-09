@@ -72,13 +72,30 @@
 @section('content')
 <div class="form-card">
     <div class="form-header">
-        <h2><i class="fas fa-check-circle me-2"></i>Payment Successful!</h2>
+        @php
+            $isPaid = $order->status === 'paid';
+        @endphp
+        <h2>
+            <i class="fas fa-check-circle me-2"></i>
+            @if($isPaid)
+                Payment Successful!
+            @else
+                Registration Confirmation
+            @endif
+        </h2>
         <p>{{ $event->event_name ?? config('constants.EVENT_NAME', 'Event') }} {{ $event->event_year ?? config('constants.EVENT_YEAR', date('Y')) }}</p>
     </div>
 
     <div class="form-body">
         <!-- Progress Bar -->
-        @include('tickets.public.partials.progress-bar', ['currentStep' => 3])
+        @php
+            // Mark step 3 as completed (green) if payment is successful
+            $isPaid = $order->status === 'paid';
+            // If paid, set to 4 so step 3 shows as completed (green checkmark)
+            // If not paid, set to 3 so step 3 shows as active (blue)
+            $currentStep = $isPaid ? 4 : 3;
+        @endphp
+        @include('tickets.public.partials.progress-bar', ['currentStep' => $currentStep])
         
         <div class="text-center mb-4">
             <div class="success-icon">
@@ -223,69 +240,131 @@
             </div>
         @endif
 
-        @if(session('payment_details'))
-            @php
-                $paymentDetails = session('payment_details');
-                $primaryPayment = $order->primaryPayment();
-            @endphp
+        @php
+            $paymentDetails = session('payment_details');
+            $primaryPayment = $order->primaryPayment();
+            $isPaid = $order->status === 'paid';
+        @endphp
+
+        @if($isPaid && ($paymentDetails || $primaryPayment))
             <div class="preview-section">
                 <h4 class="section-title">
-                    <i class="fas fa-credit-card me-2"></i>Payment Gateway Details</h4>
+                    <i class="fas fa-credit-card me-2"></i>Payment Transaction Details</h4>
+                
+                <div class="alert alert-success mb-3" style="background: #d4edda; border: 1px solid #c3e6cb; border-radius: 8px; padding: 1rem;">
+                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                        <i class="fas fa-check-circle" style="color: #28a745; font-size: 1.2rem;"></i>
+                        <div style="flex: 1;">
+                            <strong style="color: #155724;">Payment Successful!</strong>
+                            <p style="color: #155724; margin: 0.25rem 0 0; font-size: 0.9rem;">Your payment has been processed successfully.</p>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="info-row">
-                    <span class="info-label">Payment Gateway:</span>
+                    <span class="info-label">Payment Status:</span>
+                    <span class="info-value">
+                        <span class="badge bg-success">{{ strtoupper($order->status) }}</span>
+                    </span>
+                </div>
+                
+                <div class="info-row">
+                    <span class="info-label">Payment Method:</span>
                     <span class="info-value">
                         <strong>{{ $paymentDetails['gateway'] ?? ($primaryPayment ? ucfirst($primaryPayment->gateway_name) : 'N/A') }}</strong>
                     </span>
                 </div>
+                
+                @if($primaryPayment && $primaryPayment->method)
+                <div class="info-row">
+                    <span class="info-label">Payment Type:</span>
+                    <span class="info-value">
+                        <strong>{{ strtoupper($primaryPayment->method) }}</strong>
+                    </span>
+                </div>
+                @endif
+
                 @if(isset($paymentDetails['transaction_id']) || ($primaryPayment && $primaryPayment->gateway_txn_id))
                     <div class="info-row">
                         <span class="info-label">Transaction ID:</span>
                         <span class="info-value">
-                            {{ $paymentDetails['transaction_id'] ?? $primaryPayment->gateway_txn_id }}
+                            <strong style="color: var(--primary-color);">{{ $paymentDetails['transaction_id'] ?? $primaryPayment->gateway_txn_id }}</strong>
                         </span>
                     </div>
                 @endif
-                @if(isset($paymentDetails['amount']))
-                    <div class="info-row">
-                        <span class="info-label">Amount Paid:</span>
-                        <span class="info-value">
-                            <strong>{{ $paymentDetails['currency'] ?? 'INR' }} {{ number_format($paymentDetails['amount'], 2) }}</strong>
-                        </span>
-                    </div>
-                @endif
-                @if($primaryPayment && $primaryPayment->paid_at)
-                    <div class="info-row">
-                        <span class="info-label">Payment Date:</span>
-                        <span class="info-value">
-                            {{ $primaryPayment->paid_at->format('d M Y, h:i A') }}
-                        </span>
-                    </div>
-                @endif
-            </div>
-        @elseif($order->primaryPayment())
-            @php $primaryPayment = $order->primaryPayment(); @endphp
-            <div class="preview-section">
-                <h4 class="section-title">
-                    <i class="fas fa-credit-card me-2"></i>Payment Gateway Details</h4>
+
                 <div class="info-row">
-                    <span class="info-label">Payment Gateway:</span>
+                    <span class="info-label">Amount Paid:</span>
                     <span class="info-value">
-                        <strong>{{ ucfirst($primaryPayment->gateway_name) }}</strong>
+                        <strong style="color: var(--primary-color); font-size: 1.1rem;">₹{{ number_format($order->total, 2) }}</strong>
                     </span>
                 </div>
-                @if($primaryPayment->gateway_txn_id)
+
+                @if($primaryPayment && $primaryPayment->paid_at)
                     <div class="info-row">
-                        <span class="info-label">Transaction ID:</span>
+                        <span class="info-label">Payment Date & Time:</span>
                         <span class="info-value">
-                            {{ $primaryPayment->gateway_txn_id }}
+                            {{ $primaryPayment->paid_at->format('d M Y, h:i A') }}
+                        </span>
+                    </div>
+                @elseif($order->updated_at)
+                    <div class="info-row">
+                        <span class="info-label">Payment Date & Time:</span>
+                        <span class="info-value">
+                            {{ $order->updated_at->format('d M Y, h:i A') }}
                         </span>
                     </div>
                 @endif
-                @if($primaryPayment->paid_at)
+
+                @if($primaryPayment && $primaryPayment->pg_response_json)
+                    @php
+                        $responseData = $primaryPayment->pg_response_json;
+                        $paymentMode = $responseData['payment_mode'] ?? $responseData['payment_method'] ?? null;
+                    @endphp
+                    @if($paymentMode)
                     <div class="info-row">
-                        <span class="info-label">Payment Date:</span>
+                        <span class="info-label">Payment Mode:</span>
                         <span class="info-value">
-                            {{ $primaryPayment->paid_at->format('d M Y, h:i A') }}
+                            <strong>{{ strtoupper($paymentMode) }}</strong>
+                        </span>
+                    </div>
+                    @endif
+                @endif
+            </div>
+        @elseif($isPaid)
+            <div class="preview-section">
+                <h4 class="section-title">
+                    <i class="fas fa-credit-card me-2"></i>Payment Transaction Details</h4>
+                
+                <div class="alert alert-success mb-3" style="background: #d4edda; border: 1px solid #c3e6cb; border-radius: 8px; padding: 1rem;">
+                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                        <i class="fas fa-check-circle" style="color: #28a745; font-size: 1.2rem;"></i>
+                        <div style="flex: 1;">
+                            <strong style="color: #155724;">Payment Successful!</strong>
+                            <p style="color: #155724; margin: 0.25rem 0 0; font-size: 0.9rem;">Your payment has been processed successfully.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="info-row">
+                    <span class="info-label">Payment Status:</span>
+                    <span class="info-value">
+                        <span class="badge bg-success">{{ strtoupper($order->status) }}</span>
+                    </span>
+                </div>
+
+                <div class="info-row">
+                    <span class="info-label">Amount Paid:</span>
+                    <span class="info-value">
+                        <strong style="color: var(--primary-color); font-size: 1.1rem;">₹{{ number_format($order->total, 2) }}</strong>
+                    </span>
+                </div>
+
+                @if($order->updated_at)
+                    <div class="info-row">
+                        <span class="info-label">Payment Date & Time:</span>
+                        <span class="info-value">
+                            {{ $order->updated_at->format('d M Y, h:i A') }}
                         </span>
                     </div>
                 @endif
