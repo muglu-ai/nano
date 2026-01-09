@@ -52,6 +52,29 @@
                         <strong>Exhibitor:</strong> {{ $application->company_name }}
                     </div>
 
+
+                     {{--Booth Details --}}
+            <div class="card mb-4" style="border: 1px solid #dee2e6;">
+                <div class="card-header bg-light">
+                    <h4 class="mb-0"><i class="fas fa-building"></i> Booth Details</h4>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-2">
+                            <strong>Booth Space:</strong><br>
+                            {{ $application->stall_category ?? 'N/A' }}
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-2">
+                            <strong>Booth Size:</strong><br>
+                            {{ $application->interested_sqm ?? 'N/A' }}
+                        </div>
+                    </div>
+                </div>  
+                   
+            </div>
+
                     {{-- Billing Information --}}
                     @if($billingDetail)
                     <div class="card mb-4" style="border: 1px solid #dee2e6;">
