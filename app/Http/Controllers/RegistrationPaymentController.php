@@ -8,6 +8,7 @@ use App\Models\Payment;
 use App\Models\BillingDetail;
 use App\Models\Ticket\TicketOrder;
 use App\Models\Ticket\TicketPayment;
+use App\Models\Ticket\TicketRegistrationTracking;
 use App\Models\Events;
 use App\Services\CcAvenueService;
 use App\Mail\TicketRegistrationMail;
@@ -1275,6 +1276,14 @@ class RegistrationPaymentController extends Controller
                         'amount_paid' => $paidAmount,
                         'pending_amount' => max(0, ($invoice->total_final_price ?? $paidAmount) - $paidAmount),
                         'payment_status' => 'paid', // Mark invoice as paid
+                    ]);
+                }
+
+                // Track payment completed
+                $tracking = TicketRegistrationTracking::where('order_id', $order->id)->first();
+                if ($tracking) {
+                    $tracking->updateStatus('payment_completed', [
+                        'final_total' => $paidAmount ?? $order->total,
                     ]);
                 }
 

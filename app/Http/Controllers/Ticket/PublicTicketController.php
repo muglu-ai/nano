@@ -9,6 +9,7 @@ use App\Models\Ticket\TicketCategory;
 use App\Models\Ticket\TicketEventConfig;
 use App\Models\Ticket\EventDay;
 use App\Models\Ticket\TicketRegistrationCategory;
+use App\Models\Ticket\TicketRegistrationTracking;
 use App\Models\GstLookup;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
@@ -110,6 +111,36 @@ class PublicTicketController extends Controller
         $sectors = config('constants.sectors', []);
         $organizationTypes = config('constants.organization_types', []);
         
+        // Track registration started
+        $trackingToken = session('ticket_registration_tracking_token');
+        $tracking = null;
+        
+        if (!$trackingToken) {
+            // Create new tracking record
+            $trackingToken = TicketRegistrationTracking::generateTrackingToken();
+            session(['ticket_registration_tracking_token' => $trackingToken]);
+            
+            $tracking = TicketRegistrationTracking::create([
+                'event_id' => $event->id,
+                'tracking_token' => $trackingToken,
+                'session_id' => session()->getId(),
+                'ip_address' => request()->ip(),
+                'user_agent' => request()->userAgent(),
+                'status' => 'started',
+                'started_at' => now(),
+            ]);
+        } else {
+            // Update existing tracking
+            $tracking = TicketRegistrationTracking::where('tracking_token', $trackingToken)
+                ->where('event_id', $event->id)
+                ->first();
+            
+            if ($tracking && $tracking->status === 'abandoned') {
+                // User returned after abandonment
+                $tracking->updateStatus('started');
+            }
+        }
+
         // If user is coming back from preview (edit flow), load session data into old() helper
         // The old() helper reads from flashed session data, so we need to flash it
         $registrationData = session('ticket_registration_data');
@@ -425,6 +456,26 @@ class PublicTicketController extends Controller
         
         session(['ticket_registration_data' => $registrationData]);
 
+        // Track registration in progress
+        $trackingToken = session('ticket_registration_tracking_token');
+        if ($trackingToken) {
+            $tracking = TicketRegistrationTracking::where('tracking_token', $trackingToken)
+                ->where('event_id', $event->id)
+                ->first();
+            
+            if ($tracking) {
+                $ticketType = TicketType::find($validated['ticket_type_id']);
+                $tracking->updateStatus('in_progress', [
+                    'registration_data' => $registrationData,
+                    'ticket_type_id' => $validated['ticket_type_id'],
+                    'ticket_type_slug' => $ticketType->slug ?? null,
+                    'nationality' => $validated['nationality'],
+                    'delegate_count' => $validated['delegate_count'],
+                    'company_country' => $validated['company_country'] ?? null,
+                ]);
+            }
+        }
+
         // Redirect to preview page
         return redirect()->route('tickets.preview', $event->slug ?? $event->id);
     }
@@ -473,6 +524,22 @@ class PublicTicketController extends Controller
         
         // Total
         $total = $subtotal + $gstAmount + $processingChargeAmount;
+
+        // Track preview viewed - update with latest registration data and calculated total
+        $trackingToken = session('ticket_registration_tracking_token');
+        if ($trackingToken) {
+            $tracking = TicketRegistrationTracking::where('tracking_token', $trackingToken)
+                ->where('event_id', $event->id)
+                ->first();
+            
+            if ($tracking) {
+                // Store ALL registration data including all form fields and delegates in JSON format
+                $tracking->updateStatus('preview_viewed', [
+                    'registration_data' => $registrationData, // Complete form data with all fields in JSON
+                    'calculated_total' => $total,
+                ]);
+            }
+        }
 
         // Load registration category
         $registrationCategory = TicketRegistrationCategory::find($registrationData['registration_category_id']);

@@ -12,6 +12,7 @@ use App\Models\Ticket\TicketType;
 use App\Models\Ticket\TicketRegistrationCategory;
 use App\Models\Ticket\TicketDelegate;
 use App\Models\Ticket\TicketPayment;
+use App\Models\Ticket\TicketRegistrationTracking;
 use App\Models\Payment;
 use App\Models\Invoice;
 use App\Services\CcAvenueService;
@@ -67,6 +68,21 @@ class TicketPaymentController extends Controller
             ]);
             return redirect()->route('tickets.register', $event->slug ?? $event->id)
                 ->with('error', 'Please complete the registration form first.');
+        }
+
+        // Track payment initiated - update with latest registration data
+        $trackingToken = session('ticket_registration_tracking_token');
+        if ($trackingToken) {
+            $tracking = TicketRegistrationTracking::where('tracking_token', $trackingToken)
+                ->where('event_id', $event->id)
+                ->first();
+            
+            if ($tracking && $registrationData) {
+                // Store all registration data before payment initiation
+                $tracking->updateStatus('payment_initiated', [
+                    'registration_data' => $registrationData, // Store all form data including delegates
+                ]);
+            }
         }
 
         // Clear session data immediately when proceeding to payment
@@ -161,6 +177,26 @@ class TicketPaymentController extends Controller
                 'total' => $total,
                 'status' => 'pending',
             ]);
+
+            // Update tracking with order information and complete registration data
+            $trackingToken = session('ticket_registration_tracking_token');
+            if ($trackingToken) {
+                $tracking = TicketRegistrationTracking::where('tracking_token', $trackingToken)
+                    ->where('event_id', $event->id)
+                    ->first();
+                
+                if ($tracking && $registrationData) {
+                    // Store ALL registration data including all form fields and delegates
+                    $tracking->update([
+                        'registration_id' => $registration->id,
+                        'order_id' => $order->id,
+                        'order_no' => $orderNo,
+                        'registration_data' => $registrationData, // Complete form data in JSON
+                        'calculated_total' => $total,
+                        'final_total' => $total,
+                    ]);
+                }
+            }
 
             // Create order item
             TicketOrderItem::create([
@@ -398,6 +434,14 @@ class TicketPaymentController extends Controller
                         'payment_status' => 'paid', // Mark invoice as paid
                     ]);
 
+                    // Track payment completed
+                    $tracking = TicketRegistrationTracking::where('order_id', $order->id)->first();
+                    if ($tracking) {
+                        $tracking->updateStatus('payment_completed', [
+                            'final_total' => $paidAmount,
+                        ]);
+                    }
+
                     // Send payment acknowledgement email (payment successful)
                     try {
                         $contactEmail = $order->registration->contact->email ?? null;
@@ -432,6 +476,15 @@ class TicketPaymentController extends Controller
                     if ($invoice && $invoice->payment_status !== 'unpaid') {
                         $invoice->update([
                             'payment_status' => 'unpaid', // Ensure invoice remains unpaid on failure
+                        ]);
+                    }
+
+                    // Track payment failed
+                    $tracking = TicketRegistrationTracking::where('order_id', $order->id)->first();
+                    if ($tracking) {
+                        $tracking->updateStatus('payment_failed', [
+                            'dropoff_stage' => 'payment',
+                            'dropoff_reason' => $responseArray['failure_message'] ?? 'Payment failed',
                         ]);
                     }
 
