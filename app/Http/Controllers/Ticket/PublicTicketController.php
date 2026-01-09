@@ -116,7 +116,7 @@ class PublicTicketController extends Controller
         if ($registrationData && $registrationData['event_id'] == $event->id) {
             // Flash the session data so old() helper can access it
             // This preserves all form values when user clicks "Edit Registration"
-            $request->session()->flashInput($registrationData);
+            request()->session()->flashInput($registrationData);
         }
         
         return view('tickets.public.register', compact(
