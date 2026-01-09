@@ -2,6 +2,10 @@
 
 @section('title', 'Register for Tickets')
 
+@push('head-links')
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/intl-tel-input@18.1.1/build/css/intlTelInput.min.css">
+@endpush
+
 @push('styles')
 <style>
     .registration-container {
@@ -523,12 +527,16 @@
 @push('scripts')
 <!-- SweetAlert2 -->
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<!-- intl-tel-input -->
+<script src="https://cdn.jsdelivr.net/npm/intl-tel-input@18.1.1/build/js/intlTelInput.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/intl-tel-input@18.1.1/build/js/utils.js"></script>
 
 @if(config('constants.RECAPTCHA_ENABLED', false))
 <script src="https://www.google.com/recaptcha/enterprise.js?render={{ config('services.recaptcha.site_key') }}"></script>
 @endif
 
 <script>
+document.addEventListener('DOMContentLoaded', function() {
     // Delegate form generation
     const delegateCountInput = document.getElementById('delegate_count');
     const delegatesContainer = document.getElementById('delegates_container');
@@ -602,7 +610,7 @@
             setTimeout(() => {
                 const delegatePhoneInput = document.getElementById(`delegate_phone_${i}`);
                 const delegatePhoneCountryCode = document.getElementById(`delegate_phone_country_code_${i}`);
-                if (delegatePhoneInput && window.intlTelInput) {
+                if (delegatePhoneInput && typeof window.intlTelInput !== 'undefined') {
                     delegatePhoneInput.placeholder = '';
                     const itiDelegate = window.intlTelInput(delegatePhoneInput, {
                         initialCountry: 'in',
@@ -612,6 +620,9 @@
                         nationalMode: false,
                         autoPlaceholder: 'off',
                     });
+                    
+                    // Store the instance for later use
+                    delegatePhoneInstances.set(delegatePhoneInput, itiDelegate);
                     
                     // Set old value if exists
                     if (delegateData.phone) {
@@ -708,53 +719,70 @@
         }
     }
     
-    // Initialize intl-tel-input for company phone
-    const companyPhoneInput = document.getElementById('company_phone');
-    const companyPhoneCountryCode = document.getElementById('company_phone_country_code');
+    // Store delegate phone instances
+    const delegatePhoneInstances = new Map();
+    let itiCompany = null;
+    let itiContact = null;
     
-    if (companyPhoneInput && window.intlTelInput) {
-        companyPhoneInput.placeholder = '';
-        const itiCompany = window.intlTelInput(companyPhoneInput, {
-            initialCountry: 'in',
-            preferredCountries: ['in', 'us', 'gb'],
-            utilsScript: "https://cdn.jsdelivr.net/npm/intl-tel-input@18.1.1/build/js/utils.js",
-            separateDialCode: true,
-            nationalMode: false,
-            autoPlaceholder: 'off',
-        });
+    // Wait for intlTelInput to be available
+    function initializePhoneInputs() {
+        if (typeof window.intlTelInput === 'undefined') {
+            // Retry after a short delay if library not loaded yet
+            setTimeout(initializePhoneInputs, 100);
+            return;
+        }
         
-        companyPhoneInput.addEventListener('countrychange', function () {
-            const countryData = itiCompany.getSelectedCountryData();
-            companyPhoneCountryCode.value = '+' + countryData.dialCode;
-        });
+        // Initialize intl-tel-input for company phone
+        const companyPhoneInput = document.getElementById('company_phone');
+        const companyPhoneCountryCode = document.getElementById('company_phone_country_code');
         
-        const initialCountryData = itiCompany.getSelectedCountryData();
-        companyPhoneCountryCode.value = '+' + initialCountryData.dialCode;
+        if (companyPhoneInput) {
+            companyPhoneInput.placeholder = '';
+            itiCompany = window.intlTelInput(companyPhoneInput, {
+                initialCountry: 'in',
+                preferredCountries: ['in', 'us', 'gb'],
+                utilsScript: "https://cdn.jsdelivr.net/npm/intl-tel-input@18.1.1/build/js/utils.js",
+                separateDialCode: true,
+                nationalMode: false,
+                autoPlaceholder: 'off',
+            });
+            
+            companyPhoneInput.addEventListener('countrychange', function () {
+                const countryData = itiCompany.getSelectedCountryData();
+                companyPhoneCountryCode.value = '+' + countryData.dialCode;
+            });
+            
+            const initialCountryData = itiCompany.getSelectedCountryData();
+            companyPhoneCountryCode.value = '+' + initialCountryData.dialCode;
+        }
+        
+        // Initialize intl-tel-input for contact phone (primary contact)
+        const contactPhoneInput = document.getElementById('contact_phone');
+        const contactPhoneCountryCode = document.getElementById('contact_phone_country_code');
+        
+        if (contactPhoneInput) {
+            contactPhoneInput.placeholder = '';
+            itiContact = window.intlTelInput(contactPhoneInput, {
+                initialCountry: 'in',
+                preferredCountries: ['in', 'us', 'gb'],
+                utilsScript: "https://cdn.jsdelivr.net/npm/intl-tel-input@18.1.1/build/js/utils.js",
+                separateDialCode: true,
+                nationalMode: false,
+                autoPlaceholder: 'off',
+            });
+            
+            contactPhoneInput.addEventListener('countrychange', function () {
+                const countryData = itiContact.getSelectedCountryData();
+                contactPhoneCountryCode.value = '+' + countryData.dialCode;
+            });
+            
+            const initialCountryData = itiContact.getSelectedCountryData();
+            contactPhoneCountryCode.value = '+' + initialCountryData.dialCode;
+        }
     }
     
-    // Initialize intl-tel-input for contact phone (primary contact)
-    const contactPhoneInput = document.getElementById('contact_phone');
-    const contactPhoneCountryCode = document.getElementById('contact_phone_country_code');
-    
-    if (contactPhoneInput && window.intlTelInput) {
-        contactPhoneInput.placeholder = '';
-        const itiContact = window.intlTelInput(contactPhoneInput, {
-            initialCountry: 'in',
-            preferredCountries: ['in', 'us', 'gb'],
-            utilsScript: "https://cdn.jsdelivr.net/npm/intl-tel-input@18.1.1/build/js/utils.js",
-            separateDialCode: true,
-            nationalMode: false,
-            autoPlaceholder: 'off',
-        });
-        
-        contactPhoneInput.addEventListener('countrychange', function () {
-            const countryData = itiContact.getSelectedCountryData();
-            contactPhoneCountryCode.value = '+' + countryData.dialCode;
-        });
-        
-        const initialCountryData = itiContact.getSelectedCountryData();
-        contactPhoneCountryCode.value = '+' + initialCountryData.dialCode;
-    }
+    // Initialize phone inputs
+    initializePhoneInputs();
 
     // GST toggle
     const gstRequired = document.getElementById('gst_required');
@@ -838,28 +866,26 @@
         
         // Update phone numbers with full international format before submission
         // Company phone
-        if (companyPhoneInput && window.intlTelInput) {
-            const itiCompany = window.intlTelInput.getInstance(companyPhoneInput);
-            if (itiCompany && itiCompany.isValidNumber()) {
+        const companyPhoneInput = document.getElementById('company_phone');
+        if (itiCompany && companyPhoneInput) {
+            if (itiCompany.isValidNumber()) {
                 companyPhoneInput.value = itiCompany.getNumber();
             }
         }
         
         // Contact phone
-        if (contactPhoneInput && window.intlTelInput) {
-            const itiContact = window.intlTelInput.getInstance(contactPhoneInput);
-            if (itiContact && itiContact.isValidNumber()) {
+        const contactPhoneInput = document.getElementById('contact_phone');
+        if (itiContact && contactPhoneInput) {
+            if (itiContact.isValidNumber()) {
                 contactPhoneInput.value = itiContact.getNumber();
             }
         }
         
-        // Delegate phones
+        // Delegate phones - use stored instances
         document.querySelectorAll('.delegate-phone').forEach(function(phoneInput) {
-            if (window.intlTelInput) {
-                const iti = window.intlTelInput.getInstance(phoneInput);
-                if (iti && iti.isValidNumber()) {
-                    phoneInput.value = iti.getNumber();
-                }
+            const iti = delegatePhoneInstances.get(phoneInput);
+            if (iti && iti.isValidNumber()) {
+                phoneInput.value = iti.getNumber();
             }
         });
         
@@ -894,5 +920,6 @@
             }
         });
     @endif
+}); // End of DOMContentLoaded
 </script>
 @endpush
