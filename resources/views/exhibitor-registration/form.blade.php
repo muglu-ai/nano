@@ -3,10 +3,16 @@
 @section('title', 'Exhibitor Registration - ' . config('constants.EVENT_NAME') . ' ' . config('constants.EVENT_YEAR'))
 
 @section('content')
-<div class="container py-5">
-    {{-- Step Indicator --}}
-    <div class="row mb-4">
-        <div class="col-12">
+<div class="form-card">
+    {{-- Form Header --}}
+    <div class="form-header">
+        <h2><i class="fas fa-building"></i> Exhibitor Registration Form</h2>
+        <p>{{ config('constants.EVENT_NAME') }} {{ config('constants.EVENT_YEAR') }}</p>
+    </div>
+
+    <div class="form-body">
+        {{-- Step Indicator --}}
+        <div class="progress-container">
             <div class="step-indicator">
                 <div class="step-item active">
                     <div class="step-number">1</div>
@@ -23,38 +29,24 @@
                     <div class="step-label">Payment</div>
                 </div>
             </div>
-        </div>
-    </div>
 
-    {{-- Progress Bar --}}
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="progress" style="height: 30px;">
-                <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" 
-                     id="progressBar" style="width: 0%">
-                    <span id="progressText">0% Complete</span>
+            {{-- Progress Bar --}}
+            <div class="progress-bar-custom" style="position: relative; display: flex; align-items: center;">
+                <div class="progress-fill" id="progressBar" style="width: 33%; position: relative; overflow: visible;">
+                    <span id="progressText" style="position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); color: white; font-size: 0.75rem; font-weight: 600; white-space: nowrap; text-shadow: 0 1px 2px rgba(0,0,0,0.3);">Step 1 of 3</span>
                 </div>
             </div>
         </div>
-    </div>
 
-    {{-- Auto-save Indicator --}}
-    <div id="autoSaveIndicator" class="alert alert-info d-none" style="position: fixed; top: 20px; right: 20px; z-index: 9999;">
-        <i class="fas fa-spinner fa-spin"></i> Saving...
-    </div>
+        {{-- Auto-save Indicator --}}
+        <div id="autoSaveIndicator" class="alert alert-info d-none" style="position: fixed; top: 20px; right: 20px; z-index: 9999;">
+            <i class="fas fa-spinner fa-spin"></i> Saving...
+        </div>
 
-    
-
-    {{-- Form Container --}}
-    <form id="exhibitorRegistrationForm" enctype="multipart/form-data">
-        @csrf
-        <input type="hidden" name="session_id" value="{{ session()->getId() }}">
-
-        <div class="card shadow-sm mb-4">
-            <div class="card-header bg-primary text-white">
-                <h4 class="mb-0"><i class="fas fa-building"></i> Exhibitor Registration Form</h4>
-            </div>
-            <div class="card-body">
+        {{-- Form Container --}}
+        <form id="exhibitorRegistrationForm" enctype="multipart/form-data">
+            @csrf
+            <input type="hidden" name="session_id" value="{{ session()->getId() }}">
                 {{-- Booth & Exhibition Details --}}
                 <h5 class="mb-3 border-bottom pb-2"><i class="fas fa-cube"></i> Booth & Exhibition Details</h5>
                 <div class="row mb-3">
@@ -485,9 +477,8 @@
                         <i class="fas fa-check"></i> Submit & Preview
                     </button>
                 </div>
-            </div>
-        </div>
-    </form>
+        </form>
+    </div>
 </div>
 
 @push('styles')
@@ -543,6 +534,44 @@
 @endif
 <script>
 $(document).ready(function() {
+    // Step-based progress functions
+    function updateProgressByStep(stepNumber) {
+        const progressBar = document.getElementById('progressBar');
+        const progressText = document.getElementById('progressText');
+        if (progressBar && progressText) {
+            // Step-based progress: Step 1 = 33%, Step 2 = 66%, Step 3 = 100%
+            const stepPercentages = {
+                1: 33,
+                2: 66,
+                3: 100
+            };
+            const percentage = stepPercentages[stepNumber] || 0;
+            progressBar.style.width = percentage + '%';
+            progressText.textContent = 'Step ' + stepNumber + ' of 3';
+            
+            // Update step indicators
+            updateStepIndicators(stepNumber);
+        }
+    }
+
+    function updateStepIndicators(currentStep) {
+        // Update step indicators - step items are separated by step-connector divs
+        const stepItems = document.querySelectorAll('.step-item');
+        stepItems.forEach((item, index) => {
+            const stepNum = index + 1;
+            item.classList.remove('active', 'completed');
+            
+            if (stepNum < currentStep) {
+                item.classList.add('completed');
+            } else if (stepNum === currentStep) {
+                item.classList.add('active');
+            }
+        });
+    }
+
+    // Initialize progress based on current step (Step 1 by default)
+    updateProgressByStep(1);
+
     // Initialize intl-tel-input for phone fields
     const billingTelInput = intlTelInput(document.querySelector("#billing_telephone"), {
         initialCountry: "in",
@@ -717,17 +746,6 @@ $(document).ready(function() {
         });
     }
 
-    // Sector change handler
-    $('#sector').on('change', function() {
-        if ($(this).val() === 'Others') {
-            $('#other_sector_container').show();
-            $('#other_sector_name').prop('required', true);
-        } else {
-            $('#other_sector_container').hide();
-            $('#other_sector_name').prop('required', false);
-        }
-    });
-
     // TAN Status change handler
     $('#tan_status').on('change', function() {
         if ($(this).val() === 'Registered') {
@@ -754,10 +772,56 @@ $(document).ready(function() {
         }
     });
 
-    // Trigger change handlers on load
-    $('#sector').trigger('change');
-    $('#tan_status').trigger('change');
-    $('#gst_status').trigger('change');
+    // Initialize fields on page load based on current values
+    function initializeFields() {
+        // Check TAN status and show/hide fields accordingly
+        const tanStatus = $('#tan_status').val();
+        if (tanStatus === 'Registered') {
+            $('#tan_no_container').show();
+            $('#tan_required_indicator').show();
+            $('#tan_no').prop('required', true);
+        } else {
+            $('#tan_no_container').hide();
+            $('#tan_required_indicator').hide();
+            $('#tan_no').prop('required', false);
+        }
+
+        // Check GST status and show/hide fields accordingly
+        const gstStatus = $('#gst_status').val();
+        if (gstStatus === 'Registered') {
+            $('#gst_no_container').show();
+            $('#gst_required_indicator').show();
+            $('#gst_no').prop('required', true);
+        } else {
+            $('#gst_no_container').hide();
+            $('#gst_required_indicator').hide();
+            $('#gst_no').prop('required', false);
+        }
+
+        // Check sector
+        const sector = $('#sector').val();
+        if (sector === 'Others') {
+            $('#other_sector_container').show();
+            $('#other_sector_name').prop('required', true);
+        } else {
+            $('#other_sector_container').hide();
+            $('#other_sector_name').prop('required', false);
+        }
+    }
+
+    // Initialize fields on page load
+    initializeFields();
+
+    // Trigger change handlers for dynamic updates
+    $('#sector').on('change', function() {
+        if ($(this).val() === 'Others') {
+            $('#other_sector_container').show();
+            $('#other_sector_name').prop('required', true);
+        } else {
+            $('#other_sector_container').hide();
+            $('#other_sector_name').prop('required', false);
+        }
+    });
 
     // Copy from Billing Information to Exhibitor Information
     $('#copy_from_billing').on('click', function() {
@@ -928,8 +992,8 @@ $(document).ready(function() {
             contentType: false,
             success: function(response) {
                 if (response.success) {
-                    $('#progressBar').css('width', response.progress + '%');
-                    $('#progressText').text(response.progress + '% Complete');
+                    // Update progress based on current step (always step 1 for form page)
+                    updateProgressByStep(1);
                     setTimeout(function() {
                         $('#autoSaveIndicator').addClass('d-none');
                     }, 1000);
