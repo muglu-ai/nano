@@ -98,6 +98,7 @@
         justify-content: space-between;
         padding: 0.75rem 0;
         font-size: 1rem;
+        color: var(--text-secondary);
     }
 
     .price-row.total {
@@ -105,17 +106,27 @@
         font-weight: 700;
         padding-top: 1rem;
         margin-top: 1rem;
-        border-top: 2px solid rgba(255, 255, 255, 0.2);
-        color: #fff;
+        border-top: 2px solid #e0e0e0;
+        color: var(--text-primary);
     }
 
     .price-label {
-        color: rgba(255, 255, 255, 0.8);
+        color: var(--text-secondary);
     }
 
     .price-value {
-        color: #fff;
+        color: var(--text-primary);
         font-weight: 600;
+    }
+
+    .price-row.total .price-label {
+        color: var(--text-primary);
+        font-weight: 700;
+    }
+
+    .price-row.total .price-value {
+        color: var(--text-primary);
+        font-weight: 700;
     }
 
     .btn-edit {
