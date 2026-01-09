@@ -130,15 +130,19 @@
     }
 
     .btn-edit {
-        background: rgba(255, 255, 255, 0.1);
-        border: 2px solid rgba(255, 255, 255, 0.3);
-        color: #fff;
+        background: #ffffff;
+        border: 2px solid var(--primary-color);
+        color: var(--primary-color);
+        font-weight: 600;
+        transition: all 0.3s ease;
     }
 
     .btn-edit:hover {
-        background: rgba(255, 255, 255, 0.2);
-        border-color: rgba(255, 255, 255, 0.5);
-        color: #fff;
+        background: var(--primary-color);
+        border-color: var(--primary-color);
+        color: #ffffff;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(11, 94, 215, 0.3);
     }
 </style>
 @endpush
