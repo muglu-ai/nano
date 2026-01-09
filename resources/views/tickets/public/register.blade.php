@@ -639,9 +639,14 @@ document.addEventListener('DOMContentLoaded', function() {
                     // Re-apply restriction after intl-tel-input initialization to ensure it still works
                     restrictToNumbers(delegatePhoneInput);
                     
-                    // Set old value if exists
+                    // Set old value if exists (clean spaces first)
                     if (delegateData.phone) {
-                        itiDelegate.setNumber(delegateData.phone);
+                        let cleanPhone = delegateData.phone.toString().replace(/\s/g, '').replace(/[^\d+]/g, '');
+                        itiDelegate.setNumber(cleanPhone);
+                        // Clean again after setting
+                        setTimeout(function() {
+                            cleanPhoneNumber(delegatePhoneInput);
+                        }, 100);
                     }
                     
                     delegatePhoneInput.addEventListener('countrychange', function () {
@@ -763,16 +768,16 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }, { capture: true, passive: false });
         
-        // Use input event to filter out non-numeric characters in real-time (most reliable)
+        // Use input event to filter out non-numeric characters and spaces in real-time (most reliable)
         input.addEventListener('input', function(e) {
             let value = e.target.value;
             // Get the current cursor position
             const cursorPos = e.target.selectionStart || 0;
             
-            // Remove all non-numeric characters (keep only digits)
-            const numbersOnly = value.replace(/[^\d]/g, '');
+            // Remove all non-numeric characters including spaces (keep only digits)
+            const numbersOnly = value.replace(/[^\d]/g, '').replace(/\s/g, '');
             
-            // If value changed (had non-numeric chars), update it immediately
+            // If value changed (had non-numeric chars or spaces), update it immediately
             if (value !== numbersOnly) {
                 e.target.value = numbersOnly;
                 // Restore cursor position (adjusted for removed characters)
@@ -824,10 +829,11 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }, { capture: true });
         
-        // Also clean on blur as a safety measure
+        // Also clean on blur as a safety measure (remove spaces and non-numeric)
         input.addEventListener('blur', function(e) {
             let value = e.target.value;
-            const numbersOnly = value.replace(/[^\d]/g, '');
+            // Remove spaces and non-numeric characters
+            const numbersOnly = value.replace(/[^\d]/g, '').replace(/\s/g, '');
             if (value !== numbersOnly && numbersOnly) {
                 // If intl-tel-input is initialized, use its setNumber method
                 const itiInstance = delegatePhoneInstances.get(e.target) || 
@@ -847,6 +853,32 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
+    // Function to clean phone numbers by removing spaces and non-numeric characters
+    function cleanPhoneNumber(input) {
+        if (!input) return;
+        let value = input.value || '';
+        // Remove all spaces and non-numeric characters
+        const cleaned = value.replace(/\s/g, '').replace(/[^\d]/g, '');
+        if (value !== cleaned && cleaned) {
+            // If intl-tel-input is initialized, use its setNumber method
+            const itiInstance = delegatePhoneInstances.get(input) || 
+                             (input.id === 'company_phone' ? itiCompany : null) ||
+                             (input.id === 'contact_phone' ? itiContact : null);
+            if (itiInstance) {
+                try {
+                    const countryCode = itiInstance.getSelectedCountryData().dialCode;
+                    itiInstance.setNumber('+' + countryCode + cleaned);
+                } catch(err) {
+                    input.value = cleaned;
+                }
+            } else {
+                input.value = cleaned;
+            }
+        } else if (value !== cleaned) {
+            input.value = cleaned;
+        }
+    }
+    
     // Wait for intlTelInput to be available
     function initializePhoneInputs() {
         if (typeof window.intlTelInput === 'undefined') {
@@ -860,6 +892,13 @@ document.addEventListener('DOMContentLoaded', function() {
         const companyPhoneCountryCode = document.getElementById('company_phone_country_code');
         
         if (companyPhoneInput) {
+            // Clean existing value (remove spaces) before initializing
+            let initialValue = companyPhoneInput.value || '';
+            if (initialValue) {
+                initialValue = initialValue.replace(/\s/g, '').replace(/[^\d+]/g, '');
+                companyPhoneInput.value = initialValue;
+            }
+            
             // Apply restriction BEFORE initializing intl-tel-input
             restrictToNumbers(companyPhoneInput);
             
@@ -876,6 +915,11 @@ document.addEventListener('DOMContentLoaded', function() {
             // Re-apply restriction after intl-tel-input initialization
             restrictToNumbers(companyPhoneInput);
             
+            // Clean value again after initialization
+            setTimeout(function() {
+                cleanPhoneNumber(companyPhoneInput);
+            }, 100);
+            
             companyPhoneInput.addEventListener('countrychange', function () {
                 const countryData = itiCompany.getSelectedCountryData();
                 companyPhoneCountryCode.value = '+' + countryData.dialCode;
@@ -890,6 +934,13 @@ document.addEventListener('DOMContentLoaded', function() {
         const contactPhoneCountryCode = document.getElementById('contact_phone_country_code');
         
         if (contactPhoneInput) {
+            // Clean existing value (remove spaces) before initializing
+            let initialValue = contactPhoneInput.value || '';
+            if (initialValue) {
+                initialValue = initialValue.replace(/\s/g, '').replace(/[^\d+]/g, '');
+                contactPhoneInput.value = initialValue;
+            }
+            
             // Apply restriction BEFORE initializing intl-tel-input
             restrictToNumbers(contactPhoneInput);
             
@@ -906,6 +957,11 @@ document.addEventListener('DOMContentLoaded', function() {
             // Re-apply restriction after intl-tel-input initialization
             restrictToNumbers(contactPhoneInput);
             
+            // Clean value again after initialization
+            setTimeout(function() {
+                cleanPhoneNumber(contactPhoneInput);
+            }, 100);
+            
             contactPhoneInput.addEventListener('countrychange', function () {
                 const countryData = itiContact.getSelectedCountryData();
                 contactPhoneCountryCode.value = '+' + countryData.dialCode;
@@ -919,17 +975,54 @@ document.addEventListener('DOMContentLoaded', function() {
     // Initialize phone inputs
     initializePhoneInputs();
     
-    // Apply numeric restriction to all phone inputs (for dynamically added ones)
+    // Clean phone numbers on page load (remove spaces from old values)
+    document.addEventListener('DOMContentLoaded', function() {
+        // Wait a bit for intl-tel-input to initialize
+        setTimeout(function() {
+            const phoneInputs = document.querySelectorAll('input[type="tel"]');
+            phoneInputs.forEach(function(input) {
+                // Clean existing values (remove spaces)
+                cleanPhoneNumber(input);
+            });
+        }, 1000);
+    });
+    
+    // Also clean when intl-tel-input is initialized
     setTimeout(function() {
         const phoneInputs = document.querySelectorAll('input[type="tel"]');
         phoneInputs.forEach(function(input) {
-            // Only apply if not already restricted
+            // Clean existing values
+            cleanPhoneNumber(input);
+            
+            // Only apply restriction if not already restricted
             if (!input.hasAttribute('data-restricted')) {
                 restrictToNumbers(input);
                 input.setAttribute('data-restricted', 'true');
             }
         });
     }, 500);
+    
+    // Clean phone numbers when form is shown (after coming back from preview)
+    const form = document.getElementById('ticketRegistrationForm');
+    if (form) {
+        // Use MutationObserver to detect when form becomes visible
+        const observer = new MutationObserver(function(mutations) {
+            const phoneInputs = document.querySelectorAll('input[type="tel"]');
+            phoneInputs.forEach(function(input) {
+                cleanPhoneNumber(input);
+            });
+        });
+        
+        // Observe form visibility
+        observer.observe(form, { attributes: true, attributeFilter: ['style', 'class'] });
+        
+        // Also clean on focus (when user clicks on phone field)
+        document.addEventListener('focusin', function(e) {
+            if (e.target && e.target.type === 'tel') {
+                cleanPhoneNumber(e.target);
+            }
+        }, true);
+    }
 
     // GST toggle
     const gstRequired = document.getElementById('gst_required');

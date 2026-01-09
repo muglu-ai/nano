@@ -185,6 +185,14 @@
                         <span>Share this URL to make payment later</span>
                     </div>
                 </div>
+                <div style="margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid #b3d9ff;">
+                    <div style="font-size: 0.85rem; color: var(--text-secondary); word-break: break-all;">
+                        <strong>Payment URL:</strong> 
+                        <code style="background: white; padding: 0.25rem 0.5rem; border-radius: 4px; color: var(--primary-color);">
+                            {{ url()->current() }}
+                        </code>
+                    </div>
+                </div>
             </div>
             <div class="info-row">
                 <span class="info-label">Order Number:</span>
