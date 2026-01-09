@@ -1165,71 +1165,125 @@ class RegistrationPaymentController extends Controller
                     'updated_at' => now(),
                 ]);
 
-            if ($orderStatus === 'Success') {
+            // Determine payment status
+            $isSuccess = ($orderStatus === 'Success');
+            $paymentStatus = $isSuccess ? 'completed' : 'failed';
+            $paymentTableStatus = $isSuccess ? 'successful' : 'failed';
+
+            // Always create ticket payment record (for both success and failure)
+            TicketPayment::create([
+                'order_ids_json' => [$order->id],
+                'method' => strtolower($responseArray['payment_mode'] ?? 'card'),
+                'amount' => $responseArray['mer_amount'] ?? $order->total,
+                'status' => $paymentStatus,
+                'gateway_txn_id' => $responseArray['tracking_id'] ?? null,
+                'gateway_name' => 'ccavenue',
+                'paid_at' => $isSuccess ? $transDate : null,
+                'pg_request_json' => [],
+                'pg_response_json' => $responseArray,
+                'pg_webhook_json' => [],
+            ]);
+
+            // Always create Payment record in payments table with TIN/order_no
+            // Check if payment already exists (for retry scenarios)
+            $payment = null;
+            if ($invoice) {
+                $payment = Payment::where('invoice_id', $invoice->id)
+                    ->where('order_id', $order->order_no) // Use TIN/order_no for matching
+                    ->latest()
+                    ->first();
+            } else {
+                // For tickets without invoice, check by order_id (TIN)
+                $payment = Payment::where('order_id', $order->order_no)
+                    ->where(function($query) {
+                        $query->whereNull('invoice_id')
+                              ->orWhere('invoice_id', 0);
+                    })
+                    ->latest()
+                    ->first();
+            }
+
+            if (!$payment) {
+                // Create new payment record
+                // Invoice should exist as it's created during order creation or payment initiation
+                if (!$invoice) {
+                    // Fallback: Try to find or create invoice
+                    $invoice = Invoice::where('invoice_no', $order->order_no)
+                        ->where('type', 'ticket_registration')
+                        ->first();
+                    
+                    if (!$invoice) {
+                        // Create invoice if it doesn't exist (shouldn't happen, but safety check)
+                        $invoice = Invoice::create([
+                            'invoice_no'         => $order->order_no,
+                            'type'               => 'ticket_registration',
+                            'registration_id'    => $order->registration_id,
+                            'currency'           => 'INR',
+                            'amount'             => $order->total,
+                            'price'              => $order->subtotal,
+                            'gst'                => $order->gst_total,
+                            'processing_charges' => $order->processing_charge_total,
+                            'total_final_price'  => $order->total,
+                            'amount_paid'        => 0,
+                            'pending_amount'     => $order->total,
+                            'payment_status'     => 'unpaid',
+                        ]);
+                    }
+                }
+                
+                Payment::create([
+                    'invoice_id' => $invoice->id, // Invoice should always exist now
+                    'payment_method' => $responseArray['payment_mode'] ?? 'CCAvenue',
+                    'amount' => $responseArray['mer_amount'] ?? $order->total,
+                    'amount_paid' => $isSuccess ? ($responseArray['mer_amount'] ?? $order->total) : 0,
+                    'amount_received' => $isSuccess ? ($responseArray['mer_amount'] ?? $order->total) : 0,
+                    'transaction_id' => $responseArray['tracking_id'] ?? $order->order_no,
+                    'pg_result' => $orderStatus,
+                    'track_id' => $responseArray['tracking_id'] ?? null,
+                    'pg_response_json' => json_encode($responseArray),
+                    'payment_date' => $isSuccess ? $transDate : null,
+                    'currency' => 'INR',
+                    'status' => $paymentTableStatus,
+                    'order_id' => $order->order_no, // Store TIN/order_no in order_id field
+                ]);
+            } else {
+                // Update existing payment record
+                $payment->update([
+                    'payment_method' => $responseArray['payment_mode'] ?? 'CCAvenue',
+                    'amount' => $responseArray['mer_amount'] ?? $order->total,
+                    'amount_paid' => $isSuccess ? ($responseArray['mer_amount'] ?? $order->total) : 0,
+                    'amount_received' => $isSuccess ? ($responseArray['mer_amount'] ?? $order->total) : 0,
+                    'transaction_id' => $responseArray['tracking_id'] ?? $order->order_no,
+                    'pg_result' => $orderStatus,
+                    'track_id' => $responseArray['tracking_id'] ?? null,
+                    'pg_response_json' => json_encode($responseArray),
+                    'payment_date' => $isSuccess ? $transDate : null,
+                    'currency' => 'INR',
+                    'status' => $paymentTableStatus,
+                    'order_id' => $order->order_no, // Ensure TIN/order_no is stored
+                ]);
+            }
+
+            if ($isSuccess) {
                 // Update order status
                 $order->update(['status' => 'paid']);
 
-                // Create ticket payment record
-                TicketPayment::create([
-                    'order_ids_json' => [$order->id],
-                    'method' => strtolower($responseArray['payment_mode'] ?? 'card'),
-                    'amount' => $responseArray['mer_amount'] ?? $order->total,
-                    'status' => 'completed',
-                    'gateway_txn_id' => $responseArray['tracking_id'] ?? null,
-                    'gateway_name' => 'ccavenue',
-                    'paid_at' => $transDate,
-                    'pg_request_json' => [],
-                    'pg_response_json' => $responseArray,
-                    'pg_webhook_json' => [],
-                ]);
-
-                // Update payments table (prefer updating the pending row)
-                $payment = null;
-                if ($invoice) {
-                    $payment = Payment::where('invoice_id', $invoice->id)
-                        ->where('order_id', $orderId)
-                        ->latest()
-                        ->first();
-                }
-                if (!$payment) {
-                    $payment = Payment::create([
-                        'invoice_id' => $invoice->id ?? null,
-                        'payment_method' => $responseArray['payment_mode'] ?? 'CCAvenue',
-                        'amount' => $responseArray['mer_amount'] ?? $order->total,
-                        'amount_paid' => $responseArray['mer_amount'] ?? $order->total,
-                        'amount_received' => $responseArray['mer_amount'] ?? $order->total,
-                        'transaction_id' => $responseArray['tracking_id'] ?? null,
-                        'pg_result' => $orderStatus,
-                        'track_id' => $responseArray['tracking_id'] ?? null,
-                        'pg_response_json' => json_encode($responseArray),
-                        'payment_date' => $transDate,
-                        'currency' => 'INR',
-                        'status' => 'successful',
-                        'order_id' => $orderId,
-                    ]);
-                } else {
-                    $payment->update([
-                        'payment_method' => $responseArray['payment_mode'] ?? 'CCAvenue',
-                        'amount' => $responseArray['mer_amount'] ?? $order->total,
-                        'amount_paid' => $responseArray['mer_amount'] ?? $order->total,
-                        'amount_received' => $responseArray['mer_amount'] ?? $order->total,
-                        'transaction_id' => $responseArray['tracking_id'] ?? null,
-                        'pg_result' => $orderStatus,
-                        'track_id' => $responseArray['tracking_id'] ?? null,
-                        'pg_response_json' => json_encode($responseArray),
-                        'payment_date' => $transDate,
-                        'currency' => 'INR',
-                        'status' => 'successful',
-                    ]);
-                }
-
-                // Update invoice status/amounts if present
+                // Update invoice status/amounts - mark as paid
                 if ($invoice) {
                     $paidAmount = $responseArray['mer_amount'] ?? $order->total;
                     $invoice->update([
                         'amount_paid' => $paidAmount,
                         'pending_amount' => max(0, ($invoice->total_final_price ?? $paidAmount) - $paidAmount),
-                        'payment_status' => 'paid',
+                        'payment_status' => 'paid', // Mark invoice as paid
+                    ]);
+                }
+            } else {
+                // Payment failed - order status remains 'pending'
+                // Payment records already created above with 'failed' status
+                // Ensure invoice remains unpaid
+                if ($invoice && $invoice->payment_status !== 'unpaid') {
+                    $invoice->update([
+                        'payment_status' => 'unpaid', // Ensure invoice remains unpaid on failure
                     ]);
                 }
 
@@ -1307,83 +1361,133 @@ class RegistrationPaymentController extends Controller
                     'updated_at' => now(),
                 ]);
 
-            if ($status === 'COMPLETED') {
-                // Get amount from capture
-                $amount = 0;
-                if ($captureResult->getPurchaseUnits() && count($captureResult->getPurchaseUnits()) > 0) {
-                    $purchaseUnit = $captureResult->getPurchaseUnits()[0];
-                    if ($purchaseUnit->getPayments() && $purchaseUnit->getPayments()->getCaptures()) {
-                        $capture = $purchaseUnit->getPayments()->getCaptures()[0];
-                        $amount = $capture->getAmount()->getValue();
+            // Get amount from capture
+            $amount = 0;
+            if ($captureResult->getPurchaseUnits() && count($captureResult->getPurchaseUnits()) > 0) {
+                $purchaseUnit = $captureResult->getPurchaseUnits()[0];
+                if ($purchaseUnit->getPayments() && $purchaseUnit->getPayments()->getCaptures()) {
+                    $capture = $purchaseUnit->getPayments()->getCaptures()[0];
+                    $amount = $capture->getAmount()->getValue();
+                }
+            }
+
+            // Determine payment status
+            $isSuccess = ($status === 'COMPLETED');
+            $paymentStatus = $isSuccess ? 'completed' : 'failed';
+            $paymentTableStatus = $isSuccess ? 'successful' : 'failed';
+            $inrAmount = $amount * (config('constants.USD_RATE', 83));
+
+            // Always create ticket payment record (for both success and failure)
+            TicketPayment::create([
+                'order_ids_json' => [$order->id],
+                'method' => 'card',
+                'amount' => $inrAmount,
+                'status' => $paymentStatus,
+                'gateway_txn_id' => $paypalOrderId,
+                'gateway_name' => 'paypal',
+                'paid_at' => $isSuccess ? now() : null,
+                'pg_request_json' => [],
+                'pg_response_json' => (array) $captureResult,
+                'pg_webhook_json' => [],
+            ]);
+
+            // Always create Payment record in payments table with TIN/order_no
+            // Check if payment already exists (for retry scenarios)
+            $payment = null;
+            if ($invoice) {
+                $payment = Payment::where('invoice_id', $invoice->id)
+                    ->where('order_id', $order->order_no) // Use TIN/order_no for matching
+                    ->latest()
+                    ->first();
+            } else {
+                // For tickets without invoice, check by order_id (TIN)
+                $payment = Payment::where('order_id', $order->order_no)
+                    ->where(function($query) {
+                        $query->whereNull('invoice_id')
+                              ->orWhere('invoice_id', 0);
+                    })
+                    ->latest()
+                    ->first();
+            }
+
+            if (!$payment) {
+                // Create new payment record
+                // Invoice should exist as it's created during order creation or payment initiation
+                if (!$invoice) {
+                    // Fallback: Try to find or create invoice
+                    $invoice = Invoice::where('invoice_no', $order->order_no)
+                        ->where('type', 'ticket_registration')
+                        ->first();
+                    
+                    if (!$invoice) {
+                        // Create invoice if it doesn't exist (shouldn't happen, but safety check)
+                        $invoice = Invoice::create([
+                            'invoice_no'         => $order->order_no,
+                            'type'               => 'ticket_registration',
+                            'registration_id'    => $order->registration_id,
+                            'currency'           => 'USD',
+                            'amount'             => $inrAmount,
+                            'price'              => $order->subtotal,
+                            'gst'                => $order->gst_total,
+                            'processing_charges' => $order->processing_charge_total,
+                            'total_final_price'  => $inrAmount,
+                            'amount_paid'        => 0,
+                            'pending_amount'     => $inrAmount,
+                            'payment_status'     => 'unpaid',
+                        ]);
                     }
                 }
+                
+                Payment::create([
+                    'invoice_id' => $invoice->id, // Invoice should always exist now
+                    'payment_method' => 'PayPal',
+                    'amount' => $inrAmount,
+                    'amount_paid' => $isSuccess ? $inrAmount : 0,
+                    'amount_received' => $isSuccess ? $inrAmount : 0,
+                    'transaction_id' => $paypalOrderId,
+                    'pg_result' => $status,
+                    'track_id' => $paypalOrderId,
+                    'pg_response_json' => json_encode($captureResult),
+                    'payment_date' => $isSuccess ? now() : null,
+                    'currency' => 'USD',
+                    'status' => $paymentTableStatus,
+                    'order_id' => $order->order_no, // Store TIN/order_no in order_id field
+                ]);
+            } else {
+                // Update existing payment record
+                $payment->update([
+                    'payment_method' => 'PayPal',
+                    'amount' => $inrAmount,
+                    'amount_paid' => $isSuccess ? $inrAmount : 0,
+                    'amount_received' => $isSuccess ? $inrAmount : 0,
+                    'transaction_id' => $paypalOrderId,
+                    'pg_result' => $status,
+                    'track_id' => $paypalOrderId,
+                    'pg_response_json' => json_encode($captureResult),
+                    'payment_date' => $isSuccess ? now() : null,
+                    'currency' => 'USD',
+                    'status' => $paymentTableStatus,
+                    'order_id' => $order->order_no, // Ensure TIN/order_no is stored
+                ]);
+            }
 
+            if ($isSuccess) {
                 // Update order status
                 $order->update(['status' => 'paid']);
 
-                // Create ticket payment record
-                TicketPayment::create([
-                    'order_ids_json' => [$order->id],
-                    'method' => 'card',
-                    'amount' => $amount * (config('constants.USD_RATE', 83)), // Convert back to INR for storage
-                    'status' => 'completed',
-                    'gateway_txn_id' => $paypalOrderId,
-                    'gateway_name' => 'paypal',
-                    'paid_at' => now(),
-                    'pg_request_json' => [],
-                    'pg_response_json' => (array) $captureResult,
-                    'pg_webhook_json' => [],
-                ]);
-
-                // Update payments table (prefer updating pending row)
-                $payment = null;
-                if ($invoice) {
-                    $payment = Payment::where('invoice_id', $invoice->id)
-                        ->where('order_id', $orderIdFromGateway ?? null)
-                        ->latest()
-                        ->first();
-                }
-
-                $inrAmount = $amount * (config('constants.USD_RATE', 83));
-
-                if (!$payment) {
-                    $payment = Payment::create([
-                        'invoice_id' => $invoice->id ?? null,
-                        'payment_method' => 'PayPal',
-                        'amount' => $inrAmount,
-                        'amount_paid' => $inrAmount,
-                        'amount_received' => $inrAmount,
-                        'transaction_id' => $paypalOrderId,
-                        'pg_result' => $status,
-                        'track_id' => $paypalOrderId,
-                        'pg_response_json' => json_encode($captureResult),
-                        'payment_date' => now(),
-                        'currency' => 'USD',
-                        'status' => 'successful',
-                        'order_id' => $orderIdFromGateway ?? null,
-                    ]);
-                } else {
-                    $payment->update([
-                        'payment_method' => 'PayPal',
-                        'amount' => $inrAmount,
-                        'amount_paid' => $inrAmount,
-                        'amount_received' => $inrAmount,
-                        'transaction_id' => $paypalOrderId,
-                        'pg_result' => $status,
-                        'track_id' => $paypalOrderId,
-                        'pg_response_json' => json_encode($captureResult),
-                        'payment_date' => now(),
-                        'currency' => 'USD',
-                        'status' => 'successful',
-                        'order_id' => $orderIdFromGateway ?? $payment->order_id,
-                    ]);
-                }
-
+                // Update invoice - mark as paid
                 if ($invoice) {
                     $invoice->update([
                         'amount_paid' => $inrAmount,
                         'pending_amount' => max(0, ($invoice->total_final_price ?? $inrAmount) - $inrAmount),
-                        'payment_status' => 'paid',
+                        'payment_status' => 'paid', // Mark invoice as paid
+                    ]);
+                }
+            } else {
+                // Payment failed - ensure invoice remains unpaid
+                if ($invoice && $invoice->payment_status !== 'unpaid') {
+                    $invoice->update([
+                        'payment_status' => 'unpaid', // Ensure invoice remains unpaid on failure
                     ]);
                 }
 
@@ -1391,26 +1495,12 @@ class RegistrationPaymentController extends Controller
                 try {
                     $contactEmail = $order->registration->contact->email ?? null;
                     if ($contactEmail) {
-                        
                         $adminEmails = config('constants.ADMIN_EMAILS', []);
                         $mail = Mail::to($contactEmail);
                         if (!empty($adminEmails)) {
                             $mail->bcc($adminEmails);
                         }
                         $mail->send(new TicketRegistrationMail($order, $event));
-                    }
-                } catch (\Exception $e) {
-                    Log::error('Failed to send ticket payment acknowledgement email', [
-                        'order_id' => $order->id,
-                        'error' => $e->getMessage()
-                    ]);
-                }
-
-                // Send payment acknowledgement email
-                try {
-                    $contactEmail = $order->registration->contact->email ?? null;
-                    if ($contactEmail) {
-                        Mail::to($contactEmail)->send(new TicketRegistrationMail($order, $event));
                     }
                 } catch (\Exception $e) {
                     Log::error('Failed to send ticket payment acknowledgement email', [
@@ -1433,6 +1523,8 @@ class RegistrationPaymentController extends Controller
                       'currency' => 'USD',
                   ]);
             } else {
+                // Payment failed - order status remains 'pending'
+                // Payment records already created above with 'failed' status
                 return redirect()->route('tickets.payment.by-tin', [
                     'eventSlug' => $event->slug ?? $event->id,
                     'tin' => $order->order_no

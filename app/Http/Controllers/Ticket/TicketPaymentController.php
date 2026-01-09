@@ -11,12 +11,16 @@ use App\Models\Ticket\TicketOrderItem;
 use App\Models\Ticket\TicketType;
 use App\Models\Ticket\TicketRegistrationCategory;
 use App\Models\Ticket\TicketDelegate;
+use App\Models\Ticket\TicketPayment;
+use App\Models\Payment;
+use App\Models\Invoice;
 use App\Services\CcAvenueService;
 use App\Mail\TicketRegistrationMail;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
+use Carbon\Carbon;
 
 class TicketPaymentController extends Controller
 {
@@ -173,6 +177,22 @@ class TicketPaymentController extends Controller
                 'pricing_type' => $ticketType->isEarlyBirdActive() ? 'early_bird' : 'regular',
             ]);
 
+            // Create invoice for the order (for payment tracking and mapping)
+            $invoice = Invoice::create([
+                'invoice_no'         => $order->order_no,
+                'type'               => 'ticket_registration',
+                'registration_id'    => $registration->id, // link to ticket registration for traceability
+                'currency'           => $event->currency ?? 'INR',
+                'amount'             => $total, // base amount required by DB
+                'price'              => $subtotal,
+                'gst'                => $gstAmount,
+                'processing_charges' => $processingChargeAmount,
+                'total_final_price'  => $total,
+                'amount_paid'        => 0,
+                'pending_amount'     => $total,
+                'payment_status'     => 'unpaid', // Initially unpaid
+            ]);
+
             // Create delegates (always required now)
             $delegates = $registrationData['delegates'] ?? [];
             if (count($delegates) > 0) {
@@ -266,8 +286,10 @@ class TicketPaymentController extends Controller
     public function callback(Request $request, $token)
     {
         $order = TicketOrder::where('secure_token', $token)
-            ->with(['registration.event'])
+            ->with(['registration.event', 'registration.contact'])
             ->firstOrFail();
+        
+        $event = $order->registration->event;
         
         // Handle CCAvenue response
         $encResponse = $request->input('encResp');
@@ -278,22 +300,147 @@ class TicketPaymentController extends Controller
                 $decryptedResponse = $this->ccAvenueService->decrypt($encResponse, $credentials['working_key']);
                 parse_str($decryptedResponse, $responseArray);
 
-                // Update payment status based on response
-                if (isset($responseArray['order_status']) && $responseArray['order_status'] === 'Success') {
-                    // Payment successful
+                $orderStatus = $responseArray['order_status'] ?? null;
+                $orderIdFromGateway = $responseArray['order_id'] ?? null;
+                $transDate = isset($responseArray['trans_date'])
+                    ? Carbon::createFromFormat('d/m/Y H:i:s', $responseArray['trans_date'])->format('Y-m-d H:i:s')
+                    : now();
+
+                // Check for invoice
+                $invoice = Invoice::where('invoice_no', $order->order_no)
+                    ->where('type', 'ticket_registration')
+                    ->first();
+
+                // Update payment gateway response table
+                DB::table('payment_gateway_response')
+                    ->where('order_id', $orderIdFromGateway)
+                    ->update([
+                        'amount' => $responseArray['mer_amount'] ?? $order->total,
+                        'transaction_id' => $responseArray['tracking_id'] ?? null,
+                        'payment_method' => $responseArray['payment_mode'] ?? null,
+                        'trans_date' => $transDate,
+                        'reference_id' => $responseArray['bank_ref_no'] ?? null,
+                        'response_json' => json_encode($responseArray),
+                        'status' => $orderStatus === 'Success' ? 'Success' : 'Failed',
+                        'updated_at' => now(),
+                    ]);
+
+                // Determine payment status
+                $isSuccess = ($orderStatus === 'Success');
+                $paymentStatus = $isSuccess ? 'completed' : 'failed';
+                $paymentTableStatus = $isSuccess ? 'successful' : 'failed';
+
+                // Create or update ticket payment record
+                TicketPayment::create([
+                    'order_ids_json' => [$order->id],
+                    'method' => strtolower($responseArray['payment_mode'] ?? 'card'),
+                    'amount' => $responseArray['mer_amount'] ?? $order->total,
+                    'status' => $paymentStatus,
+                    'gateway_txn_id' => $responseArray['tracking_id'] ?? null,
+                    'gateway_name' => 'ccavenue',
+                    'paid_at' => $isSuccess ? $transDate : null,
+                    'pg_request_json' => [],
+                    'pg_response_json' => $responseArray,
+                    'pg_webhook_json' => [],
+                ]);
+
+                // Always create Payment record in payments table with TIN/order_no
+                // Invoice should always exist as it's created during order creation
+                if (!$invoice) {
+                    // Fallback: Create invoice if it doesn't exist (shouldn't happen, but safety check)
+                    $invoice = Invoice::where('invoice_no', $order->order_no)
+                        ->where('type', 'ticket_registration')
+                        ->first();
+                    
+                    if (!$invoice) {
+                        $invoice = Invoice::create([
+                            'invoice_no'         => $order->order_no,
+                            'type'               => 'ticket_registration',
+                            'registration_id'    => $order->registration_id,
+                            'currency'           => 'INR',
+                            'amount'             => $order->total,
+                            'price'              => $order->subtotal,
+                            'gst'                => $order->gst_total,
+                            'processing_charges' => $order->processing_charge_total,
+                            'total_final_price'  => $order->total,
+                            'amount_paid'        => 0,
+                            'pending_amount'     => $order->total,
+                            'payment_status'     => 'unpaid',
+                        ]);
+                    }
+                }
+                
+                Payment::create([
+                    'invoice_id' => $invoice->id, // Invoice should always exist
+                    'payment_method' => $responseArray['payment_mode'] ?? 'CCAvenue',
+                    'amount' => $responseArray['mer_amount'] ?? $order->total,
+                    'amount_paid' => $isSuccess ? ($responseArray['mer_amount'] ?? $order->total) : 0,
+                    'amount_received' => $isSuccess ? ($responseArray['mer_amount'] ?? $order->total) : 0,
+                    'transaction_id' => $responseArray['tracking_id'] ?? $order->order_no,
+                    'pg_result' => $orderStatus,
+                    'track_id' => $responseArray['tracking_id'] ?? null,
+                    'pg_response_json' => json_encode($responseArray),
+                    'payment_date' => $isSuccess ? $transDate : null,
+                    'currency' => 'INR',
+                    'status' => $paymentTableStatus,
+                    'order_id' => $order->order_no, // Store TIN/order_no in order_id field
+                ]);
+
+                // Update order status and invoice
+                if ($isSuccess) {
                     $order->update(['status' => 'paid']);
-                    
-                    // TODO: Create payment record, send receipt email, etc.
-                    
+
+                    // Update invoice - mark as paid
+                    $paidAmount = $responseArray['mer_amount'] ?? $order->total;
+                    $invoice->update([
+                        'amount_paid' => $paidAmount,
+                        'pending_amount' => max(0, ($invoice->total_final_price ?? $paidAmount) - $paidAmount),
+                        'payment_status' => 'paid', // Mark invoice as paid
+                    ]);
+                } else {
+                    // Payment failed - ensure invoice remains unpaid
+                    // Invoice should already be 'unpaid', but ensure it stays that way
+                    if ($invoice && $invoice->payment_status !== 'unpaid') {
+                        $invoice->update([
+                            'payment_status' => 'unpaid', // Ensure invoice remains unpaid on failure
+                        ]);
+                    }
+                }
+
+                    // Send payment acknowledgement email
+                    try {
+                        $contactEmail = $order->registration->contact->email ?? null;
+                        if ($contactEmail) {
+                            $adminEmails = config('constants.ADMIN_EMAILS', []);
+                            $mail = Mail::to($contactEmail);
+                            if (!empty($adminEmails)) {
+                                $mail->bcc($adminEmails);
+                            }
+                            $mail->send(new TicketRegistrationMail($order, $event));
+                        }
+                    } catch (\Exception $e) {
+                        Log::error('Failed to send ticket payment acknowledgement email', [
+                            'order_id' => $order->id,
+                            'error' => $e->getMessage()
+                        ]);
+                    }
+
                     return redirect()->route('tickets.confirmation', [
-                        'eventSlug' => $order->registration->event->slug ?? $order->registration->event->id,
+                        'eventSlug' => $event->slug ?? $event->id,
                         'token' => $order->secure_token
-                    ])->with('success', 'Payment successful!');
+                    ])->with('success', 'Payment successful!')
+                      ->with('payment_details', [
+                          'gateway' => 'CCAvenue',
+                          'transaction_id' => $responseArray['tracking_id'] ?? null,
+                          'amount' => $responseArray['mer_amount'] ?? $order->total,
+                      ]);
                 } else {
                     // Payment failed
                     $failureMessage = $responseArray['failure_message'] ?? 'Payment failed. Please try again.';
-                    return redirect()->route('tickets.payment', $order->secure_token)
-                        ->with('error', $failureMessage);
+                    return redirect()->route('tickets.payment.by-tin', [
+                        'eventSlug' => $event->slug ?? $event->id,
+                        'tin' => $order->order_no
+                    ])->with('error', $failureMessage);
                 }
             } catch (\Exception $e) {
                 Log::error('Payment callback error: ' . $e->getMessage(), [
@@ -302,13 +449,17 @@ class TicketPaymentController extends Controller
                     'trace' => $e->getTraceAsString()
                 ]);
                 
-                return redirect()->route('tickets.payment', $order->secure_token)
-                    ->with('error', 'Error processing payment response. Please contact support.');
+                return redirect()->route('tickets.payment.by-tin', [
+                    'eventSlug' => $event->slug ?? $event->id,
+                    'tin' => $order->order_no
+                ])->with('error', 'Error processing payment response. Please contact support.');
             }
         }
 
-        return redirect()->route('tickets.payment', $order->secure_token)
-            ->with('error', 'Invalid payment response.');
+        return redirect()->route('tickets.payment.by-tin', [
+            'eventSlug' => $event->slug ?? $event->id,
+            'tin' => $order->order_no
+        ])->with('error', 'Invalid payment response.');
     }
 
     /**
