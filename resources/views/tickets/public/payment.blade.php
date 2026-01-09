@@ -4,46 +4,35 @@
 
 @push('styles')
 <style>
-    .payment-container {
-        max-width: 1200px;
-        margin: 0 auto;
-        padding: 2rem 1rem;
-    }
-
-    .payment-container .registration-progress {
-        margin-bottom: 2rem;
-    }
-
-    .payment-card {
-        background: rgba(255, 255, 255, 0.05);
-        border-radius: 20px;
-        padding: 2.5rem;
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        margin-bottom: 2rem;
-    }
-
-    .payment-section {
-        background: rgba(255, 255, 255, 0.03);
-        border-radius: 12px;
+    .preview-section {
+        background: #f8f9fa;
+        border-radius: 10px;
         padding: 1.5rem;
         margin-bottom: 1.5rem;
-        border: 1px solid rgba(255, 255, 255, 0.1);
+        border: 1px solid #e0e0e0;
     }
 
     .section-title {
         font-size: 1.25rem;
-        font-weight: 700;
+        font-weight: 600;
         margin-bottom: 1.5rem;
-        color: #fff;
+        color: var(--text-primary);
         padding-bottom: 0.75rem;
-        border-bottom: 2px solid rgba(102, 126, 234, 0.5);
+        border-bottom: 2px solid var(--progress-inactive);
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .section-title i {
+        color: var(--primary-color);
     }
 
     .info-row {
         display: flex;
         justify-content: space-between;
         padding: 0.75rem 0;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        border-bottom: 1px solid #e0e0e0;
     }
 
     .info-row:last-child {
@@ -52,21 +41,22 @@
 
     .info-label {
         font-weight: 600;
-        color: rgba(255, 255, 255, 0.7);
+        color: var(--text-secondary);
         flex: 1;
     }
 
     .info-value {
-        color: #fff;
+        color: var(--text-primary);
         flex: 1;
         text-align: right;
     }
 
     .price-breakdown {
-        background: rgba(102, 126, 234, 0.1);
-        border-radius: 12px;
+        background: #f8f9fa;
+        border-radius: 10px;
         padding: 1.5rem;
         margin-top: 1.5rem;
+        border: 1px solid #e0e0e0;
     }
 
     .price-row {
@@ -74,6 +64,7 @@
         justify-content: space-between;
         padding: 0.75rem 0;
         font-size: 1rem;
+        color: var(--text-secondary);
     }
 
     .price-row.total {
@@ -81,17 +72,27 @@
         font-weight: 700;
         padding-top: 1rem;
         margin-top: 1rem;
-        border-top: 2px solid rgba(255, 255, 255, 0.2);
-        color: #fff;
+        border-top: 2px solid #e0e0e0;
+        color: var(--text-primary);
     }
 
     .price-label {
-        color: rgba(255, 255, 255, 0.8);
+        color: var(--text-secondary);
     }
 
     .price-value {
-        color: #fff;
+        color: var(--text-primary);
         font-weight: 600;
+    }
+
+    .price-row.total .price-label {
+        color: var(--text-primary);
+        font-weight: 700;
+    }
+
+    .price-row.total .price-value {
+        color: var(--text-primary);
+        font-weight: 700;
     }
 
     .delegates-table {
@@ -104,17 +105,19 @@
     .delegates-table td {
         padding: 0.75rem;
         text-align: left;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        border-bottom: 1px solid #e0e0e0;
+        color: var(--text-primary);
+        font-size: 0.95rem;
     }
 
     .delegates-table th {
-        background: rgba(102, 126, 234, 0.2);
-        color: #fff;
+        background: var(--primary-color);
+        color: white;
         font-weight: 600;
     }
 
     .delegates-table td {
-        color: rgba(255, 255, 255, 0.9);
+        color: var(--text-primary);
     }
 
     .delegates-table tr:last-child td {
@@ -122,7 +125,8 @@
     }
 
     .btn-pay-now {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        background: var(--primary-gradient);
+        color: white;
         border: none;
         padding: 1rem 3rem;
         font-size: 1.25rem;
@@ -133,7 +137,8 @@
 
     .btn-pay-now:hover {
         transform: translateY(-2px);
-        box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+        box-shadow: 0 10px 25px rgba(11, 94, 215, 0.3);
+        background: linear-gradient(135deg, var(--primary-color-dark) 0%, var(--primary-color) 100%);
     }
 
     .btn-pay-now:disabled {
@@ -145,14 +150,15 @@
 @endpush
 
 @section('content')
-<div class="payment-container">
-    <!-- Progress Bar -->
-    @include('tickets.public.partials.progress-bar', ['currentStep' => 3])
-    
-    <div class="payment-card">
-        <h2 class="text-center mb-4" style="background: var(--primary-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">
-            Complete Your Payment
-        </h2>
+<div class="form-card">
+    <div class="form-header">
+        <h2><i class="fas fa-credit-card me-2"></i>Complete Your Payment</h2>
+        <p>{{ $event->event_name ?? config('constants.EVENT_NAME', 'Event') }} {{ $event->event_year ?? config('constants.EVENT_YEAR', date('Y')) }}</p>
+    </div>
+
+    <div class="form-body">
+        <!-- Progress Bar -->
+        @include('tickets.public.partials.progress-bar', ['currentStep' => 3])
 
         @if(session('error'))
             <div class="alert alert-danger mb-4">
@@ -162,7 +168,7 @@
         @endif
 
         <!-- Order Information -->
-        <div class="payment-section">
+        <div class="preview-section">
             <h4 class="section-title">
                 <i class="fas fa-receipt me-2"></i>
                 Order Information
@@ -186,7 +192,7 @@
         </div>
 
         <!-- Organisation Information -->
-        <div class="payment-section">
+        <div class="preview-section">
             <h4 class="section-title">
                 <i class="fas fa-building me-2"></i>
                 Organisation Information
@@ -223,7 +229,7 @@
 
         <!-- Delegate Details -->
         @if($order->registration->delegates && $order->registration->delegates->count() > 0)
-        <div class="payment-section">
+        <div class="preview-section">
             <h4 class="section-title">
                 <i class="fas fa-users me-2"></i>
                 Delegate Details
@@ -255,7 +261,7 @@
 
         <!-- GST Information -->
         @if($order->registration->gst_required)
-        <div class="payment-section">
+        <div class="preview-section">
             <h4 class="section-title">
                 <i class="fas fa-file-invoice-dollar me-2"></i>
                 GST Information
@@ -308,8 +314,8 @@
         <!-- Pay Now Button -->
         <div class="text-center mt-4">
             <a href="{{ route('tickets.payment.process', ['eventSlug' => $event->slug ?? $event->id, 'orderNo' => $order->order_no]) }}" class="btn btn-pay-now" id="payNowBtn">
-                    <i class="fas fa-credit-card me-2"></i>
-                    Pay Now ₹{{ number_format($order->total, 2) }}
+                <i class="fas fa-credit-card me-2"></i>
+                Pay Now ₹{{ number_format($order->total, 2) }}
             </a>
         </div>
     </div>
