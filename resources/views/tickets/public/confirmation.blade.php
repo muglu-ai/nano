@@ -125,9 +125,13 @@
                     @endforeach
                 </span>
             </div>
+            @php
+                $isInternational = ($order->registration->nationality === 'International' || $order->registration->nationality === 'international');
+                $currencySymbol = $isInternational ? '$' : '₹';
+            @endphp
             <div class="info-row">
                 <span class="info-label">Total Amount:</span>
-                <span class="info-value"><strong>₹{{ number_format($order->total, 2) }}</strong></span>
+                <span class="info-value"><strong>{{ $currencySymbol }}{{ number_format($order->total, 2) }}</strong></span>
             </div>
             <div class="info-row">
                 <span class="info-label">Status:</span>
@@ -244,6 +248,8 @@
             $paymentDetails = session('payment_details');
             $primaryPayment = $order->primaryPayment();
             $isPaid = $order->status === 'paid';
+            $isInternational = ($order->registration->nationality === 'International' || $order->registration->nationality === 'international');
+            $currencySymbol = $isInternational ? '$' : '₹';
         @endphp
 
         @if($isPaid && ($paymentDetails || $primaryPayment))
@@ -296,7 +302,7 @@
                 <div class="info-row">
                     <span class="info-label">Amount Paid:</span>
                     <span class="info-value">
-                        <strong style="color: var(--primary-color); font-size: 1.1rem;">₹{{ number_format($order->total, 2) }}</strong>
+                        <strong style="color: var(--primary-color); font-size: 1.1rem;">{{ $currencySymbol }}{{ number_format($order->total, 2) }}</strong>
                     </span>
                 </div>
 
@@ -353,10 +359,14 @@
                     </span>
                 </div>
 
+                @php
+                    $isInternational = ($order->registration->nationality === 'International' || $order->registration->nationality === 'international');
+                    $currencySymbol = $isInternational ? '$' : '₹';
+                @endphp
                 <div class="info-row">
                     <span class="info-label">Amount Paid:</span>
                     <span class="info-value">
-                        <strong style="color: var(--primary-color); font-size: 1.1rem;">₹{{ number_format($order->total, 2) }}</strong>
+                        <strong style="color: var(--primary-color); font-size: 1.1rem;">{{ $currencySymbol }}{{ number_format($order->total, 2) }}</strong>
                     </span>
                 </div>
 

@@ -621,27 +621,32 @@
             @endif
 
             <!-- Price Breakdown -->
+            @php
+                $isInternational = ($order->registration->nationality === 'International' || $order->registration->nationality === 'international');
+                $currencySymbol = $isInternational ? '$' : '₹';
+                $priceFormat = 2; // Both use 2 decimal places
+            @endphp
             <div class="price-breakdown">
                 <div class="section-title" style="margin-top: 0;">
                     <i>💰</i> Price Breakdown
                 </div>
                 @foreach($order->items as $item)
                 <div class="price-row">
-                    <span>Ticket Price ({{ $item->quantity }} × ₹{{ number_format($item->unit_price, 2) }}):</span>
-                    <span>₹{{ number_format($item->subtotal, 2) }}</span>
+                    <span>Ticket Price ({{ $item->quantity }} × {{ $currencySymbol }}{{ number_format($item->unit_price, $priceFormat) }}):</span>
+                    <span>{{ $currencySymbol }}{{ number_format($item->subtotal, $priceFormat) }}</span>
                 </div>
                 <div class="price-row">
                     <span>GST ({{ $item->gst_rate }}%):</span>
-                    <span>₹{{ number_format($item->gst_amount, 2) }}</span>
+                    <span>{{ $currencySymbol }}{{ number_format($item->gst_amount, $priceFormat) }}</span>
                 </div>
                 <div class="price-row">
                     <span>Processing Charge ({{ $item->processing_charge_rate }}%):</span>
-                    <span>₹{{ number_format($item->processing_charge_amount, 2) }}</span>
+                    <span>{{ $currencySymbol }}{{ number_format($item->processing_charge_amount, $priceFormat) }}</span>
                 </div>
                 @endforeach
                 <div class="price-row total">
                     <span>Total Amount:</span>
-                    <span>₹{{ number_format($order->total, 2) }}</span>
+                    <span>{{ $currencySymbol }}{{ number_format($order->total, $priceFormat) }}</span>
                 </div>
             </div>
 
@@ -649,7 +654,7 @@
             @if($order->status !== 'paid')
             <div class="btn-container">
                 <a href="{{ route('tickets.payment.by-tin', ['eventSlug' => $event->slug ?? $event->id, 'tin' => $order->order_no]) }}" class="btn-pay-now">
-                    Complete Payment - ₹{{ number_format($order->total, 2) }}
+                    Complete Payment - {{ $currencySymbol }}{{ number_format($order->total, $priceFormat) }}
                 </a>
             </div>
 

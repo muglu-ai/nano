@@ -317,21 +317,25 @@
                 <i class="fas fa-calculator me-2"></i>
                 Price Breakdown
             </h4>
+            @php
+                $currencySymbol = ($currency ?? 'INR') === 'USD' ? '$' : '₹';
+                $priceFormat = ($currency ?? 'INR') === 'USD' ? 2 : 2; // Both use 2 decimal places for consistency
+            @endphp
             <div class="price-row">
-                <span class="price-label">Ticket Price ({{ $quantity }} × ₹{{ number_format($unitPrice, 2) }}):</span>
-                <span class="price-value">₹{{ number_format($subtotal, 2) }}</span>
+                <span class="price-label">Ticket Price ({{ $quantity }} × {{ $currencySymbol }}{{ number_format($unitPrice, $priceFormat) }}):</span>
+                <span class="price-value">{{ $currencySymbol }}{{ number_format($subtotal, $priceFormat) }}</span>
             </div>
             <div class="price-row">
                 <span class="price-label">GST ({{ $gstRate }}%):</span>
-                <span class="price-value">₹{{ number_format($gstAmount, 2) }}</span>
+                <span class="price-value">{{ $currencySymbol }}{{ number_format($gstAmount, $priceFormat) }}</span>
             </div>
             <div class="price-row">
                 <span class="price-label">Processing Charge ({{ $processingChargeRate }}%):</span>
-                <span class="price-value">₹{{ number_format($processingChargeAmount, 2) }}</span>
+                <span class="price-value">{{ $currencySymbol }}{{ number_format($processingChargeAmount, $priceFormat) }}</span>
             </div>
             <div class="price-row total">
                 <span class="price-label">Total Amount:</span>
-                <span class="price-value">₹{{ number_format($total, 2) }}</span>
+                <span class="price-value">{{ $currencySymbol }}{{ number_format($total, $priceFormat) }}</span>
             </div>
         </div>
 

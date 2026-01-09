@@ -57,6 +57,10 @@
             </div>
         @endif
 
+        @php
+            $isInternational = ($order->registration->nationality === 'International' || $order->registration->nationality === 'international');
+            $currencySymbol = $isInternational ? '$' : '₹';
+        @endphp
         <div class="order-summary">
             <h5 class="mb-3"><i class="fas fa-receipt me-2"></i>Order Summary</h5>
             <div class="summary-row">
@@ -65,7 +69,7 @@
             </div>
             <div class="summary-row">
                 <span>Total Amount:</span>
-                <strong>₹{{ number_format($order->total, 2) }}</strong>
+                <strong>{{ $currencySymbol }}{{ number_format($order->total, 2) }}</strong>
             </div>
         </div>
 

@@ -307,6 +307,11 @@
         @endif
 
         <!-- Price Breakdown -->
+        @php
+            $isInternational = ($order->registration->nationality === 'International' || $order->registration->nationality === 'international');
+            $currencySymbol = $isInternational ? '$' : '₹';
+            $priceFormat = 2; // Both use 2 decimal places
+        @endphp
         <div class="price-breakdown">
             <h4 class="section-title mb-3">
                 <i class="fas fa-calculator me-2"></i>
@@ -314,21 +319,21 @@
             </h4>
             @foreach($order->items as $item)
             <div class="price-row">
-                <span class="price-label">Ticket Price ({{ $item->quantity }} × ₹{{ number_format($item->unit_price, 2) }}):</span>
-                <span class="price-value">₹{{ number_format($item->subtotal, 2) }}</span>
+                <span class="price-label">Ticket Price ({{ $item->quantity }} × {{ $currencySymbol }}{{ number_format($item->unit_price, $priceFormat) }}):</span>
+                <span class="price-value">{{ $currencySymbol }}{{ number_format($item->subtotal, $priceFormat) }}</span>
             </div>
             <div class="price-row">
                 <span class="price-label">GST ({{ $item->gst_rate }}%):</span>
-                <span class="price-value">₹{{ number_format($item->gst_amount, 2) }}</span>
+                <span class="price-value">{{ $currencySymbol }}{{ number_format($item->gst_amount, $priceFormat) }}</span>
             </div>
             <div class="price-row">
                 <span class="price-label">Processing Charge ({{ $item->processing_charge_rate }}%):</span>
-                <span class="price-value">₹{{ number_format($item->processing_charge_amount, 2) }}</span>
+                <span class="price-value">{{ $currencySymbol }}{{ number_format($item->processing_charge_amount, $priceFormat) }}</span>
             </div>
             @endforeach
             <div class="price-row total">
                 <span class="price-label">Total Amount:</span>
-                <span class="price-value">₹{{ number_format($order->total, 2) }}</span>
+                <span class="price-value">{{ $currencySymbol }}{{ number_format($order->total, $priceFormat) }}</span>
             </div>
         </div>
 
@@ -336,7 +341,7 @@
         <div class="text-center mt-4">
             <a href="{{ route('tickets.payment.process', ['eventSlug' => $event->slug ?? $event->id, 'orderNo' => $order->order_no]) }}" class="btn btn-pay-now" id="payNowBtn">
                 <i class="fas fa-credit-card me-2"></i>
-                Pay Now ₹{{ number_format($order->total, 2) }}
+                Pay Now {{ $currencySymbol }}{{ number_format($order->total, $priceFormat) }}
             </a>
         </div>
     </div>

@@ -529,12 +529,11 @@ class PublicTicketController extends Controller
         // Get GST rate (default 18%)
         $gstRate = config('constants.GST_RATE', 18);
         
-        // Get processing charge rate (3% for India, 9% for International)
-        $country = $registrationData['company_country'] ?? $registrationData['country'] ?? '';
-        $isIndian = strtolower($country) === 'india' || $nationality === 'Indian';
-        $processingChargeRate = $isIndian 
-            ? config('constants.IND_PROCESSING_CHARGE', 3) 
-            : config('constants.INT_PROCESSING_CHARGE', 9);
+        // Get processing charge rate (3% for India/National, 9% for International)
+        // Use nationality to determine processing charge rate
+        $processingChargeRate = $isInternational 
+            ? config('constants.INT_PROCESSING_CHARGE', 9)  // International: 9%
+            : config('constants.IND_PROCESSING_CHARGE', 3); // National/Indian: 3%
         
         // Calculate GST on subtotal
         $gstAmount = ($subtotal * $gstRate) / 100;
@@ -579,7 +578,9 @@ class PublicTicketController extends Controller
             'gstAmount',
             'processingChargeRate',
             'processingChargeAmount',
-            'total'
+            'total',
+            'currency',
+            'isInternational'
         ));
     }
 
@@ -623,7 +624,7 @@ class PublicTicketController extends Controller
             if ($ipHits >= 3) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'GST validation limit exceeded (3 attempts per IP). Please fill the details manually.',
+                    'message' => 'GST validation limit exceeded. Please fill the details manually.',
                     'limit_exceeded' => true,
                     'allow_manual' => true
                 ], 429);

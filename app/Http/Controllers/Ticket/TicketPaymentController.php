@@ -109,11 +109,11 @@ class TicketPaymentController extends Controller
             $subtotal = $unitPrice * $quantity;
             
             $gstRate = config('constants.GST_RATE', 18);
-            $country = $registrationData['company_country'] ?? $registrationData['country'] ?? '';
-            $isIndian = strtolower($country) === 'india' || $nationality === 'Indian';
-            $processingChargeRate = $isIndian 
-                ? config('constants.IND_PROCESSING_CHARGE', 3) 
-                : config('constants.INT_PROCESSING_CHARGE', 9);
+            // Get processing charge rate (3% for National/Indian, 9% for International)
+            // Use nationality to determine processing charge rate
+            $processingChargeRate = $isInternational 
+                ? config('constants.INT_PROCESSING_CHARGE', 9)  // International: 9%
+                : config('constants.IND_PROCESSING_CHARGE', 3); // National/Indian: 3%
             
             $gstAmount = ($subtotal * $gstRate) / 100;
             $processingChargeAmount = (($subtotal + $gstAmount) * $processingChargeRate) / 100;
