@@ -55,6 +55,10 @@ class TicketPaymentController extends Controller
                 ->with('error', 'Please complete the registration form first.');
         }
 
+        // Clear session data immediately when proceeding to payment
+        // This prevents user from going back to edit the same registration
+        session()->forget('ticket_registration_data');
+
         try {
             DB::beginTransaction();
 
@@ -189,8 +193,8 @@ class TicketPaymentController extends Controller
 
             DB::commit();
             
-            // Clear session data after order creation
-            session()->forget('ticket_registration_data');
+            // Session already cleared at the start of payment initiation
+            // No need to clear again here
 
             // Load registration category for display (may be null)
             $registrationCategory = null;

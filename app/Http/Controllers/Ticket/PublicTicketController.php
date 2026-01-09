@@ -114,6 +114,15 @@ class PublicTicketController extends Controller
         // The old() helper reads from flashed session data, so we need to flash it
         $registrationData = session('ticket_registration_data');
         if ($registrationData && $registrationData['event_id'] == $event->id) {
+            // Normalize nationality back to form values (form uses 'national'/'international', but session stores 'Indian'/'International')
+            if (isset($registrationData['nationality'])) {
+                if ($registrationData['nationality'] === 'Indian') {
+                    $registrationData['nationality'] = 'national';
+                } elseif ($registrationData['nationality'] === 'International') {
+                    $registrationData['nationality'] = 'international';
+                }
+            }
+            
             // Flash the session data so old() helper can access it
             // This preserves all form values when user clicks "Edit Registration"
             request()->session()->flashInput($registrationData);
@@ -179,6 +188,7 @@ class PublicTicketController extends Controller
             'company_country' => 'required|string|max:255',
             'company_state' => 'nullable|string|max:255',
             'company_city' => 'nullable|string|max:255',
+            'postal_code' => 'nullable|string|max:20',
             'phone' => 'required|string|max:20',
             'email' => 'nullable|email|max:255',
             'gst_required' => 'required|in:0,1',
