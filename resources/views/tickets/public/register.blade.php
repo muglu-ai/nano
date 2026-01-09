@@ -1153,38 +1153,93 @@ document.addEventListener('DOMContentLoaded', function() {
         // Remove spaces from all phone numbers before submission
         function removeSpacesFromPhone(input) {
             if (input && input.value) {
+                // Remove all spaces
                 input.value = input.value.replace(/\s/g, '');
             }
         }
         
-        // Update phone numbers with full international format before submission
+        // Function to clean and format phone number with intl-tel-input
+        function cleanAndFormatPhone(input, itiInstance) {
+            if (!input || !input.value) return;
+            
+            // First, remove ALL spaces from the input value
+            let phoneValue = input.value.replace(/\s/g, '').trim();
+            
+            if (!phoneValue) {
+                input.value = '';
+                return;
+            }
+            
+            // If we have intl-tel-input instance, try to format it
+            if (itiInstance) {
+                try {
+                    // Get the country code
+                    const countryData = itiInstance.getSelectedCountryData();
+                    const countryCode = '+' + countryData.dialCode;
+                    
+                    // If phone value doesn't start with +, handle it
+                    if (!phoneValue.startsWith('+')) {
+                        // Check if country code digits are already at the start
+                        const countryCodeDigits = countryCode.replace('+', '');
+                        if (phoneValue.startsWith(countryCodeDigits)) {
+                            phoneValue = '+' + phoneValue;
+                        } else {
+                            // Just extract digits (the number part)
+                            phoneValue = phoneValue.replace(/[^\d]/g, '');
+                        }
+                    } else {
+                        // Already has +, ensure no spaces
+                        phoneValue = phoneValue.replace(/\s/g, '');
+                    }
+                    
+                    // Try to set the number (this will format it properly)
+                    itiInstance.setNumber(phoneValue);
+                    
+                    // Get the formatted number back
+                    const formattedNumber = itiInstance.getNumber();
+                    if (formattedNumber) {
+                        // Remove spaces from formatted number
+                        phoneValue = formattedNumber.replace(/\s/g, '');
+                    }
+                } catch(err) {
+                    // If setNumber fails, just use the cleaned value
+                    phoneValue = phoneValue.replace(/[^\d+]/g, '');
+                    if (!phoneValue.startsWith('+') && itiInstance) {
+                        try {
+                            const countryData = itiInstance.getSelectedCountryData();
+                            phoneValue = '+' + countryData.dialCode + phoneValue;
+                        } catch(e) {
+                            // Fallback
+                        }
+                    }
+                }
+            } else {
+                // No intl-tel-input instance, just remove spaces and keep digits and +
+                phoneValue = phoneValue.replace(/[^\d+]/g, '');
+            }
+            
+            // Final cleanup: ensure no spaces in the final value
+            input.value = phoneValue.replace(/\s/g, '');
+        }
+        
         // Company phone
         const companyPhoneInput = document.getElementById('company_phone');
-        if (itiCompany && companyPhoneInput) {
-            if (itiCompany.isValidNumber()) {
-                companyPhoneInput.value = itiCompany.getNumber();
-            }
-            // Remove spaces
+        if (companyPhoneInput) {
+            cleanAndFormatPhone(companyPhoneInput, itiCompany);
             removeSpacesFromPhone(companyPhoneInput);
         }
         
         // Contact phone
         const contactPhoneInput = document.getElementById('contact_phone');
-        if (itiContact && contactPhoneInput) {
-            if (itiContact.isValidNumber()) {
-                contactPhoneInput.value = itiContact.getNumber();
-            }
-            // Remove spaces
+        if (contactPhoneInput) {
+            cleanAndFormatPhone(contactPhoneInput, itiContact);
             removeSpacesFromPhone(contactPhoneInput);
         }
         
         // Delegate phones - use stored instances
         document.querySelectorAll('.delegate-phone').forEach(function(phoneInput) {
             const iti = delegatePhoneInstances.get(phoneInput);
-            if (iti && iti.isValidNumber()) {
-                phoneInput.value = iti.getNumber();
-            }
-            // Remove spaces
+            cleanAndFormatPhone(phoneInput, iti);
             removeSpacesFromPhone(phoneInput);
         });
         
