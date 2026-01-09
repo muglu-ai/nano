@@ -173,6 +173,19 @@
                 <i class="fas fa-receipt me-2"></i>
                 Order Information
             </h4>
+            <div class="alert alert-info mb-3" style="background: #e7f3ff; border: 1px solid #b3d9ff; border-radius: 8px; padding: 1rem;">
+                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                    <i class="fas fa-info-circle" style="color: var(--primary-color);"></i>
+                    <div style="flex: 1;">
+                        <strong style="color: var(--text-primary);">Order Number (TIN):</strong>
+                        <span style="color: var(--primary-color); font-size: 1.1rem; font-weight: 700; margin-left: 0.5rem;">{{ $order->order_no }}</span>
+                    </div>
+                    <div style="font-size: 0.85rem; color: var(--text-secondary);">
+                        <i class="fas fa-link me-1"></i>
+                        <span>Share this URL to make payment later</span>
+                    </div>
+                </div>
+            </div>
             <div class="info-row">
                 <span class="info-label">Order Number:</span>
                 <span class="info-value"><strong>{{ $order->order_no }}</strong></span>

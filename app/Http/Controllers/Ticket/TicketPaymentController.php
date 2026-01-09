@@ -34,6 +34,16 @@ class TicketPaymentController extends Controller
     {
         $event = Events::where('slug', $eventSlug)->orWhere('id', $eventSlug)->firstOrFail();
         
+        // Check if order number is provided in URL (for direct access)
+        $orderNo = $request->query('order');
+        if ($orderNo) {
+            // If order number is provided, redirect to initiateByTin
+            return redirect()->route('tickets.payment.by-tin', [
+                'eventSlug' => $event->slug ?? $event->id,
+                'tin' => $orderNo
+            ]);
+        }
+        
         // Get registration data from session
         $registrationData = session('ticket_registration_data');
 
@@ -219,8 +229,11 @@ class TicketPaymentController extends Controller
                 // Don't fail the transaction if email fails
             }
 
-            // Show payment page with all order details
-            return view('tickets.public.payment', compact('event', 'order', 'ticketType', 'registrationCategory', 'registrationData'));
+            // Redirect to payment page with order number in URL for easy sharing and refresh
+            return redirect()->route('tickets.payment.by-tin', [
+                'eventSlug' => $event->slug ?? $event->id,
+                'tin' => $order->order_no
+            ]);
 
         } catch (\Exception $e) {
             DB::rollBack();
