@@ -605,8 +605,7 @@ class PublicTicketController extends Controller
                         'pincode' => $gst->pincode,
                         'city' => $gst->city,
                         'pan' => $gst->pan,
-                    ],
-                    'from_cache' => true
+                    ]
                 ]);
             }
             
@@ -639,8 +638,7 @@ class PublicTicketController extends Controller
                         'pincode' => $gst->pincode,
                         'city' => $gst->city,
                         'pan' => $gst->pan,
-                    ],
-                    'from_cache' => false
+                    ]
                 ]);
             }
             

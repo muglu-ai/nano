@@ -1125,8 +1125,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         stateInput.value = data.gst.state_name;
                     }
                     
-                    const cacheMsg = data.from_cache ? ' (from cache)' : '';
-                    gstValidationMessage.innerHTML = '<div class="alert alert-success mt-2"><i class="fas fa-check-circle"></i> GST validated successfully' + cacheMsg + '</div>';
+                    gstValidationMessage.innerHTML = '<div class="alert alert-success mt-2"><i class="fas fa-check-circle"></i> GST validated successfully</div>';
                 } else if (status === 429 || data.limit_exceeded) {
                     // Rate limit exceeded
                     gstValidationMessage.innerHTML = '<div class="alert alert-warning mt-2"><i class="fas fa-exclamation-triangle"></i> ' + data.message + '</div>';
