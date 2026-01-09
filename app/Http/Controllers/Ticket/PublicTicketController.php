@@ -516,9 +516,14 @@ class PublicTicketController extends Controller
             ->with(['category', 'subcategory', 'eventDays'])
             ->firstOrFail();
 
+        // Determine nationality for pricing
+        $nationality = $registrationData['nationality'] ?? 'Indian';
+        $isInternational = ($nationality === 'International' || $nationality === 'international');
+        $nationalityForPrice = $isInternational ? 'international' : 'national';
+        
         // Calculate pricing
         $quantity = $registrationData['delegate_count'];
-        $unitPrice = $ticketType->getCurrentPrice();
+        $unitPrice = $ticketType->getCurrentPrice($nationalityForPrice);
         $subtotal = $unitPrice * $quantity;
         
         // Get GST rate (default 18%)
@@ -526,7 +531,7 @@ class PublicTicketController extends Controller
         
         // Get processing charge rate (3% for India, 9% for International)
         $country = $registrationData['company_country'] ?? $registrationData['country'] ?? '';
-        $isIndian = strtolower($country) === 'india' || $registrationData['nationality'] === 'Indian';
+        $isIndian = strtolower($country) === 'india' || $nationality === 'Indian';
         $processingChargeRate = $isIndian 
             ? config('constants.IND_PROCESSING_CHARGE', 3) 
             : config('constants.INT_PROCESSING_CHARGE', 9);
@@ -539,6 +544,9 @@ class PublicTicketController extends Controller
         
         // Total
         $total = $subtotal + $gstAmount + $processingChargeAmount;
+        
+        // Determine currency
+        $currency = $isInternational ? 'USD' : 'INR';
 
         // Track preview viewed - update with latest registration data and calculated total
         $trackingToken = session('ticket_registration_tracking_token');

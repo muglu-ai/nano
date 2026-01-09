@@ -98,14 +98,19 @@ class TicketPaymentController extends Controller
                 ->with(['category', 'subcategory'])
                 ->firstOrFail();
 
+            // Determine nationality for pricing
+            $nationality = $registrationData['nationality'] ?? 'Indian';
+            $isInternational = ($nationality === 'International' || $nationality === 'international');
+            $nationalityForPrice = $isInternational ? 'international' : 'national';
+            
             // Calculate pricing
             $quantity = $registrationData['delegate_count'];
-            $unitPrice = $ticketType->getCurrentPrice();
+            $unitPrice = $ticketType->getCurrentPrice($nationalityForPrice);
             $subtotal = $unitPrice * $quantity;
             
             $gstRate = config('constants.GST_RATE', 18);
             $country = $registrationData['company_country'] ?? $registrationData['country'] ?? '';
-            $isIndian = strtolower($country) === 'india' || $registrationData['nationality'] === 'Indian';
+            $isIndian = strtolower($country) === 'india' || $nationality === 'Indian';
             $processingChargeRate = $isIndian 
                 ? config('constants.IND_PROCESSING_CHARGE', 3) 
                 : config('constants.INT_PROCESSING_CHARGE', 9);
@@ -113,6 +118,9 @@ class TicketPaymentController extends Controller
             $gstAmount = ($subtotal * $gstRate) / 100;
             $processingChargeAmount = (($subtotal + $gstAmount) * $processingChargeRate) / 100;
             $total = $subtotal + $gstAmount + $processingChargeAmount;
+            
+            // Determine currency
+            $currency = $isInternational ? 'USD' : 'INR';
 
             // Create or get contact (use first delegate email if contact email not provided)
             $contactEmail = $registrationData['contact_email'] ?? ($registrationData['delegates'][0]['email'] ?? null);
@@ -218,7 +226,7 @@ class TicketPaymentController extends Controller
                 'invoice_no'         => $order->order_no,
                 'type'               => 'ticket_registration',
                 'registration_id'    => $registration->id, // link to ticket registration for traceability
-                'currency'           => $event->currency ?? 'INR',
+                'currency'           => $currency,
                 'amount'             => $total, // base amount required by DB
                 'price'              => $subtotal,
                 'gst'                => $gstAmount,
@@ -393,7 +401,7 @@ class TicketPaymentController extends Controller
                             'invoice_no'         => $order->order_no,
                             'type'               => 'ticket_registration',
                             'registration_id'    => $order->registration_id,
-                            'currency'           => 'INR',
+                            'currency'           => $currency ?? 'INR',
                             'amount'             => $order->total,
                             'price'              => $order->subtotal,
                             'gst'                => $order->gst_total,
@@ -417,7 +425,7 @@ class TicketPaymentController extends Controller
                     'track_id' => $responseArray['tracking_id'] ?? null,
                     'pg_response_json' => json_encode($responseArray),
                     'payment_date' => $isSuccess ? $transDate : null,
-                    'currency' => 'INR',
+                    'currency' => $order->registration->nationality === 'International' ? 'USD' : 'INR',
                     'status' => $paymentTableStatus,
                     'order_id' => $order->order_no, // Store TIN/order_no in order_id field
                 ]);
@@ -550,15 +558,23 @@ class TicketPaymentController extends Controller
             $event = $order->registration->event;
             $registration = $order->registration;
             
+            // Determine currency based on nationality
+            $isInternational = ($registration->nationality === 'International' || $registration->nationality === 'international');
+            $currency = $isInternational ? 'USD' : 'INR';
+            
             // Prepare payment gateway data
             $billingName = $registration->contact->name ?? '';
             $billingEmail = $registration->contact->email ?? '';
             $billingPhone = $registration->contact->phone ?? $registration->company_phone;
             
+            $amount = $order->total;
+            // If international, amount is already in USD (stored in order), no conversion needed
+            // The order total is already in the correct currency
+            
             $paymentData = [
                 'order_id' => $order->order_no . '_' . time(),
-                'amount' => number_format($order->total, 2, '.', ''),
-                'currency' => 'INR',
+                'amount' => number_format($amount, 2, '.', ''),
+                'currency' => $currency,
                 'redirect_url' => route('tickets.payment.callback', $order->secure_token),
                 'cancel_url' => route('tickets.payment', $order->secure_token),
                 'billing_name' => $billingName,

@@ -193,18 +193,31 @@
                             {{-- Hidden field to submit the value --}}
                             <input type="hidden" name="ticket_type_id" value="{{ $selectedTicketType->slug }}">
                             {{-- Display field (readonly) --}}
+                            @php
+                                $nationalityForPrice = $selectedNationality ?? 'national';
+                                $price = $selectedTicketType->getCurrentPrice($nationalityForPrice);
+                                $currency = ($nationalityForPrice === 'international') ? '$' : '₹';
+                                $priceFormat = ($nationalityForPrice === 'international') ? number_format($price, 2) : number_format($price, 0);
+                            @endphp
                             <input type="text" class="form-control" 
-                                   value="{{ $selectedTicketType->name }} - ₹{{ number_format($selectedTicketType->getCurrentPrice($selectedNationality ?? 'national'), 0) }}" 
+                                   value="{{ $selectedTicketType->name }} - {{ $currency }}{{ $priceFormat }}" 
                                    readonly 
                                    style="background-color: #e9ecef; cursor: not-allowed;">
                         @else
-                            <select name="ticket_type_id" class="form-select" required>
+                            <select name="ticket_type_id" class="form-select" id="ticket_type_select" required>
                                 <option value="">Select Ticket Type</option>
                                 @foreach($ticketTypes as $ticketType)
+                                    @php
+                                        $nationalityForPrice = old('nationality', $selectedNationality ?? 'national');
+                                        $price = $ticketType->getCurrentPrice($nationalityForPrice);
+                                        $currency = ($nationalityForPrice === 'international') ? '$' : '₹';
+                                        $priceFormat = ($nationalityForPrice === 'international') ? number_format($price, 2) : number_format($price, 0);
+                                    @endphp
                                     <option value="{{ $ticketType->slug }}" 
-                                            data-price="{{ $ticketType->getCurrentPrice('national') }}"
+                                            data-price-national="{{ $ticketType->getCurrentPrice('national') }}"
+                                            data-price-international="{{ $ticketType->getCurrentPrice('international') }}"
                                             {{ (old('ticket_type_id') == $ticketType->slug || (isset($selectedTicketType) && $selectedTicketType && $selectedTicketType->id == $ticketType->id)) ? 'selected' : '' }}>
-                                        {{ $ticketType->name }} - ₹{{ number_format($ticketType->getCurrentPrice('national'), 0) }}
+                                        {{ $ticketType->name }} - {{ $currency }}{{ $priceFormat }}
                                     </option>
                                 @endforeach
                             </select>
@@ -1042,6 +1055,40 @@ document.addEventListener('DOMContentLoaded', function() {
 
     const validateGstBtn = document.getElementById('validateGstBtn');
     const gstLoading = document.getElementById('gst_loading');
+    
+    // Update ticket type prices when nationality changes
+    const nationalitySelect = document.getElementById('nationality') || document.querySelector('select[name="nationality"]');
+    const ticketTypeSelect = document.getElementById('ticket_type_select');
+    
+    if (nationalitySelect && ticketTypeSelect) {
+        nationalitySelect.addEventListener('change', function() {
+            const nationality = this.value;
+            const isInternational = nationality === 'international';
+            const currency = isInternational ? '$' : '₹';
+            
+            // Update all ticket type options
+            ticketTypeSelect.querySelectorAll('option').forEach(function(option) {
+                if (option.value && option.dataset.priceNational) {
+                    const price = isInternational 
+                        ? parseFloat(option.dataset.priceInternational || 0)
+                        : parseFloat(option.dataset.priceNational || 0);
+                    const priceFormat = isInternational 
+                        ? number_format(price, 2) 
+                        : number_format(price, 0);
+                    
+                    // Extract ticket name (before the dash)
+                    const ticketName = option.textContent.split(' - ')[0];
+                    option.textContent = ticketName + ' - ' + currency + priceFormat;
+                }
+            });
+        });
+    }
+    
+    // Helper function for number formatting
+    function number_format(number, decimals) {
+        const factor = Math.pow(10, decimals);
+        return (Math.round(number * factor) / factor).toFixed(decimals);
+    }
     
     gstRequired.addEventListener('change', function() {
         if (this.value === '1') {
