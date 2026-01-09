@@ -45,6 +45,45 @@
                 </div>
             @endif
 
+            {{--Booth Details --}}
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">Booth Details</h4>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <strong>Booth Space:</strong><br>
+                            {{ $application->stall_category ?? 'N/A' }}
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <strong>Booth Size:</strong><br>
+                            {{ $application->interested_sqm ?? 'N/A' }}
+                        </div>
+                    </div>
+                    <!-- <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <strong>Booth Type:</strong><br>
+                            {{ $application->pref_location ?? 'N/A' }}
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <strong>Booth Number:</strong><br>
+                        {{ $application->stallNumber ?? 'N/A' }}
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <strong>Booth Name:</strong><br>
+                        {{ $application->booth_name ?? 'N/A' }}
+                    </div>
+                </div> -->
+            </div>
+
             {{-- Billing Information --}}
             <div class="card shadow-sm mb-4">
                 <div class="card-header bg-primary text-white">
