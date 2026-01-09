@@ -70,7 +70,8 @@ class TicketPaymentController extends Controller
             $subtotal = $unitPrice * $quantity;
             
             $gstRate = config('constants.GST_RATE', 18);
-            $isIndian = strtolower($registrationData['country']) === 'india' || $registrationData['nationality'] === 'Indian';
+            $country = $registrationData['company_country'] ?? $registrationData['country'] ?? '';
+            $isIndian = strtolower($country) === 'india' || $registrationData['nationality'] === 'Indian';
             $processingChargeRate = $isIndian 
                 ? config('constants.IND_PROCESSING_CHARGE', 3) 
                 : config('constants.INT_PROCESSING_CHARGE', 9);
@@ -113,9 +114,9 @@ class TicketPaymentController extends Controller
                 'event_id' => $event->id,
                 'contact_id' => $contact->id,
                 'company_name' => $registrationData['organisation_name'],
-                'company_country' => $registrationData['country'],
-                'company_state' => $registrationData['state'] ?? null,
-                'company_city' => $registrationData['city'] ?? null,
+                'company_country' => $registrationData['company_country'] ?? $registrationData['country'] ?? null,
+                'company_state' => $registrationData['company_state'] ?? $registrationData['state'] ?? null,
+                'company_city' => $registrationData['company_city'] ?? $registrationData['city'] ?? null,
                 'company_phone' => $registrationData['phone'],
                 'industry_sector' => $registrationData['industry_sector'],
                 'organisation_type' => $registrationData['organisation_type'],

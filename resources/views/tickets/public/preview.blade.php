@@ -222,18 +222,18 @@
             </div>
             <div class="info-row">
                 <span class="info-label">Country:</span>
-                <span class="info-value">{{ $registrationData['country'] }}</span>
+                <span class="info-value">{{ $registrationData['company_country'] ?? $registrationData['country'] ?? 'N/A' }}</span>
             </div>
-            @if(!empty($registrationData['state']))
+            @if(!empty($registrationData['company_state'] ?? $registrationData['state'] ?? null))
             <div class="info-row">
                 <span class="info-label">State:</span>
-                <span class="info-value">{{ $registrationData['state'] }}</span>
+                <span class="info-value">{{ $registrationData['company_state'] ?? $registrationData['state'] }}</span>
             </div>
             @endif
-            @if(!empty($registrationData['city']))
+            @if(!empty($registrationData['company_city'] ?? $registrationData['city'] ?? null))
             <div class="info-row">
                 <span class="info-label">City:</span>
-                <span class="info-value">{{ $registrationData['city'] }}</span>
+                <span class="info-value">{{ $registrationData['company_city'] ?? $registrationData['city'] }}</span>
             </div>
             @endif
             <div class="info-row">

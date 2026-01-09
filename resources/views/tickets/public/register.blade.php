@@ -620,6 +620,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 const delegatePhoneInput = document.getElementById(`delegate_phone_${i}`);
                 const delegatePhoneCountryCode = document.getElementById(`delegate_phone_country_code_${i}`);
                 if (delegatePhoneInput && typeof window.intlTelInput !== 'undefined') {
+                    // Apply restriction BEFORE initializing intl-tel-input
+                    restrictToNumbers(delegatePhoneInput);
+                    
                     delegatePhoneInput.placeholder = '';
                     const itiDelegate = window.intlTelInput(delegatePhoneInput, {
                         initialCountry: 'in',
@@ -633,7 +636,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     // Store the instance for later use
                     delegatePhoneInstances.set(delegatePhoneInput, itiDelegate);
                     
-                    // Apply numeric restriction
+                    // Re-apply restriction after intl-tel-input initialization to ensure it still works
                     restrictToNumbers(delegatePhoneInput);
                     
                     // Set old value if exists
@@ -738,32 +741,50 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Add numeric-only validation for phone inputs
     function restrictToNumbers(input) {
-        // Clean input on blur to remove any non-numeric characters
-        input.addEventListener('blur', function(e) {
-            let value = e.target.value;
-            // Remove all non-numeric characters (intl-tel-input handles country code separately)
-            value = value.replace(/[^\d]/g, '');
-            // Only update if value changed and we have a valid number
-            if (value && value !== e.target.value.replace(/[^\d]/g, '')) {
-                // If intl-tel-input is initialized, use its setNumber method
-                const itiInstance = delegatePhoneInstances.get(e.target) || 
-                                 (e.target.id === 'company_phone' ? itiCompany : null) ||
-                                 (e.target.id === 'contact_phone' ? itiContact : null);
-                if (itiInstance && value) {
-                    try {
-                        itiInstance.setNumber('+' + (e.target.closest('.iti') ? 
-                            itiInstance.getSelectedCountryData().dialCode : '91') + value);
-                    } catch(err) {
-                        // If setNumber fails, just set the numeric value
-                        e.target.value = value;
-                    }
-                } else {
-                    e.target.value = value;
-                }
-            }
-        });
+        // Mark input as restricted to avoid duplicate handlers
+        if (input.dataset.restricted === 'true') {
+            return;
+        }
+        input.dataset.restricted = 'true';
         
-        // Prevent non-numeric keypress
+        // Use beforeinput event (modern browsers) to prevent non-numeric input
+        input.addEventListener('beforeinput', function(e) {
+            // Allow deletion operations
+            if (e.inputType === 'deleteContentBackward' || 
+                e.inputType === 'deleteContentForward' || 
+                e.inputType === 'deleteByCut') {
+                return;
+            }
+            // For any text insertion, only allow numbers
+            if (e.data && !/^\d+$/.test(e.data)) {
+                e.preventDefault();
+                e.stopImmediatePropagation();
+                return false;
+            }
+        }, { capture: true, passive: false });
+        
+        // Use input event to filter out non-numeric characters in real-time (most reliable)
+        input.addEventListener('input', function(e) {
+            let value = e.target.value;
+            // Get the current cursor position
+            const cursorPos = e.target.selectionStart || 0;
+            
+            // Remove all non-numeric characters (keep only digits)
+            const numbersOnly = value.replace(/[^\d]/g, '');
+            
+            // If value changed (had non-numeric chars), update it immediately
+            if (value !== numbersOnly) {
+                e.target.value = numbersOnly;
+                // Restore cursor position (adjusted for removed characters)
+                const removedChars = value.length - numbersOnly.length;
+                const newCursorPos = Math.max(0, cursorPos - removedChars);
+                setTimeout(() => {
+                    e.target.setSelectionRange(newCursorPos, newCursorPos);
+                }, 0);
+            }
+        }, { capture: true });
+        
+        // Prevent non-numeric keypress (fallback for older browsers)
         input.addEventListener('keypress', function(e) {
             // Allow: backspace, delete, tab, escape, enter
             if ([46, 8, 9, 27, 13].indexOf(e.keyCode) !== -1 ||
@@ -776,28 +797,52 @@ document.addEventListener('DOMContentLoaded', function() {
                 (e.keyCode >= 35 && e.keyCode <= 39)) {
                 return;
             }
-            // Only allow numeric keys (0-9)
+            // Only allow numeric keys (0-9) - both regular and numpad
             if ((e.shiftKey || (e.keyCode < 48 || e.keyCode > 57)) && (e.keyCode < 96 || e.keyCode > 105)) {
                 e.preventDefault();
+                e.stopImmediatePropagation();
+                return false;
             }
-        });
+        }, { capture: true });
         
         // Clean paste events - extract only numbers
         input.addEventListener('paste', function(e) {
             e.preventDefault();
+            e.stopImmediatePropagation();
             const paste = (e.clipboardData || window.clipboardData).getData('text');
             const numbersOnly = paste.replace(/[^\d]/g, '');
             if (numbersOnly) {
                 // Insert at cursor position
-                const start = this.selectionStart;
-                const end = this.selectionEnd;
+                const start = this.selectionStart || 0;
+                const end = this.selectionEnd || 0;
                 const currentValue = this.value;
                 const newValue = currentValue.substring(0, start) + numbersOnly + currentValue.substring(end);
                 this.value = newValue;
-                this.setSelectionRange(start + numbersOnly.length, start + numbersOnly.length);
-                
-                // Trigger input event for intl-tel-input to update
-                this.dispatchEvent(new Event('input', { bubbles: true }));
+                setTimeout(() => {
+                    this.setSelectionRange(start + numbersOnly.length, start + numbersOnly.length);
+                }, 0);
+            }
+        }, { capture: true });
+        
+        // Also clean on blur as a safety measure
+        input.addEventListener('blur', function(e) {
+            let value = e.target.value;
+            const numbersOnly = value.replace(/[^\d]/g, '');
+            if (value !== numbersOnly && numbersOnly) {
+                // If intl-tel-input is initialized, use its setNumber method
+                const itiInstance = delegatePhoneInstances.get(e.target) || 
+                                 (e.target.id === 'company_phone' ? itiCompany : null) ||
+                                 (e.target.id === 'contact_phone' ? itiContact : null);
+                if (itiInstance) {
+                    try {
+                        const countryCode = itiInstance.getSelectedCountryData().dialCode;
+                        itiInstance.setNumber('+' + countryCode + numbersOnly);
+                    } catch(err) {
+                        e.target.value = numbersOnly;
+                    }
+                } else {
+                    e.target.value = numbersOnly;
+                }
             }
         });
     }
@@ -815,6 +860,9 @@ document.addEventListener('DOMContentLoaded', function() {
         const companyPhoneCountryCode = document.getElementById('company_phone_country_code');
         
         if (companyPhoneInput) {
+            // Apply restriction BEFORE initializing intl-tel-input
+            restrictToNumbers(companyPhoneInput);
+            
             companyPhoneInput.placeholder = '';
             itiCompany = window.intlTelInput(companyPhoneInput, {
                 initialCountry: 'in',
@@ -825,7 +873,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 autoPlaceholder: 'off',
             });
             
-            // Apply numeric restriction
+            // Re-apply restriction after intl-tel-input initialization
             restrictToNumbers(companyPhoneInput);
             
             companyPhoneInput.addEventListener('countrychange', function () {
@@ -842,6 +890,9 @@ document.addEventListener('DOMContentLoaded', function() {
         const contactPhoneCountryCode = document.getElementById('contact_phone_country_code');
         
         if (contactPhoneInput) {
+            // Apply restriction BEFORE initializing intl-tel-input
+            restrictToNumbers(contactPhoneInput);
+            
             contactPhoneInput.placeholder = '';
             itiContact = window.intlTelInput(contactPhoneInput, {
                 initialCountry: 'in',
@@ -852,7 +903,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 autoPlaceholder: 'off',
             });
             
-            // Apply numeric restriction
+            // Re-apply restriction after intl-tel-input initialization
             restrictToNumbers(contactPhoneInput);
             
             contactPhoneInput.addEventListener('countrychange', function () {
