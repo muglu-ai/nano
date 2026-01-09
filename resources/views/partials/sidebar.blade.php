@@ -146,22 +146,7 @@
     }
     
     .logo-container {
-        padding: 10px 15px;
-        text-align: center;
-        border-bottom: 1px solid #e3e6f0;
-        margin-bottom: 0;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        min-height: 60px;
-    }
-    
-    .logo-container img {
-        max-width: 120px;
-        max-height: 50px;
-        width: auto;
-        height: auto;
-        object-fit: contain;
+        display: none !important;
     }
 </style>
 

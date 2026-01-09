@@ -3,10 +3,16 @@
 @section('title', 'Startup Registration - ' . config('constants.EVENT_NAME') . ' ' . config('constants.EVENT_YEAR'))
 
 @section('content')
-<div class="container py-5">
-    {{-- Step Indicator --}}
-    <div class="row mb-4">
-        <div class="col-12">
+<div class="form-card">
+    {{-- Form Header --}}
+    <div class="form-header">
+        <h2><i class="fas fa-building"></i> Startup Zone Registration Form</h2>
+        <p>{{ config('constants.EVENT_NAME') }} {{ config('constants.EVENT_YEAR') }}</p>
+    </div>
+
+    <div class="form-body">
+        {{-- Step Indicator --}}
+        <div class="progress-container">
             <div class="step-indicator">
                 <div class="step-item active">
                     <div class="step-number">1</div>
@@ -23,36 +29,24 @@
                     <div class="step-label">Payment</div>
                 </div>
             </div>
-        </div>
-    </div>
 
-    {{-- Progress Bar --}}
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="progress" style="height: 30px;">
-                <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" 
-                     id="progressBar" style="width: 0%">
-                    <span id="progressText">0% Complete</span>
+            {{-- Progress Bar --}}
+            <div class="progress-bar-custom" style="position: relative; display: flex; align-items: center;">
+                <div class="progress-fill" id="progressBar" style="width: 33%; position: relative; overflow: visible;">
+                    <span id="progressText" style="position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); color: white; font-size: 0.75rem; font-weight: 600; white-space: nowrap; text-shadow: 0 1px 2px rgba(0,0,0,0.3);">Step 1 of 3</span>
                 </div>
             </div>
         </div>
-    </div>
 
-    {{-- Auto-save Indicator --}}
-    <div id="autoSaveIndicator" class="alert alert-info d-none" style="position: fixed; top: 20px; right: 20px; z-index: 9999;">
-        <i class="fas fa-spinner fa-spin"></i> Saving...
-    </div>
+        {{-- Auto-save Indicator --}}
+        <div id="autoSaveIndicator" class="alert alert-info d-none" style="position: fixed; top: 20px; right: 20px; z-index: 9999;">
+            <i class="fas fa-spinner fa-spin"></i> Saving...
+        </div>
 
-    {{-- Form Container --}}
-    <form id="startupZoneForm" enctype="multipart/form-data">
-        @csrf
-        <input type="hidden" name="session_id" value="{{ session()->getId() }}">
-
-        <div class="card shadow-sm mb-4">
-            <div class="card-header bg-primary text-white">
-                <h4 class="mb-0"><i class="fas fa-building"></i> Startup Zone Registration Form</h4>
-            </div>
-            <div class="card-body">
+        {{-- Form Container --}}
+        <form id="startupZoneForm" enctype="multipart/form-data">
+            @csrf
+            <input type="hidden" name="session_id" value="{{ session()->getId() }}">
                 {{-- Association Pricing Display --}}
                 <div id="associationInfo" class="alert alert-success d-none mb-4">
                     <h5 id="associationName"></h5>
@@ -542,87 +536,13 @@
                         <i class="fas fa-check"></i> Submit & Preview
                     </button>
                 </div>
-            </div>
-        </div>
-    </form>
+        </form>
+    </div>
 </div>
 
 @push('styles')
 <style>
-    .step-indicator {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        margin-bottom: 2rem;
-        padding: 1.5rem;
-        background: #f8f9fa;
-        border-radius: 10px;
-    }
-    .step-item {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        position: relative;
-        flex: 1;
-    }
-    .step-number {
-        width: 50px;
-        height: 50px;
-        border-radius: 50%;
-        background: #e0e0e0;
-        color: #666;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-weight: bold;
-        font-size: 1.2rem;
-        margin-bottom: 0.5rem;
-        transition: all 0.3s ease;
-        border: 3px solid #e0e0e0;
-    }
-    .step-item.active .step-number {
-        background: var(--primary-color);
-        color: white;
-        border-color: var(--primary-color);
-        box-shadow: 0 0 0 4px rgba(27, 55, 131, 0.2);
-    }
-    .step-item.completed .step-number {
-        background: #28a745;
-        color: white;
-        border-color: #28a745;
-        font-size: 0;
-    }
-    .step-item.completed .step-number::before {
-        content: '✓';
-        font-size: 1.5rem;
-        display: block;
-    }
-    .step-label {
-        font-size: 0.9rem;
-        color: #666;
-        font-weight: 500;
-        text-align: center;
-    }
-    .step-item.active .step-label {
-        color: var(--primary-color);
-        font-weight: 600;
-    }
-    .step-item.completed .step-label {
-        color: #28a745;
-    }
-    .step-connector {
-        flex: 1;
-        height: 3px;
-        background: #e0e0e0;
-        margin: 0 1rem;
-        margin-top: -25px;
-        position: relative;
-        z-index: 0;
-    }
-    .step-item.completed ~ .step-connector,
-    .step-item.active ~ .step-connector {
-        background: var(--primary-color);
-    }
+    /* Step indicator styles are now in the common layout */
     .step-content {
         animation: fadeIn 0.3s;
     }
@@ -645,23 +565,7 @@
         color: var(--primary-color);
         font-weight: 600;
     }
-    @media (max-width: 768px) {
-        .step-indicator {
-            padding: 1rem 0.5rem;
-        }
-        .step-number {
-            width: 40px;
-            height: 40px;
-            font-size: 1rem;
-        }
-        .step-label {
-            font-size: 0.75rem;
-        }
-        .step-connector {
-            margin: 0 0.5rem;
-            margin-top: -20px;
-        }
-    }
+    /* Responsive styles for step indicators are in the common layout */
 </style>
 @endpush
 
@@ -669,12 +573,8 @@
 <script src="https://www.google.com/recaptcha/enterprise.js?render={{ config('services.recaptcha.site_key') }}"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Load draft data if exists
-    @if($draft && isset($draft->progress_percentage))
-    updateProgress({{ $draft->progress_percentage }});
-    @else
-    updateProgress(0);
-    @endif
+    // Initialize progress based on current step (Step 1 by default)
+    updateProgressByStep(1);
 
     // Initialize intl-tel-input for mobile number
     const mobileInput = document.getElementById('contact_mobile');
@@ -1748,7 +1648,8 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(data => {
             if (data.success) {
                 indicator.innerHTML = '<i class="fas fa-check"></i> Saved';
-                updateProgress(data.progress);
+                // Update progress based on current step (always step 1 for form page)
+                updateProgressByStep(1);
                 setTimeout(() => {
                     indicator.classList.add('d-none');
                 }, 1500);
@@ -1760,13 +1661,54 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    function updateProgress(percentage) {
+    function updateProgressByStep(stepNumber) {
         const progressBar = document.getElementById('progressBar');
         const progressText = document.getElementById('progressText');
         if (progressBar && progressText) {
+            // Step-based progress: Step 1 = 33%, Step 2 = 66%, Step 3 = 100%
+            const stepPercentages = {
+                1: 33,
+                2: 66,
+                3: 100
+            };
+            const percentage = stepPercentages[stepNumber] || 0;
             progressBar.style.width = percentage + '%';
-            progressText.textContent = percentage + '% Complete';
+            progressText.textContent = 'Step ' + stepNumber + ' of 3';
+            
+            // Update step indicators
+            updateStepIndicators(stepNumber);
         }
+    }
+
+    function updateStepIndicators(currentStep) {
+        // Update step indicators - step items are separated by step-connector divs
+        const stepItems = document.querySelectorAll('.step-item');
+        stepItems.forEach((item, index) => {
+            const stepNum = index + 1;
+            item.classList.remove('active', 'completed');
+            
+            if (stepNum < currentStep) {
+                item.classList.add('completed');
+            } else if (stepNum === currentStep) {
+                item.classList.add('active');
+            }
+        });
+    }
+
+    // Legacy function for backward compatibility (if needed)
+    function updateProgress(percentage) {
+        // Convert percentage to step number
+        let stepNumber = 1;
+        if (percentage >= 100) {
+            stepNumber = 3;
+        } else if (percentage >= 66) {
+            stepNumber = 3;
+        } else if (percentage >= 33) {
+            stepNumber = 2;
+        } else {
+            stepNumber = 1;
+        }
+        updateProgressByStep(stepNumber);
     }
 
     function validatePromocode() {

@@ -1,34 +1,95 @@
+<style>
+    .navbar-logo-container {
+        width: 100%;
+        text-align: center;
+        padding: 8px 0;
+        border-bottom: 1px solid #e3e6f0;
+        margin-bottom: 10px;
+    }
+    
+    .navbar-logo {
+        max-width: 250px;
+        max-height: 70px;
+        width: auto;
+        height: auto;
+        object-fit: contain;
+    }
+    
+    @media (max-width: 768px) {
+        .navbar-logo {
+            max-width: 180px;
+            max-height: 50px;
+        }
+    }
+</style>
+
+<style>
+    .navbar-logo-container {
+        width: 100%;
+        text-align: center;
+        padding: 8px 0;
+        border-bottom: 1px solid #e3e6f0;
+        margin-bottom: 10px;
+    }
+    
+    .navbar-logo {
+        max-width: 250px;
+        max-height: 70px;
+        width: auto;
+        height: auto;
+        object-fit: contain;
+    }
+    
+    @media (max-width: 768px) {
+        .navbar-logo {
+            max-width: 180px;
+            max-height: 50px;
+        }
+    }
+</style>
+
 <nav class="navbar navbar-main navbar-expand-lg position-sticky mt-2 top-1 px-0 py-1 mx-3 shadow-none border-radius-lg z-index-sticky" id="navbarBlur" data-scroll="true">
     <div class="container-fluid py-1 px-2">
-        <div class="sidenav-toggler sidenav-toggler-inner d-xl-block d-none ">
-            <a href="javascript:void(0)" class="nav-link text-body p-0" onclick="toggleSidebar()" >
-                <div class="sidenav-toggler-inner">
-                    <i class="sidenav-toggler-line"></i>
-                    <i class="sidenav-toggler-line"></i>
-                    <i class="sidenav-toggler-line"></i>
-                </div>
-            </a>
+        <!-- Logo Section Above Breadcrumb -->
+        <div class="navbar-logo-container">
+            @if(config('constants.event_logo'))
+                <img src="{{ config('constants.event_logo') }}" alt="{{ config('constants.EVENT_NAME') }} Logo" class="navbar-logo">
+            @else
+                <img src="{{ asset('asset/img/logos/SEMI_IESA_logo.png') }}" alt="Logo" class="navbar-logo">
+            @endif
         </div>
-        @php
-        if(Auth::user()->role === 'co-exhibitor') {
-            $route = 'dashboard.co-exhibitor';
         
-        }else if(Auth::user()->role === 'exhibitor') {
-            $route = 'user.dashboard';
-        }else if(Auth::user()->role === 'admin') {
+        <div class="d-flex align-items-center w-100">
+            <div class="sidenav-toggler sidenav-toggler-inner d-xl-block d-none ">
+                <a href="javascript:void(0)" class="nav-link text-body p-0" onclick="toggleSidebar()" >
+                    <div class="sidenav-toggler-inner">
+                        <i class="sidenav-toggler-line"></i>
+                        <i class="sidenav-toggler-line"></i>
+                        <i class="sidenav-toggler-line"></i>
+                    </div>
+                </a>
+            </div>
+            @php
+            if(Auth::user()->role === 'co-exhibitor') {
+                $route = 'dashboard.co-exhibitor';
+            
+            }else if(Auth::user()->role === 'exhibitor') {
+                $route = 'user.dashboard';
+            }else if(Auth::user()->role === 'admin') {
 
-            $route = 'dashboard.admin';
-            if(Auth::user()->sub_role === 'visitor') {
-                $route = 'registration.analytics';
+                $route = 'dashboard.admin';
+                if(Auth::user()->sub_role === 'visitor') {
+                    $route = 'registration.analytics';
+                }
             }
-        }
-        @endphp
-        <nav aria-label="breadcrumb" class="ps-2">
-            <ol class="breadcrumb bg-transparent mb-0 p-0">
-                <li class="breadcrumb-item text-sm"><a class="opacity-5 text-dark" href="{{route($route)}}">Dashboard</a></li>
-                <li class="breadcrumb-item text-sm text-dark active font-weight-bold" aria-current="page">@yield('title')</li>
-            </ol>
-        </nav>
+            @endphp
+            <nav aria-label="breadcrumb" class="ps-2">
+                <ol class="breadcrumb bg-transparent mb-0 p-0">
+                    <li class="breadcrumb-item text-sm"><a class="opacity-5 text-dark" href="{{route($route)}}">Dashboard</a></li>
+                    <li class="breadcrumb-item text-sm text-dark active font-weight-bold" aria-current="page">@yield('title')</li>
+                </ol>
+            </nav>
+        </div>
         <div class="collapse navbar-collapse mt-sm-0 mt-2 me-md-0 me-sm-4" id="navbar">
             <div class="ms-md-auto pe-md-3 d-flex align-items-center">
 {{--                <div class="input-group input-group-outline">--}}
