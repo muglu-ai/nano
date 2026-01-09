@@ -1488,13 +1488,6 @@ class RegistrationPaymentController extends Controller
                         'payment_status' => 'paid', // Mark invoice as paid
                     ]);
                 }
-            } else {
-                // Payment failed - ensure invoice remains unpaid
-                if ($invoice && $invoice->payment_status !== 'unpaid') {
-                    $invoice->update([
-                        'payment_status' => 'unpaid', // Ensure invoice remains unpaid on failure
-                    ]);
-                }
 
                 // Send payment acknowledgement email
                 try {
@@ -1530,6 +1523,13 @@ class RegistrationPaymentController extends Controller
             } else {
                 // Payment failed - order status remains 'pending'
                 // Payment records already created above with 'failed' status
+                // Ensure invoice remains unpaid
+                if ($invoice && $invoice->payment_status !== 'unpaid') {
+                    $invoice->update([
+                        'payment_status' => 'unpaid', // Ensure invoice remains unpaid on failure
+                    ]);
+                }
+
                 return redirect()->route('tickets.payment.by-tin', [
                     'eventSlug' => $event->slug ?? $event->id,
                     'tin' => $order->order_no

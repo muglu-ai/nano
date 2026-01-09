@@ -397,15 +397,6 @@ class TicketPaymentController extends Controller
                         'pending_amount' => max(0, ($invoice->total_final_price ?? $paidAmount) - $paidAmount),
                         'payment_status' => 'paid', // Mark invoice as paid
                     ]);
-                } else {
-                    // Payment failed - ensure invoice remains unpaid
-                    // Invoice should already be 'unpaid', but ensure it stays that way
-                    if ($invoice && $invoice->payment_status !== 'unpaid') {
-                        $invoice->update([
-                            'payment_status' => 'unpaid', // Ensure invoice remains unpaid on failure
-                        ]);
-                    }
-                }
 
                     // Send payment acknowledgement email
                     try {
@@ -435,6 +426,14 @@ class TicketPaymentController extends Controller
                           'amount' => $responseArray['mer_amount'] ?? $order->total,
                       ]);
                 } else {
+                    // Payment failed - ensure invoice remains unpaid
+                    // Invoice should already be 'unpaid', but ensure it stays that way
+                    if ($invoice && $invoice->payment_status !== 'unpaid') {
+                        $invoice->update([
+                            'payment_status' => 'unpaid', // Ensure invoice remains unpaid on failure
+                        ]);
+                    }
+
                     // Payment failed
                     $failureMessage = $responseArray['failure_message'] ?? 'Payment failed. Please try again.';
                     return redirect()->route('tickets.payment.by-tin', [
