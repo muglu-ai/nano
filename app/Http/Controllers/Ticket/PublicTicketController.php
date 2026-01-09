@@ -110,6 +110,15 @@ class PublicTicketController extends Controller
         $sectors = config('constants.sectors', []);
         $organizationTypes = config('constants.organization_types', []);
         
+        // If user is coming back from preview (edit flow), load session data into old() helper
+        // The old() helper reads from flashed session data, so we need to flash it
+        $registrationData = session('ticket_registration_data');
+        if ($registrationData && $registrationData['event_id'] == $event->id) {
+            // Flash the session data so old() helper can access it
+            // This preserves all form values when user clicks "Edit Registration"
+            $request->session()->flashInput($registrationData);
+        }
+        
         return view('tickets.public.register', compact(
             'event', 
             'config', 
