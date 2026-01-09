@@ -117,7 +117,7 @@ class TicketPaymentController extends Controller
             // Create or get contact (use first delegate email if contact email not provided)
             $contactEmail = $registrationData['contact_email'] ?? ($registrationData['delegates'][0]['email'] ?? null);
             $contactName = $registrationData['contact_name'] ?? ($registrationData['delegates'][0]['first_name'] . ' ' . ($registrationData['delegates'][0]['last_name'] ?? ''));
-            $contactPhone = $registrationData['contact_phone'] ?? ($registrationData['delegates'][0]['phone'] ?? null);
+            $contactPhone = $this->formatPhoneNumber($registrationData['contact_phone'] ?? ($registrationData['delegates'][0]['phone'] ?? null));
             
             if ($contactEmail) {
                 $contact = TicketContact::firstOrCreate(
@@ -135,7 +135,7 @@ class TicketPaymentController extends Controller
                         ['email' => $firstDelegate['email']],
                         [
                             'name' => $firstDelegate['first_name'] . ' ' . ($firstDelegate['last_name'] ?? ''),
-                            'phone' => $firstDelegate['phone'] ?? null,
+                            'phone' => $this->formatPhoneNumber($firstDelegate['phone'] ?? null),
                         ]
                     );
                 } else {
@@ -151,7 +151,7 @@ class TicketPaymentController extends Controller
                 'company_country' => $registrationData['company_country'] ?? $registrationData['country'] ?? null,
                 'company_state' => $registrationData['company_state'] ?? $registrationData['state'] ?? null,
                 'company_city' => $registrationData['company_city'] ?? $registrationData['city'] ?? null,
-                'company_phone' => $registrationData['phone'],
+                'company_phone' => $this->formatPhoneNumber($registrationData['phone']),
                 'industry_sector' => $registrationData['industry_sector'],
                 'organisation_type' => $registrationData['organisation_type'],
                 'registration_category_id' => $registrationData['registration_category_id'],
@@ -239,7 +239,7 @@ class TicketPaymentController extends Controller
                         'first_name' => $delegateData['first_name'],
                         'last_name' => $delegateData['last_name'],
                         'email' => $delegateData['email'],
-                        'phone' => $delegateData['phone'] ?? null,
+                        'phone' => $this->formatPhoneNumber($delegateData['phone'] ?? null),
                         'job_title' => $delegateData['job_title'] ?? null,
                     ]);
                 }
@@ -687,6 +687,28 @@ class TicketPaymentController extends Controller
         // Last resort: use microtime
         $microtime = substr(str_replace('.', '', microtime(true)), -6);
         return $prefix . $microtime;
+    }
+    
+    /**
+     * Format phone number: Remove spaces and add dash after country code
+     * Example: +91 8619276031 -> +91-8619276031
+     * Example: +918619276031 -> +91-8619276031
+     */
+    private function formatPhoneNumber($phone)
+    {
+        if (empty($phone)) {
+            return $phone;
+        }
+        
+        // Remove all spaces
+        $phone = str_replace(' ', '', trim($phone));
+        
+        // If phone starts with +, add dash after country code (2-3 digits)
+        if (preg_match('/^(\+\d{1,3})(\d+)$/', $phone, $matches)) {
+            return $matches[1] . '-' . $matches[2];
+        }
+        
+        return $phone;
     }
 }
 

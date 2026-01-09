@@ -447,6 +447,21 @@ class PublicTicketController extends Controller
             }
         }
 
+        // Format phone numbers: Remove spaces and add dash after country code (e.g., +91-8619276031)
+        if (isset($validated['phone'])) {
+            $validated['phone'] = $this->formatPhoneNumber($validated['phone']);
+        }
+        if (isset($validated['contact_phone'])) {
+            $validated['contact_phone'] = $this->formatPhoneNumber($validated['contact_phone']);
+        }
+        
+        // Format delegate phone numbers
+        foreach ($delegates as &$delegate) {
+            if (isset($delegate['phone'])) {
+                $delegate['phone'] = $this->formatPhoneNumber($delegate['phone']);
+            }
+        }
+        
         // Store form data in session for preview (including delegates)
         $registrationData = array_merge($validated, [
             'event_id' => $event->id,
@@ -570,9 +585,48 @@ class PublicTicketController extends Controller
         ]);
 
         $gstin = strtoupper($request->gstin);
+        $ipAddress = $request->ip();
         
         try {
-            $gst = GstLookup::findOrFetch($gstin);
+            // First, check if GST exists in GstLookup table (cache)
+            $gst = GstLookup::where('gst_number', $gstin)->first();
+            
+            if ($gst) {
+                // Update last verified timestamp
+                $gst->update(['last_verified_at' => now()]);
+                
+                return response()->json([
+                    'success' => true,
+                    'gst' => [
+                        'company_name' => $gst->company_name,
+                        'billing_address' => $gst->billing_address,
+                        'state_name' => $gst->state_name,
+                        'state_code' => $gst->state_code,
+                        'pincode' => $gst->pincode,
+                        'city' => $gst->city,
+                        'pan' => $gst->pan,
+                    ],
+                    'from_cache' => true
+                ]);
+            }
+            
+            // If not in cache, check IP-based rate limiting (3 hits per IP)
+            $ipHits = cache()->get("gst_validation_ip_{$ipAddress}", 0);
+            
+            if ($ipHits >= 3) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'GST validation limit exceeded (3 attempts per IP). Please fill the details manually.',
+                    'limit_exceeded' => true,
+                    'allow_manual' => true
+                ], 429);
+            }
+            
+            // Increment IP hit counter
+            cache()->put("gst_validation_ip_{$ipAddress}", $ipHits + 1, now()->addHours(24));
+            
+            // Fetch from API (this will also save to GstLookup)
+            $gst = GstLookup::fetchFromApi($gstin);
             
             if ($gst) {
                 return response()->json([
@@ -585,19 +639,29 @@ class PublicTicketController extends Controller
                         'pincode' => $gst->pincode,
                         'city' => $gst->city,
                         'pan' => $gst->pan,
-                    ]
+                    ],
+                    'from_cache' => false
                 ]);
             }
             
             return response()->json([
                 'success' => false,
-                'message' => 'GST number not found or invalid.'
+                'message' => 'GST number not found or invalid. Please fill the details manually.',
+                'allow_manual' => true
             ], 404);
             
         } catch (\Exception $e) {
+            Log::error('GST Validation Error', [
+                'gstin' => $gstin,
+                'ip' => $ipAddress,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
             return response()->json([
                 'success' => false,
-                'message' => 'Error validating GST: ' . $e->getMessage()
+                'message' => 'Error validating GST. Please fill the details manually.',
+                'allow_manual' => true
             ], 500);
         }
     }
@@ -680,6 +744,28 @@ class PublicTicketController extends Controller
     {
         // TODO: Implement magic link continuation
         return redirect()->back()->with('error', 'Feature not yet implemented');
+    }
+    
+    /**
+     * Format phone number: Remove spaces and add dash after country code
+     * Example: +91 8619276031 -> +91-8619276031
+     * Example: +918619276031 -> +91-8619276031
+     */
+    private function formatPhoneNumber($phone)
+    {
+        if (empty($phone)) {
+            return $phone;
+        }
+        
+        // Remove all spaces
+        $phone = str_replace(' ', '', trim($phone));
+        
+        // If phone starts with +, add dash after country code (2-3 digits)
+        if (preg_match('/^(\+\d{1,3})(\d+)$/', $phone, $matches)) {
+            return $matches[1] . '-' . $matches[2];
+        }
+        
+        return $phone;
     }
 }
 

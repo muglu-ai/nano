@@ -414,15 +414,23 @@
                     <div class="row">
                         <div class="col-md-12 mb-3">
                             <label class="form-label">GSTIN</label>
-                            <input type="text" name="gstin" class="form-control" 
-                                   value="{{ old('gstin') }}" 
-                                   placeholder="Enter GSTIN" 
-                                   id="gstin_input"
-                                   maxlength="15">
-                            <small class="form-text text-muted">Enter 15-character GSTIN for validation</small>
+                            <div class="input-group">
+                                <input type="text" name="gstin" class="form-control" 
+                                       value="{{ old('gstin') }}" 
+                                       placeholder="Enter GSTIN" 
+                                       id="gstin_input"
+                                       maxlength="15">
+                                <button type="button" class="btn btn-outline-primary" id="validateGstBtn" style="display: none;">
+                                    <i class="fas fa-search me-1"></i>Validate GST
+                                </button>
+                            </div>
+                            <small class="form-text text-muted">Enter 15-character GSTIN and click "Validate GST" to auto-fill details</small>
                             @error('gstin')
                                 <div class="text-danger">{{ $message }}</div>
                             @enderror
+                            <div id="gst_loading" class="d-none mt-2">
+                                <small class="text-info"><i class="fas fa-spinner fa-spin"></i> Validating GST...</small>
+                            </div>
                             <div id="gst_validation_message" class="mt-2"></div>
                         </div>
                     </div>
@@ -1032,6 +1040,9 @@ document.addEventListener('DOMContentLoaded', function() {
     const contactEmail = document.getElementById('contact_email');
     const contactPhone = document.getElementById('contact_phone');
 
+    const validateGstBtn = document.getElementById('validateGstBtn');
+    const gstLoading = document.getElementById('gst_loading');
+    
     gstRequired.addEventListener('change', function() {
         if (this.value === '1') {
             gstFields.style.display = 'block';
@@ -1039,61 +1050,97 @@ document.addEventListener('DOMContentLoaded', function() {
             if (contactName) contactName.required = true;
             if (contactEmail) contactEmail.required = true;
             if (contactPhone) contactPhone.required = true;
+            if (validateGstBtn) validateGstBtn.style.display = 'inline-block';
         } else {
             gstFields.style.display = 'none';
             primaryContactSection.style.display = 'none';
             if (contactName) contactName.required = false;
             if (contactEmail) contactEmail.required = false;
             if (contactPhone) contactPhone.required = false;
+            if (validateGstBtn) validateGstBtn.style.display = 'none';
         }
     });
+    
+    // Initialize validate button visibility
+    if (gstRequired.value === '1' && validateGstBtn) {
+        validateGstBtn.style.display = 'inline-block';
+    }
 
-    // GST validation
+    // GST validation via button
     const gstinInput = document.getElementById('gstin_input');
     const gstValidationMessage = document.getElementById('gst_validation_message');
 
-    if (gstinInput) {
-        let gstValidationTimeout;
-        gstinInput.addEventListener('input', function() {
-            clearTimeout(gstValidationTimeout);
-            const gstin = this.value.trim();
+    if (validateGstBtn && gstinInput) {
+        validateGstBtn.addEventListener('click', function() {
+            const gstin = gstinInput.value.trim().toUpperCase();
             
-            if (gstin.length === 15) {
-                gstValidationTimeout = setTimeout(() => {
-                    fetch('{{ route("tickets.validate-gst") }}', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                        },
-                        body: JSON.stringify({ gstin: gstin })
-                    })
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.valid) {
-                            gstValidationMessage.innerHTML = '<span class="text-success"><i class="fas fa-check-circle"></i> Valid GSTIN</span>';
-                            if (data.legal_name && !document.querySelector('input[name="gst_legal_name"]').value) {
-                                document.querySelector('input[name="gst_legal_name"]').value = data.legal_name;
-                            }
-                            if (data.address && !document.querySelector('textarea[name="gst_address"]').value) {
-                                document.querySelector('textarea[name="gst_address"]').value = data.address;
-                            }
-                            if (data.state && !document.querySelector('input[name="gst_state"]').value) {
-                                document.querySelector('input[name="gst_state"]').value = data.state;
-                            }
-                        } else {
-                            gstValidationMessage.innerHTML = '<span class="text-danger"><i class="fas fa-times-circle"></i> Invalid GSTIN</span>';
-                        }
-                    })
-                    .catch(error => {
-                        console.error('GST validation error:', error);
-                    });
-                }, 500);
-            } else if (gstin.length > 0) {
-                gstValidationMessage.innerHTML = '<span class="text-warning">GSTIN must be 15 characters</span>';
-            } else {
-                gstValidationMessage.innerHTML = '';
+            // Validate format
+            if (gstin.length !== 15) {
+                gstValidationMessage.innerHTML = '<div class="alert alert-warning mt-2"><i class="fas fa-exclamation-triangle"></i> GSTIN must be 15 characters</div>';
+                return;
             }
+            
+            // Validate pattern
+            const gstPattern = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/;
+            if (!gstPattern.test(gstin)) {
+                gstValidationMessage.innerHTML = '<div class="alert alert-warning mt-2"><i class="fas fa-exclamation-triangle"></i> Invalid GSTIN format</div>';
+                return;
+            }
+            
+            // Show loading
+            validateGstBtn.disabled = true;
+            gstLoading.classList.remove('d-none');
+            gstValidationMessage.innerHTML = '';
+            
+            // Make API call
+            fetch('{{ route("tickets.validate-gst") }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                },
+                body: JSON.stringify({ gstin: gstin })
+            })
+            .then(response => {
+                const status = response.status;
+                return response.json().then(data => ({ status, data }));
+            })
+            .then(({ status, data }) => {
+                gstLoading.classList.add('d-none');
+                validateGstBtn.disabled = false;
+                
+                if (data.success) {
+                    // Auto-fill form fields
+                    const legalNameInput = document.querySelector('input[name="gst_legal_name"]');
+                    const addressInput = document.querySelector('textarea[name="gst_address"]');
+                    const stateInput = document.querySelector('input[name="gst_state"]');
+                    
+                    if (data.gst.company_name && legalNameInput && !legalNameInput.value) {
+                        legalNameInput.value = data.gst.company_name;
+                    }
+                    if (data.gst.billing_address && addressInput && !addressInput.value) {
+                        addressInput.value = data.gst.billing_address;
+                    }
+                    if (data.gst.state_name && stateInput && !stateInput.value) {
+                        stateInput.value = data.gst.state_name;
+                    }
+                    
+                    const cacheMsg = data.from_cache ? ' (from cache)' : '';
+                    gstValidationMessage.innerHTML = '<div class="alert alert-success mt-2"><i class="fas fa-check-circle"></i> GST validated successfully' + cacheMsg + '</div>';
+                } else if (status === 429 || data.limit_exceeded) {
+                    // Rate limit exceeded
+                    gstValidationMessage.innerHTML = '<div class="alert alert-warning mt-2"><i class="fas fa-exclamation-triangle"></i> ' + data.message + '</div>';
+                } else {
+                    // Error or not found
+                    gstValidationMessage.innerHTML = '<div class="alert alert-info mt-2"><i class="fas fa-info-circle"></i> ' + (data.message || 'GST not found. Please fill details manually.') + '</div>';
+                }
+            })
+            .catch(error => {
+                gstLoading.classList.add('d-none');
+                validateGstBtn.disabled = false;
+                console.error('GST validation error:', error);
+                gstValidationMessage.innerHTML = '<div class="alert alert-danger mt-2"><i class="fas fa-times-circle"></i> Error validating GST. Please fill details manually.</div>';
+            });
         });
     }
 
@@ -1104,6 +1151,13 @@ document.addEventListener('DOMContentLoaded', function() {
     registrationForm.addEventListener('submit', function(e) {
         e.preventDefault();
         
+        // Remove spaces from all phone numbers before submission
+        function removeSpacesFromPhone(input) {
+            if (input && input.value) {
+                input.value = input.value.replace(/\s/g, '');
+            }
+        }
+        
         // Update phone numbers with full international format before submission
         // Company phone
         const companyPhoneInput = document.getElementById('company_phone');
@@ -1111,6 +1165,8 @@ document.addEventListener('DOMContentLoaded', function() {
             if (itiCompany.isValidNumber()) {
                 companyPhoneInput.value = itiCompany.getNumber();
             }
+            // Remove spaces
+            removeSpacesFromPhone(companyPhoneInput);
         }
         
         // Contact phone
@@ -1119,6 +1175,8 @@ document.addEventListener('DOMContentLoaded', function() {
             if (itiContact.isValidNumber()) {
                 contactPhoneInput.value = itiContact.getNumber();
             }
+            // Remove spaces
+            removeSpacesFromPhone(contactPhoneInput);
         }
         
         // Delegate phones - use stored instances
@@ -1127,6 +1185,13 @@ document.addEventListener('DOMContentLoaded', function() {
             if (iti && iti.isValidNumber()) {
                 phoneInput.value = iti.getNumber();
             }
+            // Remove spaces
+            removeSpacesFromPhone(phoneInput);
+        });
+        
+        // Also remove spaces from hidden country code fields
+        document.querySelectorAll('input[name*="phone_country_code"]').forEach(function(input) {
+            removeSpacesFromPhone(input);
         });
         
         submitBtn.disabled = true;
