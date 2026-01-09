@@ -167,9 +167,9 @@ class PublicTicketController extends Controller
             'organisation_name' => 'required|string|max:255',
             'industry_sector' => 'required|string|max:255',
             'organisation_type' => 'required|string|max:255',
-            'country' => 'required|string|max:255',
-            'state' => 'nullable|string|max:255',
-            'city' => 'nullable|string|max:255',
+            'company_country' => 'required|string|max:255',
+            'company_state' => 'nullable|string|max:255',
+            'company_city' => 'nullable|string|max:255',
             'phone' => 'required|string|max:20',
             'email' => 'nullable|email|max:255',
             'gst_required' => 'required|in:0,1',
@@ -440,7 +440,8 @@ class PublicTicketController extends Controller
         $gstRate = config('constants.GST_RATE', 18);
         
         // Get processing charge rate (3% for India, 9% for International)
-        $isIndian = strtolower($registrationData['country']) === 'india' || $registrationData['nationality'] === 'Indian';
+        $country = $registrationData['company_country'] ?? $registrationData['country'] ?? '';
+        $isIndian = strtolower($country) === 'india' || $registrationData['nationality'] === 'Indian';
         $processingChargeRate = $isIndian 
             ? config('constants.IND_PROCESSING_CHARGE', 3) 
             : config('constants.INT_PROCESSING_CHARGE', 9);

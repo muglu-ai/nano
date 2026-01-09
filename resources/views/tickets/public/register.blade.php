@@ -356,7 +356,10 @@
                         <label class="form-label required-field">Phone Number</label>
                         <input type="tel" name="phone" class="form-control" id="company_phone" 
                                value="{{ old('phone') }}" 
-                               placeholder="Enter phone number" required>
+                               placeholder="Enter phone number" 
+                               pattern="[0-9]*"
+                               inputmode="numeric"
+                               required>
                         <input type="hidden" name="phone_country_code" id="company_phone_country_code" value="{{ old('phone_country_code', '+91') }}">
                         @error('phone')
                             <div class="text-danger">{{ $message }}</div>
@@ -496,7 +499,10 @@
                         <label class="form-label required-field">Mobile Number</label>
                         <input type="tel" name="contact_phone" class="form-control" 
                                value="{{ old('contact_phone') }}" 
-                               placeholder="Enter mobile number" id="contact_phone">
+                               placeholder="Enter mobile number" 
+                               id="contact_phone"
+                               pattern="[0-9]*"
+                               inputmode="numeric">
                         <input type="hidden" name="contact_phone_country_code" id="contact_phone_country_code" value="{{ old('contact_phone_country_code', '+91') }}">
                         @error('contact_phone')
                             <div class="text-danger">{{ $message }}</div>
@@ -591,7 +597,10 @@ document.addEventListener('DOMContentLoaded', function() {
                         <input type="tel" name="delegates[${i}][phone]" class="form-control delegate-phone" 
                                id="delegate_phone_${i}"
                                value="${delegateData.phone || ''}" 
-                               placeholder="Enter mobile number" required>
+                               placeholder="Enter mobile number" 
+                               pattern="[0-9]*"
+                               inputmode="numeric"
+                               required>
                         <input type="hidden" name="delegates[${i}][phone_country_code]" id="delegate_phone_country_code_${i}" value="${delegateData.phone_country_code || '+91'}">
                     </div>
                 </div>
@@ -623,6 +632,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     
                     // Store the instance for later use
                     delegatePhoneInstances.set(delegatePhoneInput, itiDelegate);
+                    
+                    // Apply numeric restriction
+                    restrictToNumbers(delegatePhoneInput);
                     
                     // Set old value if exists
                     if (delegateData.phone) {
@@ -724,6 +736,72 @@ document.addEventListener('DOMContentLoaded', function() {
     let itiCompany = null;
     let itiContact = null;
     
+    // Add numeric-only validation for phone inputs
+    function restrictToNumbers(input) {
+        // Clean input on blur to remove any non-numeric characters
+        input.addEventListener('blur', function(e) {
+            let value = e.target.value;
+            // Remove all non-numeric characters (intl-tel-input handles country code separately)
+            value = value.replace(/[^\d]/g, '');
+            // Only update if value changed and we have a valid number
+            if (value && value !== e.target.value.replace(/[^\d]/g, '')) {
+                // If intl-tel-input is initialized, use its setNumber method
+                const itiInstance = delegatePhoneInstances.get(e.target) || 
+                                 (e.target.id === 'company_phone' ? itiCompany : null) ||
+                                 (e.target.id === 'contact_phone' ? itiContact : null);
+                if (itiInstance && value) {
+                    try {
+                        itiInstance.setNumber('+' + (e.target.closest('.iti') ? 
+                            itiInstance.getSelectedCountryData().dialCode : '91') + value);
+                    } catch(err) {
+                        // If setNumber fails, just set the numeric value
+                        e.target.value = value;
+                    }
+                } else {
+                    e.target.value = value;
+                }
+            }
+        });
+        
+        // Prevent non-numeric keypress
+        input.addEventListener('keypress', function(e) {
+            // Allow: backspace, delete, tab, escape, enter
+            if ([46, 8, 9, 27, 13].indexOf(e.keyCode) !== -1 ||
+                // Allow: Ctrl+A, Ctrl+C, Ctrl+V, Ctrl+X
+                (e.keyCode === 65 && e.ctrlKey === true) ||
+                (e.keyCode === 67 && e.ctrlKey === true) ||
+                (e.keyCode === 86 && e.ctrlKey === true) ||
+                (e.keyCode === 88 && e.ctrlKey === true) ||
+                // Allow: home, end, left, right
+                (e.keyCode >= 35 && e.keyCode <= 39)) {
+                return;
+            }
+            // Only allow numeric keys (0-9)
+            if ((e.shiftKey || (e.keyCode < 48 || e.keyCode > 57)) && (e.keyCode < 96 || e.keyCode > 105)) {
+                e.preventDefault();
+            }
+        });
+        
+        // Clean paste events - extract only numbers
+        input.addEventListener('paste', function(e) {
+            e.preventDefault();
+            const paste = (e.clipboardData || window.clipboardData).getData('text');
+            const numbersOnly = paste.replace(/[^\d]/g, '');
+            if (numbersOnly) {
+                // Insert at cursor position
+                const start = this.selectionStart;
+                const end = this.selectionEnd;
+                const currentValue = this.value;
+                const newValue = currentValue.substring(0, start) + numbersOnly + currentValue.substring(end);
+                this.value = newValue;
+                this.setSelectionRange(start + numbersOnly.length, start + numbersOnly.length);
+                
+                // Trigger input event for intl-tel-input to update
+                this.dispatchEvent(new Event('input', { bubbles: true }));
+            }
+        });
+    }
+    
     // Wait for intlTelInput to be available
     function initializePhoneInputs() {
         if (typeof window.intlTelInput === 'undefined') {
@@ -746,6 +824,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 nationalMode: false,
                 autoPlaceholder: 'off',
             });
+            
+            // Apply numeric restriction
+            restrictToNumbers(companyPhoneInput);
             
             companyPhoneInput.addEventListener('countrychange', function () {
                 const countryData = itiCompany.getSelectedCountryData();
@@ -771,6 +852,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 autoPlaceholder: 'off',
             });
             
+            // Apply numeric restriction
+            restrictToNumbers(contactPhoneInput);
+            
             contactPhoneInput.addEventListener('countrychange', function () {
                 const countryData = itiContact.getSelectedCountryData();
                 contactPhoneCountryCode.value = '+' + countryData.dialCode;
@@ -783,6 +867,18 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Initialize phone inputs
     initializePhoneInputs();
+    
+    // Apply numeric restriction to all phone inputs (for dynamically added ones)
+    setTimeout(function() {
+        const phoneInputs = document.querySelectorAll('input[type="tel"]');
+        phoneInputs.forEach(function(input) {
+            // Only apply if not already restricted
+            if (!input.hasAttribute('data-restricted')) {
+                restrictToNumbers(input);
+                input.setAttribute('data-restricted', 'true');
+            }
+        });
+    }, 500);
 
     // GST toggle
     const gstRequired = document.getElementById('gst_required');
