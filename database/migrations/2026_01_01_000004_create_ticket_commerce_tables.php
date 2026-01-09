@@ -57,7 +57,7 @@ return new class extends Migration
             Schema::create('ticket_payments', function (Blueprint $table) {
             $table->id();
             $table->json('order_ids_json'); // Array of order_ids - supports multiple orders
-            $table->enum('method', ['upi', 'netbanking', 'card', 'manual', 'offline'])->default('card');
+            $table->string('method')->default('card'); // Changed from enum to string to support any payment method
             $table->decimal('amount', 10, 2);
             $table->enum('status', ['pending', 'processing', 'completed', 'failed', 'refunded'])->default('pending');
             $table->string('gateway_txn_id')->nullable();
