@@ -398,7 +398,7 @@ class TicketPaymentController extends Controller
                         'payment_status' => 'paid', // Mark invoice as paid
                     ]);
 
-                    // Send payment acknowledgement email
+                    // Send payment acknowledgement email (payment successful)
                     try {
                         $contactEmail = $order->registration->contact->email ?? null;
                         if ($contactEmail) {
@@ -407,7 +407,8 @@ class TicketPaymentController extends Controller
                             if (!empty($adminEmails)) {
                                 $mail->bcc($adminEmails);
                             }
-                            $mail->send(new TicketRegistrationMail($order, $event));
+                            // Pass true to indicate payment is successful
+                            $mail->send(new TicketRegistrationMail($order, $event, true));
                         }
                     } catch (\Exception $e) {
                         Log::error('Failed to send ticket payment acknowledgement email', [

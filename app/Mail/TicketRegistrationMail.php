@@ -16,14 +16,16 @@ class TicketRegistrationMail extends Mailable
 
     public $order;
     public $event;
+    public $isPaymentSuccessful;
 
     /**
      * Create a new message instance.
      */
-    public function __construct(TicketOrder $order, Events $event)
+    public function __construct(TicketOrder $order, Events $event, $isPaymentSuccessful = false)
     {
         $this->order = $order;
         $this->event = $event;
+        $this->isPaymentSuccessful = $isPaymentSuccessful;
     }
 
     /**
@@ -34,8 +36,15 @@ class TicketRegistrationMail extends Mailable
         $eventName = $this->event->event_name ?? config('constants.EVENT_NAME', 'Event');
         $eventYear = $this->event->event_year ?? config('constants.EVENT_YEAR', date('Y'));
         
+        // Check if payment is successful (either from parameter or order status)
+        $isPaid = $this->isPaymentSuccessful || ($this->order->status === 'paid');
+        
+        $subject = $isPaid 
+            ? "Thank You for Registration at {$eventName} {$eventYear}"
+            : "Thank You for Initiating Registration at {$eventName} {$eventYear}";
+        
         return new Envelope(
-            subject: "Thank You for Initiating Registration at {$eventName} {$eventYear}",
+            subject: $subject,
         );
     }
 
