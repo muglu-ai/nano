@@ -804,12 +804,17 @@ class RegistrationPaymentController extends Controller
                 ->first();
 
             if (!$invoice) {
+                // Determine currency from nationality, not event
+                $isInternational = ($order->registration->nationality === 'International' || 
+                                   $order->registration->nationality === 'international');
+                $currency = $isInternational ? 'USD' : 'INR';
+                
                 $orderTotal = $order->total ?? 0;
                 $invoice = Invoice::create([
                     'invoice_no'         => $order->order_no,
                     'type'               => 'ticket_registration',
                     'registration_id'    => $order->registration_id, // link to ticket registration for traceability
-                    'currency'           => $order->registration->event->currency ?? 'INR',
+                    'currency'           => $currency, // Use nationality-based currency, not event currency
                     'amount'             => $orderTotal, // base amount required by DB
                     'price'              => $orderTotal,
                     'gst'                => $order->gst_total ?? 0,
@@ -821,13 +826,33 @@ class RegistrationPaymentController extends Controller
                 ]);
             }
 
-            // Determine payment gateway based on country
+            // Determine payment gateway based on nationality (not company_country)
             $registration = $order->registration;
-            $isIndian = strtolower($registration->company_country ?? '') === 'india' 
-                     || strtolower($registration->nationality ?? '') === 'indian';
+            $isInternational = ($registration->nationality === 'International' || 
+                               $registration->nationality === 'international');
+            $isIndian = !$isInternational; // If not international, then Indian
             
-            $paymentGateway = $isIndian ? 'CCAvenue' : 'PayPal';
-            $currency = $isIndian ? 'INR' : 'USD';
+            // Determine currency and gateway based on nationality
+            $currency = $isInternational ? 'USD' : 'INR';
+            $paymentGateway = $isInternational ? 'PayPal' : 'CCAvenue';
+            
+            // IMPORTANT: Enforce currency-gateway matching
+            if ($currency === 'USD' && $paymentGateway !== 'PayPal') {
+                $paymentGateway = 'PayPal'; // Force PayPal for USD
+            }
+            if ($currency === 'INR' && $paymentGateway !== 'CCAvenue') {
+                $paymentGateway = 'CCAvenue'; // Force CCAvenue for INR
+            }
+            
+            // Log gateway selection for debugging
+            Log::info('Ticket Payment Gateway Selection', [
+                'order_no' => $order->order_no,
+                'nationality' => $registration->nationality,
+                'is_international' => $isInternational,
+                'currency' => $currency,
+                'payment_gateway' => $paymentGateway,
+                'amount' => $amount,
+            ]);
             
             // Get billing details
             $billingName = $registration->contact->name ?? '';
@@ -838,11 +863,10 @@ class RegistrationPaymentController extends Controller
             $orderIdWithTimestamp = $order->order_no . '_' . time();
             $amount = $order->total;
             
-            // Convert to USD if PayPal
-            if ($paymentGateway === 'PayPal' && $currency === 'USD') {
-                $usdRate = config('constants.USD_RATE', 83);
-                $amount = $amount / $usdRate;
-            }
+            // IMPORTANT: Amount is already in the correct currency (USD for international, INR for national)
+            // Do NOT convert - the order total is already stored in the correct currency
+            // For international: amount is already in USD
+            // For national: amount is already in INR
 
             // Create or reuse a pending payment entry (like PaymentGatewayController style validation)
             $existingPayment = Payment::where('invoice_id', $invoice->id)
@@ -1172,24 +1196,24 @@ class RegistrationPaymentController extends Controller
             $paymentTableStatus = $isSuccess ? 'successful' : 'failed';
 
             // Always create ticket payment record (for both success and failure)
-            TicketPayment::create([
-                'order_ids_json' => [$order->id],
-                'method' => strtolower($responseArray['payment_mode'] ?? 'card'),
-                'amount' => $responseArray['mer_amount'] ?? $order->total,
+                TicketPayment::create([
+                    'order_ids_json' => [$order->id],
+                    'method' => strtolower($responseArray['payment_mode'] ?? 'card'),
+                    'amount' => $responseArray['mer_amount'] ?? $order->total,
                 'status' => $paymentStatus,
-                'gateway_txn_id' => $responseArray['tracking_id'] ?? null,
-                'gateway_name' => 'ccavenue',
+                    'gateway_txn_id' => $responseArray['tracking_id'] ?? null,
+                    'gateway_name' => 'ccavenue',
                 'paid_at' => $isSuccess ? $transDate : null,
-                'pg_request_json' => [],
-                'pg_response_json' => $responseArray,
-                'pg_webhook_json' => [],
-            ]);
+                    'pg_request_json' => [],
+                    'pg_response_json' => $responseArray,
+                    'pg_webhook_json' => [],
+                ]);
 
             // Always create Payment record in payments table with TIN/order_no
             // Check if payment already exists (for retry scenarios)
-            $payment = null;
-            if ($invoice) {
-                $payment = Payment::where('invoice_id', $invoice->id)
+                $payment = null;
+                if ($invoice) {
+                    $payment = Payment::where('invoice_id', $invoice->id)
                     ->where('order_id', $order->order_no) // Use TIN/order_no for matching
                     ->latest()
                     ->first();
@@ -1200,11 +1224,11 @@ class RegistrationPaymentController extends Controller
                         $query->whereNull('invoice_id')
                               ->orWhere('invoice_id', 0);
                     })
-                    ->latest()
-                    ->first();
-            }
+                        ->latest()
+                        ->first();
+                }
 
-            if (!$payment) {
+                if (!$payment) {
                 // Create new payment record
                 // Invoice should exist as it's created during order creation or payment initiation
                 if (!$invoice) {
@@ -1234,36 +1258,36 @@ class RegistrationPaymentController extends Controller
                 
                 Payment::create([
                     'invoice_id' => $invoice->id, // Invoice should always exist now
-                    'payment_method' => $responseArray['payment_mode'] ?? 'CCAvenue',
-                    'amount' => $responseArray['mer_amount'] ?? $order->total,
+                        'payment_method' => $responseArray['payment_mode'] ?? 'CCAvenue',
+                        'amount' => $responseArray['mer_amount'] ?? $order->total,
                     'amount_paid' => $isSuccess ? ($responseArray['mer_amount'] ?? $order->total) : 0,
                     'amount_received' => $isSuccess ? ($responseArray['mer_amount'] ?? $order->total) : 0,
                     'transaction_id' => $responseArray['tracking_id'] ?? $order->order_no,
-                    'pg_result' => $orderStatus,
-                    'track_id' => $responseArray['tracking_id'] ?? null,
-                    'pg_response_json' => json_encode($responseArray),
+                        'pg_result' => $orderStatus,
+                        'track_id' => $responseArray['tracking_id'] ?? null,
+                        'pg_response_json' => json_encode($responseArray),
                     'payment_date' => $isSuccess ? $transDate : null,
-                    'currency' => 'INR',
+                        'currency' => 'INR',
                     'status' => $paymentTableStatus,
                     'order_id' => $order->order_no, // Store TIN/order_no in order_id field
-                ]);
-            } else {
+                    ]);
+                } else {
                 // Update existing payment record
-                $payment->update([
-                    'payment_method' => $responseArray['payment_mode'] ?? 'CCAvenue',
-                    'amount' => $responseArray['mer_amount'] ?? $order->total,
+                    $payment->update([
+                        'payment_method' => $responseArray['payment_mode'] ?? 'CCAvenue',
+                        'amount' => $responseArray['mer_amount'] ?? $order->total,
                     'amount_paid' => $isSuccess ? ($responseArray['mer_amount'] ?? $order->total) : 0,
                     'amount_received' => $isSuccess ? ($responseArray['mer_amount'] ?? $order->total) : 0,
                     'transaction_id' => $responseArray['tracking_id'] ?? $order->order_no,
-                    'pg_result' => $orderStatus,
-                    'track_id' => $responseArray['tracking_id'] ?? null,
-                    'pg_response_json' => json_encode($responseArray),
+                        'pg_result' => $orderStatus,
+                        'track_id' => $responseArray['tracking_id'] ?? null,
+                        'pg_response_json' => json_encode($responseArray),
                     'payment_date' => $isSuccess ? $transDate : null,
-                    'currency' => 'INR',
+                        'currency' => 'INR',
                     'status' => $paymentTableStatus,
                     'order_id' => $order->order_no, // Ensure TIN/order_no is stored
-                ]);
-            }
+                    ]);
+                }
 
             if ($isSuccess) {
                 // Update order status
@@ -1376,15 +1400,15 @@ class RegistrationPaymentController extends Controller
                     'updated_at' => now(),
                 ]);
 
-            // Get amount from capture
-            $amount = 0;
-            if ($captureResult->getPurchaseUnits() && count($captureResult->getPurchaseUnits()) > 0) {
-                $purchaseUnit = $captureResult->getPurchaseUnits()[0];
-                if ($purchaseUnit->getPayments() && $purchaseUnit->getPayments()->getCaptures()) {
-                    $capture = $purchaseUnit->getPayments()->getCaptures()[0];
-                    $amount = $capture->getAmount()->getValue();
+                // Get amount from capture
+                $amount = 0;
+                if ($captureResult->getPurchaseUnits() && count($captureResult->getPurchaseUnits()) > 0) {
+                    $purchaseUnit = $captureResult->getPurchaseUnits()[0];
+                    if ($purchaseUnit->getPayments() && $purchaseUnit->getPayments()->getCaptures()) {
+                        $capture = $purchaseUnit->getPayments()->getCaptures()[0];
+                        $amount = $capture->getAmount()->getValue();
+                    }
                 }
-            }
 
             // Determine payment status
             $isSuccess = ($status === 'COMPLETED');
@@ -1393,24 +1417,24 @@ class RegistrationPaymentController extends Controller
             $inrAmount = $amount * (config('constants.USD_RATE', 83));
 
             // Always create ticket payment record (for both success and failure)
-            TicketPayment::create([
-                'order_ids_json' => [$order->id],
-                'method' => 'card',
+                TicketPayment::create([
+                    'order_ids_json' => [$order->id],
+                    'method' => 'card',
                 'amount' => $inrAmount,
                 'status' => $paymentStatus,
-                'gateway_txn_id' => $paypalOrderId,
-                'gateway_name' => 'paypal',
+                    'gateway_txn_id' => $paypalOrderId,
+                    'gateway_name' => 'paypal',
                 'paid_at' => $isSuccess ? now() : null,
-                'pg_request_json' => [],
-                'pg_response_json' => (array) $captureResult,
-                'pg_webhook_json' => [],
-            ]);
+                    'pg_request_json' => [],
+                    'pg_response_json' => (array) $captureResult,
+                    'pg_webhook_json' => [],
+                ]);
 
             // Always create Payment record in payments table with TIN/order_no
             // Check if payment already exists (for retry scenarios)
-            $payment = null;
-            if ($invoice) {
-                $payment = Payment::where('invoice_id', $invoice->id)
+                $payment = null;
+                if ($invoice) {
+                    $payment = Payment::where('invoice_id', $invoice->id)
                     ->where('order_id', $order->order_no) // Use TIN/order_no for matching
                     ->latest()
                     ->first();
@@ -1421,11 +1445,11 @@ class RegistrationPaymentController extends Controller
                         $query->whereNull('invoice_id')
                               ->orWhere('invoice_id', 0);
                     })
-                    ->latest()
-                    ->first();
-            }
+                        ->latest()
+                        ->first();
+                }
 
-            if (!$payment) {
+                if (!$payment) {
                 // Create new payment record
                 // Invoice should exist as it's created during order creation or payment initiation
                 if (!$invoice) {
@@ -1455,36 +1479,36 @@ class RegistrationPaymentController extends Controller
                 
                 Payment::create([
                     'invoice_id' => $invoice->id, // Invoice should always exist now
-                    'payment_method' => 'PayPal',
-                    'amount' => $inrAmount,
+                        'payment_method' => 'PayPal',
+                        'amount' => $inrAmount,
                     'amount_paid' => $isSuccess ? $inrAmount : 0,
                     'amount_received' => $isSuccess ? $inrAmount : 0,
-                    'transaction_id' => $paypalOrderId,
-                    'pg_result' => $status,
-                    'track_id' => $paypalOrderId,
-                    'pg_response_json' => json_encode($captureResult),
+                        'transaction_id' => $paypalOrderId,
+                        'pg_result' => $status,
+                        'track_id' => $paypalOrderId,
+                        'pg_response_json' => json_encode($captureResult),
                     'payment_date' => $isSuccess ? now() : null,
-                    'currency' => 'USD',
+                        'currency' => 'USD',
                     'status' => $paymentTableStatus,
                     'order_id' => $order->order_no, // Store TIN/order_no in order_id field
-                ]);
-            } else {
+                    ]);
+                } else {
                 // Update existing payment record
-                $payment->update([
-                    'payment_method' => 'PayPal',
-                    'amount' => $inrAmount,
+                    $payment->update([
+                        'payment_method' => 'PayPal',
+                        'amount' => $inrAmount,
                     'amount_paid' => $isSuccess ? $inrAmount : 0,
                     'amount_received' => $isSuccess ? $inrAmount : 0,
-                    'transaction_id' => $paypalOrderId,
-                    'pg_result' => $status,
-                    'track_id' => $paypalOrderId,
-                    'pg_response_json' => json_encode($captureResult),
+                        'transaction_id' => $paypalOrderId,
+                        'pg_result' => $status,
+                        'track_id' => $paypalOrderId,
+                        'pg_response_json' => json_encode($captureResult),
                     'payment_date' => $isSuccess ? now() : null,
-                    'currency' => 'USD',
+                        'currency' => 'USD',
                     'status' => $paymentTableStatus,
                     'order_id' => $order->order_no, // Ensure TIN/order_no is stored
-                ]);
-            }
+                    ]);
+                }
 
             if ($isSuccess) {
                 // Update order status
