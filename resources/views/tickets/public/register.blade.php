@@ -617,12 +617,41 @@ document.addEventListener('DOMContentLoaded', function() {
                         <label class="form-label required-field">Mobile Number</label>
                         <input type="tel" name="delegates[${i}][phone]" class="form-control delegate-phone" 
                                id="delegate_phone_${i}"
-                               value="${(delegateData.phone || '').replace(/\s/g, '')}" 
+                               value="${(() => {
+                                   let phone = delegateData.phone || '';
+                                   if (phone && phone.includes('-')) {
+                                       const parts = phone.split('-');
+                                       if (parts.length === 2 && parts[0].startsWith('+')) {
+                                           return parts[1].replace(/\s/g, '');
+                                       }
+                                   } else if (phone && phone.startsWith('+')) {
+                                       const match = phone.match(/^(\+\d{1,3})(.+)$/);
+                                       if (match) {
+                                           return match[2].replace(/\s/g, '');
+                                       }
+                                   }
+                                   return phone.replace(/\s/g, '');
+                               })()}" 
                                placeholder="Enter mobile number" 
                                pattern="[0-9]*"
                                inputmode="numeric"
                                required>
-                        <input type="hidden" name="delegates[${i}][phone_country_code]" id="delegate_phone_country_code_${i}" value="${delegateData.phone_country_code || '+91'}">
+                        <input type="hidden" name="delegates[${i}][phone_country_code]" id="delegate_phone_country_code_${i}" value="${(() => {
+                            let phone = delegateData.phone || '';
+                            let countryCode = delegateData.phone_country_code || '+91';
+                            if (phone && phone.includes('-')) {
+                                const parts = phone.split('-');
+                                if (parts.length === 2 && parts[0].startsWith('+')) {
+                                    return parts[0];
+                                }
+                            } else if (phone && phone.startsWith('+')) {
+                                const match = phone.match(/^(\+\d{1,3})(.+)$/);
+                                if (match) {
+                                    return match[1];
+                                }
+                            }
+                            return countryCode;
+                        })()}"
                     </div>
                 </div>
                 <div class="row">
@@ -660,14 +689,59 @@ document.addEventListener('DOMContentLoaded', function() {
                     // Re-apply restriction after intl-tel-input initialization to ensure it still works
                     restrictToNumbers(delegatePhoneInput);
                     
-                    // Set old value if exists (clean spaces first)
+                    // Set old value if exists - handle +CC-NUMBER format
                     if (delegateData.phone) {
-                        let cleanPhone = delegateData.phone.toString().replace(/\s/g, '').replace(/[^\d+]/g, '');
-                        itiDelegate.setNumber(cleanPhone);
-                        // Clean again after setting
-                        setTimeout(function() {
-                            cleanPhoneNumber(delegatePhoneInput);
-                        }, 100);
+                        let phoneValue = delegateData.phone.toString();
+                        let countryCode = '+91';
+                        let phoneNumber = '';
+                        
+                        // Check if in format +CC-NUMBER
+                        if (phoneValue.includes('-')) {
+                            const parts = phoneValue.split('-');
+                            if (parts.length === 2 && parts[0].startsWith('+')) {
+                                countryCode = parts[0];
+                                phoneNumber = parts[1].replace(/\s/g, '');
+                            }
+                        } else if (phoneValue.startsWith('+')) {
+                            // Extract country code and number
+                            const match = phoneValue.match(/^(\+\d{1,3})(.+)$/);
+                            if (match) {
+                                countryCode = match[1];
+                                phoneNumber = match[2].replace(/\s/g, '');
+                            }
+                        } else {
+                            phoneNumber = phoneValue.replace(/\s/g, '');
+                        }
+                        
+                        // Set country code in hidden field
+                        if (delegatePhoneCountryCode) {
+                            delegatePhoneCountryCode.value = countryCode;
+                        }
+                        
+                        // Determine country from country code
+                        let initialCountry = 'in';
+                        if (countryCode) {
+                            const countryCodeNum = countryCode.replace('+', '');
+                            const countryMap = {
+                                '91': 'in', '1': 'us', '44': 'gb', '61': 'au', '86': 'cn',
+                                '33': 'fr', '49': 'de', '81': 'jp', '82': 'kr', '65': 'sg'
+                            };
+                            if (countryMap[countryCodeNum]) {
+                                initialCountry = countryMap[countryCodeNum];
+                            }
+                        }
+                        
+                        // Set country in intl-tel-input
+                        try {
+                            itiDelegate.setCountry(initialCountry);
+                        } catch(e) {
+                            // Fallback
+                        }
+                        
+                        // Set phone number (without country code)
+                        if (phoneNumber) {
+                            delegatePhoneInput.value = phoneNumber;
+                        }
                     }
                     
                     delegatePhoneInput.addEventListener('countrychange', function () {
@@ -913,19 +987,57 @@ document.addEventListener('DOMContentLoaded', function() {
         const companyPhoneCountryCode = document.getElementById('company_phone_country_code');
         
         if (companyPhoneInput) {
-            // Clean existing value (remove spaces) before initializing
-            let initialValue = companyPhoneInput.value || '';
-            if (initialValue) {
-                initialValue = initialValue.replace(/\s/g, '').replace(/[^\d+]/g, '');
-                companyPhoneInput.value = initialValue;
+            // Check if we have old value in format +CC-NUMBER, split it
+            let oldPhoneValue = companyPhoneInput.value || '';
+            let countryCode = '+91'; // default
+            let phoneNumber = '';
+            
+            if (oldPhoneValue && oldPhoneValue.includes('-')) {
+                // Split +91-1234567890 into +91 and 1234567890
+                const parts = oldPhoneValue.split('-');
+                if (parts.length === 2 && parts[0].startsWith('+')) {
+                    countryCode = parts[0];
+                    phoneNumber = parts[1].replace(/\s/g, '');
+                }
+            } else if (oldPhoneValue) {
+                // If old value exists but not in expected format, try to extract
+                phoneNumber = oldPhoneValue.replace(/\s/g, '');
+                // Check if it starts with country code
+                if (oldPhoneValue.startsWith('+')) {
+                    const match = oldPhoneValue.match(/^(\+\d{1,3})(.+)$/);
+                    if (match) {
+                        countryCode = match[1];
+                        phoneNumber = match[2].replace(/\s/g, '');
+                    }
+                }
+            }
+            
+            // Set the country code in hidden field
+            if (companyPhoneCountryCode) {
+                companyPhoneCountryCode.value = countryCode;
             }
             
             // Apply restriction BEFORE initializing intl-tel-input
             restrictToNumbers(companyPhoneInput);
             
             companyPhoneInput.placeholder = '';
+            
+            // Determine initial country from country code
+            let initialCountry = 'in';
+            if (countryCode) {
+                // Try to find country by dial code
+                const countryCodeNum = countryCode.replace('+', '');
+                const countryMap = {
+                    '91': 'in', '1': 'us', '44': 'gb', '61': 'au', '86': 'cn',
+                    '33': 'fr', '49': 'de', '81': 'jp', '82': 'kr', '65': 'sg'
+                };
+                if (countryMap[countryCodeNum]) {
+                    initialCountry = countryMap[countryCodeNum];
+                }
+            }
+            
             itiCompany = window.intlTelInput(companyPhoneInput, {
-                initialCountry: 'in',
+                initialCountry: initialCountry,
                 preferredCountries: ['in', 'us', 'gb'],
                 utilsScript: "https://cdn.jsdelivr.net/npm/intl-tel-input@18.1.1/build/js/utils.js",
                 separateDialCode: true,
@@ -933,21 +1045,35 @@ document.addEventListener('DOMContentLoaded', function() {
                 autoPlaceholder: 'off',
             });
             
+            // Set the country code if we have one
+            if (countryCode && countryCode !== '+91') {
+                try {
+                    itiCompany.setCountry(initialCountry);
+                } catch(e) {
+                    // Fallback to default
+                }
+            }
+            
+            // Set the phone number (without country code)
+            if (phoneNumber) {
+                companyPhoneInput.value = phoneNumber;
+            }
+            
             // Re-apply restriction after intl-tel-input initialization
             restrictToNumbers(companyPhoneInput);
             
-            // Clean value again after initialization
-            setTimeout(function() {
-                cleanPhoneNumber(companyPhoneInput);
-            }, 100);
-            
             companyPhoneInput.addEventListener('countrychange', function () {
                 const countryData = itiCompany.getSelectedCountryData();
-                companyPhoneCountryCode.value = '+' + countryData.dialCode;
+                if (companyPhoneCountryCode) {
+                    companyPhoneCountryCode.value = '+' + countryData.dialCode;
+                }
             });
             
+            // Set initial country code in hidden field
             const initialCountryData = itiCompany.getSelectedCountryData();
-            companyPhoneCountryCode.value = '+' + initialCountryData.dialCode;
+            if (companyPhoneCountryCode) {
+                companyPhoneCountryCode.value = '+' + initialCountryData.dialCode;
+            }
         }
         
         // Initialize intl-tel-input for contact phone (primary contact)
@@ -955,19 +1081,57 @@ document.addEventListener('DOMContentLoaded', function() {
         const contactPhoneCountryCode = document.getElementById('contact_phone_country_code');
         
         if (contactPhoneInput) {
-            // Clean existing value (remove spaces) before initializing
-            let initialValue = contactPhoneInput.value || '';
-            if (initialValue) {
-                initialValue = initialValue.replace(/\s/g, '').replace(/[^\d+]/g, '');
-                contactPhoneInput.value = initialValue;
+            // Check if we have old value in format +CC-NUMBER, split it
+            let oldPhoneValue = contactPhoneInput.value || '';
+            let countryCode = '+91'; // default
+            let phoneNumber = '';
+            
+            if (oldPhoneValue && oldPhoneValue.includes('-')) {
+                // Split +91-1234567890 into +91 and 1234567890
+                const parts = oldPhoneValue.split('-');
+                if (parts.length === 2 && parts[0].startsWith('+')) {
+                    countryCode = parts[0];
+                    phoneNumber = parts[1].replace(/\s/g, '');
+                }
+            } else if (oldPhoneValue) {
+                // If old value exists but not in expected format, try to extract
+                phoneNumber = oldPhoneValue.replace(/\s/g, '');
+                // Check if it starts with country code
+                if (oldPhoneValue.startsWith('+')) {
+                    const match = oldPhoneValue.match(/^(\+\d{1,3})(.+)$/);
+                    if (match) {
+                        countryCode = match[1];
+                        phoneNumber = match[2].replace(/\s/g, '');
+                    }
+                }
+            }
+            
+            // Set the country code in hidden field
+            if (contactPhoneCountryCode) {
+                contactPhoneCountryCode.value = countryCode;
             }
             
             // Apply restriction BEFORE initializing intl-tel-input
             restrictToNumbers(contactPhoneInput);
             
             contactPhoneInput.placeholder = '';
+            
+            // Determine initial country from country code
+            let initialCountry = 'in';
+            if (countryCode) {
+                // Try to find country by dial code
+                const countryCodeNum = countryCode.replace('+', '');
+                const countryMap = {
+                    '91': 'in', '1': 'us', '44': 'gb', '61': 'au', '86': 'cn',
+                    '33': 'fr', '49': 'de', '81': 'jp', '82': 'kr', '65': 'sg'
+                };
+                if (countryMap[countryCodeNum]) {
+                    initialCountry = countryMap[countryCodeNum];
+                }
+            }
+            
             itiContact = window.intlTelInput(contactPhoneInput, {
-                initialCountry: 'in',
+                initialCountry: initialCountry,
                 preferredCountries: ['in', 'us', 'gb'],
                 utilsScript: "https://cdn.jsdelivr.net/npm/intl-tel-input@18.1.1/build/js/utils.js",
                 separateDialCode: true,
@@ -975,21 +1139,35 @@ document.addEventListener('DOMContentLoaded', function() {
                 autoPlaceholder: 'off',
             });
             
+            // Set the country code if we have one
+            if (countryCode && countryCode !== '+91') {
+                try {
+                    itiContact.setCountry(initialCountry);
+                } catch(e) {
+                    // Fallback to default
+                }
+            }
+            
+            // Set the phone number (without country code)
+            if (phoneNumber) {
+                contactPhoneInput.value = phoneNumber;
+            }
+            
             // Re-apply restriction after intl-tel-input initialization
             restrictToNumbers(contactPhoneInput);
             
-            // Clean value again after initialization
-            setTimeout(function() {
-                cleanPhoneNumber(contactPhoneInput);
-            }, 100);
-            
             contactPhoneInput.addEventListener('countrychange', function () {
                 const countryData = itiContact.getSelectedCountryData();
-                contactPhoneCountryCode.value = '+' + countryData.dialCode;
+                if (contactPhoneCountryCode) {
+                    contactPhoneCountryCode.value = '+' + countryData.dialCode;
+                }
             });
             
+            // Set initial country code in hidden field
             const initialCountryData = itiContact.getSelectedCountryData();
-            contactPhoneCountryCode.value = '+' + initialCountryData.dialCode;
+            if (contactPhoneCountryCode) {
+                contactPhoneCountryCode.value = '+' + initialCountryData.dialCode;
+            }
         }
     }
     
@@ -1294,31 +1472,94 @@ document.addEventListener('DOMContentLoaded', function() {
             input.value = phoneValue.replace(/\s/g, '');
         }
         
-        // Clean all phone numbers FIRST
+        // STEP 1.5: Extract country code and phone number separately, then merge with "-"
+        // Function to merge country code and phone number
+        function mergePhoneWithCountryCode(phoneInput, countryCodeInput) {
+            if (!phoneInput || !countryCodeInput) return;
+            
+            // Get country code from hidden field or intl-tel-input
+            let countryCode = countryCodeInput.value || '+91';
+            if (!countryCode.startsWith('+')) {
+                countryCode = '+' + countryCode;
+            }
+            
+            // Get phone number (remove all spaces and non-digits, but keep the number part)
+            let phoneNumber = phoneInput.value || '';
+            phoneNumber = phoneNumber.replace(/\s/g, '').replace(/[^\d]/g, '');
+            
+            // If we have intl-tel-input, get the number without country code
+            const inputId = phoneInput.id;
+            let itiInstance = null;
+            if (inputId === 'company_phone' && itiCompany) {
+                itiInstance = itiCompany;
+            } else if (inputId === 'contact_phone' && itiContact) {
+                itiInstance = itiContact;
+            } else {
+                // Try to get from delegate instances
+                itiInstance = delegatePhoneInstances.get(phoneInput);
+            }
+            
+            if (itiInstance) {
+                try {
+                    // Get the full number from intl-tel-input
+                    const fullNumber = itiInstance.getNumber();
+                    if (fullNumber) {
+                        // Extract country code and phone number
+                        const countryData = itiInstance.getSelectedCountryData();
+                        const dialCode = '+' + countryData.dialCode;
+                        countryCode = dialCode;
+                        
+                        // Get national number (without country code)
+                        const nationalNumber = itiInstance.getNumber(itiInstance.getSelectedCountryData().iso2);
+                        if (nationalNumber) {
+                            phoneNumber = nationalNumber.replace(/\s/g, '').replace(/[^\d]/g, '');
+                        } else {
+                            // Fallback: remove country code from full number
+                            phoneNumber = fullNumber.replace(dialCode, '').replace(/\s/g, '').replace(/[^\d]/g, '');
+                        }
+                    }
+                } catch(err) {
+                    // Fallback to using input value
+                    phoneNumber = phoneInput.value.replace(/\s/g, '').replace(/[^\d]/g, '');
+                }
+            }
+            
+            // Merge: +CC-NUMBER format
+            if (phoneNumber) {
+                const mergedPhone = countryCode + '-' + phoneNumber;
+                phoneInput.value = mergedPhone;
+            } else if (countryCode) {
+                phoneInput.value = countryCode;
+            }
+        }
+        
+        // Clean all phone numbers FIRST, then merge with country code
         // Company phone
         const companyPhoneInput = document.getElementById('company_phone');
+        const companyPhoneCountryCodeInput = document.getElementById('company_phone_country_code');
         if (companyPhoneInput) {
-            cleanAndFormatPhone(companyPhoneInput, itiCompany);
             removeSpacesFromPhone(companyPhoneInput);
+            mergePhoneWithCountryCode(companyPhoneInput, companyPhoneCountryCodeInput);
         }
         
         // Contact phone
         const contactPhoneInput = document.getElementById('contact_phone');
+        const contactPhoneCountryCodeInput = document.getElementById('contact_phone_country_code');
         if (contactPhoneInput) {
-            cleanAndFormatPhone(contactPhoneInput, itiContact);
             removeSpacesFromPhone(contactPhoneInput);
+            mergePhoneWithCountryCode(contactPhoneInput, contactPhoneCountryCodeInput);
         }
         
         // Delegate phones - use stored instances
         document.querySelectorAll('.delegate-phone').forEach(function(phoneInput) {
-            const iti = delegatePhoneInstances.get(phoneInput);
-            cleanAndFormatPhone(phoneInput, iti);
             removeSpacesFromPhone(phoneInput);
-        });
-        
-        // Also remove spaces from hidden country code fields
-        document.querySelectorAll('input[name*="phone_country_code"]').forEach(function(input) {
-            removeSpacesFromPhone(input);
+            // Find corresponding country code input
+            const phoneName = phoneInput.name;
+            const countryCodeName = phoneName.replace('[phone]', '[phone_country_code]');
+            const countryCodeInput = document.querySelector(`input[name="${countryCodeName}"]`);
+            if (countryCodeInput) {
+                mergePhoneWithCountryCode(phoneInput, countryCodeInput);
+            }
         });
         
         // STEP 2: Validate the form after cleaning phone numbers
