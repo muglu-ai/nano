@@ -451,16 +451,12 @@ class TicketPaymentController extends Controller
                     }
 
                     // Send payment acknowledgement email (payment successful)
+                    // Note: Email is sent to user only. Admin notifications should be handled separately if needed.
                     try {
                         $contactEmail = $order->registration->contact->email ?? null;
                         if ($contactEmail) {
-                            $adminEmails = config('constants.ADMIN_EMAILS', []);
-                            $mail = Mail::to($contactEmail);
-                            if (!empty($adminEmails)) {
-                                $mail->bcc($adminEmails);
-                            }
-                            // Pass true to indicate payment is successful
-                            $mail->send(new TicketRegistrationMail($order, $event, true));
+                            // Send email to user only (removed BCC to admin - admin notifications should be separate)
+                            Mail::to($contactEmail)->send(new TicketRegistrationMail($order, $event, true));
                         }
                     } catch (\Exception $e) {
                         Log::error('Failed to send ticket payment acknowledgement email', [
