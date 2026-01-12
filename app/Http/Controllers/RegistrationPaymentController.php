@@ -23,6 +23,7 @@ use PaypalServerSdkLib\Models\Builders\OrderRequestBuilder;
 use PaypalServerSdkLib\Models\CheckoutPaymentIntent;
 use PaypalServerSdkLib\Models\Builders\PurchaseUnitRequestBuilder;
 use PaypalServerSdkLib\Models\Builders\AmountWithBreakdownBuilder;
+use PaypalServerSdkLib\Models\Builders\OrderApplicationContextBuilder;
 
 class RegistrationPaymentController extends Controller
 {
@@ -1079,12 +1080,39 @@ class RegistrationPaymentController extends Controller
                 ->invoiceId($orderId)  // PayPal invoice tracking
                 ->build();
             
-            // Build order body - matching PayPalController pattern (no applicationContext)
+            // Build application context with return/cancel URLs for redirect after payment
+            $returnUrl = route('registration.ticket.payment.callback', [
+                'eventSlug' => $eventSlug,
+                'gateway' => 'paypal'
+            ]);
+            $cancelUrl = route('registration.ticket.payment.callback', [
+                'eventSlug' => $eventSlug,
+                'gateway' => 'paypal'
+            ]);
+            
+            Log::info('Ticket PayPal - Creating order with return URLs', [
+                'order_id' => $order->id,
+                'order_no' => $order->order_no,
+                'return_url' => $returnUrl,
+                'cancel_url' => $cancelUrl,
+                'paypal_order_id_placeholder' => $orderId
+            ]);
+            
+            // Build order body with application context for return URLs
+            $orderRequest = OrderRequestBuilder::init(
+                CheckoutPaymentIntent::CAPTURE,
+                [$purchaseUnit]
+            )
+                ->applicationContext(
+                    OrderApplicationContextBuilder::init()
+                        ->returnUrl($returnUrl)
+                        ->cancelUrl($cancelUrl)
+                        ->build()
+                )
+                ->build();
+            
             $orderBody = [
-                'body' => OrderRequestBuilder::init(
-                    CheckoutPaymentIntent::CAPTURE,
-                    [$purchaseUnit]
-                )->build()
+                'body' => $orderRequest
             ];
 
             $apiResponse = $this->paypalClient->getOrdersController()->ordersCreate($orderBody);
@@ -1170,12 +1198,43 @@ class RegistrationPaymentController extends Controller
 
             return $this->handleTicketCcAvenueCallback($request, $order, $event, $responseArray);
         } elseif ($gateway === 'paypal') {
-            $paypalOrderId = $request->input('token');
+            // PayPal redirects back with 'token' parameter which is the PayPal order ID
+            $paypalOrderId = $request->input('token') ?? $request->input('PayerID');
+            
+            Log::info('Ticket PayPal Callback - Received', [
+                'event_slug' => $eventSlug,
+                'gateway' => $gateway,
+                'token' => $request->input('token'),
+                'payer_id' => $request->input('PayerID'),
+                'all_params' => $request->all()
+            ]);
+            
+            if (!$paypalOrderId) {
+                Log::error('Ticket PayPal Callback - No token/PayerID received', [
+                    'request_all' => $request->all()
+                ]);
+                return redirect()->route('tickets.payment.lookup', $eventSlug)
+                    ->with('error', 'Payment response incomplete. No token received.');
+            }
+            
             $pgRow = DB::table('payment_gateway_response')->where('payment_id', $paypalOrderId)->first();
+            
+            if (!$pgRow) {
+                Log::error('Ticket PayPal Callback - Payment gateway response not found', [
+                    'paypal_order_id' => $paypalOrderId
+                ]);
+                return redirect()->route('tickets.payment.lookup', $eventSlug)
+                    ->with('error', 'Payment record not found.');
+            }
+            
             $orderIdFromGateway = $pgRow->order_id ?? null;
             $orderNo = $orderIdFromGateway ? explode('_', $orderIdFromGateway)[0] : null;
 
             if (!$orderNo) {
+                Log::error('Ticket PayPal Callback - Order number not found', [
+                    'paypal_order_id' => $paypalOrderId,
+                    'order_id_from_gateway' => $orderIdFromGateway
+                ]);
                 return redirect()->route('tickets.payment.lookup', $eventSlug)
                     ->with('error', 'Order not found for payment callback.');
             }
