@@ -1020,18 +1020,19 @@ class RegistrationPaymentController extends Controller
             $event = $order->registration->event;
             $eventSlug = $event->slug ?? $event->id;
             
-            $orderRequest = OrderRequestBuilder::init()
-                ->checkoutPaymentIntent(CheckoutPaymentIntent::CAPTURE)
-                ->purchaseUnits([
-                    PurchaseUnitRequestBuilder::init()
-                        ->referenceId($order->order_no)
-                        ->amount(
-                            AmountWithBreakdownBuilder::init()
-                                ->currencyCode($currency)
-                                ->value(number_format($amount, 2, '.', ''))
-                        )
-                        ->build()
-                ])
+            // Build purchase unit first
+            $purchaseUnit = PurchaseUnitRequestBuilder::init(
+                AmountWithBreakdownBuilder::init($currency, $amount)->build()
+            )
+                ->referenceId($order->order_no)
+                ->description('Ticket Registration for ' . ($order->registration->company_name ?? 'Event'))
+                ->build();
+            
+            // Build order request with required 2 arguments
+            $orderRequest = OrderRequestBuilder::init(
+                CheckoutPaymentIntent::CAPTURE,
+                [$purchaseUnit]
+            )
                 ->applicationContext(
                     ApplicationContextBuilder::init()
                         ->returnUrl(route('registration.ticket.payment.callback', ['eventSlug' => $eventSlug, 'gateway' => 'paypal']))
@@ -1040,7 +1041,12 @@ class RegistrationPaymentController extends Controller
                 )
                 ->build();
 
-            $apiResponse = $this->paypalClient->getOrdersController()->ordersCreate($orderRequest);
+            // Wrap in body array as required by SDK
+            $orderBody = [
+                'body' => $orderRequest
+            ];
+
+            $apiResponse = $this->paypalClient->getOrdersController()->ordersCreate($orderBody);
             $paypalOrderId = $apiResponse->getResult()->getId();
 
             // Store payment gateway response
