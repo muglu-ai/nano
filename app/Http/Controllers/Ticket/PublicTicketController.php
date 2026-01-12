@@ -757,6 +757,7 @@ class PublicTicketController extends Controller
      * Format phone number: Remove spaces and add dash after country code
      * Example: +91 8619276031 -> +91-8619276031
      * Example: +918619276031 -> +91-8619276031
+     * Example: +91-8619276031 -> +91-8619276031 (already formatted, returns as-is)
      */
     private function formatPhoneNumber($phone)
     {
@@ -767,7 +768,12 @@ class PublicTicketController extends Controller
         // Remove all spaces
         $phone = str_replace(' ', '', trim($phone));
         
-        // If phone starts with +, add dash after country code (2-3 digits)
+        // If already in format +CC-NUMBER, return as-is
+        if (preg_match('/^(\+\d{1,3})-(\d+)$/', $phone, $matches)) {
+            return $phone; // Already formatted correctly
+        }
+        
+        // If phone starts with + but no dash, add dash after country code
         if (preg_match('/^(\+\d{1,3})(\d+)$/', $phone, $matches)) {
             return $matches[1] . '-' . $matches[2];
         }

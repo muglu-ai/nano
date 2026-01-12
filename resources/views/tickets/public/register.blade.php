@@ -1472,10 +1472,10 @@ document.addEventListener('DOMContentLoaded', function() {
             input.value = phoneValue.replace(/\s/g, '');
         }
         
-        // STEP 1.5: Extract country code and phone number separately, then merge with "-"
-        // Function to merge country code and phone number
-        function mergePhoneWithCountryCode(phoneInput, countryCodeInput) {
-            if (!phoneInput || !countryCodeInput) return;
+        // STEP 1.5: Clean phone numbers and prepare for merging (but don't merge yet - keep input clean for validation)
+        // Function to get merged phone number (without modifying the input)
+        function getMergedPhoneNumber(phoneInput, countryCodeInput) {
+            if (!phoneInput || !countryCodeInput) return '';
             
             // Get country code from hidden field or intl-tel-input
             let countryCode = countryCodeInput.value || '+91';
@@ -1483,7 +1483,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 countryCode = '+' + countryCode;
             }
             
-            // Get phone number (remove all spaces and non-digits, but keep the number part)
+            // Get phone number (remove all spaces and non-digits)
             let phoneNumber = phoneInput.value || '';
             phoneNumber = phoneNumber.replace(/\s/g, '').replace(/[^\d]/g, '');
             
@@ -1510,10 +1510,15 @@ document.addEventListener('DOMContentLoaded', function() {
                         countryCode = dialCode;
                         
                         // Get national number (without country code)
-                        const nationalNumber = itiInstance.getNumber(itiInstance.getSelectedCountryData().iso2);
-                        if (nationalNumber) {
-                            phoneNumber = nationalNumber.replace(/\s/g, '').replace(/[^\d]/g, '');
-                        } else {
+                        try {
+                            const nationalNumber = itiInstance.getNumber(itiInstance.getSelectedCountryData().iso2);
+                            if (nationalNumber) {
+                                phoneNumber = nationalNumber.replace(/\s/g, '').replace(/[^\d]/g, '');
+                            } else {
+                                // Fallback: remove country code from full number
+                                phoneNumber = fullNumber.replace(dialCode, '').replace(/\s/g, '').replace(/[^\d]/g, '');
+                            }
+                        } catch(e) {
                             // Fallback: remove country code from full number
                             phoneNumber = fullNumber.replace(dialCode, '').replace(/\s/g, '').replace(/[^\d]/g, '');
                         }
@@ -1524,22 +1529,24 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             }
             
-            // Merge: +CC-NUMBER format
+            // Return merged format: +CC-NUMBER
             if (phoneNumber) {
-                const mergedPhone = countryCode + '-' + phoneNumber;
-                phoneInput.value = mergedPhone;
+                return countryCode + '-' + phoneNumber;
             } else if (countryCode) {
-                phoneInput.value = countryCode;
+                return countryCode;
             }
+            return '';
         }
         
-        // Clean all phone numbers FIRST, then merge with country code
+        // Clean all phone numbers FIRST (remove spaces, keep only digits)
         // Company phone
         const companyPhoneInput = document.getElementById('company_phone');
         const companyPhoneCountryCodeInput = document.getElementById('company_phone_country_code');
         if (companyPhoneInput) {
             removeSpacesFromPhone(companyPhoneInput);
-            mergePhoneWithCountryCode(companyPhoneInput, companyPhoneCountryCodeInput);
+            // Keep only digits in the visible input (for validation)
+            let phoneValue = companyPhoneInput.value.replace(/\s/g, '').replace(/[^\d]/g, '');
+            companyPhoneInput.value = phoneValue;
         }
         
         // Contact phone
@@ -1547,19 +1554,17 @@ document.addEventListener('DOMContentLoaded', function() {
         const contactPhoneCountryCodeInput = document.getElementById('contact_phone_country_code');
         if (contactPhoneInput) {
             removeSpacesFromPhone(contactPhoneInput);
-            mergePhoneWithCountryCode(contactPhoneInput, contactPhoneCountryCodeInput);
+            // Keep only digits in the visible input (for validation)
+            let phoneValue = contactPhoneInput.value.replace(/\s/g, '').replace(/[^\d]/g, '');
+            contactPhoneInput.value = phoneValue;
         }
         
         // Delegate phones - use stored instances
         document.querySelectorAll('.delegate-phone').forEach(function(phoneInput) {
             removeSpacesFromPhone(phoneInput);
-            // Find corresponding country code input
-            const phoneName = phoneInput.name;
-            const countryCodeName = phoneName.replace('[phone]', '[phone_country_code]');
-            const countryCodeInput = document.querySelector(`input[name="${countryCodeName}"]`);
-            if (countryCodeInput) {
-                mergePhoneWithCountryCode(phoneInput, countryCodeInput);
-            }
+            // Keep only digits in the visible input (for validation)
+            let phoneValue = phoneInput.value.replace(/\s/g, '').replace(/[^\d]/g, '');
+            phoneInput.value = phoneValue;
         });
         
         // STEP 2: Validate the form after cleaning phone numbers
@@ -1579,7 +1584,36 @@ document.addEventListener('DOMContentLoaded', function() {
             return false; // Stop submission
         }
         
-        // STEP 3: If validation passes, proceed with submission
+        // STEP 3: If validation passes, merge phone numbers with country code BEFORE submission
+        // Now merge phone numbers (after validation passes)
+        if (companyPhoneInput && companyPhoneCountryCodeInput) {
+            const mergedPhone = getMergedPhoneNumber(companyPhoneInput, companyPhoneCountryCodeInput);
+            if (mergedPhone) {
+                companyPhoneInput.value = mergedPhone;
+            }
+        }
+        
+        if (contactPhoneInput && contactPhoneCountryCodeInput) {
+            const mergedPhone = getMergedPhoneNumber(contactPhoneInput, contactPhoneCountryCodeInput);
+            if (mergedPhone) {
+                contactPhoneInput.value = mergedPhone;
+            }
+        }
+        
+        // Delegate phones
+        document.querySelectorAll('.delegate-phone').forEach(function(phoneInput) {
+            const phoneName = phoneInput.name;
+            const countryCodeName = phoneName.replace('[phone]', '[phone_country_code]');
+            const countryCodeInput = document.querySelector(`input[name="${countryCodeName}"]`);
+            if (countryCodeInput) {
+                const mergedPhone = getMergedPhoneNumber(phoneInput, countryCodeInput);
+                if (mergedPhone) {
+                    phoneInput.value = mergedPhone;
+                }
+            }
+        });
+        
+        // STEP 4: Proceed with submission
         submitBtn.disabled = true;
         submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Processing...';
 
