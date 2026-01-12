@@ -1170,16 +1170,16 @@ class StartupZoneController extends Controller
             }
             
             // If found submitted application, reject (email already used)
-            if ($existingSubmittedApplication) {
-                DB::rollBack();
-                return response()->json([
-                    'success' => false,
-                    'message' => 'You have already registered for this event with this email address. Each email can only register once per event.',
-                    'errors' => [
-                        'email' => ['An application already exists for this email address and event. Please use a different email or contact support if you need to update your registration.']
-                    ]
-                ], 422);
-            }
+            // if ($existingSubmittedApplication) {
+            //     DB::rollBack();
+            //     return response()->json([
+            //         'success' => false,
+            //         'message' => 'You have already registered for this event with this email address. Each email can only register once per event.',
+            //         'errors' => [
+            //             'email' => ['An application already exists for this email address and event. Please use a different email or contact support if you need to update your registration.']
+            //         ]
+            //     ], 422);
+            // }
             
             // If found in-progress application, we'll update it instead of creating new
             // This allows users to continue their registration
