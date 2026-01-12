@@ -558,9 +558,19 @@ class TicketPaymentController extends Controller
             $event = $order->registration->event;
             $registration = $order->registration;
             
-            // Determine currency based on nationality
-            $isInternational = ($registration->nationality === 'International' || $registration->nationality === 'international');
+            // Determine currency and payment gateway based on nationality
+            $isInternational = ($registration->nationality === 'International' || 
+                               $registration->nationality === 'international');
             $currency = $isInternational ? 'USD' : 'INR';
+            $paymentGateway = $isInternational ? 'PayPal' : 'CCAvenue';
+            
+            // IMPORTANT: Enforce currency-gateway matching
+            if ($currency === 'USD' && $paymentGateway !== 'PayPal') {
+                $paymentGateway = 'PayPal'; // Force PayPal for USD
+            }
+            if ($currency === 'INR' && $paymentGateway !== 'CCAvenue') {
+                $paymentGateway = 'CCAvenue'; // Force CCAvenue for INR
+            }
             
             // Prepare payment gateway data
             $billingName = $registration->contact->name ?? '';
@@ -568,15 +578,29 @@ class TicketPaymentController extends Controller
             $billingPhone = $registration->contact->phone ?? $registration->company_phone;
             
             $amount = $order->total;
-            // If international, amount is already in USD (stored in order), no conversion needed
-            // The order total is already in the correct currency
+            // Amount is already in the correct currency (USD for international, INR for national)
+            // No conversion needed
             
+            // Route to appropriate payment gateway
+            if ($paymentGateway === 'PayPal') {
+                // Redirect to RegistrationPaymentController for PayPal processing
+                // This ensures consistent PayPal handling
+                return redirect()->route('tickets.payment.process', [
+                    'eventSlug' => $event->slug ?? $event->id,
+                    'orderNo' => $order->order_no
+                ]);
+            }
+            
+            // CCAvenue payment data
             $paymentData = [
                 'order_id' => $order->order_no . '_' . time(),
                 'amount' => number_format($amount, 2, '.', ''),
                 'currency' => $currency,
                 'redirect_url' => route('tickets.payment.callback', $order->secure_token),
-                'cancel_url' => route('tickets.payment', $order->secure_token),
+                'cancel_url' => route('tickets.payment.by-tin', [
+                    'eventSlug' => $event->slug ?? $event->id,
+                    'tin' => $order->order_no
+                ]),
                 'billing_name' => $billingName,
                 'billing_address' => $registration->company_name,
                 'billing_city' => $registration->company_city ?? '',
@@ -587,7 +611,7 @@ class TicketPaymentController extends Controller
                 'billing_email' => $billingEmail,
             ];
 
-            // Initiate payment gateway
+            // Initiate CCAvenue payment gateway
             $result = $this->ccAvenueService->initiateTransaction($paymentData);
 
             if ($result['success']) {

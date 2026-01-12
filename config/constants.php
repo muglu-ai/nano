@@ -123,10 +123,33 @@ return [
     // Payment Gateway
     'GST_RATE' => GST_RATE, // GST rate for India
     //Paypal Configuration
-    'PAYPAL_CLIENT_ID' => "Af98MdWNTOZO-rKE9MdjRJE50vr3Rp9DOYfr3TwidA9kzexdt2NGYAfXP9DfjK_5PTmTzxsxtoufZCyT",
-    'PAYPAL_SECRET' => "EPdptPZ_JJ5vFhlO4Cf4dJH9m6RIS7exO7xbGgy68pjGE42y2Cv2txd6Sh8g3l775b28SVX6gb7arBoQ",
+    'PAYPAL_MODE' => "sandbox", // Can be either 'sandbox' or 'live' - Set to 'sandbox' for testing
     'PAYPAL_CURRENCY' => "USD",
-    'PAYPAL_MODE' => "LIVE", // Can be either 'sandbox' or 'live'
+    
+    // PayPal Sandbox Credentials (for testing) - REST API (Client ID & Secret)
+    // NOTE: These are DIFFERENT from NVP/SOAP credentials (Username/Password/Signature)
+    // To get REST API credentials:
+    // 1. Go to https://developer.paypal.com/
+    // 2. Log in and go to Dashboard -> My Apps & Credentials
+    // 3. Under "Sandbox" tab, click "Create App" or use existing app
+    // 4. Copy the "Client ID" and "Secret" (these are REST API credentials)
+    // 5. NVP/SOAP credentials (Username/Password/Signature) will NOT work with this system
+    'PAYPAL_SANDBOX_CLIENT_ID' => env('PAYPAL_SANDBOX_CLIENT_ID', 'AdBqjyTeEI9u0lPQpVnXsJsc5YYVzKYNGcWz3DWVSY8N8j9Yugu8x6_XYr0h9ITzmP-G_kZ1TSVyZzEp'),
+    'PAYPAL_SANDBOX_SECRET' => env('PAYPAL_SANDBOX_SECRET', 'EKsqobP6xNcMNyPNQIS-XBCS0KMak5Wym_AehrFtHSnLvrNWPRXUJtCeTrEnunrSUCti3lKqV3zN-ERf'),
+    
+    // Temporary: If you don't have sandbox credentials yet, you can use live credentials here for testing
+    // BUT: Live credentials will NOT work in sandbox environment - you must get proper sandbox credentials
+    // 'PAYPAL_SANDBOX_CLIENT_ID' => env('PAYPAL_SANDBOX_CLIENT_ID', 'YOUR_SANDBOX_CLIENT_ID_HERE'),
+    // 'PAYPAL_SANDBOX_SECRET' => env('PAYPAL_SANDBOX_SECRET', 'YOUR_SANDBOX_SECRET_HERE'),
+    
+    // PayPal Live Credentials (for production)
+    // If env variable is empty, use the default value
+    'PAYPAL_LIVE_CLIENT_ID' => !empty(env('PAYPAL_LIVE_CLIENT_ID')) ? env('PAYPAL_LIVE_CLIENT_ID') : "AdBqjyTeEI9u0lPQpVnXsJsc5YYVzKYNGcWz3DWVSY8N8j9Yugu8x6_XYr0h9ITzmP-G_kZ1TSVyZzEp",
+    'PAYPAL_LIVE_SECRET' => !empty(env('PAYPAL_LIVE_SECRET')) ? env('PAYPAL_LIVE_SECRET') : "EKsqobP6xNcMNyPNQIS-XBCS0KMak5Wym_AehrFtHSnLvrNWPRXUJtCeTrEnunrSUCti3lKqV3zN-ERf",
+    
+    // Legacy support (will use mode-specific credentials)
+    'PAYPAL_CLIENT_ID' => null, // Deprecated - use PAYPAL_SANDBOX_CLIENT_ID or PAYPAL_LIVE_CLIENT_ID
+    'PAYPAL_SECRET' => null, // Deprecated - use PAYPAL_SANDBOX_SECRET or PAYPAL_LIVE_SECRET
     'INT_PROCESSING_CHARGE' => INT_PROCESSING_CHARGE, // 9% processing fee for International payments
     'EXTRA_REQUIREMENTS_ACTIVE' => EXTRA_REQUIREMENTS_ACTIVE,
     // CCAVENUE Configuration
