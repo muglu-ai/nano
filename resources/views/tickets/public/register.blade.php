@@ -368,7 +368,7 @@
                     <div class="col-md-6 mb-3">
                         <label class="form-label required-field">Phone Number</label>
                         <input type="tel" name="phone" class="form-control" id="company_phone" 
-                               value="{{ old('phone') }}" 
+                               value="{{ old('phone') ? preg_replace('/\s+/', '', old('phone')) : '' }}" 
                                placeholder="Enter phone number" 
                                pattern="[0-9]*"
                                inputmode="numeric"
@@ -519,7 +519,7 @@
                     <div class="col-md-6 mb-3">
                         <label class="form-label required-field">Mobile Number</label>
                         <input type="tel" name="contact_phone" class="form-control" 
-                               value="{{ old('contact_phone') }}" 
+                               value="{{ old('contact_phone') ? preg_replace('/\s+/', '', old('contact_phone')) : '' }}" 
                                placeholder="Enter mobile number" 
                                id="contact_phone"
                                pattern="[0-9]*"
@@ -617,7 +617,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         <label class="form-label required-field">Mobile Number</label>
                         <input type="tel" name="delegates[${i}][phone]" class="form-control delegate-phone" 
                                id="delegate_phone_${i}"
-                               value="${delegateData.phone || ''}" 
+                               value="${(delegateData.phone || '').replace(/\s/g, '')}" 
                                placeholder="Enter mobile number" 
                                pattern="[0-9]*"
                                inputmode="numeric"
@@ -998,6 +998,31 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Clean phone numbers on page load (remove spaces from old values)
     document.addEventListener('DOMContentLoaded', function() {
+        // Clean phone numbers immediately on page load (especially after validation errors)
+        function cleanPhoneOnLoad() {
+            // Clean company phone
+            const companyPhone = document.getElementById('company_phone');
+            if (companyPhone && companyPhone.value) {
+                companyPhone.value = companyPhone.value.replace(/\s/g, '');
+            }
+            
+            // Clean contact phone
+            const contactPhone = document.getElementById('contact_phone');
+            if (contactPhone && contactPhone.value) {
+                contactPhone.value = contactPhone.value.replace(/\s/g, '');
+            }
+            
+            // Clean all delegate phones
+            document.querySelectorAll('.delegate-phone').forEach(function(phoneInput) {
+                if (phoneInput && phoneInput.value) {
+                    phoneInput.value = phoneInput.value.replace(/\s/g, '');
+                }
+            });
+        }
+        
+        // Clean immediately
+        cleanPhoneOnLoad();
+        
         // Wait a bit for intl-tel-input to initialize
         setTimeout(function() {
             const phoneInputs = document.querySelectorAll('input[type="tel"]');
@@ -1197,7 +1222,7 @@ document.addEventListener('DOMContentLoaded', function() {
     registrationForm.addEventListener('submit', function(e) {
         e.preventDefault();
         
-        // Remove spaces from all phone numbers before submission
+        // STEP 1: Remove spaces from all phone numbers FIRST (before validation)
         function removeSpacesFromPhone(input) {
             if (input && input.value) {
                 // Remove all spaces
@@ -1269,6 +1294,7 @@ document.addEventListener('DOMContentLoaded', function() {
             input.value = phoneValue.replace(/\s/g, '');
         }
         
+        // Clean all phone numbers FIRST
         // Company phone
         const companyPhoneInput = document.getElementById('company_phone');
         if (companyPhoneInput) {
@@ -1295,6 +1321,24 @@ document.addEventListener('DOMContentLoaded', function() {
             removeSpacesFromPhone(input);
         });
         
+        // STEP 2: Validate the form after cleaning phone numbers
+        // Check HTML5 validation
+        if (!registrationForm.checkValidity()) {
+            // Find first invalid field and focus on it
+            const firstInvalid = registrationForm.querySelector(':invalid');
+            if (firstInvalid) {
+                firstInvalid.focus();
+                firstInvalid.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                // Trigger native validation message
+                firstInvalid.reportValidity();
+            } else {
+                // Fallback: report validity on form
+                registrationForm.reportValidity();
+            }
+            return false; // Stop submission
+        }
+        
+        // STEP 3: If validation passes, proceed with submission
         submitBtn.disabled = true;
         submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Processing...';
 
@@ -1304,6 +1348,17 @@ document.addEventListener('DOMContentLoaded', function() {
                 .then(function(token) {
                     document.getElementById('g-recaptcha-response').value = token;
                     registrationForm.submit();
+                })
+                .catch(function(error) {
+                    console.error('reCAPTCHA error:', error);
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = '<i class="fas fa-arrow-right me-2"></i>Continue';
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: 'Please try again. If the problem persists, please refresh the page.',
+                        confirmButtonColor: 'var(--primary-color)'
+                    });
                 });
         });
         @else
@@ -1313,12 +1368,40 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Display validation errors with SweetAlert
     @if($errors->any())
+        // Clean phone numbers when validation errors exist
+        function cleanAllPhonesOnError() {
+            // Clean company phone
+            const companyPhone = document.getElementById('company_phone');
+            if (companyPhone && companyPhone.value) {
+                companyPhone.value = companyPhone.value.replace(/\s/g, '');
+            }
+            
+            // Clean contact phone
+            const contactPhone = document.getElementById('contact_phone');
+            if (contactPhone && contactPhone.value) {
+                contactPhone.value = contactPhone.value.replace(/\s/g, '');
+            }
+            
+            // Clean all delegate phones
+            document.querySelectorAll('.delegate-phone').forEach(function(phoneInput) {
+                if (phoneInput && phoneInput.value) {
+                    phoneInput.value = phoneInput.value.replace(/\s/g, '');
+                }
+            });
+        }
+        
+        // Clean phones immediately when errors are present
+        cleanAllPhonesOnError();
+        
         Swal.fire({
             icon: 'error',
             title: 'Validation Error',
             html: '<ul style="text-align: left;">@foreach($errors->all() as $error)<li>{{ $error }}</li>@endforeach</ul>',
             confirmButtonColor: 'var(--primary-color)'
         }).then(() => {
+            // Clean phones again after alert is closed
+            cleanAllPhonesOnError();
+            
             // Scroll to first error
             const firstError = document.querySelector('.is-invalid, .text-danger');
             if (firstError) {
