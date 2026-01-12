@@ -33,16 +33,41 @@ class RegistrationPaymentController extends Controller
     {
         $this->ccAvenueService = new CcAvenueService();
         
-        // Initialize PayPal client
-        $paypalMode = config('constants.PAYPAL_MODE', 'live');
+        // Initialize PayPal client with mode-specific credentials
+        $paypalMode = strtolower(config('constants.PAYPAL_MODE', 'live'));
+        $isSandbox = ($paypalMode === 'sandbox');
+        
+        // Get credentials based on mode - default to sandbox if sandbox is defined
+        if ($isSandbox) {
+            $clientId = config('constants.PAYPAL_SANDBOX_CLIENT_ID');
+            $clientSecret = config('constants.PAYPAL_SANDBOX_SECRET');
+            $environment = 'Sandbox';
+        } else {
+            $clientId = config('constants.PAYPAL_LIVE_CLIENT_ID');
+            $clientSecret = config('constants.PAYPAL_LIVE_SECRET');
+            $environment = 'Production';
+        }
+        
+        // Fallback to legacy credentials if mode-specific ones are not set
+        if (empty($clientId) || empty($clientSecret)) {
+            $clientId = config('constants.PAYPAL_CLIENT_ID');
+            $clientSecret = config('constants.PAYPAL_SECRET');
+        }
+        
+        // Validate credentials exist
+        if (empty($clientId) || empty($clientSecret)) {
+            Log::error('PayPal credentials not configured', [
+                'mode' => $paypalMode,
+                'is_sandbox' => $isSandbox
+            ]);
+            throw new \Exception('PayPal credentials not configured. Please set PAYPAL_SANDBOX_CLIENT_ID/SECRET or PAYPAL_LIVE_CLIENT_ID/SECRET in config/constants.php');
+        }
+        
         $this->paypalClient = PaypalServerSdkClientBuilder::init()
             ->clientCredentialsAuthCredentials(
-                ClientCredentialsAuthCredentialsBuilder::init(
-                    config('constants.PAYPAL_CLIENT_ID'),
-                    config('constants.PAYPAL_SECRET')
-                )
+                ClientCredentialsAuthCredentialsBuilder::init($clientId, $clientSecret)
             )
-            ->environment($paypalMode === 'sandbox' ? 'Sandbox' : 'Production')
+            ->environment($environment)
             ->build();
     }
 

@@ -123,10 +123,20 @@ return [
     // Payment Gateway
     'GST_RATE' => GST_RATE, // GST rate for India
     //Paypal Configuration
-    'PAYPAL_CLIENT_ID' => "Af98MdWNTOZO-rKE9MdjRJE50vr3Rp9DOYfr3TwidA9kzexdt2NGYAfXP9DfjK_5PTmTzxsxtoufZCyT",
-    'PAYPAL_SECRET' => "EPdptPZ_JJ5vFhlO4Cf4dJH9m6RIS7exO7xbGgy68pjGE42y2Cv2txd6Sh8g3l775b28SVX6gb7arBoQ",
+    'PAYPAL_MODE' => "sandbox", // Can be either 'sandbox' or 'live' - Set to 'sandbox' for testing
     'PAYPAL_CURRENCY' => "USD",
-    'PAYPAL_MODE' => "LIVE", // Can be either 'sandbox' or 'live'
+    
+    // PayPal Sandbox Credentials (for testing)
+    'PAYPAL_SANDBOX_CLIENT_ID' => env('PAYPAL_SANDBOX_CLIENT_ID', ''),
+    'PAYPAL_SANDBOX_SECRET' => env('PAYPAL_SANDBOX_SECRET', ''),
+    
+    // PayPal Live Credentials (for production)
+    'PAYPAL_LIVE_CLIENT_ID' => env('PAYPAL_LIVE_CLIENT_ID', "AdBqjyTeEI9u0lPQpVnXsJsc5YYVzKYNGcWz3DWVSY8N8j9Yugu8x6_XYr0h9ITzmP-G_kZ1TSVyZzEp"),
+    'PAYPAL_LIVE_SECRET' => env('PAYPAL_LIVE_SECRET', "EKsqobP6xNcMNyPNQIS-XBCS0KMak5Wym_AehrFtHSnLvrNWPRXUJtCeTrEnunrSUCti3lKqV3zN-ERf"),
+    
+    // Legacy support (will use mode-specific credentials)
+    'PAYPAL_CLIENT_ID' => null, // Deprecated - use PAYPAL_SANDBOX_CLIENT_ID or PAYPAL_LIVE_CLIENT_ID
+    'PAYPAL_SECRET' => null, // Deprecated - use PAYPAL_SANDBOX_SECRET or PAYPAL_LIVE_SECRET
     'INT_PROCESSING_CHARGE' => INT_PROCESSING_CHARGE, // 9% processing fee for International payments
     'EXTRA_REQUIREMENTS_ACTIVE' => EXTRA_REQUIREMENTS_ACTIVE,
     // CCAVENUE Configuration
