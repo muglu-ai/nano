@@ -23,7 +23,6 @@ use PaypalServerSdkLib\Models\Builders\OrderRequestBuilder;
 use PaypalServerSdkLib\Models\CheckoutPaymentIntent;
 use PaypalServerSdkLib\Models\Builders\PurchaseUnitRequestBuilder;
 use PaypalServerSdkLib\Models\Builders\AmountWithBreakdownBuilder;
-use PaypalServerSdkLib\Models\Builders\ApplicationContextBuilder;
 
 class RegistrationPaymentController extends Controller
 {
@@ -359,7 +358,7 @@ class RegistrationPaymentController extends Controller
                         ->build()
                 ])
                 ->applicationContext(
-                    ApplicationContextBuilder::init()
+                    OrderApplicationContextBuilder::init()
                         ->returnUrl(route('registration.payment.callback', ['gateway' => 'paypal']))
                         ->cancelUrl(route('registration.payment.select', $invoice->invoice_no))
                         ->build()
@@ -1020,30 +1019,20 @@ class RegistrationPaymentController extends Controller
             $event = $order->registration->event;
             $eventSlug = $event->slug ?? $event->id;
             
-            // Build purchase unit first
+            // Build purchase unit - matching PayPalController pattern
             $purchaseUnit = PurchaseUnitRequestBuilder::init(
                 AmountWithBreakdownBuilder::init($currency, $amount)->build()
             )
-                ->referenceId($order->order_no)
                 ->description('Ticket Registration for ' . ($order->registration->company_name ?? 'Event'))
+                ->invoiceId($orderId)  // PayPal invoice tracking
                 ->build();
             
-            // Build order request with required 2 arguments
-            $orderRequest = OrderRequestBuilder::init(
-                CheckoutPaymentIntent::CAPTURE,
-                [$purchaseUnit]
-            )
-                ->applicationContext(
-                    ApplicationContextBuilder::init()
-                        ->returnUrl(route('registration.ticket.payment.callback', ['eventSlug' => $eventSlug, 'gateway' => 'paypal']))
-                        ->cancelUrl(route('registration.ticket.payment.callback', ['eventSlug' => $eventSlug, 'gateway' => 'paypal']))
-                        ->build()
-                )
-                ->build();
-
-            // Wrap in body array as required by SDK
+            // Build order body - matching PayPalController pattern (no applicationContext)
             $orderBody = [
-                'body' => $orderRequest
+                'body' => OrderRequestBuilder::init(
+                    CheckoutPaymentIntent::CAPTURE,
+                    [$purchaseUnit]
+                )->build()
             ];
 
             $apiResponse = $this->paypalClient->getOrdersController()->ordersCreate($orderBody);
