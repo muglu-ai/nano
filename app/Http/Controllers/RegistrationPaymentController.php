@@ -844,16 +844,6 @@ class RegistrationPaymentController extends Controller
                 $paymentGateway = 'CCAvenue'; // Force CCAvenue for INR
             }
             
-            // Log gateway selection for debugging
-            Log::info('Ticket Payment Gateway Selection', [
-                'order_no' => $order->order_no,
-                'nationality' => $registration->nationality,
-                'is_international' => $isInternational,
-                'currency' => $currency,
-                'payment_gateway' => $paymentGateway,
-                'amount' => $amount,
-            ]);
-            
             // Get billing details
             $billingName = $registration->contact->name ?? '';
             $billingEmail = $registration->contact->email ?? '';
@@ -862,6 +852,16 @@ class RegistrationPaymentController extends Controller
             // Prepare payment data
             $orderIdWithTimestamp = $order->order_no . '_' . time();
             $amount = $order->total;
+            
+            // Log gateway selection for debugging (after $amount is defined)
+            Log::info('Ticket Payment Gateway Selection', [
+                'order_no' => $order->order_no,
+                'nationality' => $registration->nationality,
+                'is_international' => $isInternational,
+                'currency' => $currency,
+                'payment_gateway' => $paymentGateway,
+                'amount' => $amount,
+            ]);
             
             // IMPORTANT: Amount is already in the correct currency (USD for international, INR for national)
             // Do NOT convert - the order total is already stored in the correct currency
