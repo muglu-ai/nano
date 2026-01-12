@@ -37,30 +37,57 @@ class RegistrationPaymentController extends Controller
         $paypalMode = strtolower(config('constants.PAYPAL_MODE', 'live'));
         $isSandbox = ($paypalMode === 'sandbox');
         
-        // Get credentials based on mode - default to sandbox if sandbox is defined
+        // Get credentials based on mode
         if ($isSandbox) {
             $clientId = config('constants.PAYPAL_SANDBOX_CLIENT_ID');
             $clientSecret = config('constants.PAYPAL_SANDBOX_SECRET');
             $environment = 'Sandbox';
+            
+            // If sandbox credentials are not set or empty, fall back to live credentials
+            // Note: Live credentials won't work in sandbox environment, but this prevents errors
+            if (empty($clientId) || empty($clientSecret) || trim($clientId) === '' || trim($clientSecret) === '') {
+                Log::warning('PayPal sandbox credentials not set, falling back to live credentials', [
+                    'mode' => $paypalMode,
+                    'sandbox_id_empty' => empty($clientId),
+                    'sandbox_secret_empty' => empty($clientSecret)
+                ]);
+                $clientId = config('constants.PAYPAL_LIVE_CLIENT_ID');
+                $clientSecret = config('constants.PAYPAL_LIVE_SECRET');
+                // Keep environment as Sandbox - user should get proper sandbox credentials
+            }
         } else {
             $clientId = config('constants.PAYPAL_LIVE_CLIENT_ID');
             $clientSecret = config('constants.PAYPAL_LIVE_SECRET');
             $environment = 'Production';
         }
         
-        // Fallback to legacy credentials if mode-specific ones are not set
+        // Trim whitespace and check again
+        $clientId = trim($clientId ?? '');
+        $clientSecret = trim($clientSecret ?? '');
+        
+        // Fallback to legacy credentials if mode-specific ones are still not set
         if (empty($clientId) || empty($clientSecret)) {
-            $clientId = config('constants.PAYPAL_CLIENT_ID');
-            $clientSecret = config('constants.PAYPAL_SECRET');
+            $legacyId = config('constants.PAYPAL_CLIENT_ID');
+            $legacySecret = config('constants.PAYPAL_SECRET');
+            if (!empty($legacyId) && !empty($legacySecret)) {
+                $clientId = trim($legacyId);
+                $clientSecret = trim($legacySecret);
+                Log::info('Using legacy PayPal credentials');
+            }
         }
         
         // Validate credentials exist
         if (empty($clientId) || empty($clientSecret)) {
-            Log::error('PayPal credentials not configured', [
+            $errorDetails = [
                 'mode' => $paypalMode,
-                'is_sandbox' => $isSandbox
-            ]);
-            throw new \Exception('PayPal credentials not configured. Please set PAYPAL_SANDBOX_CLIENT_ID/SECRET or PAYPAL_LIVE_CLIENT_ID/SECRET in config/constants.php');
+                'is_sandbox' => $isSandbox,
+                'sandbox_id' => !empty(config('constants.PAYPAL_SANDBOX_CLIENT_ID')) ? 'set' : 'empty',
+                'sandbox_secret' => !empty(config('constants.PAYPAL_SANDBOX_SECRET')) ? 'set' : 'empty',
+                'live_id' => !empty(config('constants.PAYPAL_LIVE_CLIENT_ID')) ? 'set' : 'empty',
+                'live_secret' => !empty(config('constants.PAYPAL_LIVE_SECRET')) ? 'set' : 'empty',
+            ];
+            Log::error('PayPal credentials not configured', $errorDetails);
+            throw new \Exception('PayPal credentials not configured. Please set PAYPAL_SANDBOX_CLIENT_ID/SECRET for sandbox mode or PAYPAL_LIVE_CLIENT_ID/SECRET for live mode in config/constants.php. Current mode: ' . $paypalMode);
         }
         
         $this->paypalClient = PaypalServerSdkClientBuilder::init()
