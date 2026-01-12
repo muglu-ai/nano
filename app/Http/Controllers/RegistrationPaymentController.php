@@ -1488,8 +1488,9 @@ class RegistrationPaymentController extends Controller
         }
 
         try {
-            // Capture the order
-            $captureResponse = $this->paypalClient->getOrdersController()->ordersCapture($paypalOrderId);
+            // Capture the order - ordersCapture expects an array with 'id' key
+            $captureBody = ['id' => $paypalOrderId];
+            $captureResponse = $this->paypalClient->getOrdersController()->ordersCapture($captureBody);
             $captureResult = $captureResponse->getResult();
             $status = $captureResult->getStatus();
 
