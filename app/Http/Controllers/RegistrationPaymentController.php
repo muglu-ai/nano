@@ -778,7 +778,7 @@ class RegistrationPaymentController extends Controller
         $event = Events::where('slug', $eventSlug)->orWhere('id', $eventSlug)->firstOrFail();
         
         // Get TIN from query parameter (tin or tin_no) or session
-        $tin = $request->query('tin') ?? $request->query('tin_no');
+        $tin = $request->input('tin') ?? $request->input('tin_no') ?? $request->query('tin') ?? $request->query('tin_no');
         if (!$tin && session('tin')) {
             $tin = session('tin');
         }
@@ -802,9 +802,9 @@ class RegistrationPaymentController extends Controller
                 // Display order details directly
                 return view('payment.ticket-order-details', compact('event', 'order', 'email'));
             } else {
-                // Order not found, show lookup form with error
+                // Order not found, show lookup form with error and pre-fill TIN
                 return view('payment.ticket-lookup', compact('event', 'tin'))
-                    ->with('error', 'No ticket order found with the provided Order Number.');
+                    ->with('error', 'No ticket order found with the provided Order Number: ' . $tinNo);
             }
         }
         
