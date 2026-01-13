@@ -59,29 +59,11 @@
                     </div>
                     <div class="row">
                         <div class="col-md-6 mb-3">
-                            <strong>Booth Size:</strong><br>
+                            <strong>Booth Type:</strong><br>
                             {{ $application->interested_sqm ?? $draft->interested_sqm ?? 'N/A' }}
                         </div>
                     </div>
-                    <!-- <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <strong>Booth Type:</strong><br>
-                            {{ $application->pref_location ?? 'N/A' }}
-                        </div>
-                    </div>
-                </div>
-                <div class="row">
-                    <div class="col-md-6 mb-3">
-                        <strong>Booth Number:</strong><br>
-                        {{ $application->stallNumber ?? 'N/A' }}
-                    </div>
-                </div>
-                <div class="row">
-                    <div class="col-md-6 mb-3">
-                        <strong>Booth Name:</strong><br>
-                        {{ $application->booth_name ?? 'N/A' }}
-                    </div>
-                </div> -->
+                   
             </div>
 
             {{-- Billing Information --}}

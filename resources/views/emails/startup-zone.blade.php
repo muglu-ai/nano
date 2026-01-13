@@ -231,7 +231,7 @@
                                         <td style="color: #333333; padding: 5px 0;">{{ $application->stall_category }}</td>
                                     </tr>
                                     <tr>
-                                        <td style="width: 40%; font-weight: bold; color: #555555; padding: 5px 0;">Booth Size:</td>
+                                        <td style="width: 40%; font-weight: bold; color: #555555; padding: 5px 0;">Booth Type:</td>
                                         <td style="color: #333333; padding: 5px 0;">{{ $application->interested_sqm }}</td>
                                     </tr>
                             </div>
