@@ -216,16 +216,18 @@ class AdminTicketController extends Controller
         DB::beginTransaction();
         try {
             // Update registration
+            $gstRequired = $request->has('gst_required') && $request->gst_required == '1';
             $registration->update([
                 'company_name' => $request->company_name,
                 'company_country' => $request->company_country,
                 'company_state' => $request->company_state,
                 'company_city' => $request->company_city,
                 'company_phone' => $request->company_phone,
-                'gstin' => $request->gstin,
-                'gst_legal_name' => $request->gst_legal_name,
-                'gst_address' => $request->gst_address,
-                'gst_state' => $request->gst_state,
+                'gst_required' => $gstRequired,
+                'gstin' => $gstRequired ? $request->gstin : null,
+                'gst_legal_name' => $gstRequired ? $request->gst_legal_name : null,
+                'gst_address' => $gstRequired ? $request->gst_address : null,
+                'gst_state' => $gstRequired ? $request->gst_state : null,
                 'nationality' => $request->nationality,
             ]);
 

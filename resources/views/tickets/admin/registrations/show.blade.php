@@ -27,6 +27,31 @@
             width: 40%;
         }
         
+        .table-bordered {
+            border: 1px solid #dee2e6 !important;
+        }
+        
+        .table-bordered th,
+        .table-bordered td {
+            border: 1px solid #dee2e6 !important;
+            padding: 0.75rem;
+            vertical-align: middle;
+        }
+        
+        .table-bordered thead th {
+            border-bottom-width: 2px !important;
+            border: 1px solid #dee2e6 !important;
+        }
+        
+        .table-bordered tbody tr td {
+            border: 1px solid #dee2e6 !important;
+        }
+        
+        .table {
+            border-collapse: separate;
+            border-spacing: 0;
+        }
+        
         .back-btn {
             background-color: #6A1B9A;
             border-color: #6A1B9A;
@@ -243,22 +268,44 @@
                                     @endif
                                 </td>
                             </tr>
-                            @if($registration->gstin)
                             <tr>
-                                <th>GSTIN:</th>
-                                <td>{{ $registration->gstin }}</td>
+                                <th>GST Required:</th>
+                                <td>
+                                    @if($registration->gst_required)
+                                        <span class="badge bg-success">Yes</span>
+                                    @else
+                                        <span class="badge bg-secondary">No</span>
+                                    @endif
+                                </td>
                             </tr>
+                            @if($registration->gst_required)
+                                @if($registration->gstin)
+                                <tr>
+                                    <th>GSTIN:</th>
+                                    <td>{{ $registration->gstin }}</td>
+                                </tr>
+                                <tr>
+                                    <th>GST Legal Name:</th>
+                                    <td>{{ $registration->gst_legal_name ?? '-' }}</td>
+                                </tr>
+                                <tr>
+                                    <th>GST Address:</th>
+                                    <td>{{ $registration->gst_address ?? '-' }}</td>
+                                </tr>
+                                <tr>
+                                    <th>GST State:</th>
+                                    <td>{{ $registration->gst_state ?? '-' }}</td>
+                                </tr>
+                                @else
+                                <tr>
+                                    <th>GST Details:</th>
+                                    <td><span class="text-muted">GST required but details not provided</span></td>
+                                </tr>
+                                @endif
+                            @else
                             <tr>
-                                <th>GST Legal Name:</th>
-                                <td>{{ $registration->gst_legal_name ?? '-' }}</td>
-                            </tr>
-                            <tr>
-                                <th>GST Address:</th>
-                                <td>{{ $registration->gst_address ?? '-' }}</td>
-                            </tr>
-                            <tr>
-                                <th>GST State:</th>
-                                <td>{{ $registration->gst_state ?? '-' }}</td>
+                                <th>GST Details:</th>
+                                <td><span class="text-muted">GST is not required</span></td>
                             </tr>
                             @endif
                         </table>

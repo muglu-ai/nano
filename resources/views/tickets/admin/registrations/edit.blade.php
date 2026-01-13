@@ -69,6 +69,31 @@
             border-color: #1e7e34;
             color: white;
         }
+        
+        .table-bordered {
+            border: 1px solid #dee2e6 !important;
+        }
+        
+        .table-bordered th,
+        .table-bordered td {
+            border: 1px solid #dee2e6 !important;
+            padding: 0.75rem;
+            vertical-align: middle;
+        }
+        
+        .table-bordered thead th {
+            border-bottom-width: 2px !important;
+            border: 1px solid #dee2e6 !important;
+        }
+        
+        .table-bordered tbody tr td {
+            border: 1px solid #dee2e6 !important;
+        }
+        
+        .table {
+            border-collapse: separate;
+            border-spacing: 0;
+        }
     </style>
 
     <div class="container-fluid py-2">
@@ -158,35 +183,52 @@
                     </div>
 
                     <!-- GST Information -->
-                    @if($registration->gst_required || $registration->gstin)
                     <div class="card">
                         <div class="card-header">
                             <h5><i class="fas fa-file-invoice me-2"></i>GST Information</h5>
                         </div>
                         <div class="card-body">
-                            <div class="row">
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label">GSTIN</label>
-                                    <input type="text" name="gstin" class="form-control" value="{{ old('gstin', $registration->gstin) }}" maxlength="15">
-                                </div>
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label">GST Legal Name</label>
-                                    <input type="text" name="gst_legal_name" class="form-control" value="{{ old('gst_legal_name', $registration->gst_legal_name) }}">
-                                </div>
-                            </div>
-                            <div class="row">
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label">GST Address</label>
-                                    <textarea name="gst_address" class="form-control" rows="2">{{ old('gst_address', $registration->gst_address) }}</textarea>
-                                </div>
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label">GST State</label>
-                                    <input type="text" name="gst_state" class="form-control" value="{{ old('gst_state', $registration->gst_state) }}">
+                            <div class="row mb-3">
+                                <div class="col-md-12">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" name="gst_required" id="gst_required" value="1" 
+                                               {{ old('gst_required', $registration->gst_required) ? 'checked' : '' }}
+                                               onchange="toggleGstFields()">
+                                        <label class="form-check-label" for="gst_required">
+                                            GST Required
+                                        </label>
+                                    </div>
                                 </div>
                             </div>
+                            <div id="gst-fields" style="{{ old('gst_required', $registration->gst_required) ? '' : 'display: none;' }}">
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">GSTIN</label>
+                                        <input type="text" name="gstin" class="form-control" value="{{ old('gstin', $registration->gstin) }}" maxlength="15">
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">GST Legal Name</label>
+                                        <input type="text" name="gst_legal_name" class="form-control" value="{{ old('gst_legal_name', $registration->gst_legal_name) }}">
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">GST Address</label>
+                                        <textarea name="gst_address" class="form-control" rows="2">{{ old('gst_address', $registration->gst_address) }}</textarea>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">GST State</label>
+                                        <input type="text" name="gst_state" class="form-control" value="{{ old('gst_state', $registration->gst_state) }}">
+                                    </div>
+                                </div>
+                            </div>
+                            @if(!old('gst_required', $registration->gst_required))
+                            <div id="gst-not-required-message" class="alert alert-info">
+                                <i class="fas fa-info-circle me-2"></i>GST is not required for this registration.
+                            </div>
+                            @endif
                         </div>
                     </div>
-                    @endif
 
                     <!-- Delegates -->
                     <div class="card">
@@ -371,6 +413,31 @@
         function removeDelegate(button) {
             const delegateItem = button.closest('.delegate-item');
             delegateItem.remove();
+        }
+
+        function toggleGstFields() {
+            const gstRequired = document.getElementById('gst_required').checked;
+            const gstFields = document.getElementById('gst-fields');
+            const gstMessage = document.getElementById('gst-not-required-message');
+            
+            if (gstRequired) {
+                gstFields.style.display = 'block';
+                if (gstMessage) {
+                    gstMessage.style.display = 'none';
+                }
+            } else {
+                gstFields.style.display = 'none';
+                if (gstMessage) {
+                    gstMessage.style.display = 'block';
+                } else {
+                    // Create message if it doesn't exist
+                    const messageDiv = document.createElement('div');
+                    messageDiv.id = 'gst-not-required-message';
+                    messageDiv.className = 'alert alert-info';
+                    messageDiv.innerHTML = '<i class="fas fa-info-circle me-2"></i>GST is not required for this registration.';
+                    gstFields.parentNode.appendChild(messageDiv);
+                }
+            }
         }
     </script>
 @endsection
