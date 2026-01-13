@@ -771,15 +771,44 @@ class RegistrationPaymentController extends Controller
 
     /**
      * Show ticket lookup form
+     * If tin or tin_no is provided in query string, automatically fetch and display order details
      */
-    public function showTicketLookup($eventSlug, Request $request = null)
+    public function showTicketLookup($eventSlug, Request $request)
     {
         $event = Events::where('slug', $eventSlug)->orWhere('id', $eventSlug)->firstOrFail();
-        // Get TIN from query parameter or session
-        $tin = $request ? $request->query('tin') : null;
+        
+        // Get TIN from query parameter (tin or tin_no) or session
+        $tin = $request->query('tin') ?? $request->query('tin_no');
         if (!$tin && session('tin')) {
             $tin = session('tin');
         }
+        
+        // If TIN is provided, automatically fetch and display order details
+        if ($tin) {
+            $tinNo = trim($tin);
+            
+            // Find ticket order by order_no (TIN)
+            $order = TicketOrder::where('order_no', $tinNo)
+                ->whereHas('registration', function($q) use ($event) {
+                    $q->where('event_id', $event->id);
+                })
+                ->with(['registration.contact', 'registration.event', 'items.ticketType', 'registration.registrationCategory'])
+                ->first();
+            
+            if ($order) {
+                // Get email from registration contact
+                $email = $order->registration->contact->email ?? $order->registration->company_email ?? 'N/A';
+                
+                // Display order details directly
+                return view('payment.ticket-order-details', compact('event', 'order', 'email'));
+            } else {
+                // Order not found, show lookup form with error
+                return view('payment.ticket-lookup', compact('event', 'tin'))
+                    ->with('error', 'No ticket order found with the provided Order Number.');
+            }
+        }
+        
+        // No TIN provided, show lookup form
         return view('payment.ticket-lookup', compact('event', 'tin'));
     }
 

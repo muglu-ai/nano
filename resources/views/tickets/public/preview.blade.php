@@ -165,10 +165,6 @@
                 Registration Information
             </h4>
             <div class="info-row">
-                <span class="info-label">Registration Category:</span>
-                <span class="info-value">{{ $registrationCategory ? $registrationCategory->name : 'N/A' }}</span>
-            </div>
-            <div class="info-row">
                 <span class="info-label">Ticket Type:</span>
                 <span class="info-value">{{ $ticketType->name }}</span>
             </div>
