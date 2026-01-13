@@ -41,7 +41,7 @@ class TicketRegistrationMail extends Mailable
         
         $subject = $isPaid 
             ? "Thank You for Registration at {$eventName} {$eventYear}"
-            : "Thank You for Initiating Registration at {$eventName} {$eventYear}";
+            : "Thank you for Submitting Information on {$eventName} {$eventYear}. Please complete the payment using following pay now link / button";
         
         return new Envelope(
             subject: $subject,

@@ -7,13 +7,13 @@
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            line-height: 1.5;
+            line-height: 1.4;
             color: #333333;
             max-width: 600px;
             margin: 0 auto;
-            padding: 15px;
+            padding: 10px;
             background-color: #f5f5f5;
-            font-size: 13px;
+            font-size: 11px;
         }
         .email-container {
             background: #ffffff;
@@ -24,7 +24,7 @@
         .header {
             background: #ffffff;
             color: #333333;
-            padding: 20px;
+            padding: 12px 15px;
             border-bottom: 2px solid #e0e0e0;
             display: table;
             width: 100%;
@@ -71,7 +71,7 @@
         .receipt-header {
             display: table;
             width: 100%;
-            padding: 15px 20px;
+            padding: 10px 15px;
             background: #f5f5f5;
             border-bottom: 1px solid #e0e0e0;
             table-layout: fixed;
@@ -96,44 +96,44 @@
         .receipt-type {
             background: #ffffff;
             color: #333333;
-            padding: 6px 15px;
+            padding: 4px 10px;
             border-radius: 0;
             display: inline-block;
             font-weight: 700;
-            font-size: 12px;
+            font-size: 10px;
             border: 1px solid #d0d0d0;
             text-transform: uppercase;
             letter-spacing: 0.5px;
             white-space: nowrap;
         }
         .receipt-date {
-            font-size: 12px;
+            font-size: 10px;
             color: #666666;
             white-space: nowrap;
             display: inline-block;
         }
         .content {
-            padding: 20px;
+            padding: 12px 15px;
         }
         .order-info {
             background: #f5f5f5;
             border-left: 3px solid #666666;
-            padding: 12px 15px;
-            margin: 15px 0;
+            padding: 8px 12px;
+            margin: 10px 0;
             border-radius: 0;
         }
         .order-info strong {
             color: #333333;
-            font-size: 14px;
+            font-size: 11px;
         }
         .order-info p {
-            margin: 5px 0 0 0;
-            font-size: 11px;
+            margin: 4px 0 0 0;
+            font-size: 10px;
             color: #666666;
         }
         .section {
-            margin: 20px 0;
-            padding-bottom: 15px;
+            margin: 12px 0;
+            padding-bottom: 10px;
             border-bottom: 1px solid #e0e0e0;
         }
         .section:last-child {
@@ -141,25 +141,25 @@
         }
         .section-title {
             color: #333333;
-            font-size: 14px;
+            font-size: 11px;
             font-weight: 600;
-            margin-bottom: 12px;
+            margin-bottom: 8px;
             display: flex;
             align-items: center;
             border-bottom: 1px solid #e0e0e0;
-            padding-bottom: 8px;
+            padding-bottom: 6px;
         }
         .section-title i {
-            margin-right: 8px;
+            margin-right: 6px;
             color: #666666;
-            font-size: 12px;
+            font-size: 10px;
         }
         .info-row {
             display: flex;
             justify-content: space-between;
-            padding: 6px 0;
+            padding: 4px 0;
             border-bottom: 1px solid #f0f0f0;
-            font-size: 12px;
+            font-size: 10px;
         }
         .info-row:last-child {
             border-bottom: none;
@@ -168,21 +168,23 @@
             font-weight: 600;
             color: #666666;
             flex: 1;
+            font-size: 10px;
         }
         .info-value {
             color: #333333;
             flex: 1;
             text-align: right;
+            font-size: 10px;
         }
         .delegates-table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 8px;
-            font-size: 11px;
+            margin-top: 6px;
+            font-size: 9px;
         }
         .delegates-table th,
         .delegates-table td {
-            padding: 8px;
+            padding: 5px;
             text-align: left;
             border-bottom: 1px solid #e0e0e0;
         }
@@ -190,55 +192,56 @@
             background: #f5f5f5;
             color: #333333;
             font-weight: 600;
-            font-size: 11px;
+            font-size: 9px;
         }
         .price-breakdown {
             background: #f5f5f5;
             border-radius: 0;
-            padding: 15px;
-            margin: 15px 0;
+            padding: 10px;
+            margin: 10px 0;
             border: 1px solid #e0e0e0;
         }
         .price-row {
             display: flex;
             justify-content: space-between;
-            padding: 6px 0;
+            padding: 4px 0;
             color: #333333;
-            font-size: 12px;
+            font-size: 10px;
         }
         .price-row.total {
-            font-size: 16px;
+            font-size: 12px;
             font-weight: 700;
-            padding-top: 12px;
-            margin-top: 12px;
+            padding-top: 8px;
+            margin-top: 8px;
             border-top: 2px solid #666666;
             color: #333333;
         }
         .btn-container {
             text-align: center;
-            margin: 25px 0;
+            margin: 15px 0;
         }
         .btn-pay-now {
             display: inline-block;
-            background: #333333;
+            background: #0066cc;
             color: #ffffff !important;
-            padding: 12px 30px;
+            padding: 10px 25px;
             text-decoration: none;
-            border-radius: 0;
+            border-radius: 4px;
             font-weight: 600;
-            font-size: 14px;
-            border: 1px solid #333333;
+            font-size: 12px;
+            border: 1px solid #0066cc;
             transition: all 0.3s ease;
+            box-shadow: 0 2px 4px rgba(0, 102, 204, 0.3);
         }
         .btn-pay-now:hover {
-            background: #666666;
-            border-color: #666666;
+            background: #0052a3;
+            border-color: #0052a3;
         }
         .footer {
             background: #f5f5f5;
-            padding: 15px 20px;
+            padding: 10px 15px;
             text-align: center;
-            font-size: 11px;
+            font-size: 9px;
             color: #666666;
             border-top: 2px solid #e0e0e0;
         }
@@ -257,9 +260,9 @@
         .secretariat-info {
             display: table;
             width: 100%;
-            margin-top: 15px;
+            margin-top: 10px;
             border-top: 1px solid #e0e0e0;
-            padding-top: 15px;
+            padding-top: 10px;
         }
         .secretariat-left,
         .secretariat-right {
@@ -268,25 +271,25 @@
         }
         .secretariat-left {
             width: 40%;
-            padding: 0 15px;
+            padding: 0 10px;
             border-right: 1px solid #e0e0e0;
             text-align: center;
             vertical-align: middle;
         }
         .secretariat-right {
             width: 60%;
-            padding: 0 10px 0 20px;
+            padding: 0 8px 0 15px;
         }
         .secretariat-title {
             color: #333333;
-            font-size: 12px;
+            font-size: 10px;
             font-weight: 600;
-            margin-bottom: 8px;
+            margin-bottom: 6px;
         }
         .secretariat-details {
-            font-size: 11px;
+            font-size: 9px;
             color: #666666;
-            line-height: 1.6;
+            line-height: 1.4;
         }
         .secretariat-details p {
             margin: 2px 0;
@@ -301,32 +304,34 @@
         .alert {
             background: #f5f5f5;
             border-left: 3px solid #666666;
-            padding: 12px;
-            margin: 15px 0;
+            padding: 8px 10px;
+            margin: 10px 0;
             border-radius: 0;
-            font-size: 12px;
+            font-size: 10px;
         }
         .alert p {
             margin: 0;
             color: #333333;
+            font-size: 10px;
         }
         .success-alert {
             background: #f5f5f5;
             border-left: 3px solid #666666;
-            padding: 12px;
-            margin: 15px 0;
+            padding: 8px 10px;
+            margin: 10px 0;
             border-radius: 0;
-            font-size: 12px;
+            font-size: 10px;
         }
         .success-alert p {
             margin: 0;
             color: #333333;
+            font-size: 10px;
         }
         .payment-status {
             display: inline-block;
-            padding: 4px 10px;
+            padding: 3px 8px;
             border-radius: 0;
-            font-size: 11px;
+            font-size: 9px;
             font-weight: 600;
             text-transform: uppercase;
         }
@@ -416,9 +421,9 @@
 
         <!-- Content -->
         <div class="content">
-            <p style="font-size: 12px; margin-bottom: 15px;">Dear {{ $order->registration->contact->name ?? 'Valued Customer' }},</p>
+            <p style="font-size: 10px; margin-bottom: 10px;">Dear {{ $order->registration->contact->name ?? 'Valued Customer' }},</p>
             
-            <p style="font-size: 12px; margin-bottom: 15px;">Thank you for registering for <strong>{{ config('constants.EVENT_NAME') }} {{ config('constants.EVENT_YEAR') }}</strong>. Your registration has been successfully received.</p>
+            <p style="font-size: 10px; margin-bottom: 10px;">Thank you for Submitting Information on <strong>{{ config('constants.EVENT_NAME') }} {{ config('constants.EVENT_YEAR') }}</strong>. Please complete the payment using following pay now link / button.</p>
 
             <!-- TIN and PIN Information -->
             <div class="order-info">
@@ -491,8 +496,8 @@
                     <span class="info-value">{{ $order->items->sum('quantity') }}</span>
                 </div>
                 <div class="info-row">
-                    <span class="info-label">Nationality:</span>
-                    <span class="info-value">{{ $order->registration->nationality }}</span>
+                    <span class="info-label">Currency:</span>
+                    <span class="info-value">{{ $order->registration->nationality === 'International' ? 'USD ($)' : 'INR (₹)' }}</span>
                 </div>
             </div>
 
@@ -654,22 +659,22 @@
             @if($order->status !== 'paid')
             <div class="btn-container">
                 <a href="{{ route('tickets.payment.by-tin', ['eventSlug' => $event->slug ?? $event->id, 'tin' => $order->order_no]) }}" class="btn-pay-now">
-                    Complete Payment - {{ $currencySymbol }}{{ number_format($order->total, $priceFormat) }}
+                    Click Here to Pay Now ({{ $currencySymbol }}{{ number_format($order->total, $priceFormat) }})
                 </a>
             </div>
 
-            <p style="text-align: center; color: #666666; font-size: 11px; margin-top: 15px;">
+            <p style="text-align: center; color: #666666; font-size: 9px; margin-top: 10px;">
                 Click the button above to complete your payment securely. This link will remain valid until your payment is completed.
             </p>
-            <p style="text-align: center; color: #666666; font-size: 10px; margin-top: 8px; font-style: italic;">
+            <p style="text-align: center; color: #666666; font-size: 8px; margin-top: 6px; font-style: italic;">
                 <strong>Note:</strong> After payment realization, a final payment acknowledgement receipt will be provided.
             </p>
             @else
-            <div style="background: #f5f5f5; padding: 15px; border: 1px solid #e0e0e0; margin: 15px 0; text-align: center;">
-                <p style="margin: 0; color: #333333; font-size: 13px; font-weight: 600;">
+            <div style="background: #f5f5f5; padding: 10px; border: 1px solid #e0e0e0; margin: 10px 0; text-align: center;">
+                <p style="margin: 0; color: #333333; font-size: 10px; font-weight: 600;">
                     ✓ Payment Completed Successfully
                 </p>
-                <p style="margin: 8px 0 0 0; color: #666666; font-size: 11px;">
+                <p style="margin: 6px 0 0 0; color: #666666; font-size: 9px;">
                     Your registration is confirmed. You will receive further communication regarding the event.
                 </p>
             </div>

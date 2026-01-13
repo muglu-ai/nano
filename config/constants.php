@@ -123,7 +123,7 @@ return [
     // Payment Gateway
     'GST_RATE' => GST_RATE, // GST rate for India
     //Paypal Configuration
-    'PAYPAL_MODE' => "sandbox", // Can be either 'sandbox' or 'live' - Set to 'sandbox' for testing
+    'PAYPAL_MODE' => "live", // Can be either 'sandbox' or 'live' - Set to 'sandbox' for testing
     'PAYPAL_CURRENCY' => "USD",
     
     // PayPal Sandbox Credentials (for testing) - REST API (Client ID & Secret)

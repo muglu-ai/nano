@@ -772,10 +772,15 @@ class RegistrationPaymentController extends Controller
     /**
      * Show ticket lookup form
      */
-    public function showTicketLookup($eventSlug)
+    public function showTicketLookup($eventSlug, Request $request = null)
     {
         $event = Events::where('slug', $eventSlug)->orWhere('id', $eventSlug)->firstOrFail();
-        return view('payment.ticket-lookup', compact('event'));
+        // Get TIN from query parameter or session
+        $tin = $request ? $request->query('tin') : null;
+        if (!$tin && session('tin')) {
+            $tin = session('tin');
+        }
+        return view('payment.ticket-lookup', compact('event', 'tin'));
     }
 
     /**
@@ -999,7 +1004,7 @@ class RegistrationPaymentController extends Controller
                 'amount' => number_format($amount, 2, '.', ''),
                 'currency' => $currency,
                 'redirect_url' => route('registration.ticket.payment.callback', ['eventSlug' => $eventSlug, 'gateway' => 'ccavenue']),
-                'cancel_url' => route('registration.ticket.payment.callback', ['eventSlug' => $eventSlug, 'gateway' => 'ccavenue']),
+                'cancel_url' => route('tickets.payment.lookup', ['eventSlug' => $eventSlug, 'tin' => $order->order_no]),
                 'billing_name' => $billingName,
                 'billing_address' => $registration->company_name ?? '',
                 'billing_city' => $registration->company_city ?? '',
@@ -1085,10 +1090,9 @@ class RegistrationPaymentController extends Controller
                 'eventSlug' => $eventSlug,
                 'gateway' => 'paypal'
             ]);
-            $cancelUrl = route('registration.ticket.payment.callback', [
-                'eventSlug' => $eventSlug,
-                'gateway' => 'paypal'
-            ]);
+            $cancelUrl = route('tickets.payment.lookup', [
+                'eventSlug' => $eventSlug
+            ]) . '?tin=' . urlencode($order->order_no);
             
             Log::info('Ticket PayPal - Creating order with return URLs', [
                 'order_id' => $order->id,
@@ -1262,10 +1266,9 @@ class RegistrationPaymentController extends Controller
             if (!$responseArray) {
                 $encResponse = $request->input('encResp');
                 if (empty($encResponse)) {
-                    return redirect()->route('tickets.payment.by-tin', [
-                        'eventSlug' => $event->slug ?? $event->id,
-                        'tin' => $order->order_no
-                    ])->with('error', 'Payment response incomplete.');
+                    return redirect()->route('tickets.payment.lookup', [
+                        'eventSlug' => $event->slug ?? $event->id
+                    ])->with('error', 'Payment response incomplete.')->with('tin', $order->order_no);
                 }
                 $credentials = $this->ccAvenueService->getCredentials();
                 $decryptedResponse = $this->ccAvenueService->decrypt($encResponse, $credentials['working_key']);
@@ -1454,20 +1457,22 @@ class RegistrationPaymentController extends Controller
                     ]);
                 }
 
-                return redirect()->route('tickets.payment.by-tin', [
-                    'eventSlug' => $event->slug ?? $event->id,
-                    'tin' => $order->order_no
-                ])->with('error', 'Payment failed. Please try again.');
+                // Check if payment was cancelled
+                $isCancelled = ($orderStatus === 'Cancelled' || $orderStatus === 'Aborted' || strtolower($orderStatus ?? '') === 'cancelled');
+                $message = $isCancelled ? 'Payment was cancelled. You can try again by clicking Pay Now.' : 'Payment failed. Please try again.';
+
+                return redirect()->route('tickets.payment.lookup', [
+                    'eventSlug' => $event->slug ?? $event->id
+                ])->with('error', $message)->with('tin', $order->order_no);
             }
         } catch (\Exception $e) {
             Log::error('Ticket CCAvenue Callback Error', [
                 'error' => $e->getMessage(),
                 'order_id' => $order->id,
             ]);
-            return redirect()->route('tickets.payment.by-tin', [
-                'eventSlug' => $event->slug ?? $event->id,
-                'tin' => $order->order_no
-            ])->with('error', 'An error occurred while processing payment.');
+            return redirect()->route('tickets.payment.lookup', [
+                'eventSlug' => $event->slug ?? $event->id
+            ])->with('error', 'An error occurred while processing payment.')->with('tin', $order->order_no ?? null);
         }
     }
 
@@ -1477,10 +1482,9 @@ class RegistrationPaymentController extends Controller
     private function handleTicketPayPalCallback($request, $order, $event, $paypalOrderId = null)
     {
         if (!$paypalOrderId) {
-            return redirect()->route('tickets.payment.by-tin', [
-                'eventSlug' => $event->slug ?? $event->id,
-                'tin' => $order->order_no
-            ])->with('error', 'Payment response incomplete.');
+            return redirect()->route('tickets.payment.lookup', [
+                'eventSlug' => $event->slug ?? $event->id
+            ])->with('error', 'Payment response incomplete.')->with('tin', $order->order_no);
         }
 
         try {
@@ -1664,10 +1668,13 @@ class RegistrationPaymentController extends Controller
                     ]);
                 }
 
-                return redirect()->route('tickets.payment.by-tin', [
-                    'eventSlug' => $event->slug ?? $event->id,
-                    'tin' => $order->order_no
-                ])->with('error', 'Payment was not completed. Please try again.');
+                // Check if payment was cancelled (PayPal returns different status)
+                $isCancelled = (strtolower($status ?? '') === 'cancelled' || strtolower($status ?? '') === 'voided');
+                $message = $isCancelled ? 'Payment was cancelled. You can try again by clicking Pay Now.' : 'Payment was not completed. Please try again.';
+
+                return redirect()->route('tickets.payment.lookup', [
+                    'eventSlug' => $event->slug ?? $event->id
+                ])->with('error', $message)->with('tin', $order->order_no);
             }
         } catch (\Exception $e) {
             Log::error('Ticket PayPal Callback Error', [

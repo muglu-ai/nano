@@ -112,7 +112,7 @@
                             name="tin_no"
                             id="tin_no"
                             class="form-control @error('tin_no') is-invalid @enderror"
-                            value="{{ old('tin_no') }}"
+                            value="{{ $tin ?? session('tin') ?? old('tin_no') }}"
                             placeholder="e.g. TIN-BTS-2026-TKT-123456"
                             required
                             autofocus

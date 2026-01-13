@@ -403,11 +403,11 @@
                 </div>
             </div>
 
-            <!-- GST Information Section -->
+            <!-- Organisation Details for Raising the Invoice Section -->
             <div class="form-section">
                 <h4 class="section-title">
                     <i class="fas fa-file-invoice-dollar"></i>
-                    GST Information
+                    Organisation Details for Raising the Invoice
                 </h4>
 
                 <div class="row">
@@ -428,11 +428,11 @@
                         <div class="col-md-12 mb-3">
                             <label class="form-label">GSTIN</label>
                             <div class="input-group">
-                                <input type="text" name="gstin" class="form-control" 
-                                       value="{{ old('gstin') }}" 
-                                       placeholder="Enter GSTIN" 
-                                       id="gstin_input"
-                                       maxlength="15">
+                            <input type="text" name="gstin" class="form-control" 
+                                   value="{{ old('gstin') }}" 
+                                   placeholder="Enter GSTIN" 
+                                   id="gstin_input"
+                                   maxlength="15">
                                 <button type="button" class="btn btn-outline-primary" id="validateGstBtn" style="display: none;">
                                     <i class="fas fa-search me-1"></i>Validate GST
                                 </button>
@@ -453,7 +453,9 @@
                             <label class="form-label">GST Legal Name</label>
                             <input type="text" name="gst_legal_name" class="form-control" 
                                    value="{{ old('gst_legal_name') }}" 
-                                   placeholder="Enter legal name for invoice">
+                                   placeholder="Enter legal name for invoice"
+                                   id="gst_legal_name_input"
+                                   readonly>
                             @error('gst_legal_name')
                                 <div class="text-danger">{{ $message }}</div>
                             @enderror
@@ -464,7 +466,9 @@
                         <div class="col-md-12 mb-3">
                             <label class="form-label">GST Address</label>
                             <textarea name="gst_address" class="form-control" rows="3" 
-                                      placeholder="Enter address for invoice">{{ old('gst_address') }}</textarea>
+                                      placeholder="Enter address for invoice"
+                                      id="gst_address_input"
+                                      readonly>{{ old('gst_address') }}</textarea>
                             @error('gst_address')
                                 <div class="text-danger">{{ $message }}</div>
                             @enderror
@@ -473,61 +477,86 @@
 
                     <div class="row">
                         <div class="col-md-6 mb-3">
-                            <label class="form-label">GST State</label>
-                            <input type="text" name="gst_state" class="form-control" 
-                                   value="{{ old('gst_state') }}" 
-                                   placeholder="Enter state">
-                            @error('gst_state')
+                            <label class="form-label">Country</label>
+                            <select name="gst_country" class="form-select" id="gst_country">
+                                <option value="India" {{ old('gst_country', 'India') == 'India' ? 'selected' : '' }}>India</option>
+                                <option value="United States" {{ old('gst_country') == 'United States' ? 'selected' : '' }}>United States</option>
+                                <option value="United Kingdom" {{ old('gst_country') == 'United Kingdom' ? 'selected' : '' }}>United Kingdom</option>
+                                <option value="Canada" {{ old('gst_country') == 'Canada' ? 'selected' : '' }}>Canada</option>
+                                <option value="Australia" {{ old('gst_country') == 'Australia' ? 'selected' : '' }}>Australia</option>
+                                <option value="Germany" {{ old('gst_country') == 'Germany' ? 'selected' : '' }}>Germany</option>
+                                <option value="France" {{ old('gst_country') == 'France' ? 'selected' : '' }}>France</option>
+                                <option value="Japan" {{ old('gst_country') == 'Japan' ? 'selected' : '' }}>Japan</option>
+                                <option value="China" {{ old('gst_country') == 'China' ? 'selected' : '' }}>China</option>
+                                <option value="Singapore" {{ old('gst_country') == 'Singapore' ? 'selected' : '' }}>Singapore</option>
+                                <option value="Other" {{ old('gst_country') == 'Other' ? 'selected' : '' }}>Other</option>
+                            </select>
+                            @error('gst_country')
                                 <div class="text-danger">{{ $message }}</div>
                             @enderror
                         </div>
-                    </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">State</label>
+                            <select name="gst_state" class="form-select" id="gst_state">
+                                <option value="">-- Select State --</option>
+                                @php
+                                    $indianStates = [
+                                        'Andhra Pradesh','Arunachal Pradesh','Assam','Bihar','Chhattisgarh','Goa',
+                                        'Gujarat','Haryana','Himachal Pradesh','Jharkhand','Karnataka','Kerala',
+                                        'Madhya Pradesh','Maharashtra','Manipur','Meghalaya','Mizoram','Nagaland',
+                                        'Odisha','Punjab','Rajasthan','Sikkim','Tamil Nadu','Telangana','Tripura',
+                                        'Uttar Pradesh','Uttarakhand','West Bengal',
+                                        'Andaman and Nicobar Islands','Chandigarh','Dadra and Nagar Haveli and Daman and Diu',
+                                        'Delhi','Jammu and Kashmir','Ladakh','Lakshadweep','Puducherry'
+                                    ];
+                                @endphp
+                                @foreach($indianStates as $state)
+                                    <option value="{{ $state }}" {{ old('gst_state') == $state ? 'selected' : '' }}>
+                                        {{ $state }}
+                                    </option>
+                                @endforeach
+                            </select>
+                            @error('gst_state')
+                                <div class="text-danger">{{ $message }}</div>
+                            @enderror
                 </div>
             </div>
 
-            <!-- Primary Contact Information Section (Only shown when GST is required) -->
-            <div class="form-section" id="primary_contact_section" style="display: {{ old('gst_required') == '1' ? 'block' : 'none' }};">
-                <h4 class="section-title">
-                    <i class="fas fa-user"></i>
-                    Primary Contact Information
-                </h4>
-                <p class="text-muted mb-3">Contact person details for invoice purposes.</p>
-
-                <div class="row">
                     <div class="col-md-6 mb-3">
-                        <label class="form-label required-field">Full Name</label>
+                            <label class="form-label required-field">Primary Contact Full Name</label>
                         <input type="text" name="contact_name" class="form-control" 
                                value="{{ old('contact_name') }}" 
                                placeholder="Enter full name" id="contact_name">
                         @error('contact_name')
                             <div class="text-danger">{{ $message }}</div>
                         @enderror
+                        </div>
                     </div>
 
+                    <div class="row">
                     <div class="col-md-6 mb-3">
-                        <label class="form-label required-field">Email Address</label>
+                            <label class="form-label required-field">Primary Contact Email Address</label>
                         <input type="email" name="contact_email" class="form-control" 
                                value="{{ old('contact_email') }}" 
                                placeholder="Enter email address" id="contact_email">
                         @error('contact_email')
                             <div class="text-danger">{{ $message }}</div>
                         @enderror
-                    </div>
                 </div>
 
-                <div class="row">
                     <div class="col-md-6 mb-3">
-                        <label class="form-label required-field">Mobile Number</label>
+                            <label class="form-label required-field">Primary Contact Mobile Number</label>
                         <input type="tel" name="contact_phone" class="form-control" 
-                               value="{{ old('contact_phone') ? preg_replace('/\s+/', '', old('contact_phone')) : '' }}" 
-                               placeholder="Enter mobile number" 
-                               id="contact_phone"
-                               pattern="[0-9]*"
-                               inputmode="numeric">
+                                   value="{{ old('contact_phone') ? preg_replace('/\s+/', '', old('contact_phone')) : '' }}" 
+                                   placeholder="Enter mobile number" 
+                                   id="contact_phone"
+                                   pattern="[0-9]*"
+                                   inputmode="numeric">
                         <input type="hidden" name="contact_phone_country_code" id="contact_phone_country_code" value="{{ old('contact_phone_country_code', '+91') }}">
                         @error('contact_phone')
                             <div class="text-danger">{{ $message }}</div>
                         @enderror
+                        </div>
                     </div>
                 </div>
             </div>
@@ -591,6 +620,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             <option value="Mrs" ${delegateData.salutation === 'Mrs' ? 'selected' : ''}>Mrs</option>
                             <option value="Ms" ${delegateData.salutation === 'Ms' ? 'selected' : ''}>Ms</option>
                             <option value="Dr" ${delegateData.salutation === 'Dr' ? 'selected' : ''}>Dr</option>
+                            <option value="Prof" ${delegateData.salutation === 'Prof' ? 'selected' : ''}>Prof.</option>
                         </select>
                     </div>
                     <div class="col-md-5 mb-3">
@@ -834,6 +864,106 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
+    // Load states for GST country dropdown
+    const gstCountrySelect = document.getElementById('gst_country');
+    const gstStateSelect = document.getElementById('gst_state');
+    
+    function loadStatesForGstCountry(countryName) {
+        if (!countryName || countryName === '' || !gstStateSelect) {
+            if (gstStateSelect) {
+                gstStateSelect.innerHTML = '<option value="">-- Select State --</option>';
+            }
+            return;
+        }
+        
+        // For India, use the predefined list
+        if (countryName === 'India') {
+            const indianStates = [
+                'Andhra Pradesh','Arunachal Pradesh','Assam','Bihar','Chhattisgarh','Goa',
+                'Gujarat','Haryana','Himachal Pradesh','Jharkhand','Karnataka','Kerala',
+                'Madhya Pradesh','Maharashtra','Manipur','Meghalaya','Mizoram','Nagaland',
+                'Odisha','Punjab','Rajasthan','Sikkim','Tamil Nadu','Telangana','Tripura',
+                'Uttar Pradesh','Uttarakhand','West Bengal',
+                'Andaman and Nicobar Islands','Chandigarh','Dadra and Nagar Haveli and Daman and Diu',
+                'Delhi','Jammu and Kashmir','Ladakh','Lakshadweep','Puducherry'
+            ];
+            gstStateSelect.innerHTML = '<option value="">-- Select State --</option>';
+            const oldState = '{{ old("gst_state") }}';
+            indianStates.forEach(state => {
+                const option = document.createElement('option');
+                option.value = state;
+                option.textContent = state;
+                if (oldState === state) {
+                    option.selected = true;
+                }
+                gstStateSelect.appendChild(option);
+            });
+            return;
+        }
+        
+        // For other countries, fetch from API
+        gstStateSelect.innerHTML = '<option value="">Loading states...</option>';
+        gstStateSelect.disabled = true;
+        
+        const countryParam = encodeURIComponent(countryName);
+        fetch(`{{ url('/api/states') }}/${countryParam}`, {
+            method: 'GET',
+            headers: {
+                'Accept': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Failed to fetch states');
+            }
+            return response.json();
+        })
+        .then(data => {
+            gstStateSelect.innerHTML = '<option value="">-- Select State --</option>';
+            if (data && Array.isArray(data) && data.length > 0) {
+                data.forEach(state => {
+                    const option = document.createElement('option');
+                    const stateName = state.name || state.state_name || state;
+                    option.value = stateName;
+                    option.textContent = stateName;
+                    if ('{{ old("gst_state") }}' === stateName) {
+                        option.selected = true;
+                    }
+                    gstStateSelect.appendChild(option);
+                });
+            } else {
+                // If no states found, add a text input option
+                const option = document.createElement('option');
+                option.value = '';
+                option.textContent = '-- No states available --';
+                gstStateSelect.appendChild(option);
+            }
+            gstStateSelect.disabled = false;
+        })
+        .catch(error => {
+            console.error('Error loading states:', error);
+            gstStateSelect.innerHTML = '<option value="">-- Select State --</option>';
+            gstStateSelect.disabled = false;
+        });
+    }
+    
+    // Load states when GST country changes
+    if (gstCountrySelect && gstStateSelect) {
+        gstCountrySelect.addEventListener('change', function() {
+            // Re-enable state select if it was disabled by API fetch
+            if (gstStateSelect.dataset.apiFetched !== 'true') {
+                gstStateSelect.disabled = false;
+                gstStateSelect.style.backgroundColor = '';
+            }
+            loadStatesForGstCountry(this.value);
+        });
+        
+        // Load states on page load if country is already set (default to India)
+        const defaultCountry = gstCountrySelect.value || 'India';
+        loadStatesForGstCountry(defaultCountry);
+    }
+    
     // Store delegate phone instances
     const delegatePhoneInstances = new Map();
     let itiCompany = null;
@@ -980,12 +1110,12 @@ document.addEventListener('DOMContentLoaded', function() {
             // Retry after a short delay if library not loaded yet
             setTimeout(initializePhoneInputs, 100);
             return;
-        }
-        
-        // Initialize intl-tel-input for company phone
-        const companyPhoneInput = document.getElementById('company_phone');
-        const companyPhoneCountryCode = document.getElementById('company_phone_country_code');
-        
+    }
+    
+    // Initialize intl-tel-input for company phone
+    const companyPhoneInput = document.getElementById('company_phone');
+    const companyPhoneCountryCode = document.getElementById('company_phone_country_code');
+    
         if (companyPhoneInput) {
             // Check if we have old value in format +CC-NUMBER, split it
             let oldPhoneValue = companyPhoneInput.value || '';
@@ -1020,7 +1150,7 @@ document.addEventListener('DOMContentLoaded', function() {
             // Apply restriction BEFORE initializing intl-tel-input
             restrictToNumbers(companyPhoneInput);
             
-            companyPhoneInput.placeholder = '';
+        companyPhoneInput.placeholder = '';
             
             // Determine initial country from country code
             let initialCountry = 'in';
@@ -1038,12 +1168,12 @@ document.addEventListener('DOMContentLoaded', function() {
             
             itiCompany = window.intlTelInput(companyPhoneInput, {
                 initialCountry: initialCountry,
-                preferredCountries: ['in', 'us', 'gb'],
-                utilsScript: "https://cdn.jsdelivr.net/npm/intl-tel-input@18.1.1/build/js/utils.js",
-                separateDialCode: true,
-                nationalMode: false,
-                autoPlaceholder: 'off',
-            });
+            preferredCountries: ['in', 'us', 'gb'],
+            utilsScript: "https://cdn.jsdelivr.net/npm/intl-tel-input@18.1.1/build/js/utils.js",
+            separateDialCode: true,
+            nationalMode: false,
+            autoPlaceholder: 'off',
+        });
             
             // Set the country code if we have one
             if (countryCode && countryCode !== '+91') {
@@ -1061,25 +1191,25 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // Re-apply restriction after intl-tel-input initialization
             restrictToNumbers(companyPhoneInput);
-            
-            companyPhoneInput.addEventListener('countrychange', function () {
-                const countryData = itiCompany.getSelectedCountryData();
+        
+        companyPhoneInput.addEventListener('countrychange', function () {
+            const countryData = itiCompany.getSelectedCountryData();
                 if (companyPhoneCountryCode) {
-                    companyPhoneCountryCode.value = '+' + countryData.dialCode;
+            companyPhoneCountryCode.value = '+' + countryData.dialCode;
                 }
-            });
-            
+        });
+        
             // Set initial country code in hidden field
-            const initialCountryData = itiCompany.getSelectedCountryData();
+        const initialCountryData = itiCompany.getSelectedCountryData();
             if (companyPhoneCountryCode) {
-                companyPhoneCountryCode.value = '+' + initialCountryData.dialCode;
+        companyPhoneCountryCode.value = '+' + initialCountryData.dialCode;
             }
-        }
-        
-        // Initialize intl-tel-input for contact phone (primary contact)
-        const contactPhoneInput = document.getElementById('contact_phone');
-        const contactPhoneCountryCode = document.getElementById('contact_phone_country_code');
-        
+    }
+    
+    // Initialize intl-tel-input for contact phone (primary contact)
+    const contactPhoneInput = document.getElementById('contact_phone');
+    const contactPhoneCountryCode = document.getElementById('contact_phone_country_code');
+    
         if (contactPhoneInput) {
             // Check if we have old value in format +CC-NUMBER, split it
             let oldPhoneValue = contactPhoneInput.value || '';
@@ -1114,7 +1244,7 @@ document.addEventListener('DOMContentLoaded', function() {
             // Apply restriction BEFORE initializing intl-tel-input
             restrictToNumbers(contactPhoneInput);
             
-            contactPhoneInput.placeholder = '';
+        contactPhoneInput.placeholder = '';
             
             // Determine initial country from country code
             let initialCountry = 'in';
@@ -1132,12 +1262,12 @@ document.addEventListener('DOMContentLoaded', function() {
             
             itiContact = window.intlTelInput(contactPhoneInput, {
                 initialCountry: initialCountry,
-                preferredCountries: ['in', 'us', 'gb'],
-                utilsScript: "https://cdn.jsdelivr.net/npm/intl-tel-input@18.1.1/build/js/utils.js",
-                separateDialCode: true,
-                nationalMode: false,
-                autoPlaceholder: 'off',
-            });
+            preferredCountries: ['in', 'us', 'gb'],
+            utilsScript: "https://cdn.jsdelivr.net/npm/intl-tel-input@18.1.1/build/js/utils.js",
+            separateDialCode: true,
+            nationalMode: false,
+            autoPlaceholder: 'off',
+        });
             
             // Set the country code if we have one
             if (countryCode && countryCode !== '+91') {
@@ -1155,18 +1285,18 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // Re-apply restriction after intl-tel-input initialization
             restrictToNumbers(contactPhoneInput);
-            
-            contactPhoneInput.addEventListener('countrychange', function () {
-                const countryData = itiContact.getSelectedCountryData();
+        
+        contactPhoneInput.addEventListener('countrychange', function () {
+            const countryData = itiContact.getSelectedCountryData();
                 if (contactPhoneCountryCode) {
-                    contactPhoneCountryCode.value = '+' + countryData.dialCode;
+            contactPhoneCountryCode.value = '+' + countryData.dialCode;
                 }
-            });
-            
+        });
+        
             // Set initial country code in hidden field
-            const initialCountryData = itiContact.getSelectedCountryData();
+        const initialCountryData = itiContact.getSelectedCountryData();
             if (contactPhoneCountryCode) {
-                contactPhoneCountryCode.value = '+' + initialCountryData.dialCode;
+        contactPhoneCountryCode.value = '+' + initialCountryData.dialCode;
             }
         }
     }
@@ -1251,7 +1381,6 @@ document.addEventListener('DOMContentLoaded', function() {
     // GST toggle
     const gstRequired = document.getElementById('gst_required');
     const gstFields = document.getElementById('gst_fields');
-    const primaryContactSection = document.getElementById('primary_contact_section');
     const contactName = document.getElementById('contact_name');
     const contactEmail = document.getElementById('contact_email');
     const contactPhone = document.getElementById('contact_phone');
@@ -1292,18 +1421,16 @@ document.addEventListener('DOMContentLoaded', function() {
         const factor = Math.pow(10, decimals);
         return (Math.round(number * factor) / factor).toFixed(decimals);
     }
-    
+
     gstRequired.addEventListener('change', function() {
         if (this.value === '1') {
             gstFields.style.display = 'block';
-            primaryContactSection.style.display = 'block';
             if (contactName) contactName.required = true;
             if (contactEmail) contactEmail.required = true;
             if (contactPhone) contactPhone.required = true;
             if (validateGstBtn) validateGstBtn.style.display = 'inline-block';
         } else {
             gstFields.style.display = 'none';
-            primaryContactSection.style.display = 'none';
             if (contactName) contactName.required = false;
             if (contactEmail) contactEmail.required = false;
             if (contactPhone) contactPhone.required = false;
@@ -1343,14 +1470,14 @@ document.addEventListener('DOMContentLoaded', function() {
             gstValidationMessage.innerHTML = '';
             
             // Make API call
-            fetch('{{ route("tickets.validate-gst") }}', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                },
-                body: JSON.stringify({ gstin: gstin })
-            })
+                    fetch('{{ route("tickets.validate-gst") }}', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                        },
+                        body: JSON.stringify({ gstin: gstin })
+                    })
             .then(response => {
                 const status = response.status;
                 return response.json().then(data => ({ status, data }));
@@ -1360,34 +1487,45 @@ document.addEventListener('DOMContentLoaded', function() {
                 validateGstBtn.disabled = false;
                 
                 if (data.success) {
-                    // Auto-fill form fields
-                    const legalNameInput = document.querySelector('input[name="gst_legal_name"]');
-                    const addressInput = document.querySelector('textarea[name="gst_address"]');
-                    const stateInput = document.querySelector('input[name="gst_state"]');
+                    // Auto-fill form fields and make them read-only
+                    const legalNameInput = document.getElementById('gst_legal_name_input');
+                    const addressInput = document.getElementById('gst_address_input');
+                    const stateSelect = document.getElementById('gst_state');
                     
-                    if (data.gst.company_name && legalNameInput && !legalNameInput.value) {
+                    if (data.gst.company_name && legalNameInput) {
                         legalNameInput.value = data.gst.company_name;
+                        legalNameInput.setAttribute('readonly', 'readonly');
+                        legalNameInput.style.backgroundColor = '#e9ecef';
                     }
-                    if (data.gst.billing_address && addressInput && !addressInput.value) {
+                    if (data.gst.billing_address && addressInput) {
                         addressInput.value = data.gst.billing_address;
+                        addressInput.setAttribute('readonly', 'readonly');
+                        addressInput.style.backgroundColor = '#e9ecef';
                     }
-                    if (data.gst.state_name && stateInput && !stateInput.value) {
-                        stateInput.value = data.gst.state_name;
+                    if (data.gst.state_name && stateSelect) {
+                        // Find and select the state
+                        const stateOption = Array.from(stateSelect.options).find(opt => opt.text === data.gst.state_name || opt.value === data.gst.state_name);
+                        if (stateOption) {
+                            stateSelect.value = stateOption.value;
+                            stateSelect.style.backgroundColor = '#e9ecef';
+                            stateSelect.disabled = true;
+                            stateSelect.dataset.apiFetched = 'true';
+                        }
                     }
                     
-                    gstValidationMessage.innerHTML = '<div class="alert alert-success mt-2"><i class="fas fa-check-circle"></i> GST validated successfully</div>';
+                    gstValidationMessage.innerHTML = '<div class="alert alert-success mt-2"><i class="fas fa-check-circle"></i> GST validated successfully. Fields are locked.</div>';
                 } else if (status === 429 || data.limit_exceeded) {
                     // Rate limit exceeded
                     gstValidationMessage.innerHTML = '<div class="alert alert-warning mt-2"><i class="fas fa-exclamation-triangle"></i> ' + data.message + '</div>';
-                } else {
+                        } else {
                     // Error or not found
                     gstValidationMessage.innerHTML = '<div class="alert alert-info mt-2"><i class="fas fa-info-circle"></i> ' + (data.message || 'GST not found. Please fill details manually.') + '</div>';
-                }
-            })
-            .catch(error => {
+                        }
+                    })
+                    .catch(error => {
                 gstLoading.classList.add('d-none');
                 validateGstBtn.disabled = false;
-                console.error('GST validation error:', error);
+                        console.error('GST validation error:', error);
                 gstValidationMessage.innerHTML = '<div class="alert alert-danger mt-2"><i class="fas fa-times-circle"></i> Error validating GST. Please fill details manually.</div>';
             });
         });
