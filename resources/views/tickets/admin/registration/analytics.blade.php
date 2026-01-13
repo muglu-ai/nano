@@ -46,6 +46,24 @@
             height: 300px;
             margin-top: 1rem;
         }
+        
+        .clickable-badge {
+            transition: all 0.2s ease;
+        }
+        
+        .clickable-badge:hover {
+            transform: scale(1.1);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+        
+        .clickable-number {
+            transition: all 0.2s ease;
+        }
+        
+        .clickable-number:hover {
+            color: #6A1B9A !important;
+            text-decoration: underline !important;
+        }
     </style>
 
     <div class="container-fluid py-2">
@@ -131,6 +149,10 @@
                                 </thead>
                                 <tbody>
                                     @forelse($categoryWiseData as $data)
+                                        @php
+                                            $categoryId = $data->category_id;
+                                            $hasValidFilters = $categoryId && $data->nationality;
+                                        @endphp
                                         <tr>
                                             <td><strong>{{ $data->category_name ?? 'Uncategorized' }}</strong></td>
                                             <td>
@@ -143,13 +165,60 @@
                                                 @endif
                                             </td>
                                             <td class="text-end">
-                                                <span class="badge bg-success">{{ number_format($data->paid_count) }}</span>
+                                                @if($data->paid_count > 0 && $hasValidFilters)
+                                                    <a href="{{ route('admin.tickets.registration.list', array_filter([
+                                                        'category_id' => $categoryId,
+                                                        'nationality' => $data->nationality,
+                                                        'payment_status' => 'paid',
+                                                        'event_id' => request('event_id'),
+                                                        'date_from' => request('date_from'),
+                                                        'date_to' => request('date_to'),
+                                                    ])) }}" 
+                                                       class="badge bg-success text-decoration-none clickable-badge" 
+                                                       style="cursor: pointer;"
+                                                       title="Click to view {{ $data->paid_count }} paid registrations for {{ $data->category_name ?? 'Uncategorized' }} - {{ $data->nationality }}">
+                                                        {{ number_format($data->paid_count) }}
+                                                    </a>
+                                                @else
+                                                    <span class="badge bg-success">{{ number_format($data->paid_count) }}</span>
+                                                @endif
                                             </td>
                                             <td class="text-end">
-                                                <span class="badge bg-warning text-dark">{{ number_format($data->not_paid_count) }}</span>
+                                                @if($data->not_paid_count > 0 && $hasValidFilters)
+                                                    <a href="{{ route('admin.tickets.registration.list', array_filter([
+                                                        'category_id' => $categoryId,
+                                                        'nationality' => $data->nationality,
+                                                        'payment_status' => 'not_paid',
+                                                        'event_id' => request('event_id'),
+                                                        'date_from' => request('date_from'),
+                                                        'date_to' => request('date_to'),
+                                                    ])) }}" 
+                                                       class="badge bg-warning text-dark text-decoration-none clickable-badge" 
+                                                       style="cursor: pointer;"
+                                                       title="Click to view {{ $data->not_paid_count }} not paid registrations for {{ $data->category_name ?? 'Uncategorized' }} - {{ $data->nationality }}">
+                                                        {{ number_format($data->not_paid_count) }}
+                                                    </a>
+                                                @else
+                                                    <span class="badge bg-warning text-dark">{{ number_format($data->not_paid_count) }}</span>
+                                                @endif
                                             </td>
                                             <td class="text-end">
-                                                <strong>{{ number_format($data->total_count) }}</strong>
+                                                @if($data->total_count > 0 && $hasValidFilters)
+                                                    <a href="{{ route('admin.tickets.registration.list', array_filter([
+                                                        'category_id' => $categoryId,
+                                                        'nationality' => $data->nationality,
+                                                        'event_id' => request('event_id'),
+                                                        'date_from' => request('date_from'),
+                                                        'date_to' => request('date_to'),
+                                                    ])) }}" 
+                                                       class="text-decoration-none text-dark fw-bold clickable-number" 
+                                                       style="cursor: pointer;"
+                                                       title="Click to view all {{ $data->total_count }} registrations for {{ $data->category_name ?? 'Uncategorized' }} - {{ $data->nationality }}">
+                                                        {{ number_format($data->total_count) }}
+                                                    </a>
+                                                @else
+                                                    <strong>{{ number_format($data->total_count) }}</strong>
+                                                @endif
                                             </td>
                                         </tr>
                                     @empty

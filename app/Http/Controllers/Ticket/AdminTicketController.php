@@ -483,6 +483,7 @@ class AdminTicketController extends Controller
             ->leftJoin('ticket_registration_categories as trc', 'tr.registration_category_id', '=', 'trc.id')
             ->leftJoin('ticket_orders as to', 'tr.id', '=', 'to.registration_id')
             ->select(
+                'tr.registration_category_id as category_id',
                 'trc.name as category_name',
                 'tr.nationality',
                 DB::raw('COUNT(CASE WHEN to.status = "paid" THEN 1 END) as paid_count'),
@@ -498,7 +499,7 @@ class AdminTicketController extends Controller
             ->when($dateTo, function($query) use ($dateTo) {
                 $query->whereDate('tr.created_at', '<=', $dateTo);
             })
-            ->groupBy('trc.name', 'tr.nationality')
+            ->groupBy('tr.registration_category_id', 'trc.name', 'tr.nationality')
             ->orderBy('trc.name')
             ->orderBy('tr.nationality')
             ->get();
