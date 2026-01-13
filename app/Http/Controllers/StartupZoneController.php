@@ -842,11 +842,30 @@ class StartupZoneController extends Controller
 
             $draft->progress_percentage = $this->calculateProgress($draft);
             $draft->save();
+            
+            // SAFEGUARD: Verify no application was created (should never happen in submitForm)
+            // This method should ONLY save to draft, never create applications
+            $sessionId = session()->getId();
+            
+            \Log::info('submitForm: Draft saved, NOT creating application', [
+                'draft_id' => $draft->id,
+                'session_id' => $sessionId,
+                'message' => 'Data saved to startup_zone_drafts only. Application will be created when user clicks Proceed to Payment.'
+            ]);
+            
+            \Log::info('submitForm: Draft saved, NOT creating application', [
+                'draft_id' => $draft->id,
+                'session_id' => $sessionId,
+                'message' => 'Data saved to startup_zone_drafts only. Application will be created when user clicks Proceed to Payment.'
+            ]);
 
+            // Return success with redirect to preview page
+            // User will click "Proceed to Payment" on preview page to create application
             return response()->json([
                 'success' => true,
-                'message' => 'Form saved successfully',
-                'progress' => $draft->progress_percentage
+                'message' => 'Form submitted successfully! Please review your details.',
+                'progress' => $draft->progress_percentage,
+                'redirect' => route('startup-zone.preview')
             ]);
         } catch (\Exception $e) {
             // Log the error for debugging
@@ -959,12 +978,70 @@ class StartupZoneController extends Controller
             // Build validation rules
             $rules = $this->buildValidationRules($fieldConfigs, 'all');
             
-            // Get fresh session data (just saved above) and merge with request data
-            // Request data takes precedence (latest values)
+            // Get fresh session data and draft data
+            // Since preview page sends empty FormData, we need to extract from session/draft
             $sessionData = session('startup_zone_draft', []);
+            
+            // Extract billing_data, exhibitor_data, contact_data from session
+            $billingData = $sessionData['billing_data'] ?? null;
+            $billingData = is_string($billingData) ? json_decode($billingData, true) : $billingData;
+            
+            $exhibitorData = $sessionData['exhibitor_data'] ?? null;
+            $exhibitorData = is_string($exhibitorData) ? json_decode($exhibitorData, true) : $exhibitorData;
+            
+            $contactData = $sessionData['contact_data'] ?? null;
+            $contactData = is_string($contactData) ? json_decode($contactData, true) : $contactData;
+            
+            // Also check draft for data (fallback)
+            $draftBillingData = $draft->billing_data ?? null;
+            $draftBillingData = is_string($draftBillingData) ? json_decode($draftBillingData, true) : $draftBillingData;
+            
+            $draftExhibitorData = $draft->exhibitor_data ?? null;
+            $draftExhibitorData = is_string($draftExhibitorData) ? json_decode($draftExhibitorData, true) : $draftExhibitorData;
+            
+            $draftContactData = $draft->contact_data ?? null;
+            $draftContactData = is_string($draftContactData) ? json_decode($draftContactData, true) : $draftContactData;
+            
+            // Use session data first, then draft data as fallback
+            $billingData = $billingData ?? $draftBillingData;
+            $exhibitorData = $exhibitorData ?? $draftExhibitorData;
+            $contactData = $contactData ?? $draftContactData;
+            
+            // Build allData for validation - map to old field names
             $allData = array_merge($sessionData, $request->all());
             
-            // Map new billing field names to old field names for validation compatibility
+            // Map billing data to old field names (for validation)
+            if ($billingData) {
+                if (isset($billingData['postal_code'])) {
+                    $allData['postal_code'] = $billingData['postal_code'];
+                }
+                if (isset($billingData['email'])) {
+                    $allData['company_email'] = $billingData['email'];
+                }
+                if (isset($billingData['company_name'])) {
+                    $allData['company_name'] = $billingData['company_name'];
+                }
+                if (isset($billingData['address'])) {
+                    $allData['address'] = $billingData['address'];
+                }
+                if (isset($billingData['country_id'])) {
+                    $allData['country_id'] = $billingData['country_id'];
+                }
+                if (isset($billingData['state_id'])) {
+                    $allData['state_id'] = $billingData['state_id'];
+                }
+                if (isset($billingData['city'])) {
+                    $allData['city_id'] = $billingData['city'];
+                }
+                if (isset($billingData['telephone'])) {
+                    $allData['landline'] = $billingData['telephone'];
+                }
+                if (isset($billingData['website'])) {
+                    $allData['website'] = $billingData['website'];
+                }
+            }
+            
+            // Map request data if provided (takes precedence)
             if ($request->has('billing_postal_code')) {
                 $allData['postal_code'] = $request->input('billing_postal_code');
             }
@@ -995,9 +1072,153 @@ class StartupZoneController extends Controller
                 $allData['website'] = $request->input('billing_website');
             }
             
+            // Map contact data
+            if ($contactData) {
+                if (isset($contactData['email'])) {
+                    $allData['contact_email'] = $contactData['email'];
+                }
+                if (isset($contactData['mobile']) && !empty($contactData['mobile'])) {
+                    // Extract national number from various formats
+                    // Stored format is typically "91-9806575432" (country_code-national_number)
+                    $mobile = trim($contactData['mobile']);
+                    
+                    \Log::info('Extracting contact mobile', [
+                        'original_mobile' => $mobile,
+                        'mobile_type' => gettype($mobile)
+                    ]);
+                    
+                    // Remove all spaces first
+                    $mobile = preg_replace('/\s+/', '', $mobile);
+                    
+                    // Try to match format with hyphen: "91-9806575432" or "91-91-9806575432"
+                    // Extract the 10 digits after the last hyphen (most reliable method)
+                    if (preg_match('/-(\d{10})$/', $mobile, $matches)) {
+                        $allData['contact_mobile'] = $matches[1];
+                        \Log::info('Mobile extracted using hyphen pattern', ['extracted' => $allData['contact_mobile']]);
+                    }
+                    // Try to match format with optional + and country code at start: "+91-9806575432"
+                    elseif (preg_match('/^\+?\d{1,3}-(\d{10})$/', $mobile, $matches)) {
+                        $allData['contact_mobile'] = $matches[1];
+                        \Log::info('Mobile extracted using + pattern', ['extracted' => $allData['contact_mobile']]);
+                    }
+                    // Try to match format like "+919801217815" or "919801217815" (no hyphen)
+                    elseif (preg_match('/^\+?(\d{1,4})(\d{10})$/', $mobile, $matches)) {
+                        $allData['contact_mobile'] = $matches[2];
+                        \Log::info('Mobile extracted using no-hyphen pattern', ['extracted' => $allData['contact_mobile']]);
+                    }
+                    // Fallback: extract all digits and get last 10
+                    else {
+                        $digitsOnly = preg_replace('/[^0-9]/', '', $mobile);
+                        if (strlen($digitsOnly) >= 10) {
+                            // Get last 10 digits (handles cases like "91919806575432" -> "9806575432")
+                            $allData['contact_mobile'] = substr($digitsOnly, -10);
+                            \Log::info('Mobile extracted using fallback (last 10 digits)', [
+                                'all_digits' => $digitsOnly,
+                                'extracted' => $allData['contact_mobile']
+                            ]);
+                        } elseif (strlen($digitsOnly) > 0) {
+                            $allData['contact_mobile'] = $digitsOnly;
+                            \Log::warning('Mobile extracted but less than 10 digits', [
+                                'extracted' => $allData['contact_mobile'],
+                                'length' => strlen($allData['contact_mobile'])
+                            ]);
+                        } else {
+                            \Log::error('Failed to extract mobile number', ['original' => $contactData['mobile']]);
+                        }
+                    }
+                    
+                    // Final validation: ensure we have exactly 10 digits
+                    if (isset($allData['contact_mobile'])) {
+                        // Ensure it's a string and contains only digits
+                        $allData['contact_mobile'] = (string) $allData['contact_mobile'];
+                        $allData['contact_mobile'] = preg_replace('/[^0-9]/', '', $allData['contact_mobile']);
+                        
+                        // If we have more than 10 digits, get last 10
+                        if (strlen($allData['contact_mobile']) > 10) {
+                            $allData['contact_mobile'] = substr($allData['contact_mobile'], -10);
+                        }
+                        
+                        if (strlen($allData['contact_mobile']) !== 10) {
+                            \Log::warning('Contact mobile extraction result is not 10 digits', [
+                                'original' => $contactData['mobile'],
+                                'extracted' => $allData['contact_mobile'],
+                                'length' => strlen($allData['contact_mobile'])
+                            ]);
+                        } else {
+                            \Log::info('Contact mobile successfully extracted (10 digits)', [
+                                'extracted' => $allData['contact_mobile']
+                            ]);
+                        }
+                    }
+                } else {
+                    \Log::warning('Contact mobile not found in contactData', [
+                        'contactData_keys' => $contactData ? array_keys($contactData) : [],
+                        'has_mobile_key' => isset($contactData['mobile'])
+                    ]);
+                }
+            }
+            
+            // Map exhibitor data if needed
+            if ($exhibitorData) {
+                if (isset($exhibitorData['name']) && empty($allData['company_name'])) {
+                    $allData['company_name'] = $exhibitorData['name'];
+                }
+            }
+            
+            // Map draft fields directly
+            if (empty($allData['postal_code']) && !empty($draft->postal_code)) {
+                $allData['postal_code'] = $draft->postal_code;
+            }
+            if (empty($allData['company_email']) && !empty($draft->company_email)) {
+                $allData['company_email'] = $draft->company_email;
+            }
+            if (empty($allData['company_name']) && !empty($draft->company_name)) {
+                $allData['company_name'] = $draft->company_name;
+            }
+            if (empty($allData['address']) && !empty($draft->address)) {
+                $allData['address'] = $draft->address;
+            }
+            if (empty($allData['country_id']) && !empty($draft->country_id)) {
+                $allData['country_id'] = $draft->country_id;
+            }
+            if (empty($allData['state_id']) && !empty($draft->state_id)) {
+                $allData['state_id'] = $draft->state_id;
+            }
+            if (empty($allData['city_id']) && !empty($draft->city_id)) {
+                $allData['city_id'] = $draft->city_id;
+            }
+            if (empty($allData['landline']) && !empty($draft->landline)) {
+                $allData['landline'] = $draft->landline;
+            }
+            if (empty($allData['website']) && !empty($draft->website)) {
+                $allData['website'] = $draft->website;
+            }
+            
+            // Certificate is already handled above (validation rule removed if exists in draft)
+            
             // For intl-tel-input fields, validate the national number
+            // Request data takes precedence over session/draft data
             if ($request->has('contact_mobile_national') && !empty($request->input('contact_mobile_national'))) {
-                $allData['contact_mobile'] = $request->input('contact_mobile_national');
+                $allData['contact_mobile'] = preg_replace('/[^0-9]/', '', (string) $request->input('contact_mobile_national'));
+                // Ensure exactly 10 digits
+                if (strlen($allData['contact_mobile']) > 10) {
+                    $allData['contact_mobile'] = substr($allData['contact_mobile'], -10);
+                }
+                \Log::info('Contact mobile set from request', ['value' => $allData['contact_mobile']]);
+            }
+            // Note: contact_mobile is already extracted from contactData above (lines 1080-1150)
+            // Final check: ensure contact_mobile is set and is exactly 10 digits
+            if (empty($allData['contact_mobile'])) {
+                \Log::warning('Contact mobile is empty after all extraction attempts', [
+                    'contactData' => $contactData,
+                    'request_has_contact_mobile_national' => $request->has('contact_mobile_national'),
+                    'draft_contact_data' => $draft->contact_data ?? null
+                ]);
+            } elseif (strlen($allData['contact_mobile']) !== 10) {
+                \Log::error('Contact mobile is not 10 digits before validation', [
+                    'value' => $allData['contact_mobile'],
+                    'length' => strlen($allData['contact_mobile'])
+                ]);
             }
             if ($request->has('landline_national') && !empty($request->input('landline_national'))) {
                 $allData['landline'] = $request->input('landline_national');
@@ -1006,11 +1227,12 @@ class StartupZoneController extends Controller
             // CRITICAL: Check if contact email already exists in users table - BLOCK SUBMISSION
             $contactEmail = $request->input('contact_email');
             if (empty($contactEmail)) {
-                // Get from session data if not in request
-                $sessionData = session('startup_zone_draft', []);
-                $contactData = $sessionData['contact_data'] ?? null;
-                $contactData = is_string($contactData) ? json_decode($contactData, true) : $contactData;
+                // Use already-extracted contactData from above
                 $contactEmail = $contactData['email'] ?? null;
+            }
+            // Also check allData in case it was set there
+            if (empty($contactEmail) && !empty($allData['contact_email'])) {
+                $contactEmail = $allData['contact_email'];
             }
             
             if (!empty($contactEmail) && $this->checkEmailExists(trim($contactEmail))) {
@@ -1029,10 +1251,39 @@ class StartupZoneController extends Controller
                 'certificate.max' => 'The certificate field must not be greater than 2mb.',
             ];
             
+            // Modify certificate validation rule if certificate already exists in draft
+            // When restoring from draft, the certificate is already uploaded, so make it optional
+            if (!empty($draft->certificate_path) || isset($sessionData['certificate_path'])) {
+                // Certificate already exists - remove the certificate validation rule entirely
+                // since we don't need to validate an already-uploaded file
+                unset($rules['certificate']);
+            }
+            
+            // Log data for debugging
+            \Log::info('restoreDraftToApplication: Data prepared for validation', [
+                'draft_id' => $draft->id,
+                'has_postal_code' => !empty($allData['postal_code']),
+                'has_company_email' => !empty($allData['company_email']),
+                'has_company_name' => !empty($allData['company_name']),
+                'has_contact_mobile' => !empty($allData['contact_mobile']),
+                'contact_mobile_value' => $allData['contact_mobile'] ?? null,
+                'contact_mobile_length' => strlen($allData['contact_mobile'] ?? ''),
+                'contact_mobile_raw' => $contactData['mobile'] ?? null,
+                'contact_data_full' => $contactData ?? null,
+                'has_certificate' => !empty($draft->certificate_path) || isset($sessionData['certificate_path']),
+                'certificate_path' => $draft->certificate_path ?? $sessionData['certificate_path'] ?? null,
+                'billing_data_keys' => $billingData ? array_keys($billingData) : [],
+                'allData_keys' => array_keys($allData)
+            ]);
+            
             // Validate using request data (latest values)
             $validator = Validator::make($allData, $rules, $customMessages);
             
             if ($validator->fails()) {
+                \Log::warning('restoreDraftToApplication: Validation failed', [
+                    'errors' => $validator->errors()->toArray(),
+                    'allData' => $allData
+                ]);
                 // Map validation errors back to frontend field names
                 $errors = $validator->errors();
                 $mappedErrors = [];
@@ -1084,6 +1335,73 @@ class StartupZoneController extends Controller
             if (isset($sessionData['contact_data'])) {
                 $draft->contact_data = $sessionData['contact_data'];
             }
+            
+            // Update draft with latest session data
+            $draft->save();
+            
+            DB::commit();
+            
+            // NOW create application from draft (user clicked "Proceed to Payment")
+            try {
+                $application = $this->createApplicationFromDraft($draft);
+                
+                // Redirect to payment page
+                return response()->json([
+                    'success' => true,
+                    'application_id' => $application->application_id,
+                    'message' => 'Application created successfully! Redirecting to payment...',
+                    'redirect' => route('startup-zone.payment', $application->application_id),
+                ]);
+            } catch (\Exception $e) {
+                \Log::error('Failed to create application from draft in restoreDraftToApplication', [
+                    'draft_id' => $draft->id,
+                    'error' => $e->getMessage(),
+                ]);
+                
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Failed to create application: ' . $e->getMessage(),
+                    'error' => $e->getMessage()
+                ], 500);
+            }
+        } catch (\Exception $e) {
+            DB::rollBack();
+            \Log::error('Startup Zone restore draft error', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'An error occurred while processing your request. Please try again.',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Create application from draft - called when user clicks "Proceed to Payment"
+     * This method creates users, applications, invoices, etc. from draft data
+     */
+    private function createApplicationFromDraft($draft)
+    {
+        $backtrace = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 10);
+        $caller = $backtrace[1]['function'] ?? 'unknown';
+        
+        \Log::info('createApplicationFromDraft called - CREATING APPLICATION NOW', [
+            'draft_id' => $draft->id,
+            'session_id' => session()->getId(),
+            'called_from' => $caller,
+            'file' => $backtrace[1]['file'] ?? 'unknown',
+            'line' => $backtrace[1]['line'] ?? 'unknown',
+            'message' => 'This should ONLY be called when user clicks Proceed to Payment'
+        ]);
+        
+        DB::beginTransaction();
+        
+        try {
+            // Get fresh session data (latest values)
+            $sessionData = session('startup_zone_draft', []);
             
             // ALWAYS use session data first (latest values), then fallback to draft
             // Get contact email - prioritize contact person email, fallback to billing email or exhibitor email
@@ -1198,6 +1516,12 @@ class StartupZoneController extends Controller
                 $passwordHash = Hash::make($password);
                 
                 // Create user with the contact email (ensures uniqueness)
+                \Log::info('Creating NEW User from draft', [
+                    'draft_id' => $draft->id,
+                    'email' => $contactEmail,
+                    'name' => $contactName
+                ]);
+                
                 try {
                     $user = \App\Models\User::create([
                         'name' => $contactName,
@@ -1208,6 +1532,11 @@ class StartupZoneController extends Controller
                         'email_verified_at' => now(),
                     ]);
                     $passwordGenerated = true;
+                    
+                    \Log::info('User created successfully', [
+                        'user_id' => $user->id,
+                        'email' => $contactEmail
+                    ]);
                 } catch (\Illuminate\Database\QueryException $e) {
                     // If email already exists (race condition), fetch the existing user
                     if ($e->getCode() == 23000) { // Integrity constraint violation
@@ -1231,11 +1560,17 @@ class StartupZoneController extends Controller
                     'email' => $contactEmail
                 ]);
             } else {
-            // Generate application_id using TIN_NO_PREFIX with 6-digit number (before creating application)
-            $applicationId = $this->generateApplicationIdWithTinPrefix();
-            
+                // Generate application_id using TIN_NO_PREFIX with 6-digit number (before creating application)
+                $applicationId = $this->generateApplicationIdWithTinPrefix();
+                
+                \Log::info('Creating NEW Application from draft', [
+                    'draft_id' => $draft->id,
+                    'application_id' => $applicationId,
+                    'contact_email' => $contactEmail
+                ]);
+                
                 // Create new application
-            $application = new Application();
+                $application = new Application();
             }
             
             // Use the latest data we already extracted above (from session first, then draft)
@@ -1263,13 +1598,7 @@ class StartupZoneController extends Controller
                     'billing_data' => $billingData,
                     'draft_company_name' => $draft->company_name,
                 ]);
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Company name is required. Please fill in the Exhibitor Information or Billing Information section.',
-                    'errors' => [
-                        'company_name' => ['Company name is required. Please fill in the Exhibitor Information or Billing Information section.']
-                    ]
-                ], 422);
+                throw new \Exception('Company name is required. Please fill in the Exhibitor Information or Billing Information section.');
             }
             
             // Get company email with proper fallback chain
@@ -1516,6 +1845,13 @@ class StartupZoneController extends Controller
             }
             
             $invoice->save();
+            
+            \Log::info('Invoice saved to database', [
+                'invoice_id' => $invoice->id,
+                'application_id' => $application->application_id,
+                'draft_id' => $draft->id,
+                'total_amount' => $invoice->total_final_price
+            ]);
 
             // Update association registration count
             if ($draft->promocode) {
@@ -1568,30 +1904,17 @@ class StartupZoneController extends Controller
             // Don't clear draft yet - needed for preview page
 
             DB::commit();
-
-            // For complimentary registrations, redirect to confirmation page
-            // For regular registrations, redirect to preview page (then payment)
-            $redirectRoute = $isComplimentary 
-                ? route('startup-zone.confirmation', $application->application_id)
-                : route('startup-zone.preview') . '?application_id=' . $application->application_id;
-
-            return response()->json([
-                'success' => true,
-                'application_id' => $application->application_id,
-                'invoice_id' => $invoice->id,
-                'message' => $isComplimentary 
-                    ? 'Complimentary registration successful! You now have access to the portal.' 
-                    : ($passwordGenerated ? 'Registration successful!' : 'Registration successful!'),
-                'redirect' => $redirectRoute,
-                'is_complimentary' => $isComplimentary
-            ]);
+            
+            return $application;
 
         } catch (\Exception $e) {
             DB::rollBack();
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to create application: ' . $e->getMessage()
-            ], 500);
+            \Log::error('Startup Zone: Error creating application from draft', [
+                'draft_id' => $draft->id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+            throw $e;
         }
     }
 
@@ -1628,19 +1951,76 @@ class StartupZoneController extends Controller
         }
 
         // Update submission_status to 'submitted' when user reaches payment page
+        $statusJustChanged = false;
         if ($application->submission_status === 'in progress') {
             $application->submission_status = 'submitted';
             $application->save();
+            $statusJustChanged = true;
             \Log::info('Application status updated to submitted', [
                 'application_id' => $applicationId,
                 'user_id' => $application->user_id
             ]);
         }
 
+        // Send admin notification email when application is first submitted
+        if ($statusJustChanged) {
+            try {
+                // Reload application with relationships for email
+                $application->load(['country', 'state', 'eventContact']);
+                $contact = EventContact::where('application_id', $application->id)->first();
+                
+                // Get admin emails from config
+                $adminEmails = config('constants.admin_emails.to', []);
+                $bccEmails = config('constants.admin_emails.bcc', []);
+                
+                \Log::info('Attempting to send admin notification email for startup zone', [
+                    'application_id' => $application->application_id,
+                    'admin_emails' => $adminEmails,
+                    'bcc_emails' => $bccEmails,
+                ]);
+                
+                if (!empty($adminEmails)) {
+                    // If adminEmails NOT empty, always send to adminEmails (with BCC if present)
+                    $mail = Mail::to($adminEmails);
+                    if (!empty($bccEmails)) {
+                        $mail->bcc($bccEmails);
+                    }
+                    $mail->send(new StartupZoneMail($application, 'admin_notification', null, $contact));
+                    
+                    \Log::info('Admin notification email sent successfully', [
+                        'application_id' => $application->application_id,
+                        'to' => $adminEmails,
+                        'bcc' => $bccEmails,
+                    ]);
+                } elseif (!empty($bccEmails)) {
+                    // If adminEmails is empty but bccEmails is not, send to bccEmails using only() to set BCC as main recipients
+                    $mail = Mail::to([])->bcc($bccEmails);
+                    $mail->send(new StartupZoneMail($application, 'admin_notification', null, $contact));
+                    
+                    \Log::info('Admin notification email sent successfully (BCC only)', [
+                        'application_id' => $application->application_id,
+                        'bcc' => $bccEmails,
+                    ]);
+                } else {
+                    \Log::warning('No admin emails configured for startup zone notification', [
+                        'application_id' => $application->application_id,
+                    ]);
+                }
+            } catch (\Exception $e) {
+                \Log::error('Failed to send admin notification email for startup zone', [
+                    'application_id' => $application->application_id,
+                    'error' => $e->getMessage(),
+                    'trace' => $e->getTraceAsString(),
+                ]);
+                // Don't fail the transaction if email fails
+            }
+        }
+
         // Check if application is approved - payment only allowed after approval
         if ($application->submission_status !== 'approved') {
             $invoice = Invoice::where('application_id', $application->id)->first();
             $billingDetail = \App\Models\BillingDetail::where('application_id', $application->id)->first();
+            $eventContact = EventContact::where('application_id', $application->id)->first();
             
             // Get association logo if promocode exists
             $associationLogo = null;
@@ -1654,7 +2034,7 @@ class StartupZoneController extends Controller
             }
             view()->share('associationLogo', $associationLogo);
             
-            return view('startup-zone.payment', compact('application', 'invoice', 'billingDetail'))
+            return view('startup-zone.payment', compact('application', 'invoice', 'billingDetail', 'eventContact'))
                 ->with('approval_pending', true);
         }
 
@@ -1673,6 +2053,7 @@ class StartupZoneController extends Controller
         view()->share('associationLogo', $associationLogo);
 
         $billingDetail = \App\Models\BillingDetail::where('application_id', $application->id)->first();
+        $eventContact = EventContact::where('application_id', $application->id)->first();
         
         // Clear session data once user reaches payment page (final insert is done)
         // This prevents editing fields after reaching payment page
@@ -1682,35 +2063,7 @@ class StartupZoneController extends Controller
         session()->forget('payment_application_type');
         session()->forget('invoice_no');
         
-        try {
-            // Reload application with relationships for email
-            $application->load(['country', 'state', 'eventContact']);
-            
-            // Get admin emails from config
-            $adminEmails = config('constants.admin_emails.to', []);
-            $bccEmails = config('constants.admin_emails.bcc', []);
-            
-            if (!empty($adminEmails)) {
-                // If adminEmails NOT empty, always send to adminEmails (with BCC if present)
-                $mail = Mail::to($adminEmails);
-                if (!empty($bccEmails)) {
-                    $mail->bcc($bccEmails);
-                }
-                $mail->send(new StartupZoneMail($application, 'admin_notification', null, $contact));
-            } elseif (!empty($bccEmails)) {
-                // If adminEmails is empty but bccEmails is not, send to bccEmails using only() to set BCC as main recipients
-                $mail = Mail::to([])->bcc($bccEmails);
-                $mail->send(new StartupZoneMail($application, 'admin_notification', null, $contact));
-            }
-        } catch (\Exception $e) {
-            \Log::error('Failed to send admin notification email for startup zone', [
-                'application_id' => $application->application_id,
-                'error' => $e->getMessage()
-            ]);
-            // Don't fail the transaction if email fails
-        }
-        
-        return view('startup-zone.payment', compact('application', 'invoice', 'billingDetail'));
+        return view('startup-zone.payment', compact('application', 'invoice', 'billingDetail', 'eventContact'));
     }
 
     /**

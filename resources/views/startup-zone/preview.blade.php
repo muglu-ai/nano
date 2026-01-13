@@ -54,13 +54,13 @@
                     <div class="row">
                         <div class="col-md-6 mb-3">
                             <strong>Booth Space:</strong><br>
-                            {{ $application->stall_category ?? 'N/A' }}
+                            {{ $application->stall_category ?? $draft->stall_category ?? 'N/A' }}
                         </div>
                     </div>
                     <div class="row">
                         <div class="col-md-6 mb-3">
                             <strong>Booth Size:</strong><br>
-                            {{ $application->interested_sqm ?? 'N/A' }}
+                            {{ $application->interested_sqm ?? $draft->interested_sqm ?? 'N/A' }}
                         </div>
                     </div>
                     <!-- <div class="row">
@@ -111,6 +111,8 @@
                             $billingPostalCode = $billingDetail->postal_code ?? 'N/A';
                             $billingPhone = $billingDetail->phone ?? 'N/A';
                             $billingWebsite = 'N/A';
+                            // Certificate might be in billingDetail or application
+                            $billingCertificatePath = $billingDetail->certificate_path ?? ($application->certificate_path ?? 'N/A');
                         } elseif (isset($draft) && isset($draft->billing_data)) {
                             // From draft
                             $billingData = is_array($draft->billing_data) ? $draft->billing_data : json_decode($draft->billing_data, true);
@@ -123,8 +125,13 @@
                             $billingPostalCode = $billingData['postal_code'] ?? 'N/A';
                             $billingPhone = $billingData['telephone'] ?? 'N/A';
                             $billingWebsite = $billingData['website'] ?? 'N/A';
+                            // Certificate is stored in draft->certificate_path directly, not in billing_data
+                            // Check draft->certificate_path first, then billing_data as fallback
+                            $billingCertificatePath = !empty($draft->certificate_path) ? $draft->certificate_path : ($billingData['certificate_path'] ?? 'N/A');
                         } else {
                             $billingCompany = $billingEmail = $billingAddress = $billingCity = $billingState = $billingCountry = $billingPostalCode = $billingPhone = $billingWebsite = 'N/A';
+                            // Check draft->certificate_path directly
+                            $billingCertificatePath = isset($draft) && !empty($draft->certificate_path) ? $draft->certificate_path : 'N/A';
                         }
                     @endphp
                     <div class="row">
@@ -166,6 +173,16 @@
                             <a href="{{ $billingWebsite }}" target="_blank">{{ $billingWebsite }}</a>
                         </div>
                         @endif
+                        <div class="col-md-6 mb-3">
+                            <strong>Certificate:</strong><br>
+                            @if($billingCertificatePath && $billingCertificatePath !== 'N/A')
+                                <a href="{{ asset('storage/' . $billingCertificatePath) }}" target="_blank" class="btn btn-sm btn-primary">
+                                    <i class="fas fa-file-pdf"></i> View Certificate
+                                </a>
+                            @else
+                                <span class="text-muted">No certificate uploaded</span>
+                            @endif
+                        </div>
                     </div>
                 </div>
             </div>
@@ -375,7 +392,33 @@
                             </div>
                             <div class="col-md-6 mb-3">
                                 <strong>Mobile:</strong><br>
-                                +{{ $draft->contact_data['country_code'] ?? '' }} {{ $draft->contact_data['mobile'] ?? 'N/A' }}
+                                @php
+                                    $mobile = $draft->contact_data['mobile'] ?? null;
+                                    $countryCode = $draft->contact_data['country_code'] ?? '91';
+                                    
+                                    // Mobile is stored as "91-9806575432" (country_code-national_number)
+                                    // Extract just the national number to avoid duplicate country code
+                                    if ($mobile && strpos($mobile, '-') !== false) {
+                                        // Format: "91-9806575432" -> display as "+91 9806575432"
+                                        // Extract only the national number part (after the hyphen)
+                                        $parts = explode('-', $mobile, 2);
+                                        if (count($parts) == 2) {
+                                            // Use the country code from the mobile field itself, or fallback to country_code
+                                            $mobileCountryCode = $parts[0];
+                                            $nationalNumber = $parts[1];
+                                            $displayMobile = '+' . $mobileCountryCode . ' ' . $nationalNumber;
+                                        } else {
+                                            // Fallback: if format is unexpected, just use country_code + mobile
+                                            $displayMobile = '+' . $countryCode . ' ' . $mobile;
+                                        }
+                                    } elseif ($mobile) {
+                                        // If no hyphen, assume it's just the national number
+                                        $displayMobile = '+' . $countryCode . ' ' . $mobile;
+                                    } else {
+                                        $displayMobile = 'N/A';
+                                    }
+                                @endphp
+                                {{ $displayMobile }}
                             </div>
                         @endif
                     </div>
@@ -444,7 +487,7 @@
                         <i class="fas fa-arrow-left"></i> Edit Details
                     </a>
                     <button type="button" class="btn btn-success btn-lg" id="confirmAndProceed">
-                        Confirm & Proceed to Payment <i class="fas fa-check"></i>
+                        Proceed to Payment <i class="fas fa-arrow-right"></i>
                     </button>
                 @endif
             </div>
@@ -455,6 +498,13 @@
 @if(!isset($application))
 <script>
 document.getElementById('confirmAndProceed')?.addEventListener('click', function() {
+    const button = this;
+    const originalText = button.innerHTML;
+    
+    // Disable button and show loading state
+    button.disabled = true;
+    button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+    
     // Get form data from the form page (if available via session or hidden fields)
     // Since we're on preview page, we'll send a POST request
     // The backend will use the latest session data which was saved during submitForm
@@ -480,6 +530,10 @@ document.getElementById('confirmAndProceed')?.addEventListener('click', function
         if (data.success) {
             window.location.href = data.redirect;
         } else {
+            // Re-enable button
+            button.disabled = false;
+            button.innerHTML = originalText;
+            
             // Display validation errors if any
             let errorMsg = data.message || 'Failed to create application';
             if (data.errors) {
@@ -491,6 +545,11 @@ document.getElementById('confirmAndProceed')?.addEventListener('click', function
     })
     .catch(error => {
         console.error('Error:', error);
+        
+        // Re-enable button
+        button.disabled = false;
+        button.innerHTML = originalText;
+        
         let errorMsg = 'An error occurred. Please try again.';
         if (error.errors) {
             const errorList = Object.values(error.errors).flat().join('\\n');
