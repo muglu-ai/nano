@@ -39,8 +39,8 @@
         </div>
 
         {{-- Auto-save Indicator --}}
-        <div id="autoSaveIndicator" class="alert alert-info d-none" style="position: fixed; top: 20px; right: 20px; z-index: 9999;">
-            <i class="fas fa-spinner fa-spin"></i> Saving...
+        <div id="autoSaveIndicator" class="alert alert-info d-none" style="position: fixed; top: 20px; right: 20px; z-index: 9999; min-width: 150px; box-shadow: 0 2px 10px rgba(0,0,0,0.2); padding: 12px 20px; border-radius: 5px; transition: opacity 0.3s ease;">
+            <i class="fas fa-spinner fa-spin"></i> <span>Saving...</span>
         </div>
 
         {{-- Form Container --}}
@@ -1632,10 +1632,21 @@ document.addEventListener('DOMContentLoaded', function() {
         
         const formData = new FormData(document.getElementById('startupZoneForm'));
         
-        // Show saving indicator (optional, can be removed for even less overhead)
+        // Show saving indicator - ensure it's visible
         const indicator = document.getElementById('autoSaveIndicator');
+        if (!indicator) {
+            console.error('Auto-save indicator element not found');
+            return;
+        }
+        
+        // Make sure indicator is visible
         indicator.classList.remove('d-none');
-        indicator.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+        indicator.style.display = 'block';
+        indicator.style.visibility = 'visible';
+        indicator.style.opacity = '1';
+        indicator.innerHTML = '<i class="fas fa-spinner fa-spin"></i> <span>Saving...</span>';
+        indicator.classList.remove('alert-success', 'alert-warning');
+        indicator.classList.add('alert-info');
         
         fetch('{{ route("startup-zone.auto-save") }}', {
             method: 'POST',
@@ -1644,20 +1655,42 @@ document.addEventListener('DOMContentLoaded', function() {
                 'X-CSRF-TOKEN': '{{ csrf_token() }}'
             }
         })
-        .then(response => response.json())
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Auto-save failed with status: ' + response.status);
+            }
+            return response.json();
+        })
         .then(data => {
             if (data.success) {
-                indicator.innerHTML = '<i class="fas fa-check"></i> Saved';
+                indicator.innerHTML = '<i class="fas fa-check"></i> <span>Saved</span>';
+                indicator.classList.remove('alert-info');
+                indicator.classList.add('alert-success');
                 // Update progress based on current step (always step 1 for form page)
-                updateProgressByStep(1);
+                if (typeof updateProgressByStep === 'function') {
+                    updateProgressByStep(1);
+                }
                 setTimeout(() => {
                     indicator.classList.add('d-none');
-                }, 1500);
+                    indicator.style.display = 'none';
+                    indicator.classList.remove('alert-success');
+                    indicator.classList.add('alert-info');
+                }, 2000);
+            } else {
+                throw new Error('Auto-save returned success: false - ' + (data.message || 'Unknown error'));
             }
         })
         .catch(error => {
-            // Silently fail - session storage is optional
-            indicator.classList.add('d-none');
+            console.error('Auto-save error:', error);
+            indicator.innerHTML = '<i class="fas fa-exclamation-triangle"></i> <span>Save failed</span>';
+            indicator.classList.remove('alert-info', 'alert-success');
+            indicator.classList.add('alert-warning');
+            setTimeout(() => {
+                indicator.classList.add('d-none');
+                indicator.style.display = 'none';
+                indicator.classList.remove('alert-warning');
+                indicator.classList.add('alert-info');
+            }, 3000);
         });
     }
 
@@ -1838,59 +1871,16 @@ document.addEventListener('DOMContentLoaded', function() {
         })
         .then(data => {
             if (data.success) {
-                // Collect all form data before sending to restore-draft
-                const form = document.querySelector('form');
-                if (!form) {
-                    throw { type: 'error', message: 'Form not found' };
+                // Form saved to draft successfully - redirect to preview page
+                // User will click "Proceed to Payment" on preview page to create application
+                if (data.redirect) {
+                    window.location.href = data.redirect;
+                } else {
+                    // Fallback: redirect to preview page
+                    window.location.href = '{{ route("startup-zone.preview") }}';
                 }
-                
-                // Create FormData from the form
-                const formData = new FormData(form);
-                
-                // Restore draft to application with form data
-                return fetch('{{ route("startup-zone.restore-draft") }}', {
-                    method: 'POST',
-                    headers: {
-                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                    },
-                    body: formData
-                });
             } else {
                 throw { type: 'error', message: data.message || 'Failed to submit form' };
-            }
-        })
-        .then(response => {
-            if (!response.ok) {
-                return response.json().then(data => {
-                    // reCAPTCHA disabled
-                    throw { 
-                        type: response.status === 422 ? 'validation' : 'error', 
-                        message: data.message || 'Failed to create application',
-                        errors: data.errors || {}
-                    };
-                });
-            }
-            return response.json();
-        })
-        .then(data => {
-            if (data.success) {
-                // Show success message if provided
-                if (data.message) {
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'Success',
-                        text: data.message,
-                        confirmButtonText: 'OK',
-                        timer: 3000,
-                        timerProgressBar: true
-                    }).then(() => {
-                        window.location.href = data.redirect;
-                    });
-                } else {
-                    window.location.href = data.redirect;
-                }
-            } else {
-                throw { type: 'error', message: data.message || 'Failed to create application' };
             }
         })
         .catch(error => {

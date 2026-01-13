@@ -130,6 +130,16 @@
                                     <strong>Postal Code:</strong><br>
                                     <small>{{ $billingDetail->postal_code ?? 'N/A' }}</small>
                                 </div>
+                                <div class="col-md-6 mb-2">
+                                    <strong>Certificate:</strong><br>
+                                    @if($application->certificate && $application->certificate !== 'N/A')
+                                        <a href="{{ asset('storage/' . $application->certificate) }}" target="_blank" class="btn btn-sm btn-primary">
+                                            <i class="fas fa-file-pdf"></i> View Certificate
+                                        </a>
+                                    @else
+                                        <span class="text-muted">No certificate uploaded</span>
+                                    @endif
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -194,6 +204,42 @@
                             </div>
                         </div>
                     </div>
+
+                    <!-- Contact person Details -->
+                    @if($application->eventContact)
+                    <div class="card mb-4" style="border: 1px solid #dee2e6;">
+                        <div class="card-header bg-light">
+                            <h5 class="mb-0"><i class="fas fa-user"></i> Contact Person Details</h5>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6 mb-2">
+                                <strong>Name:</strong><br>
+                                <small>{{ $application->eventContact->first_name }} {{ $application->eventContact->last_name }}</small>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-2">
+                                <strong>Email:</strong><br>
+                                <small>{{ $application->eventContact->email }}</small>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-2">
+                                <strong>Mobile:</strong><br>
+                                <small>{{ $application->eventContact->contact_number }}</small>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-2">
+                                <strong>Designation:</strong><br>
+                                <small>{{ $application->eventContact->job_title }}</small>
+                            </div>
+                        </div>
+                        
+                    </div>
+                    @endif
 
                     {{-- Invoice Details --}}
                     <h5 class="mb-3">Invoice Details</h5>
