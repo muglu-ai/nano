@@ -43,12 +43,33 @@
                             <div class="ms-auto my-auto mt-lg-0 mt-4">
                             </div>
                             <div class="d-flex align-items-center gap-3 flex-nowrap">
+                                @php
+                                    $isStartupZone = strpos($slug, 'Startup Zone') !== false;
+                                    $currentFilter = request()->input('filter');
+                                @endphp
+                                
                                 @if($slug == 'Application List')
                                 {{-- Make a button to add new application --}}
                                 <a href="{{ route('application.create') }}" class="btn btn-primary">
                                     <i class="fas fa-plus me-2"></i>Add New Application
                                 </a>
                                 @endif
+                                
+                                @if($isStartupZone)
+                                {{-- Startup Zone Filters --}}
+                                <form method="GET" action="{{ route('application.lists') }}" class="d-flex align-items-center gap-2">
+                                    <input type="hidden" name="type" value="startup-zone">
+                                    <select name="filter" id="startupZoneFilter" class="form-select" aria-label="Filter"
+                                            style="min-width: 200px;" onchange="this.form.submit()">
+                                        <option value="">All Applications</option>
+                                        <option value="approved" {{ $currentFilter === 'approved' ? 'selected' : '' }}>Approved</option>
+                                        <option value="approval-pending" {{ $currentFilter === 'approval-pending' ? 'selected' : '' }}>Approval Pending</option>
+                                        <option value="paid" {{ $currentFilter === 'paid' ? 'selected' : '' }}>Paid</option>
+                                        <option value="approved-not-paid" {{ $currentFilter === 'approved-not-paid' ? 'selected' : '' }}>Approved but Not Paid</option>
+                                    </select>
+                                </form>
+                                @else
+                                {{-- Regular Application Filters --}}
                                 <form action="{{ route('export.applications') }}" method="GET"
                                       class="d-flex align-items-center gap-3">
                                     <select name="status" id="statusSelect" class="form-select" aria-label="Status"
@@ -72,7 +93,9 @@
                                     <button type="submit" class="btn btn-info text-nowrap px-4 pt-2 ps-2">Export
                                     </button>
                                 </form>
+                                @endif
                             </div>
+                            @if(!$isStartupZone)
                             <script>
                                 document.getElementById('statusSelect').addEventListener('change', function () {
                                     var selectedStatus = this.value;
@@ -87,6 +110,7 @@
                                     }
                                 });
                             </script>
+                            @endif
                         </div>
                     </div>
                     <div class="card-body px-0 pb-0">

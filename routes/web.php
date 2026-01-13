@@ -166,6 +166,25 @@ Route::middleware(['auth', Auth::class])->prefix('admin/tickets')->name('admin.t
     Route::get('/events/{eventId}/rules', [AdminTicketConfigController::class, 'rules'])->name('events.rules');
     Route::post('/events/{eventId}/rules', [AdminTicketConfigController::class, 'storeRule'])->name('events.rules.store');
     Route::delete('/events/{eventId}/rules/{ruleId}', [AdminTicketConfigController::class, 'deleteRule'])->name('events.rules.delete');
+    
+    // Registrations Management
+    Route::get('/registrations', [\App\Http\Controllers\Ticket\AdminTicketController::class, 'registrations'])->name('registrations');
+    Route::get('/registrations/{id}', [\App\Http\Controllers\Ticket\AdminTicketController::class, 'showRegistration'])->name('registrations.show');
+    Route::get('/registrations/{id}/edit', [\App\Http\Controllers\Ticket\AdminTicketController::class, 'editRegistration'])->name('registrations.edit');
+    Route::put('/registrations/{id}', [\App\Http\Controllers\Ticket\AdminTicketController::class, 'updateRegistration'])->name('registrations.update');
+    Route::post('/registrations/{id}/resend-email', [\App\Http\Controllers\Ticket\AdminTicketController::class, 'resendEmail'])->name('registrations.resend-email');
+    
+    // Orders Management
+    Route::get('/orders', [\App\Http\Controllers\Ticket\AdminTicketController::class, 'orders'])->name('orders');
+    Route::get('/orders/{id}', [\App\Http\Controllers\Ticket\AdminTicketController::class, 'showOrder'])->name('orders.show');
+    
+    // Export & Analytics
+    Route::get('/registrations/export', [\App\Http\Controllers\Ticket\AdminTicketController::class, 'exportRegistrations'])->name('registrations.export');
+    Route::get('/analytics', [\App\Http\Controllers\Ticket\AdminTicketController::class, 'analytics'])->name('analytics');
+    
+    // Registration Analytics & List
+    Route::get('/registration/analytics', [\App\Http\Controllers\Ticket\AdminTicketController::class, 'registrationAnalytics'])->name('registration.analytics');
+    Route::get('/registration/list', [\App\Http\Controllers\Ticket\AdminTicketController::class, 'registrationList'])->name('registration.list');
 });
 
 Route::get('send-exhibitor-chkdin2', [AdminController::  class, 'sendAllData'])->name('send.exhibitor.chkdin')->middleware(Auth::class);

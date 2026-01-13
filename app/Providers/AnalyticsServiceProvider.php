@@ -48,20 +48,45 @@ class AnalyticsServiceProvider extends ServiceProvider
             
             $startupZoneNotPaid = $startupZoneSubmitted - $startupZonePaid;
             
+            // Exhibitor payment statistics
+            $exhibitorSubmitted = Application::where('application_type', 'exhibitor')
+                ->where('submission_status', 'submitted')
+                ->count();
+            
+            $exhibitorPaid = Application::where('application_type', 'exhibitor')
+                ->where('submission_status', 'submitted')
+                ->whereHas('invoices', function($query) {
+                    $query->where('payment_status', 'paid');
+                })
+                ->count();
+            
+            $exhibitorNotPaid = $exhibitorSubmitted - $exhibitorPaid;
+            
+            // Total counts
+            $totalExhibitorRegistrations = Application::where('application_type', 'exhibitor')->count();
+            $totalStartupZoneRegistrations = Application::where('application_type', 'startup-zone')->count();
+            
             return [
                 'totalApplications' => Application::whereIn('application_type', ['exhibitor', 'sponsor', 'exhibitor+sponsor'])->count(),
                 'totalCoExhibitors' => CoExhibitor::count(),
                 'totalUsers' => User::count(),
                 'totalInvoices' => Invoice::count(),
                 'applicationsByStatus' => $exhibitorApplicationsByStatus,
+                // Exhibitor payment statistics
+                'exhibitor' => [
+                    'total' => $totalExhibitorRegistrations,
+                    'paid' => $exhibitorPaid,
+                    'unpaid' => $exhibitorNotPaid,
+                    'byStatus' => $exhibitorApplicationsByStatus,
+                ],
                 // Startup Zone specific statistics
                 'startupZone' => [
-                    'total' => Application::where('application_type', 'startup-zone')->count(),
+                    'total' => $totalStartupZoneRegistrations,
                     'initiated' => $startupZoneApplicationsByStatus['in progress'] ?? 0,
                     'submitted' => $startupZoneSubmitted,
                     'approved' => $startupZoneApplicationsByStatus['approved'] ?? 0,
                     'paid' => $startupZonePaid,
-                    'notPaid' => $startupZoneNotPaid,
+                    'unpaid' => $startupZoneNotPaid,
                     'byStatus' => $startupZoneApplicationsByStatus,
                 ],
                 'sponsors_count' => Sponsorship::whereHas('application')->count(),

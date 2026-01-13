@@ -314,8 +314,7 @@
                 <li class="nav-item">
                     <a data-bs-toggle="collapse" href="#exhibitors" class="nav-link text-dark "
                        aria-controls="pagesExamples" role="button" aria-expanded="false">
-                        <i
-                                class="material-symbols-rounded opacity-5 {% if page.brand == 'RTL' %}ms-2{% else %} me-2{% endif %}">E</i>
+                        <i class="fa-solid fa-store me-2"></i>
                         <span class="nav-link-text ms-1 ps-1 text-dark ">Exhibitors</span>
                     </a>
                     <div class="collapse " id="exhibitors">
@@ -343,19 +342,30 @@
                             </li>
                             <li class="nav-item ">
                                 <a class="nav-link text-dark " href="{{ route('application.list', ['status' => 'approved']) }}">
-
                                     <span class="sidenav-mini-icon"> A </span>
                                     <span class="sidenav-normal  ms-1  ps-1 text-dark "> Approved Applications </span>
                                 </a>
                             </li>
+                            <li class="nav-item ">
+                                <a class="nav-link text-dark " href="{{ route('booth.management') }}">
+                                    <span class="sidenav-mini-icon"> B </span>
+                                    <span class="sidenav-normal  ms-1  ps-1 text-dark "> Booth Management </span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="{{ route('passes.allocation') }}" class="nav-link text-dark">
+                                    <span class="sidenav-mini-icon"> P </span>
+                                    <span class="sidenav-normal ms-1 ps-1 text-dark">Passes Allocation</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link text-dark" href="{{ route('exhibitor.directory.list') }}">
+                                    <span class="sidenav-mini-icon"> D </span>
+                                    <span class="sidenav-normal ms-1 ps-1 text-dark">Exhibitor Directory</span>
+                                </a>
+                            </li>
                         </ul>
                     </div>
-                </li>
-                <li class="nav-item ">
-                    <a class="nav-link text-dark " href="{{ route('booth.management') }}">
-                        <span class="sidenav-mini-icon"> B </span>
-                        <span class="sidenav-normal  ms-1  ps-1 text-dark "> Booth Management </span>
-                    </a>
                 </li>
                 @if(!in_array('invoice.list', $hiddenRoutes))
                 <li class="nav-item">
@@ -367,17 +377,47 @@
                     </a>
                 </li>
                 @endif
-                <!-- Exhibitors Passes -->
 
-                {{--
-                 Add Exhibitors Complimentary Allocation with route as passes.allocation
-                 --}}
                 <li class="nav-item">
-                    <a href="{{ route('passes.allocation') }}" class="nav-link text-dark " aria-controls="pagesExamples"
-                       role="button" aria-expanded="false">
-                        <i class="fa-solid fa-gift"></i>
-                        <span class="nav-link-text ms-1 ps-1 text-dark ">Exhibitors Complimentary Passes Allocation</span>
+                    <a data-bs-toggle="collapse" href="#startupZone" class="nav-link text-dark "
+                       aria-controls="pagesExamples" role="button" aria-expanded="false">
+                        <i class="fa-solid fa-rocket me-2"></i>
+                        <span class="nav-link-text ms-1 ps-1 text-dark ">Startup Zone</span>
                     </a>
+                    <div class="collapse " id="startupZone">
+                        <ul class="nav ">
+                            <li class="nav-item ">
+                                <a class="nav-link text-dark " href="{{ route('application.lists', ['type' => 'startup-zone']) }}">
+                                    <span class="sidenav-mini-icon"> T </span>
+                                    <span class="sidenav-normal  ms-1  ps-1 text-dark "> Total Applications </span>
+                                </a>
+                            </li>
+                            <li class="nav-item ">
+                                <a class="nav-link text-dark " href="{{ route('application.lists', ['type' => 'startup-zone', 'filter' => 'approved']) }}">
+                                    <span class="sidenav-mini-icon"> A </span>
+                                    <span class="sidenav-normal  ms-1  ps-1 text-dark "> Approved </span>
+                                </a>
+                            </li>
+                            <li class="nav-item ">
+                                <a class="nav-link text-dark " href="{{ route('application.lists', ['type' => 'startup-zone', 'filter' => 'approval-pending']) }}">
+                                    <span class="sidenav-mini-icon"> P </span>
+                                    <span class="sidenav-normal  ms-1  ps-1 text-dark "> Approval Pending </span>
+                                </a>
+                            </li>
+                            <li class="nav-item ">
+                                <a class="nav-link text-dark " href="{{ route('application.lists', ['type' => 'startup-zone', 'filter' => 'paid']) }}">
+                                    <span class="sidenav-mini-icon"> $ </span>
+                                    <span class="sidenav-normal  ms-1  ps-1 text-dark "> Paid </span>
+                                </a>
+                            </li>
+                            <li class="nav-item ">
+                                <a class="nav-link text-dark " href="{{ route('application.lists', ['type' => 'startup-zone', 'filter' => 'approved-not-paid']) }}">
+                                    <span class="sidenav-mini-icon"> ! </span>
+                                    <span class="sidenav-normal  ms-1  ps-1 text-dark "> Approved but Not Paid </span>
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
                 </li>
 
                 @if(!in_array('admin.stall-manning', $hiddenRoutes))
@@ -432,6 +472,31 @@
                     </a>
                 </li>
 
+                <!-- Ticket Registrations -->
+                <li class="nav-item">
+                    <a data-bs-toggle="collapse" href="#ticketRegistrations" class="nav-link text-dark"
+                       aria-controls="ticketRegistrations" role="button" aria-expanded="false">
+                        <i class="fa-solid fa-clipboard-list me-2"></i>
+                        <span class="nav-link-text ms-1 ps-1 text-dark">Registration</span>
+                    </a>
+                    <div class="collapse" id="ticketRegistrations">
+                        <ul class="nav">
+                            <li class="nav-item">
+                                <a class="nav-link text-dark" href="{{ route('admin.tickets.registration.analytics') }}">
+                                    <span class="sidenav-mini-icon"> A </span>
+                                    <span class="sidenav-normal ms-1 ps-1 text-dark">Analytics</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link text-dark" href="{{ route('admin.tickets.registration.list') }}">
+                                    <span class="sidenav-mini-icon"> L </span>
+                                    <span class="sidenav-normal ms-1 ps-1 text-dark">Registration List</span>
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </li>
+
             @endif
             @if($subRole == 'extra_requirements')
 
@@ -472,12 +537,6 @@
                 </li>
             @endif
 
-            <li class="nav-item">
-                <a class="nav-link text-dark" href="{{ route('exhibitor.directory.list') }}">
-                    <i class="fa-solid fa-address-book"></i>
-                    <span class="nav-link-text ms-1 ps-1 text-dark">Exhibitor Directory</span>
-                </a>
-            </li>
 
             {{-- add feedback analytics --}}
             <li class="nav-item">
