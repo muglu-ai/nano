@@ -13,7 +13,7 @@
             margin: 0 auto;
             padding: 10px;
             background-color: #f5f5f5;
-            font-size: 11px;
+            font-size: 12px;
         }
         .email-container {
             background: #ffffff;
@@ -96,44 +96,44 @@
         .receipt-type {
             background: #ffffff;
             color: #333333;
-            padding: 4px 10px;
+            padding: 5px 12px;
             border-radius: 0;
             display: inline-block;
             font-weight: 700;
-            font-size: 10px;
+            font-size: 11px;
             border: 1px solid #d0d0d0;
             text-transform: uppercase;
             letter-spacing: 0.5px;
             white-space: nowrap;
         }
         .receipt-date {
-            font-size: 10px;
+            font-size: 11px;
             color: #666666;
             white-space: nowrap;
             display: inline-block;
         }
         .content {
-            padding: 12px 15px;
+            padding: 15px 18px;
         }
         .order-info {
             background: #f5f5f5;
             border-left: 3px solid #666666;
-            padding: 8px 12px;
-            margin: 10px 0;
+            padding: 10px 12px;
+            margin: 8px 0;
             border-radius: 0;
         }
         .order-info strong {
             color: #333333;
-            font-size: 11px;
+            font-size: 12px;
         }
         .order-info p {
-            margin: 4px 0 0 0;
-            font-size: 10px;
+            margin: 5px 0 0 0;
+            font-size: 11px;
             color: #666666;
         }
         .section {
-            margin: 12px 0;
-            padding-bottom: 10px;
+            margin: 8px 0;
+            padding-bottom: 6px;
             border-bottom: 1px solid #e0e0e0;
         }
         .section:last-child {
@@ -141,25 +141,25 @@
         }
         .section-title {
             color: #333333;
-            font-size: 11px;
+            font-size: 12px;
             font-weight: 600;
-            margin-bottom: 8px;
+            margin-bottom: 6px;
             display: flex;
             align-items: center;
             border-bottom: 1px solid #e0e0e0;
-            padding-bottom: 6px;
+            padding-bottom: 4px;
         }
         .section-title i {
             margin-right: 6px;
             color: #666666;
-            font-size: 10px;
+            font-size: 11px;
         }
         .info-row {
             display: flex;
             justify-content: space-between;
-            padding: 4px 0;
+            padding: 3px 0;
             border-bottom: 1px solid #f0f0f0;
-            font-size: 10px;
+            font-size: 11px;
         }
         .info-row:last-child {
             border-bottom: none;
@@ -168,23 +168,23 @@
             font-weight: 600;
             color: #666666;
             flex: 1;
-            font-size: 10px;
+            font-size: 11px;
         }
         .info-value {
             color: #333333;
             flex: 1;
             text-align: right;
-            font-size: 10px;
+            font-size: 11px;
         }
         .delegates-table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 6px;
-            font-size: 9px;
+            margin-top: 4px;
+            font-size: 10px;
         }
         .delegates-table th,
         .delegates-table td {
-            padding: 5px;
+            padding: 4px;
             text-align: left;
             border-bottom: 1px solid #e0e0e0;
         }
@@ -192,43 +192,43 @@
             background: #f5f5f5;
             color: #333333;
             font-weight: 600;
-            font-size: 9px;
+            font-size: 10px;
         }
         .price-breakdown {
             background: #f5f5f5;
             border-radius: 0;
             padding: 10px;
-            margin: 10px 0;
+            margin: 8px 0;
             border: 1px solid #e0e0e0;
         }
         .price-row {
             display: flex;
             justify-content: space-between;
-            padding: 4px 0;
+            padding: 3px 0;
             color: #333333;
-            font-size: 10px;
+            font-size: 11px;
         }
         .price-row.total {
-            font-size: 12px;
+            font-size: 13px;
             font-weight: 700;
-            padding-top: 8px;
-            margin-top: 8px;
+            padding-top: 6px;
+            margin-top: 6px;
             border-top: 2px solid #666666;
             color: #333333;
         }
         .btn-container {
             text-align: center;
-            margin: 15px 0;
+            margin: 10px 0;
         }
         .btn-pay-now {
             display: inline-block;
             background: #0066cc;
             color: #ffffff !important;
-            padding: 10px 25px;
+            padding: 12px 30px;
             text-decoration: none;
             border-radius: 4px;
             font-weight: 600;
-            font-size: 12px;
+            font-size: 13px;
             border: 1px solid #0066cc;
             transition: all 0.3s ease;
             box-shadow: 0 2px 4px rgba(0, 102, 204, 0.3);
@@ -241,7 +241,7 @@
             background: #f5f5f5;
             padding: 10px 15px;
             text-align: center;
-            font-size: 9px;
+            font-size: 10px;
             color: #666666;
             border-top: 2px solid #e0e0e0;
         }
@@ -260,9 +260,9 @@
         .secretariat-info {
             display: table;
             width: 100%;
-            margin-top: 10px;
+            margin-top: 8px;
             border-top: 1px solid #e0e0e0;
-            padding-top: 10px;
+            padding-top: 8px;
         }
         .secretariat-left,
         .secretariat-right {
@@ -282,12 +282,12 @@
         }
         .secretariat-title {
             color: #333333;
-            font-size: 10px;
+            font-size: 11px;
             font-weight: 600;
-            margin-bottom: 6px;
+            margin-bottom: 5px;
         }
         .secretariat-details {
-            font-size: 9px;
+            font-size: 10px;
             color: #666666;
             line-height: 1.4;
         }
@@ -304,34 +304,34 @@
         .alert {
             background: #f5f5f5;
             border-left: 3px solid #666666;
-            padding: 8px 10px;
-            margin: 10px 0;
+            padding: 10px 12px;
+            margin: 8px 0;
             border-radius: 0;
-            font-size: 10px;
+            font-size: 11px;
         }
         .alert p {
             margin: 0;
             color: #333333;
-            font-size: 10px;
+            font-size: 11px;
         }
         .success-alert {
             background: #f5f5f5;
             border-left: 3px solid #666666;
-            padding: 8px 10px;
-            margin: 10px 0;
+            padding: 10px 12px;
+            margin: 8px 0;
             border-radius: 0;
-            font-size: 10px;
+            font-size: 11px;
         }
         .success-alert p {
             margin: 0;
             color: #333333;
-            font-size: 10px;
+            font-size: 11px;
         }
         .payment-status {
             display: inline-block;
-            padding: 3px 8px;
+            padding: 4px 10px;
             border-radius: 0;
-            font-size: 9px;
+            font-size: 10px;
             font-weight: 600;
             text-transform: uppercase;
         }
@@ -421,9 +421,9 @@
 
         <!-- Content -->
         <div class="content">
-            <p style="font-size: 10px; margin-bottom: 10px;">Dear {{ $order->registration->contact->name ?? 'Valued Customer' }},</p>
+            <p style="font-size: 12px; margin-bottom: 8px;">Dear {{ $order->registration->contact->name ?? 'Valued Customer' }},</p>
             
-            <p style="font-size: 10px; margin-bottom: 10px;">Thank you for Submitting Information on <strong>{{ config('constants.EVENT_NAME') }} {{ config('constants.EVENT_YEAR') }}</strong>. Please complete the payment using following pay now link / button.</p>
+            <p style="font-size: 12px; margin-bottom: 8px;">Thank you for Submitting Information on <strong>{{ config('constants.EVENT_NAME') }} {{ config('constants.EVENT_YEAR') }}</strong>. Please complete the payment using following pay now link / button.</p>
 
             <!-- TIN and PIN Information -->
             <div class="order-info">
@@ -663,18 +663,18 @@
                 </a>
             </div>
 
-            <p style="text-align: center; color: #666666; font-size: 9px; margin-top: 10px;">
+            <p style="text-align: center; color: #666666; font-size: 11px; margin-top: 8px;">
                 Click the button above to complete your payment securely. This link will remain valid until your payment is completed.
             </p>
-            <p style="text-align: center; color: #666666; font-size: 8px; margin-top: 6px; font-style: italic;">
+            <p style="text-align: center; color: #666666; font-size: 10px; margin-top: 5px; font-style: italic;">
                 <strong>Note:</strong> After payment realization, a final payment acknowledgement receipt will be provided.
             </p>
             @else
-            <div style="background: #f5f5f5; padding: 10px; border: 1px solid #e0e0e0; margin: 10px 0; text-align: center;">
-                <p style="margin: 0; color: #333333; font-size: 10px; font-weight: 600;">
+            <div style="background: #f5f5f5; padding: 10px; border: 1px solid #e0e0e0; margin: 8px 0; text-align: center;">
+                <p style="margin: 0; color: #333333; font-size: 12px; font-weight: 600;">
                     ✓ Payment Completed Successfully
                 </p>
-                <p style="margin: 6px 0 0 0; color: #666666; font-size: 9px;">
+                <p style="margin: 5px 0 0 0; color: #666666; font-size: 11px;">
                     Your registration is confirmed. You will receive further communication regarding the event.
                 </p>
             </div>
