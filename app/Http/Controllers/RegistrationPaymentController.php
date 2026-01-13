@@ -777,23 +777,49 @@ class RegistrationPaymentController extends Controller
     {
         $event = Events::where('slug', $eventSlug)->orWhere('id', $eventSlug)->firstOrFail();
         
-        // Get TIN from query parameter (tin or tin_no) or session
-        $tin = $request->input('tin') ?? $request->input('tin_no') ?? $request->query('tin') ?? $request->query('tin_no');
-        if (!$tin && session('tin')) {
-            $tin = session('tin');
+        // Get TIN from query parameter (tin or tin_no) - query() is most reliable for query string params
+        $tin = $request->query('tin') ?? $request->query('tin_no');
+        
+        // Also check session and all() as fallback
+        if (!$tin) {
+            $tin = $request->input('tin') ?? $request->input('tin_no') ?? session('tin');
         }
+        
+        // Debug logging
+        \Log::info('Ticket Lookup Request', [
+            'tin' => $tin,
+            'eventSlug' => $eventSlug,
+            'all_query' => $request->query(),
+            'all_input' => $request->all()
+        ]);
         
         // If TIN is provided, automatically fetch and display order details
         if ($tin) {
             $tinNo = trim($tin);
             
-            // Find ticket order by order_no (TIN)
+            // Find ticket order by order_no (TIN) - first try with event constraint
             $order = TicketOrder::where('order_no', $tinNo)
                 ->whereHas('registration', function($q) use ($event) {
                     $q->where('event_id', $event->id);
                 })
                 ->with(['registration.contact', 'registration.event', 'items.ticketType', 'registration.registrationCategory'])
                 ->first();
+            
+            // If not found with event constraint, try without (in case event doesn't match)
+            if (!$order) {
+                $order = TicketOrder::where('order_no', $tinNo)
+                    ->with(['registration.contact', 'registration.event', 'items.ticketType', 'registration.registrationCategory'])
+                    ->first();
+                
+                // If order found but event doesn't match, still show it but with a warning
+                if ($order && $order->registration && $order->registration->event_id != $event->id) {
+                    \Log::warning('Ticket Lookup - Order found but event mismatch', [
+                        'order_event_id' => $order->registration->event_id,
+                        'requested_event_id' => $event->id,
+                        'tin' => $tinNo
+                    ]);
+                }
+            }
             
             if ($order) {
                 // Get email from registration contact
@@ -803,6 +829,7 @@ class RegistrationPaymentController extends Controller
                 return view('payment.ticket-order-details', compact('event', 'order', 'email'));
             } else {
                 // Order not found, show lookup form with error and pre-fill TIN
+                \Log::warning('Ticket Lookup - Order not found', ['tin' => $tinNo, 'eventSlug' => $eventSlug]);
                 return view('payment.ticket-lookup', compact('event', 'tin'))
                     ->with('error', 'No ticket order found with the provided Order Number: ' . $tinNo);
             }
