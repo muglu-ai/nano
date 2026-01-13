@@ -320,9 +320,27 @@
                 <div class="row">
                     <div class="col-md-6 mb-3">
                         <label class="form-label required-field">Country</label>
-                        <input type="text" name="company_country" class="form-control" id="company_country"
-                               value="{{ old('company_country', 'India') }}" 
-                               placeholder="Enter country" required>
+                        <select name="company_country" class="form-select" id="company_country" required>
+                            <option value="">-- Select Country --</option>
+                            @php
+                                $countries = [
+                                    'India', 'United States', 'United Kingdom', 'Canada', 'Australia', 'Germany',
+                                    'France', 'Japan', 'China', 'Singapore', 'South Korea', 'Italy', 'Spain',
+                                    'Netherlands', 'Sweden', 'Switzerland', 'Belgium', 'Austria', 'Norway',
+                                    'Denmark', 'Finland', 'Poland', 'Portugal', 'Greece', 'Ireland', 'New Zealand',
+                                    'Brazil', 'Mexico', 'Argentina', 'Chile', 'South Africa', 'Egypt', 'UAE',
+                                    'Saudi Arabia', 'Israel', 'Turkey', 'Thailand', 'Malaysia', 'Indonesia',
+                                    'Philippines', 'Vietnam', 'Bangladesh', 'Pakistan', 'Sri Lanka', 'Nepal',
+                                    'Myanmar', 'Afghanistan', 'Iran', 'Iraq', 'Kuwait', 'Qatar', 'Oman',
+                                    'Bahrain', 'Jordan', 'Lebanon', 'Other'
+                                ];
+                            @endphp
+                            @foreach($countries as $country)
+                                <option value="{{ $country }}" {{ old('company_country', 'India') == $country ? 'selected' : '' }}>
+                                    {{ $country }}
+                                </option>
+                            @endforeach
+                        </select>
                         @error('company_country')
                             <div class="text-danger">{{ $message }}</div>
                         @enderror
@@ -501,45 +519,45 @@
                             @error('gst_state')
                                 <div class="text-danger">{{ $message }}</div>
                             @enderror
+                        </div>
                     </div>
-                </div>
-            </div>
 
-                <!-- Primary Contact Information - Always Visible -->
-                <div class="row">
-                    <div class="col-md-6 mb-3">
-                        <label class="form-label required-field">Primary Contact Full Name</label>
-                        <input type="text" name="contact_name" class="form-control" 
-                               value="{{ old('contact_name') }}" 
-                               placeholder="Enter full name" id="contact_name">
-                        @error('contact_name')
-                            <div class="text-danger">{{ $message }}</div>
-                        @enderror
+                    <!-- Primary Contact Information - Only visible when GST is Yes -->
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label required-field">Primary Contact Full Name</label>
+                            <input type="text" name="contact_name" class="form-control" 
+                                   value="{{ old('contact_name') }}" 
+                                   placeholder="Enter full name" id="contact_name">
+                            @error('contact_name')
+                                <div class="text-danger">{{ $message }}</div>
+                            @enderror
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label required-field">Primary Contact Email Address</label>
+                            <input type="email" name="contact_email" class="form-control" 
+                                   value="{{ old('contact_email') }}" 
+                                   placeholder="Enter email address" id="contact_email">
+                            @error('contact_email')
+                                <div class="text-danger">{{ $message }}</div>
+                            @enderror
+                        </div>
                     </div>
-                    <div class="col-md-6 mb-3">
-                        <label class="form-label required-field">Primary Contact Email Address</label>
-                        <input type="email" name="contact_email" class="form-control" 
-                               value="{{ old('contact_email') }}" 
-                               placeholder="Enter email address" id="contact_email">
-                        @error('contact_email')
-                            <div class="text-danger">{{ $message }}</div>
-                        @enderror
-                    </div>
-                </div>
 
-                <div class="row">
-                    <div class="col-md-6 mb-3">
-                        <label class="form-label required-field">Primary Contact Mobile Number</label>
-                        <input type="tel" name="contact_phone" class="form-control" 
-                               value="{{ old('contact_phone') ? preg_replace('/\s+/', '', old('contact_phone')) : '' }}" 
-                               placeholder="Enter mobile number" 
-                               id="contact_phone"
-                               pattern="[0-9]*"
-                               inputmode="numeric">
-                        <input type="hidden" name="contact_phone_country_code" id="contact_phone_country_code" value="{{ old('contact_phone_country_code', '+91') }}">
-                        @error('contact_phone')
-                            <div class="text-danger">{{ $message }}</div>
-                        @enderror
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label required-field">Primary Contact Mobile Number</label>
+                            <input type="tel" name="contact_phone" class="form-control" 
+                                   value="{{ old('contact_phone') ? preg_replace('/\s+/', '', old('contact_phone')) : '' }}" 
+                                   placeholder="Enter mobile number" 
+                                   id="contact_phone"
+                                   pattern="[0-9]*"
+                                   inputmode="numeric">
+                            <input type="hidden" name="contact_phone_country_code" id="contact_phone_country_code" value="{{ old('contact_phone_country_code', '+91') }}">
+                            @error('contact_phone')
+                                <div class="text-danger">{{ $message }}</div>
+                            @enderror
+                        </div>
                     </div>
                 </div>
             </div>
@@ -784,7 +802,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     
     // Load states for company country
-    const companyCountryInput = document.querySelector('input[name="company_country"]');
+    const companyCountrySelect = document.getElementById('company_country');
     const companyStateSelect = document.getElementById('company_state');
     
     function loadStatesForCountry(countryName) {
@@ -836,14 +854,14 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // Load states when country changes
-    if (companyCountryInput && companyStateSelect) {
-        companyCountryInput.addEventListener('change', function() {
+    if (companyCountrySelect && companyStateSelect) {
+        companyCountrySelect.addEventListener('change', function() {
             loadStatesForCountry(this.value);
         });
         
         // Load states on page load if country is already set
-        if (companyCountryInput.value) {
-            loadStatesForCountry(companyCountryInput.value);
+        if (companyCountrySelect.value) {
+            loadStatesForCountry(companyCountrySelect.value);
         }
     }
     
