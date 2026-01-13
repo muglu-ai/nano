@@ -302,7 +302,43 @@ class StartupZoneController extends Controller
         // Handle file upload separately (if provided)
         if ($request->hasFile('certificate')) {
             $file = $request->file('certificate');
-            $path = $file->store('startup-zone/certificates', 'public');
+            
+            // Get company name for filename
+            $companyName = $request->input('billing_company_name') 
+                        ?? $request->input('exhibitor_name') 
+                        ?? $request->input('company_name')
+                        ?? 'company';
+            
+            // Sanitize company name for filename (handle special characters and Unicode)
+            // Convert to lowercase for consistency
+            $companyName = mb_strtolower($companyName, 'UTF-8');
+            
+            // Remove accents and convert to ASCII equivalents (handles é, ñ, ü, etc.)
+            $companyName = iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $companyName);
+            
+            // Replace spaces and special characters with underscores
+            $companyName = preg_replace('/[^a-zA-Z0-9_-]/', '_', $companyName);
+            
+            // Remove multiple consecutive underscores
+            $companyName = preg_replace('/_+/', '_', $companyName);
+            
+            // Remove leading/trailing underscores
+            $companyName = trim($companyName, '_');
+            
+            // Limit length to prevent overly long filenames
+            $companyName = substr($companyName, 0, 50);
+            
+            // If empty after sanitization, use default
+            if (empty($companyName)) {
+                $companyName = 'company';
+            }
+            
+            // Generate filename: CompanyName_YYYYMMDD_HHMMSS.pdf
+            $timestamp = now()->format('Ymd_His');
+            $extension = $file->getClientOriginalExtension();
+            $filename = $companyName . '_' . $timestamp . '.' . $extension;
+            
+            $path = $file->storeAs('startup-zone/certificates', $filename, 'public');
             $formData['certificate_path'] = $path;
         }
         
@@ -727,7 +763,44 @@ class StartupZoneController extends Controller
             // Handle file upload (from request or session)
             if ($request->hasFile('certificate')) {
                 $file = $request->file('certificate');
-                $path = $file->store('startup-zone/certificates', 'public');
+                
+                // Get company name for filename
+                $companyName = $request->input('billing_company_name') 
+                            ?? $request->input('exhibitor_name') 
+                            ?? $request->input('company_name')
+                            ?? $draft->company_name
+                            ?? 'company';
+                
+                // Sanitize company name for filename (handle special characters and Unicode)
+                // Convert to lowercase for consistency
+                $companyName = mb_strtolower($companyName, 'UTF-8');
+                
+                // Remove accents and convert to ASCII equivalents
+                $companyName = iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $companyName);
+                
+                // Replace spaces and special characters with underscores
+                $companyName = preg_replace('/[^a-zA-Z0-9_-]/', '_', $companyName);
+                
+                // Remove multiple consecutive underscores
+                $companyName = preg_replace('/_+/', '_', $companyName);
+                
+                // Remove leading/trailing underscores
+                $companyName = trim($companyName, '_');
+                
+                // Limit length to prevent overly long filenames
+                $companyName = substr($companyName, 0, 50);
+                
+                // If empty after sanitization, use default
+                if (empty($companyName)) {
+                    $companyName = 'company';
+                }
+                
+                // Generate filename: CompanyName_YYYYMMDD_HHMMSS.pdf
+                $timestamp = now()->format('Ymd_His');
+                $extension = $file->getClientOriginalExtension();
+                $filename = $companyName . '_' . $timestamp . '.' . $extension;
+                
+                $path = $file->storeAs('startup-zone/certificates', $filename, 'public');
                 $draft->certificate_path = $path;
             } elseif (isset($sessionData['certificate_path'])) {
                 $draft->certificate_path = $sessionData['certificate_path'];
@@ -2266,7 +2339,43 @@ class StartupZoneController extends Controller
         // Handle file upload separately (if provided)
         if ($request->hasFile('certificate')) {
             $file = $request->file('certificate');
-            $path = $file->store('startup-zone/certificates', 'public');
+            
+            // Get company name for filename
+            $companyName = $request->input('billing_company_name') 
+                        ?? $request->input('exhibitor_name') 
+                        ?? $request->input('company_name')
+                        ?? 'company';
+            
+            // Sanitize company name for filename (handle special characters and Unicode)
+            // Convert to lowercase for consistency
+            $companyName = mb_strtolower($companyName, 'UTF-8');
+            
+            // Remove accents and convert to ASCII equivalents (handles é, ñ, ü, etc.)
+            $companyName = iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $companyName);
+            
+            // Replace spaces and special characters with underscores
+            $companyName = preg_replace('/[^a-zA-Z0-9_-]/', '_', $companyName);
+            
+            // Remove multiple consecutive underscores
+            $companyName = preg_replace('/_+/', '_', $companyName);
+            
+            // Remove leading/trailing underscores
+            $companyName = trim($companyName, '_');
+            
+            // Limit length to prevent overly long filenames
+            $companyName = substr($companyName, 0, 50);
+            
+            // If empty after sanitization, use default
+            if (empty($companyName)) {
+                $companyName = 'company';
+            }
+            
+            // Generate filename: CompanyName_YYYYMMDD_HHMMSS.pdf
+            $timestamp = now()->format('Ymd_His');
+            $extension = $file->getClientOriginalExtension();
+            $filename = $companyName . '_' . $timestamp . '.' . $extension;
+            
+            $path = $file->storeAs('startup-zone/certificates', $filename, 'public');
             $formData['certificate_path'] = $path;
         }
         
