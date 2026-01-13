@@ -117,7 +117,7 @@
                         <select class="form-select" id="interested_sqm" name="interested_sqm" required>
                             <option value="">Select Booth Size</option>
                             @if($hasTV)
-                            <option value="POD with TV" {{ ($draft->interested_sqm ?? '') == 'POD with TV' ? 'selected' : '' }}>POD</option>
+                            <option value="POD with TV" {{ ($draft->interested_sqm ?? '') == 'POD with TV' ? 'selected' : '' }}>POD with TV</option>
                             @else
                             <option value="POD" {{ ($draft->interested_sqm ?? '') == 'POD' ? 'selected' : '' }}>POD</option>
                             @endif
@@ -641,35 +641,55 @@ document.addEventListener('DOMContentLoaded', function() {
             const countryCode = iti.getSelectedCountryData().dialCode;
             const fullNumber = iti.getNumber();
             
-            // Get national number (without country code) and remove all spaces
+            // Get national number (without country code) and remove all spaces and non-digits
             let nationalNumber = '';
             if (window.intlTelInputUtils && iti.isValidNumber()) {
                 nationalNumber = iti.getNumber(window.intlTelInputUtils.numberFormat.NATIONAL);
-                nationalNumber = nationalNumber.replace(/\s/g, '').replace(/^0+/, ''); // Remove all spaces and leading zeros
+                nationalNumber = nationalNumber.replace(/\s/g, '').replace(/[^0-9]/g, '').replace(/^0+/, ''); // Remove spaces, non-digits, and leading zeros
             } else {
                 // Fallback: extract number from full number
                 const dialCode = '+' + countryCode;
                 if (fullNumber.startsWith(dialCode)) {
-                    nationalNumber = fullNumber.substring(dialCode.length).replace(/\s/g, '').replace(/^0+/, '');
+                    nationalNumber = fullNumber.substring(dialCode.length).replace(/\s/g, '').replace(/[^0-9]/g, '').replace(/^0+/, '');
                 } else {
                     // If no country code prefix, try to extract from the input value
                     const inputValue = mobileInput.value.replace(/\s/g, ''); // Remove all spaces
-                    nationalNumber = inputValue.replace(/^\+?\d{1,3}/, ''); // Remove country code if present
+                    nationalNumber = inputValue.replace(/^\+?\d{1,3}/, '').replace(/[^0-9]/g, ''); // Remove country code and non-digits
                 }
             }
             
-            // Remove all spaces from national number
-            nationalNumber = nationalNumber.replace(/\s+/g, '');
+            // Remove all spaces and non-digits from national number (only digits allowed)
+            nationalNumber = nationalNumber.replace(/\s+/g, '').replace(/[^0-9]/g, '');
             
             const countryCodeField = document.getElementById('contact_country_code');
             const mobileNationalField = document.getElementById('contact_mobile_national');
-            if (countryCodeField) countryCodeField.value = countryCode;
+            if (countryCodeField) countryCodeField.value = countryCode.replace(/[^0-9]/g, ''); // Only digits for country code
             if (mobileNationalField) mobileNationalField.value = nationalNumber;
         };
         
         mobileInput.addEventListener('change', window.updatePhoneFields);
         mobileInput.addEventListener('blur', window.updatePhoneFields);
         mobileInput.addEventListener('countrychange', window.updatePhoneFields);
+        
+        // Filter out non-digit characters in real-time as user types
+        mobileInput.addEventListener('input', function(e) {
+            // Get the current value and filter out non-digits (keep +, spaces, and digits for intl-tel-input formatting)
+            // The intl-tel-input library will handle formatting, but we need to prevent alphabetic characters
+            let value = this.value;
+            // Allow +, spaces, digits, and parentheses (for formatting) but remove alphabetic characters
+            value = value.replace(/[a-zA-Z]/g, '');
+            if (value !== this.value) {
+                // If we removed characters, update the value
+                const cursorPos = this.selectionStart;
+                this.value = value;
+                // Restore cursor position (adjust for removed characters)
+                this.setSelectionRange(Math.max(0, cursorPos - 1), Math.max(0, cursorPos - 1));
+                // Trigger update to sync hidden fields
+                if (typeof window.updatePhoneFields === 'function') {
+                    window.updatePhoneFields();
+                }
+            }
+        });
         
         // Initialize hidden fields on load
         setTimeout(window.updatePhoneFields, 100);
@@ -751,35 +771,51 @@ document.addEventListener('DOMContentLoaded', function() {
             const countryCode = itiLandline.getSelectedCountryData().dialCode;
             const fullNumber = itiLandline.getNumber();
             
-            // Get national number (without country code) and remove all spaces
+            // Get national number (without country code) and remove all spaces and non-digits
             let nationalNumber = '';
             if (window.intlTelInputUtils && itiLandline.isValidNumber()) {
                 nationalNumber = itiLandline.getNumber(window.intlTelInputUtils.numberFormat.NATIONAL);
-                nationalNumber = nationalNumber.replace(/\s/g, '').replace(/^0+/, ''); // Remove all spaces and leading zeros
+                nationalNumber = nationalNumber.replace(/\s/g, '').replace(/[^0-9]/g, '').replace(/^0+/, ''); // Remove spaces, non-digits, and leading zeros
             } else {
                 // Fallback: extract number from full number
                 const dialCode = '+' + countryCode;
                 if (fullNumber.startsWith(dialCode)) {
-                    nationalNumber = fullNumber.substring(dialCode.length).replace(/\s/g, '').replace(/^0+/, '');
+                    nationalNumber = fullNumber.substring(dialCode.length).replace(/\s/g, '').replace(/[^0-9]/g, '').replace(/^0+/, '');
                 } else {
                     // If no country code prefix, try to extract from the input value
                     const inputValue = landlineInput.value.replace(/\s/g, ''); // Remove all spaces
-                    nationalNumber = inputValue.replace(/^\+?\d{1,3}/, ''); // Remove country code if present
+                    nationalNumber = inputValue.replace(/^\+?\d{1,3}/, '').replace(/[^0-9]/g, ''); // Remove country code and non-digits
                 }
             }
             
-            // Remove all spaces from national number
-            nationalNumber = nationalNumber.replace(/\s+/g, '');
-            
             const countryCodeField = document.getElementById('landline_country_code');
             const landlineNationalField = document.getElementById('landline_national');
-            if (countryCodeField) countryCodeField.value = countryCode;
+            if (countryCodeField) countryCodeField.value = countryCode.replace(/[^0-9]/g, ''); // Only digits for country code
             if (landlineNationalField) landlineNationalField.value = nationalNumber;
         };
         
         landlineInput.addEventListener('change', window.updateLandlineFields);
         landlineInput.addEventListener('blur', window.updateLandlineFields);
         landlineInput.addEventListener('countrychange', window.updateLandlineFields);
+        
+        // Filter out non-digit characters in real-time as user types
+        landlineInput.addEventListener('input', function(e) {
+            // Get the current value and filter out non-digits (keep +, spaces, and digits for intl-tel-input formatting)
+            let value = this.value;
+            // Allow +, spaces, digits, and parentheses (for formatting) but remove alphabetic characters
+            value = value.replace(/[a-zA-Z]/g, '');
+            if (value !== this.value) {
+                // If we removed characters, update the value
+                const cursorPos = this.selectionStart;
+                this.value = value;
+                // Restore cursor position (adjust for removed characters)
+                this.setSelectionRange(Math.max(0, cursorPos - 1), Math.max(0, cursorPos - 1));
+                // Trigger update to sync hidden fields
+                if (typeof window.updateLandlineFields === 'function') {
+                    window.updateLandlineFields();
+                }
+            }
+        });
         
         // Initialize hidden fields on load
         setTimeout(window.updateLandlineFields, 100);
@@ -852,28 +888,48 @@ document.addEventListener('DOMContentLoaded', function() {
             let nationalNumber = '';
             if (window.intlTelInputUtils && exhibitorTelephoneIti.isValidNumber()) {
                 nationalNumber = exhibitorTelephoneIti.getNumber(window.intlTelInputUtils.numberFormat.NATIONAL);
-                nationalNumber = nationalNumber.replace(/\s/g, '').replace(/^0+/, '');
+                nationalNumber = nationalNumber.replace(/\s/g, '').replace(/[^0-9]/g, '').replace(/^0+/, ''); // Remove spaces, non-digits, and leading zeros
             } else {
                 const dialCode = '+' + countryCode;
                 if (fullNumber.startsWith(dialCode)) {
-                    nationalNumber = fullNumber.substring(dialCode.length).replace(/\s/g, '').replace(/^0+/, '');
+                    nationalNumber = fullNumber.substring(dialCode.length).replace(/\s/g, '').replace(/[^0-9]/g, '').replace(/^0+/, '');
                 } else {
                     const inputValue = exhibitorTelephoneInput.value.replace(/\s/g, '');
-                    nationalNumber = inputValue.replace(/^\+?\d{1,3}/, '');
+                    nationalNumber = inputValue.replace(/^\+?\d{1,3}/, '').replace(/[^0-9]/g, ''); // Remove country code and non-digits
                 }
             }
             
-            nationalNumber = nationalNumber.replace(/\s+/g, '');
+            // Remove all spaces and non-digit characters from national number (only digits allowed)
+            nationalNumber = nationalNumber.replace(/\s+/g, '').replace(/[^0-9]/g, '');
             
             const exhibitorCountryCodeField = document.getElementById('exhibitor_telephone_country_code');
             const exhibitorTelephoneNationalField = document.getElementById('exhibitor_telephone_national');
-            if (exhibitorCountryCodeField) exhibitorCountryCodeField.value = countryCode;
+            if (exhibitorCountryCodeField) exhibitorCountryCodeField.value = countryCode.replace(/[^0-9]/g, ''); // Only digits for country code
             if (exhibitorTelephoneNationalField) exhibitorTelephoneNationalField.value = nationalNumber;
         };
         
         exhibitorTelephoneInput.addEventListener('change', window.updateExhibitorTelephoneFields);
         exhibitorTelephoneInput.addEventListener('blur', window.updateExhibitorTelephoneFields);
         exhibitorTelephoneInput.addEventListener('countrychange', window.updateExhibitorTelephoneFields);
+        
+        // Filter out non-digit characters in real-time as user types
+        exhibitorTelephoneInput.addEventListener('input', function(e) {
+            // Get the current value and filter out non-digits (keep +, spaces, and digits for intl-tel-input formatting)
+            let value = this.value;
+            // Allow +, spaces, digits, and parentheses (for formatting) but remove alphabetic characters
+            value = value.replace(/[a-zA-Z]/g, '');
+            if (value !== this.value) {
+                // If we removed characters, update the value
+                const cursorPos = this.selectionStart;
+                this.value = value;
+                // Restore cursor position (adjust for removed characters)
+                this.setSelectionRange(Math.max(0, cursorPos - 1), Math.max(0, cursorPos - 1));
+                // Trigger update to sync hidden fields
+                if (typeof window.updateExhibitorTelephoneFields === 'function') {
+                    window.updateExhibitorTelephoneFields();
+                }
+            }
+        });
         
         setTimeout(window.updateExhibitorTelephoneFields, 100);
         
@@ -961,28 +1017,48 @@ document.addEventListener('DOMContentLoaded', function() {
             let nationalNumber = '';
             if (window.intlTelInputUtils && billingTelephoneIti.isValidNumber()) {
                 nationalNumber = billingTelephoneIti.getNumber(window.intlTelInputUtils.numberFormat.NATIONAL);
-                nationalNumber = nationalNumber.replace(/\s/g, '').replace(/^0+/, '');
+                nationalNumber = nationalNumber.replace(/\s/g, '').replace(/[^0-9]/g, '').replace(/^0+/, ''); // Remove spaces, non-digits, and leading zeros
             } else {
                 const dialCode = '+' + countryCode;
                 if (fullNumber.startsWith(dialCode)) {
-                    nationalNumber = fullNumber.substring(dialCode.length).replace(/\s/g, '').replace(/^0+/, '');
+                    nationalNumber = fullNumber.substring(dialCode.length).replace(/\s/g, '').replace(/[^0-9]/g, '').replace(/^0+/, '');
                 } else {
                     const inputValue = billingTelephoneInput.value.replace(/\s/g, '');
-                    nationalNumber = inputValue.replace(/^\+?\d{1,3}/, '');
+                    nationalNumber = inputValue.replace(/^\+?\d{1,3}/, '').replace(/[^0-9]/g, ''); // Remove country code and non-digits
                 }
             }
             
-            nationalNumber = nationalNumber.replace(/\s+/g, '');
+            // Remove all spaces and non-digit characters from national number (only digits allowed)
+            nationalNumber = nationalNumber.replace(/\s+/g, '').replace(/[^0-9]/g, '');
             
             const billingCountryCodeField = document.getElementById('billing_telephone_country_code');
             const billingTelephoneNationalField = document.getElementById('billing_telephone_national');
-            if (billingCountryCodeField) billingCountryCodeField.value = countryCode;
+            if (billingCountryCodeField) billingCountryCodeField.value = countryCode.replace(/[^0-9]/g, ''); // Only digits for country code
             if (billingTelephoneNationalField) billingTelephoneNationalField.value = nationalNumber;
         };
         
         billingTelephoneInput.addEventListener('change', window.updateBillingTelephoneFields);
         billingTelephoneInput.addEventListener('blur', window.updateBillingTelephoneFields);
         billingTelephoneInput.addEventListener('countrychange', window.updateBillingTelephoneFields);
+        
+        // Filter out non-digit characters in real-time as user types
+        billingTelephoneInput.addEventListener('input', function(e) {
+            // Get the current value and filter out non-digits (keep +, spaces, and digits for intl-tel-input formatting)
+            let value = this.value;
+            // Allow +, spaces, digits, and parentheses (for formatting) but remove alphabetic characters
+            value = value.replace(/[a-zA-Z]/g, '');
+            if (value !== this.value) {
+                // If we removed characters, update the value
+                const cursorPos = this.selectionStart;
+                this.value = value;
+                // Restore cursor position (adjust for removed characters)
+                this.setSelectionRange(Math.max(0, cursorPos - 1), Math.max(0, cursorPos - 1));
+                // Trigger update to sync hidden fields
+                if (typeof window.updateBillingTelephoneFields === 'function') {
+                    window.updateBillingTelephoneFields();
+                }
+            }
+        });
         
         setTimeout(window.updateBillingTelephoneFields, 100);
     }

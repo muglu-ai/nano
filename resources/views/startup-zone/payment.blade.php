@@ -67,7 +67,7 @@
                     </div>
                     <div class="row">
                         <div class="col-md-6 mb-2">
-                            <strong>Booth Size:</strong><br>
+                            <strong>Booth Type:</strong><br>
                             {{ $application->interested_sqm ?? 'N/A' }}
                         </div>
                     </div>

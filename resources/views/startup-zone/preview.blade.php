@@ -59,29 +59,11 @@
                     </div>
                     <div class="row">
                         <div class="col-md-6 mb-3">
-                            <strong>Booth Size:</strong><br>
+                            <strong>Booth Type:</strong><br>
                             {{ $application->interested_sqm ?? $draft->interested_sqm ?? 'N/A' }}
                         </div>
                     </div>
-                    <!-- <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <strong>Booth Type:</strong><br>
-                            {{ $application->pref_location ?? 'N/A' }}
-                        </div>
-                    </div>
-                </div>
-                <div class="row">
-                    <div class="col-md-6 mb-3">
-                        <strong>Booth Number:</strong><br>
-                        {{ $application->stallNumber ?? 'N/A' }}
-                    </div>
-                </div>
-                <div class="row">
-                    <div class="col-md-6 mb-3">
-                        <strong>Booth Name:</strong><br>
-                        {{ $application->booth_name ?? 'N/A' }}
-                    </div>
-                </div> -->
+                   
             </div>
 
             {{-- Billing Information --}}
@@ -476,14 +458,14 @@
             {{-- Action Buttons --}}
             <div class="d-flex justify-content-between">
                 @if(isset($application))
-                    <a href="{{ route('startup-zone.register') }}" class="btn btn-secondary">
+                    <a href="{{ route('startup-zone.register', isset($hasTV) && $hasTV ? ['tv' => '1'] : []) }}" class="btn btn-secondary">
                         <i class="fas fa-arrow-left"></i> Edit Details
                     </a>
                     <a href="{{ route('startup-zone.payment', $application->application_id) }}" class="btn btn-success btn-lg">
                         Proceed to Payment <i class="fas fa-arrow-right"></i>
                     </a>
                 @else
-                    <a href="{{ route('startup-zone.register') }}" class="btn btn-secondary">
+                    <a href="{{ route('startup-zone.register', isset($hasTV) && $hasTV ? ['tv' => '1'] : []) }}" class="btn btn-secondary">
                         <i class="fas fa-arrow-left"></i> Edit Details
                     </a>
                     <button type="button" class="btn btn-success btn-lg" id="confirmAndProceed">
