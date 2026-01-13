@@ -459,13 +459,13 @@ class AdminTicketController extends Controller
         // Base query
         $baseQuery = TicketRegistration::with(['order', 'registrationCategory']);
         if ($eventId) {
-            $baseQuery->where('event_id', $eventId);
+            $baseQuery->where('ticket_registrations.event_id', $eventId);
         }
         if ($dateFrom) {
-            $baseQuery->whereDate('created_at', '>=', $dateFrom);
+            $baseQuery->whereDate('ticket_registrations.created_at', '>=', $dateFrom);
         }
         if ($dateTo) {
-            $baseQuery->whereDate('created_at', '<=', $dateTo);
+            $baseQuery->whereDate('ticket_registrations.created_at', '<=', $dateTo);
         }
 
         // Total registrations
@@ -550,9 +550,21 @@ class AdminTicketController extends Controller
             ->get();
 
         // Revenue by nationality
-        $revenueByNationality = (clone $baseQuery)
+        $revenueByNationalityQuery = TicketRegistration::query()
             ->join('ticket_orders', 'ticket_registrations.id', '=', 'ticket_orders.registration_id')
-            ->where('ticket_orders.status', 'paid')
+            ->where('ticket_orders.status', 'paid');
+        
+        if ($eventId) {
+            $revenueByNationalityQuery->where('ticket_registrations.event_id', $eventId);
+        }
+        if ($dateFrom) {
+            $revenueByNationalityQuery->whereDate('ticket_registrations.created_at', '>=', $dateFrom);
+        }
+        if ($dateTo) {
+            $revenueByNationalityQuery->whereDate('ticket_registrations.created_at', '<=', $dateTo);
+        }
+        
+        $revenueByNationality = $revenueByNationalityQuery
             ->select('ticket_registrations.nationality', DB::raw('sum(ticket_orders.total) as total'))
             ->groupBy('ticket_registrations.nationality')
             ->pluck('total', 'nationality')
