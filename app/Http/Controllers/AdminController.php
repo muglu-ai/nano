@@ -173,13 +173,42 @@ class AdminController extends Controller
         // Get application type from request (default to 'exhibitor' for backward compatibility)
         $applicationType = $request->input('type', 'exhibitor');
         $paymentStatus = $request->input('payment_status'); // For filtering paid/unpaid
+        $filter = $request->input('filter'); // For Startup Zone filters: approved, approval-pending, paid, approved-not-paid
         
         $slug = 'Application List';
         if ($applicationType === 'startup-zone') {
             $slug = 'Startup Zone - Application List';
         }
 
-        if ($status) {
+        // Build base query
+        $query = Application::with('eventContact')
+            ->where('application_type', $applicationType);
+
+        // Handle Startup Zone specific filters
+        if ($applicationType === 'startup-zone' && $filter) {
+            if ($filter === 'approved') {
+                $query->where('submission_status', 'approved');
+                $slug = 'Approved - Startup Zone Application List';
+            } elseif ($filter === 'approval-pending') {
+                $query->where('submission_status', 'submitted');
+                $slug = 'Approval Pending - Startup Zone Application List';
+            } elseif ($filter === 'paid') {
+                $query->whereHas('invoices', function($q) {
+                    $q->where('payment_status', 'paid');
+                });
+                $slug = 'Paid - Startup Zone Application List';
+            } elseif ($filter === 'approved-not-paid') {
+                $query->where('submission_status', 'approved')
+                    ->where(function($q) {
+                        $q->whereDoesntHave('invoices')
+                          ->orWhereHas('invoices', function($invoiceQuery) {
+                              $invoiceQuery->where('payment_status', '!=', 'paid');
+                          });
+                    });
+                $slug = 'Approved but Not Paid - Startup Zone Application List';
+            }
+        } elseif ($status) {
+            // Handle regular status filters
             if ($status == 'in-progress') {
                 $status = 'in progress';
             }
@@ -188,9 +217,7 @@ class AdminController extends Controller
                 $slug = $status . ' - Startup Zone Application List';
             }
             
-            $query = Application::with('eventContact')
-                ->where('submission_status', $status)
-                ->where('application_type', $applicationType);
+            $query->where('submission_status', $status);
             
             // Filter by payment status if provided (for paid/unpaid)
             if ($paymentStatus) {
@@ -207,14 +234,9 @@ class AdminController extends Controller
                     });
                 }
             }
-            
-            $applications = $query->orderBy('submission_date', 'desc')->get();
-        } else {
-            $applications = Application::with('eventContact')
-                ->where('application_type', $applicationType)
-                ->orderBy('submission_date', 'desc')
-                ->get();
         }
+        
+        $applications = $query->orderBy('submission_date', 'desc')->get();
 
         if ($status == 'approved') {
             $query = Application::with('eventContact', 'invoice')
