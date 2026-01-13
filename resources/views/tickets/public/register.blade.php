@@ -476,27 +476,9 @@
                     </div>
 
                     <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label">Country</label>
-                            <select name="gst_country" class="form-select" id="gst_country">
-                                <option value="India" {{ old('gst_country', 'India') == 'India' ? 'selected' : '' }}>India</option>
-                                <option value="United States" {{ old('gst_country') == 'United States' ? 'selected' : '' }}>United States</option>
-                                <option value="United Kingdom" {{ old('gst_country') == 'United Kingdom' ? 'selected' : '' }}>United Kingdom</option>
-                                <option value="Canada" {{ old('gst_country') == 'Canada' ? 'selected' : '' }}>Canada</option>
-                                <option value="Australia" {{ old('gst_country') == 'Australia' ? 'selected' : '' }}>Australia</option>
-                                <option value="Germany" {{ old('gst_country') == 'Germany' ? 'selected' : '' }}>Germany</option>
-                                <option value="France" {{ old('gst_country') == 'France' ? 'selected' : '' }}>France</option>
-                                <option value="Japan" {{ old('gst_country') == 'Japan' ? 'selected' : '' }}>Japan</option>
-                                <option value="China" {{ old('gst_country') == 'China' ? 'selected' : '' }}>China</option>
-                                <option value="Singapore" {{ old('gst_country') == 'Singapore' ? 'selected' : '' }}>Singapore</option>
-                                <option value="Other" {{ old('gst_country') == 'Other' ? 'selected' : '' }}>Other</option>
-                            </select>
-                            @error('gst_country')
-                                <div class="text-danger">{{ $message }}</div>
-                            @enderror
-                        </div>
-                        <div class="col-md-6 mb-3">
+                        <div class="col-md-12 mb-3">
                             <label class="form-label">State</label>
+                            <input type="hidden" name="gst_country" value="India">
                             <select name="gst_state" class="form-select" id="gst_state">
                                 <option value="">-- Select State --</option>
                                 @php
@@ -519,44 +501,45 @@
                             @error('gst_state')
                                 <div class="text-danger">{{ $message }}</div>
                             @enderror
+                    </div>
                 </div>
             </div>
 
+                <!-- Primary Contact Information - Always Visible -->
+                <div class="row">
                     <div class="col-md-6 mb-3">
-                            <label class="form-label required-field">Primary Contact Full Name</label>
+                        <label class="form-label required-field">Primary Contact Full Name</label>
                         <input type="text" name="contact_name" class="form-control" 
                                value="{{ old('contact_name') }}" 
                                placeholder="Enter full name" id="contact_name">
                         @error('contact_name')
                             <div class="text-danger">{{ $message }}</div>
                         @enderror
-                        </div>
                     </div>
-
-                    <div class="row">
                     <div class="col-md-6 mb-3">
-                            <label class="form-label required-field">Primary Contact Email Address</label>
+                        <label class="form-label required-field">Primary Contact Email Address</label>
                         <input type="email" name="contact_email" class="form-control" 
                                value="{{ old('contact_email') }}" 
                                placeholder="Enter email address" id="contact_email">
                         @error('contact_email')
                             <div class="text-danger">{{ $message }}</div>
                         @enderror
+                    </div>
                 </div>
 
+                <div class="row">
                     <div class="col-md-6 mb-3">
-                            <label class="form-label required-field">Primary Contact Mobile Number</label>
+                        <label class="form-label required-field">Primary Contact Mobile Number</label>
                         <input type="tel" name="contact_phone" class="form-control" 
-                                   value="{{ old('contact_phone') ? preg_replace('/\s+/', '', old('contact_phone')) : '' }}" 
-                                   placeholder="Enter mobile number" 
-                                   id="contact_phone"
-                                   pattern="[0-9]*"
-                                   inputmode="numeric">
+                               value="{{ old('contact_phone') ? preg_replace('/\s+/', '', old('contact_phone')) : '' }}" 
+                               placeholder="Enter mobile number" 
+                               id="contact_phone"
+                               pattern="[0-9]*"
+                               inputmode="numeric">
                         <input type="hidden" name="contact_phone_country_code" id="contact_phone_country_code" value="{{ old('contact_phone_country_code', '+91') }}">
                         @error('contact_phone')
                             <div class="text-danger">{{ $message }}</div>
                         @enderror
-                        </div>
                     </div>
                 </div>
             </div>
@@ -864,105 +847,8 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
-    // Load states for GST country dropdown
-    const gstCountrySelect = document.getElementById('gst_country');
-    const gstStateSelect = document.getElementById('gst_state');
-    
-    function loadStatesForGstCountry(countryName) {
-        if (!countryName || countryName === '' || !gstStateSelect) {
-            if (gstStateSelect) {
-                gstStateSelect.innerHTML = '<option value="">-- Select State --</option>';
-            }
-            return;
-        }
-        
-        // For India, use the predefined list
-        if (countryName === 'India') {
-            const indianStates = [
-                'Andhra Pradesh','Arunachal Pradesh','Assam','Bihar','Chhattisgarh','Goa',
-                'Gujarat','Haryana','Himachal Pradesh','Jharkhand','Karnataka','Kerala',
-                'Madhya Pradesh','Maharashtra','Manipur','Meghalaya','Mizoram','Nagaland',
-                'Odisha','Punjab','Rajasthan','Sikkim','Tamil Nadu','Telangana','Tripura',
-                'Uttar Pradesh','Uttarakhand','West Bengal',
-                'Andaman and Nicobar Islands','Chandigarh','Dadra and Nagar Haveli and Daman and Diu',
-                'Delhi','Jammu and Kashmir','Ladakh','Lakshadweep','Puducherry'
-            ];
-            gstStateSelect.innerHTML = '<option value="">-- Select State --</option>';
-            const oldState = '{{ old("gst_state") }}';
-            indianStates.forEach(state => {
-                const option = document.createElement('option');
-                option.value = state;
-                option.textContent = state;
-                if (oldState === state) {
-                    option.selected = true;
-                }
-                gstStateSelect.appendChild(option);
-            });
-            return;
-        }
-        
-        // For other countries, fetch from API
-        gstStateSelect.innerHTML = '<option value="">Loading states...</option>';
-        gstStateSelect.disabled = true;
-        
-        const countryParam = encodeURIComponent(countryName);
-        fetch(`{{ url('/api/states') }}/${countryParam}`, {
-            method: 'GET',
-            headers: {
-                'Accept': 'application/json',
-                'X-Requested-With': 'XMLHttpRequest'
-            }
-        })
-        .then(response => {
-            if (!response.ok) {
-                throw new Error('Failed to fetch states');
-            }
-            return response.json();
-        })
-        .then(data => {
-            gstStateSelect.innerHTML = '<option value="">-- Select State --</option>';
-            if (data && Array.isArray(data) && data.length > 0) {
-                data.forEach(state => {
-                    const option = document.createElement('option');
-                    const stateName = state.name || state.state_name || state;
-                    option.value = stateName;
-                    option.textContent = stateName;
-                    if ('{{ old("gst_state") }}' === stateName) {
-                        option.selected = true;
-                    }
-                    gstStateSelect.appendChild(option);
-                });
-            } else {
-                // If no states found, add a text input option
-                const option = document.createElement('option');
-                option.value = '';
-                option.textContent = '-- No states available --';
-                gstStateSelect.appendChild(option);
-            }
-            gstStateSelect.disabled = false;
-        })
-        .catch(error => {
-            console.error('Error loading states:', error);
-            gstStateSelect.innerHTML = '<option value="">-- Select State --</option>';
-            gstStateSelect.disabled = false;
-        });
-    }
-    
-    // Load states when GST country changes
-    if (gstCountrySelect && gstStateSelect) {
-        gstCountrySelect.addEventListener('change', function() {
-            // Re-enable state select if it was disabled by API fetch
-            if (gstStateSelect.dataset.apiFetched !== 'true') {
-                gstStateSelect.disabled = false;
-                gstStateSelect.style.backgroundColor = '';
-            }
-            loadStatesForGstCountry(this.value);
-        });
-        
-        // Load states on page load if country is already set (default to India)
-        const defaultCountry = gstCountrySelect.value || 'India';
-        loadStatesForGstCountry(defaultCountry);
-    }
+    // GST State dropdown - Only Indian states are shown (country is fixed to India via hidden input)
+    // No JavaScript needed since states are pre-populated in HTML
     
     // Store delegate phone instances
     const delegatePhoneInstances = new Map();
