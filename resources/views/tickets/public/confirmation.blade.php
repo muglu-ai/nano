@@ -191,6 +191,10 @@
                 <span class="info-label">Organisation Type:</span>
                 <span class="info-value">{{ $order->registration->organisation_type ?? 'N/A' }}</span>
             </div>
+            <div class="info-row">
+                <span class="info-label">Currency:</span>
+                <span class="info-value">{{ $order->registration->nationality === 'International' ? 'USD ($)' : 'INR (₹)' }}</span>
+            </div>
             @if($order->registration->gst_required)
                 <div class="info-row">
                     <span class="info-label">GST Required:</span>

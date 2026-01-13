@@ -309,8 +309,8 @@
                 <span class="info-value">{{ $order->items->sum('quantity') }}</span>
             </div>
             <div class="info-row">
-                <span class="info-label">Nationality:</span>
-                <span class="info-value">{{ $order->registration->nationality }}</span>
+                <span class="info-label">Currency:</span>
+                <span class="info-value">{{ $order->registration->nationality === 'International' ? 'USD ($)' : 'INR (₹)' }}</span>
             </div>
         </div>
 

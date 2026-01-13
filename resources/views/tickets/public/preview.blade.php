@@ -173,8 +173,8 @@
                 <span class="info-value">{{ $ticketType->name }}</span>
             </div>
             <div class="info-row">
-                <span class="info-label">Nationality:</span>
-                <span class="info-value">{{ $registrationData['nationality'] }}</span>
+                <span class="info-label">Currency:</span>
+                <span class="info-value">{{ ($registrationData['nationality'] === 'international' || $registrationData['nationality'] === 'International') ? 'USD ($)' : 'INR (₹)' }}</span>
             </div>
         </div>
 

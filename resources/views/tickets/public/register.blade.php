@@ -243,20 +243,20 @@
                     </div>
 
                     <div class="col-md-6 mb-3">
-                        <label class="form-label required-field">Nationality</label>
+                        <label class="form-label required-field">Currency</label>
                         @if(isset($isNationalityLocked) && $isNationalityLocked)
                             {{-- Hidden field to submit the value --}}
                             <input type="hidden" name="nationality" value="{{ $selectedNationality }}">
                             {{-- Display field (readonly) --}}
                             <input type="text" class="form-control" 
-                                   value="{{ $selectedNationality == 'national' ? 'Indian' : 'International' }}" 
+                                   value="{{ $selectedNationality == 'national' ? 'INR (₹)' : 'USD ($)' }}" 
                                    readonly 
                                    style="background-color: #e9ecef; cursor: not-allowed;">
                         @else
                             <select name="nationality" class="form-select" required>
-                                <option value="">Select Nationality</option>
-                                <option value="national" {{ old('nationality', $selectedNationality ?? '') == 'national' ? 'selected' : '' }}>Indian</option>
-                                <option value="international" {{ old('nationality', $selectedNationality ?? '') == 'international' ? 'selected' : '' }}>International</option>
+                                <option value="">Select Currency</option>
+                                <option value="national" {{ old('nationality', $selectedNationality ?? '') == 'national' ? 'selected' : '' }}>INR (₹)</option>
+                                <option value="international" {{ old('nationality', $selectedNationality ?? '') == 'international' ? 'selected' : '' }}>USD ($)</option>
                             </select>
                         @endif
                         @error('nationality')
