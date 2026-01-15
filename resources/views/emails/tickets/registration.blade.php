@@ -316,10 +316,11 @@
             <!-- Registration Information -->
             <div class="section-title">📋 Registration Information</div>
             <table class="info-table">
-            <tr>
+             <tr>
                     <td class="label">TIN NO:</td>
-                    <td class="value">{{ $pinNo }}</td>
+                    <td class="value">{{ $order->order_no }}</td>
                 </tr>
+                
                 <tr style="background: {{ $order->status === 'paid' ? '#d4edda' : '#fff3cd' }};">
                     <td class="label" style="color: {{ $order->status === 'paid' ? '#155724' : '#856404' }};">Payment Status</td>
                     <td class="value">
