@@ -56,24 +56,22 @@
 
     .payment-status-badge {
         display: inline-block;
-        padding: 0.5rem 1rem;
-        border-radius: 8px;
-        font-size: 0.875rem;
-        font-weight: 600;
+        padding: 0.35rem 0.75rem;
+        border-radius: 4px;
+        font-size: 0.75rem;
+        font-weight: 700;
         text-transform: uppercase;
-        margin-left: 0.5rem;
+        letter-spacing: 0.5px;
     }
 
     .payment-status-badge.paid {
-        background: #d4edda;
-        color: #155724;
-        border: 1px solid #c3e6cb;
+        background: #28a745;
+        color: #ffffff;
     }
 
     .payment-status-badge.pending {
-        background: #fff3cd;
-        color: #856404;
-        border: 1px solid #ffeaa7;
+        background: #ffc107;
+        color: #333333;
     }
 
     .details-section {
@@ -262,21 +260,7 @@
                 <p><strong>PIN No.:</strong> {{ $pinNo }}</p>
                 @endif
             @endif
-            <p style="margin-top: 0.75rem;">
-                <strong>Payment Status:</strong>
-                <span class="payment-status-badge {{ $order->status === 'paid' ? 'paid' : 'pending' }}">
-                    {{ ucfirst($order->status) }}
-                </span>
-            </p>
-            @if($order->status === 'paid')
-                @php
-                    $payment = $order->primaryPayment();
-                    $paymentMethod = $payment ? ($payment->payment_method ?? 'Credit Card') : 'Credit Card';
-                @endphp
-                <p style="margin-top: 0.5rem;">
-                    <strong>Payment Method:</strong> {{ $paymentMethod }}
-                </p>
-            @endif
+            <p style="margin-top: 0.5rem; color: var(--text-secondary);">Please keep this TIN number for your records.</p>
         </div>
 
         <!-- Alert -->
@@ -296,6 +280,14 @@
                 <i class="fas fa-clipboard-list"></i>
                 Registration Information
             </h4>
+            <div class="info-row" style="background: {{ $order->status === 'paid' ? '#d4edda' : '#fff3cd' }}; padding: 0.75rem 1rem; margin: 0 -1rem 0.5rem -1rem; border-radius: 6px;">
+                <span class="info-label" style="color: {{ $order->status === 'paid' ? '#155724' : '#856404' }};">Payment Status:</span>
+                <span class="info-value">
+                    <span class="payment-status-badge {{ $order->status === 'paid' ? 'paid' : 'pending' }}" style="margin-left: 0;">
+                        {{ $order->status === 'paid' ? '✓ PAID' : '⏳ PENDING' }}
+                    </span>
+                </span>
+            </div>
             <div class="info-row">
                 <span class="info-label">Registration Category:</span>
                 <span class="info-value">{{ $order->registration->registrationCategory->name ?? 'N/A' }}</span>
@@ -303,6 +295,35 @@
             <div class="info-row">
                 <span class="info-label">Ticket Type:</span>
                 <span class="info-value">{{ $order->items->first()->ticketType->name ?? 'N/A' }}</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Day Access:</span>
+                <span class="info-value">
+                    @php
+                        $firstItem = $order->items->first();
+                        $selectedDay = $firstItem && $firstItem->selected_event_day_id ? $firstItem->selectedDay : null;
+                        $ticketType = $firstItem ? $firstItem->ticketType : null;
+                    @endphp
+                    @if($selectedDay)
+                        <span class="badge bg-primary">{{ $selectedDay->label }}</span>
+                        <small class="text-muted">({{ \Carbon\Carbon::parse($selectedDay->date)->format('M d, Y') }})</small>
+                    @elseif($ticketType && ($ticketType->all_days_access || ($ticketType->enable_day_selection && $ticketType->include_all_days_option && !$firstItem->selected_event_day_id)))
+                        <span class="badge bg-success">All Days</span>
+                    @elseif($ticketType)
+                        @php
+                            $accessibleDays = $ticketType->getAllAccessibleDays();
+                        @endphp
+                        @if($accessibleDays->count() > 0)
+                            @foreach($accessibleDays as $day)
+                                <span class="badge bg-primary me-1">{{ $day->label }}</span>
+                            @endforeach
+                        @else
+                            <span class="badge bg-success">All Days</span>
+                        @endif
+                    @else
+                        <span class="badge bg-success">All Days</span>
+                    @endif
+                </span>
             </div>
             <div class="info-row">
                 <span class="info-label">Number of Delegates:</span>
@@ -418,6 +439,9 @@
                 <i class="fas fa-users"></i>
                 Delegate Details
             </h4>
+            @php
+                $ticketTypeName = $order->items->first()->ticketType->name ?? 'N/A';
+            @endphp
             <table class="delegates-table">
                 <thead>
                     <tr>
@@ -425,7 +449,7 @@
                         <th>Delegate Name</th>
                         <th>Email</th>
                         <th>Phone</th>
-                        <th>Job Title</th>
+                        <th>Ticket Type</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -435,7 +459,7 @@
                         <td>{{ $delegate->salutation }} {{ $delegate->first_name }} {{ $delegate->last_name }}</td>
                         <td>{{ $delegate->email }}</td>
                         <td>{{ $delegate->phone ?? '-' }}</td>
-                        <td>{{ $delegate->job_title ?? '-' }}</td>
+                        <td>{{ $ticketTypeName }}</td>
                     </tr>
                     @endforeach
                 </tbody>
