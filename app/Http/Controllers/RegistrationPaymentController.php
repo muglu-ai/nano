@@ -1149,24 +1149,103 @@ class RegistrationPaymentController extends Controller
                 'billing_email' => $billingEmail,
             ];
 
-            Log::info('Ticket CCAvenue Payment - Payment data', [
+            // ============================================================
+            // DETAILED PARAMETER LOGGING FOR DEBUGGING
+            // ============================================================
+            $parameterAnalysis = [];
+            
+            // Check each parameter for potential issues
+            foreach ($paymentData as $key => $value) {
+                $analysis = [
+                    'value' => $value,
+                    'length' => strlen($value ?? ''),
+                    'is_empty' => empty($value),
+                ];
+                
+                // Check for special characters that CCAvenue might reject
+                if (is_string($value) && !empty($value)) {
+                    $specialChars = preg_match('/[&<>"\'\\\\\/=+;:@#$%^*()[\]{}|`~]/', $value);
+                    $analysis['has_special_chars'] = $specialChars ? true : false;
+                    
+                    // Check for non-ASCII characters
+                    $nonAscii = preg_match('/[^\x20-\x7E]/', $value);
+                    $analysis['has_non_ascii'] = $nonAscii ? true : false;
+                    
+                    // Check for leading/trailing spaces
+                    $analysis['has_leading_trailing_spaces'] = ($value !== trim($value));
+                }
+                
+                $parameterAnalysis[$key] = $analysis;
+            }
+            
+            Log::info('Ticket CCAvenue Payment - DETAILED PARAMETER ANALYSIS', [
+                'order_no' => $order->order_no,
+                'parameter_analysis' => $parameterAnalysis,
+            ]);
+            
+            // Log the full payment data
+            Log::info('Ticket CCAvenue Payment - Full Payment Data', [
                 'payment_data' => $paymentData,
             ]);
             
-            Log::info('Ticket CCAvenue Payment - Pre-validation passed, proceeding', [
-                'order_no' => $order->order_no,
-                'amount' => $paymentData['amount'],
-                'currency' => $paymentData['currency'],
-                'billing_email' => $paymentData['billing_email'],
-                'billing_tel' => $paymentData['billing_tel'],
-                'callback_url' => $callbackUrl,
-            ]);
-
+            // Log potential issues summary
+            $potentialIssues = [];
+            
+            // Check redirect URL length and format
+            if (strlen($paymentData['redirect_url']) > 255) {
+                $potentialIssues[] = 'redirect_url is too long (' . strlen($paymentData['redirect_url']) . ' chars)';
+            }
+            if (!filter_var($paymentData['redirect_url'], FILTER_VALIDATE_URL)) {
+                $potentialIssues[] = 'redirect_url is not a valid URL';
+            }
+            
+            // Check if redirect URL is HTTPS
+            if (strpos($paymentData['redirect_url'], 'https://') !== 0) {
+                $potentialIssues[] = 'redirect_url is not HTTPS (CCAvenue may require HTTPS)';
+            }
+            
+            // Check amount format
+            if (!preg_match('/^\d+\.\d{2}$/', $paymentData['amount'])) {
+                $potentialIssues[] = 'amount format may be invalid: ' . $paymentData['amount'];
+            }
+            
+            // Check billing_tel
+            if (!empty($paymentData['billing_tel']) && !preg_match('/^\d{10,15}$/', $paymentData['billing_tel'])) {
+                $potentialIssues[] = 'billing_tel format may be invalid: ' . $paymentData['billing_tel'];
+            }
+            
+            // Check billing_email
+            if (!filter_var($paymentData['billing_email'], FILTER_VALIDATE_EMAIL)) {
+                $potentialIssues[] = 'billing_email is invalid: ' . $paymentData['billing_email'];
+            }
+            
+            // Check billing_zip
+            if (!empty($paymentData['billing_zip']) && !preg_match('/^[a-zA-Z0-9\s-]{3,10}$/', $paymentData['billing_zip'])) {
+                $potentialIssues[] = 'billing_zip format may be invalid: ' . $paymentData['billing_zip'];
+            }
+            
+            // Check for empty required fields
+            $requiredFields = ['order_id', 'amount', 'currency', 'redirect_url', 'billing_email'];
+            foreach ($requiredFields as $field) {
+                if (empty($paymentData[$field])) {
+                    $potentialIssues[] = "Required field '$field' is empty";
+                }
+            }
+            
+            if (!empty($potentialIssues)) {
+                Log::warning('Ticket CCAvenue Payment - POTENTIAL ISSUES DETECTED', [
+                    'order_no' => $order->order_no,
+                    'issues' => $potentialIssues,
+                ]);
+            }
+            
             Log::info('Ticket CCAvenue Payment - Initiating transaction', [
                 'order_id' => $order->id,
                 'order_no' => $order->order_no,
                 'amount' => $amount,
                 'currency' => $currency,
+                'callback_url' => $callbackUrl,
+                'potential_issues_count' => count($potentialIssues),
             ]);
 
             $result = $this->ccAvenueService->initiateTransaction($paymentData);
@@ -1707,10 +1786,51 @@ class RegistrationPaymentController extends Controller
                     $message = 'Payment was cancelled. You can try again by clicking Pay Now.';
                 } elseif ($isInvalid) {
                     $message = 'Payment could not be processed due to invalid transaction parameters. Please try again.';
-                    Log::warning('CCAvenue Invalid Status', [
+                    
+                    // ============================================================
+                    // DETAILED LOGGING FOR INVALID STATUS - DEBUG CCAVENUE ISSUES
+                    // ============================================================
+                    Log::error('CCAvenue INVALID Status - FULL DEBUG INFO', [
                         'order_no' => $order->order_no,
-                        'response' => $responseArray,
+                        'order_id' => $order->id,
+                        'full_response' => $responseArray,
+                        'status_message' => $responseArray['status_message'] ?? 'N/A',
+                        'failure_message' => $responseArray['failure_message'] ?? 'N/A',
+                        'response_code' => $responseArray['response_code'] ?? 'N/A',
+                        'bank_ref_no' => $responseArray['bank_ref_no'] ?? 'N/A',
+                        'order_id_from_response' => $responseArray['order_id'] ?? 'N/A',
+                        'tracking_id' => $responseArray['tracking_id'] ?? 'N/A',
+                        'merchant_param1' => $responseArray['merchant_param1'] ?? 'N/A',
+                        'merchant_param2' => $responseArray['merchant_param2'] ?? 'N/A',
+                        'vault' => $responseArray['vault'] ?? 'N/A',
+                        'offer_type' => $responseArray['offer_type'] ?? 'N/A',
+                        'offer_code' => $responseArray['offer_code'] ?? 'N/A',
+                        'discount_value' => $responseArray['discount_value'] ?? 'N/A',
+                        'mer_amount' => $responseArray['mer_amount'] ?? 'N/A',
+                        'eci_value' => $responseArray['eci_value'] ?? 'N/A',
+                        'retry' => $responseArray['retry'] ?? 'N/A',
+                        'response_keys' => array_keys($responseArray),
                     ]);
+                    
+                    // Try to get the original request data from database
+                    try {
+                        $originalRequest = DB::table('payment_gateway_response')
+                            ->where('order_id', 'like', $order->order_no . '%')
+                            ->orderBy('created_at', 'desc')
+                            ->first();
+                        
+                        if ($originalRequest) {
+                            Log::error('CCAvenue INVALID - Original Request Data', [
+                                'order_no' => $order->order_no,
+                                'original_merchant_data' => $originalRequest->merchant_data,
+                                'original_amount' => $originalRequest->amount,
+                                'original_currency' => $originalRequest->currency,
+                                'original_email' => $originalRequest->email,
+                            ]);
+                        }
+                    } catch (\Exception $e) {
+                        Log::warning('Could not retrieve original request data', ['error' => $e->getMessage()]);
+                    }
                 } else {
                     $message = 'Payment failed. Please try again.';
                 }
