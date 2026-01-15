@@ -15,20 +15,21 @@
     }
 
     .preview-section {
-        background: #f8f9fa;
+        background: #ffffff;
         border-radius: 10px;
-        padding: 1.5rem;
+        padding: 1.25rem;
         margin-bottom: 1.5rem;
         border: 1px solid #e0e0e0;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
     }
 
     .section-title {
-        font-size: 1.25rem;
-        font-weight: 600;
-        margin-bottom: 1.5rem;
+        font-size: 1.1rem;
+        font-weight: 700;
+        margin-bottom: 1rem;
         color: var(--text-primary);
-        padding-bottom: 0.75rem;
-        border-bottom: 2px solid var(--progress-inactive);
+        padding-bottom: 0.5rem;
+        border-bottom: 2px solid var(--primary-color);
         display: flex;
         align-items: center;
         gap: 0.5rem;
@@ -36,37 +37,32 @@
 
     .section-title i {
         color: var(--primary-color);
+        font-size: 1rem;
     }
 
-    .info-row {
-        display: flex;
-        justify-content: space-between;
-        padding: 0.75rem 0;
-        border-bottom: 1px solid #e0e0e0;
+    /* Tabular Info Styles */
+    .info-table {
+        width: 100%;
+        border-collapse: collapse;
     }
 
-    .info-row:last-child {
-        border-bottom: none;
+    .info-table td {
+        padding: 0.6rem 0.75rem;
+        border: 1px solid #e9ecef;
+        font-size: 0.875rem;
+        vertical-align: middle;
     }
 
-    .info-label {
-        font-weight: 600;
-        color: var(--text-secondary);
-        flex: 1;
-    }
-
-    .info-value {
-        color: var(--text-primary);
-        flex: 1;
-        text-align: right;
-    }
-
-    .price-breakdown {
+    .info-table .label-cell {
         background: #f8f9fa;
-        border-radius: 10px;
-        padding: 1.5rem;
-        margin-top: 1.5rem;
-        border: 1px solid #e0e0e0;
+        font-weight: 600;
+        color: #495057;
+        width: 40%;
+    }
+
+    .info-table .value-cell {
+        color: #212529;
+        width: 60%;
     }
 
     .delegates-table {
@@ -75,58 +71,93 @@
         margin-top: 0.5rem;
     }
 
-    .delegates-table th,
-    .delegates-table td {
-        padding: 0.6rem 0.75rem;
-        border-bottom: 1px solid #e0e0e0;
-        color: var(--text-primary);
-        font-size: 0.95rem;
-    }
-
     .delegates-table th {
         background: var(--primary-color);
         color: white;
+        padding: 0.75rem;
+        text-align: left;
         font-weight: 600;
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
     }
 
-    .delegates-table tr:last-child td {
-        border-bottom: none;
+    .delegates-table td {
+        padding: 0.65rem 0.75rem;
+        border: 1px solid #e9ecef;
+        font-size: 0.85rem;
+        color: #495057;
     }
 
-    .price-row {
-        display: flex;
-        justify-content: space-between;
-        padding: 0.75rem 0;
-        font-size: 1rem;
-        color: var(--text-secondary);
+    .delegates-table tr:nth-child(even) {
+        background: #f8f9fa;
     }
 
-    .price-row.total {
-        font-size: 1.5rem;
-        font-weight: 700;
-        padding-top: 1rem;
-        margin-top: 1rem;
-        border-top: 2px solid #e0e0e0;
-        color: var(--text-primary);
+    .delegates-table tr:hover {
+        background: #e9ecef;
     }
 
-    .price-label {
-        color: var(--text-secondary);
+    /* Price Table Styles */
+    .price-section {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        border-radius: 10px;
+        padding: 1.25rem;
+        margin-top: 1.5rem;
+        border: 1px solid #dee2e6;
     }
 
-    .price-value {
-        color: var(--text-primary);
+    .price-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .price-table td {
+        padding: 0.65rem 0.85rem;
+        border: 1px solid #e9ecef;
+        font-size: 0.9rem;
+    }
+
+    .price-table .label-cell {
+        background: #ffffff;
+        font-weight: 500;
+        color: #495057;
+        width: 65%;
+    }
+
+    .price-table .value-cell {
+        background: #ffffff;
+        text-align: right;
         font-weight: 600;
+        color: #212529;
+        width: 35%;
     }
 
-    .price-row.total .price-label {
-        color: var(--text-primary);
+    .price-table .total-row td {
+        background: var(--primary-color);
+        color: #ffffff;
+        font-size: 1.1rem;
         font-weight: 700;
+        padding: 0.85rem;
     }
 
-    .price-row.total .price-value {
-        color: var(--text-primary);
-        font-weight: 700;
+    /* Badge styles */
+    .day-badge {
+        display: inline-block;
+        padding: 0.25rem 0.6rem;
+        border-radius: 4px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        margin-right: 0.25rem;
+    }
+
+    .day-badge.primary {
+        background: var(--primary-color);
+        color: white;
+    }
+
+    .day-badge.success {
+        background: #28a745;
+        color: white;
     }
 
     .btn-edit {
@@ -161,207 +192,208 @@
         <!-- Registration Information -->
         <div class="preview-section">
             <h4 class="section-title">
-                <i class="fas fa-info-circle me-2"></i>
+                <i class="fas fa-clipboard-list"></i>
                 Registration Information
             </h4>
-            <div class="info-row">
-                <span class="info-label">Ticket Type:</span>
-                <span class="info-value">{{ $ticketType->name }}</span>
-            </div>
-            <div class="info-row">
-                <span class="info-label">Day Access:</span>
-                <span class="info-value">
-                    @php
-                        $selectedDayId = $registrationData['selected_event_day_id'] ?? null;
-                        $selectedDay = null;
-                        if ($selectedDayId) {
-                            $selectedDay = \App\Models\Ticket\EventDay::find($selectedDayId);
-                        }
-                    @endphp
-                    @if($selectedDay)
-                        <span class="badge bg-primary">{{ $selectedDay->label }}</span>
-                        <small class="text-muted">({{ \Carbon\Carbon::parse($selectedDay->date)->format('M d, Y') }})</small>
-                    @elseif($ticketType->all_days_access || ($ticketType->enable_day_selection && $ticketType->include_all_days_option))
-                        <span class="badge bg-success">All Days</span>
-                    @else
+            <table class="info-table">
+                <tr>
+                    <td class="label-cell">Ticket Type</td>
+                    <td class="value-cell"><strong>{{ $ticketType->name }}</strong></td>
+                </tr>
+                <tr>
+                    <td class="label-cell">Day Access</td>
+                    <td class="value-cell">
                         @php
-                            $accessibleDays = $ticketType->getAllAccessibleDays();
+                            $selectedDayId = $registrationData['selected_event_day_id'] ?? null;
+                            $selectedDay = null;
+                            if ($selectedDayId) {
+                                $selectedDay = \App\Models\Ticket\EventDay::find($selectedDayId);
+                            }
                         @endphp
-                        @if($accessibleDays->count() > 0)
-                            @foreach($accessibleDays as $day)
-                                <span class="badge bg-primary me-1">{{ $day->label }}</span>
-                            @endforeach
+                        @if($selectedDay)
+                            <span class="day-badge primary">{{ $selectedDay->label }}</span>
+                            <small class="text-muted">({{ \Carbon\Carbon::parse($selectedDay->date)->format('M d, Y') }})</small>
+                        @elseif($ticketType->all_days_access || ($ticketType->enable_day_selection && $ticketType->include_all_days_option))
+                            <span class="day-badge success">All Days</span>
                         @else
-                            <span class="badge bg-success">All Days</span>
+                            @php
+                                $accessibleDays = $ticketType->getAllAccessibleDays();
+                            @endphp
+                            @if($accessibleDays->count() > 0)
+                                @foreach($accessibleDays as $day)
+                                    <span class="day-badge primary">{{ $day->label }}</span>
+                                @endforeach
+                            @else
+                                <span class="day-badge success">All Days</span>
+                            @endif
                         @endif
-                    @endif
-                </span>
-            </div>
-            <div class="info-row">
-                <span class="info-label">Currency:</span>
-                <span class="info-value">{{ ($registrationData['nationality'] === 'international' || $registrationData['nationality'] === 'International') ? 'USD ($)' : 'INR (₹)' }}</span>
-            </div>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="label-cell">Number of Delegates</td>
+                    <td class="value-cell">{{ $quantity }}</td>
+                </tr>
+                <tr>
+                    <td class="label-cell">Currency</td>
+                    <td class="value-cell">{{ ($registrationData['nationality'] === 'international' || $registrationData['nationality'] === 'International') ? 'USD ($)' : 'INR (₹)' }}</td>
+                </tr>
+            </table>
         </div>
 
         <!-- Delegate Details -->
         @if(isset($registrationData['delegates']) && count($registrationData['delegates']) > 0)
         <div class="preview-section">
             <h4 class="section-title">
-                <i class="fas fa-users me-2"></i>
+                <i class="fas fa-users"></i>
                 Delegate Details
             </h4>
-            <div class="info-row">
-                <span class="info-label">Number of Delegates:</span>
-                <span class="info-value">{{ $quantity }}</span>
-            </div>
-
-            <div class="table-responsive mt-3">
-                <table class="delegates-table">
-                    <thead>
+            <table class="delegates-table">
+                <thead>
+                    <tr>
+                        <th style="width: 5%;">#</th>
+                        <th style="width: 28%;">Delegate Name</th>
+                        <th style="width: 28%;">Email</th>
+                        <th style="width: 15%;">Phone</th>
+                        <th style="width: 24%;">Ticket Type</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach($registrationData['delegates'] as $index => $delegate)
                         <tr>
-                            <th>#</th>
-                            <th>Delegate Name</th>
-                            <th>Email</th>
-                            <th>Phone</th>
-                            <th>Designation</th>
+                            <td>{{ $loop->iteration }}</td>
+                            <td><strong>{{ $delegate['salutation'] }} {{ $delegate['first_name'] }} {{ $delegate['last_name'] }}</strong></td>
+                            <td>{{ $delegate['email'] }}</td>
+                            <td>{{ $delegate['phone'] ?? '-' }}</td>
+                            <td>{{ $ticketType->name ?? '-' }}</td>
                         </tr>
-                    </thead>
-                    <tbody>
-                        @foreach($registrationData['delegates'] as $index => $delegate)
-                            <tr>
-                                <td>{{ $loop->iteration }}</td>
-                                <td>{{ $delegate['salutation'] }} {{ $delegate['first_name'] }} {{ $delegate['last_name'] }}</td>
-                                <td>{{ $delegate['email'] }}</td>
-                                <td>{{ $delegate['phone'] ?? '-' }}</td>
-                                <td>{{ $delegate['job_title'] ?? '-' }}</td>
-                            </tr>
-                        @endforeach
-                    </tbody>
-                </table>
-            </div>
+                    @endforeach
+                </tbody>
+            </table>
         </div>
         @endif
 
         <!-- Organisation Information -->
         <div class="preview-section">
             <h4 class="section-title">
-                <i class="fas fa-building me-2"></i>
+                <i class="fas fa-building"></i>
                 Organisation Information
             </h4>
-            <div class="info-row">
-                <span class="info-label">Organisation Name:</span>
-                <span class="info-value">{{ $registrationData['organisation_name'] }}</span>
-            </div>
-            <div class="info-row">
-                <span class="info-label">Industry Sector:</span>
-                <span class="info-value">{{ $registrationData['industry_sector'] }}</span>
-            </div>
-            <div class="info-row">
-                <span class="info-label">Organisation Type:</span>
-                <span class="info-value">{{ $registrationData['organisation_type'] }}</span>
-            </div>
-            <div class="info-row">
-                <span class="info-label">Country:</span>
-                <span class="info-value">{{ $registrationData['company_country'] ?? $registrationData['country'] ?? 'N/A' }}</span>
-            </div>
-            @if(!empty($registrationData['company_state'] ?? $registrationData['state'] ?? null))
-            <div class="info-row">
-                <span class="info-label">State:</span>
-                <span class="info-value">{{ $registrationData['company_state'] ?? $registrationData['state'] }}</span>
-            </div>
-            @endif
-            @if(!empty($registrationData['company_city'] ?? $registrationData['city'] ?? null))
-            <div class="info-row">
-                <span class="info-label">City:</span>
-                <span class="info-value">{{ $registrationData['company_city'] ?? $registrationData['city'] }}</span>
-            </div>
-            @endif
-            <div class="info-row">
-                <span class="info-label">Phone:</span>
-                <span class="info-value">{{ $registrationData['phone'] }}</span>
-            </div>
-            @if(!empty($registrationData['email']))
-            <div class="info-row">
-                <span class="info-label">Email:</span>
-                <span class="info-value">{{ $registrationData['email'] }}</span>
-            </div>
-            @endif
+            <table class="info-table">
+                <tr>
+                    <td class="label-cell">Organisation Name</td>
+                    <td class="value-cell"><strong>{{ $registrationData['organisation_name'] }}</strong></td>
+                </tr>
+                <tr>
+                    <td class="label-cell">Industry Sector</td>
+                    <td class="value-cell">{{ $registrationData['industry_sector'] }}</td>
+                </tr>
+                <tr>
+                    <td class="label-cell">Organisation Type</td>
+                    <td class="value-cell">{{ $registrationData['organisation_type'] }}</td>
+                </tr>
+                <tr>
+                    <td class="label-cell">Country</td>
+                    <td class="value-cell">{{ $registrationData['company_country'] ?? $registrationData['country'] ?? 'N/A' }}</td>
+                </tr>
+                @if(!empty($registrationData['company_state'] ?? $registrationData['state'] ?? null))
+                <tr>
+                    <td class="label-cell">State</td>
+                    <td class="value-cell">{{ $registrationData['company_state'] ?? $registrationData['state'] }}</td>
+                </tr>
+                @endif
+                @if(!empty($registrationData['company_city'] ?? $registrationData['city'] ?? null))
+                <tr>
+                    <td class="label-cell">City</td>
+                    <td class="value-cell">{{ $registrationData['company_city'] ?? $registrationData['city'] }}</td>
+                </tr>
+                @endif
+                <tr>
+                    <td class="label-cell">Phone</td>
+                    <td class="value-cell">{{ $registrationData['phone'] }}</td>
+                </tr>
+                @if(!empty($registrationData['email']))
+                <tr>
+                    <td class="label-cell">Email</td>
+                    <td class="value-cell">{{ $registrationData['email'] }}</td>
+                </tr>
+                @endif
+            </table>
         </div>
 
         <!-- GST Information -->
         @if($registrationData['gst_required'] == '1')
         <div class="preview-section">
             <h4 class="section-title">
-                <i class="fas fa-file-invoice-dollar me-2"></i>
-                GST Information
+                <i class="fas fa-file-invoice-dollar"></i>
+                GST / Invoice Details
             </h4>
-            <div class="info-row">
-                <span class="info-label">GSTIN:</span>
-                <span class="info-value">{{ $registrationData['gstin'] }}</span>
-            </div>
-            <div class="info-row">
-                <span class="info-label">GST Legal Name:</span>
-                <span class="info-value">{{ $registrationData['gst_legal_name'] }}</span>
-            </div>
-            <div class="info-row">
-                <span class="info-label">GST Address:</span>
-                <span class="info-value">{{ $registrationData['gst_address'] }}</span>
-            </div>
-            <div class="info-row">
-                <span class="info-label">GST State:</span>
-                <span class="info-value">{{ $registrationData['gst_state'] }}</span>
-            </div>
-        </div>
-        @endif
-
-        <!-- Contact Information (Only shown if GST is required) -->
-        @if($registrationData['gst_required'] == '1' && !empty($registrationData['contact_name']))
-        <div class="preview-section">
-            <h4 class="section-title">
-                <i class="fas fa-user me-2"></i>
-                Primary Contact Information (For GST Invoice)
-            </h4>
-            <div class="info-row">
-                <span class="info-label">Name:</span>
-                <span class="info-value">{{ $registrationData['contact_name'] }}</span>
-            </div>
-            <div class="info-row">
-                <span class="info-label">Email:</span>
-                <span class="info-value">{{ $registrationData['contact_email'] }}</span>
-            </div>
-            <div class="info-row">
-                <span class="info-label">Phone:</span>
-                <span class="info-value">{{ $registrationData['contact_phone'] }}</span>
-            </div>
+            <table class="info-table">
+                <tr>
+                    <td class="label-cell">GSTIN</td>
+                    <td class="value-cell"><strong>{{ $registrationData['gstin'] }}</strong></td>
+                </tr>
+                <tr>
+                    <td class="label-cell">Legal Name (For Invoice)</td>
+                    <td class="value-cell">{{ $registrationData['gst_legal_name'] }}</td>
+                </tr>
+                <tr>
+                    <td class="label-cell">Invoice Address</td>
+                    <td class="value-cell">{{ $registrationData['gst_address'] }}</td>
+                </tr>
+                <tr>
+                    <td class="label-cell">State</td>
+                    <td class="value-cell">{{ $registrationData['gst_state'] }}</td>
+                </tr>
+                @if(!empty($registrationData['contact_name']))
+                <tr>
+                    <td class="label-cell">Contact Person</td>
+                    <td class="value-cell">{{ $registrationData['contact_name'] }}</td>
+                </tr>
+                @endif
+                @if(!empty($registrationData['contact_email']))
+                <tr>
+                    <td class="label-cell">Contact Email</td>
+                    <td class="value-cell">{{ $registrationData['contact_email'] }}</td>
+                </tr>
+                @endif
+                @if(!empty($registrationData['contact_phone']))
+                <tr>
+                    <td class="label-cell">Contact Phone</td>
+                    <td class="value-cell">{{ $registrationData['contact_phone'] }}</td>
+                </tr>
+                @endif
+            </table>
         </div>
         @endif
 
         <!-- Price Breakdown -->
-        <div class="price-breakdown">
-            <h4 class="section-title mb-3">
-                <i class="fas fa-calculator me-2"></i>
+        <div class="price-section">
+            <h4 class="section-title">
+                <i class="fas fa-calculator"></i>
                 Price Breakdown
             </h4>
             @php
                 $currencySymbol = ($currency ?? 'INR') === 'USD' ? '$' : '₹';
-                $priceFormat = ($currency ?? 'INR') === 'USD' ? 2 : 2; // Both use 2 decimal places for consistency
+                $priceFormat = 2;
             @endphp
-            <div class="price-row">
-                <span class="price-label">Ticket Price ({{ $quantity }} × {{ $currencySymbol }}{{ number_format($unitPrice, $priceFormat) }}):</span>
-                <span class="price-value">{{ $currencySymbol }}{{ number_format($subtotal, $priceFormat) }}</span>
-            </div>
-            <div class="price-row">
-                <span class="price-label">GST ({{ $gstRate }}%):</span>
-                <span class="price-value">{{ $currencySymbol }}{{ number_format($gstAmount, $priceFormat) }}</span>
-            </div>
-            <div class="price-row">
-                <span class="price-label">Processing Charge ({{ $processingChargeRate }}%):</span>
-                <span class="price-value">{{ $currencySymbol }}{{ number_format($processingChargeAmount, $priceFormat) }}</span>
-            </div>
-            <div class="price-row total">
-                <span class="price-label">Total Amount:</span>
-                <span class="price-value">{{ $currencySymbol }}{{ number_format($total, $priceFormat) }}</span>
-            </div>
+            <table class="price-table">
+                <tr>
+                    <td class="label-cell">Ticket Price ({{ $quantity }} × {{ $currencySymbol }}{{ number_format($unitPrice, $priceFormat) }})</td>
+                    <td class="value-cell">{{ $currencySymbol }}{{ number_format($subtotal, $priceFormat) }}</td>
+                </tr>
+                <tr>
+                    <td class="label-cell">GST ({{ $gstRate }}%)</td>
+                    <td class="value-cell">{{ $currencySymbol }}{{ number_format($gstAmount, $priceFormat) }}</td>
+                </tr>
+                <tr>
+                    <td class="label-cell">Processing Charge ({{ $processingChargeRate }}%)</td>
+                    <td class="value-cell">{{ $currencySymbol }}{{ number_format($processingChargeAmount, $priceFormat) }}</td>
+                </tr>
+                <tr class="total-row">
+                    <td class="label-cell" style="background: var(--primary-color); color: white;">Total Amount</td>
+                    <td class="value-cell" style="background: var(--primary-color); color: white;">{{ $currencySymbol }}{{ number_format($total, $priceFormat) }}</td>
+                </tr>
+            </table>
         </div>
 
         <!-- Action Buttons -->
@@ -404,4 +436,3 @@
     });
 </script>
 @endpush
-

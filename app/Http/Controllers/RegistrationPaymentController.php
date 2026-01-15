@@ -1431,7 +1431,7 @@ class RegistrationPaymentController extends Controller
                         'pg_result' => $orderStatus,
                         'track_id' => $responseArray['tracking_id'] ?? null,
                         'pg_response_json' => json_encode($responseArray),
-                    'payment_date' => $isSuccess ? $transDate : null,
+                    'payment_date' => $transDate ?? now(), // Always set payment_date, never null
                         'currency' => 'INR',
                     'status' => $paymentTableStatus,
                     'order_id' => $order->order_no, // Store TIN/order_no in order_id field
@@ -1447,7 +1447,7 @@ class RegistrationPaymentController extends Controller
                         'pg_result' => $orderStatus,
                         'track_id' => $responseArray['tracking_id'] ?? null,
                         'pg_response_json' => json_encode($responseArray),
-                    'payment_date' => $isSuccess ? $transDate : null,
+                    'payment_date' => $transDate ?? now(), // Always set payment_date, never null
                         'currency' => 'INR',
                     'status' => $paymentTableStatus,
                     'order_id' => $order->order_no, // Ensure TIN/order_no is stored
@@ -1650,7 +1650,7 @@ class RegistrationPaymentController extends Controller
                         'pg_result' => $status,
                         'track_id' => $paypalOrderId,
                         'pg_response_json' => json_encode($captureResult),
-                    'payment_date' => $isSuccess ? now() : null,
+                    'payment_date' => now(), // Always set payment_date, never null
                         'currency' => 'USD',
                     'status' => $paymentTableStatus,
                     'order_id' => $order->order_no, // Store TIN/order_no in order_id field
@@ -1666,7 +1666,7 @@ class RegistrationPaymentController extends Controller
                         'pg_result' => $status,
                         'track_id' => $paypalOrderId,
                         'pg_response_json' => json_encode($captureResult),
-                    'payment_date' => $isSuccess ? now() : null,
+                    'payment_date' => now(), // Always set payment_date, never null
                         'currency' => 'USD',
                     'status' => $paymentTableStatus,
                     'order_id' => $order->order_no, // Ensure TIN/order_no is stored

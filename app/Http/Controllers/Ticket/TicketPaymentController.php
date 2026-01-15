@@ -442,7 +442,7 @@ class TicketPaymentController extends Controller
                     'pg_result' => $orderStatus,
                     'track_id' => $responseArray['tracking_id'] ?? null,
                     'pg_response_json' => json_encode($responseArray),
-                    'payment_date' => $isSuccess ? $transDate : null,
+                    'payment_date' => $transDate ?? now(), // Always set payment_date, never null
                     'currency' => $order->registration->nationality === 'International' ? 'USD' : 'INR',
                     'status' => $paymentTableStatus,
                     'order_id' => $order->order_no, // Store TIN/order_no in order_id field
