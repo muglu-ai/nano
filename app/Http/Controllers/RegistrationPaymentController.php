@@ -960,7 +960,32 @@ class RegistrationPaymentController extends Controller
             // Get billing details
             $billingName = $registration->contact->name ?? '';
             $billingEmail = $registration->contact->email ?? '';
-            $billingPhone = $registration->contact->phone ?? $registration->company_phone ?? '';
+            
+            // Get phone number - prefer company_phone as contact->phone might be malformed
+            // Check if contact->phone looks valid (at least 10 digits when cleaned)
+            $contactPhone = $registration->contact->phone ?? '';
+            $companyPhone = $registration->company_phone ?? '';
+            
+            // Clean both to check which one is valid
+            $contactPhoneDigits = preg_replace('/[^0-9]/', '', $contactPhone);
+            $companyPhoneDigits = preg_replace('/[^0-9]/', '', $companyPhone);
+            
+            // Use company_phone if contact_phone has less than 10 digits
+            if (strlen($contactPhoneDigits) >= 10) {
+                $billingPhone = $contactPhone;
+            } elseif (strlen($companyPhoneDigits) >= 10) {
+                $billingPhone = $companyPhone;
+            } else {
+                $billingPhone = $contactPhone ?: $companyPhone; // Fallback to whatever is available
+            }
+            
+            Log::info('Ticket Payment - Phone source selection', [
+                'contact_phone' => $contactPhone,
+                'contact_phone_digits' => strlen($contactPhoneDigits),
+                'company_phone' => $companyPhone,
+                'company_phone_digits' => strlen($companyPhoneDigits),
+                'selected_phone' => $billingPhone,
+            ]);
 
             // Prepare payment data
             $orderIdWithTimestamp = $order->order_no . '_' . time();
@@ -1074,6 +1099,14 @@ class RegistrationPaymentController extends Controller
             
             // 6. Validate and Clean Billing Phone
             // CCAvenue expects phone number without country code
+            $originalBillingPhone = $billingPhone;
+            
+            Log::info('Ticket CCAvenue Payment - Phone BEFORE extraction', [
+                'billingPhone_variable' => $billingPhone,
+                'contact_phone' => $registration->contact->phone ?? 'NULL',
+                'company_phone' => $registration->company_phone ?? 'NULL',
+            ]);
+            
             if (!empty($billingPhone)) {
                 $billingPhone = $this->extractPhoneNumber($billingPhone);
             } else {
@@ -1081,10 +1114,18 @@ class RegistrationPaymentController extends Controller
                 $billingPhone = $this->extractPhoneNumber($registration->company_phone ?? '');
             }
             
+            Log::info('Ticket CCAvenue Payment - Phone AFTER extraction', [
+                'original_phone' => $originalBillingPhone,
+                'extracted_phone' => $billingPhone,
+                'extracted_length' => strlen($billingPhone),
+            ]);
+            
             if (empty($billingPhone) || strlen($billingPhone) < 10) {
-                Log::warning('Ticket CCAvenue Payment - Phone number may be invalid', [
-                    'original' => $registration->company_phone ?? $billingPhone,
+                Log::warning('Ticket CCAvenue Payment - Phone number may be invalid after extraction', [
+                    'original' => $originalBillingPhone,
+                    'company_phone' => $registration->company_phone ?? 'NULL',
                     'cleaned' => $billingPhone,
+                    'length' => strlen($billingPhone),
                 ]);
             }
             
@@ -2126,7 +2167,8 @@ class RegistrationPaymentController extends Controller
         
         // Method 1: Check if phone has a separator (dash, space) after country code
         // Format: +91-9801217815 or +91 9801217815
-        if (preg_match('/^[\+]?(\d{1,3})[\-\s](\d{10,})$/', $phone, $matches)) {
+        // Accept 7+ digits after separator (some countries have shorter numbers)
+        if (preg_match('/^[\+]?(\d{1,3})[\-\s](\d{7,})$/', $phone, $matches)) {
             // $matches[1] = country code (91)
             // $matches[2] = actual phone number (9801217815)
             $extractedNumber = $matches[2];
@@ -2135,6 +2177,7 @@ class RegistrationPaymentController extends Controller
                 'original' => $originalPhone,
                 'country_code' => $matches[1],
                 'phone_number' => $extractedNumber,
+                'phone_length' => strlen($extractedNumber),
             ]);
             
             return $extractedNumber;
