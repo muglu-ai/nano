@@ -204,8 +204,8 @@
                             <td class="text-end"><strong>{{ $application->invoice->currency ?? 'INR' }} {{ number_format($application->invoice->total_final_price ?? $application->invoice->amount, 2) }}</strong></td>
                         </tr>
                     </table>
-
-                    @if($application->invoice->payment_status === 'paid')
+                    <?php /* 
+                    <!-- @if($application->invoice->payment_status === 'paid')
                         <div class="alert alert-success">
                             <i class="fas fa-check-circle"></i> Payment already completed!
                         </div>
@@ -251,7 +251,13 @@
                                 </button>
                             </div>
                         </form>
-                    @endif
+                    @endif -->
+                     */ ?>
+
+                     <!--  Payment options will be available once your application is approved by the admin. -->
+                     <div class="alert alert-warning">
+                        <i class="fas fa-clock"></i> Payment options will be available once your application is approved by the admin.
+                     </div>
                 </div>
             </div>
         </div>

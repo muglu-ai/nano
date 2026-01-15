@@ -423,7 +423,7 @@
                     <div class="col-md-6">
                         <label for="sales_executive_name" class="form-label">Sales Executive Name (From BTS Team) <span class="text-danger">*</span></label>
                         <input type="text" class="form-control" id="sales_executive_name" name="sales_executive_name" 
-                               value="{{ $draft->sales_executive_name ?? '' }}" required>
+                               value="{{ isset($draft->exhibitor_data['sales_executive_name']) ? $draft->exhibitor_data['sales_executive_name'] : '' }}" required>
                         <div class="invalid-feedback"></div>
                     </div>
                 </div>

@@ -46,6 +46,13 @@ class ExhibitorRegistrationController extends Controller
             $draft->billing_data = [];
             $draft->exhibitor_data = [];
         }
+
+        if (!$draft) {
+            $draft = new StartupZoneDraft();
+            $draft->session_id = $sessionId;
+            $draft->uuid = Str::uuid();
+            $draft->expires_at = now()->addDays(30);
+        }
         
         // Ensure progress_percentage exists
         if (!isset($draft->progress_percentage)) {
@@ -352,6 +359,20 @@ class ExhibitorRegistrationController extends Controller
             'email' => $request->input('exhibitor_email'),
         ];
         
+        // Add additional exhibitor-specific fields
+        if ($request->has('sales_executive_name')) {
+            $exhibitorData['sales_executive_name'] = trim($request->input('sales_executive_name'));
+        }
+        if ($request->has('category')) {
+            $exhibitorData['category'] = $request->input('category');
+        }
+        if ($request->has('tan_status')) {
+            $exhibitorData['tan_status'] = $request->input('tan_status');
+        }
+        if ($request->has('tan_no')) {
+            $exhibitorData['tan_no'] = $request->input('tan_no');
+        }
+        
         if (!empty($exhibitorData)) {
             $formData['exhibitor_data'] = $exhibitorData;
         }
@@ -365,14 +386,20 @@ class ExhibitorRegistrationController extends Controller
         if (!$draft) {
             $draft = new StartupZoneDraft();
             $draft->session_id = $sessionId;
+            $draft->uuid = Str::uuid();
             $draft->application_type = 'exhibitor-registration';
             $draft->event_id = 1; // Default event ID
+            $draft->expires_at = now()->addDays(30);
         }
         
         // Update draft with form data
         $draft->contact_data = $formData['contact_data'] ?? [];
         $draft->billing_data = $formData['billing_data'] ?? [];
-        $draft->exhibitor_data = $formData['exhibitor_data'] ?? [];
+        
+        // Merge exhibitor_data to preserve existing data
+        $existingExhibitorData = $draft->exhibitor_data ?? [];
+        $newExhibitorData = $formData['exhibitor_data'] ?? [];
+        $draft->exhibitor_data = array_merge($existingExhibitorData, $newExhibitorData);
         
         // Store individual fields for easier access
         if (isset($formData['booth_space'])) {
@@ -747,6 +774,11 @@ class ExhibitorRegistrationController extends Controller
                 $allData['contact_mobile'] = $request->input('contact_mobile_national');
             }
             
+            // Trim sales_executive_name to remove leading/trailing spaces
+            if (isset($allData['sales_executive_name'])) {
+                $allData['sales_executive_name'] = trim($allData['sales_executive_name']);
+            }
+            
             // CRITICAL: Check if contact email already exists in users table - BLOCK SUBMISSION
             $contactEmail = $request->input('contact_email');
             if (!empty($contactEmail) && $this->checkEmailExists(trim($contactEmail))) {
@@ -791,7 +823,7 @@ class ExhibitorRegistrationController extends Controller
                 'tan_status' => 'required|in:Registered,Unregistered',
                 'gst_status' => 'required|in:Registered,Unregistered',
                 'pan_no' => 'required|string|regex:/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/',
-                'sales_executive_name' => 'required|string|max:255',
+                'sales_executive_name' => 'required|string|max:255|regex:/.*\S.*/',
             ];
             
             // Conditional validations
@@ -876,8 +908,10 @@ class ExhibitorRegistrationController extends Controller
             if (!$draft) {
                 $draft = new StartupZoneDraft();
                 $draft->session_id = $sessionId;
+                $draft->uuid = Str::uuid();
                 $draft->application_type = 'exhibitor-registration';
                 $draft->event_id = 1; // Default event ID
+                $draft->expires_at = now()->addDays(30);
             }
             
             // Update draft with all form data
@@ -909,7 +943,7 @@ class ExhibitorRegistrationController extends Controller
             $exhibitorData = $allData['exhibitor_data'] ?? [];
             $exhibitorData['tan_status'] = $allData['tan_status'] ?? null;
             $exhibitorData['tan_no'] = $allData['tan_no'] ?? null;
-            $exhibitorData['sales_executive_name'] = $allData['sales_executive_name'] ?? null;
+            $exhibitorData['sales_executive_name'] = !empty($allData['sales_executive_name']) ? trim($allData['sales_executive_name']) : null;
             $exhibitorData['category'] = $allData['category'] ?? null;
             $draft->exhibitor_data = $exhibitorData;
             
