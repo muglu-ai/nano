@@ -419,7 +419,7 @@ class RegistrationPaymentController extends Controller
                 ->build();
 
             try {
-                $apiResponse = $this->paypalClient->getOrdersController()->ordersCreate($orderRequest);
+                $apiResponse = $this->paypalClient->getOrdersController()->createOrder($orderRequest);
                 $paypalOrderId = $apiResponse->getResult()->getId();
             } catch (\PaypalServerSdkLib\Exceptions\ApiException $e) {
                 Log::error('PayPal API Exception during order creation', [
@@ -625,7 +625,7 @@ class RegistrationPaymentController extends Controller
 
         try {
             // Capture the order
-            $captureResponse = $this->paypalClient->getOrdersController()->ordersCapture($paypalOrderId);
+            $captureResponse = $this->paypalClient->getOrdersController()->captureOrder($paypalOrderId);
             $captureResult = $captureResponse->getResult();
 
             $status = $captureResult->getStatus();
@@ -1952,7 +1952,7 @@ class RegistrationPaymentController extends Controller
             $captureBody = ['id' => $paypalOrderId];
 
             try {
-                $captureResponse = $this->paypalClient->getOrdersController()->ordersCapture($captureBody);
+                $captureResponse = $this->paypalClient->getOrdersController()->captureOrder($captureBody);
                 $captureResult = $captureResponse->getResult();
                 $status = $captureResult->getStatus();
             } catch (\PaypalServerSdkLib\Exceptions\ApiException $e) {

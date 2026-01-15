@@ -245,17 +245,8 @@
                             <div class="text-danger">{{ $message }}</div>
                         @enderror
                         
-                        {{-- Day Access Info - shows which days the ticket grants access to --}}
-                        {{--
-                        <div id="day_access_info" class="mt-2" style="display: none;">
-                            <div class="d-flex align-items-center flex-wrap gap-2">
-                                <span class="text-muted" style="font-size: 0.875rem;">
-                                    <i class="fas fa-calendar-check me-1"></i>Day Access:
-                                </span>
-                                <span id="day_access_badges"></span>
-                            </div>
-                        </div>
-                        --}}
+                        
+                        
                     </div>
                 </div>
 
@@ -264,7 +255,7 @@
                     <div class="col-md-12 mb-3">
                         <label class="form-label required-field">Select Event Day</label>
                         <select name="selected_event_day_id" class="form-select" id="selected_event_day">
-                            <option value="">Select Day</option>
+                            {{-- <option value="">Select Day</option> --}}
                         </select>
                         <small class="text-muted">Choose which day you want to attend</small>
                         @error('selected_event_day_id')
