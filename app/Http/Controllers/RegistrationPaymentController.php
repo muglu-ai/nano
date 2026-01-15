@@ -1055,12 +1055,16 @@ class RegistrationPaymentController extends Controller
                 $billingName = $registration->company_name ?? 'Customer';
             }
             
+            // Both redirect and cancel URL should point to the same callback route
+            // CCAvenue requires these URLs to be registered in the merchant panel
+            $callbackUrl = route('registration.ticket.payment.callback', ['eventSlug' => $eventSlug, 'gateway' => 'ccavenue']);
+            
             $paymentData = [
                 'order_id' => $orderId,
                 'amount' => number_format($amount, 2, '.', ''),
                 'currency' => $currency,
-                'redirect_url' => route('registration.ticket.payment.callback', ['eventSlug' => $eventSlug, 'gateway' => 'ccavenue']),
-                'cancel_url' => route('tickets.payment.lookup', ['eventSlug' => $eventSlug, 'tin' => $order->order_no]),
+                'redirect_url' => $callbackUrl,
+                'cancel_url' => $callbackUrl, // Same as redirect_url - CCAvenue handles both success and failure
                 'billing_name' => $billingName,
                 'billing_address' => $registration->company_name ?? '',
                 'billing_city' => $registration->company_city ?? '',
@@ -1070,6 +1074,10 @@ class RegistrationPaymentController extends Controller
                 'billing_tel' => $billingPhone,
                 'billing_email' => $billingEmail,
             ];
+            
+            Log::info('Ticket CCAvenue Payment - Callback URL', [
+                'callback_url' => $callbackUrl,
+            ]);
 
             Log::info('Ticket CCAvenue Payment - Initiating transaction', [
                 'order_id' => $order->id,
@@ -1246,12 +1254,12 @@ class RegistrationPaymentController extends Controller
             if (!empty($encResponse) && strlen($encResponse) > 10) {
                 // Only attempt decryption if encResp looks valid (not just "a" or similar garbage)
                 try {
-                    $credentials = $this->ccAvenueService->getCredentials();
-                    $decryptedResponse = $this->ccAvenueService->decrypt($encResponse, $credentials['working_key']);
-                    parse_str($decryptedResponse, $responseArray);
-                    
-                    $orderIdFromGateway = $responseArray['order_id'] ?? null;
-                    $orderNo = $orderIdFromGateway ? explode('_', $orderIdFromGateway)[0] : null;
+            $credentials = $this->ccAvenueService->getCredentials();
+            $decryptedResponse = $this->ccAvenueService->decrypt($encResponse, $credentials['working_key']);
+            parse_str($decryptedResponse, $responseArray);
+
+            $orderIdFromGateway = $responseArray['order_id'] ?? null;
+            $orderNo = $orderIdFromGateway ? explode('_', $orderIdFromGateway)[0] : null;
                     
                     Log::info('Ticket CCAvenue Callback - Decrypted response', [
                         'order_id_from_gateway' => $orderIdFromGateway,
@@ -1375,9 +1383,9 @@ class RegistrationPaymentController extends Controller
                 // Check if we have a valid encrypted response to decrypt
                 if (!empty($encResponse) && strlen($encResponse) > 10) {
                     try {
-                        $credentials = $this->ccAvenueService->getCredentials();
-                        $decryptedResponse = $this->ccAvenueService->decrypt($encResponse, $credentials['working_key']);
-                        parse_str($decryptedResponse, $responseArray);
+                $credentials = $this->ccAvenueService->getCredentials();
+                $decryptedResponse = $this->ccAvenueService->decrypt($encResponse, $credentials['working_key']);
+                parse_str($decryptedResponse, $responseArray);
                     } catch (\Exception $e) {
                         Log::warning('Ticket CCAvenue Callback - Decryption failed in handler', [
                             'error' => $e->getMessage(),
@@ -1413,7 +1421,9 @@ class RegistrationPaymentController extends Controller
                 ->where('type', 'ticket_registration')
                 ->first();
 
-            // Update payment gateway response
+            // Update payment gateway response (wrapped in try-catch as this is not critical)
+            try {
+                if ($orderId) {
             DB::table('payment_gateway_response')
                 ->where('order_id', $orderId)
                 ->update([
@@ -1426,25 +1436,40 @@ class RegistrationPaymentController extends Controller
                     'status' => $orderStatus === 'Success' ? 'Success' : 'Failed',
                     'updated_at' => now(),
                 ]);
+                }
+            } catch (\Exception $e) {
+                Log::warning('Ticket CCAvenue Callback - Failed to update payment_gateway_response', [
+                    'error' => $e->getMessage(),
+                    'order_id' => $orderId,
+                ]);
+            }
 
             // Determine payment status
             $isSuccess = ($orderStatus === 'Success');
             $paymentStatus = $isSuccess ? 'completed' : 'failed';
             $paymentTableStatus = $isSuccess ? 'successful' : 'failed';
 
-            // Always create ticket payment record (for both success and failure)
+            // Try to create ticket payment record (for both success and failure)
+            try {
                 TicketPayment::create([
                     'order_ids_json' => [$order->id],
                     'method' => strtolower($responseArray['payment_mode'] ?? 'card'),
                     'amount' => $responseArray['mer_amount'] ?? $order->total,
-                'status' => $paymentStatus,
+                    'status' => $paymentStatus,
                     'gateway_txn_id' => $responseArray['tracking_id'] ?? null,
                     'gateway_name' => 'ccavenue',
-                'paid_at' => $isSuccess ? $transDate : null,
+                    'paid_at' => $isSuccess ? $transDate : null,
                     'pg_request_json' => [],
                     'pg_response_json' => $responseArray,
                     'pg_webhook_json' => [],
                 ]);
+            } catch (\Exception $e) {
+                Log::warning('Ticket CCAvenue Callback - Failed to create TicketPayment record', [
+                    'error' => $e->getMessage(),
+                    'order_no' => $order->order_no,
+                ]);
+                // Continue processing - don't fail the whole callback for this
+            }
 
             // Always create Payment record in payments table with TIN/order_no
             // Check if payment already exists (for retry scenarios)
@@ -1578,29 +1603,55 @@ class RegistrationPaymentController extends Controller
             } else {
                 // Payment failed - order status remains 'pending'
                 // Payment records already created above with 'failed' status
-                // Ensure invoice remains unpaid
-                if ($invoice && $invoice->payment_status !== 'unpaid') {
-                    $invoice->update([
-                        'payment_status' => 'unpaid', // Ensure invoice remains unpaid on failure
+                // Ensure invoice remains unpaid (wrapped in try-catch)
+                try {
+                    if ($invoice && $invoice->payment_status !== 'unpaid') {
+                        $invoice->update([
+                            'payment_status' => 'unpaid',
+                        ]);
+                    }
+                } catch (\Exception $e) {
+                    Log::warning('Ticket CCAvenue Callback - Failed to update invoice', [
+                        'error' => $e->getMessage(),
                     ]);
                 }
 
-                // Check if payment was cancelled
-                $isCancelled = ($orderStatus === 'Cancelled' || $orderStatus === 'Aborted' || strtolower($orderStatus ?? '') === 'cancelled');
-                $message = $isCancelled ? 'Payment was cancelled. You can try again by clicking Pay Now.' : 'Payment failed. Please try again.';
+                // Check if payment was cancelled, aborted, or invalid
+                $isCancelled = in_array($orderStatus, ['Cancelled', 'Aborted', 'cancelled', 'aborted']);
+                $isInvalid = ($orderStatus === 'Invalid' || $orderStatus === 'invalid');
+                
+                if ($isCancelled) {
+                    $message = 'Payment was cancelled. You can try again by clicking Pay Now.';
+                } elseif ($isInvalid) {
+                    $message = 'Payment could not be processed due to invalid transaction parameters. Please try again.';
+                    Log::warning('CCAvenue Invalid Status', [
+                        'order_no' => $order->order_no,
+                        'response' => $responseArray,
+                    ]);
+                } else {
+                    $message = 'Payment failed. Please try again.';
+                }
 
-                return redirect()->route('tickets.payment.lookup', [
-                    'eventSlug' => $event->slug ?? $event->id
-                ])->with('error', $message)->with('tin', $order->order_no);
+                Log::info('Ticket CCAvenue Payment - Failed/Cancelled, redirecting to lookup', [
+                    'order_no' => $order->order_no,
+                    'order_status' => $orderStatus,
+                    'message' => $message,
+                ]);
+
+                // Redirect to lookup page with TIN as query parameter
+                $lookupUrl = route('tickets.payment.lookup', ['eventSlug' => $event->slug ?? $event->id]) . '?tin=' . urlencode($order->order_no);
+                return redirect($lookupUrl)->with('error', $message)->with('tin', $order->order_no);
             }
         } catch (\Exception $e) {
             Log::error('Ticket CCAvenue Callback Error', [
                 'error' => $e->getMessage(),
-                'order_id' => $order->id,
+                'trace' => $e->getTraceAsString(),
+                'order_id' => $order->id ?? null,
             ]);
-            return redirect()->route('tickets.payment.lookup', [
-                'eventSlug' => $event->slug ?? $event->id
-            ])->with('error', 'An error occurred while processing payment.')->with('tin', $order->order_no ?? null);
+            
+            // Even on error, try to redirect to lookup with TIN
+            $lookupUrl = route('tickets.payment.lookup', ['eventSlug' => $event->slug ?? $event->id]) . '?tin=' . urlencode($order->order_no ?? '');
+            return redirect($lookupUrl)->with('error', 'An error occurred while processing payment. Please try again.');
         }
     }
 
