@@ -418,8 +418,32 @@ class RegistrationPaymentController extends Controller
                 )
                 ->build();
 
-            $apiResponse = $this->paypalClient->getOrdersController()->ordersCreate($orderRequest);
-            $paypalOrderId = $apiResponse->getResult()->getId();
+            try {
+                $apiResponse = $this->paypalClient->getOrdersController()->ordersCreate($orderRequest);
+                $paypalOrderId = $apiResponse->getResult()->getId();
+            } catch (\PaypalServerSdkLib\Exceptions\ApiException $e) {
+                Log::error('PayPal API Exception during order creation', [
+                    'error' => $e->getMessage(),
+                    'code' => $e->getCode(),
+                    'order_id' => $orderIdWithTimestamp,
+                ]);
+
+                // Check if it's the OAuth token error
+                if (strpos($e->getMessage(), 'OAuthToken') !== false || strpos($e->getMessage(), 'addExpiryTime') !== false) {
+                    return redirect()->route('registration.payment.select', $invoice->invoice_no)
+                        ->with('error', 'Payment gateway authentication failed. Please try again in a few moments.');
+                }
+
+                throw $e;
+            } catch (\Exception $e) {
+                Log::error('Unexpected PayPal error during order creation', [
+                    'error' => $e->getMessage(),
+                    'order_id' => $orderIdWithTimestamp,
+                ]);
+
+                return redirect()->route('registration.payment.select', $invoice->invoice_no)
+                    ->with('error', 'Payment processing failed. Please try again or contact support.');
+            }
 
             // Store payment gateway response
             DB::table('payment_gateway_response')->insert([
@@ -1926,9 +1950,38 @@ class RegistrationPaymentController extends Controller
         try {
             // Capture the order - ordersCapture expects an array with 'id' key
             $captureBody = ['id' => $paypalOrderId];
-            $captureResponse = $this->paypalClient->getOrdersController()->ordersCapture($captureBody);
-            $captureResult = $captureResponse->getResult();
-            $status = $captureResult->getStatus();
+
+            try {
+                $captureResponse = $this->paypalClient->getOrdersController()->ordersCapture($captureBody);
+                $captureResult = $captureResponse->getResult();
+                $status = $captureResult->getStatus();
+            } catch (\PaypalServerSdkLib\Exceptions\ApiException $e) {
+                Log::error('PayPal API Exception during order capture', [
+                    'error' => $e->getMessage(),
+                    'code' => $e->getCode(),
+                    'paypal_order_id' => $paypalOrderId,
+                    'order_no' => $order->order_no,
+                ]);
+
+                // Check if it's the OAuth token error
+                if (strpos($e->getMessage(), 'OAuthToken') !== false || strpos($e->getMessage(), 'addExpiryTime') !== false) {
+                    return redirect()->route('tickets.payment.lookup', [
+                        'eventSlug' => $event->slug ?? $event->id
+                    ])->with('error', 'Payment gateway authentication failed. Please try again in a few moments.')->with('tin', $order->order_no);
+                }
+
+                throw $e;
+            } catch (\Exception $e) {
+                Log::error('Unexpected PayPal error during order capture', [
+                    'error' => $e->getMessage(),
+                    'paypal_order_id' => $paypalOrderId,
+                    'order_no' => $order->order_no,
+                ]);
+
+                return redirect()->route('tickets.payment.lookup', [
+                    'eventSlug' => $event->slug ?? $event->id
+                ])->with('error', 'Payment processing failed. Please try again or contact support.')->with('tin', $order->order_no);
+            }
 
             $invoice = Invoice::where('invoice_no', $order->order_no)
                 ->where('type', 'ticket_registration')
