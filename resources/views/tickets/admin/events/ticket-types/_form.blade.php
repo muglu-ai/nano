@@ -172,6 +172,47 @@
             </div>
         </div>
     </div>
+
+    <!-- Per-Day Pricing -->
+    <div class="mb-3">
+        <h6 style="color: #ff9800; font-weight: 600; margin-bottom: 1rem;">
+            <i class="fas fa-calendar-day"></i> Per-Day Pricing (Optional)
+        </h6>
+        <p class="text-muted mb-3" style="font-size: 0.875rem;">
+            Set per-day pricing if users can select individual days. Price will be calculated per selected day.
+        </p>
+        <div class="row">
+            <div class="col-md-6">
+                <div class="form-group mb-3">
+                    <label class="form-label">
+                        <i class="fas fa-flag"></i> Per-Day National Price (INR)
+                    </label>
+                    <input type="number" name="per_day_price_national" class="form-control" 
+                           value="{{ $isEdit ? $ticketType->per_day_price_national : old('per_day_price_national') }}" 
+                           step="0.01" min="0" placeholder="0.00">
+                    <small class="text-muted">Per-day price for Indian nationals</small>
+                    @error('per_day_price_national')
+                        <div class="text-danger">{{ $message }}</div>
+                    @enderror
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <div class="form-group mb-3">
+                    <label class="form-label">
+                        <i class="fas fa-globe"></i> Per-Day International Price (USD)
+                    </label>
+                    <input type="number" name="per_day_price_international" class="form-control" 
+                           value="{{ $isEdit ? $ticketType->per_day_price_international : old('per_day_price_international') }}" 
+                           step="0.01" min="0" placeholder="0.00">
+                    <small class="text-muted">Per-day price for international users</small>
+                    @error('per_day_price_international')
+                        <div class="text-danger">{{ $message }}</div>
+                    @enderror
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 
 <div class="row">
@@ -211,59 +252,95 @@
     </div>
 </div>
 
-<!-- All Days Access Section -->
+<!-- Day Access Configuration Section -->
 <div class="form-section mb-4" style="background: linear-gradient(135deg, #e6f3ff 0%, #f0f8ff 100%); border: 2px solid #667eea; border-radius: 12px; padding: 1.5rem;">
     <h5 class="form-section-title" style="border-bottom-color: #667eea; margin-bottom: 1rem;">
         <i class="fas fa-calendar-check"></i>
         Day Access Configuration
     </h5>
     
+    {{-- Enable Day Selection Toggle --}}
     <div class="switch-container mb-3" style="background: white; padding: 1.25rem; border-radius: 8px; border: 2px solid #667eea;">
         <div class="d-flex align-items-center justify-content-between">
             <div>
-                <label class="switch-label" for="all_days_access" style="font-weight: 600; font-size: 1rem; color: #2d3748; margin: 0;">
-                    <i class="fas fa-check-circle text-success me-2"></i>
-                    Grant Access to ALL Event Days
+                <label class="switch-label" for="enable_day_selection" style="font-weight: 600; font-size: 1rem; color: #2d3748; margin: 0;">
+                    <i class="fas fa-calendar-day text-primary me-2"></i>
+                    Enable Day Selection for Users
                 </label>
                 <p class="text-muted mb-0 mt-2" style="font-size: 0.875rem;">
-                    When enabled, this ticket will automatically grant access to all event days. 
-                    Users won't need to select individual days.
+                    When enabled, users will see a dropdown to choose which day(s) they want to attend.
+                    Options include "All Days" and individual days.
                 </p>
             </div>
             <div class="form-check form-switch">
-                <input class="form-check-input" type="checkbox" name="all_days_access" id="all_days_access" value="1"
-                       {{ ($isEdit && $ticketType->all_days_access) || old('all_days_access') == '1' ? 'checked' : '' }}
-                       onchange="toggleDaySelection()">
+                <input class="form-check-input" type="checkbox" name="enable_day_selection" id="enable_day_selection" value="1"
+                       {{ ($isEdit && $ticketType->enable_day_selection) || old('enable_day_selection') == '1' ? 'checked' : '' }}
+                       onchange="toggleDaySelectionConfig()">
             </div>
         </div>
     </div>
 
-    <div id="day-selection-section" style="display: {{ ($isEdit && $ticketType->all_days_access) || old('all_days_access') == '1' ? 'none' : 'block' }};">
-        <label class="form-label mb-3">Select Specific Days (if not using "All Days")</label>
-        <div class="row">
-            @forelse($eventDays as $day)
-                <div class="col-md-4 mb-2">
-                    <div class="form-check">
-                        <input class="form-check-input" type="checkbox" name="event_day_ids[]" 
-                               value="{{ $day->id }}" id="day_{{ $day->id }}"
-                               {{ in_array($day->id, old('event_day_ids', $selectedDays)) ? 'checked' : '' }}>
-                        <label class="form-check-label" for="day_{{ $day->id }}">
-                            <strong>{{ $day->label }}</strong>
-                            <br>
-                            <small class="text-muted">
-                                {{ \Carbon\Carbon::parse($day->date)->format('M d, Y (l)') }}
-                            </small>
-                        </label>
-                    </div>
+    {{-- Day Selection Configuration (shown when enable_day_selection is ON) --}}
+    <div id="day-selection-config" style="display: {{ ($isEdit && $ticketType->enable_day_selection) || old('enable_day_selection') == '1' ? 'block' : 'none' }};">
+        
+        {{-- All Days Access Toggle --}}
+        <div class="switch-container mb-3" style="background: #f8f9fa; padding: 1rem; border-radius: 8px; border: 1px solid #dee2e6;">
+            <div class="d-flex align-items-center justify-content-between">
+                <div>
+                    <label class="switch-label" for="all_days_access" style="font-weight: 600; font-size: 0.95rem; color: #2d3748; margin: 0;">
+                        <i class="fas fa-check-circle text-success me-2"></i>
+                        Include "All Days" Option
+                    </label>
+                    <p class="text-muted mb-0 mt-1" style="font-size: 0.8rem;">
+                        Adds an "All Days" option in the dropdown (uses regular price)
+                    </p>
                 </div>
-            @empty
-                <div class="col-12">
-                    <div class="alert alert-warning">
-                        <i class="fas fa-exclamation-triangle me-2"></i>
-                        No event days found. Please create event days first.
-                    </div>
+                <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" name="all_days_access" id="all_days_access" value="1"
+                           {{ ($isEdit && $ticketType->all_days_access) || old('all_days_access', '1') == '1' ? 'checked' : '' }}>
                 </div>
-            @endforelse
+            </div>
+        </div>
+
+        {{-- Available Days Selection --}}
+        <div class="mb-3">
+            <label class="form-label mb-2" style="font-weight: 600;">
+                <i class="fas fa-list me-1"></i>
+                Available Individual Days
+            </label>
+            <p class="text-muted mb-2" style="font-size: 0.85rem;">Select which individual days will appear in the dropdown (uses per-day price if set)</p>
+            <div class="row" style="background: #f8f9fa; padding: 1rem; border-radius: 8px;">
+                @forelse($eventDays as $day)
+                    <div class="col-md-4 mb-2">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="event_day_ids[]" 
+                                   value="{{ $day->id }}" id="day_{{ $day->id }}"
+                                   {{ in_array($day->id, old('event_day_ids', $selectedDays)) ? 'checked' : '' }}>
+                            <label class="form-check-label" for="day_{{ $day->id }}">
+                                <strong>{{ $day->label }}</strong>
+                                <small class="text-muted d-block">
+                                    {{ \Carbon\Carbon::parse($day->date)->format('M d, Y') }}
+                                </small>
+                            </label>
+                        </div>
+                    </div>
+                @empty
+                    <div class="col-12">
+                        <div class="alert alert-warning mb-0">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            No event days found. Please create event days first.
+                        </div>
+                    </div>
+                @endforelse
+            </div>
+        </div>
+    </div>
+
+    {{-- Info when Day Selection is disabled --}}
+    <div id="day-selection-disabled-info" style="display: {{ ($isEdit && $ticketType->enable_day_selection) || old('enable_day_selection') == '1' ? 'none' : 'block' }};">
+        <div class="alert alert-info mb-0">
+            <i class="fas fa-info-circle me-2"></i>
+            Day selection is disabled. Users will get access to all event days automatically.
         </div>
     </div>
 </div>
@@ -295,18 +372,17 @@
 </div>
 
 <script>
-function toggleDaySelection() {
-    const allDaysChecked = document.getElementById('all_days_access').checked;
-    const daySelectionSection = document.getElementById('day-selection-section');
+function toggleDaySelectionConfig() {
+    const enableDaySelection = document.getElementById('enable_day_selection').checked;
+    const daySelectionConfig = document.getElementById('day-selection-config');
+    const daySelectionDisabledInfo = document.getElementById('day-selection-disabled-info');
     
-    if (allDaysChecked) {
-        daySelectionSection.style.display = 'none';
-        // Uncheck all individual day checkboxes
-        document.querySelectorAll('input[name="event_day_ids[]"]').forEach(checkbox => {
-            checkbox.checked = false;
-        });
+    if (enableDaySelection) {
+        daySelectionConfig.style.display = 'block';
+        daySelectionDisabledInfo.style.display = 'none';
     } else {
-        daySelectionSection.style.display = 'block';
+        daySelectionConfig.style.display = 'none';
+        daySelectionDisabledInfo.style.display = 'block';
     }
 }
 

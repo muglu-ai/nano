@@ -5,11 +5,11 @@
 @push('styles')
 <style>
     .receipt-header {
-        background: rgba(255, 255, 255, 0.05);
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
         border-radius: 10px;
-        padding: 1.5rem;
-        margin-bottom: 2rem;
-        border: 1px solid #e0e0e0;
+        padding: 1.25rem 1.5rem;
+        margin-bottom: 1.5rem;
+        border: 1px solid #dee2e6;
         display: flex;
         justify-content: space-between;
         align-items: center;
@@ -20,10 +20,10 @@
     .receipt-type {
         background: var(--primary-color);
         color: white;
-        padding: 0.5rem 1.5rem;
-        border-radius: 8px;
+        padding: 0.5rem 1.25rem;
+        border-radius: 6px;
         font-weight: 700;
-        font-size: 0.875rem;
+        font-size: 0.8rem;
         text-transform: uppercase;
         letter-spacing: 0.5px;
     }
@@ -34,63 +34,62 @@
     }
 
     .order-info-box {
-        background: #f8f9fa;
-        border-left: 4px solid var(--primary-color);
-        border-radius: 10px;
-        padding: 1.5rem;
+        background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+        border-left: 4px solid #1976d2;
+        border-radius: 8px;
+        padding: 1.25rem 1.5rem;
         margin-bottom: 1.5rem;
     }
 
     .order-info-box strong {
-        color: var(--text-primary);
+        color: #1565c0;
         font-size: 1.1rem;
         display: block;
-        margin-bottom: 0.5rem;
+        margin-bottom: 0.25rem;
     }
 
     .order-info-box p {
-        color: var(--text-secondary);
-        font-size: 0.875rem;
-        margin: 0.5rem 0 0 0;
+        color: #1976d2;
+        font-size: 0.85rem;
+        margin: 0.25rem 0 0 0;
     }
 
     .payment-status-badge {
         display: inline-block;
-        padding: 0.5rem 1rem;
-        border-radius: 8px;
-        font-size: 0.875rem;
-        font-weight: 600;
+        padding: 0.4rem 0.9rem;
+        border-radius: 5px;
+        font-size: 0.75rem;
+        font-weight: 700;
         text-transform: uppercase;
-        margin-left: 0.5rem;
+        letter-spacing: 0.5px;
     }
 
     .payment-status-badge.paid {
-        background: #d4edda;
-        color: #155724;
-        border: 1px solid #c3e6cb;
+        background: #28a745;
+        color: #ffffff;
     }
 
     .payment-status-badge.pending {
-        background: #fff3cd;
-        color: #856404;
-        border: 1px solid #ffeaa7;
+        background: #ffc107;
+        color: #333333;
     }
 
     .details-section {
-        background: #f8f9fa;
+        background: #ffffff;
         border-radius: 10px;
-        padding: 1.5rem;
+        padding: 1.25rem;
         margin-bottom: 1.5rem;
         border: 1px solid #e0e0e0;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
     }
 
     .section-title {
-        font-size: 1.25rem;
-        font-weight: 600;
-        margin-bottom: 1.5rem;
+        font-size: 1.1rem;
+        font-weight: 700;
+        margin-bottom: 1rem;
         color: var(--text-primary);
-        padding-bottom: 0.75rem;
-        border-bottom: 2px solid var(--progress-inactive);
+        padding-bottom: 0.5rem;
+        border-bottom: 2px solid var(--primary-color);
         display: flex;
         align-items: center;
         gap: 0.5rem;
@@ -98,87 +97,114 @@
 
     .section-title i {
         color: var(--primary-color);
+        font-size: 1rem;
     }
 
-    .info-row {
-        display: flex;
-        justify-content: space-between;
-        padding: 0.75rem 0;
-        border-bottom: 1px solid #e0e0e0;
+    /* Tabular Info Styles */
+    .info-table {
+        width: 100%;
+        border-collapse: collapse;
     }
 
-    .info-row:last-child {
-        border-bottom: none;
+    .info-table td {
+        padding: 0.6rem 0.75rem;
+        border: 1px solid #e9ecef;
+        font-size: 0.875rem;
+        vertical-align: middle;
     }
 
-    .info-label {
+    .info-table .label-cell {
+        background: #f8f9fa;
         font-weight: 600;
-        color: var(--text-secondary);
-        flex: 1;
+        color: #495057;
+        width: 40%;
     }
 
-    .info-value {
-        color: var(--text-primary);
-        flex: 1;
-        text-align: right;
+    .info-table .value-cell {
+        color: #212529;
+        width: 60%;
+    }
+
+    .info-table .status-row {
+        background: #d4edda;
+    }
+
+    .info-table .status-row.pending {
+        background: #fff3cd;
     }
 
     .delegates-table {
         width: 100%;
         border-collapse: collapse;
-        margin-top: 1rem;
-    }
-
-    .delegates-table th,
-    .delegates-table td {
-        padding: 0.75rem;
-        text-align: left;
-        border-bottom: 1px solid #e0e0e0;
+        margin-top: 0.5rem;
     }
 
     .delegates-table th {
-        background: #f8f9fa;
-        color: var(--text-primary);
+        background: var(--primary-color);
+        color: white;
+        padding: 0.75rem;
+        text-align: left;
         font-weight: 600;
-        font-size: 0.875rem;
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
     }
 
     .delegates-table td {
-        color: var(--text-secondary);
-        font-size: 0.875rem;
+        padding: 0.65rem 0.75rem;
+        border: 1px solid #e9ecef;
+        font-size: 0.85rem;
+        color: #495057;
     }
 
-    .price-breakdown {
+    .delegates-table tr:nth-child(even) {
         background: #f8f9fa;
-        border-radius: 10px;
-        padding: 1.5rem;
-        margin-top: 1.5rem;
-        border: 1px solid #e0e0e0;
     }
 
-    .price-row {
-        display: flex;
-        justify-content: space-between;
-        padding: 0.75rem 0;
-        font-size: 1rem;
-        color: var(--text-primary);
+    .delegates-table tr:hover {
+        background: #e9ecef;
     }
 
-    .price-row.total {
-        font-size: 1.5rem;
+    /* Price Table Styles */
+    .price-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .price-table td {
+        padding: 0.65rem 0.85rem;
+        border: 1px solid #e9ecef;
+        font-size: 0.9rem;
+    }
+
+    .price-table .label-cell {
+        background: #f8f9fa;
+        font-weight: 500;
+        color: #495057;
+        width: 65%;
+    }
+
+    .price-table .value-cell {
+        text-align: right;
+        font-weight: 600;
+        color: #212529;
+        width: 35%;
+    }
+
+    .price-table .total-row td {
+        background: var(--primary-color);
+        color: #ffffff;
+        font-size: 1.1rem;
         font-weight: 700;
-        padding-top: 1rem;
-        margin-top: 1rem;
-        border-top: 2px solid var(--primary-color);
-        color: var(--text-primary);
+        padding: 0.85rem;
     }
 
     .alert-box {
         background: #fff3cd;
         border-left: 4px solid #ffc107;
-        border-radius: 10px;
-        padding: 1rem 1.5rem;
-        margin: 1.5rem 0;
+        border-radius: 8px;
+        padding: 1rem 1.25rem;
+        margin: 1rem 0 1.5rem 0;
     }
 
     .alert-box.success {
@@ -188,26 +214,32 @@
 
     .alert-box p {
         margin: 0;
-        color: var(--text-primary);
+        color: #856404;
         font-size: 0.875rem;
     }
 
+    .alert-box.success p {
+        color: #155724;
+    }
+
     .btn-pay-now {
-        background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-color-dark) 100%);
+        background: linear-gradient(135deg, #28a745 0%, #218838 100%);
         color: white !important;
-        padding: 1rem 2.5rem;
-        border-radius: 10px;
-        font-weight: 600;
-        font-size: 1.1rem;
+        padding: 0.9rem 2.25rem;
+        border-radius: 8px;
+        font-weight: 700;
+        font-size: 1rem;
         text-decoration: none;
         display: inline-block;
         transition: all 0.3s ease;
         border: none;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
     }
 
     .btn-pay-now:hover {
         transform: translateY(-2px);
-        box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+        box-shadow: 0 5px 20px rgba(40, 167, 69, 0.4);
         color: white !important;
     }
 
@@ -221,6 +253,26 @@
     .btn-back:hover {
         color: var(--primary-color);
     }
+
+    /* Badge styles */
+    .day-badge {
+        display: inline-block;
+        padding: 0.25rem 0.6rem;
+        border-radius: 4px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        margin-right: 0.25rem;
+    }
+
+    .day-badge.primary {
+        background: var(--primary-color);
+        color: white;
+    }
+
+    .day-badge.success {
+        background: #28a745;
+        color: white;
+    }
 </style>
 @endpush
 
@@ -232,6 +284,20 @@
     </div>
 
     <div class="form-body">
+        @if(session('error'))
+        <div class="alert alert-warning mb-3" style="background: #fff3cd; border: 1px solid #ffc107; border-left: 4px solid #ffc107; border-radius: 8px; padding: 1rem;">
+            <i class="fas fa-exclamation-triangle me-2" style="color: #856404;"></i>
+            <span style="color: #856404;">{{ session('error') }}</span>
+        </div>
+        @endif
+
+        @if(session('success'))
+        <div class="alert alert-success mb-3" style="background: #d4edda; border: 1px solid #28a745; border-left: 4px solid #28a745; border-radius: 8px; padding: 1rem;">
+            <i class="fas fa-check-circle me-2" style="color: #155724;"></i>
+            <span style="color: #155724;">{{ session('success') }}</span>
+        </div>
+        @endif
+
         <!-- Receipt Header -->
         <div class="receipt-header">
             <div class="receipt-type">
@@ -242,41 +308,24 @@
                 @endif
             </div>
             <div class="receipt-date">
-                <strong>Date of Registration:</strong> {{ $order->created_at->format('d-m-Y') }}
+                <strong>Date:</strong> {{ $order->created_at->format('d-m-Y') }}
             </div>
         </div>
 
         <!-- Order Info -->
+        @php
+            // Fetch PIN from invoice table
+            $invoice = \App\Models\Invoice::where('invoice_no', $order->order_no)
+                ->where('type', 'ticket_registration')
+                ->first();
+            $pinNo = $invoice->pin_no ?? null;
+        @endphp
         <div class="order-info-box">
-            <strong>TIN No.: {{ $order->order_no }}</strong>
-            @if($order->status === 'paid')
-                @php
-                    $pinNo = $order->pin_no ?? null;
-                    if (!$pinNo && $order->status === 'paid') {
-                        $prefix = config('constants.PIN_NO_PREFIX', 'PRN-BTS-2026-EXHP-');
-                        $randomNumber = str_pad(rand(100000, 999999), 6, '0', STR_PAD_LEFT);
-                        $pinNo = $prefix . $randomNumber;
-                    }
-                @endphp
-                @if($pinNo)
-                <p><strong>PIN No.:</strong> {{ $pinNo }}</p>
-                @endif
+            <strong><i class="fas fa-ticket-alt me-2"></i>TIN No.: {{ $order->order_no }}</strong>
+            @if($order->status === 'paid' && $pinNo)
+                <p><strong>PIN No.:</strong> <span style="color: #0066cc; font-weight: 700;">{{ $pinNo }}</span></p>
             @endif
-            <p style="margin-top: 0.75rem;">
-                <strong>Payment Status:</strong>
-                <span class="payment-status-badge {{ $order->status === 'paid' ? 'paid' : 'pending' }}">
-                    {{ ucfirst($order->status) }}
-                </span>
-            </p>
-            @if($order->status === 'paid')
-                @php
-                    $payment = $order->primaryPayment();
-                    $paymentMethod = $payment ? ($payment->payment_method ?? 'Credit Card') : 'Credit Card';
-                @endphp
-                <p style="margin-top: 0.5rem;">
-                    <strong>Payment Method:</strong> {{ $paymentMethod }}
-                </p>
-            @endif
+            <p style="font-size: 0.8rem; margin-top: 0.5rem;">Please keep this TIN number for your records.</p>
         </div>
 
         <!-- Alert -->
@@ -296,22 +345,61 @@
                 <i class="fas fa-clipboard-list"></i>
                 Registration Information
             </h4>
-            <div class="info-row">
-                <span class="info-label">Registration Category:</span>
-                <span class="info-value">{{ $order->registration->registrationCategory->name ?? 'N/A' }}</span>
-            </div>
-            <div class="info-row">
-                <span class="info-label">Ticket Type:</span>
-                <span class="info-value">{{ $order->items->first()->ticketType->name ?? 'N/A' }}</span>
-            </div>
-            <div class="info-row">
-                <span class="info-label">Number of Delegates:</span>
-                <span class="info-value">{{ $order->items->sum('quantity') }}</span>
-            </div>
-            <div class="info-row">
-                <span class="info-label">Currency:</span>
-                <span class="info-value">{{ $order->registration->nationality === 'International' ? 'USD ($)' : 'INR (₹)' }}</span>
-            </div>
+            <table class="info-table">
+                <tr class="{{ $order->status === 'paid' ? 'status-row' : 'status-row pending' }}">
+                    <td class="label-cell" style="color: {{ $order->status === 'paid' ? '#155724' : '#856404' }};">Payment Status</td>
+                    <td class="value-cell">
+                        <span class="payment-status-badge {{ $order->status === 'paid' ? 'paid' : 'pending' }}">
+                            {{ $order->status === 'paid' ? '✓ PAID' : '⏳ PENDING' }}
+                        </span>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="label-cell">Registration Category</td>
+                    <td class="value-cell">{{ $order->registration->registrationCategory->name ?? 'N/A' }}</td>
+                </tr>
+                <tr>
+                    <td class="label-cell">Ticket Type</td>
+                    <td class="value-cell"><strong>{{ $order->items->first()->ticketType->name ?? 'N/A' }}</strong></td>
+                </tr>
+                <tr>
+                    <td class="label-cell">Day Access</td>
+                    <td class="value-cell">
+                        @php
+                            $firstItem = $order->items->first();
+                            $selectedDay = $firstItem && $firstItem->selected_event_day_id ? $firstItem->selectedDay : null;
+                            $ticketType = $firstItem ? $firstItem->ticketType : null;
+                        @endphp
+                        @if($selectedDay)
+                            <span class="day-badge primary">{{ $selectedDay->label }}</span>
+                            <small class="text-muted">({{ \Carbon\Carbon::parse($selectedDay->date)->format('M d, Y') }})</small>
+                        @elseif($ticketType && ($ticketType->all_days_access || ($ticketType->enable_day_selection && $ticketType->include_all_days_option && !$firstItem->selected_event_day_id)))
+                            <span class="day-badge success">All Days</span>
+                        @elseif($ticketType)
+                            @php
+                                $accessibleDays = $ticketType->getAllAccessibleDays();
+                            @endphp
+                            @if($accessibleDays->count() > 0)
+                                @foreach($accessibleDays as $day)
+                                    <span class="day-badge primary">{{ $day->label }}</span>
+                                @endforeach
+                            @else
+                                <span class="day-badge success">All Days</span>
+                            @endif
+                        @else
+                            <span class="day-badge success">All Days</span>
+                        @endif
+                    </td>
+                </tr>
+                <tr>
+                    <td class="label-cell">Number of Delegates</td>
+                    <td class="value-cell">{{ $order->items->sum('quantity') }}</td>
+                </tr>
+                <tr>
+                    <td class="label-cell">Currency</td>
+                    <td class="value-cell">{{ $order->registration->nationality === 'International' ? 'USD ($)' : 'INR (₹)' }}</td>
+                </tr>
+            </table>
         </div>
 
         <!-- Organisation Information -->
@@ -320,42 +408,44 @@
                 <i class="fas fa-building"></i>
                 Organisation Information
             </h4>
-            <div class="info-row">
-                <span class="info-label">Organisation Name:</span>
-                <span class="info-value">{{ $order->registration->company_name }}</span>
-            </div>
-            <div class="info-row">
-                <span class="info-label">Industry Sector:</span>
-                <span class="info-value">{{ $order->registration->industry_sector }}</span>
-            </div>
-            <div class="info-row">
-                <span class="info-label">Organisation Type:</span>
-                <span class="info-value">{{ $order->registration->organisation_type }}</span>
-            </div>
-            <div class="info-row">
-                <span class="info-label">Country:</span>
-                <span class="info-value">{{ $order->registration->company_country }}</span>
-            </div>
-            @if($order->registration->company_state)
-            <div class="info-row">
-                <span class="info-label">State:</span>
-                <span class="info-value">{{ $order->registration->company_state }}</span>
-            </div>
-            @endif
-            @if($order->registration->company_city)
-            <div class="info-row">
-                <span class="info-label">City:</span>
-                <span class="info-value">{{ $order->registration->company_city }}</span>
-            </div>
-            @endif
-            <div class="info-row">
-                <span class="info-label">Phone:</span>
-                <span class="info-value">{{ $order->registration->company_phone }}</span>
-            </div>
-            <div class="info-row">
-                <span class="info-label">Email:</span>
-                <span class="info-value">{{ $email }}</span>
-            </div>
+            <table class="info-table">
+                <tr>
+                    <td class="label-cell">Organisation Name</td>
+                    <td class="value-cell"><strong>{{ $order->registration->company_name }}</strong></td>
+                </tr>
+                <tr>
+                    <td class="label-cell">Industry Sector</td>
+                    <td class="value-cell">{{ $order->registration->industry_sector }}</td>
+                </tr>
+                <tr>
+                    <td class="label-cell">Organisation Type</td>
+                    <td class="value-cell">{{ $order->registration->organisation_type }}</td>
+                </tr>
+                <tr>
+                    <td class="label-cell">Country</td>
+                    <td class="value-cell">{{ $order->registration->company_country }}</td>
+                </tr>
+                @if($order->registration->company_state)
+                <tr>
+                    <td class="label-cell">State</td>
+                    <td class="value-cell">{{ $order->registration->company_state }}</td>
+                </tr>
+                @endif
+                @if($order->registration->company_city)
+                <tr>
+                    <td class="label-cell">City</td>
+                    <td class="value-cell">{{ $order->registration->company_city }}</td>
+                </tr>
+                @endif
+                <tr>
+                    <td class="label-cell">Phone</td>
+                    <td class="value-cell">{{ $order->registration->company_phone }}</td>
+                </tr>
+                <tr>
+                    <td class="label-cell">Email</td>
+                    <td class="value-cell">{{ $email }}</td>
+                </tr>
+            </table>
         </div>
 
         <!-- Organisation Details for Invoice (GST) -->
@@ -363,51 +453,53 @@
         <div class="details-section">
             <h4 class="section-title">
                 <i class="fas fa-file-invoice-dollar"></i>
-                Organisation Details for Raising the Invoice
+                GST / Invoice Details
             </h4>
-            <div class="info-row">
-                <span class="info-label">Organisation Name (To create invoice in the name of):</span>
-                <span class="info-value">{{ $order->registration->gst_legal_name ?? $order->registration->company_name }}</span>
-            </div>
-            <div class="info-row">
-                <span class="info-label">Invoice Address:</span>
-                <span class="info-value">{{ $order->registration->gst_address ?? '-' }}</span>
-            </div>
-            <div class="info-row">
-                <span class="info-label">Organisation GST Registration No:</span>
-                <span class="info-value">{{ $order->registration->gstin ?? '-' }}</span>
-            </div>
-            @php
-                $panNo = $order->registration->gstin ? substr($order->registration->gstin, 2, 10) : null;
-            @endphp
-            @if($panNo)
-            <div class="info-row">
-                <span class="info-label">Organisation PAN No:</span>
-                <span class="info-value">{{ $panNo }}</span>
-            </div>
-            @endif
-            @if($order->registration->gst_state)
-            <div class="info-row">
-                <span class="info-label">State:</span>
-                <span class="info-value">{{ $order->registration->gst_state }}</span>
-            </div>
-            @endif
-            @php
-                $contactName = $order->registration->contact->name ?? null;
-                $contactPhone = $order->registration->contact->phone ?? $order->registration->company_phone ?? null;
-            @endphp
-            @if($contactName)
-            <div class="info-row">
-                <span class="info-label">Contact Person Name:</span>
-                <span class="info-value">{{ $contactName }}</span>
-            </div>
-            @endif
-            @if($contactPhone)
-            <div class="info-row">
-                <span class="info-label">Phone No:</span>
-                <span class="info-value">{{ $contactPhone }}</span>
-            </div>
-            @endif
+            <table class="info-table">
+                <tr>
+                    <td class="label-cell">Legal Name (For Invoice)</td>
+                    <td class="value-cell">{{ $order->registration->gst_legal_name ?? $order->registration->company_name }}</td>
+                </tr>
+                <tr>
+                    <td class="label-cell">GSTIN</td>
+                    <td class="value-cell"><strong>{{ $order->registration->gstin ?? '-' }}</strong></td>
+                </tr>
+                @php
+                    $panNo = $order->registration->gstin ? substr($order->registration->gstin, 2, 10) : null;
+                @endphp
+                @if($panNo)
+                <tr>
+                    <td class="label-cell">PAN No.</td>
+                    <td class="value-cell">{{ $panNo }}</td>
+                </tr>
+                @endif
+                <tr>
+                    <td class="label-cell">Invoice Address</td>
+                    <td class="value-cell">{{ $order->registration->gst_address ?? '-' }}</td>
+                </tr>
+                @if($order->registration->gst_state)
+                <tr>
+                    <td class="label-cell">State</td>
+                    <td class="value-cell">{{ $order->registration->gst_state }}</td>
+                </tr>
+                @endif
+                @php
+                    $contactName = $order->registration->contact->name ?? null;
+                    $contactPhone = $order->registration->contact->phone ?? $order->registration->company_phone ?? null;
+                @endphp
+                @if($contactName)
+                <tr>
+                    <td class="label-cell">Contact Person</td>
+                    <td class="value-cell">{{ $contactName }}</td>
+                </tr>
+                @endif
+                @if($contactPhone)
+                <tr>
+                    <td class="label-cell">Contact Phone</td>
+                    <td class="value-cell">{{ $contactPhone }}</td>
+                </tr>
+                @endif
+            </table>
         </div>
         @endif
 
@@ -418,24 +510,27 @@
                 <i class="fas fa-users"></i>
                 Delegate Details
             </h4>
+            @php
+                $ticketTypeName = $order->items->first()->ticketType->name ?? 'N/A';
+            @endphp
             <table class="delegates-table">
                 <thead>
                     <tr>
-                        <th>#</th>
-                        <th>Delegate Name</th>
-                        <th>Email</th>
-                        <th>Phone</th>
-                        <th>Job Title</th>
+                        <th style="width: 5%;">#</th>
+                        <th style="width: 28%;">Delegate Name</th>
+                        <th style="width: 28%;">Email</th>
+                        <th style="width: 15%;">Phone</th>
+                        <th style="width: 24%;">Ticket Type</th>
                     </tr>
                 </thead>
                 <tbody>
                     @foreach($order->registration->delegates as $delegate)
                     <tr>
                         <td>{{ $loop->iteration }}</td>
-                        <td>{{ $delegate->salutation }} {{ $delegate->first_name }} {{ $delegate->last_name }}</td>
+                        <td><strong>{{ $delegate->salutation }} {{ $delegate->first_name }} {{ $delegate->last_name }}</strong></td>
                         <td>{{ $delegate->email }}</td>
                         <td>{{ $delegate->phone ?? '-' }}</td>
-                        <td>{{ $delegate->job_title ?? '-' }}</td>
+                        <td>{{ $ticketTypeName }}</td>
                     </tr>
                     @endforeach
                 </tbody>
@@ -447,31 +542,33 @@
         @php
             $isInternational = ($order->registration->nationality === 'International' || $order->registration->nationality === 'international');
             $currencySymbol = $isInternational ? '$' : '₹';
-            $priceFormat = 2; // Both use 2 decimal places
+            $priceFormat = 2;
         @endphp
-        <div class="price-breakdown">
-            <h4 class="section-title" style="margin-top: 0; border-bottom: none;">
+        <div class="details-section">
+            <h4 class="section-title">
                 <i class="fas fa-calculator"></i>
                 Price Breakdown
             </h4>
-            @foreach($order->items as $item)
-            <div class="price-row">
-                <span>Ticket Price ({{ $item->quantity }} × {{ $currencySymbol }}{{ number_format($item->unit_price, $priceFormat) }}):</span>
-                <span>{{ $currencySymbol }}{{ number_format($item->subtotal, $priceFormat) }}</span>
-            </div>
-            <div class="price-row">
-                <span>GST ({{ $item->gst_rate }}%):</span>
-                <span>{{ $currencySymbol }}{{ number_format($item->gst_amount, $priceFormat) }}</span>
-            </div>
-            <div class="price-row">
-                <span>Processing Charge ({{ $item->processing_charge_rate }}%):</span>
-                <span>{{ $currencySymbol }}{{ number_format($item->processing_charge_amount, $priceFormat) }}</span>
-            </div>
-            @endforeach
-            <div class="price-row total">
-                <span>Total Amount:</span>
-                <span>{{ $currencySymbol }}{{ number_format($order->total, $priceFormat) }}</span>
-            </div>
+            <table class="price-table">
+                @foreach($order->items as $item)
+                <tr>
+                    <td class="label-cell">Ticket Price ({{ $item->quantity }} × {{ $currencySymbol }}{{ number_format($item->unit_price, $priceFormat) }})</td>
+                    <td class="value-cell">{{ $currencySymbol }}{{ number_format($item->subtotal, $priceFormat) }}</td>
+                </tr>
+                <tr>
+                    <td class="label-cell">GST ({{ $item->gst_rate }}%)</td>
+                    <td class="value-cell">{{ $currencySymbol }}{{ number_format($item->gst_amount, $priceFormat) }}</td>
+                </tr>
+                <tr>
+                    <td class="label-cell">Processing Charge ({{ $item->processing_charge_rate }}%)</td>
+                    <td class="value-cell">{{ $currencySymbol }}{{ number_format($item->processing_charge_amount, $priceFormat) }}</td>
+                </tr>
+                @endforeach
+                <tr class="total-row">
+                    <td class="label-cell" style="background: var(--primary-color); color: white;">Total Amount</td>
+                    <td class="value-cell" style="background: var(--primary-color); color: white;">{{ $currencySymbol }}{{ number_format($order->total, $priceFormat) }}</td>
+                </tr>
+            </table>
         </div>
 
         <!-- Pay Now Button (only if unpaid) -->
@@ -479,27 +576,27 @@
         <div class="text-center mt-4">
             <a href="{{ route('tickets.payment.process', ['eventSlug' => $event->slug ?? $event->id, 'orderNo' => $order->order_no]) }}" class="btn-pay-now" id="payNowBtn">
                 <i class="fas fa-credit-card me-2"></i>
-                Complete Payment - {{ $currencySymbol }}{{ number_format($order->total, $priceFormat) }}
+                Pay Now - {{ $currencySymbol }}{{ number_format($order->total, $priceFormat) }}
             </a>
-            <p style="text-align: center; color: var(--text-secondary); font-size: 0.875rem; margin-top: 1rem;">
+            <p style="text-align: center; color: var(--text-secondary); font-size: 0.8rem; margin-top: 0.75rem;">
                 @if($isInternational)
-                    Payment will be processed via <strong>PayPal</strong> in <strong>USD</strong>
+                    Payment via <strong>PayPal</strong> (USD)
                 @else
-                    Payment will be processed via <strong>CCAvenue</strong> in <strong>INR</strong>
+                    Payment via <strong>CCAvenue</strong> (INR)
                 @endif
             </p>
         </div>
         @else
         <div class="text-center mt-4">
-            <a href="{{ route('tickets.confirmation', ['eventSlug' => $event->slug ?? $event->id, 'token' => $order->secure_token]) }}" class="btn-pay-now" style="background: #28a745; border: none;">
+            <a href="{{ route('tickets.confirmation', ['eventSlug' => $event->slug ?? $event->id, 'token' => $order->secure_token]) }}" class="btn-pay-now" style="background: linear-gradient(135deg, #28a745 0%, #218838 100%);">
                 <i class="fas fa-check-circle me-2"></i>
-                View Confirmation Details
+                View Confirmation
             </a>
         </div>
         @endif
 
         <!-- Back Link -->
-        <div class="text-center mt-4">
+        <div class="text-center mt-3">
             <a href="{{ route('tickets.payment.lookup', $event->slug ?? $event->id) }}" class="btn-back">
                 <i class="fas fa-arrow-left me-2"></i>Back to Lookup
             </a>

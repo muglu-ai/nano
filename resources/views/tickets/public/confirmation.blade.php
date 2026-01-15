@@ -15,26 +15,27 @@
     }
 
     .success-icon {
-        font-size: 5rem;
+        font-size: 4rem;
         color: #28a745;
-        margin-bottom: 1.5rem;
+        margin-bottom: 1rem;
     }
 
     .preview-section {
-        background: #f8f9fa;
+        background: #ffffff;
         border-radius: 10px;
-        padding: 1.5rem;
+        padding: 1.25rem;
         margin-bottom: 1.5rem;
         border: 1px solid #e0e0e0;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
     }
 
     .section-title {
-        font-size: 1.25rem;
-        font-weight: 600;
-        margin-bottom: 1.5rem;
+        font-size: 1.1rem;
+        font-weight: 700;
+        margin-bottom: 1rem;
         color: var(--text-primary);
-        padding-bottom: 0.75rem;
-        border-bottom: 2px solid var(--progress-inactive);
+        padding-bottom: 0.5rem;
+        border-bottom: 2px solid var(--primary-color);
         display: flex;
         align-items: center;
         gap: 0.5rem;
@@ -42,29 +43,119 @@
 
     .section-title i {
         color: var(--primary-color);
+        font-size: 1rem;
     }
 
-    .info-row {
-        display: flex;
-        justify-content: space-between;
-        padding: 0.75rem 0;
-        border-bottom: 1px solid #e0e0e0;
+    /* Tabular Info Styles */
+    .info-table {
+        width: 100%;
+        border-collapse: collapse;
     }
 
-    .info-row:last-child {
-        border-bottom: none;
+    .info-table td {
+        padding: 0.6rem 0.75rem;
+        border: 1px solid #e9ecef;
+        font-size: 0.875rem;
+        vertical-align: middle;
     }
 
-    .info-label {
+    .info-table .label-cell {
+        background: #f8f9fa;
         font-weight: 600;
-        color: var(--text-secondary);
-        flex: 1;
+        color: #495057;
+        width: 40%;
     }
 
-    .info-value {
-        color: var(--text-primary);
-        flex: 1;
-        text-align: right;
+    .info-table .value-cell {
+        color: #212529;
+        width: 60%;
+    }
+
+    .info-table .status-row {
+        background: #d4edda;
+    }
+
+    .info-table .status-row.pending {
+        background: #fff3cd;
+    }
+
+    .delegates-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 0.5rem;
+    }
+
+    .delegates-table th {
+        background: var(--primary-color);
+        color: white;
+        padding: 0.75rem;
+        text-align: left;
+        font-weight: 600;
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+    }
+
+    .delegates-table td {
+        padding: 0.65rem 0.75rem;
+        border: 1px solid #e9ecef;
+        font-size: 0.85rem;
+        color: #495057;
+    }
+
+    .delegates-table tr:nth-child(even) {
+        background: #f8f9fa;
+    }
+
+    .delegates-table tr:hover {
+        background: #e9ecef;
+    }
+
+    /* Badge styles */
+    .day-badge {
+        display: inline-block;
+        padding: 0.25rem 0.6rem;
+        border-radius: 4px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        margin-right: 0.25rem;
+    }
+
+    .day-badge.primary {
+        background: var(--primary-color);
+        color: white;
+    }
+
+    .day-badge.success {
+        background: #28a745;
+        color: white;
+    }
+
+    .payment-status-badge {
+        display: inline-block;
+        padding: 0.4rem 0.9rem;
+        border-radius: 5px;
+        font-size: 0.75rem;
+        font-weight: 700;
+        text-transform: uppercase;
+    }
+
+    .payment-status-badge.paid {
+        background: #28a745;
+        color: white;
+    }
+
+    .payment-status-badge.pending {
+        background: #ffc107;
+        color: #333;
+    }
+
+    .success-alert {
+        background: #d4edda;
+        border: 1px solid #c3e6cb;
+        border-left: 4px solid #28a745;
+        border-radius: 8px;
+        padding: 1rem;
     }
 </style>
 @endpush
@@ -89,165 +180,233 @@
     <div class="form-body">
         <!-- Progress Bar -->
         @php
-            // Mark step 3 as completed (green) if payment is successful
             $isPaid = $order->status === 'paid';
-            // If paid, set to 4 so step 3 shows as completed (green checkmark)
-            // If not paid, set to 3 so step 3 shows as active (blue)
             $currentStep = $isPaid ? 4 : 3;
         @endphp
         @include('tickets.public.partials.progress-bar', ['currentStep' => $currentStep])
-        
+    
         <div class="text-center mb-4">
             <div class="success-icon">
                 <i class="fas fa-check-circle"></i>
             </div>
-            <p class="lead mb-4" style="color: var(--text-primary); font-size: 1.1rem;">
+            <p class="lead mb-3" style="color: var(--text-primary); font-size: 1rem;">
                 Thank you for your registration. Your order has been confirmed.
             </p>
         </div>
 
+        <!-- Order Details -->
         <div class="preview-section">
             <h4 class="section-title">
-                <i class="fas fa-receipt me-2"></i>Order Details</h4>
-            <div class="info-row">
-                <span class="info-label">Order Number:</span>
-                <span class="info-value"><strong>{{ $order->order_no }}</strong></span>
-            </div>
-            <div class="info-row">
-                <span class="info-label">Event:</span>
-                <span class="info-value">{{ $order->registration->event->event_name }}</span>
-            </div>
-            <div class="info-row">
-                <span class="info-label">Ticket Type:</span>
-                <span class="info-value">
-                    @foreach($order->items as $item)
-                        {{ $item->ticketType->name }} ({{ $item->quantity }}x)
-                    @endforeach
-                </span>
-            </div>
+                <i class="fas fa-receipt"></i>
+                Order Details
+            </h4>
             @php
                 $isInternational = ($order->registration->nationality === 'International' || $order->registration->nationality === 'international');
                 $currencySymbol = $isInternational ? '$' : '₹';
             @endphp
-            <div class="info-row">
-                <span class="info-label">Total Amount:</span>
-                <span class="info-value"><strong>{{ $currencySymbol }}{{ number_format($order->total, 2) }}</strong></span>
-            </div>
-            <div class="info-row">
-                <span class="info-label">Status:</span>
-                <span class="info-value">
-                    <span class="badge bg-success">{{ strtoupper($order->status) }}</span>
-                </span>
-            </div>
+            <table class="info-table">
+                <tr class="{{ $order->status === 'paid' ? 'status-row' : 'status-row pending' }}">
+                    <td class="label-cell" style="color: {{ $order->status === 'paid' ? '#155724' : '#856404' }};">Payment Status</td>
+                    <td class="value-cell">
+                        <span class="payment-status-badge {{ $order->status === 'paid' ? 'paid' : 'pending' }}">
+                            {{ $order->status === 'paid' ? '✓ PAID' : '⏳ PENDING' }}
+                        </span>
+                    </td>
+                </tr>
+                @php
+                    // Fetch PIN from invoice table
+                    $invoice = \App\Models\Invoice::where('invoice_no', $order->order_no)
+                        ->where('type', 'ticket_registration')
+                        ->first();
+                    $pinNo = $invoice->pin_no ?? null;
+                @endphp
+                <tr>
+                    <td class="label-cell">Order Number (TIN)</td>
+                    <td class="value-cell"><strong>{{ $order->order_no }}</strong></td>
+                </tr>
+                @if($order->status === 'paid' && $pinNo)
+                <tr>
+                    <td class="label-cell">PIN No.</td>
+                    <td class="value-cell"><strong style="color: #0066cc;">{{ $pinNo }}</strong></td>
+                </tr>
+                @endif
+                <tr>
+                    <td class="label-cell">Event</td>
+                    <td class="value-cell">{{ $order->registration->event->event_name }}</td>
+                </tr>
+                <tr>
+                    <td class="label-cell">Ticket Type</td>
+                    <td class="value-cell">
+                        @foreach($order->items as $item)
+                            <strong>{{ $item->ticketType->name }}</strong> ({{ $item->quantity }}x)
+                        @endforeach
+                    </td>
+                </tr>
+                <tr>
+                    <td class="label-cell">Day Access</td>
+                    <td class="value-cell">
+                        @foreach($order->items as $item)
+                            @if($item->selectedDay)
+                                <span class="day-badge primary">{{ $item->selectedDay->label }}</span>
+                                <small class="text-muted">({{ \Carbon\Carbon::parse($item->selectedDay->date)->format('M d, Y') }})</small>
+                            @elseif($item->ticketType->all_days_access || ($item->ticketType->enable_day_selection && $item->ticketType->include_all_days_option && !$item->selected_event_day_id))
+                                <span class="day-badge success">All Days</span>
+                            @else
+                                @php
+                                    $accessibleDays = $item->ticketType->getAllAccessibleDays();
+                                @endphp
+                                @if($accessibleDays->count() > 0)
+                                    @foreach($accessibleDays as $day)
+                                        <span class="day-badge primary">{{ $day->label }}</span>
+                                    @endforeach
+                                @else
+                                    <span class="day-badge success">All Days</span>
+                                @endif
+                            @endif
+                        @endforeach
+                    </td>
+                </tr>
+                <tr>
+                    <td class="label-cell">Number of Delegates</td>
+                    <td class="value-cell">{{ $order->items->sum('quantity') }}</td>
+                </tr>
+                <tr>
+                    <td class="label-cell">Currency</td>
+                    <td class="value-cell">{{ $isInternational ? 'USD ($)' : 'INR (₹)' }}</td>
+                </tr>
+                <tr>
+                    <td class="label-cell">Total Amount</td>
+                    <td class="value-cell"><strong style="font-size: 1.1rem; color: var(--primary-color);">{{ $currencySymbol }}{{ number_format($order->total, 2) }}</strong></td>
+                </tr>
+            </table>
+        </div>
+
+        <!-- Organisation Information -->
+        <div class="preview-section">
+            <h4 class="section-title">
+                <i class="fas fa-building"></i>
+                Organisation Information
+            </h4>
+            <table class="info-table">
+                <tr>
+                    <td class="label-cell">Organisation Name</td>
+                    <td class="value-cell"><strong>{{ $order->registration->company_name ?? 'N/A' }}</strong></td>
+                </tr>
+                <tr>
+                    <td class="label-cell">Industry Sector</td>
+                    <td class="value-cell">{{ $order->registration->industry_sector ?? 'N/A' }}</td>
+                </tr>
+                <tr>
+                    <td class="label-cell">Organisation Type</td>
+                    <td class="value-cell">{{ $order->registration->organisation_type ?? 'N/A' }}</td>
+                </tr>
+                <tr>
+                    <td class="label-cell">Country</td>
+                    <td class="value-cell">{{ $order->registration->company_country ?? 'N/A' }}</td>
+                </tr>
+                @if($order->registration->company_state)
+                <tr>
+                    <td class="label-cell">State</td>
+                    <td class="value-cell">{{ $order->registration->company_state }}</td>
+                </tr>
+                @endif
+                @if($order->registration->company_city)
+                <tr>
+                    <td class="label-cell">City</td>
+                    <td class="value-cell">{{ $order->registration->company_city }}</td>
+                </tr>
+                @endif
+                <tr>
+                    <td class="label-cell">Phone</td>
+                    <td class="value-cell">{{ $order->registration->company_phone ?? 'N/A' }}</td>
+                </tr>
+            </table>
         </div>
 
         <!-- Contact Information -->
         <div class="preview-section">
             <h4 class="section-title">
-                <i class="fas fa-user me-2"></i>Contact Information</h4>
-            <div class="info-row">
-                <span class="info-label">Name:</span>
-                <span class="info-value">{{ $order->registration->contact->name }}</span>
-            </div>
-            <div class="info-row">
-                <span class="info-label">Email:</span>
-                <span class="info-value">{{ $order->registration->contact->email }}</span>
-            </div>
-            <div class="info-row">
-                <span class="info-label">Phone:</span>
-                <span class="info-value">{{ $order->registration->contact->phone }}</span>
-            </div>
+                <i class="fas fa-user"></i>
+                Contact Information
+            </h4>
+            <table class="info-table">
+                <tr>
+                    <td class="label-cell">Name</td>
+                    <td class="value-cell"><strong>{{ $order->registration->contact->name }}</strong></td>
+                </tr>
+                <tr>
+                    <td class="label-cell">Email</td>
+                    <td class="value-cell">{{ $order->registration->contact->email }}</td>
+                </tr>
+                <tr>
+                    <td class="label-cell">Phone</td>
+                    <td class="value-cell">{{ $order->registration->contact->phone }}</td>
+                </tr>
+            </table>
         </div>
 
-        <!-- Company Information -->
+        <!-- GST Information -->
+        @if($order->registration->gst_required)
         <div class="preview-section">
             <h4 class="section-title">
-                <i class="fas fa-building me-2"></i>Company Information</h4>
-            <div class="info-row">
-                <span class="info-label">Company Name:</span>
-                <span class="info-value">{{ $order->registration->company_name ?? 'N/A' }}</span>
-            </div>
-            <div class="info-row">
-                <span class="info-label">Country:</span>
-                <span class="info-value">{{ $order->registration->company_country ?? 'N/A' }}</span>
-            </div>
-            <div class="info-row">
-                <span class="info-label">State:</span>
-                <span class="info-value">{{ $order->registration->company_state ?? 'N/A' }}</span>
-            </div>
-            <div class="info-row">
-                <span class="info-label">City:</span>
-                <span class="info-value">{{ $order->registration->company_city ?? 'N/A' }}</span>
-            </div>
-            <div class="info-row">
-                <span class="info-label">Phone:</span>
-                <span class="info-value">{{ $order->registration->company_phone ?? 'N/A' }}</span>
-            </div>
-            <div class="info-row">
-                <span class="info-label">Industry Sector:</span>
-                <span class="info-value">{{ $order->registration->industry_sector ?? 'N/A' }}</span>
-            </div>
-            <div class="info-row">
-                <span class="info-label">Organisation Type:</span>
-                <span class="info-value">{{ $order->registration->organisation_type ?? 'N/A' }}</span>
-            </div>
-            <div class="info-row">
-                <span class="info-label">Currency:</span>
-                <span class="info-value">{{ $order->registration->nationality === 'International' ? 'USD ($)' : 'INR (₹)' }}</span>
-            </div>
-            @if($order->registration->gst_required)
-                <div class="info-row">
-                    <span class="info-label">GST Required:</span>
-                    <span class="info-value">Yes</span>
-                </div>
-                <div class="info-row">
-                    <span class="info-label">GSTIN:</span>
-                    <span class="info-value">{{ $order->registration->gstin ?? 'N/A' }}</span>
-                </div>
-                <div class="info-row">
-                    <span class="info-label">GST Legal Name:</span>
-                    <span class="info-value">{{ $order->registration->gst_legal_name ?? 'N/A' }}</span>
-                </div>
-                <div class="info-row">
-                    <span class="info-label">GST Address:</span>
-                    <span class="info-value">{{ $order->registration->gst_address ?? 'N/A' }}</span>
-                </div>
-                <div class="info-row">
-                    <span class="info-label">GST State:</span>
-                    <span class="info-value">{{ $order->registration->gst_state ?? 'N/A' }}</span>
-                </div>
-            @endif
+                <i class="fas fa-file-invoice-dollar"></i>
+                GST / Invoice Details
+            </h4>
+            <table class="info-table">
+                <tr>
+                    <td class="label-cell">GSTIN</td>
+                    <td class="value-cell"><strong>{{ $order->registration->gstin ?? 'N/A' }}</strong></td>
+                </tr>
+                <tr>
+                    <td class="label-cell">Legal Name (For Invoice)</td>
+                    <td class="value-cell">{{ $order->registration->gst_legal_name ?? 'N/A' }}</td>
+                </tr>
+                <tr>
+                    <td class="label-cell">Invoice Address</td>
+                    <td class="value-cell">{{ $order->registration->gst_address ?? 'N/A' }}</td>
+                </tr>
+                <tr>
+                    <td class="label-cell">State</td>
+                    <td class="value-cell">{{ $order->registration->gst_state ?? 'N/A' }}</td>
+                </tr>
+            </table>
         </div>
+        @endif
 
         <!-- Delegates Information -->
         @if($order->registration->delegates->count() > 0)
-            <div class="preview-section">
-                <h4 class="section-title">
-                    <i class="fas fa-users me-2"></i>Delegate Information</h4>
-                @foreach($order->registration->delegates as $index => $delegate)
-                    <div class="mb-3" style="border-bottom: 1px solid #e0e0e0; padding-bottom: 1rem;">
-                        <h6 style="color: var(--text-primary); font-weight: 600;">Delegate {{ $index + 1 }}</h6>
-                        <div class="info-row">
-                            <span class="info-label">Name:</span>
-                            <span class="info-value">{{ $delegate->salutation }} {{ $delegate->first_name }} {{ $delegate->last_name }}</span>
-                        </div>
-                        <div class="info-row">
-                            <span class="info-label">Email:</span>
-                            <span class="info-value">{{ $delegate->email }}</span>
-                        </div>
-                        <div class="info-row">
-                            <span class="info-label">Phone:</span>
-                            <span class="info-value">{{ $delegate->phone }}</span>
-                        </div>
-                        <div class="info-row">
-                            <span class="info-label">Job Title:</span>
-                            <span class="info-value">{{ $delegate->job_title ?? 'N/A' }}</span>
-                        </div>
-                    </div>
-                @endforeach
-            </div>
+        <div class="preview-section">
+            <h4 class="section-title">
+                <i class="fas fa-users"></i>
+                Delegate Details
+            </h4>
+            @php $ticketTypeName = $order->items->first()->ticketType->name ?? 'N/A'; @endphp
+            <table class="delegates-table">
+                <thead>
+                    <tr>
+                        <th style="width: 5%;">#</th>
+                        <th style="width: 28%;">Delegate Name</th>
+                        <th style="width: 28%;">Email</th>
+                        <th style="width: 15%;">Phone</th>
+                        <th style="width: 24%;">Ticket Type</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach($order->registration->delegates as $index => $delegate)
+                    <tr>
+                        <td>{{ $index + 1 }}</td>
+                        <td><strong>{{ $delegate->salutation }} {{ $delegate->first_name }} {{ $delegate->last_name }}</strong></td>
+                        <td>{{ $delegate->email }}</td>
+                        <td>{{ $delegate->phone ?? '-' }}</td>
+                        <td>{{ $ticketTypeName }}</td>
+                    </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        </div>
         @endif
 
+        <!-- Payment Transaction Details -->
         @php
             $paymentDetails = session('payment_details');
             $primaryPayment = $order->primaryPayment();
@@ -256,142 +415,81 @@
             $currencySymbol = $isInternational ? '$' : '₹';
         @endphp
 
-        @if($isPaid && ($paymentDetails || $primaryPayment))
-            <div class="preview-section">
-                <h4 class="section-title">
-                    <i class="fas fa-credit-card me-2"></i>Payment Transaction Details</h4>
-                
-                <div class="alert alert-success mb-3" style="background: #d4edda; border: 1px solid #c3e6cb; border-radius: 8px; padding: 1rem;">
-                    <div style="display: flex; align-items: center; gap: 0.5rem;">
-                        <i class="fas fa-check-circle" style="color: #28a745; font-size: 1.2rem;"></i>
-                        <div style="flex: 1;">
-                            <strong style="color: #155724;">Payment Successful!</strong>
-                            <p style="color: #155724; margin: 0.25rem 0 0; font-size: 0.9rem;">Your payment has been processed successfully.</p>
-                        </div>
+        @if($isPaid)
+        <div class="preview-section">
+            <h4 class="section-title">
+                <i class="fas fa-credit-card"></i>
+                Payment Transaction Details
+            </h4>
+            
+            <div class="success-alert mb-3">
+                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                    <i class="fas fa-check-circle" style="color: #28a745; font-size: 1.2rem;"></i>
+                    <div style="flex: 1;">
+                        <strong style="color: #155724;">Payment Successful!</strong>
+                        <p style="color: #155724; margin: 0.25rem 0 0; font-size: 0.9rem;">Your payment has been processed successfully.</p>
                     </div>
                 </div>
+            </div>
 
-                <div class="info-row">
-                    <span class="info-label">Payment Status:</span>
-                    <span class="info-value">
-                        <span class="badge bg-success">{{ strtoupper($order->status) }}</span>
-                    </span>
-                </div>
-                
-                <div class="info-row">
-                    <span class="info-label">Payment Method:</span>
-                    <span class="info-value">
-                        <strong>{{ $paymentDetails['gateway'] ?? ($primaryPayment ? ucfirst($primaryPayment->gateway_name) : 'N/A') }}</strong>
-                    </span>
-                </div>
-                
+            <table class="info-table">
+                <tr>
+                    <td class="label-cell">Payment Status</td>
+                    <td class="value-cell">
+                        <span class="payment-status-badge paid">✓ PAID</span>
+                    </td>
+                </tr>
+                @if($paymentDetails || $primaryPayment)
+                <tr>
+                    <td class="label-cell">Payment Method</td>
+                    <td class="value-cell"><strong>{{ $paymentDetails['gateway'] ?? ($primaryPayment ? ucfirst($primaryPayment->gateway_name) : 'N/A') }}</strong></td>
+                </tr>
                 @if($primaryPayment && $primaryPayment->method)
-                <div class="info-row">
-                    <span class="info-label">Payment Type:</span>
-                    <span class="info-value">
-                        <strong>{{ strtoupper($primaryPayment->method) }}</strong>
-                    </span>
-                </div>
+                <tr>
+                    <td class="label-cell">Payment Type</td>
+                    <td class="value-cell"><strong>{{ strtoupper($primaryPayment->method) }}</strong></td>
+                </tr>
                 @endif
-
                 @if(isset($paymentDetails['transaction_id']) || ($primaryPayment && $primaryPayment->gateway_txn_id))
-                    <div class="info-row">
-                        <span class="info-label">Transaction ID:</span>
-                        <span class="info-value">
-                            <strong style="color: var(--primary-color);">{{ $paymentDetails['transaction_id'] ?? $primaryPayment->gateway_txn_id }}</strong>
-                        </span>
-                    </div>
+                <tr>
+                    <td class="label-cell">Transaction ID</td>
+                    <td class="value-cell"><strong style="color: var(--primary-color);">{{ $paymentDetails['transaction_id'] ?? $primaryPayment->gateway_txn_id }}</strong></td>
+                </tr>
                 @endif
-
-                <div class="info-row">
-                    <span class="info-label">Amount Paid:</span>
-                    <span class="info-value">
-                        <strong style="color: var(--primary-color); font-size: 1.1rem;">{{ $currencySymbol }}{{ number_format($order->total, 2) }}</strong>
-                    </span>
-                </div>
-
-                @if($primaryPayment && $primaryPayment->paid_at)
-                    <div class="info-row">
-                        <span class="info-label">Payment Date & Time:</span>
-                        <span class="info-value">
-                            {{ $primaryPayment->paid_at->format('d M Y, h:i A') }}
-                        </span>
-                    </div>
-                @elseif($order->updated_at)
-                    <div class="info-row">
-                        <span class="info-label">Payment Date & Time:</span>
-                        <span class="info-value">
-                            {{ $order->updated_at->format('d M Y, h:i A') }}
-                        </span>
-                    </div>
                 @endif
-
+                <tr>
+                    <td class="label-cell">Amount Paid</td>
+                    <td class="value-cell"><strong style="color: var(--primary-color); font-size: 1.1rem;">{{ $currencySymbol }}{{ number_format($order->total, 2) }}</strong></td>
+                </tr>
+                @if(($primaryPayment && $primaryPayment->paid_at) || $order->updated_at)
+                <tr>
+                    <td class="label-cell">Payment Date & Time</td>
+                    <td class="value-cell">{{ ($primaryPayment && $primaryPayment->paid_at) ? $primaryPayment->paid_at->format('d M Y, h:i A') : $order->updated_at->format('d M Y, h:i A') }}</td>
+                </tr>
+                @endif
                 @if($primaryPayment && $primaryPayment->pg_response_json)
-                    @php
-                        $responseData = $primaryPayment->pg_response_json;
-                        $paymentMode = $responseData['payment_mode'] ?? $responseData['payment_method'] ?? null;
-                    @endphp
-                    @if($paymentMode)
-                    <div class="info-row">
-                        <span class="info-label">Payment Mode:</span>
-                        <span class="info-value">
-                            <strong>{{ strtoupper($paymentMode) }}</strong>
-                        </span>
-                    </div>
-                    @endif
-                @endif
-            </div>
-        @elseif($isPaid)
-            <div class="preview-section">
-                <h4 class="section-title">
-                    <i class="fas fa-credit-card me-2"></i>Payment Transaction Details</h4>
-                
-                <div class="alert alert-success mb-3" style="background: #d4edda; border: 1px solid #c3e6cb; border-radius: 8px; padding: 1rem;">
-                    <div style="display: flex; align-items: center; gap: 0.5rem;">
-                        <i class="fas fa-check-circle" style="color: #28a745; font-size: 1.2rem;"></i>
-                        <div style="flex: 1;">
-                            <strong style="color: #155724;">Payment Successful!</strong>
-                            <p style="color: #155724; margin: 0.25rem 0 0; font-size: 0.9rem;">Your payment has been processed successfully.</p>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="info-row">
-                    <span class="info-label">Payment Status:</span>
-                    <span class="info-value">
-                        <span class="badge bg-success">{{ strtoupper($order->status) }}</span>
-                    </span>
-                </div>
-
                 @php
-                    $isInternational = ($order->registration->nationality === 'International' || $order->registration->nationality === 'international');
-                    $currencySymbol = $isInternational ? '$' : '₹';
+                    $responseData = $primaryPayment->pg_response_json;
+                    $paymentMode = $responseData['payment_mode'] ?? $responseData['payment_method'] ?? null;
                 @endphp
-                <div class="info-row">
-                    <span class="info-label">Amount Paid:</span>
-                    <span class="info-value">
-                        <strong style="color: var(--primary-color); font-size: 1.1rem;">{{ $currencySymbol }}{{ number_format($order->total, 2) }}</strong>
-                    </span>
-                </div>
-
-                @if($order->updated_at)
-                    <div class="info-row">
-                        <span class="info-label">Payment Date & Time:</span>
-                        <span class="info-value">
-                            {{ $order->updated_at->format('d M Y, h:i A') }}
-                        </span>
-                    </div>
+                @if($paymentMode)
+                <tr>
+                    <td class="label-cell">Payment Mode</td>
+                    <td class="value-cell"><strong>{{ strtoupper($paymentMode) }}</strong></td>
+                </tr>
                 @endif
-            </div>
+                @endif
+            </table>
+        </div>
         @endif
 
         <div class="mt-4 text-center">
-            <div class="alert alert-success" style="background: #d4edda; border: 1px solid #c3e6cb; border-radius: 8px; padding: 1rem;">
-                <p style="color: var(--text-primary); margin-bottom: 0.5rem;">
+            <div class="success-alert">
+                <p style="color: #155724; margin-bottom: 0.5rem;">
                     <i class="fas fa-envelope me-2"></i>
                     A payment acknowledgement email has been sent to <strong>{{ $order->registration->contact->email }}</strong>
                 </p>
-                <p style="color: var(--text-secondary); font-size: 0.9rem; margin: 0;">
+                <p style="color: #155724; font-size: 0.85rem; margin: 0;">
                     Please check your email for the receipt and further instructions.
                 </p>
             </div>
@@ -399,4 +497,3 @@
     </div>
 </div>
 @endsection
-

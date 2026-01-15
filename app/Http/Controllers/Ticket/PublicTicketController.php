@@ -386,6 +386,39 @@ class PublicTicketController extends Controller
         // Store ticket type ID (not slug) in validated data for consistency
         $validated['ticket_type_id'] = $ticketType->id;
         
+        // Handle selected event day - only required if day selection is enabled
+        $selectedEventDayId = $request->input('selected_event_day_id');
+        if ($ticketType->enable_day_selection) {
+            // Day selection is enabled - user must select a day
+            if (empty($selectedEventDayId)) {
+                return redirect()->back()
+                    ->withInput()
+                    ->withErrors(['selected_event_day_id' => 'Please select which day you want to attend.']);
+            }
+            
+            // Check if "All Days" option was selected
+            if ($selectedEventDayId === 'all') {
+                // User selected all days - store as 'all' to indicate full access
+                $validated['selected_event_day_id'] = 'all';
+                $validated['selected_all_days'] = true;
+            } else {
+                // Verify the selected day is valid for this ticket type
+                $validDay = $ticketType->getAllAccessibleDays()->pluck('id')->contains($selectedEventDayId);
+                if (!$validDay) {
+                    return redirect()->back()
+                        ->withInput()
+                        ->withErrors(['selected_event_day_id' => 'The selected day is not valid for this ticket type.']);
+                }
+                
+                $validated['selected_event_day_id'] = $selectedEventDayId;
+                $validated['selected_all_days'] = false;
+            }
+        } else {
+            // Day selection disabled - user gets all days automatically
+            $validated['selected_event_day_id'] = null;
+            $validated['selected_all_days'] = true;
+        }
+        
         // Normalize nationality value (convert 'national'/'international' to 'Indian'/'International')
         if (isset($validated['nationality'])) {
             if ($validated['nationality'] === 'national') {
@@ -396,7 +429,7 @@ class PublicTicketController extends Controller
         }
         
         // Auto-set registration category if not provided
-        // Try to get from ticket rules first, otherwise use default (first active category)
+        // Priority: 1. Ticket rules, 2. Match by name, 3. First active category
         if (empty($validated['registration_category_id'])) {
             // Try to find registration category from ticket rules
             $ticketRule = \App\Models\Ticket\TicketCategoryTicketRule::where('ticket_type_id', $ticketType->id)
@@ -409,40 +442,24 @@ class PublicTicketController extends Controller
             if ($ticketRule && $ticketRule->registrationCategory) {
                 $validated['registration_category_id'] = $ticketRule->registrationCategory->id;
             } else {
-                // Use default: first active registration category for this event
-                $defaultCategory = TicketRegistrationCategory::where('event_id', $event->id)
+                // Try to match registration category by ticket type name
+                $matchedCategory = TicketRegistrationCategory::where('event_id', $event->id)
                     ->where('is_active', true)
-                    ->orderBy('sort_order')
+                    ->where('name', $ticketType->name)
                     ->first();
                 
-                if ($defaultCategory) {
-                    $validated['registration_category_id'] = $defaultCategory->id;
-                }
-            }
-        }
-        
-        // Auto-set registration category if not provided
-        // Try to get from ticket rules first, otherwise use default (first active category)
-        if (empty($validated['registration_category_id'])) {
-            // Try to find registration category from ticket rules
-            $ticketRule = \App\Models\Ticket\TicketCategoryTicketRule::where('ticket_type_id', $ticketType->id)
-                ->whereHas('registrationCategory', function($q) use ($event) {
-                    $q->where('event_id', $event->id)->where('is_active', true);
-                })
-                ->with('registrationCategory')
-                ->first();
-            
-            if ($ticketRule && $ticketRule->registrationCategory) {
-                $validated['registration_category_id'] = $ticketRule->registrationCategory->id;
-            } else {
-                // Use default: first active registration category for this event
-                $defaultCategory = TicketRegistrationCategory::where('event_id', $event->id)
-                    ->where('is_active', true)
-                    ->orderBy('sort_order')
-                    ->first();
-                
-                if ($defaultCategory) {
-                    $validated['registration_category_id'] = $defaultCategory->id;
+                if ($matchedCategory) {
+                    $validated['registration_category_id'] = $matchedCategory->id;
+                } else {
+                    // Fallback: first active registration category for this event
+                    $defaultCategory = TicketRegistrationCategory::where('event_id', $event->id)
+                        ->where('is_active', true)
+                        ->orderBy('sort_order')
+                        ->first();
+                    
+                    if ($defaultCategory) {
+                        $validated['registration_category_id'] = $defaultCategory->id;
+                    }
                 }
             }
         }
@@ -461,7 +478,7 @@ class PublicTicketController extends Controller
                 $delegate['phone'] = $this->formatPhoneNumber($delegate['phone']);
             }
         }
-        
+
         // Store form data in session for preview (including delegates)
         $registrationData = array_merge($validated, [
             'event_id' => $event->id,
@@ -520,7 +537,7 @@ class PublicTicketController extends Controller
         $nationality = $registrationData['nationality'] ?? 'Indian';
         $isInternational = ($nationality === 'International' || $nationality === 'international');
         $nationalityForPrice = $isInternational ? 'international' : 'national';
-        
+
         // Calculate pricing
         $quantity = $registrationData['delegate_count'];
         $unitPrice = $ticketType->getCurrentPrice($nationalityForPrice);

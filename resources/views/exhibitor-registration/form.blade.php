@@ -11,7 +11,7 @@
     </div>
 
     <div class="form-body">
-        {{-- Step Indicator --}}
+    {{-- Step Indicator --}}
         <div class="progress-container">
             <div class="step-indicator">
                 <div class="step-item active">
@@ -27,26 +27,26 @@
                 <div class="step-item">
                     <div class="step-number">3</div>
                     <div class="step-label">Payment</div>
-                </div>
-            </div>
+        </div>
+    </div>
 
-            {{-- Progress Bar --}}
+    {{-- Progress Bar --}}
             <div class="progress-bar-custom" style="position: relative; display: flex; align-items: center;">
                 <div class="progress-fill" id="progressBar" style="width: 33%; position: relative; overflow: visible;">
                     <span id="progressText" style="position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); color: white; font-size: 0.75rem; font-weight: 600; white-space: nowrap; text-shadow: 0 1px 2px rgba(0,0,0,0.3);">Step 1 of 3</span>
-                </div>
             </div>
         </div>
+    </div>
 
-        {{-- Auto-save Indicator --}}
-        <div id="autoSaveIndicator" class="alert alert-info d-none" style="position: fixed; top: 20px; right: 20px; z-index: 9999;">
-            <i class="fas fa-spinner fa-spin"></i> Saving...
-        </div>
+    {{-- Auto-save Indicator --}}
+    <div id="autoSaveIndicator" class="alert alert-info d-none" style="position: fixed; top: 20px; right: 20px; z-index: 9999;">
+        <i class="fas fa-spinner fa-spin"></i> Saving...
+    </div>
 
-        {{-- Form Container --}}
-        <form id="exhibitorRegistrationForm" enctype="multipart/form-data">
-            @csrf
-            <input type="hidden" name="session_id" value="{{ session()->getId() }}">
+    {{-- Form Container --}}
+    <form id="exhibitorRegistrationForm" enctype="multipart/form-data">
+        @csrf
+        <input type="hidden" name="session_id" value="{{ session()->getId() }}">
                 {{-- Booth & Exhibition Details --}}
                 <h5 class="mb-3 border-bottom pb-2"><i class="fas fa-cube"></i> Booth & Exhibition Details</h5>
                 <div class="row mb-3">
@@ -479,8 +479,8 @@
                     <button type="submit" class="btn btn-primary btn-lg">
                         <i class="fas fa-check"></i> Submit & Preview
                     </button>
-                </div>
-        </form>
+        </div>
+    </form>
     </div>
 </div>
 

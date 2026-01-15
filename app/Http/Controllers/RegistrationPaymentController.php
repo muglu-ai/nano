@@ -94,7 +94,7 @@ class RegistrationPaymentController extends Controller
         $this->paypalClient = PaypalServerSdkClientBuilder::init()
             ->clientCredentialsAuthCredentials(
                 ClientCredentialsAuthCredentialsBuilder::init($clientId, $clientSecret)
-            )
+                )
             ->environment($environment)
             ->build();
     }
@@ -802,13 +802,13 @@ class RegistrationPaymentController extends Controller
                 ->whereHas('registration', function($q) use ($event) {
                     $q->where('event_id', $event->id);
                 })
-                ->with(['registration.contact', 'registration.event', 'items.ticketType', 'registration.registrationCategory'])
+                ->with(['registration.contact', 'registration.event', 'registration.delegates', 'items.ticketType', 'items.selectedDay', 'registration.registrationCategory'])
                 ->first();
             
             // If not found with event constraint, try without (in case event doesn't match)
             if (!$order) {
                 $order = TicketOrder::where('order_no', $tinNo)
-                    ->with(['registration.contact', 'registration.event', 'items.ticketType', 'registration.registrationCategory'])
+                    ->with(['registration.contact', 'registration.event', 'registration.delegates', 'items.ticketType', 'items.selectedDay', 'registration.registrationCategory'])
                     ->first();
                 
                 // If order found but event doesn't match, still show it but with a warning
@@ -960,7 +960,32 @@ class RegistrationPaymentController extends Controller
             // Get billing details
             $billingName = $registration->contact->name ?? '';
             $billingEmail = $registration->contact->email ?? '';
-            $billingPhone = $registration->contact->phone ?? $registration->company_phone ?? '';
+            
+            // Get phone number - prefer company_phone as contact->phone might be malformed
+            // Check if contact->phone looks valid (at least 10 digits when cleaned)
+            $contactPhone = $registration->contact->phone ?? '';
+            $companyPhone = $registration->company_phone ?? '';
+            
+            // Clean both to check which one is valid
+            $contactPhoneDigits = preg_replace('/[^0-9]/', '', $contactPhone);
+            $companyPhoneDigits = preg_replace('/[^0-9]/', '', $companyPhone);
+            
+            // Use company_phone if contact_phone has less than 10 digits
+            if (strlen($contactPhoneDigits) >= 10) {
+                $billingPhone = $contactPhone;
+            } elseif (strlen($companyPhoneDigits) >= 10) {
+                $billingPhone = $companyPhone;
+            } else {
+                $billingPhone = $contactPhone ?: $companyPhone; // Fallback to whatever is available
+            }
+            
+            Log::info('Ticket Payment - Phone source selection', [
+                'contact_phone' => $contactPhone,
+                'contact_phone_digits' => strlen($contactPhoneDigits),
+                'company_phone' => $companyPhone,
+                'company_phone_digits' => strlen($companyPhoneDigits),
+                'selected_phone' => $billingPhone,
+            ]);
 
             // Prepare payment data
             $orderIdWithTimestamp = $order->order_no . '_' . time();
@@ -1039,43 +1064,229 @@ class RegistrationPaymentController extends Controller
             $event = $order->registration->event;
             $eventSlug = $event->slug ?? $event->id;
             
-            // Validate required fields
-            if (empty($billingEmail)) {
-                Log::error('Ticket CCAvenue Payment - Missing billing email', [
-                    'order_id' => $order->id,
-                    'order_no' => $order->order_no,
-                ]);
-                return redirect()->back()->with('error', 'Billing email is required for payment.');
-            }
-
-            if (empty($billingName)) {
-                Log::warning('Ticket CCAvenue Payment - Missing billing name, using company name', [
-                    'order_id' => $order->id,
-                ]);
-                $billingName = $registration->company_name ?? 'Customer';
+            // ============================================================
+            // PRE-PAYMENT VALIDATION - Check all fields before sending to CCAvenue
+            // ============================================================
+            $validationErrors = [];
+            
+            // 1. Validate Amount
+            if (empty($amount) || !is_numeric($amount) || $amount <= 0) {
+                $validationErrors[] = 'Invalid payment amount: ' . ($amount ?? 'null');
             }
             
+            // 2. Validate Order ID format
+            if (empty($orderId)) {
+                $validationErrors[] = 'Order ID is missing';
+            }
+            
+            // 3. Validate Currency
+            if (empty($currency) || !in_array(strtoupper($currency), ['INR', 'USD'])) {
+                $validationErrors[] = 'Invalid currency: ' . ($currency ?? 'null');
+            }
+            
+            // 4. Validate Billing Email (Required by CCAvenue)
+            if (empty($billingEmail) || !filter_var($billingEmail, FILTER_VALIDATE_EMAIL)) {
+                $validationErrors[] = 'Invalid or missing billing email: ' . ($billingEmail ?? 'null');
+            }
+            
+            // 5. Validate Billing Name
+            if (empty($billingName)) {
+                $billingName = $registration->company_name ?? 'Customer';
+                Log::warning('Ticket CCAvenue Payment - Missing billing name, using fallback', [
+                    'fallback_name' => $billingName,
+                ]);
+            }
+            
+            // 6. Validate and Clean Billing Phone
+            // CCAvenue expects phone number without country code
+            $originalBillingPhone = $billingPhone;
+            
+            Log::info('Ticket CCAvenue Payment - Phone BEFORE extraction', [
+                'billingPhone_variable' => $billingPhone,
+                'contact_phone' => $registration->contact->phone ?? 'NULL',
+                'company_phone' => $registration->company_phone ?? 'NULL',
+            ]);
+            
+            if (!empty($billingPhone)) {
+                $billingPhone = $this->extractPhoneNumber($billingPhone);
+            } else {
+                // Try to get phone from registration
+                $billingPhone = $this->extractPhoneNumber($registration->company_phone ?? '');
+            }
+            
+            Log::info('Ticket CCAvenue Payment - Phone AFTER extraction', [
+                'original_phone' => $originalBillingPhone,
+                'extracted_phone' => $billingPhone,
+                'extracted_length' => strlen($billingPhone),
+            ]);
+            
+            if (empty($billingPhone) || strlen($billingPhone) < 10) {
+                Log::warning('Ticket CCAvenue Payment - Phone number may be invalid after extraction', [
+                    'original' => $originalBillingPhone,
+                    'company_phone' => $registration->company_phone ?? 'NULL',
+                    'cleaned' => $billingPhone,
+                    'length' => strlen($billingPhone),
+                ]);
+            }
+            
+            // 7. Check CCAvenue credentials
+            $credentials = $this->ccAvenueService->getCredentials();
+            if (empty($credentials['merchant_id']) || empty($credentials['access_code']) || empty($credentials['working_key'])) {
+                $validationErrors[] = 'CCAvenue credentials are not properly configured';
+                Log::error('Ticket CCAvenue Payment - Missing credentials', [
+                    'has_merchant_id' => !empty($credentials['merchant_id']),
+                    'has_access_code' => !empty($credentials['access_code']),
+                    'has_working_key' => !empty($credentials['working_key']),
+                ]);
+            }
+            
+            // 8. Validate Event
+            if (!$event || empty($eventSlug)) {
+                $validationErrors[] = 'Event information is missing';
+            }
+            
+            // If there are validation errors, log them and return with error message
+            if (!empty($validationErrors)) {
+                Log::error('Ticket CCAvenue Payment - Pre-validation failed', [
+                    'order_id' => $order->id,
+                    'order_no' => $order->order_no,
+                    'errors' => $validationErrors,
+                    'billing_email' => $billingEmail,
+                    'billing_phone' => $billingPhone,
+                    'amount' => $amount,
+                    'currency' => $currency,
+                ]);
+                
+                $errorMessage = 'Payment cannot be processed due to validation errors: ' . implode(', ', $validationErrors);
+                
+                // Redirect to lookup page with TIN
+                $lookupUrl = route('tickets.payment.lookup', ['eventSlug' => $eventSlug]) . '?tin=' . urlencode($order->order_no);
+                return redirect($lookupUrl)->with('error', $errorMessage)->with('tin', $order->order_no);
+            }
+            
+            // ============================================================
+            // ALL VALIDATIONS PASSED - Proceed with payment
+            // ============================================================
+            
+            // Both redirect and cancel URL should point to the same callback route
+            // CCAvenue requires these URLs to be registered in the merchant panel
+            $callbackUrl = route('registration.ticket.payment.callback', ['eventSlug' => $eventSlug, 'gateway' => 'ccavenue']);
+            
+            // Sanitize and prepare payment data
+            // Note: billing_tel is already cleaned by extractPhoneNumber(), no need to sanitize again
             $paymentData = [
                 'order_id' => $orderId,
                 'amount' => number_format($amount, 2, '.', ''),
-                'currency' => $currency,
-                'redirect_url' => route('registration.ticket.payment.callback', ['eventSlug' => $eventSlug, 'gateway' => 'ccavenue']),
-                'cancel_url' => route('tickets.payment.lookup', ['eventSlug' => $eventSlug, 'tin' => $order->order_no]),
-                'billing_name' => $billingName,
-                'billing_address' => $registration->company_name ?? '',
-                'billing_city' => $registration->company_city ?? '',
-                'billing_state' => $registration->company_state ?? '',
-                'billing_zip' => $registration->postal_code ?? '',
-                'billing_country' => $registration->company_country ?? 'India',
-                'billing_tel' => $billingPhone,
+                'currency' => 'INR',
+                'redirect_url' => $callbackUrl,
+                'cancel_url' => $callbackUrl,
+                'billing_name' => $this->sanitizeForCcAvenue($billingName, 50),
+                'billing_address' => $this->sanitizeForCcAvenue($registration->company_name ?? '', 100),
+                'billing_city' => $this->sanitizeForCcAvenue($registration->company_city ?? '', 50),
+                'billing_state' => $this->sanitizeForCcAvenue($registration->company_state ?? '', 50),
+                'billing_zip' => $this->sanitizeForCcAvenue($registration->postal_code ?? '', 10),
+                'billing_country' => $this->sanitizeForCcAvenue($registration->company_country ?? 'India', 50),
+                'billing_tel' => $billingPhone, // Already cleaned, just use directly
                 'billing_email' => $billingEmail,
             ];
 
+            // ============================================================
+            // DETAILED PARAMETER LOGGING FOR DEBUGGING
+            // ============================================================
+            $parameterAnalysis = [];
+            
+            // Check each parameter for potential issues
+            foreach ($paymentData as $key => $value) {
+                $analysis = [
+                    'value' => $value,
+                    'length' => strlen($value ?? ''),
+                    'is_empty' => empty($value),
+                ];
+                
+                // Check for special characters that CCAvenue might reject
+                if (is_string($value) && !empty($value)) {
+                    $specialChars = preg_match('/[&<>"\'\\\\\/=+;:@#$%^*()[\]{}|`~]/', $value);
+                    $analysis['has_special_chars'] = $specialChars ? true : false;
+                    
+                    // Check for non-ASCII characters
+                    $nonAscii = preg_match('/[^\x20-\x7E]/', $value);
+                    $analysis['has_non_ascii'] = $nonAscii ? true : false;
+                    
+                    // Check for leading/trailing spaces
+                    $analysis['has_leading_trailing_spaces'] = ($value !== trim($value));
+                }
+                
+                $parameterAnalysis[$key] = $analysis;
+            }
+            
+            Log::info('Ticket CCAvenue Payment - DETAILED PARAMETER ANALYSIS', [
+                'order_no' => $order->order_no,
+                'parameter_analysis' => $parameterAnalysis,
+            ]);
+            
+            // Log the full payment data
+            Log::info('Ticket CCAvenue Payment - Full Payment Data', [
+                'payment_data' => $paymentData,
+            ]);
+            
+            // Log potential issues summary
+            $potentialIssues = [];
+            
+            // Check redirect URL length and format
+            if (strlen($paymentData['redirect_url']) > 255) {
+                $potentialIssues[] = 'redirect_url is too long (' . strlen($paymentData['redirect_url']) . ' chars)';
+            }
+            if (!filter_var($paymentData['redirect_url'], FILTER_VALIDATE_URL)) {
+                $potentialIssues[] = 'redirect_url is not a valid URL';
+            }
+            
+            // Check if redirect URL is HTTPS
+            if (strpos($paymentData['redirect_url'], 'https://') !== 0) {
+                $potentialIssues[] = 'redirect_url is not HTTPS (CCAvenue may require HTTPS)';
+            }
+            
+            // Check amount format
+            if (!preg_match('/^\d+\.\d{2}$/', $paymentData['amount'])) {
+                $potentialIssues[] = 'amount format may be invalid: ' . $paymentData['amount'];
+            }
+            
+            // Check billing_tel
+            if (!empty($paymentData['billing_tel']) && !preg_match('/^\d{10,15}$/', $paymentData['billing_tel'])) {
+                $potentialIssues[] = 'billing_tel format may be invalid: ' . $paymentData['billing_tel'];
+            }
+            
+            // Check billing_email
+            if (!filter_var($paymentData['billing_email'], FILTER_VALIDATE_EMAIL)) {
+                $potentialIssues[] = 'billing_email is invalid: ' . $paymentData['billing_email'];
+            }
+            
+            // Check billing_zip
+            if (!empty($paymentData['billing_zip']) && !preg_match('/^[a-zA-Z0-9\s-]{3,10}$/', $paymentData['billing_zip'])) {
+                $potentialIssues[] = 'billing_zip format may be invalid: ' . $paymentData['billing_zip'];
+            }
+            
+            // Check for empty required fields
+            $requiredFields = ['order_id', 'amount', 'currency', 'redirect_url', 'billing_email'];
+            foreach ($requiredFields as $field) {
+                if (empty($paymentData[$field])) {
+                    $potentialIssues[] = "Required field '$field' is empty";
+                }
+            }
+            
+            if (!empty($potentialIssues)) {
+                Log::warning('Ticket CCAvenue Payment - POTENTIAL ISSUES DETECTED', [
+                    'order_no' => $order->order_no,
+                    'issues' => $potentialIssues,
+                ]);
+            }
+            
             Log::info('Ticket CCAvenue Payment - Initiating transaction', [
                 'order_id' => $order->id,
                 'order_no' => $order->order_no,
                 'amount' => $amount,
                 'currency' => $currency,
+                'callback_url' => $callbackUrl,
+                'potential_issues_count' => count($potentialIssues),
             ]);
 
             $result = $this->ccAvenueService->initiateTransaction($paymentData);
@@ -1170,7 +1381,7 @@ class RegistrationPaymentController extends Controller
                         ->build()
                 )
                 ->build();
-            
+
             $orderBody = [
                 'body' => $orderRequest
             ];
@@ -1232,21 +1443,60 @@ class RegistrationPaymentController extends Controller
 
         if ($gateway === 'ccavenue') {
             $encResponse = $request->input('encResp');
-            if (empty($encResponse)) {
-                return redirect()->route('tickets.payment.lookup', $eventSlug)
-                    ->with('error', 'Payment response incomplete.');
+            
+            // Try to get order number from request parameter first (fallback for failed decryption)
+            $orderNoFromRequest = $request->input('orderNo');
+            if ($orderNoFromRequest) {
+                // Extract TIN from orderNo (format: TIN-BTS-2026-TKT-666662_1768457434)
+                $orderNoFromRequest = explode('_', $orderNoFromRequest)[0];
             }
-
+            
+            $responseArray = [];
+            $orderNo = null;
+            
+            if (!empty($encResponse) && strlen($encResponse) > 10) {
+                // Only attempt decryption if encResp looks valid (not just "a" or similar garbage)
+                try {
             $credentials = $this->ccAvenueService->getCredentials();
             $decryptedResponse = $this->ccAvenueService->decrypt($encResponse, $credentials['working_key']);
             parse_str($decryptedResponse, $responseArray);
 
             $orderIdFromGateway = $responseArray['order_id'] ?? null;
             $orderNo = $orderIdFromGateway ? explode('_', $orderIdFromGateway)[0] : null;
+                    
+                    Log::info('Ticket CCAvenue Callback - Decrypted response', [
+                        'order_id_from_gateway' => $orderIdFromGateway,
+                        'order_no' => $orderNo,
+                        'order_status' => $responseArray['order_status'] ?? null,
+                    ]);
+                } catch (\Exception $e) {
+                    Log::warning('Ticket CCAvenue Callback - Decryption failed', [
+                        'error' => $e->getMessage(),
+                        'encResp_length' => strlen($encResponse),
+                    ]);
+                }
+            } else {
+                Log::warning('Ticket CCAvenue Callback - Invalid/empty encResp', [
+                    'encResp' => $encResponse,
+                    'orderNo_from_request' => $orderNoFromRequest,
+                ]);
+            }
+            
+            // Fallback to order number from request if decryption failed
+            if (!$orderNo && $orderNoFromRequest) {
+                $orderNo = $orderNoFromRequest;
+                Log::info('Ticket CCAvenue Callback - Using orderNo from request parameter', [
+                    'order_no' => $orderNo,
+                ]);
+            }
 
             if (!$orderNo) {
+                Log::error('Ticket CCAvenue Callback - Could not determine order number', [
+                    'encResp' => $encResponse,
+                    'orderNo_from_request' => $orderNoFromRequest,
+                ]);
                 return redirect()->route('tickets.payment.lookup', $eventSlug)
-                    ->with('error', 'Order not found for payment callback.');
+                    ->with('error', 'Order not found for payment callback. Please use your TIN to check payment status.');
             }
 
             $order = TicketOrder::with(['registration.contact', 'registration.event', 'items.ticketType'])
@@ -1254,7 +1504,17 @@ class RegistrationPaymentController extends Controller
                 ->whereHas('registration', function($q) use ($event) {
                     $q->where('event_id', $event->id);
                 })
-                ->firstOrFail();
+                ->first();
+                
+            if (!$order) {
+                Log::error('Ticket CCAvenue Callback - Order not found in database', [
+                    'order_no' => $orderNo,
+                    'event_id' => $event->id,
+                ]);
+                return redirect()->route('tickets.payment.lookup', $eventSlug)
+                    ->with('error', 'Order not found. Please use your TIN to check payment status.')
+                    ->with('tin', $orderNo);
+            }
 
             return $this->handleTicketCcAvenueCallback($request, $order, $event, $responseArray);
         } elseif ($gateway === 'paypal') {
@@ -1319,16 +1579,39 @@ class RegistrationPaymentController extends Controller
     private function handleTicketCcAvenueCallback($request, $order, $event, $responseArray = null)
     {
         try {
-            if (!$responseArray) {
+            // If responseArray is empty or null, try to decrypt from request
+            if (empty($responseArray) || !isset($responseArray['order_status'])) {
                 $encResponse = $request->input('encResp');
-                if (empty($encResponse)) {
-                    return redirect()->route('tickets.payment.lookup', [
-                        'eventSlug' => $event->slug ?? $event->id
-                    ])->with('error', 'Payment response incomplete.')->with('tin', $order->order_no);
-                }
+                
+                // Check if we have a valid encrypted response to decrypt
+                if (!empty($encResponse) && strlen($encResponse) > 10) {
+                    try {
                 $credentials = $this->ccAvenueService->getCredentials();
                 $decryptedResponse = $this->ccAvenueService->decrypt($encResponse, $credentials['working_key']);
                 parse_str($decryptedResponse, $responseArray);
+                    } catch (\Exception $e) {
+                        Log::warning('Ticket CCAvenue Callback - Decryption failed in handler', [
+                            'error' => $e->getMessage(),
+                            'order_no' => $order->order_no,
+                        ]);
+                    }
+                }
+                
+                // If still empty, this means decryption failed or encResp was invalid
+                // Treat as cancelled/failed payment
+                if (empty($responseArray) || !isset($responseArray['order_status'])) {
+                    Log::warning('Ticket CCAvenue Callback - No valid response, treating as cancelled', [
+                        'order_no' => $order->order_no,
+                        'encResp' => $encResponse ?? 'null',
+                    ]);
+                    
+                    // Redirect to lookup with TIN pre-filled so user can retry
+                    // Pass tin as query parameter, not route parameter
+                    $lookupUrl = route('tickets.payment.lookup', ['eventSlug' => $event->slug ?? $event->id]) . '?tin=' . urlencode($order->order_no);
+                    return redirect($lookupUrl)
+                        ->with('error', 'Payment was cancelled or incomplete. You can try again by clicking Pay Now.')
+                        ->with('tin', $order->order_no);
+                }
             }
 
             $orderStatus = $responseArray['order_status'] ?? null;
@@ -1341,7 +1624,9 @@ class RegistrationPaymentController extends Controller
                 ->where('type', 'ticket_registration')
                 ->first();
 
-            // Update payment gateway response
+            // Update payment gateway response (wrapped in try-catch as this is not critical)
+            try {
+                if ($orderId) {
             DB::table('payment_gateway_response')
                 ->where('order_id', $orderId)
                 ->update([
@@ -1354,25 +1639,40 @@ class RegistrationPaymentController extends Controller
                     'status' => $orderStatus === 'Success' ? 'Success' : 'Failed',
                     'updated_at' => now(),
                 ]);
+                }
+            } catch (\Exception $e) {
+                Log::warning('Ticket CCAvenue Callback - Failed to update payment_gateway_response', [
+                    'error' => $e->getMessage(),
+                    'order_id' => $orderId,
+                ]);
+            }
 
             // Determine payment status
             $isSuccess = ($orderStatus === 'Success');
             $paymentStatus = $isSuccess ? 'completed' : 'failed';
             $paymentTableStatus = $isSuccess ? 'successful' : 'failed';
 
-            // Always create ticket payment record (for both success and failure)
+            // Try to create ticket payment record (for both success and failure)
+            try {
                 TicketPayment::create([
                     'order_ids_json' => [$order->id],
                     'method' => strtolower($responseArray['payment_mode'] ?? 'card'),
                     'amount' => $responseArray['mer_amount'] ?? $order->total,
-                'status' => $paymentStatus,
+                    'status' => $paymentStatus,
                     'gateway_txn_id' => $responseArray['tracking_id'] ?? null,
                     'gateway_name' => 'ccavenue',
-                'paid_at' => $isSuccess ? $transDate : null,
+                    'paid_at' => $isSuccess ? $transDate : null,
                     'pg_request_json' => [],
                     'pg_response_json' => $responseArray,
                     'pg_webhook_json' => [],
                 ]);
+            } catch (\Exception $e) {
+                Log::warning('Ticket CCAvenue Callback - Failed to create TicketPayment record', [
+                    'error' => $e->getMessage(),
+                    'order_no' => $order->order_no,
+                ]);
+                // Continue processing - don't fail the whole callback for this
+            }
 
             // Always create Payment record in payments table with TIN/order_no
             // Check if payment already exists (for retry scenarios)
@@ -1431,7 +1731,7 @@ class RegistrationPaymentController extends Controller
                         'pg_result' => $orderStatus,
                         'track_id' => $responseArray['tracking_id'] ?? null,
                         'pg_response_json' => json_encode($responseArray),
-                    'payment_date' => $isSuccess ? $transDate : null,
+                    'payment_date' => $transDate ?? now(), // Always set payment_date, never null
                         'currency' => 'INR',
                     'status' => $paymentTableStatus,
                     'order_id' => $order->order_no, // Store TIN/order_no in order_id field
@@ -1447,7 +1747,7 @@ class RegistrationPaymentController extends Controller
                         'pg_result' => $orderStatus,
                         'track_id' => $responseArray['tracking_id'] ?? null,
                         'pg_response_json' => json_encode($responseArray),
-                    'payment_date' => $isSuccess ? $transDate : null,
+                    'payment_date' => $transDate ?? now(), // Always set payment_date, never null
                         'currency' => 'INR',
                     'status' => $paymentTableStatus,
                     'order_id' => $order->order_no, // Ensure TIN/order_no is stored
@@ -1458,13 +1758,26 @@ class RegistrationPaymentController extends Controller
                 // Update order status
                 $order->update(['status' => 'paid']);
 
-                // Update invoice status/amounts - mark as paid
+                // Update invoice status/amounts - mark as paid and generate PIN
                 if ($invoice) {
                     $paidAmount = $responseArray['mer_amount'] ?? $order->total;
+                    
+                    // Generate PIN number if not already set
+                    $pinNo = $invoice->pin_no;
+                    if (empty($pinNo)) {
+                        $pinNo = $this->generateTicketPinNo();
+                    }
+                    
                     $invoice->update([
                         'amount_paid' => $paidAmount,
                         'pending_amount' => max(0, ($invoice->total_final_price ?? $paidAmount) - $paidAmount),
-                        'payment_status' => 'paid', // Mark invoice as paid
+                        'payment_status' => 'paid',
+                        'pin_no' => $pinNo, // Save PIN number
+                    ]);
+                    
+                    Log::info('Ticket CCAvenue Payment - PIN generated', [
+                        'order_no' => $order->order_no,
+                        'pin_no' => $pinNo,
                     ]);
                 }
 
@@ -1506,29 +1819,96 @@ class RegistrationPaymentController extends Controller
             } else {
                 // Payment failed - order status remains 'pending'
                 // Payment records already created above with 'failed' status
-                // Ensure invoice remains unpaid
-                if ($invoice && $invoice->payment_status !== 'unpaid') {
-                    $invoice->update([
-                        'payment_status' => 'unpaid', // Ensure invoice remains unpaid on failure
+                // Ensure invoice remains unpaid (wrapped in try-catch)
+                try {
+                    if ($invoice && $invoice->payment_status !== 'unpaid') {
+                        $invoice->update([
+                            'payment_status' => 'unpaid',
+                        ]);
+                    }
+                } catch (\Exception $e) {
+                    Log::warning('Ticket CCAvenue Callback - Failed to update invoice', [
+                        'error' => $e->getMessage(),
                     ]);
                 }
 
-                // Check if payment was cancelled
-                $isCancelled = ($orderStatus === 'Cancelled' || $orderStatus === 'Aborted' || strtolower($orderStatus ?? '') === 'cancelled');
-                $message = $isCancelled ? 'Payment was cancelled. You can try again by clicking Pay Now.' : 'Payment failed. Please try again.';
+                // Check if payment was cancelled, aborted, or invalid
+                $isCancelled = in_array($orderStatus, ['Cancelled', 'Aborted', 'cancelled', 'aborted']);
+                $isInvalid = ($orderStatus === 'Invalid' || $orderStatus === 'invalid');
+                
+                if ($isCancelled) {
+                    $message = 'Payment was cancelled. You can try again by clicking Pay Now.';
+                } elseif ($isInvalid) {
+                    $message = 'Payment could not be processed due to invalid transaction parameters. Please try again.';
+                    
+                    // ============================================================
+                    // DETAILED LOGGING FOR INVALID STATUS - DEBUG CCAVENUE ISSUES
+                    // ============================================================
+                    Log::error('CCAvenue INVALID Status - FULL DEBUG INFO', [
+                        'order_no' => $order->order_no,
+                        'order_id' => $order->id,
+                        'full_response' => $responseArray,
+                        'status_message' => $responseArray['status_message'] ?? 'N/A',
+                        'failure_message' => $responseArray['failure_message'] ?? 'N/A',
+                        'response_code' => $responseArray['response_code'] ?? 'N/A',
+                        'bank_ref_no' => $responseArray['bank_ref_no'] ?? 'N/A',
+                        'order_id_from_response' => $responseArray['order_id'] ?? 'N/A',
+                        'tracking_id' => $responseArray['tracking_id'] ?? 'N/A',
+                        'merchant_param1' => $responseArray['merchant_param1'] ?? 'N/A',
+                        'merchant_param2' => $responseArray['merchant_param2'] ?? 'N/A',
+                        'vault' => $responseArray['vault'] ?? 'N/A',
+                        'offer_type' => $responseArray['offer_type'] ?? 'N/A',
+                        'offer_code' => $responseArray['offer_code'] ?? 'N/A',
+                        'discount_value' => $responseArray['discount_value'] ?? 'N/A',
+                        'mer_amount' => $responseArray['mer_amount'] ?? 'N/A',
+                        'eci_value' => $responseArray['eci_value'] ?? 'N/A',
+                        'retry' => $responseArray['retry'] ?? 'N/A',
+                        'response_keys' => array_keys($responseArray),
+                    ]);
+                    
+                    // Try to get the original request data from database
+                    try {
+                        $originalRequest = DB::table('payment_gateway_response')
+                            ->where('order_id', 'like', $order->order_no . '%')
+                            ->orderBy('created_at', 'desc')
+                            ->first();
+                        
+                        if ($originalRequest) {
+                            Log::error('CCAvenue INVALID - Original Request Data', [
+                                'order_no' => $order->order_no,
+                                'original_merchant_data' => $originalRequest->merchant_data,
+                                'original_amount' => $originalRequest->amount,
+                                'original_currency' => $originalRequest->currency,
+                                'original_email' => $originalRequest->email,
+                            ]);
+                        }
+                    } catch (\Exception $e) {
+                        Log::warning('Could not retrieve original request data', ['error' => $e->getMessage()]);
+                    }
+                } else {
+                    $message = 'Payment failed. Please try again.';
+                }
 
-                return redirect()->route('tickets.payment.lookup', [
-                    'eventSlug' => $event->slug ?? $event->id
-                ])->with('error', $message)->with('tin', $order->order_no);
+                Log::info('Ticket CCAvenue Payment - Failed/Cancelled, redirecting to lookup', [
+                    'order_no' => $order->order_no,
+                    'order_status' => $orderStatus,
+                    'message' => $message,
+                ]);
+
+                // Redirect to lookup page with TIN as query parameter
+                $lookupUrl = route('tickets.payment.lookup', ['eventSlug' => $event->slug ?? $event->id]) . '?tin=' . urlencode($order->order_no);
+                return redirect($lookupUrl)->with('error', $message)->with('tin', $order->order_no);
             }
         } catch (\Exception $e) {
             Log::error('Ticket CCAvenue Callback Error', [
                 'error' => $e->getMessage(),
-                'order_id' => $order->id,
+                'trace' => $e->getTraceAsString(),
+                'order_id' => $order->id ?? null,
             ]);
-            return redirect()->route('tickets.payment.lookup', [
-                'eventSlug' => $event->slug ?? $event->id
-            ])->with('error', 'An error occurred while processing payment.')->with('tin', $order->order_no ?? null);
+            
+            // Even on error, try to redirect to lookup with TIN
+            $lookupUrl = route('tickets.payment.lookup', ['eventSlug' => $event->slug ?? $event->id]) . '?tin=' . urlencode($order->order_no ?? '');
+            return redirect($lookupUrl)->with('error', 'An error occurred while processing payment. Please try again.');
         }
     }
 
@@ -1650,7 +2030,7 @@ class RegistrationPaymentController extends Controller
                         'pg_result' => $status,
                         'track_id' => $paypalOrderId,
                         'pg_response_json' => json_encode($captureResult),
-                    'payment_date' => $isSuccess ? now() : null,
+                    'payment_date' => now(), // Always set payment_date, never null
                         'currency' => 'USD',
                     'status' => $paymentTableStatus,
                     'order_id' => $order->order_no, // Store TIN/order_no in order_id field
@@ -1666,7 +2046,7 @@ class RegistrationPaymentController extends Controller
                         'pg_result' => $status,
                         'track_id' => $paypalOrderId,
                         'pg_response_json' => json_encode($captureResult),
-                    'payment_date' => $isSuccess ? now() : null,
+                    'payment_date' => now(), // Always set payment_date, never null
                         'currency' => 'USD',
                     'status' => $paymentTableStatus,
                     'order_id' => $order->order_no, // Ensure TIN/order_no is stored
@@ -1677,12 +2057,24 @@ class RegistrationPaymentController extends Controller
                 // Update order status
                 $order->update(['status' => 'paid']);
 
-                // Update invoice - mark as paid
+                // Update invoice - mark as paid and generate PIN
                 if ($invoice) {
+                    // Generate PIN number if not already set
+                    $pinNo = $invoice->pin_no;
+                    if (empty($pinNo)) {
+                        $pinNo = $this->generateTicketPinNo();
+                    }
+                    
                     $invoice->update([
                         'amount_paid' => $inrAmount,
                         'pending_amount' => max(0, ($invoice->total_final_price ?? $inrAmount) - $inrAmount),
-                        'payment_status' => 'paid', // Mark invoice as paid
+                        'payment_status' => 'paid',
+                        'pin_no' => $pinNo, // Save PIN number
+                    ]);
+                    
+                    Log::info('Ticket PayPal Payment - PIN generated', [
+                        'order_no' => $order->order_no,
+                        'pin_no' => $pinNo,
                     ]);
                 }
 
@@ -1742,5 +2134,166 @@ class RegistrationPaymentController extends Controller
                 'tin' => $order->order_no
             ])->with('error', 'An error occurred while processing payment.');
         }
+    }
+
+    /**
+     * Sanitize string for CCAvenue - remove special characters and limit length
+     * CCAvenue is strict about field values and may return "Invalid" if they contain special characters
+     */
+    private function sanitizeForCcAvenue($value, $maxLength = 50)
+    {
+        if (empty($value)) {
+            return '';
+        }
+        
+        // Convert to string
+        $value = (string) $value;
+        
+        // Remove or replace problematic characters
+        // CCAvenue doesn't like: & < > " ' \ / = + ; : @ # $ % ^ * ( ) [ ] { } | ` ~
+        $value = preg_replace('/[&<>"\'\\\\\/=+;:@#$%^*()[\]{}|`~]/', '', $value);
+        
+        // Replace multiple spaces with single space
+        $value = preg_replace('/\s+/', ' ', $value);
+        
+        // Trim whitespace
+        $value = trim($value);
+        
+        // Limit length
+        if (strlen($value) > $maxLength) {
+            $value = substr($value, 0, $maxLength);
+        }
+        
+        return $value;
+    }
+
+    /**
+     * Extract phone number without country code
+     * 
+     * Handles formats like:
+     * - +91-9801217815 (country code separated by dash)
+     * - +91 9801217815 (country code separated by space)
+     * - +919801217815 (no separator)
+     * - 919801217815 (no plus sign)
+     * - 09801217815 (with leading zero)
+     * - 9801217815 (just the number)
+     * 
+     * Returns just the 10-digit phone number without country code
+     */
+    private function extractPhoneNumber($phone)
+
+    /**
+     * Generate unique PIN number for ticket payment confirmation
+     * Format: PRN-BTS-2026-TKT-XXXXXX (6-digit random number)
+     */
+    private function generateTicketPinNo()
+    {
+        // Use ticket-specific prefix: PRN-BTS-2026-TKT-
+        $shortName = config('constants.SHORT_NAME', 'BTS');
+        $eventYear = config('constants.EVENT_YEAR', date('Y'));
+        $prefix = 'PRN-' . $shortName . '-' . $eventYear . '-TKT-';
+        
+        $maxAttempts = 100;
+        $attempts = 0;
+        
+        while ($attempts < $maxAttempts) {
+            // Generate 6-digit random number
+            $randomNumber = str_pad(rand(100000, 999999), 6, '0', STR_PAD_LEFT);
+            $pinNo = $prefix . $randomNumber;
+            $attempts++;
+            
+            // Check if it already exists in invoices table
+            if (!Invoice::where('pin_no', $pinNo)->exists()) {
+                return $pinNo;
+            }
+        }
+        
+        // Fallback: use timestamp-based
+        $timestamp = substr(time(), -6);
+        $pinNo = $prefix . $timestamp;
+        if (!Invoice::where('pin_no', $pinNo)->exists()) {
+            return $pinNo;
+        }
+        
+        // Last resort: use microtime
+        $microtime = substr(str_replace('.', '', microtime(true)), -6);
+        return $prefix . $microtime;
+    }
+
+    private function extractPhoneNumber($phone)
+    {
+        if (empty($phone)) {
+            return '';
+        }
+        
+        $originalPhone = $phone;
+        $phone = (string) $phone;
+        $phone = trim($phone);
+        
+        // Method 1: Check if phone has a separator (dash, space) after country code
+        // Format: +91-9801217815 or +91 9801217815
+        // Accept 7+ digits after separator (some countries have shorter numbers)
+        if (preg_match('/^[\+]?(\d{1,3})[\-\s](\d{7,})$/', $phone, $matches)) {
+            // $matches[1] = country code (91)
+            // $matches[2] = actual phone number (9801217815)
+            $extractedNumber = $matches[2];
+            
+            Log::info('Phone extraction - Method 1 (separator found)', [
+                'original' => $originalPhone,
+                'country_code' => $matches[1],
+                'phone_number' => $extractedNumber,
+                'phone_length' => strlen($extractedNumber),
+            ]);
+            
+            return $extractedNumber;
+        }
+        
+        // Method 2: No separator - remove all non-numeric and process
+        $numericOnly = preg_replace('/[^0-9]/', '', $phone);
+        $totalDigits = strlen($numericOnly);
+        
+        Log::info('Phone extraction - Method 2 (numeric only)', [
+            'original' => $originalPhone,
+            'numeric_only' => $numericOnly,
+            'total_digits' => $totalDigits,
+        ]);
+        
+        // If exactly 10 digits, return as is (already a phone number without country code)
+        if ($totalDigits === 10) {
+            return $numericOnly;
+        }
+        
+        // If 11 digits and starts with 0, remove the leading 0
+        if ($totalDigits === 11 && substr($numericOnly, 0, 1) === '0') {
+            return substr($numericOnly, 1);
+        }
+        
+        // If 12 digits and starts with 91, remove the country code
+        if ($totalDigits === 12 && substr($numericOnly, 0, 2) === '91') {
+            return substr($numericOnly, 2);
+        }
+        
+        // If more than 10 digits and starts with 91, remove the country code
+        if ($totalDigits > 10 && substr($numericOnly, 0, 2) === '91') {
+            return substr($numericOnly, 2);
+        }
+        
+        // If more than 10 digits and starts with 0, remove the leading 0
+        if ($totalDigits > 10 && substr($numericOnly, 0, 1) === '0') {
+            return substr($numericOnly, 1);
+        }
+        
+        // Fallback: Return last 10 digits if we have more than 10
+        if ($totalDigits > 10) {
+            $extracted = substr($numericOnly, -10);
+            Log::warning('Phone extraction - Using last 10 digits as fallback', [
+                'original' => $originalPhone,
+                'extracted' => $extracted,
+            ]);
+            return $extracted;
+        }
+        
+        // Return whatever we have (might be less than 10 digits)
+        return $numericOnly;
     }
 }

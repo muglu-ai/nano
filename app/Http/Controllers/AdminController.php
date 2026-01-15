@@ -233,10 +233,10 @@ class AdminController extends Controller
                           });
                     });
                 }
+                }
             }
-        }
-        
-        $applications = $query->orderBy('submission_date', 'desc')->get();
+            
+            $applications = $query->orderBy('submission_date', 'desc')->get();
 
         if ($status == 'approved') {
             $query = Application::with('eventContact', 'invoice')

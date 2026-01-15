@@ -12,6 +12,7 @@ class TicketOrderItem extends Model
     protected $fillable = [
         'order_id',
         'ticket_type_id',
+        'selected_event_day_id', // The specific day user selected for this ticket
         'quantity',
         'unit_price',
         'subtotal', // Quantity × unit_price
@@ -48,6 +49,14 @@ class TicketOrderItem extends Model
     public function ticketType(): BelongsTo
     {
         return $this->belongsTo(TicketType::class, 'ticket_type_id');
+    }
+
+    /**
+     * Get the selected event day
+     */
+    public function selectedDay(): BelongsTo
+    {
+        return $this->belongsTo(EventDay::class, 'selected_event_day_id');
     }
 }
 

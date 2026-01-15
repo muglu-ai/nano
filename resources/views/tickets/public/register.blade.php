@@ -192,7 +192,7 @@
                         @if(isset($isTicketTypeLocked) && $isTicketTypeLocked)
                             {{-- Hidden field to submit the value --}}
                             <input type="hidden" name="ticket_type_id" value="{{ $selectedTicketType->slug }}">
-                            {{-- Display field (readonly) --}}
+                            {{-- Display field (readonly) with data attributes for day selection --}}
                             @php
                                 $nationalityForPrice = $selectedNationality ?? 'national';
                                 $price = $selectedTicketType->getCurrentPrice($nationalityForPrice);
@@ -200,29 +200,72 @@
                                 $priceFormat = ($nationalityForPrice === 'international') ? number_format($price, 2) : number_format($price, 0);
                             @endphp
                             <input type="text" class="form-control" 
+                                   id="locked_ticket_type"
                                    value="{{ $selectedTicketType->name }} - {{ $currency }}{{ $priceFormat }}" 
                                    readonly 
-                                   style="background-color: #e9ecef; cursor: not-allowed;">
+                                   style="background-color: #e9ecef; cursor: not-allowed;"
+                                   data-price-national="{{ $selectedTicketType->getCurrentPrice('national') }}"
+                                   data-price-international="{{ $selectedTicketType->getCurrentPrice('international') }}"
+                                   data-per-day-price-national="{{ $selectedTicketType->getPerDayPrice('national') ?? '' }}"
+                                   data-per-day-price-international="{{ $selectedTicketType->getPerDayPrice('international') ?? '' }}"
+                                   data-has-per-day-pricing="{{ $selectedTicketType->hasPerDayPricing() ? '1' : '0' }}"
+                                   data-enable-day-selection="{{ $selectedTicketType->enable_day_selection ? '1' : '0' }}"
+                                   data-all-days-access="{{ $selectedTicketType->all_days_access ? '1' : '0' }}"
+                                   data-include-all-days-option="{{ $selectedTicketType->include_all_days_option ? '1' : '0' }}"
+                                   data-available-days="{{ json_encode($selectedTicketType->getAllAccessibleDays()->map(function($day) { return ['id' => $day->id, 'label' => $day->label, 'date' => $day->date->format('M d, Y')]; })) }}">
                         @else
                             <select name="ticket_type_id" class="form-select" id="ticket_type_select" required>
                                 <option value="">Select Ticket Type</option>
                                 @foreach($ticketTypes as $ticketType)
                                     @php
                                         $nationalityForPrice = old('nationality', $selectedNationality ?? 'national');
-                                        $price = $ticketType->getCurrentPrice($nationalityForPrice);
+                                        $perDayPrice = $ticketType->getPerDayPrice($nationalityForPrice);
+                                        $price = $perDayPrice ?? $ticketType->getCurrentPrice($nationalityForPrice);
                                         $currency = ($nationalityForPrice === 'international') ? '$' : '₹';
                                         $priceFormat = ($nationalityForPrice === 'international') ? number_format($price, 2) : number_format($price, 0);
+                                        $priceLabel = $perDayPrice ? '/day' : '';
                                     @endphp
                                     <option value="{{ $ticketType->slug }}" 
                                             data-price-national="{{ $ticketType->getCurrentPrice('national') }}"
                                             data-price-international="{{ $ticketType->getCurrentPrice('international') }}"
+                                            data-per-day-price-national="{{ $ticketType->getPerDayPrice('national') ?? '' }}"
+                                            data-per-day-price-international="{{ $ticketType->getPerDayPrice('international') ?? '' }}"
+                                            data-has-per-day-pricing="{{ $ticketType->hasPerDayPricing() ? '1' : '0' }}"
+                                            data-enable-day-selection="{{ $ticketType->enable_day_selection ? '1' : '0' }}"
+                                            data-all-days-access="{{ $ticketType->all_days_access ? '1' : '0' }}"
+                                            data-include-all-days-option="{{ $ticketType->include_all_days_option ? '1' : '0' }}"
+                                            data-available-days="{{ json_encode($ticketType->getAllAccessibleDays()->map(function($day) { return ['id' => $day->id, 'label' => $day->label, 'date' => $day->date->format('M d, Y')]; })) }}"
                                             {{ (old('ticket_type_id') == $ticketType->slug || (isset($selectedTicketType) && $selectedTicketType && $selectedTicketType->id == $ticketType->id)) ? 'selected' : '' }}>
-                                        {{ $ticketType->name }} - {{ $currency }}{{ $priceFormat }}
+                                        {{ $ticketType->name }} - {{ $currency }}{{ $priceFormat }}{{ $priceLabel }}
                                     </option>
                                 @endforeach
                             </select>
                         @endif
                         @error('ticket_type_id')
+                            <div class="text-danger">{{ $message }}</div>
+                        @enderror
+                        
+                        {{-- Day Access Info - shows which days the ticket grants access to --}}
+                        <div id="day_access_info" class="mt-2" style="display: none;">
+                            <div class="d-flex align-items-center flex-wrap gap-2">
+                                <span class="text-muted" style="font-size: 0.875rem;">
+                                    <i class="fas fa-calendar-check me-1"></i>Day Access:
+                                </span>
+                                <span id="day_access_badges"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {{-- Day Selection Dropdown - shown when ticket has per-day pricing --}}
+                <div class="row" id="day_selection_row" style="display: none;">
+                    <div class="col-md-12 mb-3">
+                        <label class="form-label required-field">Select Event Day</label>
+                        <select name="selected_event_day_id" class="form-select" id="selected_event_day">
+                            <option value="">Select Day</option>
+                        </select>
+                        <small class="text-muted">Choose which day you want to attend</small>
+                        @error('selected_event_day_id')
                             <div class="text-danger">{{ $message }}</div>
                         @enderror
                     </div>
@@ -519,44 +562,44 @@
                             @error('gst_state')
                                 <div class="text-danger">{{ $message }}</div>
                             @enderror
-                        </div>
-                    </div>
+                </div>
+            </div>
 
                     <!-- Primary Contact Information - Only visible when GST is Yes -->
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
+                <div class="row">
+                    <div class="col-md-6 mb-3">
                             <label class="form-label required-field">Primary Contact Full Name</label>
-                            <input type="text" name="contact_name" class="form-control" 
-                                   value="{{ old('contact_name') }}" 
-                                   placeholder="Enter full name" id="contact_name">
-                            @error('contact_name')
-                                <div class="text-danger">{{ $message }}</div>
-                            @enderror
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label required-field">Primary Contact Email Address</label>
-                            <input type="email" name="contact_email" class="form-control" 
-                                   value="{{ old('contact_email') }}" 
-                                   placeholder="Enter email address" id="contact_email">
-                            @error('contact_email')
-                                <div class="text-danger">{{ $message }}</div>
-                            @enderror
-                        </div>
+                        <input type="text" name="contact_name" class="form-control" 
+                               value="{{ old('contact_name') }}" 
+                               placeholder="Enter full name" id="contact_name">
+                        @error('contact_name')
+                            <div class="text-danger">{{ $message }}</div>
+                        @enderror
                     </div>
+                    <div class="col-md-6 mb-3">
+                            <label class="form-label required-field">Primary Contact Email Address</label>
+                        <input type="email" name="contact_email" class="form-control" 
+                               value="{{ old('contact_email') }}" 
+                               placeholder="Enter email address" id="contact_email">
+                        @error('contact_email')
+                            <div class="text-danger">{{ $message }}</div>
+                        @enderror
+                    </div>
+                </div>
 
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
+                <div class="row">
+                    <div class="col-md-6 mb-3">
                             <label class="form-label required-field">Primary Contact Mobile Number</label>
-                            <input type="tel" name="contact_phone" class="form-control" 
+                        <input type="tel" name="contact_phone" class="form-control" 
                                    value="{{ old('contact_phone') ? preg_replace('/\s+/', '', old('contact_phone')) : '' }}" 
                                    placeholder="Enter mobile number" 
                                    id="contact_phone"
                                    pattern="[0-9]*"
                                    inputmode="numeric">
-                            <input type="hidden" name="contact_phone_country_code" id="contact_phone_country_code" value="{{ old('contact_phone_country_code', '+91') }}">
-                            @error('contact_phone')
-                                <div class="text-danger">{{ $message }}</div>
-                            @enderror
+                        <input type="hidden" name="contact_phone_country_code" id="contact_phone_country_code" value="{{ old('contact_phone_country_code', '+91') }}">
+                        @error('contact_phone')
+                            <div class="text-danger">{{ $message }}</div>
+                        @enderror
                         </div>
                     </div>
                 </div>
@@ -594,6 +637,174 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    // Day Selection Handler
+    const ticketTypeSelect = document.getElementById('ticket_type_select');
+    const lockedTicketType = document.getElementById('locked_ticket_type');
+    const daySelectionRow = document.getElementById('day_selection_row');
+    const selectedEventDaySelect = document.getElementById('selected_event_day');
+    const dayAccessInfo = document.getElementById('day_access_info');
+    const dayAccessBadges = document.getElementById('day_access_badges');
+    
+    // Helper function to get ticket type data (from select option or locked input)
+    function getTicketTypeData() {
+        if (ticketTypeSelect) {
+            const selectedOption = ticketTypeSelect.options[ticketTypeSelect.selectedIndex];
+            if (!selectedOption || !selectedOption.value) return null;
+            return selectedOption.dataset;
+        } else if (lockedTicketType) {
+            return lockedTicketType.dataset;
+        }
+        return null;
+    }
+    
+    function updateDayAccessInfo() {
+        if (!dayAccessInfo || !dayAccessBadges) return;
+        
+        const data = getTicketTypeData();
+        if (!data) {
+            dayAccessInfo.style.display = 'none';
+            dayAccessBadges.innerHTML = '';
+            return;
+        }
+        
+        const allDaysAccess = data.allDaysAccess === '1';
+        const availableDaysJson = data.availableDays;
+        
+        try {
+            if (allDaysAccess) {
+                // Show "All Days" badge
+                dayAccessBadges.innerHTML = '<span class="badge" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 0.35rem 0.75rem; border-radius: 6px; font-weight: 500;"><i class="fas fa-check-circle me-1"></i>All Days</span>';
+                dayAccessInfo.style.display = 'block';
+            } else {
+                const availableDays = JSON.parse(availableDaysJson);
+                if (availableDays && availableDays.length > 0) {
+                    let badgesHtml = '';
+                    availableDays.forEach(day => {
+                        badgesHtml += `<span class="badge bg-primary me-1" style="padding: 0.35rem 0.75rem; border-radius: 6px; font-weight: 500;">${day.label}</span>`;
+                    });
+                    dayAccessBadges.innerHTML = badgesHtml;
+                    dayAccessInfo.style.display = 'block';
+                } else {
+                    dayAccessInfo.style.display = 'none';
+                }
+            }
+        } catch(e) {
+            console.error('Error parsing available days:', e);
+            dayAccessInfo.style.display = 'none';
+        }
+    }
+    
+    function updateDaySelection() {
+        if (!daySelectionRow || !selectedEventDaySelect) return;
+        
+        const data = getTicketTypeData();
+        if (!data) {
+            daySelectionRow.style.display = 'none';
+            selectedEventDaySelect.innerHTML = '<option value="">Select Day</option>';
+            selectedEventDaySelect.removeAttribute('required');
+            return;
+        }
+        
+        const enableDaySelection = data.enableDaySelection === '1';
+        const allDaysAccess = data.allDaysAccess === '1';
+        const includeAllDaysOption = data.includeAllDaysOption === '1';
+        const availableDaysJson = data.availableDays;
+        const hasPerDayPricing = data.hasPerDayPricing === '1';
+        
+        // Show day selection only if enable_day_selection is ON
+        if (enableDaySelection) {
+            try {
+                const availableDays = JSON.parse(availableDaysJson);
+                selectedEventDaySelect.innerHTML = '<option value="">Select Day</option>';
+                
+                // Add "All Days" option first (if all_days_access OR include_all_days_option is enabled)
+                if (allDaysAccess || includeAllDaysOption) {
+                    const allDaysOption = document.createElement('option');
+                    allDaysOption.value = 'all';
+                    // Get date range from available days
+                    if (availableDays && availableDays.length > 0) {
+                        const sortedDays = [...availableDays].sort((a, b) => new Date(a.date) - new Date(b.date));
+                        const startDate = sortedDays[0].date;
+                        const endDate = sortedDays[sortedDays.length - 1].date;
+                        
+                        // Add price info for All Days
+                        let priceInfo = '';
+                        const nationality = document.querySelector('select[name="nationality"]')?.value || 
+                                           document.querySelector('input[name="nationality"]')?.value || 'national';
+                        const priceNational = data.priceNational;
+                        const priceInternational = data.priceInternational;
+                        if (nationality === 'international' && priceInternational) {
+                            priceInfo = ' - $' + parseFloat(priceInternational).toLocaleString();
+                        } else if (priceNational) {
+                            priceInfo = ' - ₹' + parseFloat(priceNational).toLocaleString();
+                        }
+                        
+                        allDaysOption.textContent = 'All Days (' + startDate + ' - ' + endDate + ')' + priceInfo;
+                    } else {
+                        allDaysOption.textContent = 'All Days';
+                    }
+                    if ('{{ old("selected_event_day_id") }}' === 'all') {
+                        allDaysOption.selected = true;
+                    }
+                    selectedEventDaySelect.appendChild(allDaysOption);
+                }
+                
+                // Add individual day options
+                if (availableDays && availableDays.length > 0) {
+                    availableDays.forEach(day => {
+                        const option = document.createElement('option');
+                        option.value = day.id;
+                        // Show per-day price if available
+                        let priceInfo = '';
+                        if (hasPerDayPricing) {
+                            const nationality = document.querySelector('select[name="nationality"]')?.value || 
+                                               document.querySelector('input[name="nationality"]')?.value || 'national';
+                            const perDayNational = data.perDayPriceNational;
+                            const perDayInternational = data.perDayPriceInternational;
+                            if (nationality === 'international' && perDayInternational) {
+                                priceInfo = ' - $' + parseFloat(perDayInternational).toLocaleString();
+                            } else if (perDayNational) {
+                                priceInfo = ' - ₹' + parseFloat(perDayNational).toLocaleString();
+                            }
+                        }
+                        option.textContent = day.label + ' (' + day.date + ')' + priceInfo;
+                        // Check for old value
+                        if ('{{ old("selected_event_day_id") }}' == day.id) {
+                            option.selected = true;
+                        }
+                        selectedEventDaySelect.appendChild(option);
+                    });
+                }
+                
+                daySelectionRow.style.display = 'flex';
+                selectedEventDaySelect.setAttribute('required', 'required');
+            } catch(e) {
+                console.error('Error parsing available days:', e);
+                daySelectionRow.style.display = 'none';
+                selectedEventDaySelect.removeAttribute('required');
+            }
+        } else {
+            daySelectionRow.style.display = 'none';
+            selectedEventDaySelect.innerHTML = '<option value="">Select Day</option>';
+            selectedEventDaySelect.removeAttribute('required');
+        }
+    }
+    
+    // Initialize day selection and day access info on page load
+    if (ticketTypeSelect) {
+        ticketTypeSelect.addEventListener('change', function() {
+            updateDayAccessInfo();
+            updateDaySelection();
+        });
+        // Trigger on load in case ticket type is pre-selected
+        updateDayAccessInfo();
+        updateDaySelection();
+    } else if (lockedTicketType) {
+        // If ticket type is locked (from URL params), still initialize day selection
+        updateDayAccessInfo();
+        updateDaySelection();
+    }
+
     // Delegate form generation
     const delegateCountInput = document.getElementById('delegate_count');
     const delegatesContainer = document.getElementById('delegates_container');
@@ -687,7 +898,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 </div>
                 <div class="row">
                     <div class="col-md-12 mb-3">
-                        <label class="form-label required-field">Job Title</label>
+                        <label class="form-label required-field">Designation</label>
                         <input type="text" name="delegates[${i}][job_title]" class="form-control" 
                                value="${delegateData.job_title || ''}" 
                                placeholder="Enter job title" required>
@@ -1294,16 +1505,16 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Update ticket type prices when nationality changes
     const nationalitySelect = document.getElementById('nationality') || document.querySelector('select[name="nationality"]');
-    const ticketTypeSelect = document.getElementById('ticket_type_select');
+    const ticketTypeSelectForPrice = document.getElementById('ticket_type_select');
     
-    if (nationalitySelect && ticketTypeSelect) {
+    if (nationalitySelect && ticketTypeSelectForPrice) {
         nationalitySelect.addEventListener('change', function() {
             const nationality = this.value;
             const isInternational = nationality === 'international';
             const currency = isInternational ? '$' : '₹';
             
             // Update all ticket type options
-            ticketTypeSelect.querySelectorAll('option').forEach(function(option) {
+            ticketTypeSelectForPrice.querySelectorAll('option').forEach(function(option) {
                 if (option.value && option.dataset.priceNational) {
                     const price = isInternational 
                         ? parseFloat(option.dataset.priceInternational || 0)
@@ -1400,7 +1611,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         legalNameInput.value = data.gst.company_name;
                         legalNameInput.setAttribute('readonly', 'readonly');
                         legalNameInput.style.backgroundColor = '#e9ecef';
-                    }
+                            }
                     if (data.gst.billing_address && addressInput) {
                         addressInput.value = data.gst.billing_address;
                         addressInput.setAttribute('readonly', 'readonly');
