@@ -368,7 +368,7 @@
                 {{-- Primary Contact Person --}}
                 <h5 class="mb-3 mt-4 border-bottom pb-2"><i class="fas fa-user"></i> Contact Person Details</h5>
                 <div class="row mb-3">
-                    <div class="col-md-3">
+                    <div class="col-md-2">
                         <label for="contact_title" class="form-label">Title <span class="text-danger">*</span></label>
                         <select class="form-select" id="contact_title" name="contact_title" required>
                             <option value=""></option>
@@ -380,26 +380,30 @@
                         </select>
                         <div class="invalid-feedback"></div>
                     </div>
-                    <div class="col-md-3">
+                    <div class="col-md-5">
                         <label for="contact_first_name" class="form-label">First Name <span class="text-danger">*</span></label>
                         <input type="text" class="form-control" id="contact_first_name" name="contact_first_name" 
                                value="{{ isset($draft->contact_data['first_name']) ? $draft->contact_data['first_name'] : ($draft->contact_first_name ?? '') }}" required>
                         <div class="invalid-feedback"></div>
                     </div>
-                    <div class="col-md-3">
+                    <div class="col-md-5">
                         <label for="contact_last_name" class="form-label">Last Name <span class="text-danger">*</span></label>
                         <input type="text" class="form-control" id="contact_last_name" name="contact_last_name" 
                                value="{{ isset($draft->contact_data['last_name']) ? $draft->contact_data['last_name'] : ($draft->contact_last_name ?? '') }}" required>
                         <div class="invalid-feedback"></div>
                     </div>
-                    <div class="col-md-3">
+                    
+                </div>
+                <div class="row mb-3">
+
+
+
+                    <div class="col-md-6">
                         <label for="contact_designation" class="form-label">Designation <span class="text-danger">*</span></label>
                         <input type="text" class="form-control" id="contact_designation" name="contact_designation" 
                                value="{{ isset($draft->contact_data['designation']) ? $draft->contact_data['designation'] : ($draft->contact_designation ?? '') }}" required>
                         <div class="invalid-feedback"></div>
                     </div>
-                </div>
-                <div class="row mb-3">
                     <div class="col-md-6">
                         <label for="contact_email" class="form-label">Email <span class="text-danger">*</span></label>
                         <input type="email" class="form-control" id="contact_email" name="contact_email" 
@@ -407,6 +411,12 @@
                         <div class="invalid-feedback"></div>
                         <div id="contact_email_check" class="mt-1" style="display: none;"></div>
                     </div>
+
+                    
+                   
+                </div>
+                <div class="row mb-3">
+                   
                     <div class="col-md-6">
                         <label for="contact_mobile" class="form-label">Mobile <span class="text-danger">*</span></label>
                         <input type="tel" class="form-control" id="contact_mobile" name="contact_mobile" 
@@ -414,6 +424,7 @@
                         <input type="hidden" id="contact_country_code" name="contact_country_code">
                         <input type="hidden" id="contact_mobile_national" name="contact_mobile_national">
                         <div class="invalid-feedback"></div>
+                   
                     </div>
                 </div>
 
