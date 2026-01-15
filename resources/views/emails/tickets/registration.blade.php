@@ -242,7 +242,7 @@
                 $currencySymbol = $isInternational ? '$' : '₹';
                 $priceFormat = $isInternational ? 2 : 0; // 2 decimals for USD, 0 for INR
             @endphp
-            
+
     <div class="email-container">
         <!-- Header -->
         <table width="100%" cellpadding="0" cellspacing="0" style="background: #ffffff; border-bottom: 2px solid #e0e0e0;">
@@ -315,11 +315,12 @@
             <div class="order-info">
                 <table width="100%" cellpadding="0" cellspacing="0">
                 
-                 <tr>
-                        <td style="font-size: 16px; font-weight: 700; color: #0066cc;">Date: {{ $order->created_at->format('d-m-Y') }}</td>
-                    </tr>
+                
                     <tr>
                         <td style="font-size: 16px; font-weight: 700; color: #0066cc;">TIN No.: {{ $order->order_no }}</td>
+                    </tr>
+                     <tr>
+                        <td style="font-size: 16px; font-weight: 700; color: #0066cc;">Date: {{ $order->created_at->format('d-m-Y') }}</td>
                     </tr>
                 @if($order->status === 'paid')
                 @php
