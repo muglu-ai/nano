@@ -429,7 +429,7 @@ class PublicTicketController extends Controller
         }
         
         // Auto-set registration category if not provided
-        // Try to get from ticket rules first, otherwise use default (first active category)
+        // Priority: 1. Ticket rules, 2. Match by name, 3. First active category
         if (empty($validated['registration_category_id'])) {
             // Try to find registration category from ticket rules
             $ticketRule = \App\Models\Ticket\TicketCategoryTicketRule::where('ticket_type_id', $ticketType->id)
@@ -442,40 +442,24 @@ class PublicTicketController extends Controller
             if ($ticketRule && $ticketRule->registrationCategory) {
                 $validated['registration_category_id'] = $ticketRule->registrationCategory->id;
             } else {
-                // Use default: first active registration category for this event
-                $defaultCategory = TicketRegistrationCategory::where('event_id', $event->id)
+                // Try to match registration category by ticket type name
+                $matchedCategory = TicketRegistrationCategory::where('event_id', $event->id)
                     ->where('is_active', true)
-                    ->orderBy('sort_order')
+                    ->where('name', $ticketType->name)
                     ->first();
                 
-                if ($defaultCategory) {
-                    $validated['registration_category_id'] = $defaultCategory->id;
-                }
-            }
-        }
-        
-        // Auto-set registration category if not provided
-        // Try to get from ticket rules first, otherwise use default (first active category)
-        if (empty($validated['registration_category_id'])) {
-            // Try to find registration category from ticket rules
-            $ticketRule = \App\Models\Ticket\TicketCategoryTicketRule::where('ticket_type_id', $ticketType->id)
-                ->whereHas('registrationCategory', function($q) use ($event) {
-                    $q->where('event_id', $event->id)->where('is_active', true);
-                })
-                ->with('registrationCategory')
-                ->first();
-            
-            if ($ticketRule && $ticketRule->registrationCategory) {
-                $validated['registration_category_id'] = $ticketRule->registrationCategory->id;
-            } else {
-                // Use default: first active registration category for this event
-                $defaultCategory = TicketRegistrationCategory::where('event_id', $event->id)
-                    ->where('is_active', true)
-                    ->orderBy('sort_order')
-                    ->first();
-                
-                if ($defaultCategory) {
-                    $validated['registration_category_id'] = $defaultCategory->id;
+                if ($matchedCategory) {
+                    $validated['registration_category_id'] = $matchedCategory->id;
+                } else {
+                    // Fallback: first active registration category for this event
+                    $defaultCategory = TicketRegistrationCategory::where('event_id', $event->id)
+                        ->where('is_active', true)
+                        ->orderBy('sort_order')
+                        ->first();
+                    
+                    if ($defaultCategory) {
+                        $validated['registration_category_id'] = $defaultCategory->id;
+                    }
                 }
             }
         }
