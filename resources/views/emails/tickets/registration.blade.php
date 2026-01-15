@@ -284,9 +284,16 @@
                     @endif
                     </span>
                 </td>
-                <td style="padding: 10px 15px; text-align: right; font-size: 13px; color: #666666;">
-                    <strong>Date:</strong> {{ $order->created_at->format('d-m-Y') }}
+                 <td style="padding: 10px 15px; text-align: right; font-size: 13px; color: #666666;">
+                    @if($order->status !== 'paid')
+            <div style="text-align: center; margin: 7px 0;">
+                <a href="{{ route('tickets.payment.by-tin', ['eventSlug' => $event->slug ?? $event->id, 'tin' => $order->order_no]) }}" class="btn-pay-now">
+                    💳 Pay Now - {{ $currencySymbol }}{{ number_format($order->total, $priceFormat) }}
+                </a>
+            </div>
+            @endif
                 </td>
+               
             </tr>
         </table>
 
@@ -300,6 +307,10 @@
             {{--
             <div class="order-info">
                 <table width="100%" cellpadding="0" cellspacing="0">
+                
+                 <tr>
+                        <td style="font-size: 16px; font-weight: 700; color: #0066cc;">Date: {{ $order->created_at->format('d-m-Y') }}</td>
+                    </tr>
                     <tr>
                         <td style="font-size: 16px; font-weight: 700; color: #0066cc;">TIN No.: {{ $order->order_no }}</td>
                     </tr>
