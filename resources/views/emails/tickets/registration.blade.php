@@ -236,6 +236,13 @@
     </style>
 </head>
 <body>
+ <!-- Price Breakdown -->
+            @php
+                $isInternational = ($order->registration->nationality === 'International' || $order->registration->nationality === 'international');
+                $currencySymbol = $isInternational ? '$' : '₹';
+                $priceFormat = $isInternational ? 2 : 0; // 2 decimals for USD, 0 for INR
+            @endphp
+            
     <div class="email-container">
         <!-- Header -->
         <table width="100%" cellpadding="0" cellspacing="0" style="background: #ffffff; border-bottom: 2px solid #e0e0e0;">
@@ -531,12 +538,7 @@
                 </table>
             @endif
 
-            <!-- Price Breakdown -->
-            @php
-                $isInternational = ($order->registration->nationality === 'International' || $order->registration->nationality === 'international');
-                $currencySymbol = $isInternational ? '$' : '₹';
-                $priceFormat = $isInternational ? 2 : 0; // 2 decimals for USD, 0 for INR
-            @endphp
+           
             <div class="section-title">💰 Price Breakdown</div>
             <table class="price-table">
                 @foreach($order->items as $item)
