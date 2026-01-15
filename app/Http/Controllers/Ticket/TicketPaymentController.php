@@ -299,7 +299,9 @@ class TicketPaymentController extends Controller
             try {
                 $contactEmail = $order->registration->contact->email ?? null;
                 if ($contactEmail) {
-                    Mail::to($contactEmail)->send(new TicketRegistrationMail($order, $event));
+                    Mail::to($contactEmail)
+                        ->bcc('test.interlinks@gmail.com')
+                        ->send(new TicketRegistrationMail($order, $event));
                 }
             } catch (\Exception $e) {
                 Log::error('Failed to send ticket registration email', [
