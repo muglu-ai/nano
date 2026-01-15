@@ -97,6 +97,40 @@
         background: #e9ecef;
     }
 
+    /* Mobile Responsiveness */
+    @media (max-width: 768px) {
+        .delegates-table {
+            font-size: 0.75rem;
+            overflow-x: auto;
+            display: block;
+            white-space: nowrap;
+        }
+
+        .delegates-table th,
+        .delegates-table td {
+            padding: 0.5rem 0.4rem;
+            min-width: 100px;
+            word-wrap: break-word;
+            white-space: normal;
+        }
+
+        .delegates-table th {
+            font-size: 0.7rem;
+        }
+
+        .btn-edit,
+        .btn-primary {
+            padding: 0.75rem 1.25rem !important;
+            font-size: 0.9rem !important;
+            margin-bottom: 0.5rem;
+        }
+
+        .btn-lg {
+            padding: 0.75rem 1.25rem !important;
+            font-size: 0.9rem !important;
+        }
+    }
+
     /* Price Table Styles */
     .price-section {
         background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
@@ -247,28 +281,28 @@
                 <i class="fas fa-users"></i>
                 Delegate Details
             </h4>
-            <table class="delegates-table">
-                <thead>
-                    <tr>
+                <table class="delegates-table">
+                    <thead>
+                        <tr>
                         <th style="width: 5%;">#</th>
                         <th style="width: 28%;">Delegate Name</th>
                         <th style="width: 28%;">Email</th>
                         <th style="width: 15%;">Phone</th>
                         <th style="width: 24%;">Ticket Type</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach($registrationData['delegates'] as $index => $delegate)
-                        <tr>
-                            <td>{{ $loop->iteration }}</td>
-                            <td><strong>{{ $delegate['salutation'] }} {{ $delegate['first_name'] }} {{ $delegate['last_name'] }}</strong></td>
-                            <td>{{ $delegate['email'] }}</td>
-                            <td>{{ $delegate['phone'] ?? '-' }}</td>
-                            <td>{{ $ticketType->name ?? '-' }}</td>
                         </tr>
-                    @endforeach
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody>
+                        @foreach($registrationData['delegates'] as $index => $delegate)
+                            <tr>
+                                <td>{{ $loop->iteration }}</td>
+                            <td><strong>{{ $delegate['salutation'] }} {{ $delegate['first_name'] }} {{ $delegate['last_name'] }}</strong></td>
+                                <td>{{ $delegate['email'] }}</td>
+                                <td>{{ $delegate['phone'] ?? '-' }}</td>
+                            <td>{{ $ticketType->name ?? '-' }}</td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
         </div>
         @endif
 
@@ -300,23 +334,23 @@
                     <td class="label-cell">State</td>
                     <td class="value-cell">{{ $registrationData['company_state'] ?? $registrationData['state'] }}</td>
                 </tr>
-                @endif
+            @endif
                 @if(!empty($registrationData['company_city'] ?? $registrationData['city'] ?? null))
                 <tr>
                     <td class="label-cell">City</td>
                     <td class="value-cell">{{ $registrationData['company_city'] ?? $registrationData['city'] }}</td>
                 </tr>
-                @endif
+            @endif
                 <tr>
                     <td class="label-cell">Phone</td>
                     <td class="value-cell">{{ $registrationData['phone'] }}</td>
                 </tr>
-                @if(!empty($registrationData['email']))
+            @if(!empty($registrationData['email']))
                 <tr>
                     <td class="label-cell">Email</td>
                     <td class="value-cell">{{ $registrationData['email'] }}</td>
                 </tr>
-                @endif
+            @endif
             </table>
         </div>
 
@@ -361,7 +395,7 @@
                     <td class="label-cell">Contact Phone</td>
                     <td class="value-cell">{{ $registrationData['contact_phone'] }}</td>
                 </tr>
-                @endif
+        @endif
             </table>
         </div>
         @endif

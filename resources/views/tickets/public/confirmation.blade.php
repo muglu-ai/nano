@@ -111,6 +111,28 @@
         background: #e9ecef;
     }
 
+    /* Mobile Responsiveness */
+    @media (max-width: 768px) {
+        .delegates-table {
+            font-size: 0.75rem;
+            overflow-x: auto;
+            display: block;
+            white-space: nowrap;
+        }
+
+        .delegates-table th,
+        .delegates-table td {
+            padding: 0.5rem 0.4rem;
+            min-width: 100px;
+            word-wrap: break-word;
+            white-space: normal;
+        }
+
+        .delegates-table th {
+            font-size: 0.7rem;
+        }
+    }
+
     /* Badge styles */
     .day-badge {
         display: inline-block;

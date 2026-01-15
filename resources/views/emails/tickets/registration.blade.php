@@ -119,6 +119,29 @@
         .delegates-table tr:nth-child(even) {
             background: #f8f9fa;
         }
+
+        /* Mobile Responsiveness for Email */
+        @media only screen and (max-width: 600px) {
+            .delegates-table {
+                font-size: 11px;
+                overflow-x: auto;
+                display: block;
+                white-space: nowrap;
+            }
+
+            .delegates-table th,
+            .delegates-table td {
+                padding: 6px 4px;
+                min-width: 80px;
+                word-wrap: break-word;
+                white-space: normal;
+            }
+
+            .delegates-table th {
+                font-size: 10px;
+            }
+        }
+
         .price-table {
             width: 100%;
             border-collapse: collapse;
@@ -200,7 +223,7 @@
             border-top: 2px solid #e0e0e0;
         }
         .secretariat-table {
-            width: 100%;
+                width: 100%;
             border-collapse: collapse;
             margin-top: 10px;
             border-top: 1px solid #e0e0e0;
@@ -218,33 +241,33 @@
         <table width="100%" cellpadding="0" cellspacing="0" style="background: #ffffff; border-bottom: 2px solid #e0e0e0;">
             <tr>
                 <td style="padding: 12px 15px; width: 65%;">
-                    @if(config('constants.event_logo'))
-                    <img src="{{ config('constants.event_logo') }}" alt="{{ config('constants.EVENT_NAME') }}" class="event-logo">
-                    @endif
+                @if(config('constants.event_logo'))
+                <img src="{{ config('constants.event_logo') }}" alt="{{ config('constants.EVENT_NAME') }}" class="event-logo">
+                @endif
                 </td>
                 <td style="padding: 12px 15px; text-align: right; width: 35%;">
-                    <div class="social-links">
-                        @if(config('constants.SOCIAL_LINKS.facebook'))
+                <div class="social-links">
+                    @if(config('constants.SOCIAL_LINKS.facebook'))
                         <a href="{{ config('constants.SOCIAL_LINKS.facebook') }}" target="_blank">
                             <img src="https://upload.wikimedia.org/wikipedia/commons/5/51/Facebook_f_logo_%282019%29.svg" alt="Facebook">
-                        </a>
-                        @endif
-                        @if(config('constants.SOCIAL_LINKS.twitter'))
+                    </a>
+                    @endif
+                    @if(config('constants.SOCIAL_LINKS.twitter'))
                         <a href="{{ config('constants.SOCIAL_LINKS.twitter') }}" target="_blank">
                             <img src="https://upload.wikimedia.org/wikipedia/commons/6/6f/Logo_of_Twitter.svg" alt="Twitter">
-                        </a>
-                        @endif
-                        @if(config('constants.SOCIAL_LINKS.linkedin'))
+                    </a>
+                    @endif
+                    @if(config('constants.SOCIAL_LINKS.linkedin'))
                         <a href="{{ config('constants.SOCIAL_LINKS.linkedin') }}" target="_blank">
                             <img src="https://upload.wikimedia.org/wikipedia/commons/c/ca/LinkedIn_logo_initials.png" alt="LinkedIn">
-                        </a>
-                        @endif
-                        @if(config('constants.SOCIAL_LINKS.instagram'))
+                    </a>
+                    @endif
+                    @if(config('constants.SOCIAL_LINKS.instagram'))
                         <a href="{{ config('constants.SOCIAL_LINKS.instagram') }}" target="_blank">
                             <img src="https://upload.wikimedia.org/wikipedia/commons/a/a5/Instagram_icon.png" alt="Instagram">
-                        </a>
-                        @endif
-                    </div>
+                    </a>
+                    @endif
+                </div>
                 </td>
             </tr>
         </table>
@@ -254,11 +277,11 @@
             <tr>
                 <td style="padding: 10px 15px;">
                     <span class="receipt-type">
-                        @if($order->status === 'paid')
-                            ✓ CONFIRMATION RECEIPT
-                        @else
-                            ⏳ PROVISIONAL RECEIPT
-                        @endif
+                    @if($order->status === 'paid')
+                        ✓ CONFIRMATION RECEIPT
+                    @else
+                        ⏳ PROVISIONAL RECEIPT
+                    @endif
                     </span>
                 </td>
                 <td style="padding: 10px 15px; text-align: right; font-size: 13px; color: #666666;">
@@ -280,21 +303,21 @@
                     <tr>
                         <td style="font-size: 16px; font-weight: 700; color: #0066cc;">TIN No.: {{ $order->order_no }}</td>
                     </tr>
-                    @if($order->status === 'paid')
-                    @php
-                        $pinNo = $order->pin_no ?? null;
-                        if (!$pinNo && $order->status === 'paid') {
-                            $prefix = config('constants.PIN_NO_PREFIX', 'PRN-BTS-2026-EXHP-');
-                            $randomNumber = str_pad(rand(100000, 999999), 6, '0', STR_PAD_LEFT);
-                            $pinNo = $prefix . $randomNumber;
-                        }
-                    @endphp
-                    @if($pinNo)
+                @if($order->status === 'paid')
+                @php
+                    $pinNo = $order->pin_no ?? null;
+                    if (!$pinNo && $order->status === 'paid') {
+                        $prefix = config('constants.PIN_NO_PREFIX', 'PRN-BTS-2026-EXHP-');
+                        $randomNumber = str_pad(rand(100000, 999999), 6, '0', STR_PAD_LEFT);
+                        $pinNo = $prefix . $randomNumber;
+                    }
+                @endphp
+                @if($pinNo)
                     <tr>
                         <td style="font-size: 14px; padding-top: 5px;"><strong>PIN No.:</strong> {{ $pinNo }}</td>
                     </tr>
-                    @endif
-                    @endif
+                @endif
+                @endif
                     <tr>
                         <td style="font-size: 12px; color: #666666; padding-top: 5px;">Please keep this TIN number for your records.</td>
                     </tr>
@@ -473,28 +496,28 @@
             @if($order->registration->delegates && $order->registration->delegates->count() > 0)
             <div class="section-title">👥 Delegate Details</div>
             @php $ticketTypeName = $order->items->first()->ticketType->name ?? 'N/A'; @endphp
-            <table class="delegates-table">
-                <thead>
-                    <tr>
+                <table class="delegates-table">
+                    <thead>
+                        <tr>
                         <th style="width: 5%;">#</th>
                         <th style="width: 30%;">Delegate Name</th>
                         <th style="width: 30%;">Email</th>
                         <th style="width: 15%;">Phone</th>
                         <th style="width: 20%;">Ticket Type</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach($order->registration->delegates as $delegate)
-                    <tr>
-                        <td>{{ $loop->iteration }}</td>
-                        <td>{{ $delegate->salutation }} {{ $delegate->first_name }} {{ $delegate->last_name }}</td>
-                        <td>{{ $delegate->email }}</td>
-                        <td>{{ $delegate->phone ?? '-' }}</td>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach($order->registration->delegates as $delegate)
+                        <tr>
+                            <td>{{ $loop->iteration }}</td>
+                            <td>{{ $delegate->salutation }} {{ $delegate->first_name }} {{ $delegate->last_name }}</td>
+                            <td>{{ $delegate->email }}</td>
+                            <td>{{ $delegate->phone ?? '-' }}</td>
                         <td>{{ $ticketTypeName }}</td>
-                    </tr>
-                    @endforeach
-                </tbody>
-            </table>
+                        </tr>
+                        @endforeach
+                    </tbody>
+                </table>
             @endif
 
             <!-- Price Breakdown -->
@@ -587,9 +610,9 @@
         <table class="secretariat-table" style="background: #f8f9fa;">
             <tr>
                 <td style="width: 35%; text-align: center; border-right: 1px solid #e0e0e0;">
-                    @if(config('constants.organizer_logo'))
+                @if(config('constants.organizer_logo'))
                     <img src="{{ config('constants.organizer_logo') }}" alt="{{ config('constants.organizer.name') }}" style="max-width: 130px; height: auto;">
-                    @endif
+                @endif
                 </td>
                 <td style="width: 65%; padding-left: 15px;">
                     <div style="font-size: 13px; font-weight: 700; color: #333333; margin-bottom: 5px;">{{ config('constants.EVENT_NAME') }} Secretariat</div>
@@ -599,7 +622,7 @@
                         <p style="margin: 2px 0;"><strong>Tel:</strong> {{ config('constants.organizer.phone') }}</p>
                         <p style="margin: 2px 0;"><strong>Email:</strong> <a href="mailto:{{ config('constants.organizer.email') }}" style="color: #0066cc;">{{ config('constants.organizer.email') }}</a></p>
                         <p style="margin: 2px 0;"><strong>Website:</strong> <a href="{{ config('constants.EVENT_WEBSITE') }}" style="color: #0066cc;">{{ config('constants.EVENT_WEBSITE') }}</a></p>
-                    </div>
+            </div>
                 </td>
             </tr>
         </table>

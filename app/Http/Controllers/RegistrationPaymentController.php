@@ -1088,7 +1088,7 @@ class RegistrationPaymentController extends Controller
             if (empty($billingEmail) || !filter_var($billingEmail, FILTER_VALIDATE_EMAIL)) {
                 $validationErrors[] = 'Invalid or missing billing email: ' . ($billingEmail ?? 'null');
             }
-            
+
             // 5. Validate Billing Name
             if (empty($billingName)) {
                 $billingName = $registration->company_name ?? 'Customer';
@@ -1279,7 +1279,7 @@ class RegistrationPaymentController extends Controller
                     'issues' => $potentialIssues,
                 ]);
             }
-            
+
             Log::info('Ticket CCAvenue Payment - Initiating transaction', [
                 'order_id' => $order->id,
                 'order_no' => $order->order_no,
@@ -1825,10 +1825,10 @@ class RegistrationPaymentController extends Controller
                         $invoice->update([
                             'payment_status' => 'unpaid',
                         ]);
-                    }
-                } catch (\Exception $e) {
+            }
+        } catch (\Exception $e) {
                     Log::warning('Ticket CCAvenue Callback - Failed to update invoice', [
-                        'error' => $e->getMessage(),
+                'error' => $e->getMessage(),
                     ]);
                 }
 
@@ -1846,7 +1846,7 @@ class RegistrationPaymentController extends Controller
                     // ============================================================
                     Log::error('CCAvenue INVALID Status - FULL DEBUG INFO', [
                         'order_no' => $order->order_no,
-                        'order_id' => $order->id,
+                'order_id' => $order->id,
                         'full_response' => $responseArray,
                         'status_message' => $responseArray['status_message'] ?? 'N/A',
                         'failure_message' => $responseArray['failure_message'] ?? 'N/A',
@@ -2180,8 +2180,6 @@ class RegistrationPaymentController extends Controller
      * 
      * Returns just the 10-digit phone number without country code
      */
-    private function extractPhoneNumber($phone)
-
     /**
      * Generate unique PIN number for ticket payment confirmation
      * Format: PRN-BTS-2026-TKT-XXXXXX (6-digit random number)
@@ -2192,29 +2190,29 @@ class RegistrationPaymentController extends Controller
         $shortName = config('constants.SHORT_NAME', 'BTS');
         $eventYear = config('constants.EVENT_YEAR', date('Y'));
         $prefix = 'PRN-' . $shortName . '-' . $eventYear . '-TKT-';
-        
+
         $maxAttempts = 100;
         $attempts = 0;
-        
+
         while ($attempts < $maxAttempts) {
             // Generate 6-digit random number
             $randomNumber = str_pad(rand(100000, 999999), 6, '0', STR_PAD_LEFT);
             $pinNo = $prefix . $randomNumber;
             $attempts++;
-            
+
             // Check if it already exists in invoices table
             if (!Invoice::where('pin_no', $pinNo)->exists()) {
                 return $pinNo;
             }
         }
-        
+
         // Fallback: use timestamp-based
         $timestamp = substr(time(), -6);
         $pinNo = $prefix . $timestamp;
         if (!Invoice::where('pin_no', $pinNo)->exists()) {
             return $pinNo;
         }
-        
+
         // Last resort: use microtime
         $microtime = substr(str_replace('.', '', microtime(true)), -6);
         return $prefix . $microtime;

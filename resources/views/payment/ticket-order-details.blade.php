@@ -165,6 +165,36 @@
         background: #e9ecef;
     }
 
+    /* Mobile Responsiveness */
+    @media (max-width: 768px) {
+        .delegates-table {
+            font-size: 0.75rem;
+            overflow-x: auto;
+            display: block;
+            white-space: nowrap;
+        }
+
+        .delegates-table th,
+        .delegates-table td {
+            padding: 0.5rem 0.4rem;
+            min-width: 100px;
+            word-wrap: break-word;
+            white-space: normal;
+        }
+
+        .delegates-table th {
+            font-size: 0.7rem;
+        }
+
+        .btn-pay-now {
+            padding: 0.7rem 1.5rem !important;
+            font-size: 0.9rem !important;
+            width: 100% !important;
+            max-width: 280px;
+            margin: 0 auto;
+        }
+    }
+
     /* Price Table Styles */
     .price-table {
         width: 100%;

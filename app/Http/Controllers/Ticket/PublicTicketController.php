@@ -450,16 +450,16 @@ class PublicTicketController extends Controller
                 
                 if ($matchedCategory) {
                     $validated['registration_category_id'] = $matchedCategory->id;
-                } else {
+            } else {
                     // Fallback: first active registration category for this event
-                    $defaultCategory = TicketRegistrationCategory::where('event_id', $event->id)
-                        ->where('is_active', true)
-                        ->orderBy('sort_order')
-                        ->first();
-                    
-                    if ($defaultCategory) {
-                        $validated['registration_category_id'] = $defaultCategory->id;
-                    }
+                $defaultCategory = TicketRegistrationCategory::where('event_id', $event->id)
+                    ->where('is_active', true)
+                    ->orderBy('sort_order')
+                    ->first();
+                
+                if ($defaultCategory) {
+                    $validated['registration_category_id'] = $defaultCategory->id;
+                }
                 }
             }
         }
