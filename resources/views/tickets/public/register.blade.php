@@ -192,7 +192,7 @@
                         @if(isset($isTicketTypeLocked) && $isTicketTypeLocked)
                             {{-- Hidden field to submit the value --}}
                             <input type="hidden" name="ticket_type_id" value="{{ $selectedTicketType->slug }}">
-                            {{-- Display field (readonly) --}}
+                            {{-- Display field (readonly) with data attributes for day selection --}}
                             @php
                                 $nationalityForPrice = $selectedNationality ?? 'national';
                                 $price = $selectedTicketType->getCurrentPrice($nationalityForPrice);
@@ -200,9 +200,19 @@
                                 $priceFormat = ($nationalityForPrice === 'international') ? number_format($price, 2) : number_format($price, 0);
                             @endphp
                             <input type="text" class="form-control" 
+                                   id="locked_ticket_type"
                                    value="{{ $selectedTicketType->name }} - {{ $currency }}{{ $priceFormat }}" 
                                    readonly 
-                                   style="background-color: #e9ecef; cursor: not-allowed;">
+                                   style="background-color: #e9ecef; cursor: not-allowed;"
+                                   data-price-national="{{ $selectedTicketType->getCurrentPrice('national') }}"
+                                   data-price-international="{{ $selectedTicketType->getCurrentPrice('international') }}"
+                                   data-per-day-price-national="{{ $selectedTicketType->getPerDayPrice('national') ?? '' }}"
+                                   data-per-day-price-international="{{ $selectedTicketType->getPerDayPrice('international') ?? '' }}"
+                                   data-has-per-day-pricing="{{ $selectedTicketType->hasPerDayPricing() ? '1' : '0' }}"
+                                   data-enable-day-selection="{{ $selectedTicketType->enable_day_selection ? '1' : '0' }}"
+                                   data-all-days-access="{{ $selectedTicketType->all_days_access ? '1' : '0' }}"
+                                   data-include-all-days-option="{{ $selectedTicketType->include_all_days_option ? '1' : '0' }}"
+                                   data-available-days="{{ json_encode($selectedTicketType->getAllAccessibleDays()->map(function($day) { return ['id' => $day->id, 'label' => $day->label, 'date' => $day->date->format('M d, Y')]; })) }}">
                         @else
                             <select name="ticket_type_id" class="form-select" id="ticket_type_select" required>
                                 <option value="">Select Ticket Type</option>
@@ -223,6 +233,7 @@
                                             data-has-per-day-pricing="{{ $ticketType->hasPerDayPricing() ? '1' : '0' }}"
                                             data-enable-day-selection="{{ $ticketType->enable_day_selection ? '1' : '0' }}"
                                             data-all-days-access="{{ $ticketType->all_days_access ? '1' : '0' }}"
+                                            data-include-all-days-option="{{ $ticketType->include_all_days_option ? '1' : '0' }}"
                                             data-available-days="{{ json_encode($ticketType->getAllAccessibleDays()->map(function($day) { return ['id' => $day->id, 'label' => $day->label, 'date' => $day->date->format('M d, Y')]; })) }}"
                                             {{ (old('ticket_type_id') == $ticketType->slug || (isset($selectedTicketType) && $selectedTicketType && $selectedTicketType->id == $ticketType->id)) ? 'selected' : '' }}>
                                         {{ $ticketType->name }} - {{ $currency }}{{ $priceFormat }}{{ $priceLabel }}
@@ -628,23 +639,36 @@
 document.addEventListener('DOMContentLoaded', function() {
     // Day Selection Handler
     const ticketTypeSelect = document.getElementById('ticket_type_select');
+    const lockedTicketType = document.getElementById('locked_ticket_type');
     const daySelectionRow = document.getElementById('day_selection_row');
     const selectedEventDaySelect = document.getElementById('selected_event_day');
     const dayAccessInfo = document.getElementById('day_access_info');
     const dayAccessBadges = document.getElementById('day_access_badges');
     
+    // Helper function to get ticket type data (from select option or locked input)
+    function getTicketTypeData() {
+        if (ticketTypeSelect) {
+            const selectedOption = ticketTypeSelect.options[ticketTypeSelect.selectedIndex];
+            if (!selectedOption || !selectedOption.value) return null;
+            return selectedOption.dataset;
+        } else if (lockedTicketType) {
+            return lockedTicketType.dataset;
+        }
+        return null;
+    }
+    
     function updateDayAccessInfo() {
-        if (!ticketTypeSelect || !dayAccessInfo || !dayAccessBadges) return;
+        if (!dayAccessInfo || !dayAccessBadges) return;
         
-        const selectedOption = ticketTypeSelect.options[ticketTypeSelect.selectedIndex];
-        if (!selectedOption || !selectedOption.value) {
+        const data = getTicketTypeData();
+        if (!data) {
             dayAccessInfo.style.display = 'none';
             dayAccessBadges.innerHTML = '';
             return;
         }
         
-        const allDaysAccess = selectedOption.dataset.allDaysAccess === '1';
-        const availableDaysJson = selectedOption.dataset.availableDays;
+        const allDaysAccess = data.allDaysAccess === '1';
+        const availableDaysJson = data.availableDays;
         
         try {
             if (allDaysAccess) {
@@ -671,20 +695,21 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     function updateDaySelection() {
-        if (!ticketTypeSelect || !daySelectionRow || !selectedEventDaySelect) return;
+        if (!daySelectionRow || !selectedEventDaySelect) return;
         
-        const selectedOption = ticketTypeSelect.options[ticketTypeSelect.selectedIndex];
-        if (!selectedOption || !selectedOption.value) {
+        const data = getTicketTypeData();
+        if (!data) {
             daySelectionRow.style.display = 'none';
             selectedEventDaySelect.innerHTML = '<option value="">Select Day</option>';
             selectedEventDaySelect.removeAttribute('required');
             return;
         }
         
-        const enableDaySelection = selectedOption.dataset.enableDaySelection === '1';
-        const allDaysAccess = selectedOption.dataset.allDaysAccess === '1';
-        const availableDaysJson = selectedOption.dataset.availableDays;
-        const hasPerDayPricing = selectedOption.dataset.hasPerDayPricing === '1';
+        const enableDaySelection = data.enableDaySelection === '1';
+        const allDaysAccess = data.allDaysAccess === '1';
+        const includeAllDaysOption = data.includeAllDaysOption === '1';
+        const availableDaysJson = data.availableDays;
+        const hasPerDayPricing = data.hasPerDayPricing === '1';
         
         // Show day selection only if enable_day_selection is ON
         if (enableDaySelection) {
@@ -692,8 +717,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 const availableDays = JSON.parse(availableDaysJson);
                 selectedEventDaySelect.innerHTML = '<option value="">Select Day</option>';
                 
-                // Add "All Days" option first (if all_days_access is enabled)
-                if (allDaysAccess) {
+                // Add "All Days" option first (if all_days_access OR include_all_days_option is enabled)
+                if (allDaysAccess || includeAllDaysOption) {
                     const allDaysOption = document.createElement('option');
                     allDaysOption.value = 'all';
                     // Get date range from available days
@@ -701,7 +726,20 @@ document.addEventListener('DOMContentLoaded', function() {
                         const sortedDays = [...availableDays].sort((a, b) => new Date(a.date) - new Date(b.date));
                         const startDate = sortedDays[0].date;
                         const endDate = sortedDays[sortedDays.length - 1].date;
-                        allDaysOption.textContent = 'All Days (' + startDate + ' - ' + endDate + ')';
+                        
+                        // Add price info for All Days
+                        let priceInfo = '';
+                        const nationality = document.querySelector('select[name="nationality"]')?.value || 
+                                           document.querySelector('input[name="nationality"]')?.value || 'national';
+                        const priceNational = data.priceNational;
+                        const priceInternational = data.priceInternational;
+                        if (nationality === 'international' && priceInternational) {
+                            priceInfo = ' - $' + parseFloat(priceInternational).toLocaleString();
+                        } else if (priceNational) {
+                            priceInfo = ' - ₹' + parseFloat(priceNational).toLocaleString();
+                        }
+                        
+                        allDaysOption.textContent = 'All Days (' + startDate + ' - ' + endDate + ')' + priceInfo;
                     } else {
                         allDaysOption.textContent = 'All Days';
                     }
@@ -719,9 +757,10 @@ document.addEventListener('DOMContentLoaded', function() {
                         // Show per-day price if available
                         let priceInfo = '';
                         if (hasPerDayPricing) {
-                            const nationality = document.querySelector('select[name="nationality"]')?.value || 'national';
-                            const perDayNational = selectedOption.dataset.perDayPriceNational;
-                            const perDayInternational = selectedOption.dataset.perDayPriceInternational;
+                            const nationality = document.querySelector('select[name="nationality"]')?.value || 
+                                               document.querySelector('input[name="nationality"]')?.value || 'national';
+                            const perDayNational = data.perDayPriceNational;
+                            const perDayInternational = data.perDayPriceInternational;
                             if (nationality === 'international' && perDayInternational) {
                                 priceInfo = ' - $' + parseFloat(perDayInternational).toLocaleString();
                             } else if (perDayNational) {
@@ -758,6 +797,10 @@ document.addEventListener('DOMContentLoaded', function() {
             updateDaySelection();
         });
         // Trigger on load in case ticket type is pre-selected
+        updateDayAccessInfo();
+        updateDaySelection();
+    } else if (lockedTicketType) {
+        // If ticket type is locked (from URL params), still initialize day selection
         updateDayAccessInfo();
         updateDaySelection();
     }
