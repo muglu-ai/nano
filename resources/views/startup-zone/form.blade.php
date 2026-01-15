@@ -134,8 +134,8 @@
                         <select class="form-select" id="sector_id" name="sector_id" required>
                             <option value="">Select Sector</option>
                             @foreach($sectors as $sector)
-                            <option value="{{ $sector->id }}" {{ ($draft->sector_id ?? '') == $sector->id ? 'selected' : '' }}>
-                                {{ $sector->name }}
+                            <option value="{{ $sector }}" {{ ($draft->sector ?? '') == $sector ? 'selected' : '' }}>
+                                {{ $sector }}
                             </option>
                             @endforeach
                         </select>

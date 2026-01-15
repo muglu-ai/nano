@@ -107,8 +107,8 @@ class StartupZoneController extends Controller
             ->keyBy('field_name');
         
         // Get dropdown data
-        $sectors = DB::table('sectors')->where('is_active', true)->orderBy('sort_order')->orderBy('name')->get();
-        
+        // $sectors = DB::table('sectors')->where('is_active', true)->orderBy('sort_order')->orderBy('name')->get();
+        $sectors = config('constants.sectors', []);
         // Get SUB_SECTORS from config file instead of database
         $subSectorsConfig = config('constants.SUB_SECTORS', []);
         $subSectors = collect($subSectorsConfig)->map(function ($name, $index) {

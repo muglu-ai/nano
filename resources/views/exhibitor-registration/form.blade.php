@@ -108,6 +108,8 @@
                         </select>
                         <div class="invalid-feedback"></div>
                     </div>
+                    
+                    
                 </div>
 
                 {{-- Tax & Compliance Details --}}
@@ -364,7 +366,7 @@
                 </div>
 
                 {{-- Primary Contact Person --}}
-                <h5 class="mb-3 mt-4 border-bottom pb-2"><i class="fas fa-user"></i> Primary Contact Person</h5>
+                <h5 class="mb-3 mt-4 border-bottom pb-2"><i class="fas fa-user"></i> Contact Person Details</h5>
                 <div class="row mb-3">
                     <div class="col-md-3">
                         <label for="contact_title" class="form-label">Title <span class="text-danger">*</span></label>
@@ -403,6 +405,7 @@
                         <input type="email" class="form-control" id="contact_email" name="contact_email" 
                                value="{{ isset($draft->contact_data['email']) ? $draft->contact_data['email'] : ($draft->contact_email ?? '') }}" required>
                         <div class="invalid-feedback"></div>
+                        <div id="contact_email_check" class="mt-1" style="display: none;"></div>
                     </div>
                     <div class="col-md-6">
                         <label for="contact_mobile" class="form-label">Mobile <span class="text-danger">*</span></label>
@@ -994,6 +997,22 @@ $(document).ready(function() {
                 if (response.success) {
                     // Update progress based on current step (always step 1 for form page)
                     updateProgressByStep(1);
+                    
+                    // Handle email warning from backend (non-blocking)
+                    if (response.email_warning && response.email_message) {
+                        const contactEmailInput = document.getElementById('contact_email');
+                        const contactEmailCheck = document.getElementById('contact_email_check');
+                        if (contactEmailInput && contactEmailCheck) {
+                            contactEmailInput.classList.add('is-invalid');
+                            contactEmailCheck.style.display = 'block';
+                            contactEmailCheck.innerHTML = '<small class="text-danger"><i class="fas fa-exclamation-triangle"></i> ' + response.email_message + '</small>';
+                            const feedback = contactEmailInput.nextElementSibling;
+                            if (feedback && feedback.classList.contains('invalid-feedback')) {
+                                feedback.textContent = 'Email already exists';
+                            }
+                        }
+                    }
+                    
                     setTimeout(function() {
                         $('#autoSaveIndicator').addClass('d-none');
                     }, 1000);
@@ -1103,6 +1122,91 @@ $(document).ready(function() {
         submitFormWithRecaptcha('');
         @endif
     });
+
+    // Email validation - check if email already exists in users table
+    const contactEmailInput = document.getElementById('contact_email');
+    const contactEmailCheck = document.getElementById('contact_email_check');
+    let emailCheckTimeout = null;
+
+    if (contactEmailInput) {
+        contactEmailInput.addEventListener('blur', function() {
+            const email = this.value.trim();
+            
+            // Clear previous timeout
+            if (emailCheckTimeout) {
+                clearTimeout(emailCheckTimeout);
+            }
+            
+            // Basic email format validation
+            const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!email) {
+                contactEmailCheck.style.display = 'none';
+                return;
+            }
+            
+            if (!emailPattern.test(email)) {
+                contactEmailCheck.style.display = 'none';
+                return;
+            }
+            
+            // Show checking indicator
+        //     contactEmailCheck.style.display = 'block';
+        //     // contactEmailCheck.innerHTML = '<small class="text-info"><i class="fas fa-spinner fa-spin"></i> Checking email...</small>';
+            
+        //     // Debounce: wait 500ms after user stops typing
+        //     emailCheckTimeout = setTimeout(function() {
+        //         // Check email via AJAX
+        //         fetch('{{ route("exhibitor-registration.check-email") }}', {
+        //             method: 'POST',
+        //             headers: {
+        //                 'Content-Type': 'application/json',
+        //                 'X-CSRF-TOKEN': '{{ csrf_token() }}'
+        //             },
+        //             body: JSON.stringify({ email: email })
+        //         })
+        //         .then(response => response.json())
+        //         .then(data => {
+        //             if (data.exists) {
+        //                 // Email already exists
+        //                 contactEmailInput.classList.add('is-invalid');
+        //                 contactEmailCheck.innerHTML = '<small class="text-danger"><i class="fas fa-times-circle"></i> This email is already registered. Please use a different email address.</small>';
+        //                 const feedback = contactEmailInput.nextElementSibling;
+        //                 if (feedback && feedback.classList.contains('invalid-feedback')) {
+        //                     feedback.textContent = 'Email already exists';
+        //                 }
+        //             } else {
+        //                 // Email is available
+        //                 contactEmailInput.classList.remove('is-invalid');
+        //                 contactEmailCheck.innerHTML = '<small class="text-success"><i class="fas fa-check-circle"></i> Email is available</small>';
+        //                 const feedback = contactEmailInput.nextElementSibling;
+        //                 if (feedback && feedback.classList.contains('invalid-feedback')) {
+        //                     feedback.textContent = '';
+        //                 }
+        //                 // Hide success message after 3 seconds
+        //                 setTimeout(function() {
+        //                     contactEmailCheck.style.display = 'none';
+        //                 }, 3000);
+        //             }
+        //         })
+        //         .catch(error => {
+        //             console.error('Email check error:', error);
+        //             contactEmailCheck.style.display = 'none';
+        //         });
+        //     }, 500);
+        });
+        
+        // Clear check message on input
+        contactEmailInput.addEventListener('input', function() {
+            if (contactEmailCheck) {
+                contactEmailCheck.style.display = 'none';
+            }
+            this.classList.remove('is-invalid');
+            const feedback = this.nextElementSibling;
+            if (feedback && feedback.classList.contains('invalid-feedback')) {
+                feedback.textContent = '';
+            }
+        });
+    }
 });
 </script>
 @endpush
