@@ -671,11 +671,13 @@
         @endif
 
         <!-- Back Link -->
+        {{--
         <div class="text-center mt-3">
             <a href="{{ route('tickets.payment.lookup', $event->slug ?? $event->id) }}" class="btn-back">
                 <i class="fas fa-arrow-left me-2"></i>Back to Lookup
             </a>
         </div>
+        --}}
     </div>
 </div>
 @endsection
