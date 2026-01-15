@@ -306,7 +306,7 @@
                                                 <input type="text" name="delegates[{{ $index }}][phone]" class="form-control" value="{{ $phone }}">
                                             </div>
                                             <div class="col-md-4 mb-3">
-                                                <label class="form-label">Job Title</label>
+                                                <label class="form-label">Designation</label>
                                                 <input type="text" name="delegates[{{ $index }}][job_title]" class="form-control" value="{{ $jobTitle }}">
                                             </div>
                                         </div>
@@ -401,7 +401,7 @@
                         <input type="text" name="delegates[${delegateIndex}][phone]" class="form-control">
                     </div>
                     <div class="col-md-4 mb-3">
-                        <label class="form-label">Job Title</label>
+                        <label class="form-label">Designation</label>
                         <input type="text" name="delegates[${delegateIndex}][job_title]" class="form-control">
                     </div>
                 </div>

@@ -258,7 +258,7 @@
                         <th>Delegate Name</th>
                         <th>Email</th>
                         <th>Phone</th>
-                        <th>Job Title</th>
+                        <th>Designation</th>
                     </tr>
                 </thead>
                 <tbody>

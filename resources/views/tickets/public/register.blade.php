@@ -898,7 +898,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 </div>
                 <div class="row">
                     <div class="col-md-12 mb-3">
-                        <label class="form-label required-field">Job Title</label>
+                        <label class="form-label required-field">Designation</label>
                         <input type="text" name="delegates[${i}][job_title]" class="form-control" 
                                value="${delegateData.job_title || ''}" 
                                placeholder="Enter job title" required>

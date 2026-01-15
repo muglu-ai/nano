@@ -264,7 +264,7 @@
                             <span class="info-value">{{ $delegate->phone }}</span>
                         </div>
                         <div class="info-row">
-                            <span class="info-label">Job Title:</span>
+                            <span class="info-label">Designation:</span>
                             <span class="info-value">{{ $delegate->job_title ?? 'N/A' }}</span>
                         </div>
                     </div>
