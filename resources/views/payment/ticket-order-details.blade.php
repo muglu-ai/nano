@@ -354,10 +354,12 @@
                         </span>
                     </td>
                 </tr>
+                {{--
                 <tr>
                     <td class="label-cell">Registration Category</td>
                     <td class="value-cell">{{ $order->registration->registrationCategory->name ?? 'N/A' }}</td>
                 </tr>
+                --}}
                 <tr>
                     <td class="label-cell">Ticket Type</td>
                     <td class="value-cell"><strong>{{ $order->items->first()->ticketType->name ?? 'N/A' }}</strong></td>
