@@ -328,7 +328,7 @@
             <!-- Alert -->
             @if($order->status !== 'paid')
             <div class="alert">
-                <strong>⚠️ Action Required:</strong> Your order is pending payment. Please complete the payment to confirm your registration.
+                <strong>⚠️ Action Required:</strong> Please complete the payment to confirm your registration.
             </div>
             @else
             <div class="success-alert">
