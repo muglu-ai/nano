@@ -13,7 +13,7 @@
             margin: 0 auto;
             padding: 10px;
             background-color: #f5f5f5;
-            font-size: 12px;
+            font-size: 14px;
         }
         .email-container {
             background: #ffffff;
@@ -100,14 +100,14 @@
             border-radius: 0;
             display: inline-block;
             font-weight: 700;
-            font-size: 11px;
+            font-size: 13px;
             border: 1px solid #d0d0d0;
             text-transform: uppercase;
             letter-spacing: 0.5px;
             white-space: nowrap;
         }
         .receipt-date {
-            font-size: 11px;
+            font-size: 13px;
             color: #666666;
             white-space: nowrap;
             display: inline-block;
@@ -124,11 +124,11 @@
         }
         .order-info strong {
             color: #333333;
-            font-size: 12px;
+            font-size: 14px;
         }
         .order-info p {
             margin: 5px 0 0 0;
-            font-size: 11px;
+            font-size: 13px;
             color: #666666;
         }
         .section {
@@ -141,7 +141,7 @@
         }
         .section-title {
             color: #333333;
-            font-size: 12px;
+            font-size: 14px;
             font-weight: 600;
             margin-bottom: 6px;
             display: flex;
@@ -152,14 +152,14 @@
         .section-title i {
             margin-right: 6px;
             color: #666666;
-            font-size: 11px;
+            font-size: 13px;
         }
         .info-row {
             display: flex;
             justify-content: space-between;
-            padding: 3px 0;
+            padding: 4px 0;
             border-bottom: 1px solid #f0f0f0;
-            font-size: 11px;
+            font-size: 13px;
         }
         .info-row:last-child {
             border-bottom: none;
@@ -168,23 +168,23 @@
             font-weight: 600;
             color: #666666;
             flex: 1;
-            font-size: 11px;
+            font-size: 13px;
         }
         .info-value {
             color: #333333;
             flex: 1;
             text-align: right;
-            font-size: 11px;
+            font-size: 13px;
         }
         .delegates-table {
             width: 100%;
             border-collapse: collapse;
             margin-top: 4px;
-            font-size: 10px;
+            font-size: 12px;
         }
         .delegates-table th,
         .delegates-table td {
-            padding: 4px;
+            padding: 5px;
             text-align: left;
             border-bottom: 1px solid #e0e0e0;
         }
@@ -192,7 +192,7 @@
             background: #f5f5f5;
             color: #333333;
             font-weight: 600;
-            font-size: 10px;
+            font-size: 12px;
         }
         .price-breakdown {
             background: #f5f5f5;
@@ -204,12 +204,12 @@
         .price-row {
             display: flex;
             justify-content: space-between;
-            padding: 3px 0;
+            padding: 4px 0;
             color: #333333;
-            font-size: 11px;
+            font-size: 13px;
         }
         .price-row.total {
-            font-size: 13px;
+            font-size: 15px;
             font-weight: 700;
             padding-top: 6px;
             margin-top: 6px;
@@ -241,7 +241,7 @@
             background: #f5f5f5;
             padding: 10px 15px;
             text-align: center;
-            font-size: 10px;
+            font-size: 12px;
             color: #666666;
             border-top: 2px solid #e0e0e0;
         }
@@ -282,12 +282,12 @@
         }
         .secretariat-title {
             color: #333333;
-            font-size: 11px;
+            font-size: 13px;
             font-weight: 600;
             margin-bottom: 5px;
         }
         .secretariat-details {
-            font-size: 10px;
+            font-size: 12px;
             color: #666666;
             line-height: 1.4;
         }
@@ -302,48 +302,47 @@
             text-decoration: underline;
         }
         .alert {
-            background: #f5f5f5;
-            border-left: 3px solid #666666;
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
             padding: 10px 12px;
             margin: 8px 0;
             border-radius: 0;
-            font-size: 11px;
+            font-size: 13px;
         }
         .alert p {
             margin: 0;
-            color: #333333;
-            font-size: 11px;
+            color: #856404;
+            font-size: 13px;
         }
         .success-alert {
-            background: #f5f5f5;
-            border-left: 3px solid #666666;
+            background: #d4edda;
+            border-left: 4px solid #28a745;
             padding: 10px 12px;
             margin: 8px 0;
             border-radius: 0;
-            font-size: 11px;
+            font-size: 13px;
         }
         .success-alert p {
             margin: 0;
-            color: #333333;
-            font-size: 11px;
+            color: #155724;
+            font-size: 13px;
         }
-        .payment-status {
+        .payment-status-badge {
             display: inline-block;
-            padding: 4px 10px;
-            border-radius: 0;
-            font-size: 10px;
-            font-weight: 600;
+            padding: 3px 10px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 700;
             text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
-        .payment-status.paid {
-            background: #f5f5f5;
+        .payment-status-badge.paid {
+            background: #28a745;
+            color: #ffffff;
+        }
+        .payment-status-badge.pending {
+            background: #ffc107;
             color: #333333;
-            border: 1px solid #666666;
-        }
-        .payment-status.pending {
-            background: #f5f5f5;
-            color: #666666;
-            border: 1px solid #d0d0d0;
         }
         @media only screen and (max-width: 600px) {
             .receipt-left,
@@ -421,9 +420,9 @@
 
         <!-- Content -->
         <div class="content">
-            <p style="font-size: 12px; margin-bottom: 8px;">Dear {{ $order->registration->contact->name ?? 'Valued Customer' }},</p>
+            <p style="font-size: 14px; margin-bottom: 8px;">Dear {{ $order->registration->contact->name ?? 'Valued Customer' }},</p>
             
-            <p style="font-size: 12px; margin-bottom: 8px;">Thank you for Submitting Information on <strong>{{ config('constants.EVENT_NAME') }} {{ config('constants.EVENT_YEAR') }}</strong>. Please complete the payment using following pay now link / button.</p>
+            <p style="font-size: 14px; margin-bottom: 8px;">Thank you for Submitting Information on <strong>{{ config('constants.EVENT_NAME') }} {{ config('constants.EVENT_YEAR') }}</strong>. Please complete the payment using following pay now link / button.</p>
 
             <!-- TIN and PIN Information -->
             <div class="order-info">
@@ -447,26 +446,6 @@
                 <p style="margin-top: 8px;">Please keep this TIN number for your records.</p>
             </div>
 
-            <!-- Payment Status -->
-            <div class="order-info" style="margin-top: 10px;">
-                <div style="margin-bottom: 8px;">
-                    <strong>Payment Status:</strong> 
-                    <span class="payment-status {{ $order->status === 'paid' ? 'paid' : 'pending' }}">
-                        {{ ucfirst($order->status) }}
-                    </span>
-                </div>
-                @if($order->status === 'paid')
-                @php
-                    $payment = $order->primaryPayment();
-                    $paymentMethod = $payment ? ($payment->payment_method ?? 'Credit Card') : 'Credit Card';
-                @endphp
-                <div style="margin-top: 8px;">
-                    <strong>Payment Method:</strong> 
-                    <span style="font-size: 12px; color: #333333;">{{ $paymentMethod }}</span>
-                </div>
-                @endif
-            </div>
-
             <!-- Alert (only show if unpaid) -->
             @if($order->status !== 'paid')
             <div class="alert">
@@ -482,6 +461,14 @@
             <div class="section">
                 <div class="section-title">
                     <i>📋</i> Registration Information
+                </div>
+                <div class="info-row" style="background: {{ $order->status === 'paid' ? '#d4edda' : '#fff3cd' }}; padding: 6px 8px; margin: 0 -8px 4px -8px; border-radius: 4px;">
+                    <span class="info-label" style="color: {{ $order->status === 'paid' ? '#155724' : '#856404' }};">Payment Status:</span>
+                    <span class="info-value">
+                        <span class="payment-status-badge {{ $order->status === 'paid' ? 'paid' : 'pending' }}">
+                            {{ $order->status === 'paid' ? '✓ PAID' : '⏳ PENDING' }}
+                        </span>
+                    </span>
                 </div>
                 <div class="info-row">
                     <span class="info-label">Registration Category:</span>
@@ -626,6 +613,9 @@
                 <div class="section-title">
                     <i>👥</i> Delegate Details
                 </div>
+                @php
+                    $ticketTypeName = $order->items->first()->ticketType->name ?? 'N/A';
+                @endphp
                 <table class="delegates-table">
                     <thead>
                         <tr>
@@ -633,7 +623,7 @@
                             <th>Delegate Name</th>
                             <th>Email</th>
                             <th>Phone</th>
-                            <th>Job Title</th>
+                            <th>Ticket Type</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -643,7 +633,7 @@
                             <td>{{ $delegate->salutation }} {{ $delegate->first_name }} {{ $delegate->last_name }}</td>
                             <td>{{ $delegate->email }}</td>
                             <td>{{ $delegate->phone ?? '-' }}</td>
-                            <td>{{ $delegate->job_title ?? '-' }}</td>
+                            <td>{{ $ticketTypeName }}</td>
                         </tr>
                         @endforeach
                     </tbody>
@@ -689,18 +679,18 @@
                 </a>
             </div>
 
-            <p style="text-align: center; color: #666666; font-size: 11px; margin-top: 8px;">
+            <p style="text-align: center; color: #666666; font-size: 13px; margin-top: 8px;">
                 Click the button above to complete your payment securely. This link will remain valid until your payment is completed.
             </p>
-            <p style="text-align: center; color: #666666; font-size: 10px; margin-top: 5px; font-style: italic;">
+            <p style="text-align: center; color: #666666; font-size: 12px; margin-top: 5px; font-style: italic;">
                 <strong>Note:</strong> After payment realization, a final payment acknowledgement receipt will be provided.
             </p>
             @else
-            <div style="background: #f5f5f5; padding: 10px; border: 1px solid #e0e0e0; margin: 8px 0; text-align: center;">
-                <p style="margin: 0; color: #333333; font-size: 12px; font-weight: 600;">
+            <div style="background: #d4edda; padding: 10px; border: 1px solid #c3e6cb; margin: 8px 0; text-align: center; border-radius: 4px;">
+                <p style="margin: 0; color: #155724; font-size: 14px; font-weight: 600;">
                     ✓ Payment Completed Successfully
                 </p>
-                <p style="margin: 5px 0 0 0; color: #666666; font-size: 11px;">
+                <p style="margin: 5px 0 0 0; color: #155724; font-size: 13px;">
                     Your registration is confirmed. You will receive further communication regarding the event.
                 </p>
             </div>
@@ -730,8 +720,8 @@
         <!-- Footer -->
         <div class="footer">
             <div class="footer-content">
-                <p style="margin: 5px 0; font-size: 10px; color: #999999;">This is an automated email. Please do not reply to this message.</p>
-                <p style="margin: 5px 0; font-size: 10px; color: #999999;">&copy; {{ date('Y') }} {{ config('constants.organizer.name') }}. All rights reserved.</p>
+                <p style="margin: 5px 0; font-size: 12px; color: #999999;">This is an automated email. Please do not reply to this message.</p>
+                <p style="margin: 5px 0; font-size: 12px; color: #999999;">&copy; {{ date('Y') }} {{ config('constants.organizer.name') }}. All rights reserved.</p>
             </div>
         </div>
     </div>
