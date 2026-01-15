@@ -105,17 +105,17 @@
                 <h5 class="mb-3 border-bottom pb-2"><i class="fas fa-cube"></i> Booth Information</h5>
                 <div class="row mb-3">
                     <div class="col-md-6">
-                        <label for="stall_category" class="form-label">Booth Type <span class="text-danger">*</span></label>
+                        <label for="stall_category" class="form-label">Booth Space <span class="text-danger">*</span></label>
                         <select class="form-select" id="stall_category" name="stall_category" required>
-                            <option value="">Select Booth Type</option>
+                            <option value="">Select Booth Space</option>
                             <option value="Startup Booth" {{ ($draft->stall_category ?? '') == 'Startup Booth' ? 'selected' : '' }}>Startup Booth</option>
                         </select>
                         <div class="invalid-feedback"></div>
                     </div>
                     <div class="col-md-6">
-                        <label for="interested_sqm" class="form-label">Booth Size <span class="text-danger">*</span></label>
+                        <label for="interested_sqm" class="form-label">Booth Type <span class="text-danger">*</span></label>
                         <select class="form-select" id="interested_sqm" name="interested_sqm" required>
-                            <option value="">Select Booth Size</option>
+                            <option value="">Select Booth Type</option>
                             @if($hasTV)
                             <option value="POD with TV" {{ ($draft->interested_sqm ?? '') == 'POD with TV' ? 'selected' : '' }}>POD with TV</option>
                             @else
