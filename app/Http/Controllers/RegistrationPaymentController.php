@@ -1977,6 +1977,12 @@ class RegistrationPaymentController extends Controller
         if (strlen($value) > $maxLength) {
             $value = substr($value, 0, $maxLength);
         }
+
+        Log::info('CCAvenue Sanitized value', [
+            'value' => $value,
+            'maxLength' => $maxLength,
+            'original_value' => $originalValue,
+        ]);
         
         return $value;
     }
