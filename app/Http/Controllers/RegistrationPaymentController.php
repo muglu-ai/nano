@@ -1039,43 +1039,122 @@ class RegistrationPaymentController extends Controller
             $event = $order->registration->event;
             $eventSlug = $event->slug ?? $event->id;
             
-            // Validate required fields
-            if (empty($billingEmail)) {
-                Log::error('Ticket CCAvenue Payment - Missing billing email', [
+            // ============================================================
+            // PRE-PAYMENT VALIDATION - Check all fields before sending to CCAvenue
+            // ============================================================
+            $validationErrors = [];
+            
+            // 1. Validate Amount
+            if (empty($amount) || !is_numeric($amount) || $amount <= 0) {
+                $validationErrors[] = 'Invalid payment amount: ' . ($amount ?? 'null');
+            }
+            
+            // 2. Validate Order ID format
+            if (empty($orderId)) {
+                $validationErrors[] = 'Order ID is missing';
+            }
+            
+            // 3. Validate Currency
+            if (empty($currency) || !in_array(strtoupper($currency), ['INR', 'USD'])) {
+                $validationErrors[] = 'Invalid currency: ' . ($currency ?? 'null');
+            }
+            
+            // 4. Validate Billing Email (Required by CCAvenue)
+            if (empty($billingEmail) || !filter_var($billingEmail, FILTER_VALIDATE_EMAIL)) {
+                $validationErrors[] = 'Invalid or missing billing email: ' . ($billingEmail ?? 'null');
+            }
+            
+            // 5. Validate Billing Name
+            if (empty($billingName)) {
+                $billingName = $registration->company_name ?? 'Customer';
+                Log::warning('Ticket CCAvenue Payment - Missing billing name, using fallback', [
+                    'fallback_name' => $billingName,
+                ]);
+            }
+            
+            // 6. Validate Billing Phone (should be numeric and reasonable length)
+            if (!empty($billingPhone)) {
+                // Remove non-numeric characters except + for country code
+                $cleanPhone = preg_replace('/[^0-9+]/', '', $billingPhone);
+                if (strlen($cleanPhone) < 10 || strlen($cleanPhone) > 15) {
+                    Log::warning('Ticket CCAvenue Payment - Phone number may be invalid', [
+                        'original' => $billingPhone,
+                        'cleaned' => $cleanPhone,
+                    ]);
+                }
+                $billingPhone = $cleanPhone;
+            } else {
+                // Try to get phone from registration
+                $billingPhone = $registration->company_phone ?? '';
+                $billingPhone = preg_replace('/[^0-9+]/', '', $billingPhone);
+            }
+            
+            // 7. Check CCAvenue credentials
+            $credentials = $this->ccAvenueService->getCredentials();
+            if (empty($credentials['merchant_id']) || empty($credentials['access_code']) || empty($credentials['working_key'])) {
+                $validationErrors[] = 'CCAvenue credentials are not properly configured';
+                Log::error('Ticket CCAvenue Payment - Missing credentials', [
+                    'has_merchant_id' => !empty($credentials['merchant_id']),
+                    'has_access_code' => !empty($credentials['access_code']),
+                    'has_working_key' => !empty($credentials['working_key']),
+                ]);
+            }
+            
+            // 8. Validate Event
+            if (!$event || empty($eventSlug)) {
+                $validationErrors[] = 'Event information is missing';
+            }
+            
+            // If there are validation errors, log them and return with error message
+            if (!empty($validationErrors)) {
+                Log::error('Ticket CCAvenue Payment - Pre-validation failed', [
                     'order_id' => $order->id,
                     'order_no' => $order->order_no,
+                    'errors' => $validationErrors,
+                    'billing_email' => $billingEmail,
+                    'billing_phone' => $billingPhone,
+                    'amount' => $amount,
+                    'currency' => $currency,
                 ]);
-                return redirect()->back()->with('error', 'Billing email is required for payment.');
+                
+                $errorMessage = 'Payment cannot be processed due to validation errors: ' . implode(', ', $validationErrors);
+                
+                // Redirect to lookup page with TIN
+                $lookupUrl = route('tickets.payment.lookup', ['eventSlug' => $eventSlug]) . '?tin=' . urlencode($order->order_no);
+                return redirect($lookupUrl)->with('error', $errorMessage)->with('tin', $order->order_no);
             }
-
-            if (empty($billingName)) {
-                Log::warning('Ticket CCAvenue Payment - Missing billing name, using company name', [
-                    'order_id' => $order->id,
-                ]);
-                $billingName = $registration->company_name ?? 'Customer';
-            }
+            
+            // ============================================================
+            // ALL VALIDATIONS PASSED - Proceed with payment
+            // ============================================================
             
             // Both redirect and cancel URL should point to the same callback route
             // CCAvenue requires these URLs to be registered in the merchant panel
             $callbackUrl = route('registration.ticket.payment.callback', ['eventSlug' => $eventSlug, 'gateway' => 'ccavenue']);
             
+            // Sanitize and prepare payment data
             $paymentData = [
                 'order_id' => $orderId,
                 'amount' => number_format($amount, 2, '.', ''),
-                'currency' => $currency,
+                'currency' => strtoupper($currency),
                 'redirect_url' => $callbackUrl,
-                'cancel_url' => $callbackUrl, // Same as redirect_url - CCAvenue handles both success and failure
-                'billing_name' => $billingName,
-                'billing_address' => $registration->company_name ?? '',
-                'billing_city' => $registration->company_city ?? '',
-                'billing_state' => $registration->company_state ?? '',
-                'billing_zip' => $registration->postal_code ?? '',
-                'billing_country' => $registration->company_country ?? 'India',
-                'billing_tel' => $billingPhone,
+                'cancel_url' => $callbackUrl,
+                'billing_name' => $this->sanitizeForCcAvenue($billingName, 50),
+                'billing_address' => $this->sanitizeForCcAvenue($registration->company_name ?? '', 100),
+                'billing_city' => $this->sanitizeForCcAvenue($registration->company_city ?? '', 50),
+                'billing_state' => $this->sanitizeForCcAvenue($registration->company_state ?? '', 50),
+                'billing_zip' => $this->sanitizeForCcAvenue($registration->postal_code ?? '', 10),
+                'billing_country' => $this->sanitizeForCcAvenue($registration->company_country ?? 'India', 50),
+                'billing_tel' => $this->sanitizeForCcAvenue($billingPhone, 15),
                 'billing_email' => $billingEmail,
             ];
             
-            Log::info('Ticket CCAvenue Payment - Callback URL', [
+            Log::info('Ticket CCAvenue Payment - Pre-validation passed, proceeding', [
+                'order_no' => $order->order_no,
+                'amount' => $paymentData['amount'],
+                'currency' => $paymentData['currency'],
+                'billing_email' => $paymentData['billing_email'],
+                'billing_tel' => $paymentData['billing_tel'],
                 'callback_url' => $callbackUrl,
             ]);
 
@@ -1865,5 +1944,36 @@ class RegistrationPaymentController extends Controller
                 'tin' => $order->order_no
             ])->with('error', 'An error occurred while processing payment.');
         }
+    }
+
+    /**
+     * Sanitize string for CCAvenue - remove special characters and limit length
+     * CCAvenue is strict about field values and may return "Invalid" if they contain special characters
+     */
+    private function sanitizeForCcAvenue($value, $maxLength = 50)
+    {
+        if (empty($value)) {
+            return '';
+        }
+        
+        // Convert to string
+        $value = (string) $value;
+        
+        // Remove or replace problematic characters
+        // CCAvenue doesn't like: & < > " ' \ / = + ; : @ # $ % ^ * ( ) [ ] { } | ` ~
+        $value = preg_replace('/[&<>"\'\\\\\/=+;:@#$%^*()[\]{}|`~]/', '', $value);
+        
+        // Replace multiple spaces with single space
+        $value = preg_replace('/\s+/', ' ', $value);
+        
+        // Trim whitespace
+        $value = trim($value);
+        
+        // Limit length
+        if (strlen($value) > $maxLength) {
+            $value = substr($value, 0, $maxLength);
+        }
+        
+        return $value;
     }
 }
