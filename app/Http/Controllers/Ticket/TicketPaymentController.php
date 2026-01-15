@@ -625,6 +625,8 @@ class TicketPaymentController extends Controller
                 'billing_email' => $billingEmail,
             ];
 
+            dd($paymentData);
+
             // Initiate CCAvenue payment gateway
             $result = $this->ccAvenueService->initiateTransaction($paymentData);
 
