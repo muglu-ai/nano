@@ -142,6 +142,7 @@
                     $order = $registration->order;
                     $currency = $registration->nationality === 'International' ? 'USD' : 'INR';
                     $currencySymbol = $currency === 'USD' ? '$' : '₹';
+                    $priceFormat = $currency === 'USD' ? 2 : 0; // 2 decimals for USD, 0 for INR
                 @endphp
 
                 <!-- Order Summary -->
@@ -204,25 +205,25 @@
                                 <table class="table table-bordered">
                                     <tr>
                                         <th>Subtotal:</th>
-                                        <td class="text-end">{{ $currencySymbol }}{{ number_format($order->subtotal, 2) }}</td>
+                                        <td class="text-end">{{ $currencySymbol }}{{ number_format($order->subtotal, $priceFormat) }}</td>
                                     </tr>
                                     <tr>
                                         <th>GST:</th>
-                                        <td class="text-end">{{ $currencySymbol }}{{ number_format($order->gst_total, 2) }}</td>
+                                        <td class="text-end">{{ $currencySymbol }}{{ number_format($order->gst_total, $priceFormat) }}</td>
                                     </tr>
                                     <tr>
                                         <th>Processing Charge:</th>
-                                        <td class="text-end">{{ $currencySymbol }}{{ number_format($order->processing_charge_total, 2) }}</td>
+                                        <td class="text-end">{{ $currencySymbol }}{{ number_format($order->processing_charge_total, $priceFormat) }}</td>
                                     </tr>
                                     @if($order->discount_amount > 0)
                                     <tr>
                                         <th>Discount:</th>
-                                        <td class="text-end text-success">-{{ $currencySymbol }}{{ number_format($order->discount_amount, 2) }}</td>
+                                        <td class="text-end text-success">-{{ $currencySymbol }}{{ number_format($order->discount_amount, $priceFormat) }}</td>
                                     </tr>
                                     @endif
                                     <tr class="table-primary">
                                         <th><strong>Total:</strong></th>
-                                        <td class="text-end"><strong>{{ $currencySymbol }}{{ number_format($order->total, 2) }}</strong></td>
+                                        <td class="text-end"><strong>{{ $currencySymbol }}{{ number_format($order->total, $priceFormat) }}</strong></td>
                                     </tr>
                                 </table>
                             </div>
@@ -363,11 +364,11 @@
                                 <tr>
                                     <td>{{ $item->ticketType ? $item->ticketType->name : 'N/A' }}</td>
                                     <td class="text-center">{{ $item->quantity }}</td>
-                                    <td class="text-end">{{ $currencySymbol }}{{ number_format($item->unit_price, 2) }}</td>
-                                    <td class="text-end">{{ $currencySymbol }}{{ number_format($item->subtotal, 2) }}</td>
-                                    <td class="text-end">{{ $currencySymbol }}{{ number_format($item->gst_amount, 2) }}</td>
-                                    <td class="text-end">{{ $currencySymbol }}{{ number_format($item->processing_charge_amount, 2) }}</td>
-                                    <td class="text-end"><strong>{{ $currencySymbol }}{{ number_format($item->total, 2) }}</strong></td>
+                                    <td class="text-end">{{ $currencySymbol }}{{ number_format($item->unit_price, $priceFormat) }}</td>
+                                    <td class="text-end">{{ $currencySymbol }}{{ number_format($item->subtotal, $priceFormat) }}</td>
+                                    <td class="text-end">{{ $currencySymbol }}{{ number_format($item->gst_amount, $priceFormat) }}</td>
+                                    <td class="text-end">{{ $currencySymbol }}{{ number_format($item->processing_charge_amount, $priceFormat) }}</td>
+                                    <td class="text-end"><strong>{{ $currencySymbol }}{{ number_format($item->total, $priceFormat) }}</strong></td>
                                 </tr>
                                 @endforeach
                             </tbody>

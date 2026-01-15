@@ -124,6 +124,28 @@
         border-bottom: none;
     }
 
+    /* Mobile Responsiveness */
+    @media (max-width: 768px) {
+        .delegates-table {
+            font-size: 0.75rem;
+            overflow-x: auto;
+            display: block;
+            white-space: nowrap;
+        }
+
+        .delegates-table th,
+        .delegates-table td {
+            padding: 0.5rem 0.4rem;
+            min-width: 100px;
+            word-wrap: break-word;
+            white-space: normal;
+        }
+
+        .delegates-table th {
+            font-size: 0.7rem;
+        }
+    }
+
     .btn-pay-now {
         background: var(--primary-gradient);
         color: white;
@@ -306,7 +328,7 @@
         @php
             $isInternational = ($order->registration->nationality === 'International' || $order->registration->nationality === 'international');
             $currencySymbol = $isInternational ? '$' : '₹';
-            $priceFormat = 2; // Both use 2 decimal places
+            $priceFormat = $isInternational ? 2 : 0; // 2 decimals for USD, 0 for INR
         @endphp
         <div class="price-breakdown">
             <h4 class="section-title mb-3">

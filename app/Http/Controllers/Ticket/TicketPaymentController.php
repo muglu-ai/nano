@@ -129,9 +129,9 @@ class TicketPaymentController extends Controller
                 ? config('constants.INT_PROCESSING_CHARGE', 9)  // International: 9%
                 : config('constants.IND_PROCESSING_CHARGE', 3); // National/Indian: 3%
             
-            $gstAmount = ($subtotal * $gstRate) / 100;
-            $processingChargeAmount = (($subtotal + $gstAmount) * $processingChargeRate) / 100;
-            $total = $subtotal + $gstAmount + $processingChargeAmount;
+            $gstAmount = round(($subtotal * $gstRate) / 100);
+            $processingChargeAmount = round((($subtotal + $gstAmount) * $processingChargeRate) / 100);
+            $total = round($subtotal + $gstAmount + $processingChargeAmount);
             
             // Determine currency
             $currency = $isInternational ? 'USD' : 'INR';
