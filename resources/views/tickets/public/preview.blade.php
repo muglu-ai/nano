@@ -104,7 +104,7 @@
             overflow-x: auto;
             display: block;
             white-space: nowrap;
-        }
+    }
 
         .delegates-table th,
         .delegates-table td {

@@ -310,28 +310,28 @@
             </label>
             <p class="text-muted mb-2" style="font-size: 0.85rem;">Select which individual days will appear in the dropdown (uses per-day price if set)</p>
             <div class="row" style="background: #f8f9fa; padding: 1rem; border-radius: 8px;">
-                @forelse($eventDays as $day)
-                    <div class="col-md-4 mb-2">
-                        <div class="form-check">
-                            <input class="form-check-input" type="checkbox" name="event_day_ids[]" 
-                                   value="{{ $day->id }}" id="day_{{ $day->id }}"
-                                   {{ in_array($day->id, old('event_day_ids', $selectedDays)) ? 'checked' : '' }}>
-                            <label class="form-check-label" for="day_{{ $day->id }}">
-                                <strong>{{ $day->label }}</strong>
+            @forelse($eventDays as $day)
+                <div class="col-md-4 mb-2">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" name="event_day_ids[]" 
+                               value="{{ $day->id }}" id="day_{{ $day->id }}"
+                               {{ in_array($day->id, old('event_day_ids', $selectedDays)) ? 'checked' : '' }}>
+                        <label class="form-check-label" for="day_{{ $day->id }}">
+                            <strong>{{ $day->label }}</strong>
                                 <small class="text-muted d-block">
                                     {{ \Carbon\Carbon::parse($day->date)->format('M d, Y') }}
-                                </small>
-                            </label>
-                        </div>
+                            </small>
+                        </label>
                     </div>
-                @empty
-                    <div class="col-12">
+                </div>
+            @empty
+                <div class="col-12">
                         <div class="alert alert-warning mb-0">
-                            <i class="fas fa-exclamation-triangle me-2"></i>
-                            No event days found. Please create event days first.
-                        </div>
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        No event days found. Please create event days first.
                     </div>
-                @endforelse
+                </div>
+            @endforelse
             </div>
         </div>
     </div>

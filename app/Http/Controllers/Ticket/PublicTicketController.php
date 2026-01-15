@@ -554,10 +554,10 @@ class PublicTicketController extends Controller
         
         // Calculate GST on subtotal
         $gstAmount = round(($subtotal * $gstRate) / 100);
-
+        
         // Calculate processing charge on (subtotal + GST)
         $processingChargeAmount = round((($subtotal + $gstAmount) * $processingChargeRate) / 100);
-
+        
         // Total
         $total = round($subtotal + $gstAmount + $processingChargeAmount);
         

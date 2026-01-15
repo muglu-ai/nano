@@ -130,7 +130,7 @@
 
         .delegates-table th {
             font-size: 0.7rem;
-        }
+    }
     }
 
     /* Badge styles */
@@ -200,7 +200,7 @@
     </div>
 
     <div class="form-body">
-        <!-- Progress Bar -->
+    <!-- Progress Bar -->
         @php
             $isPaid = $order->status === 'paid';
             $currentStep = $isPaid ? 4 : 3;
@@ -208,13 +208,13 @@
         @include('tickets.public.partials.progress-bar', ['currentStep' => $currentStep])
     
         <div class="text-center mb-4">
-            <div class="success-icon">
-                <i class="fas fa-check-circle"></i>
-            </div>
-            <p class="lead mb-3" style="color: var(--text-primary); font-size: 1rem;">
-                Thank you for your registration. Your order has been confirmed.
-            </p>
+        <div class="success-icon">
+            <i class="fas fa-check-circle"></i>
         </div>
+            <p class="lead mb-3" style="color: var(--text-primary); font-size: 1rem;">
+            Thank you for your registration. Your order has been confirmed.
+        </p>
+            </div>
 
         <!-- Order Details -->
         <div class="preview-section">
@@ -268,7 +268,7 @@
                 <tr>
                     <td class="label-cell">Day Access</td>
                     <td class="value-cell">
-                        @foreach($order->items as $item)
+                    @foreach($order->items as $item)
                             @if($item->selectedDay)
                                 <span class="day-badge primary">{{ $item->selectedDay->label }}</span>
                                 <small class="text-muted">({{ \Carbon\Carbon::parse($item->selectedDay->date)->format('M d, Y') }})</small>
@@ -286,7 +286,7 @@
                                     <span class="day-badge success">All Days</span>
                                 @endif
                             @endif
-                        @endforeach
+                    @endforeach
                     </td>
                 </tr>
                 <tr>
@@ -302,7 +302,7 @@
                     <td class="value-cell"><strong style="font-size: 1.1rem; color: var(--primary-color);">{{ $currencySymbol }}{{ number_format($order->total, $priceFormat) }}</strong></td>
                 </tr>
             </table>
-        </div>
+            </div>
 
         <!-- Organisation Information -->
         <div class="preview-section">
@@ -369,7 +369,7 @@
         </div>
 
         <!-- GST Information -->
-        @if($order->registration->gst_required)
+            @if($order->registration->gst_required)
         <div class="preview-section">
             <h4 class="section-title">
                 <i class="fas fa-file-invoice-dollar"></i>
@@ -415,7 +415,7 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @foreach($order->registration->delegates as $index => $delegate)
+                @foreach($order->registration->delegates as $index => $delegate)
                     <tr>
                         <td>{{ $index + 1 }}</td>
                         <td><strong>{{ $delegate->salutation }} {{ $delegate->first_name }} {{ $delegate->last_name }}</strong></td>
@@ -423,21 +423,21 @@
                         <td>{{ $delegate->phone ?? '-' }}</td>
                         <td>{{ $ticketTypeName }}</td>
                     </tr>
-                    @endforeach
+                @endforeach
                 </tbody>
             </table>
-        </div>
+            </div>
         @endif
 
         <!-- Payment Transaction Details -->
-        @php
-            $paymentDetails = session('payment_details');
-            $primaryPayment = $order->primaryPayment();
+            @php
+                $paymentDetails = session('payment_details');
+                $primaryPayment = $order->primaryPayment();
             $isPaid = $order->status === 'paid';
             $isInternational = ($order->registration->nationality === 'International' || $order->registration->nationality === 'international');
             $currencySymbol = $isInternational ? '$' : '₹';
             $priceFormat = $isInternational ? 2 : 0; // 2 decimals for USD, 0 for INR
-        @endphp
+            @endphp
 
         @if($isPaid)
         <div class="preview-section">
@@ -504,18 +504,18 @@
                 @endif
                 @endif
             </table>
-        </div>
+            </div>
         @endif
 
         <div class="mt-4 text-center">
             <div class="success-alert">
                 <p style="color: #155724; margin-bottom: 0.5rem;">
                     <i class="fas fa-envelope me-2"></i>
-                    A payment acknowledgement email has been sent to <strong>{{ $order->registration->contact->email }}</strong>
-                </p>
+                A payment acknowledgement email has been sent to <strong>{{ $order->registration->contact->email }}</strong>
+            </p>
                 <p style="color: #155724; font-size: 0.85rem; margin: 0;">
-                    Please check your email for the receipt and further instructions.
-                </p>
+                Please check your email for the receipt and further instructions.
+            </p>
             </div>
         </div>
     </div>

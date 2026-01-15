@@ -611,7 +611,7 @@
             <tr>
                 <td style="width: 35%; text-align: center; border-right: 1px solid #e0e0e0;">
                 @if(config('constants.organizer_logo'))
-                    <img src="{{ config('constants.organizer_logo') }}" alt="{{ config('constants.organizer.name') }}" style="max-width: 130px; height: auto;">
+                    <img src="{{ config('constants.organizer_logo') }}" alt="{{ config('constants.organizer.name') }}" style="width: 120px; height: 120px; object-fit: contain; display: block; margin: 0 auto;">
                 @endif
                 </td>
                 <td style="width: 65%; padding-left: 15px;">

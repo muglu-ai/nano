@@ -278,10 +278,10 @@ class TicketType extends Model
      */
     public function getAllEventDays()
     {
-        return EventDay::where('event_id', $this->event_id)
-            ->orderBy('sort_order')
-            ->orderBy('date')
-            ->get();
+            return EventDay::where('event_id', $this->event_id)
+                ->orderBy('sort_order')
+                ->orderBy('date')
+                ->get();
     }
 
     /**

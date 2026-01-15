@@ -192,7 +192,7 @@
             width: 100% !important;
             max-width: 280px;
             margin: 0 auto;
-        }
+    }
     }
 
     /* Price Table Styles */
@@ -457,18 +457,18 @@
                     <td class="label-cell">Country</td>
                     <td class="value-cell">{{ $order->registration->company_country }}</td>
                 </tr>
-                @if($order->registration->company_state)
+            @if($order->registration->company_state)
                 <tr>
                     <td class="label-cell">State</td>
                     <td class="value-cell">{{ $order->registration->company_state }}</td>
                 </tr>
-                @endif
-                @if($order->registration->company_city)
+            @endif
+            @if($order->registration->company_city)
                 <tr>
                     <td class="label-cell">City</td>
                     <td class="value-cell">{{ $order->registration->company_city }}</td>
                 </tr>
-                @endif
+            @endif
                 <tr>
                     <td class="label-cell">Phone</td>
                     <td class="value-cell">{{ $order->registration->company_phone }}</td>
@@ -496,41 +496,41 @@
                     <td class="label-cell">GSTIN</td>
                     <td class="value-cell"><strong>{{ $order->registration->gstin ?? '-' }}</strong></td>
                 </tr>
-                @php
-                    $panNo = $order->registration->gstin ? substr($order->registration->gstin, 2, 10) : null;
-                @endphp
-                @if($panNo)
+            @php
+                $panNo = $order->registration->gstin ? substr($order->registration->gstin, 2, 10) : null;
+            @endphp
+            @if($panNo)
                 <tr>
                     <td class="label-cell">PAN No.</td>
                     <td class="value-cell">{{ $panNo }}</td>
                 </tr>
-                @endif
+            @endif
                 <tr>
                     <td class="label-cell">Invoice Address</td>
                     <td class="value-cell">{{ $order->registration->gst_address ?? '-' }}</td>
                 </tr>
-                @if($order->registration->gst_state)
+            @if($order->registration->gst_state)
                 <tr>
                     <td class="label-cell">State</td>
                     <td class="value-cell">{{ $order->registration->gst_state }}</td>
                 </tr>
-                @endif
-                @php
-                    $contactName = $order->registration->contact->name ?? null;
-                    $contactPhone = $order->registration->contact->phone ?? $order->registration->company_phone ?? null;
-                @endphp
-                @if($contactName)
+            @endif
+            @php
+                $contactName = $order->registration->contact->name ?? null;
+                $contactPhone = $order->registration->contact->phone ?? $order->registration->company_phone ?? null;
+            @endphp
+            @if($contactName)
                 <tr>
                     <td class="label-cell">Contact Person</td>
                     <td class="value-cell">{{ $contactName }}</td>
                 </tr>
-                @endif
-                @if($contactPhone)
+            @endif
+            @if($contactPhone)
                 <tr>
                     <td class="label-cell">Contact Phone</td>
                     <td class="value-cell">{{ $contactPhone }}</td>
                 </tr>
-                @endif
+            @endif
             </table>
         </div>
         @endif
@@ -582,7 +582,7 @@
                 Price Breakdown
             </h4>
             <table class="price-table">
-                @foreach($order->items as $item)
+            @foreach($order->items as $item)
                 <tr>
                     <td class="label-cell">Ticket Price ({{ $item->quantity }} × {{ $currencySymbol }}{{ number_format($item->unit_price, $priceFormat) }})</td>
                     <td class="value-cell">{{ $currencySymbol }}{{ number_format($item->subtotal, $priceFormat) }}</td>
@@ -595,7 +595,7 @@
                     <td class="label-cell">Processing Charge ({{ $item->processing_charge_rate }}%)</td>
                     <td class="value-cell">{{ $currencySymbol }}{{ number_format($item->processing_charge_amount, $priceFormat) }}</td>
                 </tr>
-                @endforeach
+            @endforeach
                 <tr class="total-row">
                     <td class="label-cell" style="background: var(--primary-color); color: white;">Total Amount</td>
                     <td class="value-cell" style="background: var(--primary-color); color: white;">{{ $currencySymbol }}{{ number_format($order->total, $priceFormat) }}</td>
