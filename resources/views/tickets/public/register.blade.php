@@ -255,7 +255,7 @@
                     <div class="col-md-12 mb-3">
                         <label class="form-label required-field">Select Event Day</label>
                         <select name="selected_event_day_id" class="form-select" id="selected_event_day">
-                            {{-- <option value="">Select Day</option> --}}
+                            
                         </select>
                         <small class="text-muted">Choose which day you want to attend</small>
                         @error('selected_event_day_id')
@@ -768,7 +768,13 @@ document.addEventListener('DOMContentLoaded', function() {
                         selectedEventDaySelect.appendChild(option);
                     });
                 }
-                
+
+                // Auto-select the only available option if there's only one choice
+                const allOptions = selectedEventDaySelect.querySelectorAll('option:not([value=""])');
+                if (allOptions.length === 1) {
+                    allOptions[0].selected = true;
+                }
+
                 // Auto-select "All 3 Days" if there's only one accessible day and "All Days" option is available
                 if (availableDays && availableDays.length === 1 && (allDaysAccess || includeAllDaysOption)) {
                     // Set "All 3 Days" as selected

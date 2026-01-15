@@ -1410,7 +1410,7 @@ class RegistrationPaymentController extends Controller
                 'body' => $orderRequest
             ];
 
-            $apiResponse = $this->paypalClient->getOrdersController()->ordersCreate($orderBody);
+            $apiResponse = $this->paypalClient->getOrdersController()->createOrder($orderBody);
             $paypalOrderId = $apiResponse->getResult()->getId();
 
             // Store payment gateway response
@@ -1948,7 +1948,7 @@ class RegistrationPaymentController extends Controller
         }
 
         try {
-            // Capture the order - ordersCapture expects an array with 'id' key
+            // Capture the order - captureOrder expects an array with 'id' key
             $captureBody = ['id' => $paypalOrderId];
 
             try {
