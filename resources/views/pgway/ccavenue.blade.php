@@ -10,7 +10,6 @@
         <input type="hidden" name="encRequest" value="{{ $encryptedData }}">
         <input type="hidden" name="access_code" value="{{ config('constants.CCAVENUE_ACCESS_CODE') }}">
         <p>Redirecting to payment gateway...</p>
-        <p> {{ $encryptedData }} </p>
         <button type="submit">Click here if not redirected</button>
     </form>
 </body>
