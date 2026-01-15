@@ -1072,21 +1072,20 @@ class RegistrationPaymentController extends Controller
                 ]);
             }
             
-            // 6. Validate Billing Phone (should be numeric and reasonable length)
+            // 6. Validate and Clean Billing Phone
+            // CCAvenue expects phone number without country code
             if (!empty($billingPhone)) {
-                // Remove non-numeric characters except + for country code
-                $cleanPhone = preg_replace('/[^0-9+]/', '', $billingPhone);
-                if (strlen($cleanPhone) < 10 || strlen($cleanPhone) > 15) {
-                    Log::warning('Ticket CCAvenue Payment - Phone number may be invalid', [
-                        'original' => $billingPhone,
-                        'cleaned' => $cleanPhone,
-                    ]);
-                }
-                $billingPhone = $cleanPhone;
+                $billingPhone = $this->extractPhoneNumber($billingPhone);
             } else {
                 // Try to get phone from registration
-                $billingPhone = $registration->company_phone ?? '';
-                $billingPhone = preg_replace('/[^0-9+]/', '', $billingPhone);
+                $billingPhone = $this->extractPhoneNumber($registration->company_phone ?? '');
+            }
+            
+            if (empty($billingPhone) || strlen($billingPhone) < 10) {
+                Log::warning('Ticket CCAvenue Payment - Phone number may be invalid', [
+                    'original' => $registration->company_phone ?? $billingPhone,
+                    'cleaned' => $billingPhone,
+                ]);
             }
             
             // 7. Check CCAvenue credentials
@@ -1133,6 +1132,7 @@ class RegistrationPaymentController extends Controller
             $callbackUrl = route('registration.ticket.payment.callback', ['eventSlug' => $eventSlug, 'gateway' => 'ccavenue']);
             
             // Sanitize and prepare payment data
+            // Note: billing_tel is already cleaned by extractPhoneNumber(), no need to sanitize again
             $paymentData = [
                 'order_id' => $orderId,
                 'amount' => number_format($amount, 2, '.', ''),
@@ -1140,12 +1140,12 @@ class RegistrationPaymentController extends Controller
                 'redirect_url' => $callbackUrl,
                 'cancel_url' => $callbackUrl,
                 'billing_name' => $this->sanitizeForCcAvenue($billingName, 50),
-                'billing_address' => $this->sanitizeForCcAvenue($registration->company_name, 100),
-                'billing_city' => $this->sanitizeForCcAvenue($registration->company_city, 50),
-                'billing_state' => $this->sanitizeForCcAvenue($registration->company_state, 50),
+                'billing_address' => $this->sanitizeForCcAvenue($registration->company_name ?? '', 100),
+                'billing_city' => $this->sanitizeForCcAvenue($registration->company_city ?? '', 50),
+                'billing_state' => $this->sanitizeForCcAvenue($registration->company_state ?? '', 50),
                 'billing_zip' => $this->sanitizeForCcAvenue($registration->postal_code ?? '', 10),
                 'billing_country' => $this->sanitizeForCcAvenue($registration->company_country ?? 'India', 50),
-                'billing_tel' => $this->sanitizeForCcAvenue($billingPhone, 15),
+                'billing_tel' => $billingPhone, // Already cleaned, just use directly
                 'billing_email' => $billingEmail,
             ];
 
@@ -1977,12 +1977,44 @@ class RegistrationPaymentController extends Controller
         if (strlen($value) > $maxLength) {
             $value = substr($value, 0, $maxLength);
         }
-
-        Log::info('CCAvenue Sanitized value', [
-            'value' => $value,
-            'maxLength' => $maxLength
-        ]);
         
         return $value;
+    }
+
+    /**
+     * Extract phone number without country code
+     * Handles formats like: +91-9801217815, +91 9801217815, 919801217815, 9801217815
+     * Returns just the 10-digit phone number
+     */
+    private function extractPhoneNumber($phone)
+    {
+        if (empty($phone)) {
+            return '';
+        }
+        
+        // Convert to string and remove all non-numeric characters
+        $phone = (string) $phone;
+        $numericOnly = preg_replace('/[^0-9]/', '', $phone);
+        
+        // If the number starts with country code (91 for India), remove it
+        // Check if it's 12 digits starting with 91
+        if (strlen($numericOnly) === 12 && substr($numericOnly, 0, 2) === '91') {
+            $numericOnly = substr($numericOnly, 2);
+        }
+        // Check if it's 11 digits starting with 0 (some formats use 0 prefix)
+        elseif (strlen($numericOnly) === 11 && substr($numericOnly, 0, 1) === '0') {
+            $numericOnly = substr($numericOnly, 1);
+        }
+        // If longer than 10 and starts with 91, strip it
+        elseif (strlen($numericOnly) > 10 && substr($numericOnly, 0, 2) === '91') {
+            $numericOnly = substr($numericOnly, 2);
+        }
+        
+        Log::info('Phone number extraction', [
+            'original' => $phone,
+            'extracted' => $numericOnly,
+        ]);
+        
+        return $numericOnly;
     }
 }
