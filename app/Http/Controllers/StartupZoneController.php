@@ -841,18 +841,47 @@ class StartupZoneController extends Controller
                 }
             }
             
-            // Update draft with all form fields from session + request
+            // Update draft with all form fields
             $formFields = array_merge($sessionData, $landlineData, $request->only([
-                'stall_category', 'interested_sqm', 'company_name',
-                'how_old_startup', 'address', 'city_id', 'state_id',
-                'postal_code', 'country_id', 'website',
-                'company_email', 'gst_compliance', 'gst_no', 'pan_no',
+                'stall_category', 'interested_sqm',
+                'how_old_startup', 'gst_compliance', 'gst_no', 'pan_no',
                 'sector_id', 'subSector', 'type_of_business',
                 'promocode', 'assoc_mem', 'RegSource', 'payment_mode'
             ]));
             
-            // Normalize website URL - add https:// if missing
-            if (isset($formFields['website']) && !empty($formFields['website'])) {
+            // Map billing_ prefixed fields to draft columns
+            if ($request->has('billing_company_name')) {
+                $formFields['company_name'] = $request->input('billing_company_name');
+            }
+            if ($request->has('billing_address')) {
+                $formFields['address'] = $request->input('billing_address');
+            }
+            if ($request->has('billing_city')) {
+                $formFields['city_id'] = $request->input('billing_city');
+            }
+            if ($request->has('billing_state_id')) {
+                $formFields['state_id'] = $request->input('billing_state_id');
+            }
+            if ($request->has('billing_postal_code')) {
+                $formFields['postal_code'] = $request->input('billing_postal_code');
+            }
+            if ($request->has('billing_country_id')) {
+                $formFields['country_id'] = $request->input('billing_country_id');
+            }
+            if ($request->has('billing_website')) {
+                $formFields['website'] = $this->normalizeWebsiteUrl($request->input('billing_website'));
+            }
+            if ($request->has('billing_email')) {
+                $formFields['company_email'] = $request->input('billing_email');
+            }
+            
+            // Landline is already handled above in $landlineData
+            if (isset($landlineData['landline'])) {
+                $formFields['landline'] = $landlineData['landline'];
+            }
+            
+            // Normalize website URL - add https:// if missing (if not already set from billing_website above)
+            if (isset($formFields['website']) && !empty($formFields['website']) && !$request->has('billing_website')) {
                 $formFields['website'] = $this->normalizeWebsiteUrl($formFields['website']);
             }
             
@@ -2652,11 +2681,11 @@ class StartupZoneController extends Controller
 
     /**
      * Generate unique application_id using TIN_NO_PREFIX
-     * Format: BTS-2026-EXH-XXXXXX (6-digit random number)
+     * Format: TIN-BTS-2026-EXH-XXXXXX (6-digit random number)
      */
     private function generateApplicationIdWithTinPrefix()
     {
-        $prefix = config('constants.TIN_NO_PREFIX');
+        $prefix = config('constants.APPLICATION_ID_PREFIX');
         $maxAttempts = 100; // Prevent infinite loop
         $attempts = 0;
         
