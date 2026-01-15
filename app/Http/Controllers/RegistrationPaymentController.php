@@ -802,13 +802,13 @@ class RegistrationPaymentController extends Controller
                 ->whereHas('registration', function($q) use ($event) {
                     $q->where('event_id', $event->id);
                 })
-                ->with(['registration.contact', 'registration.event', 'items.ticketType', 'registration.registrationCategory'])
+                ->with(['registration.contact', 'registration.event', 'registration.delegates', 'items.ticketType', 'items.selectedDay', 'registration.registrationCategory'])
                 ->first();
             
             // If not found with event constraint, try without (in case event doesn't match)
             if (!$order) {
                 $order = TicketOrder::where('order_no', $tinNo)
-                    ->with(['registration.contact', 'registration.event', 'items.ticketType', 'registration.registrationCategory'])
+                    ->with(['registration.contact', 'registration.event', 'registration.delegates', 'items.ticketType', 'items.selectedDay', 'registration.registrationCategory'])
                     ->first();
                 
                 // If order found but event doesn't match, still show it but with a warning
@@ -1232,21 +1232,60 @@ class RegistrationPaymentController extends Controller
 
         if ($gateway === 'ccavenue') {
             $encResponse = $request->input('encResp');
-            if (empty($encResponse)) {
-                return redirect()->route('tickets.payment.lookup', $eventSlug)
-                    ->with('error', 'Payment response incomplete.');
+            
+            // Try to get order number from request parameter first (fallback for failed decryption)
+            $orderNoFromRequest = $request->input('orderNo');
+            if ($orderNoFromRequest) {
+                // Extract TIN from orderNo (format: TIN-BTS-2026-TKT-666662_1768457434)
+                $orderNoFromRequest = explode('_', $orderNoFromRequest)[0];
+            }
+            
+            $responseArray = [];
+            $orderNo = null;
+            
+            if (!empty($encResponse) && strlen($encResponse) > 10) {
+                // Only attempt decryption if encResp looks valid (not just "a" or similar garbage)
+                try {
+                    $credentials = $this->ccAvenueService->getCredentials();
+                    $decryptedResponse = $this->ccAvenueService->decrypt($encResponse, $credentials['working_key']);
+                    parse_str($decryptedResponse, $responseArray);
+                    
+                    $orderIdFromGateway = $responseArray['order_id'] ?? null;
+                    $orderNo = $orderIdFromGateway ? explode('_', $orderIdFromGateway)[0] : null;
+                    
+                    Log::info('Ticket CCAvenue Callback - Decrypted response', [
+                        'order_id_from_gateway' => $orderIdFromGateway,
+                        'order_no' => $orderNo,
+                        'order_status' => $responseArray['order_status'] ?? null,
+                    ]);
+                } catch (\Exception $e) {
+                    Log::warning('Ticket CCAvenue Callback - Decryption failed', [
+                        'error' => $e->getMessage(),
+                        'encResp_length' => strlen($encResponse),
+                    ]);
+                }
+            } else {
+                Log::warning('Ticket CCAvenue Callback - Invalid/empty encResp', [
+                    'encResp' => $encResponse,
+                    'orderNo_from_request' => $orderNoFromRequest,
+                ]);
+            }
+            
+            // Fallback to order number from request if decryption failed
+            if (!$orderNo && $orderNoFromRequest) {
+                $orderNo = $orderNoFromRequest;
+                Log::info('Ticket CCAvenue Callback - Using orderNo from request parameter', [
+                    'order_no' => $orderNo,
+                ]);
             }
 
-            $credentials = $this->ccAvenueService->getCredentials();
-            $decryptedResponse = $this->ccAvenueService->decrypt($encResponse, $credentials['working_key']);
-            parse_str($decryptedResponse, $responseArray);
-
-            $orderIdFromGateway = $responseArray['order_id'] ?? null;
-            $orderNo = $orderIdFromGateway ? explode('_', $orderIdFromGateway)[0] : null;
-
             if (!$orderNo) {
+                Log::error('Ticket CCAvenue Callback - Could not determine order number', [
+                    'encResp' => $encResponse,
+                    'orderNo_from_request' => $orderNoFromRequest,
+                ]);
                 return redirect()->route('tickets.payment.lookup', $eventSlug)
-                    ->with('error', 'Order not found for payment callback.');
+                    ->with('error', 'Order not found for payment callback. Please use your TIN to check payment status.');
             }
 
             $order = TicketOrder::with(['registration.contact', 'registration.event', 'items.ticketType'])
@@ -1254,7 +1293,17 @@ class RegistrationPaymentController extends Controller
                 ->whereHas('registration', function($q) use ($event) {
                     $q->where('event_id', $event->id);
                 })
-                ->firstOrFail();
+                ->first();
+                
+            if (!$order) {
+                Log::error('Ticket CCAvenue Callback - Order not found in database', [
+                    'order_no' => $orderNo,
+                    'event_id' => $event->id,
+                ]);
+                return redirect()->route('tickets.payment.lookup', $eventSlug)
+                    ->with('error', 'Order not found. Please use your TIN to check payment status.')
+                    ->with('tin', $orderNo);
+            }
 
             return $this->handleTicketCcAvenueCallback($request, $order, $event, $responseArray);
         } elseif ($gateway === 'paypal') {
@@ -1319,16 +1368,39 @@ class RegistrationPaymentController extends Controller
     private function handleTicketCcAvenueCallback($request, $order, $event, $responseArray = null)
     {
         try {
-            if (!$responseArray) {
+            // If responseArray is empty or null, try to decrypt from request
+            if (empty($responseArray) || !isset($responseArray['order_status'])) {
                 $encResponse = $request->input('encResp');
-                if (empty($encResponse)) {
-                    return redirect()->route('tickets.payment.lookup', [
-                        'eventSlug' => $event->slug ?? $event->id
-                    ])->with('error', 'Payment response incomplete.')->with('tin', $order->order_no);
+                
+                // Check if we have a valid encrypted response to decrypt
+                if (!empty($encResponse) && strlen($encResponse) > 10) {
+                    try {
+                        $credentials = $this->ccAvenueService->getCredentials();
+                        $decryptedResponse = $this->ccAvenueService->decrypt($encResponse, $credentials['working_key']);
+                        parse_str($decryptedResponse, $responseArray);
+                    } catch (\Exception $e) {
+                        Log::warning('Ticket CCAvenue Callback - Decryption failed in handler', [
+                            'error' => $e->getMessage(),
+                            'order_no' => $order->order_no,
+                        ]);
+                    }
                 }
-                $credentials = $this->ccAvenueService->getCredentials();
-                $decryptedResponse = $this->ccAvenueService->decrypt($encResponse, $credentials['working_key']);
-                parse_str($decryptedResponse, $responseArray);
+                
+                // If still empty, this means decryption failed or encResp was invalid
+                // Treat as cancelled/failed payment
+                if (empty($responseArray) || !isset($responseArray['order_status'])) {
+                    Log::warning('Ticket CCAvenue Callback - No valid response, treating as cancelled', [
+                        'order_no' => $order->order_no,
+                        'encResp' => $encResponse ?? 'null',
+                    ]);
+                    
+                    // Redirect to lookup with TIN pre-filled so user can retry
+                    // Pass tin as query parameter, not route parameter
+                    $lookupUrl = route('tickets.payment.lookup', ['eventSlug' => $event->slug ?? $event->id]) . '?tin=' . urlencode($order->order_no);
+                    return redirect($lookupUrl)
+                        ->with('error', 'Payment was cancelled or incomplete. You can try again by clicking Pay Now.')
+                        ->with('tin', $order->order_no);
+                }
             }
 
             $orderStatus = $responseArray['order_status'] ?? null;

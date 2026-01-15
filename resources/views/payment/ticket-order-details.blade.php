@@ -284,6 +284,20 @@
     </div>
 
     <div class="form-body">
+        @if(session('error'))
+        <div class="alert alert-warning mb-3" style="background: #fff3cd; border: 1px solid #ffc107; border-left: 4px solid #ffc107; border-radius: 8px; padding: 1rem;">
+            <i class="fas fa-exclamation-triangle me-2" style="color: #856404;"></i>
+            <span style="color: #856404;">{{ session('error') }}</span>
+        </div>
+        @endif
+
+        @if(session('success'))
+        <div class="alert alert-success mb-3" style="background: #d4edda; border: 1px solid #28a745; border-left: 4px solid #28a745; border-radius: 8px; padding: 1rem;">
+            <i class="fas fa-check-circle me-2" style="color: #155724;"></i>
+            <span style="color: #155724;">{{ session('success') }}</span>
+        </div>
+        @endif
+
         <!-- Receipt Header -->
         <div class="receipt-header">
             <div class="receipt-type">
