@@ -169,6 +169,35 @@
                 <span class="info-value">{{ $ticketType->name }}</span>
             </div>
             <div class="info-row">
+                <span class="info-label">Day Access:</span>
+                <span class="info-value">
+                    @php
+                        $selectedDayId = $registrationData['selected_event_day_id'] ?? null;
+                        $selectedDay = null;
+                        if ($selectedDayId) {
+                            $selectedDay = \App\Models\Ticket\EventDay::find($selectedDayId);
+                        }
+                    @endphp
+                    @if($selectedDay)
+                        <span class="badge bg-primary">{{ $selectedDay->label }}</span>
+                        <small class="text-muted">({{ \Carbon\Carbon::parse($selectedDay->date)->format('M d, Y') }})</small>
+                    @elseif($ticketType->all_days_access || ($ticketType->enable_day_selection && $ticketType->include_all_days_option))
+                        <span class="badge bg-success">All Days</span>
+                    @else
+                        @php
+                            $accessibleDays = $ticketType->getAllAccessibleDays();
+                        @endphp
+                        @if($accessibleDays->count() > 0)
+                            @foreach($accessibleDays as $day)
+                                <span class="badge bg-primary me-1">{{ $day->label }}</span>
+                            @endforeach
+                        @else
+                            <span class="badge bg-success">All Days</span>
+                        @endif
+                    @endif
+                </span>
+            </div>
+            <div class="info-row">
                 <span class="info-label">Currency:</span>
                 <span class="info-value">{{ ($registrationData['nationality'] === 'international' || $registrationData['nationality'] === 'International') ? 'USD ($)' : 'INR (₹)' }}</span>
             </div>

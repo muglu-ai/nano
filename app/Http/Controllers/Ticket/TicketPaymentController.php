@@ -102,10 +102,24 @@ class TicketPaymentController extends Controller
             $nationality = $registrationData['nationality'] ?? 'Indian';
             $isInternational = ($nationality === 'International' || $nationality === 'international');
             $nationalityForPrice = $isInternational ? 'international' : 'national';
-            
-            // Calculate pricing
+
+            // Calculate pricing - check if per-day pricing applies
             $quantity = $registrationData['delegate_count'];
-            $unitPrice = $ticketType->getCurrentPrice($nationalityForPrice);
+            $selectedEventDayId = $registrationData['selected_event_day_id'] ?? null;
+            $selectedAllDays = $registrationData['selected_all_days'] ?? false;
+            
+            // Use per-day price if ticket has per-day pricing and a specific day is selected (not "all")
+            if ($ticketType->hasPerDayPricing() && $selectedEventDayId && $selectedEventDayId !== 'all' && !$selectedAllDays) {
+                // Single day selected - use per-day price
+                $unitPrice = $ticketType->getPerDayPrice($nationalityForPrice) ?? $ticketType->getCurrentPrice($nationalityForPrice);
+            } elseif ($ticketType->hasPerDayPricing() && ($selectedEventDayId === 'all' || $selectedAllDays)) {
+                // "All Days" selected - use regular price (full package)
+                $unitPrice = $ticketType->getCurrentPrice($nationalityForPrice);
+                // Set selectedEventDayId to null for database (all days = null)
+                $selectedEventDayId = null;
+            } else {
+                $unitPrice = $ticketType->getCurrentPrice($nationalityForPrice);
+            }
             $subtotal = $unitPrice * $quantity;
             
             $gstRate = config('constants.GST_RATE', 18);
@@ -206,10 +220,12 @@ class TicketPaymentController extends Controller
                 }
             }
 
-            // Create order item
+            // Create order item - ensure selected_event_day_id is null for 'all' days
+            $orderItemDayId = ($selectedEventDayId === 'all' || $selectedEventDayId === null) ? null : $selectedEventDayId;
             TicketOrderItem::create([
                 'order_id' => $order->id,
                 'ticket_type_id' => $ticketType->id,
+                'selected_event_day_id' => $orderItemDayId,
                 'quantity' => $quantity,
                 'unit_price' => $unitPrice,
                 'subtotal' => $subtotal,
@@ -433,7 +449,7 @@ class TicketPaymentController extends Controller
                 // Update order status and invoice
                 if ($isSuccess) {
                     $order->update(['status' => 'paid']);
-
+                    
                     // Update invoice - mark as paid
                     $paidAmount = $responseArray['mer_amount'] ?? $order->total;
                     $invoice->update([
@@ -464,7 +480,7 @@ class TicketPaymentController extends Controller
                             'error' => $e->getMessage()
                         ]);
                     }
-
+                    
                     return redirect()->route('tickets.confirmation', [
                         'eventSlug' => $event->slug ?? $event->id,
                         'token' => $order->secure_token

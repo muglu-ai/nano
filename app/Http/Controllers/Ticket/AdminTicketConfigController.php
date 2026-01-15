@@ -530,11 +530,14 @@ class AdminTicketConfigController extends Controller
             'early_bird_price_international' => 'nullable|numeric|min:0',
             'regular_price_national' => 'required|numeric|min:0',
             'regular_price_international' => 'required|numeric|min:0',
+            'per_day_price_national' => 'nullable|numeric|min:0',
+            'per_day_price_international' => 'nullable|numeric|min:0',
             'early_bird_end_date' => 'nullable|date|after_or_equal:today',
             'capacity' => 'nullable|integer|min:1',
             'sale_start_at' => 'nullable|date',
             'sale_end_at' => 'nullable|date|after:sale_start_at',
             'is_active' => 'boolean',
+            'enable_day_selection' => 'boolean',
             'all_days_access' => 'boolean',
             'sort_order' => 'nullable|integer',
             'event_day_ids' => 'nullable|array',
@@ -558,11 +561,14 @@ class AdminTicketConfigController extends Controller
                 'regular_price' => $request->regular_price_national, // Fallback for backward compatibility
                 'regular_price_national' => $request->regular_price_national,
                 'regular_price_international' => $request->regular_price_international,
+                'per_day_price_national' => $request->per_day_price_national,
+                'per_day_price_international' => $request->per_day_price_international,
                 'early_bird_end_date' => $request->early_bird_end_date,
                 'capacity' => $request->capacity,
                 'sale_start_at' => $request->sale_start_at,
                 'sale_end_at' => $request->sale_end_at,
                 'is_active' => $request->input('is_active', '0') == '1',
+                'enable_day_selection' => $request->input('enable_day_selection', '0') == '1',
                 'all_days_access' => $request->input('all_days_access', '0') == '1',
                 'sort_order' => $request->sort_order ?? 0,
             ]);
@@ -574,14 +580,16 @@ class AdminTicketConfigController extends Controller
                 'sold_qty' => 0,
             ]);
 
-            // Handle day access
-            if ($request->has('all_days_access') && $request->all_days_access) {
-                // Attach all event days
+            // Handle day access - only attach specific days if day selection is enabled
+            if ($request->input('enable_day_selection', '0') == '1') {
+                if ($request->has('event_day_ids') && is_array($request->event_day_ids)) {
+                    // Attach selected days
+                    $ticketType->eventDays()->attach($request->event_day_ids);
+                }
+            } else {
+                // Day selection disabled - attach all event days by default
                 $allDays = EventDay::where('event_id', $eventId)->pluck('id');
                 $ticketType->eventDays()->attach($allDays);
-            } elseif ($request->has('event_day_ids')) {
-                // Attach selected days
-                $ticketType->eventDays()->attach($request->event_day_ids);
             }
         });
 
@@ -618,11 +626,14 @@ class AdminTicketConfigController extends Controller
             'early_bird_price_international' => 'nullable|numeric|min:0',
             'regular_price_national' => 'required|numeric|min:0',
             'regular_price_international' => 'required|numeric|min:0',
+            'per_day_price_national' => 'nullable|numeric|min:0',
+            'per_day_price_international' => 'nullable|numeric|min:0',
             'early_bird_end_date' => 'nullable|date',
             'capacity' => 'nullable|integer|min:1',
             'sale_start_at' => 'nullable|date',
             'sale_end_at' => 'nullable|date|after:sale_start_at',
             'is_active' => 'boolean',
+            'enable_day_selection' => 'boolean',
             'all_days_access' => 'boolean',
             'sort_order' => 'nullable|integer',
             'event_day_ids' => 'nullable|array',
@@ -646,26 +657,31 @@ class AdminTicketConfigController extends Controller
             'regular_price' => $request->regular_price_national, // Fallback for backward compatibility
             'regular_price_national' => $request->regular_price_national,
             'regular_price_international' => $request->regular_price_international,
+            'per_day_price_national' => $request->per_day_price_national,
+            'per_day_price_international' => $request->per_day_price_international,
             'early_bird_end_date' => $request->early_bird_end_date,
             'capacity' => $request->capacity,
             'sale_start_at' => $request->sale_start_at,
             'sale_end_at' => $request->sale_end_at,
             'is_active' => $request->input('is_active', '0') == '1',
+            'enable_day_selection' => $request->input('enable_day_selection', '0') == '1',
             'all_days_access' => $request->input('all_days_access', '0') == '1',
             'sort_order' => $request->sort_order ?? 0,
         ]);
 
-        // Handle day access
-        if ($request->has('all_days_access') && $request->all_days_access) {
-            // Sync all event days
+        // Handle day access - only sync if day selection is enabled
+        if ($request->input('enable_day_selection', '0') == '1') {
+            if ($request->has('event_day_ids') && is_array($request->event_day_ids)) {
+                // Sync selected days
+                $ticketType->eventDays()->sync($request->event_day_ids);
+            } else {
+                // No days selected, detach all
+                $ticketType->eventDays()->detach();
+            }
+        } else {
+            // Day selection disabled - attach all event days by default
             $allDays = EventDay::where('event_id', $eventId)->pluck('id');
             $ticketType->eventDays()->sync($allDays);
-        } elseif ($request->has('event_day_ids')) {
-            // Sync selected days
-            $ticketType->eventDays()->sync($request->event_day_ids);
-        } else {
-            // Remove all day access
-            $ticketType->eventDays()->detach();
         }
 
         return redirect()->route('admin.tickets.events.ticket-types', $eventId)

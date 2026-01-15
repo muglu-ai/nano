@@ -285,10 +285,14 @@
                                         </span>
                                     @else
                                         @php
-                                            $dayCount = $ticketType->eventDays->count();
+                                            $days = $ticketType->eventDays;
                                         @endphp
-                                        @if($dayCount > 0)
-                                            <span class="badge bg-primary">{{ $dayCount }} Day{{ $dayCount > 1 ? 's' : '' }}</span>
+                                        @if($days->count() > 0)
+                                            <div class="d-flex flex-wrap gap-1">
+                                                @foreach($days as $day)
+                                                    <span class="badge bg-primary">{{ $day->label }}</span>
+                                                @endforeach
+                                            </div>
                                         @else
                                             <span class="text-muted">No days</span>
                                         @endif

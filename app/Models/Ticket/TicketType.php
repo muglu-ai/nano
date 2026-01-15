@@ -27,12 +27,15 @@ class TicketType extends Model
         'regular_price', // Regular price after early bird ends (legacy, kept for backward compatibility)
         'regular_price_national', // Regular price for national users
         'regular_price_international', // Regular price for international users
+        'per_day_price_national', // Per-day price for national users (INR)
+        'per_day_price_international', // Per-day price for international users (USD)
         'early_bird_end_date', // When early bird pricing ends
         'capacity', // null for unlimited
         'sale_start_at',
         'sale_end_at',
         'is_active',
         'all_days_access', // If true, ticket grants access to all event days
+        'enable_day_selection', // When enabled, users can select which day(s) they want to attend
         'sort_order',
         'early_bird_reminder_sent', // Track if sales team has been reminded
     ];
@@ -44,12 +47,15 @@ class TicketType extends Model
         'regular_price' => 'decimal:2',
         'regular_price_national' => 'decimal:2',
         'regular_price_international' => 'decimal:2',
+        'per_day_price_national' => 'decimal:2',
+        'per_day_price_international' => 'decimal:2',
         'early_bird_end_date' => 'date',
         'capacity' => 'integer',
         'sale_start_at' => 'datetime',
         'sale_end_at' => 'datetime',
         'is_active' => 'boolean',
         'all_days_access' => 'boolean',
+        'enable_day_selection' => 'boolean',
         'sort_order' => 'integer',
         'early_bird_reminder_sent' => 'boolean',
     ];
@@ -182,6 +188,30 @@ class TicketType extends Model
     }
 
     /**
+     * Get per-day price for a specific nationality
+     * 
+     * @param string $nationality 'national' or 'international'
+     * @return float|null Returns null if per-day pricing is not set
+     */
+    public function getPerDayPrice(string $nationality = 'national'): ?float
+    {
+        if ($nationality === 'international') {
+            return $this->per_day_price_international ? (float) $this->per_day_price_international : null;
+        }
+        return $this->per_day_price_national ? (float) $this->per_day_price_national : null;
+    }
+
+    /**
+     * Check if per-day pricing is enabled for this ticket type
+     * 
+     * @return bool
+     */
+    public function hasPerDayPricing(): bool
+    {
+        return $this->per_day_price_national !== null || $this->per_day_price_international !== null;
+    }
+
+    /**
      * Check if early bird pricing is active
      */
     public function isEarlyBirdActive(): bool
@@ -236,19 +266,22 @@ class TicketType extends Model
 
     /**
      * Get all accessible event days for this ticket type
-     * If all_days_access is true, returns all event days
-     * Otherwise returns the specific days assigned
+     * Returns the specific days assigned via the pivot table
      */
     public function getAllAccessibleDays()
     {
-        if ($this->all_days_access) {
-            return EventDay::where('event_id', $this->event_id)
-                ->orderBy('sort_order')
-                ->orderBy('date')
-                ->get();
-        }
-        
         return $this->eventDays()->orderBy('sort_order')->orderBy('date')->get();
+    }
+    
+    /**
+     * Get all event days for the event (used when day selection is disabled)
+     */
+    public function getAllEventDays()
+    {
+        return EventDay::where('event_id', $this->event_id)
+            ->orderBy('sort_order')
+            ->orderBy('date')
+            ->get();
     }
 
     /**

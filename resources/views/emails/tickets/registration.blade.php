@@ -492,6 +492,32 @@
                     <span class="info-value">{{ $order->items->first()->ticketType->name ?? 'N/A' }}</span>
                 </div>
                 <div class="info-row">
+                    <span class="info-label">Day Access:</span>
+                    <span class="info-value">
+                        @php
+                            $firstItem = $order->items->first();
+                            $selectedDay = $firstItem && $firstItem->selected_event_day_id ? $firstItem->selectedDay : null;
+                            $ticketType = $firstItem ? $firstItem->ticketType : null;
+                        @endphp
+                        @if($selectedDay)
+                            {{ $selectedDay->label }} ({{ \Carbon\Carbon::parse($selectedDay->date)->format('M d, Y') }})
+                        @elseif($ticketType && ($ticketType->all_days_access || ($ticketType->enable_day_selection && $ticketType->include_all_days_option && !$firstItem->selected_event_day_id)))
+                            All Days
+                        @elseif($ticketType)
+                            @php
+                                $accessibleDays = $ticketType->getAllAccessibleDays();
+                            @endphp
+                            @if($accessibleDays->count() > 0)
+                                {{ $accessibleDays->pluck('label')->implode(', ') }}
+                            @else
+                                All Days
+                            @endif
+                        @else
+                            All Days
+                        @endif
+                    </span>
+                </div>
+                <div class="info-row">
                     <span class="info-label">Number of Delegates:</span>
                     <span class="info-value">{{ $order->items->sum('quantity') }}</span>
                 </div>

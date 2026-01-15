@@ -87,7 +87,7 @@
     </div>
 
     <div class="form-body">
-        <!-- Progress Bar -->
+    <!-- Progress Bar -->
         @php
             // Mark step 3 as completed (green) if payment is successful
             $isPaid = $order->status === 'paid';
@@ -96,14 +96,14 @@
             $currentStep = $isPaid ? 4 : 3;
         @endphp
         @include('tickets.public.partials.progress-bar', ['currentStep' => $currentStep])
-        
+    
         <div class="text-center mb-4">
-            <div class="success-icon">
-                <i class="fas fa-check-circle"></i>
-            </div>
+        <div class="success-icon">
+            <i class="fas fa-check-circle"></i>
+        </div>
             <p class="lead mb-4" style="color: var(--text-primary); font-size: 1.1rem;">
-                Thank you for your registration. Your order has been confirmed.
-            </p>
+            Thank you for your registration. Your order has been confirmed.
+        </p>
         </div>
 
         <div class="preview-section">
@@ -122,6 +122,30 @@
                 <span class="info-value">
                     @foreach($order->items as $item)
                         {{ $item->ticketType->name }} ({{ $item->quantity }}x)
+                    @endforeach
+                </span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Day Access:</span>
+                <span class="info-value">
+                    @foreach($order->items as $item)
+                        @if($item->selectedDay)
+                            <span class="badge bg-primary">{{ $item->selectedDay->label }}</span>
+                            <small class="text-muted">({{ \Carbon\Carbon::parse($item->selectedDay->date)->format('M d, Y') }})</small>
+                        @elseif($item->ticketType->all_days_access || ($item->ticketType->enable_day_selection && $item->ticketType->include_all_days_option && !$item->selected_event_day_id))
+                            <span class="badge bg-success">All Days</span>
+                        @else
+                            @php
+                                $accessibleDays = $item->ticketType->getAllAccessibleDays();
+                            @endphp
+                            @if($accessibleDays->count() > 0)
+                                @foreach($accessibleDays as $day)
+                                    <span class="badge bg-primary me-1">{{ $day->label }}</span>
+                                @endforeach
+                            @else
+                                <span class="badge bg-success">All Days</span>
+                            @endif
+                        @endif
                     @endforeach
                 </span>
             </div>
@@ -248,13 +272,13 @@
             </div>
         @endif
 
-        @php
-            $paymentDetails = session('payment_details');
-            $primaryPayment = $order->primaryPayment();
+            @php
+                $paymentDetails = session('payment_details');
+                $primaryPayment = $order->primaryPayment();
             $isPaid = $order->status === 'paid';
             $isInternational = ($order->registration->nationality === 'International' || $order->registration->nationality === 'international');
             $currencySymbol = $isInternational ? '$' : '₹';
-        @endphp
+            @endphp
 
         @if($isPaid && ($paymentDetails || $primaryPayment))
             <div class="preview-section">
@@ -290,8 +314,8 @@
                     <span class="info-label">Payment Type:</span>
                     <span class="info-value">
                         <strong>{{ strtoupper($primaryPayment->method) }}</strong>
-                    </span>
-                </div>
+                        </span>
+                    </div>
                 @endif
 
                 @if(isset($paymentDetails['transaction_id']) || ($primaryPayment && $primaryPayment->gateway_txn_id))
@@ -371,8 +395,8 @@
                     <span class="info-label">Amount Paid:</span>
                     <span class="info-value">
                         <strong style="color: var(--primary-color); font-size: 1.1rem;">{{ $currencySymbol }}{{ number_format($order->total, 2) }}</strong>
-                    </span>
-                </div>
+                        </span>
+                    </div>
 
                 @if($order->updated_at)
                     <div class="info-row">
@@ -389,11 +413,11 @@
             <div class="alert alert-success" style="background: #d4edda; border: 1px solid #c3e6cb; border-radius: 8px; padding: 1rem;">
                 <p style="color: var(--text-primary); margin-bottom: 0.5rem;">
                     <i class="fas fa-envelope me-2"></i>
-                    A payment acknowledgement email has been sent to <strong>{{ $order->registration->contact->email }}</strong>
-                </p>
+                A payment acknowledgement email has been sent to <strong>{{ $order->registration->contact->email }}</strong>
+            </p>
                 <p style="color: var(--text-secondary); font-size: 0.9rem; margin: 0;">
-                    Please check your email for the receipt and further instructions.
-                </p>
+                Please check your email for the receipt and further instructions.
+            </p>
             </div>
         </div>
     </div>

@@ -157,8 +157,8 @@
     </div>
 
     <div class="form-body">
-        <!-- Progress Bar -->
-        @include('tickets.public.partials.progress-bar', ['currentStep' => 3])
+    <!-- Progress Bar -->
+    @include('tickets.public.partials.progress-bar', ['currentStep' => 3])
 
         @if(session('error'))
             <div class="alert alert-danger mb-4">
@@ -336,7 +336,7 @@
         <!-- Pay Now Button -->
         <div class="text-center mt-4">
             <a href="{{ route('tickets.payment.process', ['eventSlug' => $event->slug ?? $event->id, 'orderNo' => $order->order_no]) }}" class="btn btn-pay-now" id="payNowBtn">
-                <i class="fas fa-credit-card me-2"></i>
+                    <i class="fas fa-credit-card me-2"></i>
                 Pay Now {{ $currencySymbol }}{{ number_format($order->total, $priceFormat) }}
             </a>
         </div>

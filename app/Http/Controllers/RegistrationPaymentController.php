@@ -94,7 +94,7 @@ class RegistrationPaymentController extends Controller
         $this->paypalClient = PaypalServerSdkClientBuilder::init()
             ->clientCredentialsAuthCredentials(
                 ClientCredentialsAuthCredentialsBuilder::init($clientId, $clientSecret)
-            )
+                )
             ->environment($environment)
             ->build();
     }
@@ -1170,7 +1170,7 @@ class RegistrationPaymentController extends Controller
                         ->build()
                 )
                 ->build();
-            
+
             $orderBody = [
                 'body' => $orderRequest
             ];

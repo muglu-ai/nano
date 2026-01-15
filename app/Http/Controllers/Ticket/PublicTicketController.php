@@ -386,6 +386,39 @@ class PublicTicketController extends Controller
         // Store ticket type ID (not slug) in validated data for consistency
         $validated['ticket_type_id'] = $ticketType->id;
         
+        // Handle selected event day - only required if day selection is enabled
+        $selectedEventDayId = $request->input('selected_event_day_id');
+        if ($ticketType->enable_day_selection) {
+            // Day selection is enabled - user must select a day
+            if (empty($selectedEventDayId)) {
+                return redirect()->back()
+                    ->withInput()
+                    ->withErrors(['selected_event_day_id' => 'Please select which day you want to attend.']);
+            }
+            
+            // Check if "All Days" option was selected
+            if ($selectedEventDayId === 'all') {
+                // User selected all days - store as 'all' to indicate full access
+                $validated['selected_event_day_id'] = 'all';
+                $validated['selected_all_days'] = true;
+            } else {
+                // Verify the selected day is valid for this ticket type
+                $validDay = $ticketType->getAllAccessibleDays()->pluck('id')->contains($selectedEventDayId);
+                if (!$validDay) {
+                    return redirect()->back()
+                        ->withInput()
+                        ->withErrors(['selected_event_day_id' => 'The selected day is not valid for this ticket type.']);
+                }
+                
+                $validated['selected_event_day_id'] = $selectedEventDayId;
+                $validated['selected_all_days'] = false;
+            }
+        } else {
+            // Day selection disabled - user gets all days automatically
+            $validated['selected_event_day_id'] = null;
+            $validated['selected_all_days'] = true;
+        }
+        
         // Normalize nationality value (convert 'national'/'international' to 'Indian'/'International')
         if (isset($validated['nationality'])) {
             if ($validated['nationality'] === 'national') {
@@ -461,7 +494,7 @@ class PublicTicketController extends Controller
                 $delegate['phone'] = $this->formatPhoneNumber($delegate['phone']);
             }
         }
-        
+
         // Store form data in session for preview (including delegates)
         $registrationData = array_merge($validated, [
             'event_id' => $event->id,
@@ -520,7 +553,7 @@ class PublicTicketController extends Controller
         $nationality = $registrationData['nationality'] ?? 'Indian';
         $isInternational = ($nationality === 'International' || $nationality === 'international');
         $nationalityForPrice = $isInternational ? 'international' : 'national';
-        
+
         // Calculate pricing
         $quantity = $registrationData['delegate_count'];
         $unitPrice = $ticketType->getCurrentPrice($nationalityForPrice);
