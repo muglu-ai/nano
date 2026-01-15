@@ -315,11 +315,24 @@
 
             <!-- Registration Information -->
             <div class="section-title">📋 Registration Information</div>
+            @php
+                // Fetch PIN from invoice table
+                $invoice = \App\Models\Invoice::where('invoice_no', $order->order_no)
+                    ->where('type', 'ticket_registration')
+                    ->first();
+                $pinNo = $invoice->pin_no ?? null;
+            @endphp
             <table class="info-table">
              <tr>
                     <td class="label">TIN NO:</td>
                     <td class="value">{{ $order->order_no }}</td>
                 </tr>
+                @if($order->status === 'paid' && $pinNo)
+                <tr>
+                    <td class="label">PIN NO:</td>
+                    <td class="value" style="font-weight: 700; color: #0066cc;">{{ $pinNo }}</td>
+                </tr>
+                @endif
                 
                 <tr style="background: {{ $order->status === 'paid' ? '#d4edda' : '#fff3cd' }};">
                     <td class="label" style="color: {{ $order->status === 'paid' ? '#155724' : '#856404' }};">Payment Status</td>

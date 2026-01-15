@@ -1758,13 +1758,26 @@ class RegistrationPaymentController extends Controller
                 // Update order status
                 $order->update(['status' => 'paid']);
 
-                // Update invoice status/amounts - mark as paid
+                // Update invoice status/amounts - mark as paid and generate PIN
                 if ($invoice) {
                     $paidAmount = $responseArray['mer_amount'] ?? $order->total;
+                    
+                    // Generate PIN number if not already set
+                    $pinNo = $invoice->pin_no;
+                    if (empty($pinNo)) {
+                        $pinNo = $this->generateTicketPinNo();
+                    }
+                    
                     $invoice->update([
                         'amount_paid' => $paidAmount,
                         'pending_amount' => max(0, ($invoice->total_final_price ?? $paidAmount) - $paidAmount),
-                        'payment_status' => 'paid', // Mark invoice as paid
+                        'payment_status' => 'paid',
+                        'pin_no' => $pinNo, // Save PIN number
+                    ]);
+                    
+                    Log::info('Ticket CCAvenue Payment - PIN generated', [
+                        'order_no' => $order->order_no,
+                        'pin_no' => $pinNo,
                     ]);
                 }
 
@@ -2044,12 +2057,24 @@ class RegistrationPaymentController extends Controller
                 // Update order status
                 $order->update(['status' => 'paid']);
 
-                // Update invoice - mark as paid
+                // Update invoice - mark as paid and generate PIN
                 if ($invoice) {
+                    // Generate PIN number if not already set
+                    $pinNo = $invoice->pin_no;
+                    if (empty($pinNo)) {
+                        $pinNo = $this->generateTicketPinNo();
+                    }
+                    
                     $invoice->update([
                         'amount_paid' => $inrAmount,
                         'pending_amount' => max(0, ($invoice->total_final_price ?? $inrAmount) - $inrAmount),
-                        'payment_status' => 'paid', // Mark invoice as paid
+                        'payment_status' => 'paid',
+                        'pin_no' => $pinNo, // Save PIN number
+                    ]);
+                    
+                    Log::info('Ticket PayPal Payment - PIN generated', [
+                        'order_no' => $order->order_no,
+                        'pin_no' => $pinNo,
                     ]);
                 }
 
@@ -2155,6 +2180,46 @@ class RegistrationPaymentController extends Controller
      * 
      * Returns just the 10-digit phone number without country code
      */
+    private function extractPhoneNumber($phone)
+
+    /**
+     * Generate unique PIN number for ticket payment confirmation
+     * Format: PRN-BTS-2026-TKT-XXXXXX (6-digit random number)
+     */
+    private function generateTicketPinNo()
+    {
+        // Use ticket-specific prefix: PRN-BTS-2026-TKT-
+        $shortName = config('constants.SHORT_NAME', 'BTS');
+        $eventYear = config('constants.EVENT_YEAR', date('Y'));
+        $prefix = 'PRN-' . $shortName . '-' . $eventYear . '-TKT-';
+        
+        $maxAttempts = 100;
+        $attempts = 0;
+        
+        while ($attempts < $maxAttempts) {
+            // Generate 6-digit random number
+            $randomNumber = str_pad(rand(100000, 999999), 6, '0', STR_PAD_LEFT);
+            $pinNo = $prefix . $randomNumber;
+            $attempts++;
+            
+            // Check if it already exists in invoices table
+            if (!Invoice::where('pin_no', $pinNo)->exists()) {
+                return $pinNo;
+            }
+        }
+        
+        // Fallback: use timestamp-based
+        $timestamp = substr(time(), -6);
+        $pinNo = $prefix . $timestamp;
+        if (!Invoice::where('pin_no', $pinNo)->exists()) {
+            return $pinNo;
+        }
+        
+        // Last resort: use microtime
+        $microtime = substr(str_replace('.', '', microtime(true)), -6);
+        return $prefix . $microtime;
+    }
+
     private function extractPhoneNumber($phone)
     {
         if (empty($phone)) {

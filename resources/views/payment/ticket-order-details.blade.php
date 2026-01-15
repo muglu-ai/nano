@@ -313,20 +313,17 @@
         </div>
 
         <!-- Order Info -->
+        @php
+            // Fetch PIN from invoice table
+            $invoice = \App\Models\Invoice::where('invoice_no', $order->order_no)
+                ->where('type', 'ticket_registration')
+                ->first();
+            $pinNo = $invoice->pin_no ?? null;
+        @endphp
         <div class="order-info-box">
             <strong><i class="fas fa-ticket-alt me-2"></i>TIN No.: {{ $order->order_no }}</strong>
-            @if($order->status === 'paid')
-                @php
-                    $pinNo = $order->pin_no ?? null;
-                    if (!$pinNo && $order->status === 'paid') {
-                        $prefix = config('constants.PIN_NO_PREFIX', 'PRN-BTS-2026-EXHP-');
-                        $randomNumber = str_pad(rand(100000, 999999), 6, '0', STR_PAD_LEFT);
-                        $pinNo = $prefix . $randomNumber;
-                    }
-                @endphp
-                @if($pinNo)
-                <p><strong>PIN No.:</strong> {{ $pinNo }}</p>
-                @endif
+            @if($order->status === 'paid' && $pinNo)
+                <p><strong>PIN No.:</strong> <span style="color: #0066cc; font-weight: 700;">{{ $pinNo }}</span></p>
             @endif
             <p style="font-size: 0.8rem; margin-top: 0.5rem;">Please keep this TIN number for your records.</p>
         </div>

@@ -213,10 +213,23 @@
                         </span>
                     </td>
                 </tr>
+                @php
+                    // Fetch PIN from invoice table
+                    $invoice = \App\Models\Invoice::where('invoice_no', $order->order_no)
+                        ->where('type', 'ticket_registration')
+                        ->first();
+                    $pinNo = $invoice->pin_no ?? null;
+                @endphp
                 <tr>
                     <td class="label-cell">Order Number (TIN)</td>
                     <td class="value-cell"><strong>{{ $order->order_no }}</strong></td>
                 </tr>
+                @if($order->status === 'paid' && $pinNo)
+                <tr>
+                    <td class="label-cell">PIN No.</td>
+                    <td class="value-cell"><strong style="color: #0066cc;">{{ $pinNo }}</strong></td>
+                </tr>
+                @endif
                 <tr>
                     <td class="label-cell">Event</td>
                     <td class="value-cell">{{ $order->registration->event->event_name }}</td>
