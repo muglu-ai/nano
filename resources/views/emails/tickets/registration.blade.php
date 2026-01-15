@@ -274,6 +274,7 @@
             <p style="font-size: 14px; margin-bottom: 12px;">Thank you for registering for <strong>{{ config('constants.EVENT_NAME') }} {{ config('constants.EVENT_YEAR') }}</strong>.</p>
 
             <!-- TIN Information -->
+            {{--
             <div class="order-info">
                 <table width="100%" cellpadding="0" cellspacing="0">
                     <tr>
@@ -299,6 +300,7 @@
                     </tr>
                 </table>
             </div>
+            --}}
 
             <!-- Alert -->
             @if($order->status !== 'paid')
@@ -314,6 +316,10 @@
             <!-- Registration Information -->
             <div class="section-title">📋 Registration Information</div>
             <table class="info-table">
+            <tr>
+                    <td class="label">TIN NO:</td>
+                    <td class="value">{{ $pinNo }}</td>
+                </tr>
                 <tr style="background: {{ $order->status === 'paid' ? '#d4edda' : '#fff3cd' }};">
                     <td class="label" style="color: {{ $order->status === 'paid' ? '#155724' : '#856404' }};">Payment Status</td>
                     <td class="value">
@@ -507,7 +513,7 @@
 
             <!-- Pay Now Button -->
             @if($order->status !== 'paid')
-            <div style="text-align: center; margin: 20px 0;">
+            <div style="text-align: center; margin: 7px 0;">
                 <a href="{{ route('tickets.payment.by-tin', ['eventSlug' => $event->slug ?? $event->id, 'tin' => $order->order_no]) }}" class="btn-pay-now">
                     💳 Pay Now - {{ $currencySymbol }}{{ number_format($order->total, $priceFormat) }}
                 </a>
@@ -519,7 +525,7 @@
                 <strong>Note:</strong> After payment, a final acknowledgement receipt will be provided.
             </p>
             @else
-            <div style="background: #d4edda; padding: 15px; border: 1px solid #c3e6cb; margin: 15px 0; text-align: center; border-radius: 4px;">
+            <div style="background: #d4edda; padding: 15px; border: 1px solid #c3e6cb; margin: 8px 0; text-align: center; border-radius: 4px;">
                 <p style="margin: 0; color: #155724; font-size: 15px; font-weight: 700;">
                     ✓ Payment Completed Successfully
                 </p>
