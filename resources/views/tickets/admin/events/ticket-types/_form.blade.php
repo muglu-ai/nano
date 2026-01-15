@@ -269,7 +269,7 @@
                 </label>
                 <p class="text-muted mb-0 mt-2" style="font-size: 0.875rem;">
                     When enabled, users will see a dropdown to choose which day(s) they want to attend.
-                    Options include "All Days" and individual days.
+                    Options include "All 3 Days" and individual days.
                 </p>
             </div>
             <div class="form-check form-switch">
@@ -289,10 +289,10 @@
                 <div>
                     <label class="switch-label" for="all_days_access" style="font-weight: 600; font-size: 0.95rem; color: #2d3748; margin: 0;">
                         <i class="fas fa-check-circle text-success me-2"></i>
-                        Include "All Days" Option
+                        Include "All 3 Days" Option
                     </label>
                     <p class="text-muted mb-0 mt-1" style="font-size: 0.8rem;">
-                        Adds an "All Days" option in the dropdown (uses regular price)
+                        Adds an "All 3 Days" option in the dropdown (uses regular price)
                     </p>
                 </div>
                 <div class="form-check form-switch">

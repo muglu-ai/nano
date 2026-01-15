@@ -414,7 +414,7 @@
                                         $allowedDays = $rule->getAllowedDays();
                                     @endphp
                                     @if(empty($allowedDays))
-                                        <span class="badge-days">All Days</span>
+                                        <span class="badge-days">All 3 Days</span>
                                     @else
                                         @php
                                             $dayLabels = $eventDays->whereIn('id', $allowedDays)->pluck('label')->toArray();

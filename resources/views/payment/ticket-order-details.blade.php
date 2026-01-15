@@ -406,7 +406,7 @@
                             <span class="day-badge primary">{{ $selectedDay->label }}</span>
                             <small class="text-muted">({{ \Carbon\Carbon::parse($selectedDay->date)->format('M d, Y') }})</small>
                         @elseif($ticketType && ($ticketType->all_days_access || ($ticketType->enable_day_selection && $ticketType->include_all_days_option && !$firstItem->selected_event_day_id)))
-                            <span class="day-badge success">All Days</span>
+                            <span class="day-badge success">All 3 Days</span>
                         @elseif($ticketType)
                             @php
                                 $accessibleDays = $ticketType->getAllAccessibleDays();
@@ -416,10 +416,10 @@
                                     <span class="day-badge primary">{{ $day->label }}</span>
                                 @endforeach
                             @else
-                                <span class="day-badge success">All Days</span>
+                                <span class="day-badge success">All 3 Days</span>
                             @endif
                         @else
-                            <span class="day-badge success">All Days</span>
+                            <span class="day-badge success">All 3 Days</span>
                         @endif
                     </td>
                 </tr>

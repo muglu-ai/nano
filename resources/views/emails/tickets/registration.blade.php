@@ -384,16 +384,16 @@
                         @if($selectedDay)
                             {{ $selectedDay->label }} ({{ \Carbon\Carbon::parse($selectedDay->date)->format('M d, Y') }})
                         @elseif($ticketType && ($ticketType->all_days_access || ($ticketType->enable_day_selection && $ticketType->include_all_days_option && !$firstItem->selected_event_day_id)))
-                            All Days
+                            All 3 Days
                         @elseif($ticketType)
                             @php $accessibleDays = $ticketType->getAllAccessibleDays(); @endphp
                             @if($accessibleDays->count() > 0)
                                 {{ $accessibleDays->pluck('label')->implode(', ') }}
                             @else
-                                All Days
+                                All 3 Days
                             @endif
                         @else
-                            All Days
+                            All 3 Days
                         @endif
                     </td>
                 </tr>

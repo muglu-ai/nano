@@ -246,6 +246,7 @@
                         @enderror
                         
                         {{-- Day Access Info - shows which days the ticket grants access to --}}
+                        {{--
                         <div id="day_access_info" class="mt-2" style="display: none;">
                             <div class="d-flex align-items-center flex-wrap gap-2">
                                 <span class="text-muted" style="font-size: 0.875rem;">
@@ -254,6 +255,7 @@
                                 <span id="day_access_badges"></span>
                             </div>
                         </div>
+                        --}}
                     </div>
                 </div>
 
@@ -672,8 +674,8 @@ document.addEventListener('DOMContentLoaded', function() {
         
         try {
             if (allDaysAccess) {
-                // Show "All Days" badge
-                dayAccessBadges.innerHTML = '<span class="badge" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 0.35rem 0.75rem; border-radius: 6px; font-weight: 500;"><i class="fas fa-check-circle me-1"></i>All Days</span>';
+                // Show "All 3 Days" badge
+                dayAccessBadges.innerHTML = '<span class="badge" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 0.35rem 0.75rem; border-radius: 6px; font-weight: 500;"><i class="fas fa-check-circle me-1"></i>All 3 Days</span>';
                 dayAccessInfo.style.display = 'block';
             } else {
                 const availableDays = JSON.parse(availableDaysJson);
@@ -739,9 +741,9 @@ document.addEventListener('DOMContentLoaded', function() {
                             priceInfo = ' - ₹' + parseFloat(priceNational).toLocaleString();
                         }
                         
-                        allDaysOption.textContent = 'All Days (' + startDate + ' - ' + endDate + ')' + priceInfo;
+                        allDaysOption.textContent = 'All 3 Days (' + startDate + ' - ' + endDate + ')' + priceInfo;
                     } else {
-                        allDaysOption.textContent = 'All Days';
+                        allDaysOption.textContent = 'All 3 Days';
                     }
                     if ('{{ old("selected_event_day_id") }}' === 'all') {
                         allDaysOption.selected = true;
@@ -776,6 +778,15 @@ document.addEventListener('DOMContentLoaded', function() {
                     });
                 }
                 
+                // Auto-select "All 3 Days" if there's only one accessible day and "All Days" option is available
+                if (availableDays && availableDays.length === 1 && (allDaysAccess || includeAllDaysOption)) {
+                    // Set "All 3 Days" as selected
+                    const allDaysOption = selectedEventDaySelect.querySelector('option[value="all"]');
+                    if (allDaysOption) {
+                        allDaysOption.selected = true;
+                    }
+                }
+
                 daySelectionRow.style.display = 'flex';
                 selectedEventDaySelect.setAttribute('required', 'required');
             } catch(e) {

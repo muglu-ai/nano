@@ -281,7 +281,7 @@
                                 <td>
                                     @if($ticketType->all_days_access)
                                         <span class="badge-all-days">
-                                            <i class="fas fa-check-circle me-1"></i>All Days
+                                            <i class="fas fa-check-circle me-1"></i>All 3 Days
                                         </span>
                                     @else
                                         @php
