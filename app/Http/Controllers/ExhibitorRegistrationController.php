@@ -8,6 +8,7 @@ use App\Models\Invoice;
 use App\Models\State;
 use App\Models\Country;
 use App\Models\GstLookup;
+use App\Models\StartupZoneDraft;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
@@ -21,6 +22,7 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use App\Mail\UserCredentialsMail;
 use App\Mail\ExhibitorRegistrationMail;
+use App\Mail\ExhibitorRegistrationAdminMail;
 
 class ExhibitorRegistrationController extends Controller
 {
@@ -29,10 +31,21 @@ class ExhibitorRegistrationController extends Controller
      */
     public function showForm(Request $request)
     {
-        // Get draft data from session (if exists)
-        $sessionData = session('exhibitor_registration_draft', []);
+        // Get draft data from database (if exists)
+        $sessionId = session()->getId();
+        $draft = StartupZoneDraft::where('session_id', $sessionId)
+            ->where('application_type', 'exhibitor-registration')
+            ->active()
+            ->first();
         
-        $draft = (object) $sessionData;
+        // If no draft exists, create empty object for form
+        if (!$draft) {
+            $draft = new \stdClass();
+            $draft->progress_percentage = 0;
+            $draft->contact_data = [];
+            $draft->billing_data = [];
+            $draft->exhibitor_data = [];
+        }
         
         // Ensure progress_percentage exists
         if (!isset($draft->progress_percentage)) {
@@ -40,10 +53,11 @@ class ExhibitorRegistrationController extends Controller
         }
         
         // Set default country to India if not set
-        if (!isset($draft->country_id)) {
+        $countryId = $draft->country_id ?? null;
+        if (!$countryId) {
             $india = Country::where('code', 'IN')->first();
             if ($india) {
-                $draft->country_id = $india->id;
+                $countryId = $india->id;
             }
         }
         
@@ -54,7 +68,7 @@ class ExhibitorRegistrationController extends Controller
         $gstRate = $eventConfig->gst_rate ?? 18;
         
         // Get dropdown data
-        $sectors = [
+     /*   $sectors = [
             'Information Technology',
             'Electronics & Semiconductor',
             'Drones & Robotics',
@@ -82,7 +96,8 @@ class ExhibitorRegistrationController extends Controller
             'Banking / Insurance',
             'R&D and Central Govt.',
             'Others'
-        ];
+        ];*/
+        $sectors = config('constants.sectors', []);
         
         $subSectors = config('constants.SUB_SECTORS', []);
         
@@ -297,6 +312,13 @@ class ExhibitorRegistrationController extends Controller
             'country_code' => $mobileCountryCode,
         ];
         
+        // Check email in autoSave (non-blocking, just for early feedback)
+        $contactEmail = $request->input('contact_email');
+        $emailExists = false;
+        if (!empty($contactEmail)) {
+            $emailExists = $this->checkEmailExists(trim($contactEmail));
+        }
+        
         if (!empty($contactData)) {
             $formData['contact_data'] = $contactData;
         }
@@ -334,17 +356,103 @@ class ExhibitorRegistrationController extends Controller
             $formData['exhibitor_data'] = $exhibitorData;
         }
         
-        // Store in session
-        session(['exhibitor_registration_draft' => $formData]);
+        // Save to draft table (same as Startup Zone)
+        $sessionId = session()->getId();
+        $draft = StartupZoneDraft::where('session_id', $sessionId)
+            ->where('application_type', 'exhibitor-registration')
+            ->first();
+        
+        if (!$draft) {
+            $draft = new StartupZoneDraft();
+            $draft->session_id = $sessionId;
+            $draft->application_type = 'exhibitor-registration';
+            $draft->event_id = 1; // Default event ID
+        }
+        
+        // Update draft with form data
+        $draft->contact_data = $formData['contact_data'] ?? [];
+        $draft->billing_data = $formData['billing_data'] ?? [];
+        $draft->exhibitor_data = $formData['exhibitor_data'] ?? [];
+        
+        // Store individual fields for easier access
+        if (isset($formData['booth_space'])) {
+            $draft->stall_category = $formData['booth_space'];
+        }
+        if (isset($formData['booth_size'])) {
+            $draft->interested_sqm = $formData['booth_size'];
+        }
+        if (isset($billingData['company_name'])) {
+            $draft->company_name = $billingData['company_name'];
+        }
+        if (isset($billingData['email'])) {
+            $draft->company_email = $billingData['email'];
+        }
+        if (isset($billingData['address'])) {
+            $draft->address = $billingData['address'];
+        }
+        if (isset($billingData['city'])) {
+            $draft->city_id = $billingData['city'];
+        }
+        if (isset($billingData['state_id'])) {
+            $draft->state_id = $billingData['state_id'];
+        }
+        if (isset($billingData['postal_code'])) {
+            $draft->postal_code = $billingData['postal_code'];
+        }
+        if (isset($billingData['country_id'])) {
+            $draft->country_id = $billingData['country_id'];
+        }
+        if (isset($billingData['telephone'])) {
+            $draft->landline = $billingData['telephone'];
+        }
+        if (isset($billingData['website'])) {
+            $draft->website = $billingData['website'];
+        }
+        if (isset($formData['sector'])) {
+            $draft->sector_id = $formData['sector'];
+        }
+        if (isset($formData['subsector'])) {
+            $draft->subSector = $formData['subsector'];
+        }
+        if (isset($formData['other_sector_name'])) {
+            $draft->type_of_business = $formData['other_sector_name'];
+        }
+        if (isset($formData['gst_status'])) {
+            $draft->gst_compliance = ($formData['gst_status'] === 'Registered');
+        }
+        if (isset($formData['gst_no'])) {
+            $draft->gst_no = $formData['gst_no'];
+        }
+        if (isset($formData['pan_no'])) {
+            $draft->pan_no = $formData['pan_no'];
+        }
+        if (isset($formData['promocode'])) {
+            $draft->promocode = $formData['promocode'];
+        }
         
         // Calculate progress percentage
         $progress = $this->calculateProgressFromData($formData);
+        $draft->progress_percentage = $progress;
         
-        return response()->json([
+        $draft->save();
+        
+        // Also store in session for backward compatibility
+        session(['exhibitor_registration_draft' => $formData]);
+        
+        // Return response with email validation warning (non-blocking for autoSave)
+        $response = [
             'success' => true,
-            'message' => 'Data stored in session',
+            'message' => 'Data saved successfully',
             'progress' => $progress
-        ]);
+        ];
+        
+        // Add email warning if email exists (non-blocking in autoSave)
+        if ($emailExists) {
+            $response['email_warning'] = true;
+            $response['email_message'] = 'This email is already registered. Please use a different email address.';
+        }
+        
+        return response()->json($response);
     }
 
     /**
@@ -639,6 +747,19 @@ class ExhibitorRegistrationController extends Controller
                 $allData['contact_mobile'] = $request->input('contact_mobile_national');
             }
             
+            // CRITICAL: Check if contact email already exists in users table - BLOCK SUBMISSION
+            $contactEmail = $request->input('contact_email');
+            if (!empty($contactEmail) && $this->checkEmailExists(trim($contactEmail))) {
+                // Email already exists - return error immediately and STOP processing
+                return response()->json([
+                    'success' => false,
+                    'message' => 'This email is already registered. Please use a different email address.',
+                    'errors' => [
+                        'contact_email' => ['Email already exists']
+                    ]
+                ], 422);
+            }
+            
             // Validation rules
             $rules = [
                 'booth_space' => 'required|in:Raw,Shell',
@@ -746,29 +867,80 @@ class ExhibitorRegistrationController extends Controller
                 $contactMobile = $request->input('contact_mobile');
             }
             
-            // Store validated and calculated data in session (no DB insert yet)
-            $submittedData = [
-                'all_data' => $allData,
-                'billing_data' => $billingData,
-                'exhibitor_data' => $allData['exhibitor_data'] ?? [],
-                'contact_data' => $contactData,
-                'billing_telephone' => $billingTelephone,
-                'contact_mobile' => $contactMobile,
-                'pricing' => [
-                    'base_price' => $basePrice,
-                    'gst_amount' => $gstAmount,
-                    'processing_charges' => $processingCharges,
-                    'processing_rate' => $eventConfig->ind_processing_charge ?? 3,
-                    'gst_rate' => $eventConfig->gst_rate ?? 18,
-                    'total_price' => $totalPrice,
-                ],
-                'submitted_at' => now()->toDateTimeString(),
+            // Save to draft table (NOT creating application yet)
+            $sessionId = session()->getId();
+            $draft = StartupZoneDraft::where('session_id', $sessionId)
+                ->where('application_type', 'exhibitor-registration')
+                ->first();
+            
+            if (!$draft) {
+                $draft = new StartupZoneDraft();
+                $draft->session_id = $sessionId;
+                $draft->application_type = 'exhibitor-registration';
+                $draft->event_id = 1; // Default event ID
+            }
+            
+            // Update draft with all form data
+            $draft->contact_data = $contactData;
+            $draft->billing_data = $billingData;
+            $draft->exhibitor_data = $allData['exhibitor_data'] ?? [];
+            
+            // Store individual fields
+            $draft->stall_category = $allData['booth_space'] ?? null;
+            $draft->interested_sqm = $allData['booth_size'] ?? null;
+            $draft->company_name = $billingData['company_name'] ?? null;
+            $draft->company_email = $billingData['email'] ?? $allData['billing_email'] ?? null;
+            $draft->address = $billingData['address'] ?? null;
+            $draft->city_id = $billingData['city'] ?? null;
+            $draft->state_id = $billingData['state_id'] ?? null;
+            $draft->postal_code = $billingData['postal_code'] ?? null;
+            $draft->country_id = $billingData['country_id'] ?? null;
+            $draft->landline = $billingTelephone;
+            $draft->website = $billingData['website'] ?? null;
+            $draft->sector_id = $allData['sector'] ?? null;
+            $draft->subSector = $allData['subsector'] ?? null;
+            $draft->type_of_business = $allData['other_sector_name'] ?? null;
+            $draft->gst_compliance = ($allData['gst_status'] ?? '') === 'Registered';
+            $draft->gst_no = $allData['gst_no'] ?? null;
+            $draft->pan_no = $allData['pan_no'] ?? null;
+            $draft->promocode = $allData['promocode'] ?? null;
+            
+            // Store additional exhibitor-specific data in JSON fields
+            $exhibitorData = $allData['exhibitor_data'] ?? [];
+            $exhibitorData['tan_status'] = $allData['tan_status'] ?? null;
+            $exhibitorData['tan_no'] = $allData['tan_no'] ?? null;
+            $exhibitorData['sales_executive_name'] = $allData['sales_executive_name'] ?? null;
+            $exhibitorData['category'] = $allData['category'] ?? null;
+            $draft->exhibitor_data = $exhibitorData;
+            
+            // Store pricing in a JSON field (we'll add a pricing_data field or use existing)
+            // For now, store in session for backward compatibility
+            $pricingData = [
+                'base_price' => $basePrice,
+                'gst_amount' => $gstAmount,
+                'processing_charges' => $processingCharges,
+                'processing_rate' => $eventConfig->ind_processing_charge ?? 3,
+                'gst_rate' => $eventConfig->gst_rate ?? 18,
+                'total_price' => $totalPrice,
             ];
             
-            session(['exhibitor_registration_submitted' => $submittedData]);
+            // Calculate progress
+            $progress = $this->calculateProgressFromData($allData);
+            $draft->progress_percentage = $progress;
             
-            // Clear draft session
-            session()->forget('exhibitor_registration_draft');
+            $draft->save();
+            
+            // Store pricing in session for preview page (temporary)
+            session(['exhibitor_registration_pricing' => $pricingData]);
+            
+            // Also store in session for backward compatibility
+            session(['exhibitor_registration_draft' => $allData]);
+            
+            \Log::info('Exhibitor Registration: Draft saved, NOT creating application', [
+                'draft_id' => $draft->id,
+                'session_id' => $sessionId,
+                'message' => 'Data saved to startup_zone_drafts only. Application will be created when user clicks Proceed to Payment.'
+            ]);
             
             return response()->json([
                 'success' => true,
@@ -787,72 +959,275 @@ class ExhibitorRegistrationController extends Controller
     }
 
     /**
-     * Show preview page (from session data, before DB insertion)
+     * Show preview page (from draft table, before application creation)
      */
     public function showPreview()
     {
-        // Get submitted data from session
-        $submittedData = session('exhibitor_registration_submitted');
-        
-        if (!$submittedData) {
-            // No submitted data, redirect back to form
-            return redirect()->route('exhibitor-registration.register')
-                ->with('error', 'Please submit the form first.');
-        }
-        
-        // Check if application already exists (user clicked proceed to payment)
-        if (isset($submittedData['application_id'])) {
-            $application = Application::with(['eventContact', 'invoice', 'state', 'country'])
-                ->find($submittedData['application_id']);
+        // Check if application_id is provided (after draft restoration)
+        if (request()->has('application_id')) {
+            $applicationId = request()->query('application_id');
+            $application = Application::where('application_id', $applicationId)
+                ->where('application_type', 'exhibitor-registration')
+                ->with(['eventContact', 'invoice', 'state', 'country'])
+                ->first();
             
             if ($application) {
                 return view('exhibitor-registration.preview', compact('application'));
             }
         }
         
-        // Pass session data to view for preview
-        return view('exhibitor-registration.preview', ['submittedData' => $submittedData]);
+        // Get draft from database
+        $sessionId = session()->getId();
+        $draft = StartupZoneDraft::where('session_id', $sessionId)
+            ->where('application_type', 'exhibitor-registration')
+            ->active()
+            ->first();
+        
+        if (!$draft) {
+            return redirect()->route('exhibitor-registration.register')
+                ->with('error', 'No draft found. Please submit the form again.');
+        }
+        
+        // Get pricing from session (temporary, until we add pricing_data to draft table)
+        $pricing = session('exhibitor_registration_pricing', []);
+        
+        // If pricing not in session, calculate it
+        if (empty($pricing)) {
+            $eventConfig = DB::table('event_configurations')->where('id', 1)->first();
+            $gstRate = ($eventConfig->gst_rate ?? 18) / 100;
+            $processingRate = ($eventConfig->ind_processing_charge ?? 3) / 100;
+            
+            $ratePerSqm = 0;
+            if ($draft->stall_category === 'Shell') {
+                $ratePerSqm = $eventConfig->shell_scheme_rate ?? 13000;
+            } else {
+                $ratePerSqm = $eventConfig->raw_space_rate ?? 12000;
+            }
+            
+            $boothSize = preg_replace('/[^0-9]/', '', $draft->interested_sqm ?? '0');
+            $sqm = (int) $boothSize;
+            $basePrice = $sqm * $ratePerSqm;
+            $gstAmount = $basePrice * $gstRate;
+            $processingCharges = ($basePrice + $gstAmount) * $processingRate;
+            $totalPrice = $basePrice + $gstAmount + $processingCharges;
+            
+            $pricing = [
+                'base_price' => $basePrice,
+                'gst_amount' => $gstAmount,
+                'processing_charges' => $processingCharges,
+                'processing_rate' => $eventConfig->ind_processing_charge ?? 3,
+                'gst_rate' => $eventConfig->gst_rate ?? 18,
+                'total_price' => $totalPrice,
+            ];
+        }
+        
+        // Extract data from draft
+        $billingData = $draft->billing_data ?? [];
+        $exhibitorData = $draft->exhibitor_data ?? [];
+        $contactData = $draft->contact_data ?? [];
+        
+        // Log for debugging
+        \Log::info('Exhibitor Registration Preview: Draft data extracted', [
+            'draft_id' => $draft->id,
+            'has_billing_data' => !empty($billingData),
+            'has_exhibitor_data' => !empty($exhibitorData),
+            'has_contact_data' => !empty($contactData),
+            'billing_data_keys' => array_keys($billingData),
+            'exhibitor_data_keys' => array_keys($exhibitorData),
+            'contact_data_keys' => array_keys($contactData),
+        ]);
+        
+        return view('exhibitor-registration.preview', compact(
+            'draft',
+            'billingData',
+            'exhibitorData',
+            'contactData',
+            'pricing'
+        ));
     }
     
     /**
-     * Create application from session data (called when Proceed to Payment is clicked)
+     * Create application from draft (called when Proceed to Payment is clicked)
      */
     public function createApplicationFromSession(Request $request)
     {
-        // Get submitted data from session
-        $submittedData = session('exhibitor_registration_submitted');
+        // Get draft from database
+        $sessionId = session()->getId();
+        $draft = StartupZoneDraft::where('session_id', $sessionId)
+            ->where('application_type', 'exhibitor-registration')
+            ->active()
+            ->first();
         
-        if (!$submittedData) {
+        if (!$draft) {
+            \Log::error('Exhibitor Registration: Draft not found', [
+                'session_id' => $sessionId
+            ]);
             return response()->json([
                 'success' => false,
-                'message' => 'Session expired. Please submit the form again.'
+                'message' => 'Draft not found. Please submit the form again.'
             ], 400);
         }
         
-        $allData = $submittedData['all_data'];
-        $billingData = $submittedData['billing_data'];
-        $contactData = $submittedData['contact_data'];
-        $pricing = $submittedData['pricing'];
+        \Log::info('Exhibitor Registration: Creating application from draft', [
+            'draft_id' => $draft->id,
+            'session_id' => $sessionId
+        ]);
+        
+        // Extract data from draft
+        $billingData = $draft->billing_data ?? [];
+        $exhibitorData = $draft->exhibitor_data ?? [];
+        $contactData = $draft->contact_data ?? [];
+        
+        \Log::info('Exhibitor Registration: Draft data extracted', [
+            'has_billing_data' => !empty($billingData),
+            'has_exhibitor_data' => !empty($exhibitorData),
+            'has_contact_data' => !empty($contactData),
+            'contact_email' => $contactData['email'] ?? 'not_set',
+        ]);
+        
+        // Get pricing from session or calculate
+        $pricing = session('exhibitor_registration_pricing', []);
+        if (empty($pricing)) {
+            $eventConfig = DB::table('event_configurations')->where('id', 1)->first();
+            $gstRate = ($eventConfig->gst_rate ?? 18) / 100;
+            $processingRate = ($eventConfig->ind_processing_charge ?? 3) / 100;
+            
+            $ratePerSqm = 0;
+            if ($draft->stall_category === 'Shell') {
+                $ratePerSqm = $eventConfig->shell_scheme_rate ?? 13000;
+            } else {
+                $ratePerSqm = $eventConfig->raw_space_rate ?? 12000;
+            }
+            
+            $boothSize = preg_replace('/[^0-9]/', '', $draft->interested_sqm ?? '0');
+            $sqm = (int) $boothSize;
+            $basePrice = $sqm * $ratePerSqm;
+            $gstAmount = $basePrice * $gstRate;
+            $processingCharges = ($basePrice + $gstAmount) * $processingRate;
+            $totalPrice = $basePrice + $gstAmount + $processingCharges;
+            
+            $pricing = [
+                'base_price' => $basePrice,
+                'gst_amount' => $gstAmount,
+                'processing_charges' => $processingCharges,
+                'processing_rate' => $eventConfig->ind_processing_charge ?? 3,
+                'gst_rate' => $eventConfig->gst_rate ?? 18,
+                'total_price' => $totalPrice,
+            ];
+        }
+        
+        // Build allData from draft for compatibility
+        $allData = [
+            'booth_space' => $draft->stall_category,
+            'booth_size' => $draft->interested_sqm,
+            'sector' => $draft->sector_id,
+            'subsector' => $draft->subSector,
+            'other_sector_name' => $draft->type_of_business,
+            'gst_status' => $draft->gst_compliance ? 'Registered' : 'Unregistered',
+            'gst_no' => $draft->gst_no,
+            'pan_no' => $draft->pan_no,
+            'promocode' => $draft->promocode,
+            'event_id' => $draft->event_id ?? 1,
+            'tan_status' => $exhibitorData['tan_status'] ?? 'Unregistered',
+            'tan_no' => $exhibitorData['tan_no'] ?? null,
+            'sales_executive_name' => $exhibitorData['sales_executive_name'] ?? '',
+            'category' => $exhibitorData['category'] ?? 'Exhibitor',
+            'contact_email' => $contactData['email'] ?? '',
+            'contact_first_name' => $contactData['first_name'] ?? '',
+            'contact_last_name' => $contactData['last_name'] ?? '',
+            'contact_title' => $contactData['title'] ?? '',
+            'contact_designation' => $contactData['designation'] ?? '',
+            // Map billing fields for compatibility
+            'billing_company_name' => $billingData['company_name'] ?? $draft->company_name ?? '',
+            'billing_address' => $billingData['address'] ?? $draft->address ?? '',
+            'billing_city' => $billingData['city'] ?? $draft->city_id ?? '',
+            'billing_state_id' => $billingData['state_id'] ?? $draft->state_id ?? null,
+            'billing_postal_code' => $billingData['postal_code'] ?? $draft->postal_code ?? '',
+            'billing_country_id' => $billingData['country_id'] ?? $draft->country_id ?? null,
+            'billing_website' => $billingData['website'] ?? $draft->website ?? '',
+            'billing_email' => $billingData['email'] ?? $draft->company_email ?? '',
+        ];
+        
+        // Extract landline from draft/billingData
+        if (isset($billingData['telephone']) && !empty($billingData['telephone'])) {
+            $landlineValue = $billingData['telephone'];
+            // Extract only digits from "country_code-national_number" format
+            if (preg_match('/^(\d+)-(\d+)$/', $landlineValue, $matches)) {
+                $allData['landline'] = $matches[2]; // Use only national number (digits only)
+            } else {
+                $allData['landline'] = preg_replace('/[^0-9]/', '', $landlineValue);
+            }
+        } elseif (!empty($draft->landline)) {
+            $landlineValue = $draft->landline;
+            if (preg_match('/^(\d+)-(\d+)$/', $landlineValue, $matches)) {
+                $allData['landline'] = $matches[2]; // Use only national number (digits only)
+            } else {
+                $allData['landline'] = preg_replace('/[^0-9]/', '', $landlineValue);
+            }
+        }
+        
+        // Extract contact mobile from contactData
+        if (isset($contactData['mobile']) && !empty($contactData['mobile'])) {
+            $mobile = trim($contactData['mobile']);
+            // Remove all spaces first
+            $mobile = preg_replace('/\s+/', '', $mobile);
+            
+            // Try to match format with hyphen: "91-9806575432"
+            if (preg_match('/-(\d{10})$/', $mobile, $matches)) {
+                $allData['contact_mobile'] = $matches[1];
+            }
+            // Try to match format with optional + and country code at start: "+91-9806575432"
+            elseif (preg_match('/^\+?\d{1,3}-(\d{10})$/', $mobile, $matches)) {
+                $allData['contact_mobile'] = $matches[1];
+            }
+            // Try to match format like "+919801217815" or "919801217815" (no hyphen)
+            elseif (preg_match('/^\+?(\d{1,4})(\d{10})$/', $mobile, $matches)) {
+                $allData['contact_mobile'] = $matches[2];
+            }
+            // Fallback: extract all digits and get last 10
+            else {
+                $digitsOnly = preg_replace('/[^0-9]/', '', $mobile);
+                if (strlen($digitsOnly) >= 10) {
+                    $allData['contact_mobile'] = substr($digitsOnly, -10);
+                } else {
+                    $allData['contact_mobile'] = $digitsOnly;
+                }
+            }
+            
+            // Ensure exactly 10 digits
+            if (isset($allData['contact_mobile'])) {
+                $allData['contact_mobile'] = preg_replace('/[^0-9]/', '', (string) $allData['contact_mobile']);
+                if (strlen($allData['contact_mobile']) > 10) {
+                    $allData['contact_mobile'] = substr($allData['contact_mobile'], -10);
+                }
+            }
+        }
         
         // Get event_id (default to 1 if not set)
         $eventId = $allData['event_id'] ?? 1;
+        
+        \Log::info('Exhibitor Registration: allData built from draft', [
+            'has_contact_mobile' => isset($allData['contact_mobile']),
+            'contact_mobile' => $allData['contact_mobile'] ?? 'not_set',
+            'has_landline' => isset($allData['landline']),
+            'landline' => $allData['landline'] ?? 'not_set',
+            'company_name' => $allData['billing_company_name'] ?? 'not_set',
+        ]);
         
         // Start database transaction
         DB::beginTransaction();
         
         try {
-            // Check if contact email already exists in users table
+            // CRITICAL: Check if contact email already exists in users table - BLOCK SUBMISSION
             $email = $allData['contact_email'];
-            $existingUser = \App\Models\User::where('email', $email)->first();
-            
-            // If user exists, return error immediately
-            if ($existingUser) {
+            if (!empty($email) && $this->checkEmailExists(trim($email))) {
+                // Email already exists - return error immediately and STOP processing
                 DB::rollBack();
                 return response()->json([
                     'success' => false,
-                    'message' => 'This email is already registered with us. Please use a different email address or contact support if you need to update your registration.',
+                    'message' => 'This email is already registered. Please use a different email address.',
                     'errors' => [
-                        'contact_email' => ['This email address is already registered with us. Please use a different email or contact support.']
+                        'contact_email' => ['Email already exists']
                     ]
                 ], 422);
             }
@@ -896,17 +1271,34 @@ class ExhibitorRegistrationController extends Controller
             
             // Create new user account (email doesn't exist, so safe to create)
             $password = Str::random(12);
+            
+            \Log::info('Exhibitor Registration: Creating user', [
+                'email' => $email,
+                'name' => ($allData['contact_first_name'] ?? '') . ' ' . ($allData['contact_last_name'] ?? '')
+            ]);
+            
             $user = \App\Models\User::create([
-                'name' => $allData['contact_first_name'] . ' ' . $allData['contact_last_name'],
+                'name' => trim(($allData['contact_first_name'] ?? '') . ' ' . ($allData['contact_last_name'] ?? '')),
                 'email' => $email,
                 'password' => Hash::make($password),
                 'role' => 'exhibitor',
             ]);
             
+            \Log::info('Exhibitor Registration: User created', ['user_id' => $user->id]);
+            
             // Send credentials email
-            $contactName = $allData['contact_first_name'] . ' ' . $allData['contact_last_name'];
+            $contactName = trim(($allData['contact_first_name'] ?? '') . ' ' . ($allData['contact_last_name'] ?? ''));
             $setupProfileUrl = config('app.url');
-            Mail::to($email)->send(new UserCredentialsMail($contactName, $setupProfileUrl, $email, $password));
+            try {
+                Mail::to($email)->send(new UserCredentialsMail($contactName, $setupProfileUrl, $email, $password));
+                \Log::info('Exhibitor Registration: Credentials email sent', ['email' => $email]);
+            } catch (\Exception $mailError) {
+                \Log::warning('Exhibitor Registration: Failed to send credentials email', [
+                    'email' => $email,
+                    'error' => $mailError->getMessage()
+                ]);
+                // Don't fail if email fails
+            }
             
             // No existing in-progress application since user doesn't exist yet
             $application = null;
@@ -929,31 +1321,46 @@ class ExhibitorRegistrationController extends Controller
             
             // Create or update application using billing data
             if (!$application) {
+                \Log::info('Exhibitor Registration: Creating application', [
+                    'application_id' => $applicationId,
+                    'user_id' => $user->id,
+                    'company_name' => $billingData['company_name'] ?? $allData['billing_company_name'] ?? 'not_set',
+                ]);
+                
                 $application = Application::create([
                     'application_id' => $applicationId,
                     'user_id' => $user->id,
                     'event_id' => $eventId,
-                    'company_name' => $billingData['company_name'] ?? $allData['billing_company_name'] ?? '',
+                    'company_name' => $billingData['company_name'] ?? $allData['billing_company_name'] ?? $draft->company_name ?? '',
                     'company_email' => $companyEmail,
-                    'address' => $billingData['address'] ?? $allData['billing_address'] ?? '',
-                    'city_id' => $billingData['city'] ?? $allData['billing_city'] ?? '',
-                    'state_id' => $billingData['state_id'] ?? $allData['billing_state_id'] ?? null,
-                    'postal_code' => $billingData['postal_code'] ?? $allData['billing_postal_code'] ?? '',
-                    'country_id' => $billingData['country_id'] ?? $allData['billing_country_id'] ?? Country::where('code', 'IN')->first()->id,
-                    'landline' => $submittedData['billing_telephone'] ?? '',
-                    'website' => $this->normalizeWebsiteUrl($billingData['website'] ?? $allData['billing_website'] ?? ''),
-                    'stall_category' => $allData['booth_space'],
-                    'interested_sqm' => $allData['booth_size'],
-                    'sector_id' => $allData['sector'],
-                    'subSector' => $allData['subsector'],
-                    'type_of_business' => $allData['other_sector_name'] ?? null,
-                    'gst_compliance' => ($allData['gst_status'] ?? '') === 'Registered' ? 1 : 0,
-                    'gst_no' => $allData['gst_no'] ?? null,
-                    'pan_no' => $allData['pan_no'],
+                    'address' => $billingData['address'] ?? $allData['billing_address'] ?? $draft->address ?? '',
+                    'city_id' => $billingData['city'] ?? $allData['billing_city'] ?? $draft->city_id ?? '',
+                    'state_id' => $billingData['state_id'] ?? $allData['billing_state_id'] ?? $draft->state_id ?? null,
+                    'postal_code' => $billingData['postal_code'] ?? $allData['billing_postal_code'] ?? $draft->postal_code ?? '',
+                    'country_id' => $billingData['country_id'] ?? $allData['billing_country_id'] ?? $draft->country_id ?? Country::where('code', 'IN')->first()->id,
+                    'landline' => $allData['landline'] ?? $billingData['telephone'] ?? $draft->landline ?? '',
+                    'website' => $this->normalizeWebsiteUrl($billingData['website'] ?? $allData['billing_website'] ?? $draft->website ?? ''),
+                    'stall_category' => $allData['booth_space'] ?? $draft->stall_category ?? '',
+                    'interested_sqm' => $allData['booth_size'] ?? $draft->interested_sqm ?? '',
+                    'sector_id' => $allData['sector'] ?? $draft->sector_id ?? '',
+                    'subSector' => $allData['subsector'] ?? $draft->subSector ?? '',
+                    'type_of_business' => $allData['other_sector_name'] ?? $draft->type_of_business ?? null,
+                    'gst_compliance' => ($allData['gst_status'] ?? ($draft->gst_compliance ? 'Registered' : 'Unregistered')) === 'Registered' ? 1 : 0,
+                    'gst_no' => $allData['gst_no'] ?? $draft->gst_no ?? null,
+                    'pan_no' => $allData['pan_no'] ?? $draft->pan_no ?? '',
                     'tan_no' => $allData['tan_no'] ?? null,
-                    'promocode' => $allData['promocode'] ?? null,
-                    'status' => 'submitted',
+                    'promocode' => $allData['promocode'] ?? $draft->promocode ?? null,
+                    'salesPerson' => $allData['sales_executive_name'] ?? '',
+                    'exhibitorType' => $allData['category'] ?? 'Exhibitor',
+                    'status' => 'initiated',
+                    'submission_status' => 'submitted',
+                    'submission_date' => now(),
                     'application_type' => 'exhibitor-registration',
+                ]);
+                
+                \Log::info('Exhibitor Registration: Application created', [
+                    'application_id' => $application->application_id,
+                    'application_db_id' => $application->id
                 ]);
             } else {
                 // Update existing in-progress application
@@ -968,7 +1375,7 @@ class ExhibitorRegistrationController extends Controller
                     'state_id' => $billingData['state_id'] ?? $allData['billing_state_id'] ?? null,
                     'postal_code' => $billingData['postal_code'] ?? $allData['billing_postal_code'] ?? '',
                     'country_id' => $billingData['country_id'] ?? $allData['billing_country_id'] ?? Country::where('code', 'IN')->first()->id,
-                    'landline' => $submittedData['billing_telephone'] ?? '',
+                    'landline' => $allData['landline'] ?? $billingData['telephone'] ?? $draft->landline ?? '',
                     'website' => $this->normalizeWebsiteUrl($billingData['website'] ?? $allData['billing_website'] ?? ''),
                     'stall_category' => $allData['booth_space'],
                     'interested_sqm' => $allData['booth_size'],
@@ -980,25 +1387,38 @@ class ExhibitorRegistrationController extends Controller
                     'pan_no' => $allData['pan_no'],
                     'tan_no' => $allData['tan_no'] ?? null,
                     'promocode' => $allData['promocode'] ?? null,
-                    'status' => 'submitted',
+                    'salesPerson' => $allData['sales_executive_name'] ?? '',
+                    'exhibitorType' => $allData['category'] ?? 'Exhibitor',
+                    'status' => 'initiated',
+                    'submission_status' => 'submitted',
+                    'submission_date' => now(),
                 ]);
             }
             
             // Create or update event contact with correct field names
-            $contactMobile = $submittedData['contact_mobile'] ?? '';
+            $contactMobile = $allData['contact_mobile'] ?? '';
+            
+            \Log::info('Exhibitor Registration: Creating event contact', [
+                'application_id' => $application->id,
+                'contact_mobile' => $contactMobile,
+                'contact_email' => $contactData['email'] ?? $allData['contact_email'] ?? 'not_set',
+            ]);
+            
             $contact = EventContact::where('application_id', $application->id)->first();
             if (!$contact) {
                 $contact = new EventContact();
                 $contact->application_id = $application->id;
             }
             $contact->salutation = $contactData['title'] ?? $allData['contact_title'] ?? null;
-            $contact->first_name = $contactData['first_name'] ?? $allData['contact_first_name'];
-            $contact->last_name = $contactData['last_name'] ?? $allData['contact_last_name'];
-            $contact->designation = $contactData['designation'] ?? $allData['contact_designation'];
-            $contact->job_title = $contactData['designation'] ?? $allData['contact_designation']; // job_title same as designation
-            $contact->email = $contactData['email'] ?? $allData['contact_email'];
+            $contact->first_name = $contactData['first_name'] ?? $allData['contact_first_name'] ?? '';
+            $contact->last_name = $contactData['last_name'] ?? $allData['contact_last_name'] ?? '';
+            $contact->designation = $contactData['designation'] ?? $allData['contact_designation'] ?? '';
+            $contact->job_title = $contactData['designation'] ?? $allData['contact_designation'] ?? ''; // job_title same as designation
+            $contact->email = $contactData['email'] ?? $allData['contact_email'] ?? $email;
             $contact->contact_number = $contactMobile; // Use contact_number instead of mobile
             $contact->save();
+            
+            \Log::info('Exhibitor Registration: Event contact saved', ['contact_id' => $contact->id]);
             
             // Create or update billing detail
             $billingDetail = \App\Models\BillingDetail::where('application_id', $application->id)->first();
@@ -1012,7 +1432,7 @@ class ExhibitorRegistrationController extends Controller
                 $billingDetail->billing_company = $billingData['company_name'] ?? $allData['billing_company_name'] ?? '';
                 $billingDetail->contact_name = $contactName;
                 $billingDetail->email = $billingData['email'] ?? $allData['billing_email'] ?? $email;
-                $billingDetail->phone = $submittedData['billing_telephone'] ?? '';
+                $billingDetail->phone = $allData['landline'] ?? $billingData['telephone'] ?? $draft->landline ?? '';
                 $billingDetail->address = $billingData['address'] ?? $allData['billing_address'] ?? '';
                 $billingDetail->city_id = !empty($billingData['city']) ? trim($billingData['city']) : ($allData['billing_city'] ?? null);
                 $billingDetail->state_id = $billingData['state_id'] ?? $allData['billing_state_id'] ?? null;
@@ -1048,26 +1468,93 @@ class ExhibitorRegistrationController extends Controller
             $invoice->type = 'Exhibitor Registration';
             $invoice->amount = $pricing['total_price'];
             $invoice->price = $pricing['base_price'];
-            $invoice->gst = $pricing['gst_amount'];
-            $invoice->gst_amount = $pricing['gst_amount'];
+            $invoice->gst = $pricing['gst_amount']; // Only 'gst' column exists, not 'gst_amount'
             $invoice->processing_chargesRate = $pricing['processing_rate'];
             $invoice->processing_charges = $pricing['processing_charges'];
             $invoice->total_final_price = $pricing['total_price'];
             $invoice->currency = 'INR';
-            $invoice->status = 'pending';
             $invoice->payment_status = 'unpaid';
             $invoice->payment_due_date = null;
             $invoice->save();
             
             DB::commit();
             
+            // Mark draft as converted (use database ID, not application_id string)
+            $draft->converted_to_application_id = $application->id;
+            $draft->converted_at = now();
+            $draft->save();
+            
             // Update session with application_id for security
-            $submittedData['application_id'] = $application->id;
-            session(['exhibitor_registration_submitted' => $submittedData]);
             session(['exhibitor_registration_application_id' => $application->application_id]);
             
             // Send confirmation email with contact information
-            Mail::to($email)->send(new ExhibitorRegistrationMail($application, $invoice, $contact));
+            try {
+                Mail::to($email)->send(new ExhibitorRegistrationMail($application, $invoice, $contact));
+                \Log::info('Exhibitor Registration: Confirmation email sent', ['email' => $email]);
+            } catch (\Exception $mailError) {
+                \Log::warning('Exhibitor Registration: Failed to send confirmation email', [
+                    'email' => $email,
+                    'error' => $mailError->getMessage()
+                ]);
+                // Don't fail if email fails
+            }
+            
+            // Send admin notification email (separate mail class for Exhibitor Registration)
+            try {
+                // Reload application with relationships for email
+                $application->load(['country', 'state', 'eventContact']);
+                $contact = EventContact::where('application_id', $application->id)->first();
+                
+                // Get admin emails from config
+                $adminEmails = config('constants.admin_emails.to', []);
+                $bccEmails = config('constants.admin_emails.bcc', []);
+                
+                \Log::info('Attempting to send admin notification email for exhibitor registration', [
+                    'application_id' => $application->application_id,
+                    'admin_emails' => $adminEmails,
+                    'bcc_emails' => $bccEmails,
+                ]);
+                
+                if (!empty($adminEmails)) {
+                    // If adminEmails NOT empty, always send to adminEmails (with BCC if present)
+                    $mail = Mail::to($adminEmails);
+                    if (!empty($bccEmails)) {
+                        $mail->bcc($bccEmails);
+                    }
+                    $mail->send(new ExhibitorRegistrationAdminMail($application, $contact));
+                    
+                    \Log::info('Admin notification email sent successfully', [
+                        'application_id' => $application->application_id,
+                        'to' => $adminEmails,
+                        'bcc' => $bccEmails,
+                    ]);
+                } elseif (!empty($bccEmails)) {
+                    // If adminEmails is empty but bccEmails is not, send to bccEmails using bcc() as main recipients
+                    Mail::to([])->bcc($bccEmails)->send(new ExhibitorRegistrationAdminMail($application, $contact));
+                    
+                    \Log::info('Admin notification email sent successfully (BCC only)', [
+                        'application_id' => $application->application_id,
+                        'bcc' => $bccEmails,
+                    ]);
+                } else {
+                    \Log::warning('No admin emails configured for exhibitor registration notification', [
+                        'application_id' => $application->application_id,
+                    ]);
+                }
+            } catch (\Exception $e) {
+                \Log::error('Failed to send admin notification email for exhibitor registration', [
+                    'application_id' => $application->application_id,
+                    'error' => $e->getMessage(),
+                    'trace' => $e->getTraceAsString()
+                ]);
+                // Don't fail if email fails
+            }
+            
+            \Log::info('Exhibitor Registration: Application creation successful', [
+                'application_id' => $application->application_id,
+                'user_id' => $user->id,
+                'invoice_id' => $invoice->id ?? null
+            ]);
             
             return response()->json([
                 'success' => true,
@@ -1079,12 +1566,20 @@ class ExhibitorRegistrationController extends Controller
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Exhibitor Registration Error: ' . $e->getMessage(), [
-                'trace' => $e->getTraceAsString()
+                'trace' => $e->getTraceAsString(),
+                'draft_id' => $draft->id ?? null,
+                'session_id' => $sessionId,
+                'email' => $email ?? null,
+                'allData_keys' => array_keys($allData ?? []),
+                'billingData_keys' => array_keys($billingData ?? []),
+                'contactData_keys' => array_keys($contactData ?? []),
+                'exhibitorData_keys' => array_keys($exhibitorData ?? []),
             ]);
             
             return response()->json([
                 'success' => false,
-                'message' => 'An error occurred while creating the application. Please try again.'
+                'message' => 'An error occurred while creating the application. Please try again.',
+                'error_details' => config('app.debug') ? $e->getMessage() : null
             ], 500);
         }
     }
@@ -1227,6 +1722,37 @@ class ExhibitorRegistrationController extends Controller
         $contact = EventContact::where('application_id', $application->id)->first();
         
         return view('exhibitor-registration.confirmation', compact('application', 'invoice', 'contact'));
+    }
+
+    /**
+     * Check if email already exists in users table
+     */
+    private function checkEmailExists($email)
+    {
+        $user = \App\Models\User::where('email', $email)->first();
+        return $user !== null;
+    }
+
+    /**
+     * Check if email already exists in users table (AJAX endpoint)
+     */
+    public function checkEmail(Request $request)
+    {
+        $email = $request->input('email');
+        
+        if (empty($email)) {
+            return response()->json([
+                'exists' => false,
+                'message' => ''
+            ]);
+        }
+        
+        $exists = $this->checkEmailExists(trim($email));
+        
+        return response()->json([
+            'exists' => $exists,
+            'message' => $exists ? 'Email already exists' : ''
+        ]);
     }
 }
 

@@ -44,6 +44,53 @@
                         <strong>Exhibitor:</strong> {{ $application->company_name }}
                     </div>
 
+                    <!-- Booth & Exhibition Details -->
+                    <div class="card mb-4" style="border: 1px solid #dee2e6;">
+                        <div class="card-header bg-light">
+                            <h5 class="mb-0"><i class="fas fa-file-invoice"></i> Booth & Exhibition Details</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-2">
+                                <strong>Booth Space:</strong><br>
+                                <small>{{ $application->stall_category ?? 'N/A' }}</small>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-2">
+                                <strong>Booth Type:</strong><br>
+                                <small>{{ $application->interested_sqm ?? 'N/A' }}</small>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-2">
+                                <strong>Sector:</strong><br>
+                                <small>{{ $application->sector_id ?? 'N/A' }}</small>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-2">
+                                <strong>Subsector:</strong><br>
+                                <small>{{ $application->subSector ?? 'N/A' }}</small>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-2">
+                                <strong>Category:</strong><br>
+                                <small>{{ $application->exhibitorType ?? 'N/A' }}</small>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-2">
+                                <strong>Sales Executive:</strong><br>
+                                <small>{{ $application->salesPerson ?? 'N/A' }}</small>
+                            </div>
+                        </div>
+                    </div>
+                    
+                   
                     {{-- Billing Information --}}
                     <div class="card mb-4" style="border: 1px solid #dee2e6;">
                         <div class="card-header bg-light">
