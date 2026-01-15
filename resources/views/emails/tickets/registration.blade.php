@@ -539,6 +539,39 @@
                 <strong>Note:</strong> After payment, a final acknowledgement receipt will be provided.
             </p>
             @else
+            <!-- Payment Transaction Details (shown only when paid) -->
+            @php
+                // Fetch payment details from payments table
+                $payment = \App\Models\Payment::where('order_id', $order->order_no)
+                    ->where('status', 'successful')
+                    ->latest()
+                    ->first();
+            @endphp
+            @if($payment)
+            <div class="section-title" style="margin-top: 20px;">🧾 Payment Transaction Details</div>
+            <table class="info-table">
+                <tr>
+                    <td class="label">Payment Method</td>
+                    <td class="value">{{ $payment->payment_method ?? 'Online' }}</td>
+                </tr>
+                <tr>
+                    <td class="label">Transaction ID</td>
+                    <td class="value" style="font-weight: 700; color: #0066cc;">{{ $payment->transaction_id ?? $payment->track_id ?? 'N/A' }}</td>
+                </tr>
+                <tr>
+                    <td class="label">Amount Paid</td>
+                    <td class="value" style="font-weight: 700; color: #155724;">{{ $currencySymbol }}{{ number_format($payment->amount_paid ?? $payment->amount ?? $order->total, $priceFormat) }}</td>
+                </tr>
+                <tr>
+                    <td class="label">Payment Date</td>
+                    <td class="value">{{ $payment->payment_date ? \Carbon\Carbon::parse($payment->payment_date)->format('d M Y, h:i A') : 'N/A' }}</td>
+                </tr>
+                <tr>
+                    <td class="label">Payment Status</td>
+                    <td class="value"><span style="background: #28a745; color: #fff; padding: 3px 10px; border-radius: 3px; font-weight: 600;">✓ CONFIRMED</span></td>
+                </tr>
+            </table>
+            @endif
             <div style="background: #d4edda; padding: 15px; border: 1px solid #c3e6cb; margin: 8px 0; text-align: center; border-radius: 4px;">
                 <p style="margin: 0; color: #155724; font-size: 15px; font-weight: 700;">
                     ✓ Payment Completed Successfully

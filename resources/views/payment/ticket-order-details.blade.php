@@ -571,6 +571,49 @@
             </table>
         </div>
 
+        <!-- Payment Transaction Details (shown only when paid) -->
+        @if($order->status === 'paid')
+        @php
+            // Fetch payment details from payments table
+            $payment = \App\Models\Payment::where('order_id', $order->order_no)
+                ->where('status', 'successful')
+                ->latest()
+                ->first();
+        @endphp
+        @if($payment)
+        <div class="details-section">
+            <h4 class="section-title">
+                <i class="fas fa-receipt"></i>
+                Payment Transaction Details
+            </h4>
+            <table class="info-table">
+                <tr>
+                    <td class="label-cell">Payment Method</td>
+                    <td class="value-cell">{{ $payment->payment_method ?? 'Online' }}</td>
+                </tr>
+                <tr>
+                    <td class="label-cell">Transaction ID</td>
+                    <td class="value-cell" style="font-weight: 700; color: var(--primary-color);">{{ $payment->transaction_id ?? $payment->track_id ?? 'N/A' }}</td>
+                </tr>
+                <tr>
+                    <td class="label-cell">Amount Paid</td>
+                    <td class="value-cell" style="font-weight: 700; color: #155724;">{{ $currencySymbol }}{{ number_format($payment->amount_paid ?? $payment->amount ?? $order->total, $priceFormat) }}</td>
+                </tr>
+                <tr>
+                    <td class="label-cell">Payment Date</td>
+                    <td class="value-cell">{{ $payment->payment_date ? \Carbon\Carbon::parse($payment->payment_date)->format('d M Y, h:i A') : 'N/A' }}</td>
+                </tr>
+                <tr class="status-row">
+                    <td class="label-cell" style="color: #155724;">Payment Status</td>
+                    <td class="value-cell">
+                        <span class="payment-status-badge paid">✓ CONFIRMED</span>
+                    </td>
+                </tr>
+            </table>
+        </div>
+        @endif
+        @endif
+
         <!-- Pay Now Button (only if unpaid) -->
         @if($order->status !== 'paid')
         <div class="text-center mt-4">
