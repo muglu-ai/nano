@@ -2103,8 +2103,16 @@ class RegistrationPaymentController extends Controller
 
     /**
      * Extract phone number without country code
-     * Handles formats like: +91-9801217815, +91 9801217815, 919801217815, 9801217815
-     * Returns just the 10-digit phone number
+     * 
+     * Handles formats like:
+     * - +91-9801217815 (country code separated by dash)
+     * - +91 9801217815 (country code separated by space)
+     * - +919801217815 (no separator)
+     * - 919801217815 (no plus sign)
+     * - 09801217815 (with leading zero)
+     * - 9801217815 (just the number)
+     * 
+     * Returns just the 10-digit phone number without country code
      */
     private function extractPhoneNumber($phone)
     {
@@ -2112,29 +2120,72 @@ class RegistrationPaymentController extends Controller
             return '';
         }
         
-        // Convert to string and remove all non-numeric characters
+        $originalPhone = $phone;
         $phone = (string) $phone;
+        $phone = trim($phone);
+        
+        // Method 1: Check if phone has a separator (dash, space) after country code
+        // Format: +91-9801217815 or +91 9801217815
+        if (preg_match('/^[\+]?(\d{1,3})[\-\s](\d{10,})$/', $phone, $matches)) {
+            // $matches[1] = country code (91)
+            // $matches[2] = actual phone number (9801217815)
+            $extractedNumber = $matches[2];
+            
+            Log::info('Phone extraction - Method 1 (separator found)', [
+                'original' => $originalPhone,
+                'country_code' => $matches[1],
+                'phone_number' => $extractedNumber,
+            ]);
+            
+            return $extractedNumber;
+        }
+        
+        // Method 2: No separator - remove all non-numeric and process
         $numericOnly = preg_replace('/[^0-9]/', '', $phone);
+        $totalDigits = strlen($numericOnly);
         
-        // If the number starts with country code (91 for India), remove it
-        // Check if it's 12 digits starting with 91
-        if (strlen($numericOnly) === 12 && substr($numericOnly, 0, 2) === '91') {
-            $numericOnly = substr($numericOnly, 2);
-        }
-        // Check if it's 11 digits starting with 0 (some formats use 0 prefix)
-        elseif (strlen($numericOnly) === 11 && substr($numericOnly, 0, 1) === '0') {
-            $numericOnly = substr($numericOnly, 1);
-        }
-        // If longer than 10 and starts with 91, strip it
-        elseif (strlen($numericOnly) > 10 && substr($numericOnly, 0, 2) === '91') {
-            $numericOnly = substr($numericOnly, 2);
-        }
-        
-        Log::info('Phone number extraction', [
-            'original' => $phone,
-            'extracted' => $numericOnly,
+        Log::info('Phone extraction - Method 2 (numeric only)', [
+            'original' => $originalPhone,
+            'numeric_only' => $numericOnly,
+            'total_digits' => $totalDigits,
         ]);
         
+        // If exactly 10 digits, return as is (already a phone number without country code)
+        if ($totalDigits === 10) {
+            return $numericOnly;
+        }
+        
+        // If 11 digits and starts with 0, remove the leading 0
+        if ($totalDigits === 11 && substr($numericOnly, 0, 1) === '0') {
+            return substr($numericOnly, 1);
+        }
+        
+        // If 12 digits and starts with 91, remove the country code
+        if ($totalDigits === 12 && substr($numericOnly, 0, 2) === '91') {
+            return substr($numericOnly, 2);
+        }
+        
+        // If more than 10 digits and starts with 91, remove the country code
+        if ($totalDigits > 10 && substr($numericOnly, 0, 2) === '91') {
+            return substr($numericOnly, 2);
+        }
+        
+        // If more than 10 digits and starts with 0, remove the leading 0
+        if ($totalDigits > 10 && substr($numericOnly, 0, 1) === '0') {
+            return substr($numericOnly, 1);
+        }
+        
+        // Fallback: Return last 10 digits if we have more than 10
+        if ($totalDigits > 10) {
+            $extracted = substr($numericOnly, -10);
+            Log::warning('Phone extraction - Using last 10 digits as fallback', [
+                'original' => $originalPhone,
+                'extracted' => $extracted,
+            ]);
+            return $extracted;
+        }
+        
+        // Return whatever we have (might be less than 10 digits)
         return $numericOnly;
     }
 }
