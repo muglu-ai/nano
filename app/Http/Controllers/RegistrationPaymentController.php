@@ -1136,18 +1136,22 @@ class RegistrationPaymentController extends Controller
             $paymentData = [
                 'order_id' => $orderId,
                 'amount' => number_format($amount, 2, '.', ''),
-                'currency' => strtoupper($currency),
+                'currency' => 'INR',
                 'redirect_url' => $callbackUrl,
                 'cancel_url' => $callbackUrl,
                 'billing_name' => $this->sanitizeForCcAvenue($billingName, 50),
-                'billing_address' => $this->sanitizeForCcAvenue($registration->company_name ?? '', 100),
-                'billing_city' => $this->sanitizeForCcAvenue($registration->company_city ?? '', 50),
-                'billing_state' => $this->sanitizeForCcAvenue($registration->company_state ?? '', 50),
+                'billing_address' => $this->sanitizeForCcAvenue($registration->company_name, 100),
+                'billing_city' => $this->sanitizeForCcAvenue($registration->company_city, 50),
+                'billing_state' => $this->sanitizeForCcAvenue($registration->company_state, 50),
                 'billing_zip' => $this->sanitizeForCcAvenue($registration->postal_code ?? '', 10),
                 'billing_country' => $this->sanitizeForCcAvenue($registration->company_country ?? 'India', 50),
                 'billing_tel' => $this->sanitizeForCcAvenue($billingPhone, 15),
                 'billing_email' => $billingEmail,
             ];
+
+            Log::info('Ticket CCAvenue Payment - Payment data', [
+                'payment_data' => $paymentData,
+            ]);
             
             Log::info('Ticket CCAvenue Payment - Pre-validation passed, proceeding', [
                 'order_no' => $order->order_no,
