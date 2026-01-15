@@ -328,7 +328,7 @@
         @php
             $isInternational = ($order->registration->nationality === 'International' || $order->registration->nationality === 'international');
             $currencySymbol = $isInternational ? '$' : '₹';
-            $priceFormat = 2; // Both use 2 decimal places
+            $priceFormat = $isInternational ? 2 : 0; // 2 decimals for USD, 0 for INR
         @endphp
         <div class="price-breakdown">
             <h4 class="section-title mb-3">

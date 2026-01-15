@@ -553,13 +553,13 @@ class PublicTicketController extends Controller
             : config('constants.IND_PROCESSING_CHARGE', 3); // National/Indian: 3%
         
         // Calculate GST on subtotal
-        $gstAmount = ($subtotal * $gstRate) / 100;
-        
+        $gstAmount = round(($subtotal * $gstRate) / 100);
+
         // Calculate processing charge on (subtotal + GST)
-        $processingChargeAmount = (($subtotal + $gstAmount) * $processingChargeRate) / 100;
-        
+        $processingChargeAmount = round((($subtotal + $gstAmount) * $processingChargeRate) / 100);
+
         // Total
-        $total = $subtotal + $gstAmount + $processingChargeAmount;
+        $total = round($subtotal + $gstAmount + $processingChargeAmount);
         
         // Determine currency
         $currency = $isInternational ? 'USD' : 'INR';

@@ -31,7 +31,7 @@ const SOC_YOUTUBE = 'https://www.youtube.com/@bengalurutechsummit/streams';
 const ORGANIZER_NAME = 'MM Activ Sci-Tech Communications';
 define('ORGANIZER_ADDRESS', !empty($_ENV['ORGANIZER_ADDRESS'])
     ? $_ENV['ORGANIZER_ADDRESS']
-    : 'No.11/3, NITON, <br> Block C, 2nd Floor, <br> Palace Road, Bengaluru - 560001, Karnataka, India');
+    : 'No.11/3, NITON, Block C, 2nd Floor, <br> Palace Road, Bengaluru - 560001, Karnataka, India');
 const FAVICON_APPLE = 'https://www.bengalurutechsummit.com/apple-touch-icon.png';
 const FAVICON = 'https://www.bengalurutechsummit.com/favicon-32x32.png';
 const FAVICON_16 = 'https://www.bengalurutechsummit.com/favicon-16x16.png';

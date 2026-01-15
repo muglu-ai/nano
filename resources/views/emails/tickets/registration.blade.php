@@ -524,7 +524,7 @@
             @php
                 $isInternational = ($order->registration->nationality === 'International' || $order->registration->nationality === 'international');
                 $currencySymbol = $isInternational ? '$' : '₹';
-                $priceFormat = 2;
+                $priceFormat = $isInternational ? 2 : 0; // 2 decimals for USD, 0 for INR
             @endphp
             <div class="section-title">💰 Price Breakdown</div>
             <table class="price-table">

@@ -408,7 +408,7 @@
             </h4>
             @php
                 $currencySymbol = ($currency ?? 'INR') === 'USD' ? '$' : '₹';
-                $priceFormat = 2;
+                $priceFormat = ($currency ?? 'INR') === 'USD' ? 2 : 0; // 2 decimals for USD, 0 for INR
             @endphp
             <table class="price-table">
                 <tr>

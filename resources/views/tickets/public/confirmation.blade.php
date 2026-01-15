@@ -225,6 +225,7 @@
             @php
                 $isInternational = ($order->registration->nationality === 'International' || $order->registration->nationality === 'international');
                 $currencySymbol = $isInternational ? '$' : '₹';
+                $priceFormat = $isInternational ? 2 : 0; // 2 decimals for USD, 0 for INR
             @endphp
             <table class="info-table">
                 <tr class="{{ $order->status === 'paid' ? 'status-row' : 'status-row pending' }}">
@@ -298,7 +299,7 @@
                 </tr>
                 <tr>
                     <td class="label-cell">Total Amount</td>
-                    <td class="value-cell"><strong style="font-size: 1.1rem; color: var(--primary-color);">{{ $currencySymbol }}{{ number_format($order->total, 2) }}</strong></td>
+                    <td class="value-cell"><strong style="font-size: 1.1rem; color: var(--primary-color);">{{ $currencySymbol }}{{ number_format($order->total, $priceFormat) }}</strong></td>
                 </tr>
             </table>
         </div>
@@ -435,6 +436,7 @@
             $isPaid = $order->status === 'paid';
             $isInternational = ($order->registration->nationality === 'International' || $order->registration->nationality === 'international');
             $currencySymbol = $isInternational ? '$' : '₹';
+            $priceFormat = $isInternational ? 2 : 0; // 2 decimals for USD, 0 for INR
         @endphp
 
         @if($isPaid)
@@ -481,7 +483,7 @@
                 @endif
                 <tr>
                     <td class="label-cell">Amount Paid</td>
-                    <td class="value-cell"><strong style="color: var(--primary-color); font-size: 1.1rem;">{{ $currencySymbol }}{{ number_format($order->total, 2) }}</strong></td>
+                    <td class="value-cell"><strong style="color: var(--primary-color); font-size: 1.1rem;">{{ $currencySymbol }}{{ number_format($order->total, $priceFormat) }}</strong></td>
                 </tr>
                 @if(($primaryPayment && $primaryPayment->paid_at) || $order->updated_at)
                 <tr>
