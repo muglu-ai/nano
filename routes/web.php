@@ -1182,6 +1182,7 @@ Route::prefix('exhibitor')->name('exhibitor-registration.')->group(function () {
     Route::post('/auto-save', [ExhibitorRegistrationController::class, 'autoSave'])->name('auto-save');
     Route::post('/calculate-price', [ExhibitorRegistrationController::class, 'calculatePrice'])->name('calculate-price');
     Route::get('/booth-sizes', [ExhibitorRegistrationController::class, 'getBoothSizes'])->name('booth-sizes');
+    Route::post('/check-email', [ExhibitorRegistrationController::class, 'checkEmail'])->name('check-email');
     Route::post('/fetch-gst-details', [ExhibitorRegistrationController::class, 'fetchGstDetails'])->name('fetch-gst-details');
     Route::post('/submit-form', [ExhibitorRegistrationController::class, 'submitForm'])->name('submit-form');
     Route::get('/preview', [ExhibitorRegistrationController::class, 'showPreview'])->name('preview');

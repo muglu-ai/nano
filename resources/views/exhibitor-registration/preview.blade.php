@@ -31,8 +31,9 @@
             <h2 class="text-center mb-4">Preview Your Registration</h2>
             
             @php
-                // Determine if we have application (from DB) or submittedData (from session)
+                // Determine if we have application (from DB), draft (from database), or submittedData (from session - legacy)
                 $hasApplication = isset($application) && $application;
+                $hasDraft = isset($draft) && $draft;
                 $hasSubmittedData = isset($submittedData) && $submittedData;
                 
                 if ($hasApplication) {
@@ -43,7 +44,8 @@
                     $sector = $application->sector_id ?? '';
                     $subsector = $application->subSector ?? '';
                     $otherSector = $application->type_of_business ?? null;
-                    $category = $application->category ?? '';
+                    $category = $application->exhibitorType ?? '';
+                    $salesExecutiveName = $application->salesPerson ?? '';
                     $gstStatus = $application->gst_compliance ? 'Registered' : 'Unregistered';
                     $gstNo = $application->gst_no ?? null;
                     $panNo = $application->pan_no ?? '';
@@ -71,8 +73,59 @@
                         'gst_rate' => 18,
                         'total_price' => $application->invoice->total_final_price ?? $application->invoice->amount,
                     ] : null;
+                } elseif ($hasDraft) {
+                    // Data from draft table
+                    $boothSpace = $draft->stall_category ?? '';
+                    $boothSize = $draft->interested_sqm ?? '';
+                    $sector = $draft->sector_id ?? '';
+                    $subsector = $draft->subSector ?? '';
+                    $otherSector = $draft->type_of_business ?? null;
+                    $category = $exhibitorData['category'] ?? 'Exhibitor';
+                    $salesExecutiveName = $exhibitorData['sales_executive_name'] ?? '';
+                    $gstStatus = $draft->gst_compliance ? 'Registered' : 'Unregistered';
+                    $gstNo = $draft->gst_no ?? null;
+                    $panNo = $draft->pan_no ?? '';
+                    $tanNo = $exhibitorData['tan_no'] ?? null;
+                    
+                    // Billing data from draft
+                    $billingCompany = $billingData['company_name'] ?? $draft->company_name ?? '';
+                    $billingEmail = $billingData['email'] ?? $draft->company_email ?? '';
+                    $billingAddress = $billingData['address'] ?? $draft->address ?? '';
+                    $billingCity = $billingData['city'] ?? $draft->city_id ?? '';
+                    $billingStateId = $billingData['state_id'] ?? $draft->state_id ?? null;
+                    $billingState = $billingStateId ? (\App\Models\State::find($billingStateId)->name ?? 'N/A') : 'N/A';
+                    $billingCountryId = $billingData['country_id'] ?? $draft->country_id ?? null;
+                    $billingCountry = $billingCountryId ? (\App\Models\Country::find($billingCountryId)->name ?? 'N/A') : 'N/A';
+                    $billingPostal = $billingData['postal_code'] ?? $draft->postal_code ?? '';
+                    // Format telephone: extract national number from "country_code-national_number" format
+                    $billingPhoneRaw = $billingData['telephone'] ?? $draft->landline ?? '';
+                    if ($billingPhoneRaw && strpos($billingPhoneRaw, '-') !== false) {
+                        $parts = explode('-', $billingPhoneRaw, 2);
+                        $billingPhone = '+' . $parts[0] . ' ' . $parts[1];
+                    } else {
+                        $billingPhone = $billingPhoneRaw;
+                    }
+                    $billingWebsite = $billingData['website'] ?? $draft->website ?? '';
+                    
+                    // Contact data from draft
+                    $contactTitle = $contactData['title'] ?? '';
+                    $contactFirstName = $contactData['first_name'] ?? '';
+                    $contactLastName = $contactData['last_name'] ?? '';
+                    $contactDesignation = $contactData['designation'] ?? '';
+                    $contactEmail = $contactData['email'] ?? '';
+                    // Format mobile: extract national number from "country_code-national_number" format
+                    $contactMobileRaw = $contactData['mobile'] ?? '';
+                    if ($contactMobileRaw && strpos($contactMobileRaw, '-') !== false) {
+                        $parts = explode('-', $contactMobileRaw, 2);
+                        $contactMobile = '+' . $parts[0] . ' ' . $parts[1];
+                    } else {
+                        $contactMobile = $contactMobileRaw;
+                    }
+                    
+                    // Pricing from passed variable
+                    $pricing = $pricing ?? null;
                 } else {
-                    // Data from session
+                    // Legacy: Data from session
                     $allData = $submittedData['all_data'] ?? [];
                     $boothSpace = $allData['booth_space'] ?? '';
                     $boothSize = $allData['booth_size'] ?? '';
@@ -80,6 +133,7 @@
                     $subsector = $allData['subsector'] ?? '';
                     $otherSector = $allData['other_sector_name'] ?? null;
                     $category = $allData['category'] ?? '';
+                    $salesExecutiveName = $allData['sales_executive_name'] ?? '';
                     $gstStatus = ($allData['gst_status'] ?? '') === 'Registered' ? 'Registered' : 'Unregistered';
                     $gstNo = $allData['gst_no'] ?? null;
                     $panNo = $allData['pan_no'] ?? '';
@@ -120,7 +174,7 @@
                     </p>
                 </div>
             </div>
-            @else
+            @elseif($hasDraft || $hasSubmittedData)
             {{-- Review Before Submission --}}
             <div class="card shadow-sm mb-4">
                 <div class="card-header bg-warning text-dark">
@@ -128,9 +182,13 @@
                 </div>
                 <div class="card-body">
                     <p class="alert alert-warning mb-0">
-                        Please review all details below.
+                        Please review all details below. Click "Proceed to Payment" to finalize your registration.
                     </p>
                 </div>
+            </div>
+            @else
+            <div class="alert alert-danger">
+                <strong>Error:</strong> No data found. Please submit the form again.
             </div>
             @endif
 
@@ -166,6 +224,10 @@
                         <div class="col-md-4 mb-3">
                             <strong>Category:</strong><br>
                             {{ $category ?: 'N/A' }}
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <strong>Sales Executive Name:</strong><br>
+                            {{ $salesExecutiveName ?: 'N/A' }}
                         </div>
                     </div>
                 </div>
@@ -320,7 +382,7 @@
                     <a href="{{ route('exhibitor-registration.payment', $application->application_id) }}" class="btn btn-success btn-lg">
                         Proceed to Payment <i class="fas fa-arrow-right"></i>
                     </a>
-                @else
+                @elseif($hasDraft || $hasSubmittedData)
                     <button type="button" class="btn btn-success btn-lg" id="proceedToPaymentBtn">
                         Proceed to Payment <i class="fas fa-arrow-right"></i>
                     </button>
@@ -330,7 +392,7 @@
     </div>
 </div>
 
-@if(!$hasApplication)
+@if(!$hasApplication && ($hasDraft || $hasSubmittedData))
 @push('scripts')
 <script>
 document.getElementById('proceedToPaymentBtn')?.addEventListener('click', function() {
