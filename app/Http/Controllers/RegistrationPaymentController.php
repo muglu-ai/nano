@@ -1980,8 +1980,7 @@ class RegistrationPaymentController extends Controller
 
         Log::info('CCAvenue Sanitized value', [
             'value' => $value,
-            'maxLength' => $maxLength,
-            'original_value' => $originalValue,
+            'maxLength' => $maxLength
         ]);
         
         return $value;
