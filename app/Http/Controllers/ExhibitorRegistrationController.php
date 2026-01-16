@@ -70,8 +70,10 @@ class ExhibitorRegistrationController extends Controller
         
         // Get event configuration for pricing
         $eventConfig = DB::table('event_configurations')->where('id', 1)->first();
-        $shellSchemeRate = $eventConfig->shell_scheme_rate ?? 13000;
-        $rawSpaceRate = $eventConfig->raw_space_rate ?? 12000;
+        $shellSchemeRate = $eventConfig->shell_scheme_rate ?? 14000;
+        $rawSpaceRate = $eventConfig->raw_space_rate ?? 13000;
+        $shellSchemeRateUSD = $eventConfig->shell_scheme_rate_usd ?? 175;
+        $rawSpaceRateUSD = $eventConfig->raw_space_rate_usd ?? 160;
         $gstRate = $eventConfig->gst_rate ?? 18;
         
         // Get dropdown data
@@ -147,6 +149,7 @@ class ExhibitorRegistrationController extends Controller
         $validator = Validator::make($request->all(), [
             'booth_space' => 'required|in:Raw,Shell',
             'booth_size' => 'required|string',
+            'currency' => 'required|in:INR,USD',
             'gst_rate' => 'nullable|numeric|min:0|max:100'
         ]);
 
@@ -157,21 +160,37 @@ class ExhibitorRegistrationController extends Controller
             ], 422);
         }
 
+        // Get currency (default to INR)
+        $currency = $request->input('currency', 'INR');
+        
         // Get event configuration
         $eventConfig = DB::table('event_configurations')->where('id', 1)->first();
         $gstRatePercent = $request->input('gst_rate') ?? ($eventConfig->gst_rate ?? 18);
         $gstRate = $gstRatePercent / 100;
         
-        // Get processing charge rate (default 3% for Indian payments)
-        $processingRatePercent = $eventConfig->ind_processing_charge ?? 3;
+        // Get processing charge rate based on currency
+        // For INR: use ind_processing_charge, for USD: use usd_processing_charge or 0
+        if ($currency === 'USD') {
+            $processingRatePercent = $eventConfig->usd_processing_charge ?? 0;
+        } else {
+            $processingRatePercent = $eventConfig->ind_processing_charge ?? 3;
+        }
         $processingRate = $processingRatePercent / 100;
         
-        // Get rate per sqm based on booth space type
+        // Get rate per sqm based on booth space type and currency
         $ratePerSqm = 0;
         if ($request->input('booth_space') === 'Shell') {
-            $ratePerSqm = $eventConfig->shell_scheme_rate ?? 13000;
+            if ($currency === 'USD') {
+                $ratePerSqm = $eventConfig->shell_scheme_rate_usd ?? 175;
+            } else {
+                $ratePerSqm = $eventConfig->shell_scheme_rate ?? 13000;
+            }
         } else {
-            $ratePerSqm = $eventConfig->raw_space_rate ?? 12000;
+            if ($currency === 'USD') {
+                $ratePerSqm = $eventConfig->raw_space_rate_usd ?? 160;
+            } else {
+                $ratePerSqm = $eventConfig->raw_space_rate ?? 12000;
+            }
         }
         
         // Extract sqm from booth size (e.g., "36" from "36sqm" or "36")
@@ -207,7 +226,8 @@ class ExhibitorRegistrationController extends Controller
                 'gst_amount' => round($gstAmount, 2),
                 'processing_rate' => $processingRatePercent,
                 'processing_charges' => round($processingCharges, 2),
-                'total_price' => round($totalPrice, 2)
+                'total_price' => round($totalPrice, 2),
+                'currency' => $currency
             ]
         ]);
     }
@@ -455,6 +475,9 @@ class ExhibitorRegistrationController extends Controller
         }
         if (isset($formData['promocode'])) {
             $draft->promocode = $formData['promocode'];
+        }
+        if (isset($formData['currency'])) {
+            $draft->currency = $formData['currency'];
         }
         
         // Calculate progress percentage
@@ -849,18 +872,34 @@ class ExhibitorRegistrationController extends Controller
                 ], 422);
             }
 
+            // Get currency from form
+            $currency = $request->input('currency', 'INR');
+            
             // Calculate price
             $eventConfig = DB::table('event_configurations')->where('id', 1)->first();
             $gstRate = ($eventConfig->gst_rate ?? 18) / 100;
             
-            // Get processing charge rate (default 3% for Indian payments)
-            $processingRate = ($eventConfig->ind_processing_charge ?? 3) / 100;
+            // Get processing charge rate based on currency
+            if ($currency === 'USD') {
+                $processingRate = ($eventConfig->usd_processing_charge ?? 0) / 100;
+            } else {
+                $processingRate = ($eventConfig->ind_processing_charge ?? 3) / 100;
+            }
             
+            // Get rate per sqm based on booth space type and currency
             $ratePerSqm = 0;
             if ($allData['booth_space'] === 'Shell') {
-                $ratePerSqm = $eventConfig->shell_scheme_rate ?? 13000;
+                if ($currency === 'USD') {
+                    $ratePerSqm = $eventConfig->shell_scheme_rate_usd ?? 175;
+                } else {
+                    $ratePerSqm = $eventConfig->shell_scheme_rate ?? 13000;
+                }
             } else {
-                $ratePerSqm = $eventConfig->raw_space_rate ?? 12000;
+                if ($currency === 'USD') {
+                    $ratePerSqm = $eventConfig->raw_space_rate_usd ?? 160;
+                } else {
+                    $ratePerSqm = $eventConfig->raw_space_rate ?? 12000;
+                }
             }
             
             $boothSize = preg_replace('/[^0-9]/', '', $allData['booth_size']);
@@ -947,16 +986,22 @@ class ExhibitorRegistrationController extends Controller
             $exhibitorData['category'] = $allData['category'] ?? null;
             $draft->exhibitor_data = $exhibitorData;
             
-            // Store pricing in a JSON field (we'll add a pricing_data field or use existing)
-            // For now, store in session for backward compatibility
+            // Store pricing in pricing_data column
             $pricingData = [
                 'base_price' => $basePrice,
                 'gst_amount' => $gstAmount,
                 'processing_charges' => $processingCharges,
-                'processing_rate' => $eventConfig->ind_processing_charge ?? 3,
+                'processing_rate' => $currency === 'USD' ? ($eventConfig->usd_processing_charge ?? 0) : ($eventConfig->ind_processing_charge ?? 3),
                 'gst_rate' => $eventConfig->gst_rate ?? 18,
                 'total_price' => $totalPrice,
+                'sqm' => $sqm,
+                'rate_per_sqm' => $ratePerSqm,
+                'currency' => $currency,
             ];
+            
+            // Store pricing data and currency in draft
+            $draft->pricing_data = $pricingData;
+            $draft->currency = $currency;
             
             // Calculate progress
             $progress = $this->calculateProgressFromData($allData);
@@ -964,7 +1009,7 @@ class ExhibitorRegistrationController extends Controller
             
             $draft->save();
             
-            // Store pricing in session for preview page (temporary)
+            // Store pricing in session for preview page (backward compatibility)
             session(['exhibitor_registration_pricing' => $pricingData]);
             
             // Also store in session for backward compatibility
@@ -1022,20 +1067,38 @@ class ExhibitorRegistrationController extends Controller
                 ->with('error', 'No draft found. Please submit the form again.');
         }
         
-        // Get pricing from session (temporary, until we add pricing_data to draft table)
-        $pricing = session('exhibitor_registration_pricing', []);
+        // Get currency from draft
+        $currency = $draft->currency ?? 'INR';
         
-        // If pricing not in session, calculate it
+        // Get pricing from draft pricing_data column (preferred) or session (fallback)
+        $pricing = $draft->pricing_data ?? session('exhibitor_registration_pricing', []);
+        
+        // If pricing not in draft or session, calculate it
         if (empty($pricing)) {
             $eventConfig = DB::table('event_configurations')->where('id', 1)->first();
             $gstRate = ($eventConfig->gst_rate ?? 18) / 100;
-            $processingRate = ($eventConfig->ind_processing_charge ?? 3) / 100;
             
+            // Get processing rate based on currency
+            if ($currency === 'USD') {
+                $processingRate = ($eventConfig->usd_processing_charge ?? 0) / 100;
+            } else {
+                $processingRate = ($eventConfig->ind_processing_charge ?? 3) / 100;
+            }
+            
+            // Get rate per sqm based on currency
             $ratePerSqm = 0;
             if ($draft->stall_category === 'Shell') {
-                $ratePerSqm = $eventConfig->shell_scheme_rate ?? 13000;
+                if ($currency === 'USD') {
+                    $ratePerSqm = $eventConfig->shell_scheme_rate_usd ?? 175;
+                } else {
+                    $ratePerSqm = $eventConfig->shell_scheme_rate ?? 13000;
+                }
             } else {
-                $ratePerSqm = $eventConfig->raw_space_rate ?? 12000;
+                if ($currency === 'USD') {
+                    $ratePerSqm = $eventConfig->raw_space_rate_usd ?? 160;
+                } else {
+                    $ratePerSqm = $eventConfig->raw_space_rate ?? 12000;
+                }
             }
             
             $boothSize = preg_replace('/[^0-9]/', '', $draft->interested_sqm ?? '0');
@@ -1049,9 +1112,12 @@ class ExhibitorRegistrationController extends Controller
                 'base_price' => $basePrice,
                 'gst_amount' => $gstAmount,
                 'processing_charges' => $processingCharges,
-                'processing_rate' => $eventConfig->ind_processing_charge ?? 3,
+                'processing_rate' => $currency === 'USD' ? ($eventConfig->usd_processing_charge ?? 0) : ($eventConfig->ind_processing_charge ?? 3),
                 'gst_rate' => $eventConfig->gst_rate ?? 18,
                 'total_price' => $totalPrice,
+                'sqm' => $sqm,
+                'rate_per_sqm' => $ratePerSqm,
+                'currency' => $currency,
             ];
         }
         
@@ -1076,7 +1142,8 @@ class ExhibitorRegistrationController extends Controller
             'billingData',
             'exhibitorData',
             'contactData',
-            'pricing'
+            'pricing',
+            'currency'
         ));
     }
     
@@ -1119,18 +1186,36 @@ class ExhibitorRegistrationController extends Controller
             'contact_email' => $contactData['email'] ?? 'not_set',
         ]);
         
-        // Get pricing from session or calculate
-        $pricing = session('exhibitor_registration_pricing', []);
+        // Get currency from draft
+        $currency = $draft->currency ?? 'INR';
+        
+        // Get pricing from draft pricing_data column (preferred) or session (fallback)
+        $pricing = $draft->pricing_data ?? session('exhibitor_registration_pricing', []);
         if (empty($pricing)) {
             $eventConfig = DB::table('event_configurations')->where('id', 1)->first();
             $gstRate = ($eventConfig->gst_rate ?? 18) / 100;
-            $processingRate = ($eventConfig->ind_processing_charge ?? 3) / 100;
             
+            // Get processing rate based on currency
+            if ($currency === 'USD') {
+                $processingRate = ($eventConfig->usd_processing_charge ?? 0) / 100;
+            } else {
+                $processingRate = ($eventConfig->ind_processing_charge ?? 3) / 100;
+            }
+            
+            // Get rate per sqm based on currency
             $ratePerSqm = 0;
             if ($draft->stall_category === 'Shell') {
-                $ratePerSqm = $eventConfig->shell_scheme_rate ?? 13000;
+                if ($currency === 'USD') {
+                    $ratePerSqm = $eventConfig->shell_scheme_rate_usd ?? 175;
+                } else {
+                    $ratePerSqm = $eventConfig->shell_scheme_rate ?? 13000;
+                }
             } else {
-                $ratePerSqm = $eventConfig->raw_space_rate ?? 12000;
+                if ($currency === 'USD') {
+                    $ratePerSqm = $eventConfig->raw_space_rate_usd ?? 160;
+                } else {
+                    $ratePerSqm = $eventConfig->raw_space_rate ?? 12000;
+                }
             }
             
             $boothSize = preg_replace('/[^0-9]/', '', $draft->interested_sqm ?? '0');
@@ -1144,11 +1229,17 @@ class ExhibitorRegistrationController extends Controller
                 'base_price' => $basePrice,
                 'gst_amount' => $gstAmount,
                 'processing_charges' => $processingCharges,
-                'processing_rate' => $eventConfig->ind_processing_charge ?? 3,
+                'processing_rate' => $currency === 'USD' ? ($eventConfig->usd_processing_charge ?? 0) : ($eventConfig->ind_processing_charge ?? 3),
                 'gst_rate' => $eventConfig->gst_rate ?? 18,
                 'total_price' => $totalPrice,
+                'sqm' => $sqm,
+                'rate_per_sqm' => $ratePerSqm,
+                'currency' => $currency,
             ];
         }
+        
+        // Get currency from draft
+        $currency = $draft->currency ?? 'INR';
         
         // Build allData from draft for compatibility
         $allData = [
@@ -1386,6 +1477,7 @@ class ExhibitorRegistrationController extends Controller
                     'promocode' => $allData['promocode'] ?? $draft->promocode ?? null,
                     'salesPerson' => $allData['sales_executive_name'] ?? '',
                     'exhibitorType' => $allData['category'] ?? 'Exhibitor',
+                    'payment_currency' => $currency,
                     'status' => 'initiated',
                     'submission_status' => 'submitted',
                     'submission_date' => now(),
@@ -1423,6 +1515,7 @@ class ExhibitorRegistrationController extends Controller
                     'promocode' => $allData['promocode'] ?? null,
                     'salesPerson' => $allData['sales_executive_name'] ?? '',
                     'exhibitorType' => $allData['category'] ?? 'Exhibitor',
+                    'payment_currency' => $currency,
                     'status' => 'initiated',
                     'submission_status' => 'submitted',
                     'submission_date' => now(),
@@ -1506,7 +1599,7 @@ class ExhibitorRegistrationController extends Controller
             $invoice->processing_chargesRate = $pricing['processing_rate'];
             $invoice->processing_charges = $pricing['processing_charges'];
             $invoice->total_final_price = $pricing['total_price'];
-            $invoice->currency = 'INR';
+            $invoice->currency = $currency; // Use currency from draft
             $invoice->payment_status = 'unpaid';
             $invoice->payment_due_date = null;
             $invoice->save();

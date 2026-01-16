@@ -108,8 +108,16 @@
                         </select>
                         <div class="invalid-feedback"></div>
                     </div>
-                    
-                    
+
+                    <div class="col-md-4">
+                        <label for="promocode" class="form-label">Currency <span class="text-danger">*</span></label>
+                        <select class="form-select" id="currency" name="currency" required>
+                            <option value="">Select Currency</option>
+                            <option value="INR" {{ ($draft->currency ?? '') == 'INR' ? 'selected' : '' }}>INR</option>
+                            <option value="USD" {{ ($draft->currency ?? '') == 'USD' ? 'selected' : '' }}>USD</option>
+                        </select>
+                        <div class="invalid-feedback"></div>
+                    </div>
                 </div>
 
                 {{-- Tax & Compliance Details --}}
@@ -440,7 +448,7 @@
                 </div>
 
                 {{-- Payment Mode --}}
-                <h5 class="mb-3 mt-4 border-bottom pb-2"><i class="fas fa-credit-card"></i> Payment Mode</h5>
+                <!-- <h5 class="mb-3 mt-4 border-bottom pb-2"><i class="fas fa-credit-card"></i> Payment Mode</h5>
                 <div class="row mb-3">
                     <div class="col-md-6">
                         <label class="form-label d-block mb-2">Payment Mode <span class="text-danger">*</span></label>
@@ -455,7 +463,7 @@
                         </div>
                         <div class="invalid-feedback"></div>
                     </div>
-                </div>
+                </div> -->
 
                 {{-- Promocode Section --}}
                 <div class="row mb-3" style="display: none;">
@@ -729,7 +737,20 @@ $(document).ready(function() {
         }
     });
 
+    // Recalculate price when currency changes
+    $('#currency').on('change', function() {
+        const boothSpace = $('#booth_space').val();
+        const boothSize = $('#booth_size').val();
+        
+        if (boothSpace && boothSize) {
+            calculatePrice(boothSpace, boothSize);
+        }
+    });
+
     function calculatePrice(boothSpace, boothSize) {
+        const currency = $('#currency').val() || 'INR';
+        const currencySymbol = currency === 'USD' ? '$' : '₹';
+        
         $.ajax({
             url: '{{ route("exhibitor-registration.calculate-price") }}',
             method: 'POST',
@@ -737,6 +758,7 @@ $(document).ready(function() {
                 _token: '{{ csrf_token() }}',
                 booth_space: boothSpace,
                 booth_size: boothSize,
+                currency: currency,
                 gst_rate: {{ $gstRate }}
             },
             success: function(response) {
@@ -744,15 +766,15 @@ $(document).ready(function() {
                     const price = response.price;
                     let processingHtml = '';
                     if (price.processing_charges) {
-                        processingHtml = `<p><strong>Processing Charges (${price.processing_rate}%):</strong> ₹${price.processing_charges.toLocaleString()}</p>`;
+                        processingHtml = `<p><strong>Processing Charges (${price.processing_rate}%):</strong> ${currencySymbol}${price.processing_charges.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</p>`;
                     }
                     $('#priceDetails').html(`
                         <p><strong>Booth Size:</strong> ${price.sqm} sqm</p>
-                        <p><strong>Rate per sqm:</strong> ₹${price.rate_per_sqm.toLocaleString()}</p>
-                        <p><strong>Base Price:</strong> ₹${price.base_price.toLocaleString()}</p>
-                        <p><strong>GST (${price.gst_rate}%):</strong> ₹${price.gst_amount.toLocaleString()}</p>
+                        <p><strong>Rate per sqm:</strong> ${currencySymbol}${price.rate_per_sqm.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</p>
+                        <p><strong>Base Price:</strong> ${currencySymbol}${price.base_price.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</p>
+                        <p><strong>GST (${price.gst_rate}%):</strong> ${currencySymbol}${price.gst_amount.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</p>
                         ${processingHtml}
-                        <p><strong>Total Price:</strong> ₹${price.total_price.toLocaleString()}</p>
+                        <p><strong>Total Price:</strong> ${currencySymbol}${price.total_price.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</p>
                     `);
                     $('#priceDisplay').removeClass('d-none');
                 }

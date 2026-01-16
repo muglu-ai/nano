@@ -18,8 +18,10 @@ const EVENT_DATE_END = '21-11-2026';
 const EVENT_VENUE = 'Bengaluru International Exhibition Centre (BIEC), Bengaluru, India';
 
 const APP_URL = 'http://bengalurutechsummit.com/bts-portal/public';
-const SHELL_SCHEME_RATE = 13000; // per sqm
-const RAW_SPACE_RATE = 12000; // per sqm
+const SHELL_SCHEME_RATE = 14000; // per sqm
+const SHELL_SCHEME_RATE_USD = 175; // per sqm
+const RAW_SPACE_RATE = 13000; // per sqm
+const RAW_SPACE_RATE_USD = 160; // per sqm
 const IND_PROCESSING_CHARGE = 3; // 5% processing fee for National payments
 const INT_PROCESSING_CHARGE = 9; // 9% processing fee for International payments
 const GST_RATE = 18; // GST rate for India
