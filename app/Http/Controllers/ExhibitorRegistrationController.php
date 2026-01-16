@@ -169,11 +169,11 @@ class ExhibitorRegistrationController extends Controller
         $gstRate = $gstRatePercent / 100;
         
         // Get processing charge rate based on currency
-        // For INR: use ind_processing_charge, for USD: use usd_processing_charge or 0
+        // For INR: use ind_processing_charge, for USD: use int_processing_charge
         if ($currency === 'USD') {
-            $processingRatePercent = $eventConfig->usd_processing_charge ?? 0;
+            $processingRatePercent = $eventConfig->int_processing_charge ?? 9; // Default 9% for USD
         } else {
-            $processingRatePercent = $eventConfig->ind_processing_charge ?? 3;
+            $processingRatePercent = $eventConfig->ind_processing_charge ?? 3; // Default 3% for INR
         }
         $processingRate = $processingRatePercent / 100;
         
@@ -881,9 +881,9 @@ class ExhibitorRegistrationController extends Controller
             
             // Get processing charge rate based on currency
             if ($currency === 'USD') {
-                $processingRate = ($eventConfig->usd_processing_charge ?? 0) / 100;
+                $processingRate = ($eventConfig->int_processing_charge ?? 9.5) / 100; // Default 9.5% for USD
             } else {
-                $processingRate = ($eventConfig->ind_processing_charge ?? 3) / 100;
+                $processingRate = ($eventConfig->ind_processing_charge ?? 3) / 100; // Default 3% for INR
             }
             
             // Get rate per sqm based on booth space type and currency
@@ -991,7 +991,7 @@ class ExhibitorRegistrationController extends Controller
                 'base_price' => $basePrice,
                 'gst_amount' => $gstAmount,
                 'processing_charges' => $processingCharges,
-                'processing_rate' => $currency === 'USD' ? ($eventConfig->usd_processing_charge ?? 0) : ($eventConfig->ind_processing_charge ?? 3),
+                'processing_rate' => $currency === 'USD' ? ($eventConfig->int_processing_charge ?? 9.5) : ($eventConfig->ind_processing_charge ?? 3),
                 'gst_rate' => $eventConfig->gst_rate ?? 18,
                 'total_price' => $totalPrice,
                 'sqm' => $sqm,
@@ -1112,7 +1112,7 @@ class ExhibitorRegistrationController extends Controller
                 'base_price' => $basePrice,
                 'gst_amount' => $gstAmount,
                 'processing_charges' => $processingCharges,
-                'processing_rate' => $currency === 'USD' ? ($eventConfig->usd_processing_charge ?? 0) : ($eventConfig->ind_processing_charge ?? 3),
+                'processing_rate' => $currency === 'USD' ? ($eventConfig->int_processing_charge ?? 9.5) : ($eventConfig->ind_processing_charge ?? 3),
                 'gst_rate' => $eventConfig->gst_rate ?? 18,
                 'total_price' => $totalPrice,
                 'sqm' => $sqm,
@@ -1229,7 +1229,7 @@ class ExhibitorRegistrationController extends Controller
                 'base_price' => $basePrice,
                 'gst_amount' => $gstAmount,
                 'processing_charges' => $processingCharges,
-                'processing_rate' => $currency === 'USD' ? ($eventConfig->usd_processing_charge ?? 0) : ($eventConfig->ind_processing_charge ?? 3),
+                'processing_rate' => $currency === 'USD' ? ($eventConfig->int_processing_charge ?? 9.5) : ($eventConfig->ind_processing_charge ?? 3),
                 'gst_rate' => $eventConfig->gst_rate ?? 18,
                 'total_price' => $totalPrice,
                 'sqm' => $sqm,

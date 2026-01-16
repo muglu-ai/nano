@@ -765,8 +765,10 @@ $(document).ready(function() {
                 if (response.success) {
                     const price = response.price;
                     let processingHtml = '';
-                    if (price.processing_charges) {
-                        processingHtml = `<p><strong>Processing Charges (${price.processing_rate}%):</strong> ${currencySymbol}${price.processing_charges.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</p>`;
+                    // Always show processing charges if processing_rate > 0, even if amount is 0
+                    if (price.processing_rate && price.processing_rate > 0) {
+                        const processingAmount = price.processing_charges || 0;
+                        processingHtml = `<p><strong>Processing Charges (${price.processing_rate}%):</strong> ${currencySymbol}${processingAmount.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</p>`;
                     }
                     $('#priceDetails').html(`
                         <p><strong>Booth Size:</strong> ${price.sqm} sqm</p>
