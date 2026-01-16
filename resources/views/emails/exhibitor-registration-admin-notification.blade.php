@@ -305,7 +305,7 @@
                             <!-- Pricing Information -->
                             @if($invoice)
                             <div style="background-color: #f8f9fa; border-left: 4px solid #1a237e; padding: 20px; margin: 25px 0; border-radius: 4px;">
-                                <h2 style="margin: 0 0 15px; font-size: 18px; color: #1a237e; font-weight: bold;">Pricing Information</h2>
+                                <h2 style="margin: 0 0 15px; font-size: 18px; color: #1a237e; font-weight: bold;">Invoice Details</h2>
                                 
                                 @if($invoice->price)
                                 <table role="presentation" width="100%" cellpadding="5" cellspacing="0" style="margin-bottom: 10px;">
@@ -319,17 +319,17 @@
                                 @if($invoice->gst)
                                 <table role="presentation" width="100%" cellpadding="5" cellspacing="0" style="margin-bottom: 10px;">
                                     <tr>
-                                        <td style="width: 40%; font-weight: bold; color: #555555; padding: 5px 0;">GST:</td>
+                                        <td style="width: 40%; font-weight: bold; color: #555555; padding: 5px 0;">GST({{ $invoice->gst_rate ?? 18 }}%):</td>
                                         <td style="color: #333333; padding: 5px 0;">{{ $invoice->currency }} {{ number_format($invoice->gst, 2) }}</td>
                                     </tr>
                                 </table>
                                 @endif
 
-                                @if($invoice->processing_charges)
+                                @if($invoice->processing_chargesRate && $invoice->processing_chargesRate > 0)
                                 <table role="presentation" width="100%" cellpadding="5" cellspacing="0" style="margin-bottom: 10px;">
                                     <tr>
-                                        <td style="width: 40%; font-weight: bold; color: #555555; padding: 5px 0;">Processing Charges:</td>
-                                        <td style="color: #333333; padding: 5px 0;">{{ $invoice->currency }} {{ number_format($invoice->processing_charges, 2) }}</td>
+                                        <td style="width: 40%; font-weight: bold; color: #555555; padding: 5px 0;">Processing Charges({{ $invoice->processing_chargesRate }}%):</td>
+                                        <td style="color: #333333; padding: 5px 0;">{{ $invoice->currency }} {{ number_format($invoice->processing_charges ?? 0, 2) }}</td>
                                     </tr>
                                 </table>
                                 @endif
