@@ -15,6 +15,7 @@ class Application extends Model
         'user_id',
         'billing_country_id',
         'gst_compliance',
+        'tan_compliance',
         'company_name',
         'address',
         'postal_code',

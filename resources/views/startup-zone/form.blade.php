@@ -2,6 +2,20 @@
 
 @section('title', 'Startup Registration - ' . config('constants.EVENT_NAME') . ' ' . config('constants.EVENT_YEAR'))
 
+@push('styles')
+<style>
+   
+
+    .form-section {
+        background: #f8f9fa;
+        border-radius: 10px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+        border: 1px solid #e0e0e0;
+    }
+</style>
+@endpush
+
 @section('content')
 <div class="form-card">
     {{-- Form Header --}}
@@ -102,6 +116,7 @@
                 </div>
 
                 {{-- Booth Information --}}
+                <div class="form-section">
                 <h5 class="mb-3 border-bottom pb-2"><i class="fas fa-cube"></i> Booth Information</h5>
                 <div class="row mb-3">
                     <div class="col-md-6">
@@ -125,8 +140,9 @@
                         <div class="invalid-feedback"></div>
                     </div>
                 </div>
-
+                </div>
                 {{-- Sector Information --}}
+                <div class="form-section">
                 <h5 class="mb-3 mt-4 border-bottom pb-2"><i class="fas fa-industry"></i> Sector Information</h5>
                 <div class="row mb-3">
                     <div class="col-md-6">
@@ -171,8 +187,9 @@
                         <div class="invalid-feedback"></div>
                     </div>
                 </div>
-
+                </div>
                 {{-- Tax Information --}}
+                <div class="form-section">
                 <h5 class="mb-3 mt-4 border-bottom pb-2"><i class="fas fa-file-invoice-dollar"></i> Tax Information</h5>
                 <div class="row mb-3">
                     <div class="col-md-6">
@@ -214,8 +231,9 @@
                         <div class="invalid-feedback"></div>
                     </div>
                 </div>
-
+                </div>
                 {{-- Billing Information --}}
+                <div class="form-section">
                 <h5 class="mb-3 mt-4 border-bottom pb-2"><i class="fas fa-building"></i> Billing Information</h5>
                 <div class="row mb-3">
                     <div class="col-md-6">
@@ -255,7 +273,7 @@
                 </div>
 
                 <div class="row mb-3">
-                    <div class="col-md-4">
+                    <div class="col-md-6">
                         <label for="billing_country_id" class="form-label">Billing Country <span class="text-danger">*</span></label>
                         <select class="form-select" id="billing_country_id" name="billing_country_id" required>
                             <option value="">Select Country</option>
@@ -272,7 +290,7 @@
                         </select>
                         <div class="invalid-feedback"></div>
                     </div>
-                    <div class="col-md-4">
+                    <div class="col-md-6">
                         <label for="billing_state_id" class="form-label">Billing State <span class="text-danger">*</span></label>
                         <select class="form-select" id="billing_state_id" name="billing_state_id" required>
                             <option value="">Select State</option>
@@ -294,24 +312,28 @@
                         </select>
                         <div class="invalid-feedback"></div>
                     </div>
-                    <div class="col-md-4">
+                   
+                </div>
+
+                <div class="row mb-3">
+                    <div class="col-md-6">
                         <label for="billing_city" class="form-label">Billing City <span class="text-danger">*</span></label>
                         <input type="text" class="form-control" id="billing_city" name="billing_city" 
                                value="{{ isset($draft->billing_data['city']) ? $draft->billing_data['city'] : ($draft->city_id ?? '') }}" 
                                maxlength="100" required>
                         <div class="invalid-feedback"></div>
                     </div>
-                </div>
-
-                <div class="row mb-3">
-                    <div class="col-md-4">
+                    <div class="col-md-6">
                         <label for="billing_postal_code" class="form-label">Billing Postal Code <span class="text-danger">*</span></label>
                         <input type="text" class="form-control" id="billing_postal_code" name="billing_postal_code" 
                                value="{{ isset($draft->billing_data['postal_code']) ? $draft->billing_data['postal_code'] : ($draft->postal_code ?? '') }}" 
                                pattern="[0-9]{6}" maxlength="6" required>
                         <div class="invalid-feedback"></div>
                     </div>
-                    <div class="col-md-4">
+                   
+                </div>
+                <div class="row mb-3">
+                    <div class="col-md-6">
                         <label for="billing_telephone" class="form-label">Billing Telephone Number <span class="text-danger">*</span></label>
                         <input type="tel" class="form-control" id="billing_telephone" name="billing_telephone" 
                                value="{{ isset($draft->billing_data['telephone']) ? $draft->billing_data['telephone'] : ($draft->landline ?? '') }}" 
@@ -320,7 +342,7 @@
                         <input type="hidden" id="billing_telephone_national" name="billing_telephone_national">
                         <div class="invalid-feedback"></div>
                     </div>
-                    <div class="col-md-4">
+                    <div class="col-md-6">
                         <label for="billing_website" class="form-label">Website <span class="text-danger">*</span></label>
                         <input type="url" class="form-control" id="billing_website" name="billing_website" 
                                value="{{ isset($draft->billing_data['website']) ? $draft->billing_data['website'] : ($draft->website ?? '') }}" 
@@ -337,8 +359,9 @@
                         <div class="invalid-feedback"></div>
                     </div>
                 </div>
-
+                </div>
                 {{-- Exhibitor Information --}}
+                <div class="form-section">
                 <h5 class="mb-3 mt-4 border-bottom pb-2"><i class="fas fa-building"></i> Exhibitor Information</h5>
                 <div class="row mb-3">
                     <div class="col-12">
@@ -363,7 +386,7 @@
                 </div>
 
                 <div class="row mb-3">
-                    <div class="col-md-4">
+                    <div class="col-md-6">
                         <label for="exhibitor_country_id" class="form-label">Country <span class="text-danger">*</span></label>
                         <select class="form-select" id="exhibitor_country_id" name="exhibitor_country_id" required>
                             <option value="">Select Country</option>
@@ -379,7 +402,7 @@
                         </select>
                         <div class="invalid-feedback"></div>
                     </div>
-                    <div class="col-md-4">
+                    <div class="col-md-6">
                         <label for="exhibitor_state_id" class="form-label">State <span class="text-danger">*</span></label>
                         <select class="form-select" id="exhibitor_state_id" name="exhibitor_state_id" required>
                             <option value="">Select State</option>
@@ -394,24 +417,28 @@
                         </select>
                         <div class="invalid-feedback"></div>
                     </div>
-                    <div class="col-md-4">
+                    
+                </div>
+
+                <div class="row mb-3">
+                    <div class="col-md-6">
                         <label for="exhibitor_city" class="form-label">City <span class="text-danger">*</span></label>
                         <input type="text" class="form-control" id="exhibitor_city" name="exhibitor_city" 
                                value="{{ isset($draft->exhibitor_data['city']) ? $draft->exhibitor_data['city'] : '' }}" 
                                maxlength="100" required>
                         <div class="invalid-feedback"></div>
                     </div>
-                </div>
-
-                <div class="row mb-3">
-                    <div class="col-md-4">
+                    <div class="col-md-6">
                         <label for="exhibitor_postal_code" class="form-label">Postal Code <span class="text-danger">*</span></label>
                         <input type="text" class="form-control" id="exhibitor_postal_code" name="exhibitor_postal_code" 
                                value="{{ isset($draft->exhibitor_data['postal_code']) ? $draft->exhibitor_data['postal_code'] : '' }}" 
                                pattern="[0-9]{6}" maxlength="6" required>
                         <div class="invalid-feedback"></div>
                     </div>
-                    <div class="col-md-4">
+                    
+                </div>
+                <div class="row mb-3">
+                    <div class="col-md-6">
                         <label for="exhibitor_telephone" class="form-label">Telephone Number <span class="text-danger">*</span></label>
                         <input type="tel" class="form-control" id="exhibitor_telephone" name="exhibitor_telephone" 
                                value="{{ isset($draft->exhibitor_data['telephone']) ? $draft->exhibitor_data['telephone'] : '' }}" 
@@ -420,7 +447,7 @@
                         <input type="hidden" id="exhibitor_telephone_national" name="exhibitor_telephone_national">
                         <div class="invalid-feedback"></div>
                     </div>
-                    <div class="col-md-4">
+                    <div class="col-md-6">
                         <label for="exhibitor_website" class="form-label">Website <span class="text-danger">*</span></label>
                         <input type="url" class="form-control" id="exhibitor_website" name="exhibitor_website" 
                                value="{{ isset($draft->exhibitor_data['website']) ? $draft->exhibitor_data['website'] : '' }}" 
@@ -437,8 +464,10 @@
                         <div class="invalid-feedback"></div>
                     </div>
                 </div>
+                </div>
 
                 {{-- Contact Person Details --}}
+                <div class="form-section">
                 <h5 class="mb-3 mt-4 border-bottom pb-2"><i class="fas fa-user"></i> Contact Person Details</h5>
                 <div class="row mb-3">
                     <div class="col-md-3">
@@ -493,8 +522,9 @@
                         <div class="invalid-feedback"></div>
                     </div>
                 </div>
-
+                </div>
                 {{-- Payment Mode --}}
+                <div class="form-section">
                 <h5 class="mb-3 mt-4 border-bottom pb-2"><i class="fas fa-credit-card"></i> Payment Mode</h5>
                 <div class="row mb-3">
                     <div class="col-md-6">
@@ -506,9 +536,10 @@
                         <div class="invalid-feedback"></div>
                     </div>
                 </div>
-
+                </div>
                 {{-- Promocode Section --}}
                 <!-- <h5 class="mb-3 mt-4 border-bottom pb-2"><i class="fas fa-ticket-alt" style="display: none;"></i> Promocode (Optional)</h5> -->
+                <div class="form-section" style="display: none;">
                 <div class="row mb-3" style="display: none;">
                     <div class="col-md-6">
                         <label for="promocode" class="form-label">Promocode</label>
@@ -527,7 +558,7 @@
                 <div class="alert alert-info">
                     <i class="fas fa-info-circle"></i> <strong>Note:</strong> After submitting this form, you will be redirected to preview your registration details before making payment.
                 </div>
-
+                </div>
                 {{-- Google reCAPTCHA temporarily disabled --}}
 
                 {{-- Submit Button --}}

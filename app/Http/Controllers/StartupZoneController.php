@@ -1739,36 +1739,28 @@ class StartupZoneController extends Controller
             // Use the latest data we already extracted above (from session first, then draft)
             // $exhibitorData and $billingData are already set above with proper priority
             
-            // Get company name with proper fallback chain
+            // Get company name from billing_data only (for application table)
             $companyName = null;
-            
-            if ($exhibitorData && is_array($exhibitorData) && !empty($exhibitorData['name'])) {
-                $companyName = trim($exhibitorData['name']);
-            }
-            if (empty($companyName) && $billingData && is_array($billingData) && !empty($billingData['company_name'])) {
+            if ($billingData && is_array($billingData) && !empty($billingData['company_name'])) {
                 $companyName = trim($billingData['company_name']);
-            }
-            if (empty($companyName) && !empty($draft->company_name)) {
+            } elseif (!empty($draft->company_name)) {
                 $companyName = trim($draft->company_name);
             }
             
             // Final validation: company_name cannot be null
             if (empty($companyName)) {
                 DB::rollBack();
-                \Log::error('Startup Zone: company_name is null after all fallbacks', [
+                \Log::error('Startup Zone: company_name is null - billing_data required', [
                     'draft_id' => $draft->id,
-                    'exhibitor_data' => $exhibitorData,
                     'billing_data' => $billingData,
                     'draft_company_name' => $draft->company_name,
                 ]);
-                throw new \Exception('Company name is required. Please fill in the Exhibitor Information or Billing Information section.');
+                throw new \Exception('Company name is required. Please fill in the Billing Information section.');
             }
             
-            // Get company email with proper fallback chain
+            // Get company email from billing_data only (for application table)
             $companyEmail = null;
-            if ($exhibitorData && !empty($exhibitorData['email'])) {
-                $companyEmail = $exhibitorData['email'];
-            } elseif ($billingData && !empty($billingData['email'])) {
+            if ($billingData && !empty($billingData['email'])) {
                 $companyEmail = $billingData['email'];
             } elseif (!empty($draft->company_email)) {
                 $companyEmail = $draft->company_email;
@@ -1776,33 +1768,29 @@ class StartupZoneController extends Controller
                 $companyEmail = $contactEmail; // Final fallback to contact email
             }
             
-            // Get address with proper fallback chain
-            $address = $exhibitorData['address'] ?? $billingData['address'] ?? $draft->address ?? '';
+            // Get address from billing_data only (for application table)
+            $address = $billingData['address'] ?? $draft->address ?? '';
             
-            // Get city as string (exact value from form) with proper fallback chain
+            // Get city from billing_data only (for application table)
             $city = null;
-            if ($exhibitorData && !empty($exhibitorData['city'])) {
-                $city = trim($exhibitorData['city']);
-            } elseif ($billingData && !empty($billingData['city'])) {
+            if ($billingData && !empty($billingData['city'])) {
                 $city = trim($billingData['city']);
-            }
-            if (empty($city) && !empty($draft->city_id)) {
+            } elseif (!empty($draft->city_id)) {
                 // If draft has city_id, use it (could be string or ID, but we'll store as string)
                 $city = is_numeric($draft->city_id) ? null : $draft->city_id;
             }
             
-            // Get state_id with proper fallback chain
-            $stateId = $exhibitorData['state_id'] ?? $billingData['state_id'] ?? $draft->state_id ?? null;
+            // Get state_id from billing_data only (for application table)
+            $stateId = $billingData['state_id'] ?? $draft->state_id ?? null;
             
-            // Get postal_code with proper fallback chain
-            $postalCode = $exhibitorData['postal_code'] ?? $billingData['postal_code'] ?? $draft->postal_code ?? '';
+            // Get postal_code from billing_data only (for application table)
+            $postalCode = $billingData['postal_code'] ?? $draft->postal_code ?? '';
             
-            // Get country_id with proper fallback chain
-            $countryId = $exhibitorData['country_id'] ?? $billingData['country_id'] ?? $draft->country_id ?? null;
+            // Get country_id from billing_data only (for application table)
+            $countryId = $billingData['country_id'] ?? $draft->country_id ?? null;
             
-            // Get landline with proper fallback chain
-            // Get landline and ensure it contains only digits
-            $landlineRaw = $exhibitorData['telephone'] ?? $billingData['telephone'] ?? $draft->landline ?? '';
+            // Get landline from billing_data only (for application table)
+            $landlineRaw = $billingData['telephone'] ?? $draft->landline ?? '';
             // Extract only digits from telephone/landline (remove alphabets and special chars)
             // If in format "91-9801217815", extract only digits and reformat
             if (preg_match('/^(\d+)-(\d+)$/', $landlineRaw, $matches)) {
@@ -1812,8 +1800,8 @@ class StartupZoneController extends Controller
                 $landline = preg_replace('/[^0-9]/', '', $landlineRaw);
             }
             
-            // Get website with proper fallback chain
-            $website = $exhibitorData['website'] ?? $billingData['website'] ?? $draft->website ?? '';
+            // Get website from billing_data only (for application table)
+            $website = $billingData['website'] ?? $draft->website ?? '';
             $website = $this->normalizeWebsiteUrl($website);
             
             // Check if this is a complimentary registration
@@ -2037,6 +2025,62 @@ class StartupZoneController extends Controller
                 'draft_id' => $draft->id,
                 'total_amount' => $invoice->total_final_price
             ]);
+            
+            // Create or update exhibitor info
+            $exhibitorInfo = \App\Models\ExhibitorInfo::where('application_id', $application->id)->first();
+            if (!$exhibitorInfo) {
+                $exhibitorInfo = new \App\Models\ExhibitorInfo();
+                $exhibitorInfo->application_id = $application->id;
+            }
+            
+            // Map exhibitor_data ONLY to exhibitors_info table (no fallbacks)
+            $exhibitorInfo->company_name = $exhibitorData['name'] ?? '';
+            $exhibitorInfo->fascia_name = $exhibitorData['name'] ?? ''; // Required field
+            $exhibitorInfo->address = $exhibitorData['address'] ?? '';
+            
+            // Get city name from exhibitor_data only
+            $exhibitorCity = $exhibitorData['city'] ?? '';
+            $exhibitorInfo->city = $exhibitorCity;
+            
+            // Get state name from exhibitor_data only
+            $exhibitorStateId = $exhibitorData['state_id'] ?? null;
+            $exhibitorState = $exhibitorStateId ? (\App\Models\State::find($exhibitorStateId)->name ?? 'N/A') : 'N/A';
+            $exhibitorInfo->state = $exhibitorState;
+            
+            // Get country name from exhibitor_data only
+            $exhibitorCountryId = $exhibitorData['country_id'] ?? null;
+            $exhibitorCountry = $exhibitorCountryId ? (\App\Models\Country::find($exhibitorCountryId)->name ?? 'N/A') : 'N/A';
+            $exhibitorInfo->country = $exhibitorCountry;
+            
+            $exhibitorInfo->zip_code = $exhibitorData['postal_code'] ?? '';
+            
+            // Format telephone from exhibitor_data only
+            $exhibitorPhoneRaw = $exhibitorData['telephone'] ?? '';
+            if ($exhibitorPhoneRaw && strpos($exhibitorPhoneRaw, '-') !== false) {
+                $parts = explode('-', $exhibitorPhoneRaw, 2);
+                $exhibitorInfo->telPhone = $parts[1] ?? $exhibitorPhoneRaw;
+            } else {
+                $exhibitorInfo->telPhone = $exhibitorPhoneRaw;
+            }
+            
+            $exhibitorInfo->website = $exhibitorData['website'] ?? '';
+            $exhibitorInfo->email = $exhibitorData['email'] ?? '';
+            
+            // Contact person details
+            $exhibitorInfo->contact_person = trim(($contactData['first_name'] ?? '') . ' ' . ($contactData['last_name'] ?? ''));
+            $exhibitorInfo->designation = $contactData['designation'] ?? '';
+            
+            // Sector and category
+            // $exhibitorInfo->sector = $application->sector_id ?? '';
+            $exhibitorInfo->category = 'Startup'; // Startup zone applications are startups
+            
+            $exhibitorInfo->submission_status = false; // Default to false, can be updated later
+            $exhibitorInfo->save();
+            
+            \Log::info('Startup Zone: ExhibitorInfo created/updated', [
+                'exhibitor_info_id' => $exhibitorInfo->id,
+                'application_id' => $application->id
+            ]);
 
             // Update association registration count
             if ($draft->promocode) {
@@ -2111,6 +2155,9 @@ class StartupZoneController extends Controller
         $application = Application::where('application_id', $applicationId)
             ->where('application_type', 'startup-zone')
             ->firstOrFail();
+        
+        // Load exhibitor info if exists
+        $exhibitorInfo = \App\Models\ExhibitorInfo::where('application_id', $application->id)->first();
         
         // Security: Verify ownership using session
         // Check if this application_id matches the one stored in session (from form submission)
@@ -2219,7 +2266,7 @@ class StartupZoneController extends Controller
             }
             view()->share('associationLogo', $associationLogo);
             
-            return view('startup-zone.payment', compact('application', 'invoice', 'billingDetail', 'eventContact'))
+            return view('startup-zone.payment', compact('application', 'invoice', 'billingDetail', 'eventContact', 'exhibitorInfo'))
                 ->with('approval_pending', true);
         }
 
@@ -2248,7 +2295,7 @@ class StartupZoneController extends Controller
         session()->forget('payment_application_type');
         session()->forget('invoice_no');
         
-        return view('startup-zone.payment', compact('application', 'invoice', 'billingDetail', 'eventContact'));
+        return view('startup-zone.payment', compact('application', 'invoice', 'billingDetail', 'eventContact', 'exhibitorInfo'));
     }
 
     /**
@@ -2415,6 +2462,11 @@ class StartupZoneController extends Controller
     {
         $formData = $request->except(['_token', 'certificate']);
         
+        // Get existing billing_data from session to preserve values not in request
+        $sessionData = session('startup_zone_draft', []);
+        $existingBillingData = $sessionData['billing_data'] ?? null;
+        $existingBillingData = is_string($existingBillingData) ? json_decode($existingBillingData, true) : $existingBillingData;
+        
         // Handle billing data
         $billingTelephoneNational = '';
         $billingTelephoneCountryCode = '91'; // Default to India
@@ -2436,17 +2488,23 @@ class StartupZoneController extends Controller
             }
         }
         
+        // Build billing_data - use request values if provided, otherwise preserve existing values
         $billingData = [
-            'company_name' => $request->input('billing_company_name'),
-            'address' => $request->input('billing_address'),
-            'country_id' => $request->input('billing_country_id'),
-            'state_id' => $request->input('billing_state_id'),
-            'city' => $request->input('billing_city'),
-            'postal_code' => $request->input('billing_postal_code'),
-            'telephone' => $billingTelephoneNational ? ($billingTelephoneCountryCode . '-' . $billingTelephoneNational) : '',
-            'website' => $this->normalizeWebsiteUrl($request->input('billing_website') ?? ''),
-            'email' => $request->input('billing_email'),
+            'company_name' => $request->input('billing_company_name') ?? $existingBillingData['company_name'] ?? null,
+            'address' => $request->input('billing_address') ?? $existingBillingData['address'] ?? null,
+            'country_id' => $request->input('billing_country_id') ?? $existingBillingData['country_id'] ?? null,
+            'state_id' => $request->input('billing_state_id') ?? $existingBillingData['state_id'] ?? null,
+            'city' => $request->input('billing_city') ?? $existingBillingData['city'] ?? null,
+            'postal_code' => $request->input('billing_postal_code') ?? $existingBillingData['postal_code'] ?? null,
+            'telephone' => $billingTelephoneNational ? ($billingTelephoneCountryCode . '-' . $billingTelephoneNational) : ($existingBillingData['telephone'] ?? ''),
+            'website' => $request->has('billing_website') ? $this->normalizeWebsiteUrl($request->input('billing_website') ?? '') : ($existingBillingData['website'] ?? ''),
+            'email' => $request->input('billing_email') ?? $existingBillingData['email'] ?? null,
         ];
+        
+        // Remove null values to keep the array clean
+        $billingData = array_filter($billingData, function($value) {
+            return $value !== null;
+        });
         
         if (!empty($billingData)) {
             $formData['billing_data'] = $billingData;

@@ -306,6 +306,11 @@ class ExhibitorRegistrationController extends Controller
             'telephone' => $billingTelephoneNational ? ($billingTelephoneCountryCode . '-' . $billingTelephoneNational) : '',
             'website' => $this->normalizeWebsiteUrl($request->input('billing_website') ?? ''),
             'email' => $request->input('billing_email'),
+            'gst_status' => $request->input('gst_status'),
+            'gst_no' => $request->input('gst_no'),
+            'pan_no' => $request->input('pan_no'),
+            'tan_no' => $request->input('tan_no'),
+            'tan_status' => $request->input('tan_status')
         ];
         
         if (!empty($billingData)) {
@@ -386,12 +391,12 @@ class ExhibitorRegistrationController extends Controller
         if ($request->has('category')) {
             $exhibitorData['category'] = $request->input('category');
         }
-        if ($request->has('tan_status')) {
-            $exhibitorData['tan_status'] = $request->input('tan_status');
-        }
-        if ($request->has('tan_no')) {
-            $exhibitorData['tan_no'] = $request->input('tan_no');
-        }
+        // if ($request->has('tan_status')) {
+        //     $exhibitorData['tan_status'] = $request->input('tan_status');
+        // }
+        // if ($request->has('tan_no')) {
+        //     $exhibitorData['tan_no'] = $request->input('tan_no');
+        // }
         
         if (!empty($exhibitorData)) {
             $formData['exhibitor_data'] = $exhibitorData;
@@ -980,8 +985,8 @@ class ExhibitorRegistrationController extends Controller
             
             // Store additional exhibitor-specific data in JSON fields
             $exhibitorData = $allData['exhibitor_data'] ?? [];
-            $exhibitorData['tan_status'] = $allData['tan_status'] ?? null;
-            $exhibitorData['tan_no'] = $allData['tan_no'] ?? null;
+            // $exhibitorData['tan_status'] = $allData['tan_status'] ?? null;
+            // $exhibitorData['tan_no'] = $allData['tan_no'] ?? null;
             $exhibitorData['sales_executive_name'] = !empty($allData['sales_executive_name']) ? trim($allData['sales_executive_name']) : null;
             $exhibitorData['category'] = $allData['category'] ?? null;
             $draft->exhibitor_data = $exhibitorData;
@@ -1253,8 +1258,8 @@ class ExhibitorRegistrationController extends Controller
             'pan_no' => $draft->pan_no,
             'promocode' => $draft->promocode,
             'event_id' => $draft->event_id ?? 1,
-            'tan_status' => $exhibitorData['tan_status'] ?? 'Unregistered',
-            'tan_no' => $exhibitorData['tan_no'] ?? null,
+            'tan_status' => $billingData['tan_status'] ?? 'Unregistered',
+            'tan_no' => $billingData['tan_no'] ?? null,
             'sales_executive_name' => $exhibitorData['sales_executive_name'] ?? '',
             'category' => $exhibitorData['category'] ?? 'Exhibitor',
             'contact_email' => $contactData['email'] ?? '',
@@ -1473,7 +1478,8 @@ class ExhibitorRegistrationController extends Controller
                     'gst_compliance' => ($allData['gst_status'] ?? ($draft->gst_compliance ? 'Registered' : 'Unregistered')) === 'Registered' ? 1 : 0,
                     'gst_no' => $allData['gst_no'] ?? $draft->gst_no ?? null,
                     'pan_no' => $allData['pan_no'] ?? $draft->pan_no ?? '',
-                    'tan_no' => $allData['tan_no'] ?? null,
+                    'tan_compliance' => ($billingData['tan_status'] ?? $allData['tan_status'] ?? 'Unregistered') === 'Registered' ? 1 : 0,
+                    'tan_no' => $billingData['tan_no'] ?? $allData['tan_no'] ?? null,
                     'promocode' => $allData['promocode'] ?? $draft->promocode ?? null,
                     'salesPerson' => $allData['sales_executive_name'] ?? '',
                     'exhibitorType' => $allData['category'] ?? 'Exhibitor',
@@ -1511,7 +1517,8 @@ class ExhibitorRegistrationController extends Controller
                     'gst_compliance' => ($allData['gst_status'] ?? '') === 'Registered' ? 1 : 0,
                     'gst_no' => $allData['gst_no'] ?? null,
                     'pan_no' => $allData['pan_no'],
-                    'tan_no' => $allData['tan_no'] ?? null,
+                    'tan_compliance' => ($billingData['tan_status'] ?? $allData['tan_status'] ?? 'Unregistered') === 'Registered' ? 1 : 0,
+                    'tan_no' => $billingData['tan_no'] ?? $allData['tan_no'] ?? null,
                     'promocode' => $allData['promocode'] ?? null,
                     'salesPerson' => $allData['sales_executive_name'] ?? '',
                     'exhibitorType' => $allData['category'] ?? 'Exhibitor',
@@ -1603,6 +1610,67 @@ class ExhibitorRegistrationController extends Controller
             $invoice->payment_status = 'unpaid';
             $invoice->payment_due_date = null;
             $invoice->save();
+            
+            // Create or update exhibitor info
+            $exhibitorInfo = \App\Models\ExhibitorInfo::where('application_id', $application->id)->first();
+            if (!$exhibitorInfo) {
+                $exhibitorInfo = new \App\Models\ExhibitorInfo();
+                $exhibitorInfo->application_id = $application->id;
+            }
+            
+            // Map exhibitor data to exhibitors_info table
+            $exhibitorInfo->company_name = $exhibitorData['name'] ?? $billingData['company_name'] ?? $application->company_name ?? '';
+            $exhibitorInfo->fascia_name = $exhibitorData['name'] ?? $billingData['company_name'] ?? $application->company_name ?? '';
+            $exhibitorInfo->address = $exhibitorData['address'] ?? $billingData['address'] ?? $application->address ?? '';
+            
+            // Get city name
+            $exhibitorCity = $exhibitorData['city'] ?? '';
+            if (empty($exhibitorCity) && !empty($billingData['city'])) {
+                $exhibitorCity = is_numeric($billingData['city']) ? (\App\Models\City::find($billingData['city'])->name ?? $billingData['city']) : $billingData['city'];
+            } elseif (empty($exhibitorCity) && !empty($application->city_id)) {
+                $exhibitorCity = is_numeric($application->city_id) ? (\App\Models\City::find($application->city_id)->name ?? $application->city_id) : $application->city_id;
+            }
+            $exhibitorInfo->city = $exhibitorCity;
+            
+            // Get state name
+            $exhibitorStateId = $exhibitorData['state_id'] ?? $billingData['state_id'] ?? $application->state_id ?? null;
+            $exhibitorState = $exhibitorStateId ? (\App\Models\State::find($exhibitorStateId)->name ?? 'N/A') : ($application->state ? $application->state->name : 'N/A');
+            $exhibitorInfo->state = $exhibitorState;
+            
+            // Get country name
+            $exhibitorCountryId = $exhibitorData['country_id'] ?? $billingData['country_id'] ?? $application->country_id ?? null;
+            $exhibitorCountry = $exhibitorCountryId ? (\App\Models\Country::find($exhibitorCountryId)->name ?? 'N/A') : ($application->country ? $application->country->name : 'N/A');
+            $exhibitorInfo->country = $exhibitorCountry;
+            
+            $exhibitorInfo->zip_code = $exhibitorData['postal_code'] ?? $billingData['postal_code'] ?? $application->postal_code ?? '';
+            
+            // Format telephone
+            $exhibitorPhoneRaw = $exhibitorData['telephone'] ?? '';
+            if ($exhibitorPhoneRaw && strpos($exhibitorPhoneRaw, '-') !== false) {
+                $parts = explode('-', $exhibitorPhoneRaw, 2);
+                $exhibitorInfo->telPhone = $parts[1] ?? $exhibitorPhoneRaw;
+            } else {
+                $exhibitorInfo->telPhone = $exhibitorPhoneRaw ?: $application->landline ?? '';
+            }
+            
+            $exhibitorInfo->website = $exhibitorData['website'] ?? $billingData['website'] ?? $application->website ?? '';
+            $exhibitorInfo->email = $exhibitorData['email'] ?? $billingData['email'] ?? $application->company_email ?? '';
+            
+            // Contact person details
+            $exhibitorInfo->contact_person = trim(($contactData['first_name'] ?? '') . ' ' . ($contactData['last_name'] ?? ''));
+            $exhibitorInfo->designation = $contactData['designation'] ?? '';
+            
+            // Sector and category
+            $exhibitorInfo->sector = $application->sector_id ?? '';
+            $exhibitorInfo->category = $application->exhibitorType ?? 'Exhibitor';
+            
+            $exhibitorInfo->submission_status = false; // Default to false, can be updated later
+            $exhibitorInfo->save();
+            
+            \Log::info('Exhibitor Registration: ExhibitorInfo created/updated', [
+                'exhibitor_info_id' => $exhibitorInfo->id,
+                'application_id' => $application->id
+            ]);
             
             DB::commit();
             
@@ -1722,6 +1790,9 @@ class ExhibitorRegistrationController extends Controller
             ->where('application_type', 'exhibitor-registration')
             ->firstOrFail();
         
+        // Load exhibitor info if exists
+        $exhibitorInfo = \App\Models\ExhibitorInfo::where('application_id', $application->id)->first();
+        
         // Security: Verify ownership using session
         $sessionApplicationId = session('exhibitor_registration_application_id');
         
@@ -1737,7 +1808,7 @@ class ExhibitorRegistrationController extends Controller
                 ->with('error', 'Invoice not found.');
         }
         
-        return view('exhibitor-registration.payment', compact('application'));
+        return view('exhibitor-registration.payment', compact('application', 'exhibitorInfo'));
     }
     
     /**
