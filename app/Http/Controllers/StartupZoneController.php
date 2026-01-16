@@ -910,6 +910,11 @@ class StartupZoneController extends Controller
                 }
             }
             
+            // Determine currency from payment_mode if not explicitly set
+            if (!isset($formFields['currency']) && isset($formFields['payment_mode'])) {
+                $formFields['currency'] = $formFields['payment_mode'] === 'PayPal' ? 'USD' : 'INR';
+            }
+            
             $draft->fill($formFields);
 
             // Store billing_data and exhibitor_data from session (these are not in fillable)
@@ -918,6 +923,15 @@ class StartupZoneController extends Controller
             }
             if (isset($sessionData['exhibitor_data'])) {
                 $draft->exhibitor_data = $sessionData['exhibitor_data'];
+            }
+            
+            // Calculate and store pricing data
+            $pricing = $this->calculatePricing($draft);
+            $draft->pricing_data = $pricing;
+            
+            // Ensure currency is stored
+            if (!isset($draft->currency)) {
+                $draft->currency = $pricing['currency'];
             }
 
             // Store contact data as JSON (from session or request)
@@ -1061,10 +1075,20 @@ class StartupZoneController extends Controller
         // Check if TV parameter is set (from session)
         $hasTV = session('startup_zone_has_tv', false);
         
-        // Calculate pricing
-        $pricing = $this->calculatePricing($draft);
+        // Get pricing from draft pricing_data (preferred) or calculate
+        $pricing = $draft->pricing_data ?? $this->calculatePricing($draft);
+        
+        // If pricing not in draft, store it
+        if (!$draft->pricing_data) {
+            $draft->pricing_data = $pricing;
+            $draft->currency = $pricing['currency'];
+            $draft->save();
+        }
+        
+        // Get currency from draft
+        $currency = $draft->currency ?? $pricing['currency'] ?? 'INR';
 
-        return view('startup-zone.preview', compact('draft', 'pricing', 'hasTV'));
+        return view('startup-zone.preview', compact('draft', 'pricing', 'hasTV', 'currency'));
     }
 
     /**
@@ -1808,6 +1832,10 @@ class StartupZoneController extends Controller
             $applicationStatus = $isComplimentary ? 'approved' : 'initiated';
             $submissionStatus = $isComplimentary ? 'approved' : 'in progress';
             
+            // Get currency for payment_currency field
+            $draftCurrency = $draft->currency ?? ($draft->payment_mode === 'PayPal' ? 'USD' : 'INR');
+            $paymentCurrency = $draftCurrency === 'USD' ? 'USD' : 'INR';
+            
             $application->fill([
                 'application_id' => $applicationId,
                 'stall_category' => $draft->stall_category ?? 'Startup Booth',
@@ -1839,6 +1867,7 @@ class StartupZoneController extends Controller
                 'submission_status' => $submissionStatus,
                 'event_id' => $draft->event_id ?? 1,
                 'user_id' => $user->id,
+                'payment_currency' => $paymentCurrency,
                 'terms_accepted' => 1,
                 'userActive' => $isComplimentary ? true : false, // Activate user for complimentary registrations
             ]);
@@ -1960,7 +1989,15 @@ class StartupZoneController extends Controller
             $invoice->application_id = $application->id;
             }
             
-            $pricing = $this->calculatePricing($draft);
+            // Get pricing from draft pricing_data (preferred) or calculate
+            $pricing = $draft->pricing_data ?? $this->calculatePricing($draft);
+            
+            // Get currency from draft
+            $currency = $draft->currency ?? $pricing['currency'] ?? ($draft->payment_mode === 'PayPal' ? 'USD' : 'INR');
+            
+            // Map currency to payment_currency (USD -> USD, INR -> INR, PayPal -> USD)
+            $paymentCurrency = $currency === 'USD' ? 'USD' : 'INR';
+            
             $invoice->application_no = $application->application_id;
             $invoice->invoice_no = $application->application_id;
             $invoice->type = 'Startup Zone Registration';
@@ -1973,7 +2010,7 @@ class StartupZoneController extends Controller
                 $invoice->processing_charges = 0;
                 $invoice->processing_chargesRate = 0;
                 $invoice->total_final_price = 0;
-                $invoice->currency = 'INR';
+                $invoice->currency = $currency;
                 $invoice->payment_status = 'paid';
                 $invoice->payment_due_date = now(); // Set to current date for complimentary
                 $invoice->pending_amount = 0;
@@ -1985,7 +2022,7 @@ class StartupZoneController extends Controller
                 $invoice->processing_charges = $pricing['processing_charges'];
                 $invoice->processing_chargesRate = $pricing['processing_rate'];
                 $invoice->total_final_price = $pricing['total'];
-                $invoice->currency = $draft->payment_mode === 'PayPal' ? 'USD' : 'INR';
+                $invoice->currency = $currency; // Use currency from draft
                 $invoice->payment_status = 'unpaid';
                 $invoice->payment_due_date = now()->addDays(5); // Required field - payment due date
                 $invoice->pending_amount = $pricing['total']; // Set pending amount to total initially
@@ -2624,7 +2661,8 @@ class StartupZoneController extends Controller
         $fieldsToValidate = $stepFields[$step] ?? $allFields;
 
         // Normalize website URL before validation (if present in allData)
-        if (isset($allData['website']) && !empty($allData['website'])) {
+        // Note: $allData is passed as parameter to this method, check if it exists
+        if (isset($allData) && isset($allData['website']) && !empty($allData['website'])) {
             $allData['website'] = $this->normalizeWebsiteUrl($allData['website']);
         }
 
@@ -2845,14 +2883,15 @@ class StartupZoneController extends Controller
      */
     private function calculatePricing($draft)
     {
+        // Get currency from draft (preferred) or derive from payment_mode
+        $currency = $draft->currency ?? ($draft->payment_mode === 'PayPal' ? 'USD' : 'INR');
+        
         // Check if TV parameter is set (from session or draft)
         $hasTV = session('startup_zone_has_tv', false);
         
-        // Base price: 60000 if TV is present, otherwise 52000
-        $basePrice = $hasTV ? 60000.00 : 52000.00;
-        $processingRate = 0.03; // 3% for Indian payments
-        $currency = 'INR';
-
+        // Base price: 60000 if TV is present, otherwise 52000 (in INR)
+        $basePriceINR = $hasTV ? 60000.00 : 52000.00;
+        
         // Get association pricing if promocode exists
         // Note: TV pricing takes precedence over association pricing
         if ($draft->promocode && !$hasTV) {
@@ -2862,29 +2901,42 @@ class StartupZoneController extends Controller
                 ->first();
 
             if ($association) {
-                $basePrice = $association->getEffectivePrice();
+                $basePriceINR = $association->getEffectivePrice();
             }
         }
 
-        // Determine currency and processing rate based on payment mode
-        if ($draft->payment_mode === 'PayPal') {
-            $currency = 'USD';
-            $processingRate = 0.095; // 9.5% for PayPal
-            // Convert INR to USD (approximate rate, should use actual exchange rate)
-            $basePrice = $basePrice / 83; // Example: 1 USD = 83 INR
-        }                                                                                                                                       
+        // Convert to USD if currency is USD
+        $basePrice = $basePriceINR;
+        if ($currency === 'USD') {
+            // Get exchange rate from event config or use default
+            $eventConfig = DB::table('event_configurations')->where('id', 1)->first();
+            $exchangeRate = $eventConfig->usd_exchange_rate ?? 83; // Default 1 USD = 83 INR
+            $basePrice = $basePriceINR / $exchangeRate;
+        }
 
-        $gst = $basePrice * 0.18; // 18% GST
+        // Get processing rate based on currency
+        $eventConfig = DB::table('event_configurations')->where('id', 1)->first();
+        if ($currency === 'USD') {
+            $processingRate = ($eventConfig->usd_processing_charge ?? 9.5) / 100; // 9.5% for USD
+        } else {
+            $processingRate = ($eventConfig->ind_processing_charge ?? 3) / 100; // 3% for INR
+        }
+
+        $gstRate = ($eventConfig->gst_rate ?? 18) / 100; // 18% GST
+        $gst = $basePrice * $gstRate;
         $processingCharges = ($basePrice + $gst) * $processingRate;
         $total = $basePrice + $gst + $processingCharges;
 
         return [
-            'base_price' => $this->roundAmount($basePrice), // Round to whole number (.8 up, .4 down)
-            'gst' => $this->roundAmount($gst), // Round to whole number (.8 up, .4 down)
-            'processing_charges' => $this->roundAmount($processingCharges), // Round to whole number (.8 up, .4 down)
+            'base_price' => $this->roundAmount($basePrice),
+            'gst' => $this->roundAmount($gst),
+            'processing_charges' => $this->roundAmount($processingCharges),
             'processing_rate' => $processingRate * 100,
-            'total' => $this->roundAmount($total), // Round to whole number (.8 up, .4 down)
-            'currency' => $currency
+            'gst_rate' => $gstRate * 100,
+            'total' => $this->roundAmount($total),
+            'currency' => $currency,
+            'has_tv' => $hasTV,
+            'base_price_inr' => $basePriceINR
         ];
     }
 

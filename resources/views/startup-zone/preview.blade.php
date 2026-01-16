@@ -436,19 +436,19 @@
                         <table class="table table-bordered">
                             <tr>
                                 <td><strong>Base Price:</strong></td>
-                                <td class="text-end">{{ $pricing['currency'] }} {{ number_format($pricing['base_price'], 2) }}</td>
+                                <td class="text-end">{{ $currency ?? $pricing['currency'] ?? 'INR' }} {{ number_format($pricing['base_price'], 2) }}</td>
                             </tr>
                             <tr>
                                 <td><strong>GST (18%):</strong></td>
-                                <td class="text-end">{{ $pricing['currency'] }} {{ number_format($pricing['gst'], 2) }}</td>
+                                <td class="text-end">{{ $currency ?? $pricing['currency'] ?? 'INR' }} {{ number_format($pricing['gst'], 2) }}</td>
                             </tr>
                             <tr>
                                 <td><strong>Processing Charges ({{ $pricing['processing_rate'] }}%):</strong></td>
-                                <td class="text-end">{{ $pricing['currency'] }} {{ number_format($pricing['processing_charges'], 2) }}</td>
+                                <td class="text-end">{{ $currency ?? $pricing['currency'] ?? 'INR' }} {{ number_format($pricing['processing_charges'], 2) }}</td>
                             </tr>
                             <tr class="table-success">
                                 <td><strong>Total Amount:</strong></td>
-                                <td class="text-end"><strong>{{ $pricing['currency'] }} {{ number_format($pricing['total'], 2) }}</strong></td>
+                                <td class="text-end"><strong>{{ $currency ?? $pricing['currency'] ?? 'INR' }} {{ number_format($pricing['total'], 2) }}</strong></td>
                             </tr>
                         </table>
                     @endif
