@@ -177,24 +177,21 @@
                 // TAN Status from tan_compliance field (similar to gst_compliance)
                 $tanStatus = $application->tan_compliance ? 'Registered' : 'Unregistered';
                 
-                // Get exhibitor information from exhibitors_info table if available
-                $exhibitorName = ($exhibitorInfo && $exhibitorInfo->company_name) ? $exhibitorInfo->company_name : ($application->company_name ?? '');
-                $exhibitorAddress = ($exhibitorInfo && $exhibitorInfo->address) ? $exhibitorInfo->address : ($application->address ?? '');
-                $exhibitorCity = ($exhibitorInfo && $exhibitorInfo->city) ? $exhibitorInfo->city : '';
-                $exhibitorState = ($exhibitorInfo && $exhibitorInfo->state) ? $exhibitorInfo->state : ($application->state ? $application->state->name : 'N/A');
-                $exhibitorCountry = ($exhibitorInfo && $exhibitorInfo->country) ? $exhibitorInfo->country : ($application->country ? $application->country->name : 'N/A');
-                $exhibitorPostal = ($exhibitorInfo && $exhibitorInfo->zip_code) ? $exhibitorInfo->zip_code : ($application->postal_code ?? '');
-                $exhibitorPhone = ($exhibitorInfo && $exhibitorInfo->telPhone) ? $exhibitorInfo->telPhone : ($application->landline ?? '');
-                $exhibitorWebsite = ($exhibitorInfo && $exhibitorInfo->website) ? $exhibitorInfo->website : ($application->website ?? '');
-                $exhibitorEmail = ($exhibitorInfo && $exhibitorInfo->email) ? $exhibitorInfo->email : ($application->company_email ?? '');
+                // Get exhibitor information from application table (exhibitor_data is stored in applications)
+                $exhibitorName = $application->company_name ?? '';
+                $exhibitorAddress = $application->address ?? '';
+                $exhibitorCity = is_numeric($application->city_id) ? (\App\Models\City::find($application->city_id)->name ?? $application->city_id) : ($application->city_id ?? '');
+                $exhibitorState = $application->state ? $application->state->name : 'N/A';
+                $exhibitorCountry = $application->country ? $application->country->name : 'N/A';
+                $exhibitorPostal = $application->postal_code ?? '';
+                $exhibitorPhone = $application->landline ?? '';
+                $exhibitorWebsite = $application->website ?? '';
+                $exhibitorEmail = $application->company_email ?? '';
                 
                 // Check if exhibitor info is different from billing (to show separate section)
-                $showExhibitorSection = $exhibitorInfo && (
-                    ($exhibitorInfo->company_name ?? '') !== ($application->company_name ?? '') ||
-                    ($exhibitorInfo->address ?? '') !== ($application->address ?? '') ||
-                    !empty($exhibitorInfo->city) ||
-                    !empty($exhibitorInfo->state) ||
-                    !empty($exhibitorInfo->country)
+                $showExhibitorSection = $billingDetail && (
+                    ($billingDetail->billing_company ?? '') !== ($application->company_name ?? '') ||
+                    ($billingDetail->address ?? '') !== ($application->address ?? '')
                 );
             @endphp
 
@@ -327,7 +324,7 @@
 
             
              {{-- Exhibitor Information --}}
-             @if($showExhibitorSection || ($exhibitorInfo && !empty($exhibitorInfo->company_name)))
+             @if($showExhibitorSection || !empty($exhibitorName))
              <div class="preview-section">
                  <h4 class="section-title">
                      <i class="fas fa-building"></i>

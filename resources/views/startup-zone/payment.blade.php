@@ -251,7 +251,7 @@
                     </div>
 
                     {{-- Billing Information --}}
-                    @if($application)
+                    @if($billingDetail)
                     <div class="preview-section">
                         <h4 class="section-title">
                             <i class="fas fa-building"></i>
@@ -260,21 +260,81 @@
                         <table class="info-table">
                             <tr>
                                 <td class="label-cell">Company Name</td>
-                                <td class="value-cell"><strong>{{ $application->company_name ?? 'N/A' }}</strong></td>
+                                <td class="value-cell"><strong>{{ $billingDetail->billing_company ?? 'N/A' }}</strong></td>
                             </tr>
-                            @if($application->eventContact)
+                            @if($billingDetail->contact_name)
                             <tr>
                                 <td class="label-cell">Contact Name</td>
-                                <td class="value-cell">{{ $application->eventContact->first_name }} {{ $application->eventContact->last_name ?? '' }}</td>
+                                <td class="value-cell">{{ $billingDetail->contact_name }}</td>
                             </tr>
                             @endif
                             <tr>
                                 <td class="label-cell">Email</td>
-                                <td class="value-cell">{{ $application->company_email ?? 'N/A' }}</td>
+                                <td class="value-cell">{{ $billingDetail->email ?? 'N/A' }}</td>
                             </tr>
                             <tr>
                                 <td class="label-cell">Phone</td>
-                                <td class="value-cell">{{ $application->landline ?? 'N/A' }}</td>
+                                <td class="value-cell">{{ $billingDetail->phone ?? 'N/A' }}</td>
+                            </tr>
+                            <tr>
+                                <td class="label-cell">Address</td>
+                                <td class="value-cell">{{ $billingDetail->address ?? 'N/A' }}</td>
+                            </tr>
+                            <tr>
+                                <td class="label-cell">City</td>
+                                <td class="value-cell">
+                                    @if($billingDetail->city_id)
+                                        @if(is_numeric($billingDetail->city_id))
+                                            {{ \App\Models\City::find($billingDetail->city_id)->name ?? $billingDetail->city_id }}
+                                        @else
+                                            {{ $billingDetail->city_id }}
+                                        @endif
+                                    @else
+                                        N/A
+                                    @endif
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="label-cell">State</td>
+                                <td class="value-cell">{{ $billingDetail->state_id ? (\App\Models\State::find($billingDetail->state_id)->name ?? 'N/A') : 'N/A' }}</td>
+                            </tr>
+                            <tr>
+                                <td class="label-cell">Country</td>
+                                <td class="value-cell">{{ $billingDetail->country_id ? (\App\Models\Country::find($billingDetail->country_id)->name ?? 'N/A') : 'N/A' }}</td>
+                            </tr>
+                            <tr>
+                                <td class="label-cell">Postal Code</td>
+                                <td class="value-cell">{{ $billingDetail->postal_code ?? 'N/A' }}</td>
+                            </tr>
+                            @if($application->certificate && $application->certificate !== 'N/A')
+                            <tr>
+                                <td class="label-cell">Certificate</td>
+                                <td class="value-cell">
+                                    <a href="{{ asset('storage/' . $application->certificate) }}" target="_blank" class="btn btn-sm btn-primary">
+                                        <i class="fas fa-file-pdf"></i> View Certificate
+                                    </a>
+                                </td>
+                            </tr>
+                            @endif
+                        </table>
+                    </div>
+                    @endif
+
+                    {{-- Exhibitor Information --}}
+                    @if($application)
+                    <div class="preview-section">
+                        <h4 class="section-title">
+                            <i class="fas fa-building"></i>
+                            Exhibitor Information
+                        </h4>
+                        <table class="info-table">
+                            <tr>
+                                <td class="label-cell">Name of Exhibitor</td>
+                                <td class="value-cell"><strong>{{ $application->company_name ?? 'N/A' }}</strong></td>
+                            </tr>
+                            <tr>
+                                <td class="label-cell">Company Email</td>
+                                <td class="value-cell">{{ $application->company_email ?? 'N/A' }}</td>
                             </tr>
                             <tr>
                                 <td class="label-cell">Address</td>
@@ -296,64 +356,14 @@
                                 <td class="label-cell">Postal Code</td>
                                 <td class="value-cell">{{ $application->postal_code ?? 'N/A' }}</td>
                             </tr>
-                            @if($application->certificate && $application->certificate !== 'N/A')
-                            <tr>
-                                <td class="label-cell">Certificate</td>
-                                <td class="value-cell">
-                                    <a href="{{ asset('storage/' . $application->certificate) }}" target="_blank" class="btn btn-sm btn-primary">
-                                        <i class="fas fa-file-pdf"></i> View Certificate
-                                    </a>
-                                </td>
-                            </tr>
-                            @endif
-                        </table>
-                    </div>
-                    @endif
-
-                    {{-- Exhibitor Information --}}
-                    @if($exhibitorInfo)
-                    <div class="preview-section">
-                        <h4 class="section-title">
-                            <i class="fas fa-building"></i>
-                            Exhibitor Information
-                        </h4>
-                        <table class="info-table">
-                            <tr>
-                                <td class="label-cell">Name of Exhibitor</td>
-                                <td class="value-cell"><strong>{{ $exhibitorInfo->company_name ?? 'N/A' }}</strong></td>
-                            </tr>
-                            <tr>
-                                <td class="label-cell">Company Email</td>
-                                <td class="value-cell">{{ $exhibitorInfo->email ?? 'N/A' }}</td>
-                            </tr>
-                            <tr>
-                                <td class="label-cell">Address</td>
-                                <td class="value-cell">{{ $exhibitorInfo->address ?? 'N/A' }}</td>
-                            </tr>
-                            <tr>
-                                <td class="label-cell">City</td>
-                                <td class="value-cell">{{ $exhibitorInfo->city ?? 'N/A' }}</td>
-                            </tr>
-                            <tr>
-                                <td class="label-cell">State</td>
-                                <td class="value-cell">{{ $exhibitorInfo->state ?? 'N/A' }}</td>
-                            </tr>
-                            <tr>
-                                <td class="label-cell">Country</td>
-                                <td class="value-cell">{{ $exhibitorInfo->country ?? 'N/A' }}</td>
-                            </tr>
-                            <tr>
-                                <td class="label-cell">Postal Code</td>
-                                <td class="value-cell">{{ $exhibitorInfo->zip_code ?? 'N/A' }}</td>
-                            </tr>
                             <tr>
                                 <td class="label-cell">Telephone</td>
-                                <td class="value-cell">{{ $exhibitorInfo->telPhone ?? 'N/A' }}</td>
+                                <td class="value-cell">{{ $application->landline ?? 'N/A' }}</td>
                             </tr>
-                            @if($exhibitorInfo->website)
+                            @if($application->website)
                             <tr>
                                 <td class="label-cell">Website</td>
-                                <td class="value-cell"><a href="{{ $exhibitorInfo->website }}" target="_blank">{{ $exhibitorInfo->website }}</a></td>
+                                <td class="value-cell"><a href="{{ $application->website }}" target="_blank">{{ $application->website }}</a></td>
                             </tr>
                             @endif
                         </table>

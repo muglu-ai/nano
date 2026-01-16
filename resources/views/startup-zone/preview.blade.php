@@ -335,30 +335,16 @@
 
             @php
                 if (isset($application)) {
-                    // From application (after creation) - check exhibitorInfo first
-                    $exhibitorInfo = \App\Models\ExhibitorInfo::where('application_id', $application->id)->first();
-                    if ($exhibitorInfo) {
-                        $exhibitorName = $exhibitorInfo->company_name ?? 'N/A';
-                        $exhibitorEmail = $exhibitorInfo->email ?? 'N/A';
-                        $exhibitorAddress = $exhibitorInfo->address ?? 'N/A';
-                        $exhibitorCity = $exhibitorInfo->city ?? 'N/A';
-                        $exhibitorState = $exhibitorInfo->state ?? 'N/A';
-                        $exhibitorCountry = $exhibitorInfo->country ?? 'N/A';
-                        $exhibitorPostalCode = $exhibitorInfo->zip_code ?? 'N/A';
-                        $exhibitorPhone = $exhibitorInfo->telPhone ?? 'N/A';
-                        $exhibitorWebsite = $exhibitorInfo->website ?? 'N/A';
-                    } else {
-                        // Fallback to application
-                        $exhibitorName = $application->company_name ?? 'N/A';
-                        $exhibitorEmail = $application->company_email ?? 'N/A';
-                        $exhibitorAddress = $application->address ?? 'N/A';
-                        $exhibitorCity = is_numeric($application->city_id) ? (\App\Models\City::find($application->city_id)->name ?? $application->city_id) : ($application->city_id ?? 'N/A');
-                        $exhibitorState = $application->state ? $application->state->name : 'N/A';
-                        $exhibitorCountry = $application->country ? $application->country->name : 'N/A';
-                        $exhibitorPostalCode = $application->postal_code ?? 'N/A';
-                        $exhibitorPhone = $application->landline ?? 'N/A';
-                        $exhibitorWebsite = $application->website ?? 'N/A';
-                    }
+                    // From application (after creation) - exhibitor_data is stored in applications table
+                    $exhibitorName = $application->company_name ?? 'N/A';
+                    $exhibitorEmail = $application->company_email ?? 'N/A';
+                    $exhibitorAddress = $application->address ?? 'N/A';
+                    $exhibitorCity = is_numeric($application->city_id) ? (\App\Models\City::find($application->city_id)->name ?? $application->city_id) : ($application->city_id ?? 'N/A');
+                    $exhibitorState = $application->state ? $application->state->name : 'N/A';
+                    $exhibitorCountry = $application->country ? $application->country->name : 'N/A';
+                    $exhibitorPostalCode = $application->postal_code ?? 'N/A';
+                    $exhibitorPhone = $application->landline ?? 'N/A';
+                    $exhibitorWebsite = $application->website ?? 'N/A';
                     $companyAge = $application->companyYears ?? $application->how_old_startup ?? null;
                 } elseif (isset($draft)) {
                     // From draft

@@ -1457,19 +1457,36 @@ class ExhibitorRegistrationController extends Controller
                     'company_name' => $billingData['company_name'] ?? $allData['billing_company_name'] ?? 'not_set',
                 ]);
                 
+                // Store exhibitor_data in applications table
+                $exhibitorName = $exhibitorData['name'] ?? $draft->company_name ?? '';
+                $exhibitorEmail = $exhibitorData['email'] ?? $companyEmail;
+                $exhibitorAddress = $exhibitorData['address'] ?? $draft->address ?? '';
+                $exhibitorCity = $exhibitorData['city'] ?? $draft->city_id ?? '';
+                $exhibitorStateId = $exhibitorData['state_id'] ?? $draft->state_id ?? null;
+                $exhibitorPostalCode = $exhibitorData['postal_code'] ?? $draft->postal_code ?? '';
+                $exhibitorCountryId = $exhibitorData['country_id'] ?? $draft->country_id ?? Country::where('code', 'IN')->first()->id;
+                $exhibitorLandlineRaw = $exhibitorData['telephone'] ?? $draft->landline ?? '';
+                // Extract only digits from telephone/landline
+                if (preg_match('/^(\d+)-(\d+)$/', $exhibitorLandlineRaw, $matches)) {
+                    $exhibitorLandline = $matches[2];
+                } else {
+                    $exhibitorLandline = preg_replace('/[^0-9]/', '', $exhibitorLandlineRaw);
+                }
+                $exhibitorWebsite = $this->normalizeWebsiteUrl($exhibitorData['website'] ?? $draft->website ?? '');
+                
                 $application = Application::create([
                     'application_id' => $applicationId,
                     'user_id' => $user->id,
                     'event_id' => $eventId,
-                    'company_name' => $billingData['company_name'] ?? $allData['billing_company_name'] ?? $draft->company_name ?? '',
-                    'company_email' => $companyEmail,
-                    'address' => $billingData['address'] ?? $allData['billing_address'] ?? $draft->address ?? '',
-                    'city_id' => $billingData['city'] ?? $allData['billing_city'] ?? $draft->city_id ?? '',
-                    'state_id' => $billingData['state_id'] ?? $allData['billing_state_id'] ?? $draft->state_id ?? null,
-                    'postal_code' => $billingData['postal_code'] ?? $allData['billing_postal_code'] ?? $draft->postal_code ?? '',
-                    'country_id' => $billingData['country_id'] ?? $allData['billing_country_id'] ?? $draft->country_id ?? Country::where('code', 'IN')->first()->id,
-                    'landline' => $allData['landline'] ?? $billingData['telephone'] ?? $draft->landline ?? '',
-                    'website' => $this->normalizeWebsiteUrl($billingData['website'] ?? $allData['billing_website'] ?? $draft->website ?? ''),
+                    'company_name' => $exhibitorName,
+                    'company_email' => $exhibitorEmail,
+                    'address' => $exhibitorAddress,
+                    'city_id' => $exhibitorCity,
+                    'state_id' => $exhibitorStateId,
+                    'postal_code' => $exhibitorPostalCode,
+                    'country_id' => $exhibitorCountryId,
+                    'landline' => $exhibitorLandline,
+                    'website' => $exhibitorWebsite,
                     'stall_category' => $allData['booth_space'] ?? $draft->stall_category ?? '',
                     'interested_sqm' => $allData['booth_size'] ?? $draft->interested_sqm ?? '',
                     'sector_id' => $allData['sector'] ?? $draft->sector_id ?? '',
@@ -1495,20 +1512,36 @@ class ExhibitorRegistrationController extends Controller
                     'application_db_id' => $application->id
                 ]);
             } else {
-                // Update existing in-progress application
+                // Update existing in-progress application with exhibitor_data
+                $exhibitorName = $exhibitorData['name'] ?? $application->company_name ?? '';
+                $exhibitorEmail = $exhibitorData['email'] ?? $companyEmail;
+                $exhibitorAddress = $exhibitorData['address'] ?? $application->address ?? '';
+                $exhibitorCity = $exhibitorData['city'] ?? $application->city_id ?? '';
+                $exhibitorStateId = $exhibitorData['state_id'] ?? $application->state_id ?? null;
+                $exhibitorPostalCode = $exhibitorData['postal_code'] ?? $application->postal_code ?? '';
+                $exhibitorCountryId = $exhibitorData['country_id'] ?? $application->country_id ?? Country::where('code', 'IN')->first()->id;
+                $exhibitorLandlineRaw = $exhibitorData['telephone'] ?? $application->landline ?? '';
+                // Extract only digits from telephone/landline
+                if (preg_match('/^(\d+)-(\d+)$/', $exhibitorLandlineRaw, $matches)) {
+                    $exhibitorLandline = $matches[2];
+                } else {
+                    $exhibitorLandline = preg_replace('/[^0-9]/', '', $exhibitorLandlineRaw);
+                }
+                $exhibitorWebsite = $this->normalizeWebsiteUrl($exhibitorData['website'] ?? $application->website ?? '');
+                
                 $application->update([
                     'application_id' => $applicationId,
                     'user_id' => $user->id,
                     'event_id' => $eventId,
-                    'company_name' => $billingData['company_name'] ?? $allData['billing_company_name'] ?? '',
-                    'company_email' => $companyEmail,
-                    'address' => $billingData['address'] ?? $allData['billing_address'] ?? '',
-                    'city_id' => $billingData['city'] ?? $allData['billing_city'] ?? '',
-                    'state_id' => $billingData['state_id'] ?? $allData['billing_state_id'] ?? null,
-                    'postal_code' => $billingData['postal_code'] ?? $allData['billing_postal_code'] ?? '',
-                    'country_id' => $billingData['country_id'] ?? $allData['billing_country_id'] ?? Country::where('code', 'IN')->first()->id,
-                    'landline' => $allData['landline'] ?? $billingData['telephone'] ?? $draft->landline ?? '',
-                    'website' => $this->normalizeWebsiteUrl($billingData['website'] ?? $allData['billing_website'] ?? ''),
+                    'company_name' => $exhibitorName,
+                    'company_email' => $exhibitorEmail,
+                    'address' => $exhibitorAddress,
+                    'city_id' => $exhibitorCity,
+                    'state_id' => $exhibitorStateId,
+                    'postal_code' => $exhibitorPostalCode,
+                    'country_id' => $exhibitorCountryId,
+                    'landline' => $exhibitorLandline,
+                    'website' => $exhibitorWebsite,
                     'stall_category' => $allData['booth_space'],
                     'interested_sqm' => $allData['booth_size'],
                     'sector_id' => $allData['sector'],
@@ -1561,12 +1594,12 @@ class ExhibitorRegistrationController extends Controller
                 $billingDetail->application_id = $application->id;
             }
             
-            // Use billing data from form
+            // Store billing_data ONLY in billing_details table (no fallbacks to exhibitor_data or application)
             if ($billingData && !empty($billingData)) {
                 $billingDetail->billing_company = $billingData['company_name'] ?? $allData['billing_company_name'] ?? '';
                 $billingDetail->contact_name = $contactName;
                 $billingDetail->email = $billingData['email'] ?? $allData['billing_email'] ?? $email;
-                $billingDetail->phone = $allData['landline'] ?? $billingData['telephone'] ?? $draft->landline ?? '';
+                $billingDetail->phone = $billingData['telephone'] ?? '';
                 $billingDetail->address = $billingData['address'] ?? $allData['billing_address'] ?? '';
                 $billingDetail->city_id = !empty($billingData['city']) ? trim($billingData['city']) : ($allData['billing_city'] ?? null);
                 $billingDetail->state_id = $billingData['state_id'] ?? $allData['billing_state_id'] ?? null;
@@ -1575,18 +1608,18 @@ class ExhibitorRegistrationController extends Controller
                 $billingDetail->gst_id = $allData['gst_no'] ?? null;
                 $billingDetail->same_as_basic = '0'; // Different from exhibitor
             } else {
-                // Fallback: Use application data if billing data not available
-                $billingDetail->billing_company = $application->company_name ?? '';
+                // Fallback: Use contact details only if billing data not available
+                $billingDetail->billing_company = $contactName;
                 $billingDetail->contact_name = $contactName;
                 $billingDetail->email = $email;
-                $billingDetail->phone = $application->landline ?? '';
-                $billingDetail->address = $application->address ?? '';
-                $billingDetail->city_id = $application->city_id ?? null;
-                $billingDetail->state_id = $application->state_id ?? null;
-                $billingDetail->country_id = $application->country_id ?? null;
-                $billingDetail->postal_code = $application->postal_code ?? '';
-                $billingDetail->gst_id = $application->gst_no ?? null;
-                $billingDetail->same_as_basic = '0';
+                $billingDetail->phone = $draft->contact_data['mobile'] ?? '';
+                $billingDetail->address = '';
+                $billingDetail->city_id = null;
+                $billingDetail->state_id = null;
+                $billingDetail->country_id = Country::where('code', 'IN')->first()->id;
+                $billingDetail->postal_code = '';
+                $billingDetail->gst_id = $allData['gst_no'] ?? null;
+                $billingDetail->same_as_basic = '1';
             }
             $billingDetail->save();
             
@@ -1611,66 +1644,7 @@ class ExhibitorRegistrationController extends Controller
             $invoice->payment_due_date = null;
             $invoice->save();
             
-            // Create or update exhibitor info
-            $exhibitorInfo = \App\Models\ExhibitorInfo::where('application_id', $application->id)->first();
-            if (!$exhibitorInfo) {
-                $exhibitorInfo = new \App\Models\ExhibitorInfo();
-                $exhibitorInfo->application_id = $application->id;
-            }
-            
-            // Map exhibitor data to exhibitors_info table
-            $exhibitorInfo->company_name = $exhibitorData['name'] ?? $billingData['company_name'] ?? $application->company_name ?? '';
-            $exhibitorInfo->fascia_name = $exhibitorData['name'] ?? $billingData['company_name'] ?? $application->company_name ?? '';
-            $exhibitorInfo->address = $exhibitorData['address'] ?? $billingData['address'] ?? $application->address ?? '';
-            
-            // Get city name
-            $exhibitorCity = $exhibitorData['city'] ?? '';
-            if (empty($exhibitorCity) && !empty($billingData['city'])) {
-                $exhibitorCity = is_numeric($billingData['city']) ? (\App\Models\City::find($billingData['city'])->name ?? $billingData['city']) : $billingData['city'];
-            } elseif (empty($exhibitorCity) && !empty($application->city_id)) {
-                $exhibitorCity = is_numeric($application->city_id) ? (\App\Models\City::find($application->city_id)->name ?? $application->city_id) : $application->city_id;
-            }
-            $exhibitorInfo->city = $exhibitorCity;
-            
-            // Get state name
-            $exhibitorStateId = $exhibitorData['state_id'] ?? $billingData['state_id'] ?? $application->state_id ?? null;
-            $exhibitorState = $exhibitorStateId ? (\App\Models\State::find($exhibitorStateId)->name ?? 'N/A') : ($application->state ? $application->state->name : 'N/A');
-            $exhibitorInfo->state = $exhibitorState;
-            
-            // Get country name
-            $exhibitorCountryId = $exhibitorData['country_id'] ?? $billingData['country_id'] ?? $application->country_id ?? null;
-            $exhibitorCountry = $exhibitorCountryId ? (\App\Models\Country::find($exhibitorCountryId)->name ?? 'N/A') : ($application->country ? $application->country->name : 'N/A');
-            $exhibitorInfo->country = $exhibitorCountry;
-            
-            $exhibitorInfo->zip_code = $exhibitorData['postal_code'] ?? $billingData['postal_code'] ?? $application->postal_code ?? '';
-            
-            // Format telephone
-            $exhibitorPhoneRaw = $exhibitorData['telephone'] ?? '';
-            if ($exhibitorPhoneRaw && strpos($exhibitorPhoneRaw, '-') !== false) {
-                $parts = explode('-', $exhibitorPhoneRaw, 2);
-                $exhibitorInfo->telPhone = $parts[1] ?? $exhibitorPhoneRaw;
-            } else {
-                $exhibitorInfo->telPhone = $exhibitorPhoneRaw ?: $application->landline ?? '';
-            }
-            
-            $exhibitorInfo->website = $exhibitorData['website'] ?? $billingData['website'] ?? $application->website ?? '';
-            $exhibitorInfo->email = $exhibitorData['email'] ?? $billingData['email'] ?? $application->company_email ?? '';
-            
-            // Contact person details
-            $exhibitorInfo->contact_person = trim(($contactData['first_name'] ?? '') . ' ' . ($contactData['last_name'] ?? ''));
-            $exhibitorInfo->designation = $contactData['designation'] ?? '';
-            
-            // Sector and category
-            $exhibitorInfo->sector = $application->sector_id ?? '';
-            $exhibitorInfo->category = $application->exhibitorType ?? 'Exhibitor';
-            
-            $exhibitorInfo->submission_status = false; // Default to false, can be updated later
-            $exhibitorInfo->save();
-            
-            \Log::info('Exhibitor Registration: ExhibitorInfo created/updated', [
-                'exhibitor_info_id' => $exhibitorInfo->id,
-                'application_id' => $application->id
-            ]);
+            // Exhibitor data is now stored in applications table, so no need to create exhibitors_info
             
             DB::commit();
             
@@ -1808,7 +1782,10 @@ class ExhibitorRegistrationController extends Controller
                 ->with('error', 'Invoice not found.');
         }
         
-        return view('exhibitor-registration.payment', compact('application', 'exhibitorInfo'));
+        // Load billing detail (billing_data is stored in billing_details table)
+        $billingDetail = \App\Models\BillingDetail::where('application_id', $application->id)->first();
+        
+        return view('exhibitor-registration.payment', compact('application', 'billingDetail'));
     }
     
     /**
