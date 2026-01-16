@@ -236,6 +236,13 @@
     </style>
 </head>
 <body>
+ <!-- Price Breakdown -->
+            @php
+                $isInternational = ($order->registration->nationality === 'International' || $order->registration->nationality === 'international');
+                $currencySymbol = $isInternational ? '$' : '₹';
+                $priceFormat = $isInternational ? 2 : 0; // 2 decimals for USD, 0 for INR
+            @endphp
+
     <div class="email-container">
         <!-- Header -->
         <table width="100%" cellpadding="0" cellspacing="0" style="background: #ffffff; border-bottom: 2px solid #e0e0e0;">
@@ -284,9 +291,16 @@
                     @endif
                     </span>
                 </td>
-                <td style="padding: 10px 15px; text-align: right; font-size: 13px; color: #666666;">
-                    <strong>Date:</strong> {{ $order->created_at->format('d-m-Y') }}
+                 <td style="padding: 10px 15px; text-align: right; font-size: 13px; color: #666666;">
+                    @if($order->status !== 'paid')
+            <div style="text-align: center; margin: 7px 0;">
+                <a href="{{ route('tickets.payment.by-tin', ['eventSlug' => $event->slug ?? $event->id, 'tin' => $order->order_no]) }}" class="btn-pay-now">
+                    💳 Pay Now - {{ $currencySymbol }}{{ number_format($order->total, $priceFormat) }}
+                </a>
+            </div>
+            @endif
                 </td>
+               
             </tr>
         </table>
 
@@ -300,9 +314,12 @@
             {{--
             <div class="order-info">
                 <table width="100%" cellpadding="0" cellspacing="0">
+                
+                
                     <tr>
                         <td style="font-size: 16px; font-weight: 700; color: #0066cc;">TIN No.: {{ $order->order_no }}</td>
                     </tr>
+                    
                 @if($order->status === 'paid')
                 @php
                     $pinNo = $order->pin_no ?? null;
@@ -347,6 +364,10 @@
             @endphp
             <table class="info-table">
              <tr>
+              <td class="label">Date:</td>
+                    <td class="value">{{ $order->created_at->format('d-m-Y') }}</td>
+                    </tr>
+                    <tr>
                     <td class="label">TIN NO:</td>
                     <td class="value">{{ $order->order_no }}</td>
                 </tr>
@@ -384,16 +405,16 @@
                         @if($selectedDay)
                             {{ $selectedDay->label }} ({{ \Carbon\Carbon::parse($selectedDay->date)->format('M d, Y') }})
                         @elseif($ticketType && ($ticketType->all_days_access || ($ticketType->enable_day_selection && $ticketType->include_all_days_option && !$firstItem->selected_event_day_id)))
-                            All Days
+                            All 3 Days
                         @elseif($ticketType)
                             @php $accessibleDays = $ticketType->getAllAccessibleDays(); @endphp
                             @if($accessibleDays->count() > 0)
                                 {{ $accessibleDays->pluck('label')->implode(', ') }}
                             @else
-                                All Days
+                                All 3 Days
                             @endif
                         @else
-                            All Days
+                            All 3 Days
                         @endif
                     </td>
                 </tr>
@@ -520,12 +541,7 @@
                 </table>
             @endif
 
-            <!-- Price Breakdown -->
-            @php
-                $isInternational = ($order->registration->nationality === 'International' || $order->registration->nationality === 'international');
-                $currencySymbol = $isInternational ? '$' : '₹';
-                $priceFormat = $isInternational ? 2 : 0; // 2 decimals for USD, 0 for INR
-            @endphp
+           
             <div class="section-title">💰 Price Breakdown</div>
             <table class="price-table">
                 @foreach($order->items as $item)

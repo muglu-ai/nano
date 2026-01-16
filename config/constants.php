@@ -61,7 +61,11 @@ const GST_API_KEY = '5479841c-b3ff-42ba-90bf-cb9866f52321';
 
 //define("DEFAULT_REGISTRATION_LINK", route('register.form'));
 const DEFAULT_REGISTRATION_LINK = null;
-
+const PAYPAL_MODE = "live";
+const PAYPAL_CLIENT_ID = "Acv2dOnqohq3Ty2yKnWFaHsjWEEo9jF6KlzXDoNfgFcG7ZZ8z1wBc2CRy2JRfz28HYPKE-zC3rw6Jag3";
+const PAYPAL_SECRET = "EErD4CPPTPWzpUFSU4mNlZrLgF_ZlradgkfFLrk9B875BooSGI7_ElX1uiMvYC7MPXKPsDk3Q8_GtgqE";
+const PAYPAL_SANDBOX_CLIENT_ID = "AdBqjyTeEI9u0lPQpVnXsJsc5YYVzKYNGcWz3DWVSY8N8j9Yugu8x6_XYr0h9ITzmP-G_kZ1TSVyZzEp";
+const PAYPAL_SANDBOX_SECRET = "EKsqobP6xNcMNyPNQIS-XBCS0KMak5Wym_AehrFtHSnLvrNWPRXUJtCeTrEnunrSUCti3lKqV3zN-ERf";
 
 return [
     // Feature toggles
@@ -125,7 +129,7 @@ return [
     // Payment Gateway
     'GST_RATE' => GST_RATE, // GST rate for India
     //Paypal Configuration
-    'PAYPAL_MODE' => "live", // Can be either 'sandbox' or 'live' - Set to 'sandbox' for testing
+    'PAYPAL_MODE' => PAYPAL_MODE, // Can be either 'sandbox' or 'live' - Set to 'sandbox' for testing
     'PAYPAL_CURRENCY' => "USD",
     
     // PayPal Sandbox Credentials (for testing) - REST API (Client ID & Secret)
@@ -146,12 +150,11 @@ return [
     
     // PayPal Live Credentials (for production)
     // If env variable is empty, use the default value
-    'PAYPAL_LIVE_CLIENT_ID' => !empty(env('PAYPAL_LIVE_CLIENT_ID')) ? env('PAYPAL_LIVE_CLIENT_ID') : "AdBqjyTeEI9u0lPQpVnXsJsc5YYVzKYNGcWz3DWVSY8N8j9Yugu8x6_XYr0h9ITzmP-G_kZ1TSVyZzEp",
-    'PAYPAL_LIVE_SECRET' => !empty(env('PAYPAL_LIVE_SECRET')) ? env('PAYPAL_LIVE_SECRET') : "EKsqobP6xNcMNyPNQIS-XBCS0KMak5Wym_AehrFtHSnLvrNWPRXUJtCeTrEnunrSUCti3lKqV3zN-ERf",
-    
+    'PAYPAL_LIVE_CLIENT_ID' => PAYPAL_CLIENT_ID,
+    'PAYPAL_LIVE_SECRET' => PAYPAL_SECRET,
     // Legacy support (will use mode-specific credentials)
-    'PAYPAL_CLIENT_ID' => null, // Deprecated - use PAYPAL_SANDBOX_CLIENT_ID or PAYPAL_LIVE_CLIENT_ID
-    'PAYPAL_SECRET' => null, // Deprecated - use PAYPAL_SANDBOX_SECRET or PAYPAL_LIVE_SECRET
+    'PAYPAL_CLIENT_ID' => PAYPAL_CLIENT_ID, // Deprecated - use PAYPAL_SANDBOX_CLIENT_ID or PAYPAL_LIVE_CLIENT_ID
+    'PAYPAL_SECRET' => PAYPAL_SECRET, // Deprecated - use PAYPAL_SANDBOX_SECRET or PAYPAL_LIVE_SECRET
     'INT_PROCESSING_CHARGE' => INT_PROCESSING_CHARGE, // 9% processing fee for International payments
     'EXTRA_REQUIREMENTS_ACTIVE' => EXTRA_REQUIREMENTS_ACTIVE,
     // CCAVENUE Configuration

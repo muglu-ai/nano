@@ -1034,7 +1034,7 @@ private function formatBillingFromEventContact($eventContact, $applicationId)
         ];
 
         try {
-            $apiResponse = $this->client->getOrdersController()->ordersCreate($orderBody);
+            $apiResponse = $this->client->getOrdersController()->createOrder($orderBody);
             //get the id from the response
             $order_ID = $apiResponse->getResult()->getId();
             //insert into payment response table
@@ -1086,7 +1086,7 @@ private function formatBillingFromEventContact($eventContact, $applicationId)
     {
         try {
             $captureBody = ['id' => $orderId];
-            $apiResponse = $this->client->getOrdersController()->ordersCapture($captureBody);
+            $apiResponse = $this->client->getOrdersController()->captureOrder($captureBody);
             //store the response in the payment_gateway_response table with insert 
             \DB::table('payment_gateway_response')
                 ->where('payment_id', $orderId)

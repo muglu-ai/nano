@@ -245,15 +245,8 @@
                             <div class="text-danger">{{ $message }}</div>
                         @enderror
                         
-                        {{-- Day Access Info - shows which days the ticket grants access to --}}
-                        <div id="day_access_info" class="mt-2" style="display: none;">
-                            <div class="d-flex align-items-center flex-wrap gap-2">
-                                <span class="text-muted" style="font-size: 0.875rem;">
-                                    <i class="fas fa-calendar-check me-1"></i>Day Access:
-                                </span>
-                                <span id="day_access_badges"></span>
-                            </div>
-                        </div>
+                        
+                        
                     </div>
                 </div>
 
@@ -262,7 +255,7 @@
                     <div class="col-md-12 mb-3">
                         <label class="form-label required-field">Select Event Day</label>
                         <select name="selected_event_day_id" class="form-select" id="selected_event_day">
-                            <option value="">Select Day</option>
+                            
                         </select>
                         <small class="text-muted">Choose which day you want to attend</small>
                         @error('selected_event_day_id')
@@ -540,7 +533,7 @@
                         <div class="col-md-12 mb-3">
                             <label class="form-label">State</label>
                             <input type="hidden" name="gst_country" value="India">
-                            <select name="gst_state" class="form-select" id="gst_state">
+                            <select name="gst_state" class="form-select" id="gst_state" {{ old('gst_state') ? '' : '' }}>
                                 <option value="">-- Select State --</option>
                                 @php
                                     $indianStates = [
@@ -672,8 +665,8 @@ document.addEventListener('DOMContentLoaded', function() {
         
         try {
             if (allDaysAccess) {
-                // Show "All Days" badge
-                dayAccessBadges.innerHTML = '<span class="badge" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 0.35rem 0.75rem; border-radius: 6px; font-weight: 500;"><i class="fas fa-check-circle me-1"></i>All Days</span>';
+                // Show "All 3 Days" badge
+                dayAccessBadges.innerHTML = '<span class="badge" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 0.35rem 0.75rem; border-radius: 6px; font-weight: 500;"><i class="fas fa-check-circle me-1"></i>All 3 Days</span>';
                 dayAccessInfo.style.display = 'block';
             } else {
                 const availableDays = JSON.parse(availableDaysJson);
@@ -739,9 +732,9 @@ document.addEventListener('DOMContentLoaded', function() {
                             priceInfo = ' - ₹' + parseFloat(priceNational).toLocaleString();
                         }
                         
-                        allDaysOption.textContent = 'All Days (' + startDate + ' - ' + endDate + ')' + priceInfo;
+                        allDaysOption.textContent = 'All 3 Days (' + startDate + ' - ' + endDate + ')' + priceInfo;
                     } else {
-                        allDaysOption.textContent = 'All Days';
+                        allDaysOption.textContent = 'All 3 Days';
                     }
                     if ('{{ old("selected_event_day_id") }}' === 'all') {
                         allDaysOption.selected = true;
@@ -775,7 +768,22 @@ document.addEventListener('DOMContentLoaded', function() {
                         selectedEventDaySelect.appendChild(option);
                     });
                 }
-                
+
+                // Auto-select the only available option if there's only one choice
+                const allOptions = selectedEventDaySelect.querySelectorAll('option:not([value=""])');
+                if (allOptions.length === 1) {
+                    allOptions[0].selected = true;
+                }
+
+                // Auto-select "All 3 Days" if there's only one accessible day and "All Days" option is available
+                if (availableDays && availableDays.length === 1 && (allDaysAccess || includeAllDaysOption)) {
+                    // Set "All 3 Days" as selected
+                    const allDaysOption = selectedEventDaySelect.querySelector('option[value="all"]');
+                    if (allDaysOption) {
+                        allDaysOption.selected = true;
+                    }
+                }
+
                 daySelectionRow.style.display = 'flex';
                 selectedEventDaySelect.setAttribute('required', 'required');
             } catch(e) {
@@ -1623,25 +1631,87 @@ document.addEventListener('DOMContentLoaded', function() {
                         if (stateOption) {
                             stateSelect.value = stateOption.value;
                             stateSelect.style.backgroundColor = '#e9ecef';
-                            stateSelect.disabled = true;
+                            // Keep enabled but readonly to ensure value is submitted
+                            stateSelect.disabled = false;
+                            stateSelect.setAttribute('readonly', 'readonly');
                             stateSelect.dataset.apiFetched = 'true';
                         }
                     }
                     
-                    gstValidationMessage.innerHTML = '<div class="alert alert-success mt-2"><i class="fas fa-check-circle"></i> GST validated successfully. Fields are locked.</div>';
+                    gstValidationMessage.innerHTML = '<div class="alert alert-success mt-2"><i class="fas fa-check-circle"></i> GST validated successfully./div>';
                 } else if (status === 429 || data.limit_exceeded) {
-                    // Rate limit exceeded
+                    // Rate limit exceeded - enable manual entry
                     gstValidationMessage.innerHTML = '<div class="alert alert-warning mt-2"><i class="fas fa-exclamation-triangle"></i> ' + data.message + '</div>';
+
+                    // Enable GST fields for manual entry
+                    const legalNameInput = document.getElementById('gst_legal_name_input');
+                    const addressInput = document.getElementById('gst_address_input');
+                    const stateSelect = document.getElementById('gst_state');
+
+                    if (legalNameInput) {
+                        legalNameInput.removeAttribute('readonly');
+                        legalNameInput.style.backgroundColor = '';
+                    }
+                    if (addressInput) {
+                        addressInput.removeAttribute('readonly');
+                        addressInput.style.backgroundColor = '';
+                    }
+                    if (stateSelect) {
+                        stateSelect.disabled = false;
+                        stateSelect.style.backgroundColor = '';
+                        stateSelect.removeAttribute('readonly');
+                        stateSelect.removeAttribute('data-api-fetched');
+                    }
                         } else {
-                    // Error or not found
+                    // Error or not found - enable manual entry
                     gstValidationMessage.innerHTML = '<div class="alert alert-info mt-2"><i class="fas fa-info-circle"></i> ' + (data.message || 'GST not found. Please fill details manually.') + '</div>';
+
+                    // Enable GST fields for manual entry
+                    const legalNameInput = document.getElementById('gst_legal_name_input');
+                    const addressInput = document.getElementById('gst_address_input');
+                    const stateSelect = document.getElementById('gst_state');
+
+                    if (legalNameInput) {
+                        legalNameInput.removeAttribute('readonly');
+                        legalNameInput.style.backgroundColor = '';
+                    }
+                    if (addressInput) {
+                        addressInput.removeAttribute('readonly');
+                        addressInput.style.backgroundColor = '';
+                    }
+                    if (stateSelect) {
+                        stateSelect.disabled = false;
+                        stateSelect.style.backgroundColor = '';
+                        stateSelect.removeAttribute('readonly');
+                        stateSelect.removeAttribute('data-api-fetched');
+                    }
                         }
                     })
                     .catch(error => {
                 gstLoading.classList.add('d-none');
                 validateGstBtn.disabled = false;
                         console.error('GST validation error:', error);
-                gstValidationMessage.innerHTML = '<div class="alert alert-danger mt-2"><i class="fas fa-times-circle"></i> Error validating GST. Please fill details manually.</div>';
+
+                // Enable GST fields for manual entry when validation fails
+                const legalNameInput = document.getElementById('gst_legal_name_input');
+                const addressInput = document.getElementById('gst_address_input');
+                const stateSelect = document.getElementById('gst_state');
+
+                if (legalNameInput) {
+                    legalNameInput.removeAttribute('readonly');
+                    legalNameInput.style.backgroundColor = '';
+                }
+                if (addressInput) {
+                    addressInput.removeAttribute('readonly');
+                    addressInput.style.backgroundColor = '';
+                }
+                if (stateSelect) {
+                    stateSelect.disabled = false;
+                    stateSelect.style.backgroundColor = '';
+                    stateSelect.removeAttribute('data-api-fetched');
+                }
+
+                gstValidationMessage.innerHTML = '<div class="alert alert-warning mt-2"><i class="fas fa-exclamation-triangle"></i> Error validating GST. Please fill details manually.</div>';
             });
         });
     }
@@ -1649,6 +1719,19 @@ document.addEventListener('DOMContentLoaded', function() {
     // Form submission with reCAPTCHA
     const registrationForm = document.getElementById('registrationForm');
     const submitBtn = document.getElementById('submitBtn');
+
+    // Ensure GST fields are enabled before form submission
+    registrationForm.addEventListener('submit', function(e) {
+        // Temporarily enable all GST fields to ensure they're submitted
+        const gstFields = ['gst_legal_name_input', 'gst_address_input', 'gst_state'];
+        gstFields.forEach(fieldId => {
+            const field = document.getElementById(fieldId);
+            if (field) {
+                field.disabled = false;
+                field.removeAttribute('readonly');
+            }
+        });
+    });
 
     registrationForm.addEventListener('submit', function(e) {
         e.preventDefault();
