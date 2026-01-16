@@ -533,7 +533,7 @@
                         <div class="col-md-12 mb-3">
                             <label class="form-label">State</label>
                             <input type="hidden" name="gst_country" value="India">
-                            <select name="gst_state" class="form-select" id="gst_state">
+                            <select name="gst_state" class="form-select" id="gst_state" {{ old('gst_state') ? '' : '' }}>
                                 <option value="">-- Select State --</option>
                                 @php
                                     $indianStates = [
@@ -1631,25 +1631,87 @@ document.addEventListener('DOMContentLoaded', function() {
                         if (stateOption) {
                             stateSelect.value = stateOption.value;
                             stateSelect.style.backgroundColor = '#e9ecef';
-                            stateSelect.disabled = true;
+                            // Keep enabled but readonly to ensure value is submitted
+                            stateSelect.disabled = false;
+                            stateSelect.setAttribute('readonly', 'readonly');
                             stateSelect.dataset.apiFetched = 'true';
                         }
                     }
                     
-                    gstValidationMessage.innerHTML = '<div class="alert alert-success mt-2"><i class="fas fa-check-circle"></i> GST validated successfully. Fields are locked.</div>';
+                    gstValidationMessage.innerHTML = '<div class="alert alert-success mt-2"><i class="fas fa-check-circle"></i> GST validated successfully./div>';
                 } else if (status === 429 || data.limit_exceeded) {
-                    // Rate limit exceeded
+                    // Rate limit exceeded - enable manual entry
                     gstValidationMessage.innerHTML = '<div class="alert alert-warning mt-2"><i class="fas fa-exclamation-triangle"></i> ' + data.message + '</div>';
+
+                    // Enable GST fields for manual entry
+                    const legalNameInput = document.getElementById('gst_legal_name_input');
+                    const addressInput = document.getElementById('gst_address_input');
+                    const stateSelect = document.getElementById('gst_state');
+
+                    if (legalNameInput) {
+                        legalNameInput.removeAttribute('readonly');
+                        legalNameInput.style.backgroundColor = '';
+                    }
+                    if (addressInput) {
+                        addressInput.removeAttribute('readonly');
+                        addressInput.style.backgroundColor = '';
+                    }
+                    if (stateSelect) {
+                        stateSelect.disabled = false;
+                        stateSelect.style.backgroundColor = '';
+                        stateSelect.removeAttribute('readonly');
+                        stateSelect.removeAttribute('data-api-fetched');
+                    }
                         } else {
-                    // Error or not found
+                    // Error or not found - enable manual entry
                     gstValidationMessage.innerHTML = '<div class="alert alert-info mt-2"><i class="fas fa-info-circle"></i> ' + (data.message || 'GST not found. Please fill details manually.') + '</div>';
+
+                    // Enable GST fields for manual entry
+                    const legalNameInput = document.getElementById('gst_legal_name_input');
+                    const addressInput = document.getElementById('gst_address_input');
+                    const stateSelect = document.getElementById('gst_state');
+
+                    if (legalNameInput) {
+                        legalNameInput.removeAttribute('readonly');
+                        legalNameInput.style.backgroundColor = '';
+                    }
+                    if (addressInput) {
+                        addressInput.removeAttribute('readonly');
+                        addressInput.style.backgroundColor = '';
+                    }
+                    if (stateSelect) {
+                        stateSelect.disabled = false;
+                        stateSelect.style.backgroundColor = '';
+                        stateSelect.removeAttribute('readonly');
+                        stateSelect.removeAttribute('data-api-fetched');
+                    }
                         }
                     })
                     .catch(error => {
                 gstLoading.classList.add('d-none');
                 validateGstBtn.disabled = false;
                         console.error('GST validation error:', error);
-                gstValidationMessage.innerHTML = '<div class="alert alert-danger mt-2"><i class="fas fa-times-circle"></i> Error validating GST. Please fill details manually.</div>';
+
+                // Enable GST fields for manual entry when validation fails
+                const legalNameInput = document.getElementById('gst_legal_name_input');
+                const addressInput = document.getElementById('gst_address_input');
+                const stateSelect = document.getElementById('gst_state');
+
+                if (legalNameInput) {
+                    legalNameInput.removeAttribute('readonly');
+                    legalNameInput.style.backgroundColor = '';
+                }
+                if (addressInput) {
+                    addressInput.removeAttribute('readonly');
+                    addressInput.style.backgroundColor = '';
+                }
+                if (stateSelect) {
+                    stateSelect.disabled = false;
+                    stateSelect.style.backgroundColor = '';
+                    stateSelect.removeAttribute('data-api-fetched');
+                }
+
+                gstValidationMessage.innerHTML = '<div class="alert alert-warning mt-2"><i class="fas fa-exclamation-triangle"></i> Error validating GST. Please fill details manually.</div>';
             });
         });
     }
@@ -1657,6 +1719,19 @@ document.addEventListener('DOMContentLoaded', function() {
     // Form submission with reCAPTCHA
     const registrationForm = document.getElementById('registrationForm');
     const submitBtn = document.getElementById('submitBtn');
+
+    // Ensure GST fields are enabled before form submission
+    registrationForm.addEventListener('submit', function(e) {
+        // Temporarily enable all GST fields to ensure they're submitted
+        const gstFields = ['gst_legal_name_input', 'gst_address_input', 'gst_state'];
+        gstFields.forEach(fieldId => {
+            const field = document.getElementById(fieldId);
+            if (field) {
+                field.disabled = false;
+                field.removeAttribute('readonly');
+            }
+        });
+    });
 
     registrationForm.addEventListener('submit', function(e) {
         e.preventDefault();
