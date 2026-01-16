@@ -364,9 +364,10 @@
             @endphp
             <table class="info-table">
              <tr>
-                        <td style="font-size: 16px; font-weight: 700; color: #0066cc;">Date: {{ $order->created_at->format('d-m-Y') }}</td>
+              <td class="label">Date:</td>
+                    <td class="value">{{ $order->created_at->format('d-m-Y') }}</td>
                     </tr>
-             <tr>
+                    <tr>
                     <td class="label">TIN NO:</td>
                     <td class="value">{{ $order->order_no }}</td>
                 </tr>
