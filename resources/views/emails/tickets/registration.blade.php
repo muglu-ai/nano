@@ -319,9 +319,7 @@
                     <tr>
                         <td style="font-size: 16px; font-weight: 700; color: #0066cc;">TIN No.: {{ $order->order_no }}</td>
                     </tr>
-                     <tr>
-                        <td style="font-size: 16px; font-weight: 700; color: #0066cc;">Date: {{ $order->created_at->format('d-m-Y') }}</td>
-                    </tr>
+                    
                 @if($order->status === 'paid')
                 @php
                     $pinNo = $order->pin_no ?? null;
@@ -365,6 +363,9 @@
                 $pinNo = $invoice->pin_no ?? null;
             @endphp
             <table class="info-table">
+             <tr>
+                        <td style="font-size: 16px; font-weight: 700; color: #0066cc;">Date: {{ $order->created_at->format('d-m-Y') }}</td>
+                    </tr>
              <tr>
                     <td class="label">TIN NO:</td>
                     <td class="value">{{ $order->order_no }}</td>
