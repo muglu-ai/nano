@@ -97,6 +97,16 @@ class RegistrationPaymentController extends Controller
                 )
             ->environment($environment)
             ->build();
+
+        // Debug logging for PayPal client initialization
+        Log::info('PayPal Client Initialized', [
+            'mode' => $paypalMode,
+            'environment' => $environment,
+            'client_id_length' => strlen($clientId ?? ''),
+            'client_secret_length' => strlen($clientSecret ?? ''),
+            'client_initialized' => $this->paypalClient ? 'yes' : 'no',
+            'client_class' => $this->paypalClient ? get_class($this->paypalClient) : 'null'
+        ]);
     }
 
     /**
@@ -379,6 +389,18 @@ class RegistrationPaymentController extends Controller
      */
     private function processPayPalPayment($invoice, $application, $billingDetail)
     {
+        // Debug logging at start of PayPal payment processing
+        Log::info('PayPal Payment Processing Started', [
+            'invoice_id' => $invoice->id ?? null,
+            'invoice_no' => $invoice->invoice_no ?? null,
+            'application_id' => $application->id ?? null,
+            'billing_detail_keys' => is_array($billingDetail) ? array_keys($billingDetail) : 'not_array',
+            'invoice_total' => $invoice->total_final_price ?? null,
+            'invoice_currency' => $invoice->currency ?? null,
+            'paypal_mode' => config('constants.PAYPAL_MODE'),
+            'client_initialized' => $this->paypalClient ? 'yes' : 'no'
+        ]);
+
         try {
             // Convert to USD if needed
             $amount = $invoice->total_final_price;
@@ -418,9 +440,26 @@ class RegistrationPaymentController extends Controller
                 )
                 ->build();
 
+            // Debug logging before PayPal API call
+            Log::info('CCAvenue PayPal Order Creation Debug', [
+                'order_id' => $orderIdWithTimestamp,
+                'amount' => $amount,
+                'currency' => $currency,
+                'paypal_mode' => config('constants.PAYPAL_MODE'),
+                'paypal_client_initialized' => $this->paypalClient ? 'yes' : 'no',
+                'order_request_type' => get_class($orderRequest),
+                'return_url' => route('registration.payment.callback', ['gateway' => 'paypal']),
+                'cancel_url' => route('registration.payment.select', $invoice->invoice_no)
+            ]);
+
             try {
                 $apiResponse = $this->paypalClient->getOrdersController()->createOrder($orderRequest);
                 $paypalOrderId = $apiResponse->getResult()->getId();
+
+                Log::info('CCAvenue PayPal Order Creation Success', [
+                    'order_id' => $orderIdWithTimestamp,
+                    'paypal_order_id' => $paypalOrderId
+                ]);
             } catch (\PaypalServerSdkLib\Exceptions\ApiException $e) {
                 Log::error('PayPal API Exception during order creation', [
                     'error' => $e->getMessage(),
@@ -1364,6 +1403,22 @@ class RegistrationPaymentController extends Controller
      */
     private function processTicketPayPal($order, $orderId, $amount, $currency, $billingName, $billingEmail, $billingPhone, $registration, $invoice)
     {
+        // Debug logging at start of ticket PayPal processing
+        Log::info('Ticket PayPal Payment Processing Started', [
+            'order_id' => $order->id,
+            'order_no' => $order->order_no,
+            'orderId_param' => $orderId,
+            'amount' => $amount,
+            'currency' => $currency,
+            'billing_name' => $billingName,
+            'billing_email' => $billingEmail,
+            'billing_phone' => $billingPhone,
+            'registration_id' => $registration->id,
+            'invoice_id' => $invoice->id ?? null,
+            'paypal_mode' => config('constants.PAYPAL_MODE'),
+            'client_initialized' => $this->paypalClient ? 'yes' : 'no'
+        ]);
+
         try {
             $event = $order->registration->event;
             $eventSlug = $event->slug ?? $event->id;
@@ -1410,7 +1465,50 @@ class RegistrationPaymentController extends Controller
                 'body' => $orderRequest
             ];
 
-            $apiResponse = $this->paypalClient->getOrdersController()->createOrder($orderBody);
+            // Debug logging before PayPal API call
+            Log::info('PayPal Order Creation Debug', [
+                'order_id' => $orderId,
+                'order_no' => $order->order_no,
+                'amount' => $amount,
+                'currency' => $currency,
+                'paypal_mode' => config('constants.PAYPAL_MODE'),
+                'paypal_client_id_set' => !empty(config('constants.PAYPAL_SANDBOX_CLIENT_ID')) || !empty(config('constants.PAYPAL_LIVE_CLIENT_ID')),
+                'order_request_structure' => json_encode($orderRequest, JSON_PRETTY_PRINT),
+                'order_body_keys' => array_keys($orderBody),
+                'return_url' => $returnUrl,
+                'cancel_url' => $cancelUrl,
+                'client_initialized' => $this->paypalClient ? 'yes' : 'no'
+            ]);
+
+            try {
+                $apiResponse = $this->paypalClient->getOrdersController()->createOrder($orderBody);
+                $paypalOrderId = $apiResponse->getResult()->getId();
+
+                Log::info('PayPal Order Creation Success', [
+                    'order_id' => $orderId,
+                    'paypal_order_id' => $paypalOrderId,
+                    'api_response_status' => 'success'
+                ]);
+            } catch (\PaypalServerSdkLib\Exceptions\ApiException $e) {
+                Log::error('PayPal Order Creation API Exception', [
+                    'order_id' => $orderId,
+                    'order_no' => $order->order_no,
+                    'error_message' => $e->getMessage(),
+                    'error_code' => $e->getCode(),
+                    'paypal_mode' => config('constants.PAYPAL_MODE'),
+                    'request_body_preview' => json_encode($orderBody, JSON_PRETTY_PRINT)
+                ]);
+                throw $e;
+            } catch (\Exception $e) {
+                Log::error('PayPal Order Creation Unexpected Error', [
+                    'order_id' => $orderId,
+                    'order_no' => $order->order_no,
+                    'error_message' => $e->getMessage(),
+                    'error_trace' => $e->getTraceAsString(),
+                    'paypal_mode' => config('constants.PAYPAL_MODE')
+                ]);
+                throw $e;
+            }
             $paypalOrderId = $apiResponse->getResult()->getId();
 
             // Store payment gateway response
