@@ -40,6 +40,10 @@ return [
             'driver' => 'session',
             'provider' => 'users',
         ],
+        'delegate' => [
+            'driver' => 'session',
+            'provider' => 'delegates',
+        ],
     ],
 
     /*
@@ -63,6 +67,11 @@ return [
         'users' => [
             'driver' => 'eloquent',
             'model' => env('AUTH_MODEL', App\Models\User::class),
+        ],
+
+        'delegates' => [
+            'driver' => 'eloquent',
+            'model' => App\Models\Ticket\TicketAccount::class,
         ],
 
         // 'users' => [
@@ -94,6 +103,12 @@ return [
         'users' => [
             'provider' => 'users',
             'table' => env('AUTH_PASSWORD_RESET_TOKEN_TABLE', 'password_reset_tokens'),
+            'expire' => 60,
+            'throttle' => 60,
+        ],
+        'delegates' => [
+            'provider' => 'delegates',
+            'table' => 'delegate_password_reset_tokens',
             'expire' => 60,
             'throttle' => 60,
         ],
