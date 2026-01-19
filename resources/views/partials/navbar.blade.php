@@ -70,13 +70,14 @@
                 </a>
             </div>
             @php
-            if(Auth::user()->role === 'co-exhibitor') {
+            $route = 'user.dashboard'; // Default route
+            if(Auth::user()->role === 'super-admin') {
+                $route = 'super-admin.event-config';
+            } else if(Auth::user()->role === 'co-exhibitor') {
                 $route = 'dashboard.co-exhibitor';
-            
-            }else if(Auth::user()->role === 'exhibitor') {
+            } else if(Auth::user()->role === 'exhibitor') {
                 $route = 'user.dashboard';
-            }else if(Auth::user()->role === 'admin') {
-
+            } else if(Auth::user()->role === 'admin') {
                 $route = 'dashboard.admin';
                 if(Auth::user()->sub_role === 'visitor') {
                     $route = 'registration.analytics';
