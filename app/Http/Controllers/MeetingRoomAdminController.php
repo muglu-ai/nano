@@ -16,12 +16,12 @@ use Illuminate\Support\Str;
 class MeetingRoomAdminController extends Controller
 {
 
-    //construct to check if user is authenticated and role is admin
+    //construct to check if user is authenticated and role is admin or super-admin
     public function __construct()
     {
         $this->middleware(function ($request, $next) {
-            if (!Auth::check() || Auth::user()->role !== 'admin') {
-                return redirect()->route('login')->with('error', 'You must be an admin to access this page.');
+            if (!Auth::check() || !in_array(Auth::user()->role, ['admin', 'super-admin'])) {
+                return redirect()->route('login')->with('error', 'You must be an admin or super-admin to access this page.');
             }
             return $next($request);
         });
