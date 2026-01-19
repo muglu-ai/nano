@@ -106,3 +106,8 @@ User::create([
 - Super admin role is required to access configuration pages
 - Event configuration updates also update `config/constants.php` file
 - All sectors, sub-sectors, and organization types are stored in the database for easy management
+
+
+1. We will give each delegate panel where he can login, can aceess he badge, any notification that can be pushed by admin, if he want to upgrade the ticket, from one categroy to another and higher categroy he can do that. can see the receipt, if group registration is done then he should be able see all the registration. 
+
+We will make a different auth system for the same.
