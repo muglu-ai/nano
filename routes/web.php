@@ -88,7 +88,7 @@ Route::get('/admin/ccavenue-transactions/{id}/details', [PaymentGatewayControlle
 
 
 // Super Admin Routes
-Route::middleware(['auth'])->prefix('super-admin')->name('super-admin.')->group(function () {
+Route::middleware(['auth', Auth::class])->prefix('super-admin')->name('super-admin.')->group(function () {
     Route::get('/event-config', [SuperAdminController::class, 'eventConfig'])->name('event-config');
     Route::post('/event-config', [SuperAdminController::class, 'updateEventConfig'])->name('event-config.update');
     
