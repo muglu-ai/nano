@@ -299,7 +299,7 @@ class DashboardController extends Controller
 
             return view('dashboard.index', compact('exhibitionParticipant', 'application', 'directoryFilled'));
             return view('dashboard.index');
-        } elseif ($user->role == 'admin') {
+        } elseif ($user->role == 'admin' || $user->role == 'super-admin') {
             try {
                 $analytics = app('analytics');
                 $submittedApplications = $analytics['applicationsByStatus']['submitted'] ?? 0;

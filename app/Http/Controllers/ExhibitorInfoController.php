@@ -707,7 +707,7 @@ class ExhibitorInfoController extends Controller
             return redirect()->route('login')->with('error', 'Please login to continue.');
         }
 
-        if (Auth::user()->role !== 'admin') {
+        if (!in_array(Auth::user()->role, ['admin', 'super-admin'])) {
             return redirect()->route('user.dashboard')->with('error', 'You are not authorized to access this page.');
         }
 

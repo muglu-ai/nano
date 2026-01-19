@@ -700,9 +700,9 @@ class AttendeeController extends Controller
 
         }
 
-        //if user is not admin then redirect to home page
+        //if user is not admin or super-admin then redirect to home page
 
-        if ($user->role !== 'admin') {
+        if (!in_array($user->role, ['admin', 'super-admin'])) {
 
             return redirect()->back()->withErrors(['error' => 'You do not have permission to access this page.']);
 
@@ -1252,9 +1252,9 @@ class AttendeeController extends Controller
 
         }
 
-        //if user is not admin then redirect to home page
+        //if user is not admin or super-admin then redirect to home page
 
-        if ($user->role !== 'admin') {
+        if (!in_array($user->role, ['admin', 'super-admin'])) {
 
             return redirect()->back()->withErrors(['error' => 'You do not have permission to access this page.']);
 
@@ -1419,9 +1419,9 @@ class AttendeeController extends Controller
 
         }
 
-        //if user is not admin then redirect to home page
+        //if user is not admin or super-admin then redirect to home page
 
-        if ($user->role !== 'admin') {
+        if (!in_array($user->role, ['admin', 'super-admin'])) {
 
             return redirect()->back()->withErrors(['error' => 'You do not have permission to access this page.']);
 
@@ -1752,7 +1752,7 @@ class AttendeeController extends Controller
 
         // Check if the user is authenticated and has the right role
 
-        if (!auth()->check() || auth()->user()->role !== 'admin') {
+        if (!auth()->check() || !in_array(auth()->user()->role, ['admin', 'super-admin'])) {
 
             return redirect()->back()->withErrors(['error' => 'You do not have permission to access this page.']);
 
@@ -1789,7 +1789,7 @@ class AttendeeController extends Controller
 
         // Check if the user is authenticated and has the right role
 
-        if (!auth()->check() || auth()->user()->role !== 'admin') {
+        if (!auth()->check() || !in_array(auth()->user()->role, ['admin', 'super-admin'])) {
 
             return redirect()->back()->withErrors(['error' => 'You do not have permission to access this page.']);
 
@@ -1816,9 +1816,9 @@ class AttendeeController extends Controller
         $attendee = Attendee::where('unique_id', $unique_id)->firstOrFail();
 
 
-        // Only allow admin
+        // Only allow admin or super-admin
 
-        if (!auth()->user() || auth()->user()->role !== 'admin') {
+        if (!auth()->user() || !in_array(auth()->user()->role, ['admin', 'super-admin'])) {
 
             abort(403);
 

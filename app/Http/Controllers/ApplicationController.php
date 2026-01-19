@@ -1264,8 +1264,8 @@ class ApplicationController extends Controller
      */
     public function create()
     {
-        // Check if user is admin
-        if (!auth()->check() || auth()->user()->role !== 'admin') {
+        // Check if user is admin or super-admin
+        if (!auth()->check() || !in_array(auth()->user()->role, ['admin', 'super-admin'])) {
             return redirect('/login')->with('error', 'Unauthorized access');
         }
 
@@ -1291,8 +1291,8 @@ class ApplicationController extends Controller
         // Fix Laravel Facade usage: use the Auth facade directly.
         // Also, don't double validate fields, combine into a single validate call.
 
-        // Check if user is admin
-        if (!\Illuminate\Support\Facades\Auth::check() || \Illuminate\Support\Facades\Auth::user()->role !== 'admin') {
+        // Check if user is admin or super-admin
+        if (!\Illuminate\Support\Facades\Auth::check() || !in_array(\Illuminate\Support\Facades\Auth::user()->role, ['admin', 'super-admin'])) {
             return redirect('/login')->with('error', 'Unauthorized access');
         }
 
