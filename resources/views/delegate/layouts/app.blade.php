@@ -33,6 +33,73 @@
         .async-hide {
             opacity: 0 !important
         }
+        
+        /* Global Delegate Panel Styles */
+        body {
+            background-color: #f8f9fc;
+            color: #2d3748; /* Explicit dark text color for better visibility */
+        }
+        
+        .main-content {
+            background-color: #f8f9fc;
+            color: #2d3748; /* Explicit text color */
+        }
+        
+        /* Improved text-muted for better visibility */
+        .text-muted {
+            color: #4a5568 !important; /* Darker gray for better contrast */
+        }
+        
+        /* Better contrast for all text elements */
+        p, span, div, td, th, li {
+            color: #2d3748; /* Dark text by default */
+        }
+        
+        /* Smooth transitions */
+        * {
+            transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+        }
+        
+        /* Better button styles */
+        .btn {
+            border-radius: 8px;
+            font-weight: 500;
+            padding: 0.625rem 1.25rem;
+            transition: all 0.3s ease;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+        }
+        
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #5568d3 0%, #653a8f 100%);
+        }
+        
+        /* Card improvements */
+        .card {
+            border-radius: 12px;
+            box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+            border: none;
+        }
+        
+        /* Better form controls */
+        .form-control:focus, .form-select:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+        }
+        
+        /* Loading states */
+        .loading {
+            opacity: 0.6;
+            pointer-events: none;
+        }
     </style>
     @stack('styles')
 </head>
