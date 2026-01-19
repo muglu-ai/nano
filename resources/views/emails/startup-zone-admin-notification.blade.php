@@ -152,53 +152,53 @@
                             <div style="background-color: #f8f9fa; border-left: 4px solid #1a237e; padding: 20px; margin: 25px 0; border-radius: 4px;">
                                 <h2 style="margin: 0 0 15px; font-size: 18px; color: #1a237e; font-weight: bold;">Exhibitor Information</h2>
                                 
-                                @if($exhibitorData['name'])
+                                @if($application->company_name)
                                 <table role="presentation" width="100%" cellpadding="5" cellspacing="0" style="margin-bottom: 10px;">
                                     <tr>
                                         <td style="width: 40%; font-weight: bold; color: #555555; padding: 5px 0;">Name of Exhibitor:</td>
-                                        <td style="color: #333333; padding: 5px 0;">{{ $exhibitorData['name'] }}</td>
+                                        <td style="color: #333333; padding: 5px 0;">{{ $application->company_name ?? 'N/A' }}</td>
                                     </tr>
                                 </table>
                                 @endif
 
-                                @if($exhibitorData['email'])
+                                @if($application->company_email)
                                 <table role="presentation" width="100%" cellpadding="5" cellspacing="0" style="margin-bottom: 10px;">
                                     <tr>
                                         <td style="width: 40%; font-weight: bold; color: #555555; padding: 5px 0;">Company Email:</td>
-                                        <td style="color: #333333; padding: 5px 0;"><a href="mailto:{{ $exhibitorData['email'] }}" style="color: #1a237e; text-decoration: none;">{{ $exhibitorData['email'] }}</a></td>
+                                        <td style="color: #333333; padding: 5px 0;"><a href="mailto:{{ $application->company_email }}" style="color: #1a237e; text-decoration: none;">{{ $application->company_email }}</a></td>
                                     </tr>
                                 </table>
                                 @endif
 
-                                @if($exhibitorData['address'])
+                                @if($application->address)
                                 <table role="presentation" width="100%" cellpadding="5" cellspacing="0" style="margin-bottom: 10px;">
                                     <tr>
                                         <td style="width: 40%; font-weight: bold; color: #555555; padding: 5px 0; vertical-align: top;">Address:</td>
                                         <td style="color: #333333; padding: 5px 0;">
-                                            {{ $exhibitorData['address'] }}
-                                            @if($exhibitorData['city']), {{ $exhibitorData['city'] }}@endif
-                                            @if($exhibitorData['state']), {{ $exhibitorData['state'] }}@endif
-                                            @if($exhibitorData['country']), {{ $exhibitorData['country'] }}@endif
-                                            @if($exhibitorData['postal_code']) - {{ $exhibitorData['postal_code'] }}@endif
+                                            {{ $application->address }}
+                                            @if($application->city_id), {{ is_numeric($application->city_id) ? (\App\Models\City::find($application->city_id)->name ?? $application->city_id) : $application->city_id }}@endif
+                                            @if($application->state), {{ $application->state->name }}@endif
+                                            @if($application->country), {{ $application->country->name }}@endif
+                                            @if($application->postal_code) - {{ $application->postal_code }}@endif
                                         </td>
                                     </tr>
                                 </table>
                                 @endif
 
-                                @if($exhibitorData['telephone'])
+                                @if($application->landline)
                                 <table role="presentation" width="100%" cellpadding="5" cellspacing="0" style="margin-bottom: 10px;">
                                     <tr>
                                         <td style="width: 40%; font-weight: bold; color: #555555; padding: 5px 0;">Telephone:</td>
-                                        <td style="color: #333333; padding: 5px 0;">{{ $exhibitorData['telephone'] }}</td>
+                                        <td style="color: #333333; padding: 5px 0;">{{ $application->landline }}</td>
                                     </tr>
                                 </table>
                                 @endif
 
-                                @if($exhibitorData['website'])
+                                @if($application->website)
                                 <table role="presentation" width="100%" cellpadding="5" cellspacing="0" style="margin-bottom: 10px;">
                                     <tr>
                                         <td style="width: 40%; font-weight: bold; color: #555555; padding: 5px 0;">Website:</td>
-                                        <td style="color: #333333; padding: 5px 0;"><a href="{{ $exhibitorData['website'] }}" target="_blank" style="color: #1a237e; text-decoration: none;">{{ $exhibitorData['website'] }}</a></td>
+                                        <td style="color: #333333; padding: 5px 0;"><a href="{{ $application->website }}" target="_blank" style="color: #1a237e; text-decoration: none;">{{ $application->website }}</a></td>
                                     </tr>
                                 </table>
                                 @endif

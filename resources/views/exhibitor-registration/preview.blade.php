@@ -2,6 +2,156 @@
 
 @section('title', 'Preview Registration - ' . config('constants.EVENT_NAME') . ' ' . config('constants.EVENT_YEAR'))
 
+@push('styles')
+<style>
+    .preview-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 2rem 1rem;
+    }
+
+    .preview-section {
+        background: #ffffff;
+        border-radius: 10px;
+        padding: 1.25rem;
+        margin-bottom: 1.5rem;
+        border: 1px solid #e0e0e0;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+
+    .section-title {
+        font-size: 1.1rem;
+        font-weight: 700;
+        margin-bottom: 1rem;
+        color: var(--text-primary);
+        padding-bottom: 0.5rem;
+        border-bottom: 2px solid var(--primary-color);
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .section-title i {
+        color: var(--primary-color);
+        font-size: 1rem;
+    }
+
+    /* Tabular Info Styles */
+    .info-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .info-table td {
+        padding: 0.6rem 0.75rem;
+        border: 1px solid #e9ecef;
+        font-size: 0.875rem;
+        vertical-align: middle;
+    }
+
+    .info-table .label-cell {
+        background: #f8f9fa;
+        font-weight: 600;
+        color: #495057;
+        width: 40%;
+    }
+
+    .info-table .value-cell {
+        color: #212529;
+        width: 60%;
+    }
+
+    /* Price Table Styles */
+    .price-section {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        border-radius: 10px;
+        padding: 1.25rem;
+        margin-top: 1.5rem;
+        border: 1px solid #dee2e6;
+    }
+
+    .price-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .price-table td {
+        padding: 0.65rem 0.85rem;
+        border: 1px solid #e9ecef;
+        font-size: 0.9rem;
+    }
+
+    .price-table .label-cell {
+        background: #ffffff;
+        font-weight: 500;
+        color: #495057;
+        width: 65%;
+    }
+
+    .price-table .value-cell {
+        background: #ffffff;
+        text-align: right;
+        font-weight: 600;
+        color: #212529;
+        width: 35%;
+    }
+
+    .price-table .total-row td {
+        background: var(--primary-color);
+        color: #ffffff;
+        font-size: 1.1rem;
+        font-weight: 700;
+        padding: 0.85rem;
+    }
+
+    .btn-edit {
+        background: #ffffff;
+        border: 2px solid var(--primary-color);
+        color: var(--primary-color);
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+
+    .btn-edit:hover {
+        background: var(--primary-color);
+        border-color: var(--primary-color);
+        color: #ffffff;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(11, 94, 215, 0.3);
+    }
+
+    /* Mobile Responsiveness */
+    @media (max-width: 768px) {
+        .info-table {
+            font-size: 0.75rem;
+        }
+
+        .info-table td {
+            padding: 0.5rem 0.4rem;
+        }
+
+        .price-table {
+            font-size: 0.8rem;
+        }
+
+        .price-table td {
+            padding: 0.5rem 0.4rem;
+        }
+
+        .btn-edit,
+        .btn-primary {
+            padding: 0.75rem 1.25rem !important;
+            font-size: 0.9rem !important;
+            margin-bottom: 0.5rem;
+        }
+
+        .btn-lg {
+            padding: 0.75rem 1.25rem !important;
+            font-size: 0.9rem !important;
+        }
+    }
+</style>
+@endpush
 @section('content')
 <div class="container py-5">
     {{-- Step Indicator --}}
@@ -50,6 +200,8 @@
                     $gstNo = $application->gst_no ?? null;
                     $panNo = $application->pan_no ?? '';
                     $tanNo = $application->tan_no ?? null;
+                    // TAN Status from tan_compliance field (similar to gst_compliance)
+                    $tanStatus = $application->tan_compliance ? 'Registered' : 'Unregistered';
                     $billingCompany = $application->company_name ?? '';
                     $billingEmail = $application->company_email ?? '';
                     $billingAddress = $application->address ?? '';
@@ -65,6 +217,19 @@
                     $contactDesignation = $application->eventContact->designation ?? '';
                     $contactEmail = $application->eventContact->email ?? '';
                     $contactMobile = $application->eventContact->contact_number ?? '';
+                    
+                    // Exhibitor data from application (if different from billing)
+                    // For now, exhibitor info is same as billing in application
+                    $exhibitorName = $application->company_name ?? '';
+                    $exhibitorAddress = $application->address ?? '';
+                    $exhibitorCity = is_numeric($application->city_id) ? (\App\Models\City::find($application->city_id)->name ?? $application->city_id) : ($application->city_id ?? '');
+                    $exhibitorState = $application->state->name ?? 'N/A';
+                    $exhibitorCountry = $application->country->name ?? 'N/A';
+                    $exhibitorPostal = $application->postal_code ?? '';
+                    $exhibitorPhone = $application->landline ?? '';
+                    $exhibitorWebsite = $application->website ?? '';
+                    $exhibitorEmail = $application->company_email ?? '';
+                    
                     $pricing = $application->invoice ? [
                         'base_price' => $application->invoice->price ?? $application->invoice->amount,
                         'gst_amount' => $application->invoice->gst_amount ?? $application->invoice->gst ?? 0,
@@ -85,7 +250,9 @@
                     $gstStatus = $draft->gst_compliance ? 'Registered' : 'Unregistered';
                     $gstNo = $draft->gst_no ?? null;
                     $panNo = $draft->pan_no ?? '';
-                    $tanNo = $exhibitorData['tan_no'] ?? null;
+                    $tanNo = $billingData['tan_no'] ?? null;
+                    // TAN Status from billing data (similar to gst_status)
+                    $tanStatus = ($billingData['tan_status'] ?? 'Unregistered') === 'Registered' ? 'Registered' : 'Unregistered';
                     
                     // Billing data from draft
                     $billingCompany = $billingData['company_name'] ?? $draft->company_name ?? '';
@@ -106,6 +273,25 @@
                         $billingPhone = $billingPhoneRaw;
                     }
                     $billingWebsite = $billingData['website'] ?? $draft->website ?? '';
+                    
+                    // Exhibitor data from draft
+                    $exhibitorName = $exhibitorData['name'] ?? '';
+                    $exhibitorAddress = $exhibitorData['address'] ?? '';
+                    $exhibitorCity = $exhibitorData['city'] ?? '';
+                    $exhibitorStateId = $exhibitorData['state_id'] ?? null;
+                    $exhibitorState = $exhibitorStateId ? (\App\Models\State::find($exhibitorStateId)->name ?? 'N/A') : 'N/A';
+                    $exhibitorCountryId = $exhibitorData['country_id'] ?? null;
+                    $exhibitorCountry = $exhibitorCountryId ? (\App\Models\Country::find($exhibitorCountryId)->name ?? 'N/A') : 'N/A';
+                    $exhibitorPostal = $exhibitorData['postal_code'] ?? '';
+                    $exhibitorPhoneRaw = $exhibitorData['telephone'] ?? '';
+                    if ($exhibitorPhoneRaw && strpos($exhibitorPhoneRaw, '-') !== false) {
+                        $parts = explode('-', $exhibitorPhoneRaw, 2);
+                        $exhibitorPhone = '+' . $parts[0] . ' ' . $parts[1];
+                    } else {
+                        $exhibitorPhone = $exhibitorPhoneRaw;
+                    }
+                    $exhibitorWebsite = $exhibitorData['website'] ?? '';
+                    $exhibitorEmail = $exhibitorData['email'] ?? '';
                     
                     // Contact data from draft
                     $contactTitle = $contactData['title'] ?? '';
@@ -138,6 +324,8 @@
                     $gstNo = $allData['gst_no'] ?? null;
                     $panNo = $allData['pan_no'] ?? '';
                     $tanNo = $allData['tan_no'] ?? null;
+                    // TAN Status from allData
+                    $tanStatus = ($allData['tan_status'] ?? '') === 'Registered' ? 'Registered' : 'Unregistered';
                     $billingData = $submittedData['billing_data'] ?? [];
                     $billingCompany = $billingData['company_name'] ?? $allData['billing_company_name'] ?? '';
                     $billingEmail = $billingData['email'] ?? $allData['billing_email'] ?? '';
@@ -150,6 +338,21 @@
                     $billingPostal = $billingData['postal_code'] ?? $allData['billing_postal_code'] ?? '';
                     $billingPhone = $submittedData['billing_telephone'] ?? '';
                     $billingWebsite = $billingData['website'] ?? $allData['billing_website'] ?? '';
+                    
+                    // Exhibitor data from session
+                    $exhibitorDataSession = $submittedData['exhibitor_data'] ?? [];
+                    $exhibitorName = $exhibitorDataSession['name'] ?? $allData['exhibitor_name'] ?? '';
+                    $exhibitorAddress = $exhibitorDataSession['address'] ?? $allData['exhibitor_address'] ?? '';
+                    $exhibitorCity = $exhibitorDataSession['city'] ?? $allData['exhibitor_city'] ?? '';
+                    $exhibitorStateId = $exhibitorDataSession['state_id'] ?? $allData['exhibitor_state_id'] ?? null;
+                    $exhibitorState = $exhibitorStateId ? (\App\Models\State::find($exhibitorStateId)->name ?? 'N/A') : 'N/A';
+                    $exhibitorCountryId = $exhibitorDataSession['country_id'] ?? $allData['exhibitor_country_id'] ?? null;
+                    $exhibitorCountry = $exhibitorCountryId ? (\App\Models\Country::find($exhibitorCountryId)->name ?? 'N/A') : 'N/A';
+                    $exhibitorPostal = $exhibitorDataSession['postal_code'] ?? $allData['exhibitor_postal_code'] ?? '';
+                    $exhibitorPhone = $submittedData['exhibitor_telephone'] ?? '';
+                    $exhibitorWebsite = $exhibitorDataSession['website'] ?? $allData['exhibitor_website'] ?? '';
+                    $exhibitorEmail = $exhibitorDataSession['email'] ?? $allData['exhibitor_email'] ?? '';
+                    
                     $contactData = $submittedData['contact_data'] ?? [];
                     $contactTitle = $contactData['title'] ?? $allData['contact_title'] ?? '';
                     $contactFirstName = $contactData['first_name'] ?? $allData['contact_first_name'] ?? '';
@@ -163,228 +366,281 @@
             
             @if($hasApplication)
             {{-- Application Created Successfully --}}
-            <div class="card shadow-sm mb-4">
-                <div class="card-header bg-success text-white">
-                    <h4 class="mb-0"><i class="fas fa-check-circle"></i> Application Created Successfully</h4>
-                </div>
-                <div class="card-body">
-                    <p class="alert alert-info mb-0">
-                        <strong>Application ID:</strong> {{ $application->application_id }}<br>
-                        Please review your details below and proceed to payment.
-                    </p>
-                </div>
+            <div class="alert alert-success mb-4">
+                <h5 class="mb-2"><i class="fas fa-check-circle"></i> Application Created Successfully</h5>
+                <p class="mb-0">
+                    <strong>Application ID:</strong> {{ $application->application_id }}<br>
+                    Please review your details below and proceed to payment.
+                </p>
             </div>
             @elseif($hasDraft || $hasSubmittedData)
             {{-- Review Before Submission --}}
-            <div class="card shadow-sm mb-4">
-                <div class="card-header bg-warning text-dark">
-                    <h4 class="mb-0"><i class="fas fa-info-circle"></i> Review Your Details</h4>
-                </div>
-                <div class="card-body">
-                    <p class="alert alert-warning mb-0">
-                        Please review all details below. Click "Proceed to Payment" to finalize your registration.
-                    </p>
-                </div>
+            <div class="alert alert-info mb-4">
+                <h5 class="mb-2"><i class="fas fa-info-circle"></i> Review Your Details</h5>
+                <p class="mb-0">
+                    Please review all details below. Click "Proceed to Payment" to finalize your registration.
+                </p>
             </div>
             @else
-            <div class="alert alert-danger">
+            <div class="alert alert-danger mb-4">
                 <strong>Error:</strong> No data found. Please submit the form again.
             </div>
             @endif
 
             {{-- Booth & Exhibition Details --}}
-            <div class="card shadow-sm mb-4">
-                <div class="card-header bg-primary text-white">
-                    <h4 class="mb-0"><i class="fas fa-cube"></i> Booth & Exhibition Details</h4>
-                </div>
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-4 mb-3">
-                            <strong>Booth Space:</strong><br>
-                            {{ $boothSpace ?: 'N/A' }}
-                        </div>
-                        <div class="col-md-4 mb-3">
-                            <strong>Booth Size:</strong><br>
-                            {{ $boothSize ?: 'N/A' }} @if($boothSize) sqm @endif
-                        </div>
-                        <div class="col-md-4 mb-3">
-                            <strong>Sector:</strong><br>
-                            {{ $sector ?: 'N/A' }}
-                        </div>
-                        <div class="col-md-4 mb-3">
-                            <strong>Subsector:</strong><br>
-                            {{ $subsector ?: 'N/A' }}
-                        </div>
-                        @if($otherSector)
-                        <div class="col-md-4 mb-3">
-                            <strong>Other Sector Name:</strong><br>
-                            {{ $otherSector }}
-                        </div>
-                        @endif
-                        <div class="col-md-4 mb-3">
-                            <strong>Category:</strong><br>
-                            {{ $category ?: 'N/A' }}
-                        </div>
-                        <div class="col-md-4 mb-3">
-                            <strong>Sales Executive Name:</strong><br>
-                            {{ $salesExecutiveName ?: 'N/A' }}
-                        </div>
-                    </div>
-                </div>
+            <div class="preview-section">
+                <h4 class="section-title">
+                    <i class="fas fa-cube"></i>
+                    Booth & Exhibition Details
+                </h4>
+                <table class="info-table">
+                    <tr>
+                        <td class="label-cell">Booth Space</td>
+                        <td class="value-cell"><strong>{{ $boothSpace ?: 'N/A' }}</strong></td>
+                    </tr>
+                    <tr>
+                        <td class="label-cell">Booth Size</td>
+                        <td class="value-cell">{{ $boothSize ?: 'N/A' }}@if($boothSize) sqm @endif</td>
+                    </tr>
+                    <tr>
+                        <td class="label-cell">Sector</td>
+                        <td class="value-cell">{{ $sector ?: 'N/A' }}</td>
+                    </tr>
+                    <tr>
+                        <td class="label-cell">Subsector</td>
+                        <td class="value-cell">{{ $subsector ?: 'N/A' }}</td>
+                    </tr>
+                    @if($otherSector)
+                    <tr>
+                        <td class="label-cell">Other Sector Name</td>
+                        <td class="value-cell">{{ $otherSector }}</td>
+                    </tr>
+                    @endif
+                    <tr>
+                        <td class="label-cell">Category</td>
+                        <td class="value-cell">{{ $category ?: 'N/A' }}</td>
+                    </tr>
+                    <tr>
+                        <td class="label-cell">Sales Executive Name</td>
+                        <td class="value-cell">{{ $salesExecutiveName ?: 'N/A' }}</td>
+                    </tr>
+                </table>
             </div>
 
             {{-- Tax & Compliance Details --}}
-            <div class="card shadow-sm mb-4">
-                <div class="card-header bg-primary text-white">
-                    <h4 class="mb-0"><i class="fas fa-file-invoice-dollar"></i> Tax & Compliance Details</h4>
-                </div>
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-4 mb-3">
-                            <strong>GST Status:</strong><br>
-                            {{ $gstStatus }}
-                        </div>
-                        @if($gstStatus === 'Registered' && $gstNo)
-                        <div class="col-md-4 mb-3">
-                            <strong>GST Number:</strong><br>
-                            {{ $gstNo }}
-                        </div>
-                        @endif
-                        <div class="col-md-4 mb-3">
-                            <strong>PAN Number:</strong><br>
-                            {{ $panNo ?: 'N/A' }}
-                        </div>
-                        @if($tanNo)
-                        <div class="col-md-4 mb-3">
-                            <strong>TAN Number:</strong><br>
-                            {{ $tanNo }}
-                        </div>
-                        @endif
-                    </div>
-                </div>
+            <div class="preview-section">
+                <h4 class="section-title">
+                    <i class="fas fa-file-invoice-dollar"></i>
+                    Tax & Compliance Details
+                </h4>
+                <table class="info-table">
+                    <tr>
+                        <td class="label-cell">GST Status</td>
+                        <td class="value-cell"><strong>{{ $gstStatus }}</strong></td>
+                    </tr>
+                    @if($gstStatus === 'Registered' && $gstNo)
+                    <tr>
+                        <td class="label-cell">GST Number</td>
+                        <td class="value-cell">{{ $gstNo }}</td>
+                    </tr>
+                    @endif
+                    <tr>
+                        <td class="label-cell">TAN Status</td>
+                        <td class="value-cell"><strong>{{ $tanStatus }}</strong></td>
+                    </tr>
+                    @if($tanStatus === 'Registered' && $tanNo)
+                    <tr>
+                        <td class="label-cell">TAN Number</td>
+                        <td class="value-cell">{{ $tanNo }}</td>
+                    </tr>
+                    @endif
+                    <tr>
+                        <td class="label-cell">PAN Number</td>
+                        <td class="value-cell">{{ $panNo ?: 'N/A' }}</td>
+                    </tr>
+                   
+                </table>
             </div>
 
             {{-- Billing Information --}}
-            <div class="card shadow-sm mb-4">
-                <div class="card-header bg-primary text-white">
-                    <h4 class="mb-0"><i class="fas fa-building"></i> Billing Information</h4>
-                </div>
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <strong>Company Name:</strong><br>
-                            {{ $billingCompany ?: 'N/A' }}
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <strong>Email:</strong><br>
-                            {{ $billingEmail ?: 'N/A' }}
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <strong>Address:</strong><br>
-                            {{ $billingAddress ?: 'N/A' }}
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <strong>City:</strong><br>
-                            {{ $billingCity ?: 'N/A' }}
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <strong>State:</strong><br>
-                            {{ $billingState }}
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <strong>Postal Code:</strong><br>
-                            {{ $billingPostal ?: 'N/A' }}
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <strong>Country:</strong><br>
-                            {{ $billingCountry }}
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <strong>Telephone:</strong><br>
-                            {{ $billingPhone ?: 'N/A' }}
-                        </div>
-                        @if($billingWebsite)
-                        <div class="col-md-6 mb-3">
-                            <strong>Website:</strong><br>
-                            <a href="{{ $billingWebsite }}" target="_blank">{{ $billingWebsite }}</a>
-                        </div>
-                        @endif
-                    </div>
-                </div>
+            <div class="preview-section">
+                <h4 class="section-title">
+                    <i class="fas fa-building"></i>
+                    Billing Information
+                </h4>
+                <table class="info-table">
+                    <tr>
+                        <td class="label-cell">Company Name</td>
+                        <td class="value-cell"><strong>{{ $billingCompany ?: 'N/A' }}</strong></td>
+                    </tr>
+                    <tr>
+                        <td class="label-cell">Email</td>
+                        <td class="value-cell">{{ $billingEmail ?: 'N/A' }}</td>
+                    </tr>
+                    <tr>
+                        <td class="label-cell">Address</td>
+                        <td class="value-cell">{{ $billingAddress ?: 'N/A' }}</td>
+                    </tr>
+                    <tr>
+                        <td class="label-cell">City</td>
+                        <td class="value-cell">{{ $billingCity ?: 'N/A' }}</td>
+                    </tr>
+                    <tr>
+                        <td class="label-cell">State</td>
+                        <td class="value-cell">{{ $billingState }}</td>
+                    </tr>
+                    <tr>
+                        <td class="label-cell">Postal Code</td>
+                        <td class="value-cell">{{ $billingPostal ?: 'N/A' }}</td>
+                    </tr>
+                    <tr>
+                        <td class="label-cell">Country</td>
+                        <td class="value-cell">{{ $billingCountry }}</td>
+                    </tr>
+                    <tr>
+                        <td class="label-cell">Telephone</td>
+                        <td class="value-cell">{{ $billingPhone ?: 'N/A' }}</td>
+                    </tr>
+                    @if($billingWebsite)
+                    <tr>
+                        <td class="label-cell">Website</td>
+                        <td class="value-cell"><a href="{{ $billingWebsite }}" target="_blank">{{ $billingWebsite }}</a></td>
+                    </tr>
+                    @endif
+                </table>
             </div>
 
+            {{-- Exhibitor Information --}}
+            @if(isset($exhibitorName) && !empty($exhibitorName))
+            <div class="preview-section">
+                <h4 class="section-title">
+                    <i class="fas fa-building"></i>
+                    Exhibitor Information
+                </h4>
+                <table class="info-table">
+                    <tr>
+                        <td class="label-cell">Name of Exhibitor</td>
+                        <td class="value-cell"><strong>{{ $exhibitorName }}</strong></td>
+                    </tr>
+                    <tr>
+                        <td class="label-cell">Address</td>
+                        <td class="value-cell">{{ $exhibitorAddress ?: 'N/A' }}</td>
+                    </tr>
+                    <tr>
+                        <td class="label-cell">City</td>
+                        <td class="value-cell">{{ $exhibitorCity ?: 'N/A' }}</td>
+                    </tr>
+                    <tr>
+                        <td class="label-cell">State</td>
+                        <td class="value-cell">{{ $exhibitorState ?? 'N/A' }}</td>
+                    </tr>
+                    <tr>
+                        <td class="label-cell">Postal Code</td>
+                        <td class="value-cell">{{ $exhibitorPostal ?: 'N/A' }}</td>
+                    </tr>
+                    <tr>
+                        <td class="label-cell">Country</td>
+                        <td class="value-cell">{{ $exhibitorCountry ?? 'N/A' }}</td>
+                    </tr>
+                    @if(isset($exhibitorPhone) && !empty($exhibitorPhone))
+                    <tr>
+                        <td class="label-cell">Telephone</td>
+                        <td class="value-cell">{{ $exhibitorPhone }}</td>
+                    </tr>
+                    @endif
+                    @if(isset($exhibitorWebsite) && !empty($exhibitorWebsite))
+                    <tr>
+                        <td class="label-cell">Website</td>
+                        <td class="value-cell"><a href="{{ $exhibitorWebsite }}" target="_blank">{{ $exhibitorWebsite }}</a></td>
+                    </tr>
+                    @endif
+                    @if(isset($exhibitorEmail) && !empty($exhibitorEmail))
+                    <tr>
+                        <td class="label-cell">Email</td>
+                        <td class="value-cell">{{ $exhibitorEmail }}</td>
+                    </tr>
+                    @endif
+                </table>
+            </div>
+            @endif
+
             {{-- Contact Person Details --}}
-            <div class="card shadow-sm mb-4">
-                <div class="card-header bg-primary text-white">
-                    <h4 class="mb-0"><i class="fas fa-user"></i> Primary Contact Person</h4>
-                </div>
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <strong>Name:</strong><br>
-                            {{ $contactTitle }} {{ $contactFirstName }} {{ $contactLastName }}
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <strong>Designation:</strong><br>
-                            {{ $contactDesignation ?: 'N/A' }}
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <strong>Email:</strong><br>
-                            {{ $contactEmail ?: 'N/A' }}
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <strong>Mobile:</strong><br>
-                            {{ $contactMobile ?: 'N/A' }}
-                        </div>
-                    </div>
-                </div>
+            <div class="preview-section">
+                <h4 class="section-title">
+                    <i class="fas fa-user"></i>
+                    Contact Person Details
+                </h4>
+                <table class="info-table">
+                    <tr>
+                        <td class="label-cell">Name</td>
+                        <td class="value-cell"><strong>{{ $contactTitle }} {{ $contactFirstName }} {{ $contactLastName }}</strong></td>
+                    </tr>
+                    <tr>
+                        <td class="label-cell">Designation</td>
+                        <td class="value-cell">{{ $contactDesignation ?: 'N/A' }}</td>
+                    </tr>
+                    <tr>
+                        <td class="label-cell">Email</td>
+                        <td class="value-cell">{{ $contactEmail ?: 'N/A' }}</td>
+                    </tr>
+                    <tr>
+                        <td class="label-cell">Mobile</td>
+                        <td class="value-cell">{{ $contactMobile ?: 'N/A' }}</td>
+                    </tr>
+                </table>
             </div>
 
             {{-- Pricing Summary --}}
             @if($pricing)
-            <div class="card shadow-sm mb-4">
-                <div class="card-header bg-success text-white">
-                    <h4 class="mb-0"><i class="fas fa-money-bill-wave"></i> Pricing Summary</h4>
-                </div>
-                <div class="card-body">
-                    <table class="table table-bordered">
-                        <tr>
-                            <td><strong>Base Price:</strong></td>
-                            <td class="text-end">{{ $currency ?? 'INR' }} {{ number_format($pricing['base_price'], 2) }}</td>
-                        </tr>
-                        @if($pricing['gst_amount'])
-                        <tr>
-                            <td><strong>GST ({{ $pricing['gst_rate'] }}%):</strong></td>
-                            <td class="text-end">{{ $currency ?? 'INR' }} {{ number_format($pricing['gst_amount'], 2) }}</td>
-                        </tr>
-                        @endif
-                        @if($pricing['processing_charges'])
-                        <tr>
-                            <td><strong>Processing Charges ({{ $pricing['processing_rate'] }}%):</strong></td>
-                            <td class="text-end">{{ $currency ?? 'INR' }} {{ number_format($pricing['processing_charges'], 2) }}</td>
-                        </tr>
-                        @endif
-                        <tr class="table-success">
-                            <td><strong>Total Amount:</strong></td>
-                            <td class="text-end"><strong>{{ $currency ?? 'INR' }} {{ number_format($pricing['total_price'], 2) }}</strong></td>
-                        </tr>
-                    </table>
-                </div>
+            <div class="price-section">
+                <h4 class="section-title">
+                    <i class="fas fa-calculator"></i>
+                    Pricing Summary
+                </h4>
+                @php
+                    $currencySymbol = ($currency ?? 'INR') === 'USD' ? '$' : '₹';
+                    $priceFormat = ($currency ?? 'INR') === 'USD' ? 2 : 2; // 2 decimals for both
+                @endphp
+                <table class="price-table">
+                    <tr>
+                        <td class="label-cell">Base Price</td>
+                        <td class="value-cell">{{ $currencySymbol }}{{ number_format($pricing['base_price'], $priceFormat) }}</td>
+                    </tr>
+                    @if($pricing['gst_amount'])
+                    <tr>
+                        <td class="label-cell">GST ({{ $pricing['gst_rate'] }}%)</td>
+                        <td class="value-cell">{{ $currencySymbol }}{{ number_format($pricing['gst_amount'], $priceFormat) }}</td>
+                    </tr>
+                    @endif
+                    @if($pricing['processing_charges'])
+                    <tr>
+                        <td class="label-cell">Processing Charges ({{ $pricing['processing_rate'] }}%)</td>
+                        <td class="value-cell">{{ $currencySymbol }}{{ number_format($pricing['processing_charges'], $priceFormat) }}</td>
+                    </tr>
+                    @endif
+                    <tr class="total-row">
+                        <td class="label-cell" style="background: var(--primary-color); color: white;">Total Amount</td>
+                        <td class="value-cell" style="background: var(--primary-color); color: white;">{{ $currencySymbol }}{{ number_format($pricing['total_price'], $priceFormat) }}</td>
+                    </tr>
+                </table>
             </div>
             @endif
 
             {{-- Action Buttons --}}
-            <div class="d-flex justify-content-between">
-                <a href="{{ route('exhibitor-registration.register') }}" class="btn btn-secondary">
-                    <i class="fas fa-arrow-left"></i> Edit Details
+            <div class="d-flex justify-content-between mt-4">
+                <a href="{{ route('exhibitor-registration.register') }}" class="btn btn-edit btn-lg">
+                    <i class="fas fa-arrow-left me-2"></i>
+                    Edit Details
                 </a>
                 @if($hasApplication)
-                    <a href="{{ route('exhibitor-registration.payment', $application->application_id) }}" class="btn btn-success btn-lg">
-                        Proceed to Payment <i class="fas fa-arrow-right"></i>
+                    <a href="{{ route('exhibitor-registration.payment', $application->application_id) }}" class="btn btn-primary btn-lg">
+                        <i class="fas fa-arrow-right me-2"></i>
+                        Proceed to Payment
                     </a>
                 @elseif($hasDraft || $hasSubmittedData)
-                    <button type="button" class="btn btn-success btn-lg" id="proceedToPaymentBtn">
-                        Proceed to Payment <i class="fas fa-arrow-right"></i>
+                    <button type="button" class="btn btn-primary btn-lg" id="proceedToPaymentBtn">
+                        <i class="fas fa-arrow-right me-2"></i>
+                        Proceed to Payment
                     </button>
                 @endif
             </div>

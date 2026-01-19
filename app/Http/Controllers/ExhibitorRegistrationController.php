@@ -306,6 +306,11 @@ class ExhibitorRegistrationController extends Controller
             'telephone' => $billingTelephoneNational ? ($billingTelephoneCountryCode . '-' . $billingTelephoneNational) : '',
             'website' => $this->normalizeWebsiteUrl($request->input('billing_website') ?? ''),
             'email' => $request->input('billing_email'),
+            'gst_status' => $request->input('gst_status'),
+            'gst_no' => $request->input('gst_no'),
+            'pan_no' => $request->input('pan_no'),
+            'tan_no' => $request->input('tan_no'),
+            'tan_status' => $request->input('tan_status')
         ];
         
         if (!empty($billingData)) {
@@ -386,12 +391,12 @@ class ExhibitorRegistrationController extends Controller
         if ($request->has('category')) {
             $exhibitorData['category'] = $request->input('category');
         }
-        if ($request->has('tan_status')) {
-            $exhibitorData['tan_status'] = $request->input('tan_status');
-        }
-        if ($request->has('tan_no')) {
-            $exhibitorData['tan_no'] = $request->input('tan_no');
-        }
+        // if ($request->has('tan_status')) {
+        //     $exhibitorData['tan_status'] = $request->input('tan_status');
+        // }
+        // if ($request->has('tan_no')) {
+        //     $exhibitorData['tan_no'] = $request->input('tan_no');
+        // }
         
         if (!empty($exhibitorData)) {
             $formData['exhibitor_data'] = $exhibitorData;
@@ -980,8 +985,8 @@ class ExhibitorRegistrationController extends Controller
             
             // Store additional exhibitor-specific data in JSON fields
             $exhibitorData = $allData['exhibitor_data'] ?? [];
-            $exhibitorData['tan_status'] = $allData['tan_status'] ?? null;
-            $exhibitorData['tan_no'] = $allData['tan_no'] ?? null;
+            // $exhibitorData['tan_status'] = $allData['tan_status'] ?? null;
+            // $exhibitorData['tan_no'] = $allData['tan_no'] ?? null;
             $exhibitorData['sales_executive_name'] = !empty($allData['sales_executive_name']) ? trim($allData['sales_executive_name']) : null;
             $exhibitorData['category'] = $allData['category'] ?? null;
             $draft->exhibitor_data = $exhibitorData;
@@ -1253,8 +1258,8 @@ class ExhibitorRegistrationController extends Controller
             'pan_no' => $draft->pan_no,
             'promocode' => $draft->promocode,
             'event_id' => $draft->event_id ?? 1,
-            'tan_status' => $exhibitorData['tan_status'] ?? 'Unregistered',
-            'tan_no' => $exhibitorData['tan_no'] ?? null,
+            'tan_status' => $billingData['tan_status'] ?? 'Unregistered',
+            'tan_no' => $billingData['tan_no'] ?? null,
             'sales_executive_name' => $exhibitorData['sales_executive_name'] ?? '',
             'category' => $exhibitorData['category'] ?? 'Exhibitor',
             'contact_email' => $contactData['email'] ?? '',
@@ -1452,19 +1457,36 @@ class ExhibitorRegistrationController extends Controller
                     'company_name' => $billingData['company_name'] ?? $allData['billing_company_name'] ?? 'not_set',
                 ]);
                 
+                // Store exhibitor_data in applications table
+                $exhibitorName = $exhibitorData['name'] ?? $draft->company_name ?? '';
+                $exhibitorEmail = $exhibitorData['email'] ?? $companyEmail;
+                $exhibitorAddress = $exhibitorData['address'] ?? $draft->address ?? '';
+                $exhibitorCity = $exhibitorData['city'] ?? $draft->city_id ?? '';
+                $exhibitorStateId = $exhibitorData['state_id'] ?? $draft->state_id ?? null;
+                $exhibitorPostalCode = $exhibitorData['postal_code'] ?? $draft->postal_code ?? '';
+                $exhibitorCountryId = $exhibitorData['country_id'] ?? $draft->country_id ?? Country::where('code', 'IN')->first()->id;
+                $exhibitorLandlineRaw = $exhibitorData['telephone'] ?? $draft->landline ?? '';
+                // Extract only digits from telephone/landline
+                if (preg_match('/^(\d+)-(\d+)$/', $exhibitorLandlineRaw, $matches)) {
+                    $exhibitorLandline = $matches[2];
+                } else {
+                    $exhibitorLandline = preg_replace('/[^0-9]/', '', $exhibitorLandlineRaw);
+                }
+                $exhibitorWebsite = $this->normalizeWebsiteUrl($exhibitorData['website'] ?? $draft->website ?? '');
+                
                 $application = Application::create([
                     'application_id' => $applicationId,
                     'user_id' => $user->id,
                     'event_id' => $eventId,
-                    'company_name' => $billingData['company_name'] ?? $allData['billing_company_name'] ?? $draft->company_name ?? '',
-                    'company_email' => $companyEmail,
-                    'address' => $billingData['address'] ?? $allData['billing_address'] ?? $draft->address ?? '',
-                    'city_id' => $billingData['city'] ?? $allData['billing_city'] ?? $draft->city_id ?? '',
-                    'state_id' => $billingData['state_id'] ?? $allData['billing_state_id'] ?? $draft->state_id ?? null,
-                    'postal_code' => $billingData['postal_code'] ?? $allData['billing_postal_code'] ?? $draft->postal_code ?? '',
-                    'country_id' => $billingData['country_id'] ?? $allData['billing_country_id'] ?? $draft->country_id ?? Country::where('code', 'IN')->first()->id,
-                    'landline' => $allData['landline'] ?? $billingData['telephone'] ?? $draft->landline ?? '',
-                    'website' => $this->normalizeWebsiteUrl($billingData['website'] ?? $allData['billing_website'] ?? $draft->website ?? ''),
+                    'company_name' => $exhibitorName,
+                    'company_email' => $exhibitorEmail,
+                    'address' => $exhibitorAddress,
+                    'city_id' => $exhibitorCity,
+                    'state_id' => $exhibitorStateId,
+                    'postal_code' => $exhibitorPostalCode,
+                    'country_id' => $exhibitorCountryId,
+                    'landline' => $exhibitorLandline,
+                    'website' => $exhibitorWebsite,
                     'stall_category' => $allData['booth_space'] ?? $draft->stall_category ?? '',
                     'interested_sqm' => $allData['booth_size'] ?? $draft->interested_sqm ?? '',
                     'sector_id' => $allData['sector'] ?? $draft->sector_id ?? '',
@@ -1473,7 +1495,8 @@ class ExhibitorRegistrationController extends Controller
                     'gst_compliance' => ($allData['gst_status'] ?? ($draft->gst_compliance ? 'Registered' : 'Unregistered')) === 'Registered' ? 1 : 0,
                     'gst_no' => $allData['gst_no'] ?? $draft->gst_no ?? null,
                     'pan_no' => $allData['pan_no'] ?? $draft->pan_no ?? '',
-                    'tan_no' => $allData['tan_no'] ?? null,
+                    'tan_compliance' => ($billingData['tan_status'] ?? $allData['tan_status'] ?? 'Unregistered') === 'Registered' ? 1 : 0,
+                    'tan_no' => $billingData['tan_no'] ?? $allData['tan_no'] ?? null,
                     'promocode' => $allData['promocode'] ?? $draft->promocode ?? null,
                     'salesPerson' => $allData['sales_executive_name'] ?? '',
                     'exhibitorType' => $allData['category'] ?? 'Exhibitor',
@@ -1489,20 +1512,36 @@ class ExhibitorRegistrationController extends Controller
                     'application_db_id' => $application->id
                 ]);
             } else {
-                // Update existing in-progress application
+                // Update existing in-progress application with exhibitor_data
+                $exhibitorName = $exhibitorData['name'] ?? $application->company_name ?? '';
+                $exhibitorEmail = $exhibitorData['email'] ?? $companyEmail;
+                $exhibitorAddress = $exhibitorData['address'] ?? $application->address ?? '';
+                $exhibitorCity = $exhibitorData['city'] ?? $application->city_id ?? '';
+                $exhibitorStateId = $exhibitorData['state_id'] ?? $application->state_id ?? null;
+                $exhibitorPostalCode = $exhibitorData['postal_code'] ?? $application->postal_code ?? '';
+                $exhibitorCountryId = $exhibitorData['country_id'] ?? $application->country_id ?? Country::where('code', 'IN')->first()->id;
+                $exhibitorLandlineRaw = $exhibitorData['telephone'] ?? $application->landline ?? '';
+                // Extract only digits from telephone/landline
+                if (preg_match('/^(\d+)-(\d+)$/', $exhibitorLandlineRaw, $matches)) {
+                    $exhibitorLandline = $matches[2];
+                } else {
+                    $exhibitorLandline = preg_replace('/[^0-9]/', '', $exhibitorLandlineRaw);
+                }
+                $exhibitorWebsite = $this->normalizeWebsiteUrl($exhibitorData['website'] ?? $application->website ?? '');
+                
                 $application->update([
                     'application_id' => $applicationId,
                     'user_id' => $user->id,
                     'event_id' => $eventId,
-                    'company_name' => $billingData['company_name'] ?? $allData['billing_company_name'] ?? '',
-                    'company_email' => $companyEmail,
-                    'address' => $billingData['address'] ?? $allData['billing_address'] ?? '',
-                    'city_id' => $billingData['city'] ?? $allData['billing_city'] ?? '',
-                    'state_id' => $billingData['state_id'] ?? $allData['billing_state_id'] ?? null,
-                    'postal_code' => $billingData['postal_code'] ?? $allData['billing_postal_code'] ?? '',
-                    'country_id' => $billingData['country_id'] ?? $allData['billing_country_id'] ?? Country::where('code', 'IN')->first()->id,
-                    'landline' => $allData['landline'] ?? $billingData['telephone'] ?? $draft->landline ?? '',
-                    'website' => $this->normalizeWebsiteUrl($billingData['website'] ?? $allData['billing_website'] ?? ''),
+                    'company_name' => $exhibitorName,
+                    'company_email' => $exhibitorEmail,
+                    'address' => $exhibitorAddress,
+                    'city_id' => $exhibitorCity,
+                    'state_id' => $exhibitorStateId,
+                    'postal_code' => $exhibitorPostalCode,
+                    'country_id' => $exhibitorCountryId,
+                    'landline' => $exhibitorLandline,
+                    'website' => $exhibitorWebsite,
                     'stall_category' => $allData['booth_space'],
                     'interested_sqm' => $allData['booth_size'],
                     'sector_id' => $allData['sector'],
@@ -1511,7 +1550,8 @@ class ExhibitorRegistrationController extends Controller
                     'gst_compliance' => ($allData['gst_status'] ?? '') === 'Registered' ? 1 : 0,
                     'gst_no' => $allData['gst_no'] ?? null,
                     'pan_no' => $allData['pan_no'],
-                    'tan_no' => $allData['tan_no'] ?? null,
+                    'tan_compliance' => ($billingData['tan_status'] ?? $allData['tan_status'] ?? 'Unregistered') === 'Registered' ? 1 : 0,
+                    'tan_no' => $billingData['tan_no'] ?? $allData['tan_no'] ?? null,
                     'promocode' => $allData['promocode'] ?? null,
                     'salesPerson' => $allData['sales_executive_name'] ?? '',
                     'exhibitorType' => $allData['category'] ?? 'Exhibitor',
@@ -1554,12 +1594,12 @@ class ExhibitorRegistrationController extends Controller
                 $billingDetail->application_id = $application->id;
             }
             
-            // Use billing data from form
+            // Store billing_data ONLY in billing_details table (no fallbacks to exhibitor_data or application)
             if ($billingData && !empty($billingData)) {
                 $billingDetail->billing_company = $billingData['company_name'] ?? $allData['billing_company_name'] ?? '';
                 $billingDetail->contact_name = $contactName;
                 $billingDetail->email = $billingData['email'] ?? $allData['billing_email'] ?? $email;
-                $billingDetail->phone = $allData['landline'] ?? $billingData['telephone'] ?? $draft->landline ?? '';
+                $billingDetail->phone = $billingData['telephone'] ?? '';
                 $billingDetail->address = $billingData['address'] ?? $allData['billing_address'] ?? '';
                 $billingDetail->city_id = !empty($billingData['city']) ? trim($billingData['city']) : ($allData['billing_city'] ?? null);
                 $billingDetail->state_id = $billingData['state_id'] ?? $allData['billing_state_id'] ?? null;
@@ -1568,18 +1608,18 @@ class ExhibitorRegistrationController extends Controller
                 $billingDetail->gst_id = $allData['gst_no'] ?? null;
                 $billingDetail->same_as_basic = '0'; // Different from exhibitor
             } else {
-                // Fallback: Use application data if billing data not available
-                $billingDetail->billing_company = $application->company_name ?? '';
+                // Fallback: Use contact details only if billing data not available
+                $billingDetail->billing_company = $contactName;
                 $billingDetail->contact_name = $contactName;
                 $billingDetail->email = $email;
-                $billingDetail->phone = $application->landline ?? '';
-                $billingDetail->address = $application->address ?? '';
-                $billingDetail->city_id = $application->city_id ?? null;
-                $billingDetail->state_id = $application->state_id ?? null;
-                $billingDetail->country_id = $application->country_id ?? null;
-                $billingDetail->postal_code = $application->postal_code ?? '';
-                $billingDetail->gst_id = $application->gst_no ?? null;
-                $billingDetail->same_as_basic = '0';
+                $billingDetail->phone = $draft->contact_data['mobile'] ?? '';
+                $billingDetail->address = '';
+                $billingDetail->city_id = null;
+                $billingDetail->state_id = null;
+                $billingDetail->country_id = Country::where('code', 'IN')->first()->id;
+                $billingDetail->postal_code = '';
+                $billingDetail->gst_id = $allData['gst_no'] ?? null;
+                $billingDetail->same_as_basic = '1';
             }
             $billingDetail->save();
             
@@ -1603,6 +1643,8 @@ class ExhibitorRegistrationController extends Controller
             $invoice->payment_status = 'unpaid';
             $invoice->payment_due_date = null;
             $invoice->save();
+            
+            // Exhibitor data is now stored in applications table, so no need to create exhibitors_info
             
             DB::commit();
             
@@ -1722,6 +1764,9 @@ class ExhibitorRegistrationController extends Controller
             ->where('application_type', 'exhibitor-registration')
             ->firstOrFail();
         
+        // Load exhibitor info if exists
+        $exhibitorInfo = \App\Models\ExhibitorInfo::where('application_id', $application->id)->first();
+        
         // Security: Verify ownership using session
         $sessionApplicationId = session('exhibitor_registration_application_id');
         
@@ -1737,7 +1782,10 @@ class ExhibitorRegistrationController extends Controller
                 ->with('error', 'Invoice not found.');
         }
         
-        return view('exhibitor-registration.payment', compact('application'));
+        // Load billing detail (billing_data is stored in billing_details table)
+        $billingDetail = \App\Models\BillingDetail::where('application_id', $application->id)->first();
+        
+        return view('exhibitor-registration.payment', compact('application', 'billingDetail'));
     }
     
     /**
