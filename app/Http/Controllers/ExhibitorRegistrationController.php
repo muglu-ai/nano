@@ -897,7 +897,7 @@ class ExhibitorRegistrationController extends Controller
                 'billing_city' => ['required', 'string', 'max:255', 'regex:/^\S/'],
                 'billing_state_id' => 'required|exists:states,id',
                 'billing_country_id' => 'required|exists:countries,id',
-                'billing_postal_code' => ['required', 'string', 'max:20', 'regex:/^\S/'],
+                'billing_postal_code' => ['required', 'string','alpha_num', 'min:4', 'max:10'],
                 'billing_telephone' => 'required|string',
                 'billing_website' => 'required|url',
                 'billing_email' => 'nullable|email|max:255',
@@ -906,7 +906,7 @@ class ExhibitorRegistrationController extends Controller
                 'exhibitor_city' => ['required', 'string', 'max:255', 'regex:/^\S/'],
                 'exhibitor_state_id' => 'required|exists:states,id',
                 'exhibitor_country_id' => 'required|exists:countries,id',
-                'exhibitor_postal_code' => ['required', 'string', 'max:20', 'regex:/^\S/'],
+                'exhibitor_postal_code' => ['required', 'string', 'alpha_num', 'min:4', 'max:10'],
                 'exhibitor_telephone' => 'required|string',
                 'exhibitor_website' => 'required|url',
                 'contact_title' => 'required|in:Mr.,Mrs.,Ms.,Dr.,Prof.',
@@ -914,7 +914,24 @@ class ExhibitorRegistrationController extends Controller
                 'contact_last_name' => ['required', 'string', 'max:255', 'regex:/^\S/'],
                 'contact_designation' => ['required', 'string', 'max:255', 'regex:/^\S/'],
                 'contact_email' => ['required', 'email', 'max:255', 'regex:/^\S/'],
-                'contact_mobile' => 'required|string',
+                'contact_mobile' => ['required', function ($attribute, $value, $fail) use ($request) {
+
+                    $code = $request->contact_country_code;
+            
+                    //  India: 10 digits only
+                    if ($code === '+91') {
+                        if (!preg_match('/^[0-9]{9}$/', $value)) {
+                            $fail('Invalid Mobile Number');
+                        }
+                    }
+            
+                    //  Other countries: alphanumeric 8-15
+                    else {
+                        if (!preg_match('/^[A-Za-z0-9]{8,15}$/', $value)) {
+                            $fail('Invalid Mobile Number');
+                        }
+                    }
+                }],
                 'tan_status' => 'required|in:Registered,Unregistered',
                 'gst_status' => 'required|in:Registered,Unregistered',
                 'pan_no' => 'required|string|regex:/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/',

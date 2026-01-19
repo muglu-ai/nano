@@ -154,13 +154,7 @@
             <h2 class="text-center mb-4">Payment</h2>
 
           
-            {{-- Approval Pending Message --}}
-            <!-- @if(isset($approval_pending) && $approval_pending) -->
-                        <!-- <div class="alert alert-warning mb-4">
-                            <i class="fas fa-exclamation-triangle"></i>
-                            <strong>Approval Pending:</strong> Your profile is not approved yet for payment. Please wait for admin approval. You will be notified once your application is approved.
-                        </div>
-                    @endif -->
+        
             
             @if(session('error'))
                 <div class="alert alert-danger mb-4">
