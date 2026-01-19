@@ -706,25 +706,29 @@ $(document).ready(function() {
 
     // Update hidden fields on change
     $('#billing_telephone').on('blur', function() {
-        const phoneNumber = billingTelInput.getNumber(intlTelInputUtils.numberFormat.NATIONAL);
         const countryCode = billingTelInput.getSelectedCountryData().dialCode;
-        const nationalNumber = phoneNumber.replace(/\D/g, '');
+        // Use E164 format to avoid trunk prefix (leading 0)
+        const e164Number = billingTelInput.getNumber();
+        const nationalNumber = e164Number.replace('+' + countryCode, '').replace(/\D/g, '');
         $('#billing_telephone_country_code').val(countryCode);
         $('#billing_telephone_national').val(nationalNumber);
     });
 
     $('#exhibitor_telephone').on('blur', function() {
-        const phoneNumber = exhibitorTelInput.getNumber(intlTelInputUtils.numberFormat.NATIONAL);
         const countryCode = exhibitorTelInput.getSelectedCountryData().dialCode;
-        const nationalNumber = phoneNumber.replace(/\D/g, '');
+        // Use E164 format to avoid trunk prefix (leading 0)
+        const e164Number = exhibitorTelInput.getNumber();
+        const nationalNumber = e164Number.replace('+' + countryCode, '').replace(/\D/g, '');
         $('#exhibitor_telephone_country_code').val(countryCode);
         $('#exhibitor_telephone_national').val(nationalNumber);
     });
 
     $('#contact_mobile').on('blur', function() {
-        const phoneNumber = contactTelInput.getNumber(intlTelInputUtils.numberFormat.NATIONAL);
         const countryCode = contactTelInput.getSelectedCountryData().dialCode;
-        const nationalNumber = phoneNumber.replace(/\D/g, '');
+        // Use E164 format to avoid trunk prefix (leading 0)
+        const e164Number = contactTelInput.getNumber();
+        // Extract only national number without country code and leading 0
+        const nationalNumber = e164Number.replace('+' + countryCode, '').replace(/\D/g, '');
         $('#contact_country_code').val(countryCode);
         $('#contact_mobile_national').val(nationalNumber);
     });
@@ -1087,25 +1091,29 @@ $(document).ready(function() {
     function autoSave() {
         // Update phone fields before saving
         if (billingTelInput) {
-            const billingPhoneNumber = billingTelInput.getNumber(intlTelInputUtils.numberFormat.NATIONAL);
             const billingCountryCode = billingTelInput.getSelectedCountryData().dialCode;
-            const billingNationalNumber = billingPhoneNumber.replace(/\D/g, '');
+            // Use E164 format to avoid trunk prefix (leading 0)
+            const e164Number = billingTelInput.getNumber();
+            const billingNationalNumber = e164Number.replace('+' + billingCountryCode, '').replace(/\D/g, '');
             $('#billing_telephone_country_code').val(billingCountryCode);
             $('#billing_telephone_national').val(billingNationalNumber);
         }
         
         if (exhibitorTelInput) {
-            const exhibitorPhoneNumber = exhibitorTelInput.getNumber(intlTelInputUtils.numberFormat.NATIONAL);
             const exhibitorCountryCode = exhibitorTelInput.getSelectedCountryData().dialCode;
-            const exhibitorNationalNumber = exhibitorPhoneNumber.replace(/\D/g, '');
+            // Use E164 format to avoid trunk prefix (leading 0)
+            const e164Number = exhibitorTelInput.getNumber();
+            const exhibitorNationalNumber = e164Number.replace('+' + exhibitorCountryCode, '').replace(/\D/g, '');
             $('#exhibitor_telephone_country_code').val(exhibitorCountryCode);
             $('#exhibitor_telephone_national').val(exhibitorNationalNumber);
         }
         
         if (contactTelInput) {
-            const contactPhoneNumber = contactTelInput.getNumber(intlTelInputUtils.numberFormat.NATIONAL);
             const contactCountryCode = contactTelInput.getSelectedCountryData().dialCode;
-            const contactNationalNumber = contactPhoneNumber.replace(/\D/g, '');
+            // Use E164 format to avoid trunk prefix (leading 0)
+            const e164Number = contactTelInput.getNumber();
+            // Extract only national number without country code and leading 0
+            const contactNationalNumber = e164Number.replace('+' + contactCountryCode, '').replace(/\D/g, '');
             $('#contact_country_code').val(contactCountryCode);
             $('#contact_mobile_national').val(contactNationalNumber);
         }
@@ -1157,25 +1165,29 @@ $(document).ready(function() {
         
         // Update phone fields before submitting
         if (billingTelInput) {
-            const billingPhoneNumber = billingTelInput.getNumber(intlTelInputUtils.numberFormat.NATIONAL);
             const billingCountryCode = billingTelInput.getSelectedCountryData().dialCode;
-            const billingNationalNumber = billingPhoneNumber.replace(/\D/g, '');
+            // Use E164 format to avoid trunk prefix (leading 0)
+            const e164Number = billingTelInput.getNumber();
+            const billingNationalNumber = e164Number.replace('+' + billingCountryCode, '').replace(/\D/g, '');
             $('#billing_telephone_country_code').val(billingCountryCode);
             $('#billing_telephone_national').val(billingNationalNumber);
         }
         
         if (exhibitorTelInput) {
-            const exhibitorPhoneNumber = exhibitorTelInput.getNumber(intlTelInputUtils.numberFormat.NATIONAL);
             const exhibitorCountryCode = exhibitorTelInput.getSelectedCountryData().dialCode;
-            const exhibitorNationalNumber = exhibitorPhoneNumber.replace(/\D/g, '');
+            // Use E164 format to avoid trunk prefix (leading 0)
+            const e164Number = exhibitorTelInput.getNumber();
+            const exhibitorNationalNumber = e164Number.replace('+' + exhibitorCountryCode, '').replace(/\D/g, '');
             $('#exhibitor_telephone_country_code').val(exhibitorCountryCode);
             $('#exhibitor_telephone_national').val(exhibitorNationalNumber);
         }
         
         if (contactTelInput) {
-            const contactPhoneNumber = contactTelInput.getNumber(intlTelInputUtils.numberFormat.NATIONAL);
             const contactCountryCode = contactTelInput.getSelectedCountryData().dialCode;
-            const contactNationalNumber = contactPhoneNumber.replace(/\D/g, '');
+            // Use E164 format to avoid trunk prefix (leading 0)
+            const e164Number = contactTelInput.getNumber();
+            // Extract only national number without country code and leading 0
+            const contactNationalNumber = e164Number.replace('+' + contactCountryCode, '').replace(/\D/g, '');
             $('#contact_country_code').val(contactCountryCode);
             $('#contact_mobile_national').val(contactNationalNumber);
         }

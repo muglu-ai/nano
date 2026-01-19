@@ -1376,57 +1376,68 @@ class ExhibitorRegistrationController extends Controller
             'billing_email' => $billingData['email'] ?? $draft->company_email ?? '',
         ];
         
-        // Extract landline from draft/billingData
+        // Extract landline from draft/billingData - Keep with country code
         if (isset($billingData['telephone']) && !empty($billingData['telephone'])) {
             $landlineValue = $billingData['telephone'];
-            // Extract only digits from "country_code-national_number" format
+            // Keep format "country_code-national_number"
             if (preg_match('/^(\d+)-(\d+)$/', $landlineValue, $matches)) {
-                $allData['landline'] = $matches[2]; // Use only national number (digits only)
+                $allData['landline'] = $matches[1] . '-' . $matches[2]; // Keep country code with national number
             } else {
-                $allData['landline'] = preg_replace('/[^0-9]/', '', $landlineValue);
+                // If no hyphen, assume it's already formatted or needs default country code
+                $allData['landline'] = $landlineValue;
             }
         } elseif (!empty($draft->landline)) {
             $landlineValue = $draft->landline;
             if (preg_match('/^(\d+)-(\d+)$/', $landlineValue, $matches)) {
-                $allData['landline'] = $matches[2]; // Use only national number (digits only)
+                $allData['landline'] = $matches[1] . '-' . $matches[2]; // Keep country code with national number
             } else {
-                $allData['landline'] = preg_replace('/[^0-9]/', '', $landlineValue);
+                $allData['landline'] = $landlineValue;
             }
         }
         
-        // Extract contact mobile from contactData
+        // Extract contact mobile from contactData - Store with country code
         if (isset($contactData['mobile']) && !empty($contactData['mobile'])) {
             $mobile = trim($contactData['mobile']);
             // Remove all spaces first
             $mobile = preg_replace('/\s+/', '', $mobile);
             
-            // Try to match format with hyphen: "91-9806575432"
-            if (preg_match('/-(\d{10})$/', $mobile, $matches)) {
-                $allData['contact_mobile'] = $matches[1];
+            // Try to match format with hyphen: "91-9806575432" or "91-08896541230"
+            if (preg_match('/^(\d{1,4})-(\d+)$/', $mobile, $matches)) {
+                $nationalNumber = ltrim($matches[2], '0'); // Remove leading zeros
+                if (strlen($nationalNumber) == 10) {
+                    $allData['contact_mobile'] = $matches[1] . '-' . $nationalNumber;
+                }
             }
             // Try to match format with optional + and country code at start: "+91-9806575432"
-            elseif (preg_match('/^\+?\d{1,3}-(\d{10})$/', $mobile, $matches)) {
-                $allData['contact_mobile'] = $matches[1];
+            elseif (preg_match('/^\+?(\d{1,3})-(\d+)$/', $mobile, $matches)) {
+                $nationalNumber = ltrim($matches[2], '0'); // Remove leading zeros
+                if (strlen($nationalNumber) == 10) {
+                    $allData['contact_mobile'] = $matches[1] . '-' . $nationalNumber;
+                }
             }
             // Try to match format like "+919801217815" or "919801217815" (no hyphen)
-            elseif (preg_match('/^\+?(\d{1,4})(\d{10})$/', $mobile, $matches)) {
-                $allData['contact_mobile'] = $matches[2];
+            elseif (preg_match('/^\+?(\d{1,4})(\d{10,})$/', $mobile, $matches)) {
+                $nationalNumber = ltrim($matches[2], '0'); // Remove leading zeros
+                if (strlen($nationalNumber) == 10) {
+                    $allData['contact_mobile'] = $matches[1] . '-' . $nationalNumber;
+                }
             }
-            // Fallback: extract all digits and get last 10
+            // Fallback: extract all digits and format with default country code (91 for India)
             else {
                 $digitsOnly = preg_replace('/[^0-9]/', '', $mobile);
                 if (strlen($digitsOnly) >= 10) {
-                    $allData['contact_mobile'] = substr($digitsOnly, -10);
+                    $nationalNumber = substr($digitsOnly, -10);
+                    $nationalNumber = ltrim($nationalNumber, '0'); // Remove leading zeros
+                    // If there are extra digits, they might be country code
+                    if (strlen($digitsOnly) > 10) {
+                        $countryCode = substr($digitsOnly, 0, strlen($digitsOnly) - 10);
+                        $allData['contact_mobile'] = $countryCode . '-' . $nationalNumber;
+                    } else {
+                        $allData['contact_mobile'] = '91-' . $nationalNumber; // Default to India
+                    }
                 } else {
-                    $allData['contact_mobile'] = $digitsOnly;
-                }
-            }
-            
-            // Ensure exactly 10 digits
-            if (isset($allData['contact_mobile'])) {
-                $allData['contact_mobile'] = preg_replace('/[^0-9]/', '', (string) $allData['contact_mobile']);
-                if (strlen($allData['contact_mobile']) > 10) {
-                    $allData['contact_mobile'] = substr($allData['contact_mobile'], -10);
+                    $digitsOnly = ltrim($digitsOnly, '0'); // Remove leading zeros
+                    $allData['contact_mobile'] = '91-' . $digitsOnly; // Default to India
                 }
             }
         }
@@ -1564,11 +1575,11 @@ class ExhibitorRegistrationController extends Controller
                 $exhibitorPostalCode = $exhibitorData['postal_code'] ?? $draft->postal_code ?? '';
                 $exhibitorCountryId = $exhibitorData['country_id'] ?? $draft->country_id ?? Country::where('code', 'IN')->first()->id;
                 $exhibitorLandlineRaw = $exhibitorData['telephone'] ?? $draft->landline ?? '';
-                // Extract only digits from telephone/landline
+                // Keep format with country code "country_code-national_number"
                 if (preg_match('/^(\d+)-(\d+)$/', $exhibitorLandlineRaw, $matches)) {
-                    $exhibitorLandline = $matches[2];
+                    $exhibitorLandline = $matches[1] . '-' . $matches[2];
                 } else {
-                    $exhibitorLandline = preg_replace('/[^0-9]/', '', $exhibitorLandlineRaw);
+                    $exhibitorLandline = $exhibitorLandlineRaw;
                 }
                 $exhibitorWebsite = $this->normalizeWebsiteUrl($exhibitorData['website'] ?? $draft->website ?? '');
                 
@@ -1619,11 +1630,11 @@ class ExhibitorRegistrationController extends Controller
                 $exhibitorPostalCode = $exhibitorData['postal_code'] ?? $application->postal_code ?? '';
                 $exhibitorCountryId = $exhibitorData['country_id'] ?? $application->country_id ?? Country::where('code', 'IN')->first()->id;
                 $exhibitorLandlineRaw = $exhibitorData['telephone'] ?? $application->landline ?? '';
-                // Extract only digits from telephone/landline
+                // Keep format with country code "country_code-national_number"
                 if (preg_match('/^(\d+)-(\d+)$/', $exhibitorLandlineRaw, $matches)) {
-                    $exhibitorLandline = $matches[2];
+                    $exhibitorLandline = $matches[1] . '-' . $matches[2];
                 } else {
-                    $exhibitorLandline = preg_replace('/[^0-9]/', '', $exhibitorLandlineRaw);
+                    $exhibitorLandline = $exhibitorLandlineRaw;
                 }
                 $exhibitorWebsite = $this->normalizeWebsiteUrl($exhibitorData['website'] ?? $application->website ?? '');
                 
