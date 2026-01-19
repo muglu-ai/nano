@@ -1194,3 +1194,14 @@ Route::prefix('exhibitor')->name('exhibitor-registration.')->group(function () {
 
 // Ticket Registration Routes (Public) - Separate route file
 require __DIR__.'/tickets.php';
+
+// Delegate Panel Routes - Separate route file
+require __DIR__.'/delegate.php';
+
+// Admin routes for delegate notifications
+Route::middleware(['auth', AdminMiddleware::class])->prefix('admin/delegate-notifications')->name('admin.delegate-notifications.')->group(function () {
+    Route::get('/', [\App\Http\Controllers\Admin\AdminDelegateNotificationController::class, 'index'])->name('index');
+    Route::get('/create', [\App\Http\Controllers\Admin\AdminDelegateNotificationController::class, 'create'])->name('create');
+    Route::post('/', [\App\Http\Controllers\Admin\AdminDelegateNotificationController::class, 'store'])->name('store');
+    Route::post('/{id}/send', [\App\Http\Controllers\Admin\AdminDelegateNotificationController::class, 'send'])->name('send');
+});

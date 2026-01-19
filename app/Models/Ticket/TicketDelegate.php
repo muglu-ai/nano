@@ -51,5 +51,13 @@ class TicketDelegate extends Model
     {
         return trim("{$this->salutation} {$this->first_name} {$this->last_name}");
     }
+
+    /**
+     * Get notifications for this delegate
+     */
+    public function notifications()
+    {
+        return $this->hasMany(\App\Models\Ticket\DelegateNotification::class, 'delegate_id');
+    }
 }
 

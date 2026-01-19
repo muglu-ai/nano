@@ -70,5 +70,13 @@ class TicketContact extends Model
     {
         return $this->phone_verified_at !== null;
     }
+
+    /**
+     * Get notifications for this contact
+     */
+    public function notifications()
+    {
+        return $this->hasMany(\App\Models\Ticket\DelegateNotification::class, 'contact_id');
+    }
 }
 

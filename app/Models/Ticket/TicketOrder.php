@@ -94,5 +94,13 @@ class TicketOrder extends Model
     {
         return $this->belongsTo(TicketPromoCode::class, 'promo_code_id');
     }
+
+    /**
+     * Get upgrade request for this order (if it's an upgrade order)
+     */
+    public function upgradeRequest(): HasOne
+    {
+        return $this->hasOne(TicketUpgradeRequest::class, 'upgrade_order_id');
+    }
 }
 

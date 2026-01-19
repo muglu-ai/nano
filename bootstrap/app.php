@@ -17,6 +17,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'admin' => \App\Http\Middleware\AdminMiddleware::class,
             'admin.auth' => \App\Http\Middleware\Auth::class, // Admin and Super Admin authentication
             'validate.ticket.flow' => \App\Http\Middleware\ValidateTicketRegistrationFlow::class,
+            'delegate.auth' => \App\Http\Middleware\DelegateAuthMiddleware::class,
         ]);
         //
         // Don't append Auth middleware globally - apply it only to specific routes
@@ -44,6 +45,9 @@ return Application::configure(basePath: dirname(__DIR__))
             // Legacy ticket payment callbacks
             '/ticket-payment/*/callback',          // GET - Old ticket payment callback
             '/ticket-payment/webhook',             // POST - Ticket payment webhook
+            
+            // Delegate upgrade payment webhooks
+            '/delegate/upgrades/payment/webhook',  // POST - Upgrade payment webhook
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
