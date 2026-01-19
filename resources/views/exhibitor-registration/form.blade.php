@@ -12,6 +12,53 @@
         margin-bottom: 2rem;
         border: 1px solid #e0e0e0;
     }
+    /* .ui-intl-tel-input .iti input[type=tel] {
+        height: 100% !important;
+    }
+    .ui-intl-tel-input .iti__selected-flag {
+        height: 100% !important;
+        padding-left: 0px;
+    }
+    .ui-intl-tel-input .iti--allow-dropdown .iti__flag-container {
+        border: 2px solid #e0e0e0 !important;
+        border-radius: 0.375rem 0 0 0.375rem;
+    }
+    .iti--separate-dial-code .iti__selected-dial-code {
+        padding: 0px 0px !important;
+    }
+    .form-control, .form-select {
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 0.75rem;
+    transition: all 0.3s;
+}
+.iti__flag-container {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 1;
+    width: auto;
+    min-width: 95px;
+    max-width: 100px;
+    padding: 1px;
+}
+.iti__selected-flag
+ {
+    padding: 0 10px 0 12px !important;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    border-right: 2px solid #e0e0e0;
+    background-color: #f8f9fa;
+    border-radius: 8px 0 0 8px;
+    min-width: 95px;
+    max-width: 100px;
+    box-sizing: border-box;
+    overflow: visible;
+} */
+
 </style>
 @endpush
 @section('content')
@@ -123,12 +170,21 @@
                     </div>
 
                     <div class="col-md-4">
-                        <label for="promocode" class="form-label">Currency <span class="text-danger">*</span></label>
-                        <select class="form-select" id="currency" name="currency" required>
-                            <option value="">Select Currency</option>
-                            <option value="INR" {{ ($draft->currency ?? '') == 'INR' ? 'selected' : '' }}>INR</option>
-                            <option value="USD" {{ ($draft->currency ?? '') == 'USD' ? 'selected' : '' }}>USD</option>
-                        </select>
+                        <label for="currency" class="form-label">Currency <span class="text-danger">*</span></label>
+                        @if(isset($isCurrencyReadOnly) && $isCurrencyReadOnly)
+                            <select class="form-select" id="currency" name="currency" required disabled style="background-color: #e9ecef; cursor: not-allowed;">
+                                <option value="INR" {{ $selectedCurrency == 'INR' ? 'selected' : '' }}>INR</option>
+                                <option value="USD" {{ $selectedCurrency == 'USD' ? 'selected' : '' }}>USD</option>
+                            </select>
+                            <input type="hidden" name="currency" value="{{ $selectedCurrency }}">
+                            
+                        @else
+                            <select class="form-select" id="currency" name="currency" required>
+                                <option value="">Select Currency</option>
+                                <option value="INR" {{ ($draft->currency ?? '') == 'INR' ? 'selected' : '' }}>INR</option>
+                                <option value="USD" {{ ($draft->currency ?? '') == 'USD' ? 'selected' : '' }}>USD</option>
+                            </select>
+                        @endif
                         <div class="invalid-feedback"></div>
                     </div>
                 </div>
@@ -284,9 +340,9 @@
 
                 <div class="row mb-3">
                     <div class="col-md-6">
-                        <label for="billing_email" class="form-label">Billing Email</label>
+                        <label for="billing_email" class="form-label">Billing Email <span class="text-danger">*</span></label>
                         <input type="email" class="form-control" id="billing_email" name="billing_email" 
-                               value="{{ isset($draft->billing_data['email']) ? $draft->billing_data['email'] : ($draft->company_email ?? '') }}">
+                               value="{{ isset($draft->billing_data['email']) ? $draft->billing_data['email'] : ($draft->company_email ?? '') }}" required>
                         <div class="invalid-feedback"></div>
                     </div>
                 </div>
@@ -391,9 +447,9 @@
 
                 <div class="row mb-3">
                     <div class="col-md-6">
-                        <label for="exhibitor_email" class="form-label">Company Email</label>
+                        <label for="exhibitor_email" class="form-label">Company Email <span class="text-danger">*</span></label>
                         <input type="email" class="form-control" id="exhibitor_email" name="exhibitor_email" 
-                               value="{{ isset($draft->exhibitor_data['email']) ? $draft->exhibitor_data['email'] : '' }}">
+                               value="{{ isset($draft->exhibitor_data['email']) ? $draft->exhibitor_data['email'] : '' }}" required>
                         <div class="invalid-feedback"></div>
                     </div>
                 </div>
@@ -405,7 +461,7 @@
                     <div class="col-md-2">
                         <label for="contact_title" class="form-label">Title <span class="text-danger">*</span></label>
                         <select class="form-select" id="contact_title" name="contact_title" required>
-                            <option value=""></option>
+                            <option value="">Select Title</option>
                             <option value="Mr." {{ (isset($draft->contact_data['title']) && $draft->contact_data['title'] == 'Mr.') || ($draft->contact_title ?? '') == 'Mr.' ? 'selected' : '' }}>Mr.</option>
                             <option value="Mrs." {{ (isset($draft->contact_data['title']) && $draft->contact_data['title'] == 'Mrs.') || ($draft->contact_title ?? '') == 'Mrs.' ? 'selected' : '' }}>Mrs.</option>
                             <option value="Ms." {{ (isset($draft->contact_data['title']) && $draft->contact_data['title'] == 'Ms.') || ($draft->contact_title ?? '') == 'Ms.' ? 'selected' : '' }}>Ms.</option>
@@ -451,7 +507,7 @@
                 </div>
                 <div class="row mb-3">
                    
-                    <div class="col-md-6">
+                    <div class="col-md-6 ui-intl-tel-input">
                         <label for="contact_mobile" class="form-label">Mobile <span class="text-danger">*</span></label>
                         <input type="tel" class="form-control" id="contact_mobile" name="contact_mobile" 
                                value="{{ isset($draft->contact_data['mobile']) ? $draft->contact_data['mobile'] : ($draft->contact_mobile ?? '') }}" required>
@@ -536,16 +592,14 @@
 
 @push('styles')
 <style>
-    /* Fix intl-tel-input alignment with Bootstrap grid */
-    .col-md-6 .iti,
-    .col-md-4 .iti {
+    /* Fix intl-tel-input alignment with Bootstrap grid - Match startup zone (minimal styling) */
+    .iti {
         width: 100%;
-        display: block;
     }
     
     /* Ensure the input field container takes full width */
     .iti input[type=tel] {
-        width: 100% !important;
+        width: 100%;
     }
     
     /* Fix alignment for separate dial code mode */
@@ -563,20 +617,10 @@
         padding: 0 8px;
     }
     
-    /* Ensure proper height alignment */
-    .iti input[type=tel],
-    .iti .iti__selected-flag {
-        height: calc(1.5em + 0.75rem + 2px);
-    }
-    
     /* Match Bootstrap form-control styling */
     .iti input[type=tel].form-control {
         border-left: 0;
         border-radius: 0 0.375rem 0.375rem 0;
-    }
-    
-    .iti--separate-dial-code .iti__selected-flag {
-        border-radius: 0.375rem 0 0 0.375rem;
     }
 </style>
 @endpush
@@ -587,6 +631,14 @@
 @endif
 <script>
 $(document).ready(function() {
+    // Auto-calculate price on page load if currency is set from URL and booth details are available
+    @if(isset($isCurrencyReadOnly) && $isCurrencyReadOnly)
+        const initialBoothSpace = $('#booth_space').val();
+        const initialBoothSize = $('#booth_size').val();
+        if (initialBoothSpace && initialBoothSize) {
+            calculatePrice(initialBoothSpace, initialBoothSize);
+        }
+    @endif
     // Step-based progress functions
     function updateProgressByStep(stepNumber) {
         const progressBar = document.getElementById('progressBar');
@@ -768,8 +820,12 @@ $(document).ready(function() {
         }
     });
 
-    // Recalculate price when currency changes
+    // Recalculate price when currency changes (only if not disabled)
     $('#currency').on('change', function() {
+        // Skip if currency is disabled (read-only from URL parameter)
+        if ($(this).prop('disabled')) {
+            return;
+        }
         const boothSpace = $('#booth_space').val();
         const boothSize = $('#booth_size').val();
         
@@ -779,7 +835,12 @@ $(document).ready(function() {
     });
 
     function calculatePrice(boothSpace, boothSize) {
-        const currency = $('#currency').val() || 'INR';
+        // Get currency from select or hidden input (if disabled)
+        let currency = $('#currency').val();
+        if (!currency) {
+            // Try to get from hidden input if select is disabled
+            currency = $('input[name="currency"]').val() || 'INR';
+        }
         const currencySymbol = currency === 'USD' ? '$' : '₹';
         
         $.ajax({

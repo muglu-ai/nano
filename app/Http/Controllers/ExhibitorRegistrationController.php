@@ -31,6 +31,33 @@ class ExhibitorRegistrationController extends Controller
      */
     public function showForm(Request $request)
     {
+
+        // Handle currency parameter from URL (ind = INR, int = USD)
+        // Currency parameter is REQUIRED - if missing or invalid, redirect with error
+        $currencyParam = $request->query('currency');
+        $selectedCurrency = null;
+        $isCurrencyReadOnly = false;
+        
+        // Check if currency parameter is provided
+        if (!$currencyParam) {
+            // No currency parameter - redirect with error message
+            return redirect()->to('https://bengalurutechsummit.com/exhibition.php#exhibition-tariff')
+                ->with('error', 'Invalid URL. Please select a currency option.');
+        }
+        
+        // Validate currency parameter value
+        if ($currencyParam === 'ind') {
+            $selectedCurrency = 'INR';
+            $isCurrencyReadOnly = true;
+        } elseif ($currencyParam === 'int') {
+            $selectedCurrency = 'USD';
+            $isCurrencyReadOnly = true;
+        } else {
+            // Invalid currency parameter value - redirect with error message
+            return redirect()->to('https://bengalurutechsummit.com/exhibition.php#exhibition-tariff')
+                ->with('error', 'Invalid URL. Please select a valid currency option.');
+        }
+
         // Get draft data from database (if exists)
         $sessionId = session()->getId();
         $draft = StartupZoneDraft::where('session_id', $sessionId)
@@ -38,25 +65,30 @@ class ExhibitorRegistrationController extends Controller
             ->active()
             ->first();
         
-        // If no draft exists, create empty object for form
-        if (!$draft) {
-            $draft = new \stdClass();
-            $draft->progress_percentage = 0;
-            $draft->contact_data = [];
-            $draft->billing_data = [];
-            $draft->exhibitor_data = [];
-        }
-
+        // If no draft exists, create a new draft record
         if (!$draft) {
             $draft = new StartupZoneDraft();
             $draft->session_id = $sessionId;
             $draft->uuid = Str::uuid();
+            $draft->application_type = 'exhibitor-registration';
             $draft->expires_at = now()->addDays(30);
+            $draft->progress_percentage = 0;
+            $draft->contact_data = [];
+            $draft->billing_data = [];
+            $draft->exhibitor_data = [];
+            $draft->save();
+        }
+
+        // If currency is set from URL, override draft currency
+        if ($selectedCurrency) {
+            $draft->currency = $selectedCurrency;
+            $draft->save();
         }
         
         // Ensure progress_percentage exists
-        if (!isset($draft->progress_percentage)) {
+        if (!isset($draft->progress_percentage) || $draft->progress_percentage === null) {
             $draft->progress_percentage = 0;
+            $draft->save();
         }
         
         // Set default country to India if not set
@@ -137,7 +169,9 @@ class ExhibitorRegistrationController extends Controller
             'shellSchemeRate',
             'rawSpaceRate',
             'gstRate',
-            'boothSizes'
+            'boothSizes',
+            'selectedCurrency',
+            'isCurrencyReadOnly'
         ));
     }
 
