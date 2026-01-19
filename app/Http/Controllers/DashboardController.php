@@ -300,91 +300,141 @@ class DashboardController extends Controller
             return view('dashboard.index', compact('exhibitionParticipant', 'application', 'directoryFilled'));
             return view('dashboard.index');
         } elseif ($user->role == 'admin') {
-            $analytics = app('analytics');
-            $submittedApplications = $analytics['applicationsByStatus']['submitted'] ?? 0;
-            $approvedApplications = $analytics['applicationsByStatus']['approved'] ?? 0;
-            $rejectedApplications = $analytics['applicationsByStatus']['rejected'] ?? 0;
-            $inProgressApplications = $analytics['applicationsByStatus']['in progress'] ?? 0;
-            $totalApplications = $submittedApplications + $approvedApplications + $rejectedApplications + $inProgressApplications;
+            try {
+                $analytics = app('analytics');
+                $submittedApplications = $analytics['applicationsByStatus']['submitted'] ?? 0;
+                $approvedApplications = $analytics['applicationsByStatus']['approved'] ?? 0;
+                $rejectedApplications = $analytics['applicationsByStatus']['rejected'] ?? 0;
+                $inProgressApplications = $analytics['applicationsByStatus']['in progress'] ?? 0;
+                $totalApplications = $submittedApplications + $approvedApplications + $rejectedApplications + $inProgressApplications;
+            } catch (\Exception $e) {
+                Log::error('Error loading analytics: ' . $e->getMessage());
+                // Set default values if analytics fails
+                $analytics = [];
+                $submittedApplications = 0;
+                $approvedApplications = 0;
+                $rejectedApplications = 0;
+                $inProgressApplications = 0;
+                $totalApplications = 0;
+            }
 
             // Fetch applications grouped by billing country, excluding applications in sponsorships
-            $applicationsByCountry = DB::table('applications as a')
-                ->join('countries as c', 'a.billing_country_id', '=', 'c.id') // Use billing_country_id
-                ->leftJoin('sponsorships as s', 'a.id', '=', 's.application_id') // Check if application exists in sponsorships
-                ->select(
-                    'c.name as country_name',
-                    DB::raw('COUNT(a.id) as total_companies'),
-                    DB::raw('SUM(CAST(a.interested_sqm AS UNSIGNED)) as total_sqm')
-                )
-                ->where('a.submission_status', 'submitted')
-                ->whereNull('s.application_id') // Exclude applications present in sponsorships
-                ->groupBy('c.id')
-                ->having('total_sqm', '>', 0)
-
-                ->orderByDesc('total_companies')
-                ->get();
+            try {
+                $applicationsByCountry = DB::table('applications as a')
+                    ->join('countries as c', 'a.billing_country_id', '=', 'c.id') // Use billing_country_id
+                    ->leftJoin('sponsorships as s', 'a.id', '=', 's.application_id') // Check if application exists in sponsorships
+                    ->select(
+                        'c.name as country_name',
+                        DB::raw('COUNT(a.id) as total_companies'),
+                        DB::raw('SUM(CAST(a.interested_sqm AS UNSIGNED)) as total_sqm')
+                    )
+                    ->where('a.submission_status', 'submitted')
+                    ->whereNull('s.application_id') // Exclude applications present in sponsorships
+                    ->groupBy('c.id')
+                    ->having('total_sqm', '>', 0)
+                    ->orderByDesc('total_companies')
+                    ->get();
+            } catch (\Exception $e) {
+                Log::error('Error fetching applications by country: ' . $e->getMessage());
+                $applicationsByCountry = collect([]);
+            }
 
 //            dd($applicationsByCountry);
             // Count total unique countries with submitted applications (excluding sponsorships)
-            $totalCountries = DB::table('applications as a')
-                ->leftJoin('sponsorships as s', 'a.id', '=', 's.application_id') // Ensure exclusion
-                ->where('a.submission_status', 'submitted')
-                ->whereNull('s.application_id') // Exclude applications in sponsorships
-                ->distinct()
-                ->count('a.billing_country_id');
+            try {
+                $totalCountries = DB::table('applications as a')
+                    ->leftJoin('sponsorships as s', 'a.id', '=', 's.application_id') // Ensure exclusion
+                    ->where('a.submission_status', 'submitted')
+                    ->whereNull('s.application_id') // Exclude applications in sponsorships
+                    ->distinct()
+                    ->count('a.billing_country_id');
+            } catch (\Exception $e) {
+                Log::error('Error counting total countries: ' . $e->getMessage());
+                $totalCountries = 0;
+            }
 
             // Get India vs. International count and total sqm (excluding sponsorships)
-            $indiaInternationalStats = DB::table('applications as a')
-                ->join('countries as c', 'a.billing_country_id', '=', 'c.id') // Use billing_country_id
-                ->leftJoin('sponsorships as s', 'a.id', '=', 's.application_id') // Exclude sponsored applications
-                ->selectRaw("
-                    COUNT(DISTINCT CASE WHEN c.name = 'India' THEN a.id END) AS india_count,
-                    SUM(CASE WHEN c.name = 'India' THEN CAST(a.interested_sqm AS UNSIGNED) ELSE 0 END) AS india_sqm,
-                    COUNT(DISTINCT CASE WHEN c.name != 'India' THEN a.id END) AS international_count,
-                    SUM(CASE WHEN c.name != 'India' THEN CAST(a.interested_sqm AS UNSIGNED) ELSE 0 END) AS international_sqm
-                ")
-                ->where('a.submission_status', 'submitted')
-                ->whereNull('s.application_id') // Exclude applications in sponsorships
-                ->whereRaw("CAST(a.interested_sqm AS UNSIGNED) > 0 AND a.interested_sqm IS NOT NULL AND a.interested_sqm != ''") // Exclude zero and empty sqm values
-                ->first();
+            try {
+                $indiaInternationalStats = DB::table('applications as a')
+                    ->join('countries as c', 'a.billing_country_id', '=', 'c.id') // Use billing_country_id
+                    ->leftJoin('sponsorships as s', 'a.id', '=', 's.application_id') // Exclude sponsored applications
+                    ->selectRaw("
+                        COUNT(DISTINCT CASE WHEN c.name = 'India' THEN a.id END) AS india_count,
+                        SUM(CASE WHEN c.name = 'India' THEN CAST(a.interested_sqm AS UNSIGNED) ELSE 0 END) AS india_sqm,
+                        COUNT(DISTINCT CASE WHEN c.name != 'India' THEN a.id END) AS international_count,
+                        SUM(CASE WHEN c.name != 'India' THEN CAST(a.interested_sqm AS UNSIGNED) ELSE 0 END) AS international_sqm
+                    ")
+                    ->where('a.submission_status', 'submitted')
+                    ->whereNull('s.application_id') // Exclude applications in sponsorships
+                    ->whereRaw("CAST(a.interested_sqm AS UNSIGNED) > 0 AND a.interested_sqm IS NOT NULL AND a.interested_sqm != ''") // Exclude zero and empty sqm values
+                    ->first();
+            } catch (\Exception $e) {
+                Log::error('Error fetching India/International stats: ' . $e->getMessage());
+                $indiaInternationalStats = (object)[
+                    'india_count' => 0,
+                    'india_sqm' => 0,
+                    'international_count' => 0,
+                    'international_sqm' => 0
+                ];
+            }
 
-            $approvedApplicationsByCountry = DB::table('applications as a')
-                ->join('countries as c', 'a.billing_country_id', '=', 'c.id') // Use billing_country_id
-                ->leftJoin('sponsorships as s', 'a.id', '=', 's.application_id') // Exclude applications in sponsorships
-                ->select(
-                    'c.name as country_name',
-                    DB::raw('COUNT(a.id) as total_companies'),
-                    DB::raw('SUM(CAST(a.allocated_sqm AS UNSIGNED)) as total_sqm')
-                )
-                ->where('a.submission_status', 'approved') // Only approved applications
-                ->whereNull('s.application_id') // Exclude applications in sponsorships
-                ->groupBy('c.id')
-                ->having('total_sqm', '>', 0)
-                ->orderByDesc('total_companies')
-                ->get();
+            try {
+                $approvedApplicationsByCountry = DB::table('applications as a')
+                    ->join('countries as c', 'a.billing_country_id', '=', 'c.id') // Use billing_country_id
+                    ->leftJoin('sponsorships as s', 'a.id', '=', 's.application_id') // Exclude applications in sponsorships
+                    ->select(
+                        'c.name as country_name',
+                        DB::raw('COUNT(a.id) as total_companies'),
+                        DB::raw('SUM(CAST(a.allocated_sqm AS UNSIGNED)) as total_sqm')
+                    )
+                    ->where('a.submission_status', 'approved') // Only approved applications
+                    ->whereNull('s.application_id') // Exclude applications in sponsorships
+                    ->groupBy('c.id')
+                    ->having('total_sqm', '>', 0)
+                    ->orderByDesc('total_companies')
+                    ->get();
+            } catch (\Exception $e) {
+                Log::error('Error fetching approved applications by country: ' . $e->getMessage());
+                $approvedApplicationsByCountry = collect([]);
+            }
 
             // Count total unique countries with approved applications (excluding sponsorships)
-            $totalApprovedCountries = DB::table('applications as a')
-                ->leftJoin('sponsorships as s', 'a.id', '=', 's.application_id') // Ensure exclusion
-                ->where('a.submission_status', 'approved') // Only approved applications
-                ->whereNull('s.application_id') // Exclude applications in sponsorships
-                ->distinct()
-                ->count('a.billing_country_id');
+            try {
+                $totalApprovedCountries = DB::table('applications as a')
+                    ->leftJoin('sponsorships as s', 'a.id', '=', 's.application_id') // Ensure exclusion
+                    ->where('a.submission_status', 'approved') // Only approved applications
+                    ->whereNull('s.application_id') // Exclude applications in sponsorships
+                    ->distinct()
+                    ->count('a.billing_country_id');
+            } catch (\Exception $e) {
+                Log::error('Error counting approved countries: ' . $e->getMessage());
+                $totalApprovedCountries = 0;
+            }
 
             // Get India vs. International count and total sqm (excluding sponsorships)
-            $approvedIndiaInternationalStats = DB::table('applications as a')
-                ->join('countries as c', 'a.billing_country_id', '=', 'c.id') // Use billing_country_id
-                ->leftJoin('sponsorships as s', 'a.id', '=', 's.application_id') // Exclude sponsored applications
-                ->selectRaw("
-                    COUNT(DISTINCT CASE WHEN c.name = 'India' THEN a.id END) AS india_count,
-                    SUM(CASE WHEN c.name = 'India' THEN CAST(a.allocated_sqm AS UNSIGNED) ELSE 0 END) AS india_sqm,
-                    COUNT(DISTINCT CASE WHEN c.name != 'India' THEN a.id END) AS international_count,
-                    SUM(CASE WHEN c.name != 'India' THEN CAST(a.allocated_sqm AS UNSIGNED) ELSE 0 END) AS international_sqm
-                ")
-                ->where('a.submission_status', 'approved') // Only approved applications
-                ->whereNull('s.application_id') // Exclude applications in sponsorships
-                ->whereRaw("a.allocated_sqm IS NOT NULL") // Exclude null and zero sqm values
-                ->first();
+            try {
+                $approvedIndiaInternationalStats = DB::table('applications as a')
+                    ->join('countries as c', 'a.billing_country_id', '=', 'c.id') // Use billing_country_id
+                    ->leftJoin('sponsorships as s', 'a.id', '=', 's.application_id') // Exclude sponsored applications
+                    ->selectRaw("
+                        COUNT(DISTINCT CASE WHEN c.name = 'India' THEN a.id END) AS india_count,
+                        SUM(CASE WHEN c.name = 'India' THEN CAST(a.allocated_sqm AS UNSIGNED) ELSE 0 END) AS india_sqm,
+                        COUNT(DISTINCT CASE WHEN c.name != 'India' THEN a.id END) AS international_count,
+                        SUM(CASE WHEN c.name != 'India' THEN CAST(a.allocated_sqm AS UNSIGNED) ELSE 0 END) AS international_sqm
+                    ")
+                    ->where('a.submission_status', 'approved') // Only approved applications
+                    ->whereNull('s.application_id') // Exclude applications in sponsorships
+                    ->whereRaw("a.allocated_sqm IS NOT NULL") // Exclude null and zero sqm values
+                    ->first();
+            } catch (\Exception $e) {
+                Log::error('Error fetching approved India/International stats: ' . $e->getMessage());
+                $approvedIndiaInternationalStats = (object)[
+                    'india_count' => 0,
+                    'india_sqm' => 0,
+                    'international_count' => 0,
+                    'international_sqm' => 0
+                ];
+            }
 
             // give me sql query for the above query
 
@@ -393,21 +443,32 @@ class DashboardController extends Controller
 //            dd($approvedIndiaInternationalStats);
 
             //count the CoExhibitors where status pending
-            $coExhibitorCount = CoExhibitor::where('status', 'pending')->count();
-            $approvedCoexhibitorCount = CoExhibitor::where('status', 'approved')->count();
+            try {
+                $coExhibitorCount = CoExhibitor::where('status', 'pending')->count();
+                $approvedCoexhibitorCount = CoExhibitor::where('status', 'approved')->count();
+            } catch (\Exception $e) {
+                Log::error('Error counting CoExhibitors: ' . $e->getMessage());
+                $coExhibitorCount = 0;
+                $approvedCoexhibitorCount = 0;
+            }
 
-
-            return view('dashboard.admin_new', compact(
-                'analytics',
-                'applicationsByCountry',
-                'totalCountries',
-                'indiaInternationalStats',
-                'approvedApplicationsByCountry',
-                'totalApprovedCountries',
-                'approvedIndiaInternationalStats',
-                'coExhibitorCount',
-                'approvedCoexhibitorCount'
-            ));
+            try {
+                return view('dashboard.admin_new', compact(
+                    'analytics',
+                    'applicationsByCountry',
+                    'totalCountries',
+                    'indiaInternationalStats',
+                    'approvedApplicationsByCountry',
+                    'totalApprovedCountries',
+                    'approvedIndiaInternationalStats',
+                    'coExhibitorCount',
+                    'approvedCoexhibitorCount'
+                ));
+            } catch (\Exception $e) {
+                Log::error('Error rendering admin dashboard view: ' . $e->getMessage());
+                Log::error('Stack trace: ' . $e->getTraceAsString());
+                return response()->view('errors.500', ['message' => 'Error loading dashboard: ' . $e->getMessage()], 500);
+            }
         }
 
 
