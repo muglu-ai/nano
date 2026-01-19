@@ -314,7 +314,7 @@
                         <label for="billing_postal_code" class="form-label">Billing Postal Code <span class="text-danger">*</span></label>
                         <input type="text" class="form-control" id="billing_postal_code" name="billing_postal_code" 
                                value="{{ isset($draft->billing_data['postal_code']) ? $draft->billing_data['postal_code'] : ($draft->postal_code ?? '') }}" 
-                               pattern="[0-9]{6}" maxlength="6" required>
+                               pattern="[A-Za-z0-9]{4,10}" minlength="4" maxlength="10" required>
                         <div class="invalid-feedback"></div>
                     </div>
                     
@@ -421,7 +421,7 @@
                         <label for="exhibitor_postal_code" class="form-label">Postal Code <span class="text-danger">*</span></label>
                         <input type="text" class="form-control" id="exhibitor_postal_code" name="exhibitor_postal_code" 
                                value="{{ isset($draft->exhibitor_data['postal_code']) ? $draft->exhibitor_data['postal_code'] : ($draft->postal_code ?? '') }}" 
-                               pattern="[0-9]{6}" maxlength="6" required>
+                               pattern="[A-Za-z0-9]{4,10}" minlength="4" maxlength="10" required>
                         <div class="invalid-feedback"></div>
                     </div>
                     
@@ -1336,6 +1336,52 @@ $(document).ready(function() {
     }
 });
 </script>
+
+<script>
+document.querySelector("form").addEventListener("submit", function (e) {
+
+    const phoneInput = document.querySelector("#contact_mobile");
+    const iti = window.intlTelInputGlobals.getInstance(phoneInput);
+    const countryData = iti.getSelectedCountryData();
+    const dialCode = "+" + countryData.dialCode;
+
+    // Get number without spaces and without national trunk 0
+    let cleanNumber = iti.getNumber(intlTelInputUtils.numberFormat.E164);
+    cleanNumber = cleanNumber.replace("+" + countryData.dialCode, "");
+
+    // 🇮🇳 INDIA VALIDATION
+    if (dialCode === "+91") {
+
+        const indiaRegex = /^[6-9][0-9]{9}$/;
+
+        if (!indiaRegex.test(cleanNumber)) {
+            alert("Invalid Mobile Number");
+            phoneInput.focus();
+            e.preventDefault();
+            return false;
+        }
+    }
+
+    // 🌍 INTERNATIONAL VALIDATION
+    else {
+
+        const intlRegex = /^[A-Za-z0-9]{8,15}$/;
+
+        if (!intlRegex.test(cleanNumber)) {
+            alert("Invalid Mobile Number");
+            phoneInput.focus();
+            e.preventDefault();
+            return false;
+        }
+    }
+
+    // Put correct number back (without 0, without country code)
+    phoneInput.value = cleanNumber.replace(/^0+/, '').replace(/^\+/, '');
+
+});
+</script>
+
+
 @endpush
 @endsection
 
