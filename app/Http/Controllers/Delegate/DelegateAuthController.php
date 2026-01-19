@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Delegate;
 use App\Http\Controllers\Controller;
 use App\Models\Ticket\TicketAccount;
 use App\Models\Ticket\TicketContact;
+use App\Models\Ticket\TicketDelegate;
 use App\Models\Ticket\TicketOtpRequest;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -40,8 +41,28 @@ class DelegateAuthController extends Controller
             'password' => 'required',
         ]);
 
-        // Find contact by email
+        // First, try to find contact by email
         $contact = TicketContact::where('email', $credentials['email'])->first();
+
+        // If not found in contacts, check if it's a delegate email
+        if (!$contact) {
+            $delegate = TicketDelegate::where('email', $credentials['email'])->first();
+            
+            if ($delegate) {
+                // Create or get contact for this delegate
+                $contact = TicketContact::where('email', $credentials['email'])->first();
+                
+                if (!$contact) {
+                    // Create contact from delegate information
+                    $contact = TicketContact::create([
+                        'name' => trim("{$delegate->salutation} {$delegate->first_name} {$delegate->last_name}"),
+                        'email' => $delegate->email,
+                        'phone' => $delegate->phone,
+                        'email_verified_at' => now(), // Assume verified since they have a ticket
+                    ]);
+                }
+            }
+        }
 
         if (!$contact) {
             return back()->withErrors([
@@ -97,7 +118,28 @@ class DelegateAuthController extends Controller
             'email' => 'required|email',
         ]);
 
+        // First, try to find contact by email
         $contact = TicketContact::where('email', $request->email)->first();
+
+        // If not found in contacts, check if it's a delegate email
+        if (!$contact) {
+            $delegate = TicketDelegate::where('email', $request->email)->first();
+            
+            if ($delegate) {
+                // Create or get contact for this delegate
+                $contact = TicketContact::where('email', $request->email)->first();
+                
+                if (!$contact) {
+                    // Create contact from delegate information
+                    $contact = TicketContact::create([
+                        'name' => trim("{$delegate->salutation} {$delegate->first_name} {$delegate->last_name}"),
+                        'email' => $delegate->email,
+                        'phone' => $delegate->phone,
+                        'email_verified_at' => now(), // Assume verified since they have a ticket
+                    ]);
+                }
+            }
+        }
 
         if (!$contact) {
             return back()->withErrors([
@@ -136,35 +178,97 @@ class DelegateAuthController extends Controller
             $eventYear = config('constants.EVENT_YEAR', date('Y'));
             $supportEmail = config('constants.SUPPORT_EMAIL', 'support@example.com');
 
+            // Validate email template exists
+            if (!view()->exists('emails.delegate-otp')) {
+                throw new \Exception('Email template emails.delegate-otp not found.');
+            }
+
+            // Validate mail configuration
+            $mailDriver = config('mail.default');
+            if (empty($mailDriver)) {
+                throw new \Exception('Mail driver not configured. Please check .env file.');
+            }
+
             Mail::send('emails.delegate-otp', [
                 'otp' => $otp,
                 'eventName' => $eventName,
                 'eventYear' => $eventYear,
                 'supportEmail' => $supportEmail,
             ], function ($message) use ($contact, $eventName, $eventYear) {
-                $message->to($contact->email, $contact->name)
+                $message->to($contact->email, $contact->name ?? $contact->email)
                     ->subject("OTP for Delegate Login - {$eventName} {$eventYear}");
             });
 
-            Log::info('Delegate OTP sent', ['contact_id' => $contact->id, 'email' => $contact->email]);
+            Log::info('Delegate OTP sent successfully', [
+                'contact_id' => $contact->id,
+                'email' => $contact->email,
+                'otp_request_id' => $otpRequest->id,
+            ]);
 
             if ($request->expectsJson() || $request->ajax()) {
                 return response()->json(['success' => true, 'message' => 'OTP has been sent to your email address.']);
             }
 
             return back()->with('success', 'OTP has been sent to your email address.');
-        } catch (\Exception $e) {
-            Log::error('Failed to send delegate OTP', [
+        } catch (\Swift_TransportException $e) {
+            // SMTP/Transport specific errors
+            $errorMessage = $e->getMessage();
+            $detailedError = 'Mail transport error: ' . $errorMessage;
+            
+            Log::error('Failed to send delegate OTP - Transport Error', [
                 'contact_id' => $contact->id,
-                'error' => $e->getMessage(),
+                'email' => $contact->email,
+                'error' => $errorMessage,
+                'trace' => $e->getTraceAsString(),
+                'mail_driver' => config('mail.default'),
+                'mail_host' => config('mail.mailers.smtp.host'),
             ]);
 
+            // Show detailed error in development, generic in production
+            $userMessage = app()->environment('local', 'development') 
+                ? "Failed to send OTP: {$errorMessage}. Please check mail configuration."
+                : 'Failed to send OTP. Please check your mail configuration or contact support.';
+
             if ($request->expectsJson() || $request->ajax()) {
-                return response()->json(['success' => false, 'errors' => ['email' => ['Failed to send OTP. Please try again.']]], 422);
+                return response()->json([
+                    'success' => false, 
+                    'errors' => ['email' => [$userMessage]],
+                    'debug' => app()->environment('local') ? $detailedError : null
+                ], 422);
             }
 
             return back()->withErrors([
-                'email' => 'Failed to send OTP. Please try again.',
+                'email' => $userMessage,
+            ])->withInput($request->only('email'));
+        } catch (\Exception $e) {
+            $errorMessage = $e->getMessage();
+            $detailedError = 'Error: ' . $errorMessage;
+            
+            Log::error('Failed to send delegate OTP', [
+                'contact_id' => $contact->id,
+                'email' => $contact->email,
+                'error' => $errorMessage,
+                'error_class' => get_class($e),
+                'trace' => $e->getTraceAsString(),
+                'mail_driver' => config('mail.default'),
+                'mail_host' => config('mail.mailers.smtp.host') ?? 'not configured',
+            ]);
+
+            // Show detailed error in development, generic in production
+            $userMessage = app()->environment('local', 'development') 
+                ? "Failed to send OTP: {$errorMessage}"
+                : 'Failed to send OTP. Please try again or contact support.';
+
+            if ($request->expectsJson() || $request->ajax()) {
+                return response()->json([
+                    'success' => false, 
+                    'errors' => ['email' => [$userMessage]],
+                    'debug' => app()->environment('local') ? $detailedError : null
+                ], 422);
+            }
+
+            return back()->withErrors([
+                'email' => $userMessage,
             ])->withInput($request->only('email'));
         }
     }
@@ -179,7 +283,28 @@ class DelegateAuthController extends Controller
             'otp' => 'required|string|size:6',
         ]);
 
+        // First, try to find contact by email
         $contact = TicketContact::where('email', $request->email)->first();
+
+        // If not found in contacts, check if it's a delegate email
+        if (!$contact) {
+            $delegate = TicketDelegate::where('email', $request->email)->first();
+            
+            if ($delegate) {
+                // Create or get contact for this delegate
+                $contact = TicketContact::where('email', $request->email)->first();
+                
+                if (!$contact) {
+                    // Create contact from delegate information
+                    $contact = TicketContact::create([
+                        'name' => trim("{$delegate->salutation} {$delegate->first_name} {$delegate->last_name}"),
+                        'email' => $delegate->email,
+                        'phone' => $delegate->phone,
+                        'email_verified_at' => now(), // Assume verified since they have a ticket
+                    ]);
+                }
+            }
+        }
 
         if (!$contact) {
             return back()->withErrors([
@@ -293,7 +418,28 @@ class DelegateAuthController extends Controller
             'email' => 'required|email',
         ]);
 
+        // First, try to find contact by email
         $contact = TicketContact::where('email', $request->email)->first();
+
+        // If not found in contacts, check if it's a delegate email
+        if (!$contact) {
+            $delegate = TicketDelegate::where('email', $request->email)->first();
+            
+            if ($delegate) {
+                // Create or get contact for this delegate
+                $contact = TicketContact::where('email', $request->email)->first();
+                
+                if (!$contact) {
+                    // Create contact from delegate information
+                    $contact = TicketContact::create([
+                        'name' => trim("{$delegate->salutation} {$delegate->first_name} {$delegate->last_name}"),
+                        'email' => $delegate->email,
+                        'phone' => $delegate->phone,
+                        'email_verified_at' => now(), // Assume verified since they have a ticket
+                    ]);
+                }
+            }
+        }
 
         if (!$contact) {
             // Don't reveal if email exists
@@ -355,14 +501,50 @@ class DelegateAuthController extends Controller
                 ->withErrors(['email' => 'Invalid reset link.']);
         }
 
+        // First, try to find contact by email
         $contact = TicketContact::where('email', $email)->first();
-        if (!$contact || !$contact->account) {
+
+        // If not found in contacts, check if it's a delegate email
+        if (!$contact) {
+            $delegate = TicketDelegate::where('email', $email)->first();
+            
+            if ($delegate) {
+                // Create or get contact for this delegate
+                $contact = TicketContact::where('email', $email)->first();
+                
+                if (!$contact) {
+                    // Create contact from delegate information
+                    $contact = TicketContact::create([
+                        'name' => trim("{$delegate->salutation} {$delegate->first_name} {$delegate->last_name}"),
+                        'email' => $delegate->email,
+                        'phone' => $delegate->phone,
+                        'email_verified_at' => now(), // Assume verified since they have a ticket
+                    ]);
+                }
+            }
+        }
+
+        if (!$contact) {
+            return redirect()->route('delegate.password.forgot')
+                ->withErrors(['email' => 'Invalid reset link.']);
+        }
+
+        // Get or create account
+        $account = $contact->account;
+        if (!$account) {
+            $account = TicketAccount::create([
+                'contact_id' => $contact->id,
+                'status' => 'active',
+            ]);
+        }
+
+        if (!$account) {
             return redirect()->route('delegate.password.forgot')
                 ->withErrors(['email' => 'Invalid reset link.']);
         }
 
         // Verify token
-        if (!Hash::check($token, $contact->account->remember_token)) {
+        if (!Hash::check($token, $account->remember_token)) {
             return redirect()->route('delegate.password.forgot')
                 ->withErrors(['email' => 'Invalid or expired reset link.']);
         }
@@ -384,23 +566,59 @@ class DelegateAuthController extends Controller
             'password' => 'required|string|min:8|confirmed',
         ]);
 
+        // First, try to find contact by email
         $contact = TicketContact::where('email', $request->email)->first();
 
-        if (!$contact || !$contact->account) {
+        // If not found in contacts, check if it's a delegate email
+        if (!$contact) {
+            $delegate = TicketDelegate::where('email', $request->email)->first();
+            
+            if ($delegate) {
+                // Create or get contact for this delegate
+                $contact = TicketContact::where('email', $request->email)->first();
+                
+                if (!$contact) {
+                    // Create contact from delegate information
+                    $contact = TicketContact::create([
+                        'name' => trim("{$delegate->salutation} {$delegate->first_name} {$delegate->last_name}"),
+                        'email' => $delegate->email,
+                        'phone' => $delegate->phone,
+                        'email_verified_at' => now(), // Assume verified since they have a ticket
+                    ]);
+                }
+            }
+        }
+
+        if (!$contact) {
+            return back()->withErrors([
+                'email' => 'Invalid reset link.',
+            ]);
+        }
+
+        // Get or create account
+        $account = $contact->account;
+        if (!$account) {
+            $account = TicketAccount::create([
+                'contact_id' => $contact->id,
+                'status' => 'active',
+            ]);
+        }
+
+        if (!$account) {
             return back()->withErrors([
                 'email' => 'Invalid reset link.',
             ]);
         }
 
         // Verify token
-        if (!Hash::check($request->token, $contact->account->remember_token)) {
+        if (!Hash::check($request->token, $account->remember_token)) {
             return back()->withErrors([
                 'token' => 'Invalid or expired reset link.',
             ]);
         }
 
         // Update password
-        $contact->account->update([
+        $account->update([
             'password' => $request->password,
             'remember_token' => null, // Clear reset token
         ]);
