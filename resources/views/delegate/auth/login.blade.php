@@ -134,22 +134,35 @@
 
             fetch('{{ route("delegate.otp.send") }}', {
                 method: 'POST',
-                body: formData
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'application/json'
+                }
             })
-            .then(response => response.json())
+            .then(response => {
+                // Check if response is ok
+                if (!response.ok) {
+                    return response.json().then(data => {
+                        throw new Error(data.errors?.email?.[0] || data.message || 'Failed to send OTP');
+                    });
+                }
+                return response.json();
+            })
             .then(data => {
-                if (data.success || response.ok) {
+                if (data.success) {
                     document.getElementById('otp-send-form').style.display = 'none';
                     document.getElementById('otp-verify-form').style.display = 'block';
                     document.getElementById('verify-email').value = email;
-                    alert('OTP sent to your email!');
+                    alert('OTP sent to your email! Please check your inbox.');
                 } else {
-                    alert('Failed to send OTP. Please try again.');
+                    const errorMsg = data.errors?.email?.[0] || data.message || 'Failed to send OTP. Please try again.';
+                    alert(errorMsg);
                 }
             })
             .catch(error => {
                 console.error('Error:', error);
-                alert('Failed to send OTP. Please try again.');
+                alert(error.message || 'Failed to send OTP. Please try again.');
             });
         });
 

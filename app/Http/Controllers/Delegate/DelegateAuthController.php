@@ -446,22 +446,36 @@ class DelegateAuthController extends Controller
             return back()->with('success', 'If an account exists with this email, a password reset link has been sent.');
         }
 
+        // Get or create account
         $account = $contact->account;
-        if (!$account || !$account->password) {
-            return back()->with('success', 'If an account exists with this email, a password reset link has been sent.');
+        if (!$account) {
+            $account = TicketAccount::create([
+                'contact_id' => $contact->id,
+                'status' => 'active',
+            ]);
         }
 
         // Generate reset token
         $token = Str::random(64);
         
-        // Store token in database (you may want to create a password_reset_tokens table for delegates)
-        // For now, we'll use a simple approach with remember_token
+        // Store token in database using remember_token
         $account->update([
             'remember_token' => Hash::make($token),
         ]);
 
         // Send reset email
         try {
+            // Validate email template exists
+            if (!view()->exists('emails.delegate-password-reset')) {
+                throw new \Exception('Email template emails.delegate-password-reset not found.');
+            }
+
+            // Validate mail configuration
+            $mailDriver = config('mail.default');
+            if (empty($mailDriver)) {
+                throw new \Exception('Mail driver not configured. Please check .env file.');
+            }
+
             $resetUrl = route('delegate.password.reset', ['token' => $token, 'email' => $contact->email]);
             $eventName = config('constants.EVENT_NAME', 'Event');
             $eventYear = config('constants.EVENT_YEAR', date('Y'));
@@ -472,19 +486,57 @@ class DelegateAuthController extends Controller
                 'eventName' => $eventName,
                 'eventYear' => $eventYear,
             ], function ($message) use ($contact, $eventName, $eventYear) {
-                $message->to($contact->email, $contact->name)
+                $message->to($contact->email, $contact->name ?? $contact->email)
                     ->subject("Password Reset Request - {$eventName} {$eventYear}");
             });
 
-            return back()->with('success', 'Password reset link has been sent to your email address.');
-        } catch (\Exception $e) {
-            Log::error('Failed to send password reset email', [
+            Log::info('Password reset link sent successfully', [
                 'contact_id' => $contact->id,
-                'error' => $e->getMessage(),
+                'email' => $contact->email,
             ]);
 
+            return back()->with('success', 'Password reset link has been sent to your email address.');
+        } catch (\Swift_TransportException $e) {
+            // SMTP/Transport specific errors
+            $errorMessage = $e->getMessage();
+            
+            Log::error('Failed to send password reset email - Transport Error', [
+                'contact_id' => $contact->id,
+                'email' => $contact->email,
+                'error' => $errorMessage,
+                'trace' => $e->getTraceAsString(),
+                'mail_driver' => config('mail.default'),
+                'mail_host' => config('mail.mailers.smtp.host'),
+            ]);
+
+            // Show detailed error in development, generic in production
+            $userMessage = app()->environment('local', 'development') 
+                ? "Failed to send password reset link: {$errorMessage}. Please check mail configuration."
+                : 'Failed to send password reset link. Please check your mail configuration or contact support.';
+
             return back()->withErrors([
-                'email' => 'Failed to send password reset link. Please try again.',
+                'email' => $userMessage,
+            ]);
+        } catch (\Exception $e) {
+            $errorMessage = $e->getMessage();
+            
+            Log::error('Failed to send password reset email', [
+                'contact_id' => $contact->id,
+                'email' => $contact->email,
+                'error' => $errorMessage,
+                'error_class' => get_class($e),
+                'trace' => $e->getTraceAsString(),
+                'mail_driver' => config('mail.default'),
+                'mail_host' => config('mail.mailers.smtp.host') ?? 'not configured',
+            ]);
+
+            // Show detailed error in development, generic in production
+            $userMessage = app()->environment('local', 'development') 
+                ? "Failed to send password reset link: {$errorMessage}"
+                : 'Failed to send password reset link. Please try again or contact support.';
+
+            return back()->withErrors([
+                'email' => $userMessage,
             ]);
         }
     }
