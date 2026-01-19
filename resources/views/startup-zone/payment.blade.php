@@ -148,13 +148,9 @@
             </div>
         </div>
     </div>
-    <div class="row justify-content-center">
-        <div class="col-md-8">
-            <div class="card shadow-sm">
-                <div class="card-header bg-primary text-white">
-                    <h4 class="mb-0"><i class="fas fa-credit-card"></i> Payment</h4>
-                </div>
-                <div class="card-body">
+    <div class="row">
+        <div class="col-12">
+            <h2 class="text-center mb-4">Payment</h2>
                     {{-- Approval Pending Message --}}
                     @if(isset($approval_pending) && $approval_pending)
                         <div class="alert alert-warning">

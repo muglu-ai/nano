@@ -2127,5 +2127,11 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 </script>
+<!-- Postal Code Validation -->
+<script>
+document.getElementById('billing_postal_code','exhibitor_postal_code').addEventListener('input', function() {
+    this.value = this.value.replace(/[^0-9]/g, '');
+});
+</script>
 @endpush
 @endsection
