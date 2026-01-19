@@ -331,19 +331,19 @@ class ExhibitorRegistrationController extends Controller
         }
         
         $billingData = [
-            'company_name' => $request->input('billing_company_name'),
-            'address' => $request->input('billing_address'),
+            'company_name' => trim($request->input('billing_company_name') ?? ''),
+            'address' => trim($request->input('billing_address') ?? ''),
             'country_id' => $request->input('billing_country_id'),
             'state_id' => $request->input('billing_state_id'),
-            'city' => $request->input('billing_city'),
-            'postal_code' => $request->input('billing_postal_code'),
+            'city' => trim($request->input('billing_city') ?? ''),
+            'postal_code' => trim($request->input('billing_postal_code') ?? ''),
             'telephone' => $billingTelephoneNational ? ($billingTelephoneCountryCode . '-' . $billingTelephoneNational) : '',
             'website' => $this->normalizeWebsiteUrl($request->input('billing_website') ?? ''),
-            'email' => $request->input('billing_email'),
+            'email' => trim($request->input('billing_email') ?? ''),
             'gst_status' => $request->input('gst_status'),
-            'gst_no' => $request->input('gst_no'),
-            'pan_no' => $request->input('pan_no'),
-            'tan_no' => $request->input('tan_no'),
+            'gst_no' => trim($request->input('gst_no') ?? ''),
+            'pan_no' => trim($request->input('pan_no') ?? ''),
+            'tan_no' => trim($request->input('tan_no') ?? ''),
             'tan_status' => $request->input('tan_status')
         ];
         
@@ -370,10 +370,10 @@ class ExhibitorRegistrationController extends Controller
         
         $contactData = [
             'title' => $request->input('contact_title'),
-            'first_name' => $request->input('contact_first_name'),
-            'last_name' => $request->input('contact_last_name'),
-            'designation' => $request->input('contact_designation'),
-            'email' => $request->input('contact_email'),
+            'first_name' => trim($request->input('contact_first_name') ?? ''),
+            'last_name' => trim($request->input('contact_last_name') ?? ''),
+            'designation' => trim($request->input('contact_designation') ?? ''),
+            'email' => trim($request->input('contact_email') ?? ''),
             'mobile' => $mobileNational ? ($mobileCountryCode . '-' . $mobileNational) : '',
             'country_code' => $mobileCountryCode,
         ];
@@ -407,20 +407,31 @@ class ExhibitorRegistrationController extends Controller
         }
         
         $exhibitorData = [
-            'name' => $request->input('exhibitor_name'),
-            'address' => $request->input('exhibitor_address'),
+            'name' => trim($request->input('exhibitor_name') ?? ''),
+            'address' => trim($request->input('exhibitor_address') ?? ''),
             'country_id' => $request->input('exhibitor_country_id'),
             'state_id' => $request->input('exhibitor_state_id'),
-            'city' => $request->input('exhibitor_city'),
-            'postal_code' => $request->input('exhibitor_postal_code'),
+            'city' => trim($request->input('exhibitor_city') ?? ''),
+            'postal_code' => trim($request->input('exhibitor_postal_code') ?? ''),
             'telephone' => $exhibitorTelephoneNational ? ($exhibitorTelephoneCountryCode . '-' . $exhibitorTelephoneNational) : '',
             'website' => $this->normalizeWebsiteUrl($request->input('exhibitor_website') ?? ''),
-            'email' => $request->input('exhibitor_email'),
+            'email' => trim($request->input('exhibitor_email') ?? ''),
         ];
         
         // Add additional exhibitor-specific fields
         if ($request->has('sales_executive_name')) {
             $exhibitorData['sales_executive_name'] = trim($request->input('sales_executive_name'));
+        }
+        
+        // Trim other fields
+        if ($request->has('sector')) {
+            $formData['sector'] = trim($request->input('sector'));
+        }
+        if ($request->has('subsector')) {
+            $formData['subsector'] = trim($request->input('subsector'));
+        }
+        if ($request->has('other_sector_name')) {
+            $formData['other_sector_name'] = trim($request->input('other_sector_name'));
         }
         if ($request->has('category')) {
             $exhibitorData['category'] = $request->input('category');
@@ -800,18 +811,40 @@ class ExhibitorRegistrationController extends Controller
             $sessionData = session('exhibitor_registration_draft', []);
             $allData = array_merge($sessionData, $request->all());
             
+            // List of text fields that should be trimmed and validated for leading spaces
+            $textFields = [
+                'booth_size', 'sector', 'subsector', 'other_sector_name',
+                'billing_company_name', 'billing_address', 'billing_city', 'billing_postal_code',
+                'billing_telephone', 'billing_website', 'billing_email',
+                'exhibitor_name', 'exhibitor_address', 'exhibitor_city', 'exhibitor_postal_code',
+                'exhibitor_telephone', 'exhibitor_website',
+                'contact_first_name', 'contact_last_name', 'contact_designation',
+                'contact_email', 'contact_mobile',
+                'pan_no', 'tan_no', 'gst_no', 'sales_executive_name'
+            ];
+            
+            // Trim all string inputs after validation (validation will check for leading spaces on original input)
+            foreach ($textFields as $field) {
+                if (isset($allData[$field]) && is_string($allData[$field])) {
+                    $allData[$field] = trim($allData[$field]);
+                }
+                if ($request->has($field) && is_string($request->input($field))) {
+                    $allData[$field] = trim($request->input($field));
+                }
+            }
+            
             // Map billing fields to old field names for validation compatibility
             if ($request->has('billing_postal_code')) {
-                $allData['postal_code'] = $request->input('billing_postal_code');
+                $allData['postal_code'] = $allData['billing_postal_code'] ?? trim($request->input('billing_postal_code'));
             }
             if ($request->has('billing_email')) {
-                $allData['company_email'] = $request->input('billing_email');
+                $allData['company_email'] = $allData['billing_email'] ?? trim($request->input('billing_email'));
             }
             if ($request->has('billing_company_name')) {
-                $allData['company_name'] = $request->input('billing_company_name');
+                $allData['company_name'] = $allData['billing_company_name'] ?? trim($request->input('billing_company_name'));
             }
             if ($request->has('billing_address')) {
-                $allData['address'] = $request->input('billing_address');
+                $allData['address'] = $allData['billing_address'] ?? trim($request->input('billing_address'));
             }
             if ($request->has('billing_country_id')) {
                 $allData['country_id'] = $request->input('billing_country_id');
@@ -820,25 +853,22 @@ class ExhibitorRegistrationController extends Controller
                 $allData['state_id'] = $request->input('billing_state_id');
             }
             if ($request->has('billing_city')) {
-                $allData['city_id'] = $request->input('billing_city');
+                $allData['city_id'] = $allData['billing_city'] ?? trim($request->input('billing_city'));
             }
             if ($request->has('billing_telephone_national') && !empty($request->input('billing_telephone_national'))) {
-                $allData['landline'] = $request->input('billing_telephone_national');
+                $allData['landline'] = preg_replace('/\s+/', '', trim($request->input('billing_telephone_national')));
             } elseif ($request->has('billing_telephone')) {
-                $allData['landline'] = $request->input('billing_telephone');
+                $allData['landline'] = preg_replace('/\s+/', '', trim($request->input('billing_telephone')));
             }
             if ($request->has('billing_website')) {
-                $allData['website'] = $request->input('billing_website');
+                $allData['website'] = $allData['billing_website'] ?? trim($request->input('billing_website'));
             }
             
             // Map contact mobile for validation
             if ($request->has('contact_mobile_national') && !empty($request->input('contact_mobile_national'))) {
-                $allData['contact_mobile'] = $request->input('contact_mobile_national');
-            }
-            
-            // Trim sales_executive_name to remove leading/trailing spaces
-            if (isset($allData['sales_executive_name'])) {
-                $allData['sales_executive_name'] = trim($allData['sales_executive_name']);
+                $allData['contact_mobile'] = preg_replace('/\s+/', '', trim($request->input('contact_mobile_national')));
+            } elseif (isset($allData['contact_mobile'])) {
+                $allData['contact_mobile'] = preg_replace('/\s+/', '', trim($allData['contact_mobile']));
             }
             
             // CRITICAL: Check if contact email already exists in users table - BLOCK SUBMISSION
@@ -854,54 +884,67 @@ class ExhibitorRegistrationController extends Controller
                 ], 422);
             }
             
-            // Validation rules
+            // Validation rules - All text fields must not start with space
+            // Note: We validate the original request input (before trimming) to catch leading spaces
             $rules = [
                 'booth_space' => 'required|in:Raw,Shell',
-                'booth_size' => 'required|string',
-                'sector' => 'required|string',
-                'subsector' => 'required|string',
+                'booth_size' => ['required', 'string', 'regex:/^\S/'],
+                'sector' => ['required', 'string', 'regex:/^\S/'],
+                'subsector' => ['required', 'string', 'regex:/^\S/'],
                 'category' => 'required|in:Exhibitor,Sponsor',
-                'billing_company_name' => 'required|string|max:255',
-                'billing_address' => 'required|string',
-                'billing_city' => 'required|string|max:255',
+                'billing_company_name' => ['required', 'string', 'max:255', 'regex:/^\S/'],
+                'billing_address' => ['required', 'string', 'regex:/^\S/'],
+                'billing_city' => ['required', 'string', 'max:255', 'regex:/^\S/'],
                 'billing_state_id' => 'required|exists:states,id',
-                'billing_postal_code' => 'required|string|max:20',
+                'billing_country_id' => 'required|exists:countries,id',
+                'billing_postal_code' => ['required', 'string', 'max:20', 'regex:/^\S/'],
                 'billing_telephone' => 'required|string',
                 'billing_website' => 'required|url',
                 'billing_email' => 'nullable|email|max:255',
-                'exhibitor_name' => 'required|string|max:255',
-                'exhibitor_address' => 'required|string',
-                'exhibitor_city' => 'required|string|max:255',
+                'exhibitor_name' => ['required', 'string', 'max:255', 'regex:/^\S/'],
+                'exhibitor_address' => ['required', 'string', 'regex:/^\S/'],
+                'exhibitor_city' => ['required', 'string', 'max:255', 'regex:/^\S/'],
                 'exhibitor_state_id' => 'required|exists:states,id',
-                'exhibitor_postal_code' => 'required|string|max:20',
+                'exhibitor_country_id' => 'required|exists:countries,id',
+                'exhibitor_postal_code' => ['required', 'string', 'max:20', 'regex:/^\S/'],
                 'exhibitor_telephone' => 'required|string',
                 'exhibitor_website' => 'required|url',
                 'contact_title' => 'required|in:Mr.,Mrs.,Ms.,Dr.,Prof.',
-                'contact_first_name' => 'required|string|max:255',
-                'contact_last_name' => 'required|string|max:255',
-                'contact_designation' => 'required|string|max:255',
-                'contact_email' => 'required|email|max:255',
+                'contact_first_name' => ['required', 'string', 'max:255', 'regex:/^\S/'],
+                'contact_last_name' => ['required', 'string', 'max:255', 'regex:/^\S/'],
+                'contact_designation' => ['required', 'string', 'max:255', 'regex:/^\S/'],
+                'contact_email' => ['required', 'email', 'max:255', 'regex:/^\S/'],
                 'contact_mobile' => 'required|string',
                 'tan_status' => 'required|in:Registered,Unregistered',
                 'gst_status' => 'required|in:Registered,Unregistered',
                 'pan_no' => 'required|string|regex:/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/',
-                'sales_executive_name' => 'required|string|max:255|regex:/.*\S.*/',
+                'sales_executive_name' => ['required', 'string', 'max:255', 'regex:/^\S/'],
             ];
             
             // Conditional validations
-            if (($allData['sector'] ?? '') === 'Others') {
-                $rules['other_sector_name'] = 'required|string|max:255';
+            if (($request->input('sector') ?? '') === 'Others') {
+                $rules['other_sector_name'] = ['required', 'string', 'max:255', 'regex:/^\S/'];
             }
             
-            if (($allData['tan_status'] ?? '') === 'Registered') {
-                $rules['tan_no'] = 'required|string|max:50';
+            if (($request->input('tan_status') ?? '') === 'Registered') {
+                $rules['tan_no'] = ['required', 'string', 'max:50', 'regex:/^\S/'];
             }
             
-            if (($allData['gst_status'] ?? '') === 'Registered') {
+            if (($request->input('gst_status') ?? '') === 'Registered') {
                 $rules['gst_no'] = 'required|string|regex:/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/';
             }
             
-            $validator = Validator::make($allData, $rules);
+            // Custom validation messages
+            $messages = [
+                '*.regex' => 'The :attribute field cannot start with a space.',
+                'billing_country_id.required' => 'The billing country field is required.',
+                'billing_country_id.exists' => 'The selected billing country is invalid.',
+                'exhibitor_country_id.required' => 'The exhibitor country field is required.',
+                'exhibitor_country_id.exists' => 'The selected exhibitor country is invalid.',
+            ];
+            
+            // Validate using original request data (before trimming) to catch leading spaces
+            $validator = Validator::make($request->all(), $rules, $messages);
 
             if ($validator->fails()) {
                 return response()->json([
@@ -1184,7 +1227,11 @@ class ExhibitorRegistrationController extends Controller
             'pricing',
             'currency'
         ));
+
+       
     }
+
+       
     
     /**
      * Create application from draft (called when Proceed to Payment is clicked)
@@ -1656,6 +1703,11 @@ class ExhibitorRegistrationController extends Controller
                 $billingDetail->same_as_basic = '1';
             }
             $billingDetail->save();
+
+
+   
+
+       
             
             // Create or update invoice
             $invoice = Invoice::where('application_id', $application->id)->first();
@@ -1675,6 +1727,7 @@ class ExhibitorRegistrationController extends Controller
             $invoice->total_final_price = $pricing['total_price'];
             $invoice->currency = $currency; // Use currency from draft
             $invoice->payment_status = 'unpaid';
+            $invoice->pending_amount = $pricing['total_price']; // Set pending amount to total initially
             $invoice->payment_due_date = null;
             $invoice->save();
             
@@ -1816,11 +1869,21 @@ class ExhibitorRegistrationController extends Controller
                 ->with('error', 'Invoice not found.');
         }
         
+        // Check if application is approved - payment only allowed after approval
+        if ($application->submission_status !== 'approved') {
+            $invoice = Invoice::where('application_id', $application->id)->first();
+            $billingDetail = \App\Models\BillingDetail::where('application_id', $application->id)->first();
+            $eventContact = EventContact::where('application_id', $application->id)->first();
+            return view('exhibitor-registration.payment', compact('application', 'invoice', 'billingDetail', 'eventContact'))
+                ->with('approval_pending', true);
+        }
+        
         // Load billing detail (billing_data is stored in billing_details table)
         $billingDetail = \App\Models\BillingDetail::where('application_id', $application->id)->first();
         
         return view('exhibitor-registration.payment', compact('application', 'billingDetail'));
     }
+
     
     /**
      * Generate unique application_id using APPLICATION_ID_PREFIX

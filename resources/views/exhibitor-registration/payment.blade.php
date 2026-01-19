@@ -152,13 +152,31 @@
     <div class="row">
         <div class="col-12">
             <h2 class="text-center mb-4">Payment</h2>
+
+          
+            {{-- Approval Pending Message --}}
+            <!-- @if(isset($approval_pending) && $approval_pending) -->
+                        <!-- <div class="alert alert-warning mb-4">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            <strong>Approval Pending:</strong> Your profile is not approved yet for payment. Please wait for admin approval. You will be notified once your application is approved.
+                        </div>
+                    @endif -->
             
             @if(session('error'))
                 <div class="alert alert-danger mb-4">
                     <i class="fas fa-exclamation-circle"></i> {{ session('error') }}
                 </div>
             @endif
+              {{-- Approval Pending Message --}}
+            @if(isset($approval_pending) && $approval_pending)
+            <div class="alert alert-warning mb-4">
+            <i class="fas fa-exclamation-triangle"></i>
+            <strong>Approval Pending:</strong> Your profile is not approved yet for payment. Please wait for admin approval. You will be notified once your application is approved.
+            </div>
+            @endif 
+
             
+
             {{-- Application Summary --}}
             <div class="alert alert-info mb-4">
                 <h5 class="mb-2"><i class="fas fa-info-circle"></i> Application Information</h5>
@@ -490,10 +508,96 @@
                      */ ?>
 
             {{-- Payment Notice --}}
-            <div class="alert alert-warning mb-4">
+            <!-- <div class="alert alert-warning mb-4">
                 <h5 class="mb-2"><i class="fas fa-clock"></i> Payment Notice</h5>
                 <p class="mb-0">Payment options will be available once your application is approved by the admin.</p>
-            </div>
+            </div> -->
+
+            @if($application->invoice->payment_status === 'paid')
+                        <div class="alert alert-success">
+                            <i class="fas fa-check-circle"></i> Payment already completed!
+                        </div>
+                        <a href="{{ route('exhibitor-registration.confirmation', $application->application_id) }}" class="btn btn-success">
+                            View Confirmation <i class="fas fa-arrow-right"></i>
+                        </a>
+                    @elseif(isset($approval_pending) && $approval_pending)
+                        {{-- Approval Pending - Disable Payment --}}
+                        <div class="alert alert-warning">
+                            <i class="fas fa-clock"></i> Payment options will be available once your application is approved by the admin.
+                        </div>
+                    @else
+                        {{-- Payment Options --}}
+                        <!-- <h5 class="mb-3">Select Payment Method</h5> -->
+                        
+                        <form id="paymentForm" method="POST" action="{{ route('exhibitor-registration.payment.process', $application->application_id) }}">
+                            @csrf
+                            
+                         <?php /*   <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <div class="card payment-option-card {{ $application->invoice->currency === 'INR' ? 'border-primary' : '' }}" 
+                                         onclick="document.getElementById('ccavenue').checked = true;">
+                                        <div class="card-body text-center">
+                                            <input class="form-check-input" type="radio" name="payment_method" id="ccavenue" 
+                                                   value="CCAvenue" {{ $application->invoice->currency === 'INR' ? 'checked' : '' }} style="position: absolute; top: 10px; right: 10px;">
+                                            <div class="mb-2">
+                                                <i class="fas fa-credit-card fa-3x text-primary"></i>
+                                            </div>
+                                            <h6 class="card-title"><strong>CCAvenue</strong></h6>
+                                            <p class="card-text text-muted small mb-0">Indian Payments</p>
+                                            <p class="card-text text-muted small">Credit Card, Debit Card, Net Banking, UPI, Wallets</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                 */ ?>
+                                <?php 
+                                /*
+                                <div class="col-md-6 mb-3">
+                                    <div class="card payment-option-card {{ $invoice->currency === 'USD' ? 'border-primary' : '' }}" 
+                                         onclick="document.getElementById('paypal').checked = true;">
+                                        <div class="card-body text-center">
+                                            <input class="form-check-input" type="radio" name="payment_method" id="paypal" 
+                                                   value="PayPal" {{ $invoice->currency === 'USD' ? 'checked' : '' }} style="position: absolute; top: 10px; right: 10px;">
+                                            <div class="mb-2">
+                                                <i class="fab fa-paypal fa-3x text-primary"></i>
+                                            </div>
+                                            <h6 class="card-title"><strong>PayPal</strong></h6>
+                                            <p class="card-text text-muted small mb-0">International Payments</p>
+                                            <p class="card-text text-muted small">PayPal Account or Credit Card</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                */
+                                 ?>
+                            </div>
+                            <?php 
+                                /*
+                            <div class="mb-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="payment_method" id="bank_transfer" 
+                                           value="Bank Transfer">
+                                    <label class="form-check-label" for="bank_transfer">
+                                        <strong>Bank Transfer</strong> (Contact us for instructions)
+                                    </label>
+                                </div>
+                            </div>
+
+                            */ ?>
+
+                            <div class="alert alert-warning">
+                                <strong>Note:</strong> After clicking "Proceed to Payment", you will be redirected to the payment gateway.
+                            </div>
+
+                            <div class="d-flex justify-content-between mt-4">
+                                <a href="{{ route('exhibitor-registration.preview', ['application_id' => $application->application_id]) }}" 
+                                   class="btn btn-secondary">
+                                    <i class="fas fa-arrow-left"></i> Back
+                                </a>
+                                <button type="submit" class="btn btn-success btn-lg">
+                                    Proceed to Payment <i class="fas fa-arrow-right"></i>
+                                </button>
+                            </div>
+                        </form>
+                        @endif
         </div>
     </div>
 </div>
