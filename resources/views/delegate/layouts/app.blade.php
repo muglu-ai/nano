@@ -37,10 +37,22 @@
         /* Global Delegate Panel Styles */
         body {
             background-color: #f8f9fc;
+            color: #2d3748; /* Explicit dark text color for better visibility */
         }
         
         .main-content {
             background-color: #f8f9fc;
+            color: #2d3748; /* Explicit text color */
+        }
+        
+        /* Improved text-muted for better visibility */
+        .text-muted {
+            color: #4a5568 !important; /* Darker gray for better contrast */
+        }
+        
+        /* Better contrast for all text elements */
+        p, span, div, td, th, li {
+            color: #2d3748; /* Dark text by default */
         }
         
         /* Smooth transitions */

@@ -75,7 +75,7 @@
             <div class="coming-soon">
                 <i class="fas fa-id-badge"></i>
                 <h3 class="mb-3">Badge Feature Coming Soon</h3>
-                <p class="text-muted mb-4">
+                <p class="mb-4" style="color: #4a5568;">
                     You will be able to view and download your badges with QR codes here.
                 </p>
                 <div class="info-alert">

@@ -17,7 +17,7 @@
                             <i class="fas fa-home me-1"></i>Dashboard
                         </a>
                     </li>
-                    <li class="breadcrumb-item text-sm text-dark active font-weight-bold" aria-current="page">
+                    <li class="breadcrumb-item text-sm active font-weight-bold" aria-current="page" style="color: #2d3748;">
                         @yield('title')
                     </li>
                 </ol>
@@ -31,8 +31,8 @@
                             <div class="icon icon-shape icon-sm shadow border-radius-md bg-gradient-primary text-center me-2 d-flex align-items-center justify-content-center" style="width: 36px; height: 36px;">
                                 <i class="fas fa-user-circle text-white text-sm"></i>
                             </div>
-                            <span class="d-sm-inline d-none ms-1">{{ Auth::guard('delegate')->user()->contact->name ?? 'Delegate' }}</span>
-                            <i class="fas fa-chevron-down ms-1 text-xs opacity-6"></i>
+                            <span class="d-sm-inline d-none ms-1" style="color: #2d3748; font-weight: 500;">{{ Auth::guard('delegate')->user()->contact->name ?? 'Delegate' }}</span>
+                            <i class="fas fa-chevron-down ms-1 text-xs" style="color: #4a5568;"></i>
                         </div>
                     </a>
                     <ul class="dropdown-menu dropdown-menu-end px-2 py-3 me-sm-n4" aria-labelledby="dropdownMenuButton">
@@ -41,7 +41,7 @@
                                 <div class="d-flex align-items-center py-1">
                                     <i class="fas fa-home me-2 text-primary"></i>
                                     <div class="ms-2">
-                                        <h6 class="text-sm font-weight-normal mb-0">Dashboard</h6>
+                                        <h6 class="text-sm font-weight-normal mb-0" style="color: #2d3748;">Dashboard</h6>
                                     </div>
                                 </div>
                             </a>
@@ -51,7 +51,7 @@
                                 <div class="d-flex align-items-center py-1">
                                     <i class="fas fa-sign-out-alt me-2 text-danger"></i>
                                     <div class="ms-2">
-                                        <h6 class="text-sm font-weight-normal mb-0">Logout</h6>
+                                        <h6 class="text-sm font-weight-normal mb-0" style="color: #2d3748;">Logout</h6>
                                     </div>
                                 </div>
                             </a>

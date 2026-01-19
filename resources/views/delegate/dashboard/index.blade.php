@@ -78,7 +78,7 @@
     
     .stat-label {
         font-size: 0.875rem;
-        color: #718096;
+        color: #4a5568; /* Darker for better visibility */
         margin-top: 0.5rem;
         font-weight: 500;
     }
@@ -140,13 +140,19 @@
     .empty-state {
         text-align: center;
         padding: 3rem 1rem;
-        color: #a0aec0;
+        color: #4a5568; /* Darker for better visibility */
     }
     
     .empty-state i {
         font-size: 3rem;
         margin-bottom: 1rem;
-        opacity: 0.5;
+        opacity: 0.6; /* Slightly more visible */
+        color: #667eea; /* Use primary color */
+    }
+    
+    .empty-state p {
+        color: #4a5568; /* Darker text */
+        font-weight: 500;
     }
     
     .page-header {

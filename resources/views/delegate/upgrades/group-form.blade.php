@@ -142,7 +142,7 @@
         <div class="card-body p-4">
             <div class="registration-info">
                 <h5><i class="fas fa-building me-2"></i>{{ $registration->company_name }}</h5>
-                <p class="text-muted mb-0">
+                <p class="mb-0" style="color: #4a5568;">
                     <i class="fas fa-users me-1"></i>
                     {{ $registration->delegates->count() }} delegate(s) in this registration
                 </p>
@@ -174,12 +174,12 @@
                                     <td>
                                         <strong>{{ $ticket->delegate->full_name }}</strong>
                                         <br>
-                                        <small class="text-muted">{{ $ticket->delegate->email }}</small>
+                                        <small style="color: #4a5568;">{{ $ticket->delegate->email }}</small>
                                     </td>
                                     <td>
                                         <strong>{{ $ticket->ticketType->name }}</strong>
                                         <br>
-                                        <small class="text-muted">
+                                        <small style="color: #4a5568;">
                                             <i class="fas fa-tag me-1"></i>
                                             {{ $ticket->ticketType->category->name ?? 'Category' }}
                                         </small>
@@ -273,7 +273,7 @@ function updateTotalPreview() {
         document.getElementById('total-preview').style.display = 'block';
         document.getElementById('total-details').innerHTML = `
             <p class="mb-1"><strong>Estimated Amount:</strong> ${total.toLocaleString('en-IN', {maximumFractionDigits: 2})} INR</p>
-            <small class="text-muted">Final amount including taxes and charges will be calculated during checkout.</small>
+            <small style="color: #4a5568;">Final amount including taxes and charges will be calculated during checkout.</small>
         `;
     } else {
         document.getElementById('total-preview').style.display = 'none';

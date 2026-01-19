@@ -188,7 +188,7 @@
                             </option>
                         @endforeach
                     </select>
-                    <small class="text-muted d-block mt-2">
+                    <small class="d-block mt-2" style="color: #4a5568;">
                         <i class="fas fa-info-circle me-1"></i>
                         Only higher category tickets are available for upgrade.
                     </small>

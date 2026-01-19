@@ -297,8 +297,8 @@
                         @endif
                     @else
                         <div class="text-center py-5">
-                            <i class="fas fa-receipt fa-3x text-muted mb-3 opacity-50"></i>
-                            <p class="text-muted">No order found for this registration.</p>
+                            <i class="fas fa-receipt fa-3x mb-3" style="color: #667eea; opacity: 0.6;"></i>
+                            <p style="color: #4a5568;">No order found for this registration.</p>
                         </div>
                     @endif
                 </div>
@@ -343,8 +343,8 @@
                         </div>
                     @else
                         <div class="text-center py-5">
-                            <i class="fas fa-arrow-up fa-3x text-muted mb-3 opacity-50"></i>
-                            <p class="text-muted mb-4">No upgrades for this registration.</p>
+                            <i class="fas fa-arrow-up fa-3x mb-3" style="color: #667eea; opacity: 0.6;"></i>
+                            <p class="mb-4" style="color: #4a5568;">No upgrades for this registration.</p>
                         </div>
                     @endif
                     <div class="mt-4">

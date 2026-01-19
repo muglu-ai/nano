@@ -52,7 +52,7 @@
         display: flex;
         align-items: center;
         gap: 1rem;
-        color: #718096;
+        color: #4a5568; /* Darker for better visibility */
         font-size: 0.875rem;
     }
     
@@ -88,13 +88,23 @@
     .empty-state {
         text-align: center;
         padding: 4rem 2rem;
-        color: #a0aec0;
+        color: #4a5568; /* Darker for better visibility */
     }
     
     .empty-state i {
         font-size: 4rem;
         margin-bottom: 1rem;
-        opacity: 0.3;
+        opacity: 0.6; /* More visible */
+        color: #667eea; /* Use primary color */
+    }
+    
+    .empty-state h5 {
+        color: #2d3748; /* Dark text */
+        font-weight: 600;
+    }
+    
+    .empty-state p {
+        color: #4a5568; /* Darker gray */
     }
 </style>
 @endpush
