@@ -219,7 +219,7 @@
                         </div>
                         <div id="gst_feedback" class="mt-1"></div>
                         <div class="invalid-feedback"></div>
-                        <small class="form-text text-muted">Click "Validate" to auto-fill company details from GST database</small>
+                        <!-- <small class="form-text text-muted">Click "Validate" to auto-fill company details from GST database</small> -->
                     </div>
                 </div>
 
@@ -599,6 +599,22 @@
         font-weight: 600;
     }
     /* Responsive styles for step indicators are in the common layout */
+    
+    /* GST Locked Fields Styling */
+    .gst-locked {
+        background-color: #f8f9fa !important;
+        cursor: not-allowed;
+        /* border-color: #28a745 !important; */
+    }
+    .gst-locked:focus {
+        box-shadow: none !important;
+    }
+    .lock-indicator {
+        margin-top: 5px;
+    }
+    .btn-success.gst-validated {
+        pointer-events: none;
+    }
 </style>
 @endpush
 
@@ -1187,12 +1203,34 @@ document.addEventListener('DOMContentLoaded', function() {
         
         gstCompliance.addEventListener('change', function() {
             if (this.value === '1') {
+                // Registered selected - show GST field and reset it to editable state
                 gstNoContainer.style.display = 'block';
                 gstNo.setAttribute('required', 'required');
                 if (gstRequiredIndicator) {
                     gstRequiredIndicator.style.display = 'inline';
                 }
+                
+                // Reset GST field to editable state (in case it was locked before)
+                gstNo.readOnly = false;
+                gstNo.classList.remove('bg-light', 'gst-locked');
+                gstNo.value = ''; // Clear any previous value
+                
+                // Reset validate button to original state
+                const validateGstBtn = document.getElementById('validateGstBtn');
+                if (validateGstBtn) {
+                    validateGstBtn.innerHTML = '<i class="fas fa-search"></i> Validate';
+                    validateGstBtn.classList.remove('btn-success');
+                    validateGstBtn.classList.add('btn-outline-primary');
+                    validateGstBtn.disabled = false;
+                }
+                
+                // Clear GST feedback
+                gstFeedback.innerHTML = '';
+                
+                // Also unlock and reset billing fields for fresh entry
+                unlockAndResetGstFields();
             } else {
+                // Unregistered selected - hide GST field and unlock all GST-locked fields
                 gstNoContainer.style.display = 'none';
                 gstNo.removeAttribute('required');
                 if (gstRequiredIndicator) {
@@ -1200,6 +1238,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
                 gstNo.value = '';
                 gstFeedback.innerHTML = '';
+                
+                // Unlock and reset all GST-locked fields when switching to Unregistered
+                unlockAndResetGstFields();
             }
             resetAutoSaveTimer();
         });
@@ -1274,23 +1315,63 @@ document.addEventListener('DOMContentLoaded', function() {
                         billingAddressField.value = data.data.billing_address;
                     }
                     
-                    if (data.data.state_id && billingStateField) {
-                        billingStateField.value = data.data.state_id;
-                        // Trigger state change event to ensure proper handling
-                        const changeEvent = new Event('change', { bubbles: true });
-                        billingStateField.dispatchEvent(changeEvent);
-                    }
-                    
                     if (data.data.pincode && billingPostalCodeField) {
                         billingPostalCodeField.value = data.data.pincode;
                     }
                     
-                    if (data.data.pan && panField) {
-                        panField.value = data.data.pan;
+                    // Extract PAN from GST number if not provided by API
+                    // GST format: 22AAAAA0000A1Z5 - PAN is characters 3-12 (10 characters)
+                    let panValue = data.data.pan;
+                    if (!panValue && gstNumber.length >= 12) {
+                        panValue = gstNumber.substring(2, 12);
+                    }
+                    if (panValue && panField) {
+                        panField.value = panValue;
                     }
                     
                     if (data.data.city && billingCityField) {
                         billingCityField.value = data.data.city;
+                    }
+                    
+                    // Set Billing Country to India (GST is India-specific)
+                    const billingCountryField = document.getElementById('billing_country_id');
+                    if (billingCountryField) {
+                        // Find India option (usually id=101 or look for "India" text)
+                        const indiaOption = Array.from(billingCountryField.options).find(opt => 
+                            opt.text.toLowerCase() === 'india' || opt.value === '101'
+                        );
+                        if (indiaOption) {
+                            billingCountryField.value = indiaOption.value;
+                        }
+                    }
+                    
+                    // Check if states are already loaded for the selected country
+                    const statesAlreadyLoaded = billingStateField && billingStateField.options.length > 1;
+                    
+                    // If states already loaded, set state value directly
+                    if (statesAlreadyLoaded && data.data.state_id) {
+                        billingStateField.value = data.data.state_id;
+                    }
+                    
+                    // IMMEDIATELY lock all fields (don't wait for state loading)
+                    lockFieldsAfterGstValidation();
+                    
+                    // Only load states if not already loaded
+                    if (!statesAlreadyLoaded && billingCountryField && billingCountryField.value) {
+                        loadBillingStatesForCountryWithCallback(billingCountryField.value, function() {
+                            // After states are loaded, set the state value and re-lock state field
+                            if (data.data.state_id && billingStateField) {
+                                billingStateField.value = data.data.state_id;
+                                // Re-lock the state field after setting value
+                                billingStateField.disabled = true;
+                                billingStateField.classList.add('bg-light', 'gst-locked');
+                                // Update hidden field
+                                let hiddenState = document.getElementById('billing_state_id_hidden');
+                                if (hiddenState) {
+                                    hiddenState.value = data.data.state_id;
+                                }
+                            }
+                        });
                     }
                     
                     let successMsg = '<small class="text-success"><i class="fas fa-check"></i> GST details fetched successfully';
@@ -1324,6 +1405,163 @@ document.addEventListener('DOMContentLoaded', function() {
                 console.error('GST API Error:', error);
             });
         });
+    }
+
+    // Function to lock PAN and Billing Information fields after successful GST validation
+    function lockFieldsAfterGstValidation() {
+        // Lock PAN Number field
+        const panField = document.getElementById('pan_no');
+        if (panField) {
+            panField.readOnly = true;
+            panField.classList.add('bg-light', 'gst-locked');
+            panField.title = 'Auto-filled from GST validation';
+        }
+        
+        // Lock Billing Information fields
+        const billingFields = [
+            'billing_company_name',
+            'billing_address',
+            'billing_city',
+            'billing_postal_code'
+        ];
+        
+        billingFields.forEach(fieldId => {
+            const field = document.getElementById(fieldId);
+            if (field) {
+                field.readOnly = true;
+                field.classList.add('bg-light', 'gst-locked');
+                field.title = 'Auto-filled from GST validation';
+            }
+        });
+        
+        // Lock billing country dropdown (GST is India-specific, so country is India)
+        const billingCountryField = document.getElementById('billing_country_id');
+        if (billingCountryField) {
+            billingCountryField.disabled = true;
+            billingCountryField.classList.add('bg-light', 'gst-locked');
+            billingCountryField.title = 'Auto-filled from GST validation';
+            // Add a hidden field to ensure the value is submitted
+            let hiddenCountry = document.getElementById('billing_country_id_hidden');
+            if (!hiddenCountry) {
+                hiddenCountry = document.createElement('input');
+                hiddenCountry.type = 'hidden';
+                hiddenCountry.id = 'billing_country_id_hidden';
+                hiddenCountry.name = 'billing_country_id';
+                billingCountryField.parentNode.appendChild(hiddenCountry);
+            }
+            hiddenCountry.value = billingCountryField.value;
+        }
+        
+        // Lock billing state dropdown
+        const billingStateField = document.getElementById('billing_state_id');
+        if (billingStateField) {
+            billingStateField.disabled = true;
+            billingStateField.classList.add('bg-light', 'gst-locked');
+            billingStateField.title = 'Auto-filled from GST validation';
+            // Add a hidden field to ensure the value is submitted
+            let hiddenState = document.getElementById('billing_state_id_hidden');
+            if (!hiddenState) {
+                hiddenState = document.createElement('input');
+                hiddenState.type = 'hidden';
+                hiddenState.id = 'billing_state_id_hidden';
+                hiddenState.name = 'billing_state_id';
+                billingStateField.parentNode.appendChild(hiddenState);
+            }
+            hiddenState.value = billingStateField.value;
+        }
+        
+        // Add lock icon indicator to GST feedback
+        const gstFeedback = document.getElementById('gst_feedback');
+        if (gstFeedback && !gstFeedback.querySelector('.lock-indicator')) {
+            const lockIndicator = document.createElement('div');
+            lockIndicator.className = 'lock-indicator mt-1';
+            // lockIndicator.innerHTML = '<small class="text-info"><i class="fas fa-lock"></i> PAN and Billing fields are locked based on GST data</small>';
+            gstFeedback.appendChild(lockIndicator);
+        }
+        
+        // Hide the validate button and show a "validated" badge
+        const validateGstBtn = document.getElementById('validateGstBtn');
+        if (validateGstBtn) {
+            validateGstBtn.innerHTML = '<i class="fas fa-check-circle"></i> Validated';
+            validateGstBtn.classList.remove('btn-outline-primary');
+            validateGstBtn.classList.add('btn-success');
+            validateGstBtn.disabled = true;
+        }
+        
+        // Make GST number field read-only to prevent changes
+        const gstNo = document.getElementById('gst_no');
+        if (gstNo) {
+            gstNo.readOnly = true;
+            gstNo.classList.add('bg-light', 'gst-locked');
+        }
+    }
+    
+    
+    // Function to unlock AND reset/clear all GST-locked fields when switching to Unregistered
+    function unlockAndResetGstFields() {
+        // Unlock and clear PAN Number field
+        const panField = document.getElementById('pan_no');
+        if (panField) {
+            panField.readOnly = false;
+            panField.classList.remove('bg-light', 'gst-locked');
+            panField.title = '';
+            panField.value = ''; // Clear the value
+        }
+        
+        // Unlock and clear Billing Information fields
+        const billingFieldsToClear = [
+            'billing_company_name',
+            'billing_address',
+            'billing_city',
+            'billing_postal_code'
+        ];
+        
+        billingFieldsToClear.forEach(fieldId => {
+            const field = document.getElementById(fieldId);
+            if (field) {
+                field.readOnly = false;
+                field.classList.remove('bg-light', 'gst-locked');
+                field.title = '';
+                field.value = ''; // Clear the value
+            }
+        });
+        
+        // Unlock and reset billing country dropdown
+        const billingCountryField = document.getElementById('billing_country_id');
+        if (billingCountryField) {
+            billingCountryField.disabled = false;
+            billingCountryField.classList.remove('bg-light', 'gst-locked');
+            billingCountryField.title = '';
+            billingCountryField.value = ''; // Reset to default
+        }
+        
+        // Unlock and reset billing state dropdown
+        const billingStateField = document.getElementById('billing_state_id');
+        if (billingStateField) {
+            billingStateField.disabled = false;
+            billingStateField.classList.remove('bg-light', 'gst-locked');
+            billingStateField.title = '';
+            billingStateField.innerHTML = '<option value="">Select State</option>'; // Reset options
+        }
+        
+        // Reset validate button
+        const validateGstBtn = document.getElementById('validateGstBtn');
+        if (validateGstBtn) {
+            validateGstBtn.innerHTML = '<i class="fas fa-search"></i> Validate';
+            validateGstBtn.classList.remove('btn-success');
+            validateGstBtn.classList.add('btn-outline-primary');
+            validateGstBtn.disabled = false;
+        }
+        
+        // Remove hidden fields for disabled dropdowns
+        const hiddenCountry = document.getElementById('billing_country_id_hidden');
+        if (hiddenCountry) {
+            hiddenCountry.remove();
+        }
+        const hiddenState = document.getElementById('billing_state_id_hidden');
+        if (hiddenState) {
+            hiddenState.remove();
+        }
     }
 
     // Show/hide other sector field
@@ -1398,6 +1636,48 @@ document.addEventListener('DOMContentLoaded', function() {
             console.error('Error loading billing states:', error);
             billingStateSelect.innerHTML = '<option value="">Error loading states</option>';
             billingStateSelect.disabled = false;
+        });
+    }
+    
+    // Version with callback for GST validation flow
+    function loadBillingStatesForCountryWithCallback(countryId, callback) {
+        if (!countryId) {
+            billingStateSelect.innerHTML = '<option value="">Select State</option>';
+            billingStateSelect.disabled = false;
+            if (callback) callback();
+            return;
+        }
+        
+        billingStateSelect.innerHTML = '<option value="">Loading states...</option>';
+        billingStateSelect.disabled = true;
+        
+        fetch('{{ route("get.states") }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+            },
+            body: JSON.stringify({ country_id: countryId })
+        })
+        .then(response => response.json())
+        .then(data => {
+            billingStateSelect.innerHTML = '<option value="">Select State</option>';
+            if (data && data.length > 0) {
+                data.forEach(state => {
+                    const option = document.createElement('option');
+                    option.value = state.id;
+                    option.textContent = state.name;
+                    billingStateSelect.appendChild(option);
+                });
+            }
+            billingStateSelect.disabled = false;
+            if (callback) callback();
+        })
+        .catch(error => {
+            console.error('Error loading billing states:', error);
+            billingStateSelect.innerHTML = '<option value="">Error loading states</option>';
+            billingStateSelect.disabled = false;
+            if (callback) callback();
         });
     }
     
