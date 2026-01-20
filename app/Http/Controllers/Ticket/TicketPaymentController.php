@@ -16,6 +16,7 @@ use App\Models\Ticket\TicketRegistrationTracking;
 use App\Models\Payment;
 use App\Models\Invoice;
 use App\Services\CcAvenueService;
+use App\Services\TicketIssuanceService;
 use App\Mail\TicketRegistrationMail;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -26,8 +27,9 @@ use Carbon\Carbon;
 class TicketPaymentController extends Controller
 {
     protected $ccAvenueService;
+    protected $ticketIssuanceService;
 
-    public function __construct(CcAvenueService $ccAvenueService)
+    public function __construct(CcAvenueService $ccAvenueService, TicketIssuanceService $ticketIssuanceService)
     {
         $this->ccAvenueService = $ccAvenueService;
     }
@@ -459,6 +461,28 @@ class TicketPaymentController extends Controller
                         'pending_amount' => max(0, ($invoice->total_final_price ?? $paidAmount) - $paidAmount),
                         'payment_status' => 'paid', // Mark invoice as paid
                     ]);
+
+                    // Issue tickets for all delegates
+                    try {
+                        $ticketsIssued = $this->ticketIssuanceService->issueTicketsForOrder($order);
+                        if ($ticketsIssued) {
+                            Log::info('Ticket Payment - Tickets issued successfully', [
+                                'order_id' => $order->id,
+                                'order_no' => $order->order_no,
+                            ]);
+                        } else {
+                            Log::warning('Ticket Payment - Failed to issue tickets', [
+                                'order_id' => $order->id,
+                                'order_no' => $order->order_no,
+                            ]);
+                        }
+                    } catch (\Exception $e) {
+                        Log::error('Ticket Payment - Error issuing tickets', [
+                            'order_id' => $order->id,
+                            'error' => $e->getMessage(),
+                        ]);
+                        // Don't fail the payment if ticket issuance fails - tickets can be issued manually
+                    }
 
                     // Track payment completed
                     $tracking = TicketRegistrationTracking::where('order_id', $order->id)->first();

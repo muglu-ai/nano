@@ -11,6 +11,7 @@ use App\Models\Ticket\TicketPayment;
 use App\Models\Ticket\TicketRegistrationTracking;
 use App\Models\Events;
 use App\Services\CcAvenueService;
+use App\Services\TicketIssuanceService;
 use App\Mail\TicketRegistrationMail;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -29,10 +30,12 @@ class RegistrationPaymentController extends Controller
 {
     private $ccAvenueService;
     private $paypalClient;
+    private $ticketIssuanceService;
 
     public function __construct()
     {
         $this->ccAvenueService = new CcAvenueService();
+        $this->ticketIssuanceService = new TicketIssuanceService();
         
         // Initialize PayPal client with mode-specific credentials
         $paypalMode = strtolower(config('constants.PAYPAL_MODE', 'live'));
@@ -1903,6 +1906,28 @@ class RegistrationPaymentController extends Controller
                     ]);
                 }
 
+                // Issue tickets for all delegates
+                try {
+                    $ticketsIssued = $this->ticketIssuanceService->issueTicketsForOrder($order);
+                    if ($ticketsIssued) {
+                        Log::info('Ticket CCAvenue Payment - Tickets issued successfully', [
+                            'order_id' => $order->id,
+                            'order_no' => $order->order_no,
+                        ]);
+                    } else {
+                        Log::warning('Ticket CCAvenue Payment - Failed to issue tickets', [
+                            'order_id' => $order->id,
+                            'order_no' => $order->order_no,
+                        ]);
+                    }
+                } catch (\Exception $e) {
+                    Log::error('Ticket CCAvenue Payment - Error issuing tickets', [
+                        'order_id' => $order->id,
+                        'error' => $e->getMessage(),
+                    ]);
+                    // Don't fail the payment if ticket issuance fails - tickets can be issued manually
+                }
+
                 // Track payment completed
                 $tracking = TicketRegistrationTracking::where('order_id', $order->id)->first();
                 if ($tracking) {
@@ -2227,6 +2252,28 @@ class RegistrationPaymentController extends Controller
                         'order_no' => $order->order_no,
                         'pin_no' => $pinNo,
                     ]);
+                }
+
+                // Issue tickets for all delegates
+                try {
+                    $ticketsIssued = $this->ticketIssuanceService->issueTicketsForOrder($order);
+                    if ($ticketsIssued) {
+                        Log::info('Ticket PayPal Payment - Tickets issued successfully', [
+                            'order_id' => $order->id,
+                            'order_no' => $order->order_no,
+                        ]);
+                    } else {
+                        Log::warning('Ticket PayPal Payment - Failed to issue tickets', [
+                            'order_id' => $order->id,
+                            'order_no' => $order->order_no,
+                        ]);
+                    }
+                } catch (\Exception $e) {
+                    Log::error('Ticket PayPal Payment - Error issuing tickets', [
+                        'order_id' => $order->id,
+                        'error' => $e->getMessage(),
+                    ]);
+                    // Don't fail the payment if ticket issuance fails - tickets can be issued manually
                 }
 
                 // Send payment acknowledgement email (payment successful)

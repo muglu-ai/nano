@@ -23,6 +23,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Carbon;
 use App\Mail\UserCredentialsMail;
 use App\Mail\ExhibitorRegistrationMail;
 use App\Mail\StartupZoneMail;
@@ -2865,7 +2866,13 @@ class StartupZoneController extends Controller
     }
 
     /**
-     * Helper: Calculate pricing based on association
+     * Helper: Calculate pricing for startup zone with early bird and regular pricing
+     * 
+     * Pricing logic:
+     * 1. Check if early bird pricing is active (based on cutoff date)
+     * 2. Apply early bird price if active, otherwise use regular price
+     * 3. Apply association pricing (if promocode exists and no TV)
+     * 4. TV pricing takes precedence over association pricing
      */
     private function calculatePricing($draft)
     {
@@ -2875,11 +2882,31 @@ class StartupZoneController extends Controller
         // Check if TV parameter is set (from session or draft)
         $hasTV = session('startup_zone_has_tv', false);
         
-        // Base price: 60000 if TV is present, otherwise 52000 (in INR)
-        $basePriceINR = $hasTV ? 60000.00 : 52000.00;
+        // Get event config for early bird cutoff date
+        $eventConfig = DB::table('event_configurations')->where('id', 1)->first();
+        
+        // Early bird cutoff date - can be configured in event_configurations or use default
+        // Default: March 31, 2026 (can be changed via event_configurations table)
+        $earlyBirdCutoffDate = $eventConfig->startup_zone_early_bird_cutoff_date ?? '2026-03-31';
+        $isEarlyBird = now()->lte(Carbon::parse($earlyBirdCutoffDate)->endOfDay());
+        
+        // Define early bird and regular prices (in INR)
+        // Early bird prices: ~13% discount from regular prices
+        $regularPriceWithoutTV = 52000.00;
+        $regularPriceWithTV = 60000.00;
+        $earlyBirdPriceWithoutTV = 30000.00;  
+        $earlyBirdPriceWithTV = 37500.00;     
+        
+        // Determine base price based on early bird status and TV
+        if ($hasTV) {
+            $basePriceINR = $isEarlyBird ? $earlyBirdPriceWithTV : $regularPriceWithTV;
+        } else {
+            $basePriceINR = $isEarlyBird ? $earlyBirdPriceWithoutTV : $regularPriceWithoutTV;
+        }
         
         // Get association pricing if promocode exists
         // Note: TV pricing takes precedence over association pricing
+        // Association pricing applies to regular price, not early bird
         if ($draft->promocode && !$hasTV) {
             $association = AssociationPricingRule::where('promocode', $draft->promocode)
                 ->active()
@@ -2887,6 +2914,7 @@ class StartupZoneController extends Controller
                 ->first();
 
             if ($association) {
+                // Association pricing overrides both early bird and regular pricing
                 $basePriceINR = $association->getEffectivePrice();
             }
         }
@@ -2895,13 +2923,11 @@ class StartupZoneController extends Controller
         $basePrice = $basePriceINR;
         if ($currency === 'USD') {
             // Get exchange rate from event config or use default
-            $eventConfig = DB::table('event_configurations')->where('id', 1)->first();
             $exchangeRate = $eventConfig->usd_exchange_rate ?? 83; // Default 1 USD = 83 INR
             $basePrice = $basePriceINR / $exchangeRate;
         }
 
         // Get processing rate based on currency
-        $eventConfig = DB::table('event_configurations')->where('id', 1)->first();
         if ($currency === 'USD') {
             $processingRate = ($eventConfig->usd_processing_charge ?? 9.5) / 100; // 9.5% for USD
         } else {
