@@ -3,6 +3,7 @@
 @section('title', 'Preview Registration - ' . config('constants.EVENT_NAME') . ' ' . config('constants.EVENT_YEAR'))
 
 @push('styles')
+<link rel="stylesheet" href="{{ asset('asset/css/custom.css') }}">
 <style>
     .preview-container {
         max-width: 1200px;
@@ -150,11 +151,12 @@
             font-size: 0.9rem !important;
         }
     }
+    .form-container {padding: 1rem 0px;}
 </style>
 @endpush
 
 @section('content')
-<div class="container py-5">
+<div class="container">
     {{-- Step Indicator --}}
     <div class="row mb-4">
         <div class="col-12">
@@ -571,20 +573,20 @@
             @endif
 
             {{-- Action Buttons --}}
-            <div class="d-flex justify-content-between">
+            <div class="d-flex justify-content-between mt-4">
                 @if(isset($application))
-                    <a href="{{ route('startup-zone.register', isset($hasTV) && $hasTV ? ['tv' => '1'] : []) }}" class="btn btn-secondary">
-                        <i class="fas fa-arrow-left"></i> Edit Details
+                    <a href="{{ route('startup-zone.register', isset($hasTV) && $hasTV ? ['tv' => '1'] : []) }}" class="btn btn-outline-danger fs-6">
+                        <i class="fas fa-arrow-left fa-6 me-2"></i> Edit Details
                     </a>
-                    <a href="{{ route('startup-zone.payment', $application->application_id) }}" class="btn btn-success btn-lg">
-                        Proceed to Payment <i class="fas fa-arrow-right"></i>
+                    <a href="{{ route('startup-zone.payment', $application->application_id) }}" class="btn btn-success fs-6">
+                        Proceed to Payment <i class="fas fa-arrow-right fa-6 ms-2"></i>
                     </a>
                 @else
-                    <a href="{{ route('startup-zone.register', isset($hasTV) && $hasTV ? ['tv' => '1'] : []) }}" class="btn btn-secondary">
-                        <i class="fas fa-arrow-left"></i> Edit Details
+                    <a href="{{ route('startup-zone.register', isset($hasTV) && $hasTV ? ['tv' => '1'] : []) }}" class="btn btn-outline-danger fs-6">
+                        <i class="fas fa-arrow-left fa-6 me-2"></i> Edit Details
                     </a>
-                    <button type="button" class="btn btn-success btn-lg" id="confirmAndProceed">
-                        Proceed to Payment <i class="fas fa-arrow-right"></i>
+                    <button type="button" class="btn btn-success fs-6" id="confirmAndProceed">
+                        Proceed to Payment <i class="fas fa-arrow-right fa-6 ms-2"></i>
                     </button>
                 @endif
             </div>

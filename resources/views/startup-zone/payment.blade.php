@@ -3,6 +3,7 @@
 @section('title', 'Payment - ' . config('constants.EVENT_NAME') . ' ' . config('constants.EVENT_YEAR'))
 
 @push('styles')
+<link rel="stylesheet" href="{{ asset('asset/css/custom.css') }}">
 <style>
     .preview-container {
         max-width: 1200px;
@@ -122,11 +123,12 @@
             padding: 0.5rem 0.4rem;
         }
     }
+    .form-container {padding: 1rem 0px;}
 </style>
 @endpush
 
 @section('content')
-<div class="container py-5">
+<div class="container">
     {{-- Step Indicator --}}
     <div class="row mb-4">
         <div class="col-12">
@@ -169,7 +171,7 @@
                     <div class="alert alert-info mb-4">
                         <h5 class="mb-2"><i class="fas fa-info-circle"></i> Application Information</h5>
                         <p class="mb-0">
-                            <strong>Application ID:</strong> {{ $application->application_id }}<br>
+                            <strong>TIN No:</strong> {{ $application->application_id }}<br>
                             <strong>Exhibitor:</strong> {{ $application->company_name }}
                         </p>
                     </div>
@@ -438,7 +440,7 @@
                         </div>
                     @else
                         {{-- Payment Options --}}
-                        <h5 class="mb-3">Select Payment Method</h5>
+                        <h5 class="mb-3 mt-4">Select Payment Method</h5>
                         
                         <form id="paymentForm" method="POST" action="{{ route('startup-zone.payment.process', $application->application_id) }}">
                             @csrf
@@ -499,11 +501,11 @@
 
                             <div class="d-flex justify-content-between mt-4">
                                 <a href="{{ route('startup-zone.preview', ['application_id' => $application->application_id]) }}" 
-                                   class="btn btn-secondary">
-                                    <i class="fas fa-arrow-left"></i> Back
+                                   class="btn btn-outline-danger fs-6">
+                                    <i class="fas fa-arrow-left fa-6 me-2"></i> Back
                                 </a>
-                                <button type="submit" class="btn btn-success btn-lg">
-                                    Proceed to Payment <i class="fas fa-arrow-right"></i>
+                                <button type="submit" class="btn btn-success fs-6">
+                                    Proceed to Payment <i class="fas fa-arrow-right fa-6 ms-2"></i>
                                 </button>
                             </div>
                         </form>
