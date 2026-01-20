@@ -742,6 +742,33 @@ class StartupZoneController extends Controller
                 ], 422);
             }
             
+            // SERVER-SIDE GST VALIDATION: When GST is provided, enforce PAN and Country
+            $gstNo = $request->input('gst_no');
+            $gstCompliance = $request->input('gst_compliance');
+            
+            if ($gstCompliance == '1' && !empty($gstNo) && strlen($gstNo) >= 12) {
+                // Extract PAN from GST number (characters 3-12, 0-indexed: positions 2-11)
+                $extractedPan = strtoupper(substr($gstNo, 2, 10));
+                
+                // Auto-set PAN from GST (server-side enforcement)
+                $allData['pan_no'] = $extractedPan;
+                
+                // Ensure country is India (ID 101) when GST is provided
+                $india = \App\Models\Country::where('name', 'India')->first();
+                if ($india) {
+                    $allData['country_id'] = $india->id;
+                    $allData['billing_country_id'] = $india->id;
+                }
+                
+                // Log for audit
+                \Log::info('GST Validation - Server-side enforcement', [
+                    'gst_no' => $gstNo,
+                    'extracted_pan' => $extractedPan,
+                    'submitted_pan' => $request->input('pan_no'),
+                    'country_set_to' => $india ? $india->id : 'not found'
+                ]);
+            }
+            
             // Custom validation messages
             $customMessages = [
                 'certificate.max' => 'The certificate field must not be greater than 2mb.',
