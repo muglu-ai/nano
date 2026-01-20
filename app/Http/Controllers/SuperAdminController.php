@@ -51,6 +51,16 @@ class SuperAdminController extends Controller
             'ind_processing_charge' => 'nullable|numeric|min:0|max:100',
             'int_processing_charge' => 'nullable|numeric|min:0|max:100',
             'gst_rate' => 'nullable|numeric|min:0|max:100',
+            // Startup Zone Pricing
+            'startup_zone_early_bird_cutoff_date' => 'nullable|date',
+            'startup_zone_regular_price_inr' => 'nullable|numeric|min:0',
+            'startup_zone_regular_price_with_tv_inr' => 'nullable|numeric|min:0',
+            'startup_zone_early_bird_price_inr' => 'nullable|numeric|min:0',
+            'startup_zone_early_bird_price_with_tv_inr' => 'nullable|numeric|min:0',
+            'startup_zone_regular_price_usd' => 'nullable|numeric|min:0',
+            'startup_zone_regular_price_with_tv_usd' => 'nullable|numeric|min:0',
+            'startup_zone_early_bird_price_usd' => 'nullable|numeric|min:0',
+            'startup_zone_early_bird_price_with_tv_usd' => 'nullable|numeric|min:0',
         ]);
 
         if ($validator->fails()) {
@@ -63,7 +73,17 @@ class SuperAdminController extends Controller
             'organizer_name', 'organizer_email', 'organizer_phone',
             'organizer_website', 'organizer_address',
             'shell_scheme_rate', 'raw_space_rate',
-            'ind_processing_charge', 'int_processing_charge', 'gst_rate'
+            'ind_processing_charge', 'int_processing_charge', 'gst_rate',
+            // Startup Zone Pricing
+            'startup_zone_early_bird_cutoff_date',
+            'startup_zone_regular_price_inr',
+            'startup_zone_regular_price_with_tv_inr',
+            'startup_zone_early_bird_price_inr',
+            'startup_zone_early_bird_price_with_tv_inr',
+            'startup_zone_regular_price_usd',
+            'startup_zone_regular_price_with_tv_usd',
+            'startup_zone_early_bird_price_usd',
+            'startup_zone_early_bird_price_with_tv_usd',
         ]);
 
         if ($request->has('social_links')) {

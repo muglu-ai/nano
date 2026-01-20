@@ -366,6 +366,117 @@
                     </div>
                 </div>
 
+                <hr class="section-divider">
+
+                <!-- Startup Zone Pricing Configuration -->
+                <div class="form-section">
+                    <h5 class="form-section-title">
+                        <i class="fas fa-rocket"></i>
+                        Startup Zone Pricing Configuration
+                    </h5>
+                    <div class="row">
+                        <div class="col-12 mb-4">
+                            <label class="form-label">Early Bird Cutoff Date</label>
+                            <input type="date" class="form-control" name="startup_zone_early_bird_cutoff_date" 
+                                   value="{{ old('startup_zone_early_bird_cutoff_date', $config->startup_zone_early_bird_cutoff_date ?? '') }}"
+                                   placeholder="YYYY-MM-DD">
+                            <small class="form-text text-muted">Date when early bird pricing ends</small>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h6 class="mb-3" style="color: #667eea; font-weight: 600;">
+                                <i class="fas fa-rupee-sign"></i> INR Pricing
+                            </h6>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Regular Price (Without TV) - INR</label>
+                            <div class="input-group">
+                                <span class="input-group-text">₹</span>
+                                <input type="number" step="0.01" class="form-control" name="startup_zone_regular_price_inr" 
+                                       value="{{ old('startup_zone_regular_price_inr', $config->startup_zone_regular_price_inr ?? '') }}"
+                                       placeholder="52000.00">
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Regular Price (With TV) - INR</label>
+                            <div class="input-group">
+                                <span class="input-group-text">₹</span>
+                                <input type="number" step="0.01" class="form-control" name="startup_zone_regular_price_with_tv_inr" 
+                                       value="{{ old('startup_zone_regular_price_with_tv_inr', $config->startup_zone_regular_price_with_tv_inr ?? '') }}"
+                                       placeholder="60000.00">
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Early Bird Price (Without TV) - INR</label>
+                            <div class="input-group">
+                                <span class="input-group-text">₹</span>
+                                <input type="number" step="0.01" class="form-control" name="startup_zone_early_bird_price_inr" 
+                                       value="{{ old('startup_zone_early_bird_price_inr', $config->startup_zone_early_bird_price_inr ?? '') }}"
+                                       placeholder="30000.00">
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Early Bird Price (With TV) - INR</label>
+                            <div class="input-group">
+                                <span class="input-group-text">₹</span>
+                                <input type="number" step="0.01" class="form-control" name="startup_zone_early_bird_price_with_tv_inr" 
+                                       value="{{ old('startup_zone_early_bird_price_with_tv_inr', $config->startup_zone_early_bird_price_with_tv_inr ?? '') }}"
+                                       placeholder="37500.00">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h6 class="mb-3" style="color: #667eea; font-weight: 600;">
+                                <i class="fas fa-dollar-sign"></i> USD Pricing
+                            </h6>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Regular Price (Without TV) - USD</label>
+                            <div class="input-group">
+                                <span class="input-group-text">$</span>
+                                <input type="number" step="0.01" class="form-control" name="startup_zone_regular_price_usd" 
+                                       value="{{ old('startup_zone_regular_price_usd', $config->startup_zone_regular_price_usd ?? '') }}"
+                                       placeholder="0.00">
+                            </div>
+                            <small class="form-text text-muted">Leave empty to calculate from INR using exchange rate</small>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Regular Price (With TV) - USD</label>
+                            <div class="input-group">
+                                <span class="input-group-text">$</span>
+                                <input type="number" step="0.01" class="form-control" name="startup_zone_regular_price_with_tv_usd" 
+                                       value="{{ old('startup_zone_regular_price_with_tv_usd', $config->startup_zone_regular_price_with_tv_usd ?? '') }}"
+                                       placeholder="0.00">
+                            </div>
+                            <small class="form-text text-muted">Leave empty to calculate from INR using exchange rate</small>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Early Bird Price (Without TV) - USD</label>
+                            <div class="input-group">
+                                <span class="input-group-text">$</span>
+                                <input type="number" step="0.01" class="form-control" name="startup_zone_early_bird_price_usd" 
+                                       value="{{ old('startup_zone_early_bird_price_usd', $config->startup_zone_early_bird_price_usd ?? '') }}"
+                                       placeholder="0.00">
+                            </div>
+                            <small class="form-text text-muted">Leave empty to calculate from INR using exchange rate</small>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Early Bird Price (With TV) - USD</label>
+                            <div class="input-group">
+                                <span class="input-group-text">$</span>
+                                <input type="number" step="0.01" class="form-control" name="startup_zone_early_bird_price_with_tv_usd" 
+                                       value="{{ old('startup_zone_early_bird_price_with_tv_usd', $config->startup_zone_early_bird_price_with_tv_usd ?? '') }}"
+                                       placeholder="0.00">
+                            </div>
+                            <small class="form-text text-muted">Leave empty to calculate from INR using exchange rate</small>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="mt-5 pt-3 border-top">
                     <button type="submit" class="btn btn-save">
                         <i class="fas fa-save me-2"></i>
