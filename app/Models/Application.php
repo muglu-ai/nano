@@ -251,4 +251,21 @@ submission_status
     //fetch the application with user, event and billing details
     //$application = Application::with(['user', 'event', 'billingDetail'])->find($id);
 
+    /**
+     * Accessor: Get allocated_sqm, fallback to interested_sqm if empty
+     * 
+     * @param mixed $value
+     * @return string|null
+     */
+    public function getAllocatedSqmAttribute($value)
+    {
+        // If allocated_sqm is empty/null/0, use interested_sqm as fallback
+        if (empty($value) || $value === null || $value === '0' || $value === 0 || trim($value) === '') {
+            // Access raw attribute to avoid recursion
+            $interestedSqm = $this->attributes['interested_sqm'] ?? null;
+            return !empty($interestedSqm) ? $interestedSqm : $value;
+        }
+        return $value;
+    }
+
 }

@@ -32,7 +32,7 @@ class ExhibitorPriceCalculatornew
     {
         $rates = [
             'INR' => ['Shell Scheme' => 11000, 'Raw Space' => 8000],
-            'EUR' => ['Shell Scheme' => 300, 'Raw Space' => 250],
+            'USD' => ['Shell Scheme' => 300, 'Raw Space' => 250],
         ];
 
         if (!isset($rates[$currency][$stallType])) {

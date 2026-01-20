@@ -422,10 +422,33 @@
                     <td class="label">Number of Delegates</td>
                     <td class="value">{{ $order->items->sum('quantity') }}</td>
                 </tr>
+                @php
+                    $totalDelegates = $order->items->sum('quantity');
+                    $baseAmount = $order->items->sum('subtotal'); // Sum of all (quantity × unit_price)
+                @endphp
                 <tr>
+                    <td class="label">Base Amount</td>
+                    <td class="value">
+                        {{ $currencySymbol }}{{ number_format($baseAmount, $priceFormat) }}
+                        @if($totalDelegates > 0 && $baseAmount > 0)
+                            <span style="font-size: 11px; color: #666666; display: block; margin-top: 3px; font-style: italic;">
+                                @if($order->items->count() === 1)
+                                    {{ $totalDelegates }} delegate{{ $totalDelegates > 1 ? 's' : '' }} × {{ $currencySymbol }}{{ number_format($order->items->first()->unit_price, $priceFormat) }}
+                                @else
+                                    @foreach($order->items as $item)
+                                        {{ $item->quantity }} × {{ $currencySymbol }}{{ number_format($item->unit_price, $priceFormat) }}{{ !$loop->last ? ' + ' : '' }}
+                                    @endforeach
+                                @endif
+                            </span>
+                        @endif
+                    </td>
+                </tr>
+                <tr style="display: none !important; visibility: hidden;">
                     <td class="label">Currency</td>
                     <td class="value">{{ $order->registration->nationality === 'International' ? 'USD ($)' : 'INR (₹)' }}</td>
                 </tr>
+
+
             </table>
 
             <!-- Organisation Information -->
