@@ -87,14 +87,6 @@
                 </div>
                 <div class="col-4">
                     <div class="card shadow-sm border-0">
-                        <div class="card-body">
-                            <h3 class="h4 font-weight-bold">Semi-Member</h3>
-                            <p class="form-control-plaintext mb-0">{{ $application->semi_member == 1 ? 'Yes' : 'No' }}</p>
-                            @if($application->semi_member == 1)
-                                <h3 class="h4 font-weight-bold">Membership ID</h3>
-                                <p class="form-control-plaintext mb-0">{{ $application->membership_id }}</p>
-                            @endif
-                        </div>
                     </div>
                 </div>
             </div>

@@ -181,18 +181,6 @@
 {{--            @endif--}}
 {{--        </td>--}}
 {{--    </tr>--}}
-    @if(isset($application->semi_member) && $application->semi_member == 1)
-    <tr>
-        <th>SEMI Membership ID</th>
-        <td>
-            @if(isset($application->semi_memberID) && $application->semi_memberID)
-                {{$application->semi_memberID}}
-            @else
-                <span class="text-danger">Not provided</span>
-            @endif
-        </td>
-    </tr>
-    @endif
     <tr>
         <th>Region</th>
         <td>
