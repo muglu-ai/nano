@@ -64,21 +64,85 @@
                     <thead class="table-dark text-white text-center">
                     <tr>
                         <th>Company Name</th>
+                        <th>Company Email</th>
                         <th>Website</th>
                         <th>Address</th>
-                        <th>Postal Code</th>
                     </tr>
                     </thead>
                     <tbody>
                     <tr>
                         <td><input type="text" name="company_name" value="{{ $application->company_name ?: 'Not Provided' }}"
                                    class="form-control" readonly></td>
+                        <td><input type="email" name="company_email" value="{{ $application->company_email ?: 'Not Provided' }}"
+                                   class="form-control" readonly></td>
                         <td><input type="url" name="website" value="{{ $application->website ?: 'Not Provided' }}" class="form-control"
                                    readonly></td>
                         <td><input type="text" name="address" value="{{ $application->address ?: 'Not Provided' }}" class="form-control"
                                    readonly></td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="table-responsive mt-3">
+                <table class="table table-bordered table-striped shadow-sm">
+                    <thead class="table-dark text-white text-center">
+                    <tr>
+                        <th>City</th>
+                        <th>State</th>
+                        <th>Country</th>
+                        <th>Postal Code</th>
+                        <th>Telephone/Landline</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr>
+                        <td>
+                            @php
+                                $cityDisplay = 'Not Provided';
+                                if (!empty($application->city_id)) {
+                                    if (is_numeric($application->city_id)) {
+                                        $city = \App\Models\City::find($application->city_id);
+                                        $cityDisplay = $city ? $city->name : $application->city_id;
+                                    } else {
+                                        $cityDisplay = $application->city_id;
+                                    }
+                                }
+                            @endphp
+                            <input type="text" name="city_id" value="{{ $cityDisplay }}" class="form-control" readonly>
+                        </td>
+                        <td>
+                            @php
+                                $stateDisplay = 'Not Provided';
+                                if ($application->state) {
+                                    $stateDisplay = $application->state->name;
+                                } elseif (!empty($application->state_id)) {
+                                    $stateDisplay = $application->state_id;
+                                }
+                            @endphp
+                            <input type="text" value="{{ $stateDisplay }}" class="form-control" readonly>
+                        </td>
+                        <td>
+                            @php
+                                $countryDisplay = 'Not Provided';
+                                if ($application->country) {
+                                    $countryDisplay = $application->country->name;
+                                } elseif (!empty($application->country_id)) {
+                                    $countryDisplay = $application->country_id;
+                                }
+                            @endphp
+                            <input type="text" value="{{ $countryDisplay }}" class="form-control" readonly>
+                        </td>
                         <td><input type="text" name="postal_code" value="{{ $application->postal_code ?: 'Not Provided' }}"
                                    class="form-control" readonly></td>
+                        <td>
+                            @php
+                                $landlineDisplay = 'Not Provided';
+                                if (!empty($application->landline)) {
+                                    $landlineDisplay = $application->landline;
+                                }
+                            @endphp
+                            <input type="text" name="landline" value="{{ $landlineDisplay }}" class="form-control" readonly>
+                        </td>
                     </tr>
                     </tbody>
                 </table>
@@ -163,27 +227,13 @@
                 <table class="table table-bordered table-striped shadow-sm">
                     <thead class="table-dark text-white text-center">
                     <tr>
-{{--                        <th>Main Product Category</th>--}}
-{{--                        <th>Type of Business</th>--}}
-                        <th>Sectors</th>
+                        <th>Main Product Category</th>                        <th>Type of Business</th>                        <th>Sectors</th>
                         <th>Sub-Sector</th>
                     </tr>
                     </thead>
                     <tbody>
                     <tr>
-{{--                        <td style="width: 30%;">--}}
-{{--                            <select name="main_product_category" class="form-control" readonly disabled>--}}
-{{--                                @foreach($productCategories as $category)--}}
-{{--                                    <option value="{{ $category->id }}" {{ $application->main_product_category == $category->id ? 'selected' : '' }}>--}}
-{{--                                        {{ $category->name }}--}}
-{{--                                    </option>--}}
-{{--                                @endforeach--}}
-{{--                            </select>--}}
-{{--                        </td>--}}
-{{--                        <td style="width: 35%;"><input type="text" name="type_of_business"--}}
-{{--                                                       value="{{ $application->type_of_business }}" class="form-control"--}}
-{{--                                                       readonly></td>--}}
-                        <td style="width: 35%;">
+                        <td style="width: 30%;">                            <select name="main_product_category" class="form-control" readonly disabled>                                @foreach($productCategories as $category)                                    <option value="{{ $category->id }}" {{ $application->main_product_category == $category->id ? 'selected' : '' }}>                                        {{ $category->name }}                                    </option>                                @endforeach                            </select>                        </td>                        <td style="width: 35%;"><input type="text" name="type_of_business"                                                       value="{{ $application->type_of_business }}" class="form-control"                                                       readonly></td>                        <td style="width: 35%;">
                             @php
                                 $sectorDisplay = 'Not Provided';
                                 $sectorIds = [];
@@ -254,6 +304,93 @@
                 </table>
             </div>
 
+            <!-- Additional Company Information -->
+            <h4 class="h5 font-weight-bold mt-4 text-dark">Additional Information</h4>
+            <div class="table-responsive">
+                <table class="table table-bordered table-striped shadow-sm">
+                    <thead class="table-dark text-white text-center">
+                    <tr>
+                        <th>Company Age (Years)</th>
+                        <th>Participant Type</th>
+                        <th>Type of Business</th>
+                        <th>Association/Promocode</th>
+                        @if($application->application_type == 'exhibitor')
+                        <th>SEMI Member</th>
+                        <th>SEMI Member ID</th>
+                        <th>Exhibitor Type/Category</th>
+                        <th>Payment Currency</th>
+                        <th>Participation Type</th>
+                        <th>Tag</th>
+                        <th>Preferred Location</th>
+                        <th>Fascia Name</th>
+                        @endif
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr>
+                        <td>
+                            @php
+                                $companyAge = $application->how_old_startup ?? $application->companyYears ?? null;
+                                $companyAgeDisplay = $companyAge ? $companyAge . ' years' : 'Not Provided';
+                            @endphp
+                            <input type="text" value="{{ $companyAgeDisplay }}" class="form-control" readonly>
+                        </td>
+                        <td><input type="text" name="participant_type" value="{{ $application->participant_type ?: 'Not Provided' }}"
+                                   class="form-control" readonly></td>
+                        <td><input type="text" name="type_of_business" value="{{ $application->type_of_business ?: 'Not Provided' }}"
+                                   class="form-control" readonly></td>
+                        <td>
+                            @php
+                                $assocDisplay = 'Not Provided';
+                                if (!empty($application->assoc_mem)) {
+                                    $assocDisplay = $application->assoc_mem;
+                                    if (!empty($application->promocode)) {
+                                        $assocDisplay .= ' (Promocode: ' . $application->promocode . ')';
+                                    }
+                                } elseif (!empty($application->promocode)) {
+                                    $assocDisplay = 'Promocode: ' . $application->promocode;
+                                }
+                            @endphp
+                            <input type="text" value="{{ $assocDisplay }}" class="form-control" readonly>
+                        </td>
+                        @if($application->application_type == 'exhibitor')
+                        <td>
+                            @php
+                                $semiMember = $application->semi_member;
+                                if (is_null($semiMember)) {
+                                    $semiDisplay = 'Not Provided';
+                                } elseif ($semiMember === 1 || $semiMember === true || $semiMember === '1' || strtolower($semiMember) === 'yes') {
+                                    $semiDisplay = 'Yes';
+                                } else {
+                                    $semiDisplay = 'No';
+                                }
+                            @endphp
+                            <input type="text" value="{{ $semiDisplay }}" class="form-control" readonly>
+                        </td>
+                        <td><input type="text" name="semi_memberID" value="{{ $application->semi_memberID ?: 'Not Provided' }}"
+                                   class="form-control" readonly></td>
+                        <td><input type="text" name="exhibitorType" value="{{ $application->exhibitorType ?: 'Not Provided' }}"
+                                   class="form-control" readonly></td>
+                        <td>
+                            @php
+                                $currency = $application->payment_currency ?? 'INR';
+                                $currencyDisplay = $currency ?: 'INR';
+                            @endphp
+                            <input type="text" value="{{ $currencyDisplay }}" class="form-control" readonly>
+                        </td>
+                        <td><input type="text" name="participation_type" value="{{ $application->participation_type ?: 'Not Provided' }}"
+                                   class="form-control" readonly></td>
+                        <td><input type="text" name="tag" value="{{ $application->tag ?: 'Not Provided' }}"
+                                   class="form-control" readonly></td>
+                        <td><input type="text" name="pref_location" value="{{ $application->pref_location ?: 'Not Provided' }}"
+                                   class="form-control" readonly></td>
+                        <td><input type="text" name="fascia_name" value="{{ $application->fascia_name ?: 'Not Provided' }}"
+                                   class="form-control" readonly></td>
+                        @endif
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
 
             <!-- Booth Information - Show for all application types -->
             <h4 class="h5 font-weight-bold mt-4 text-dark">Booth Information</h4>
@@ -275,20 +412,22 @@
                         <tr>
                             <td><input type="text" name="stall_category" value="{{ $application->stall_category ?: 'Not Provided' }}"
                                        class="form-control" readonly></td>
-{{--                            <td><input type="text" name="interested_sqm" value="{{ $application->interested_sqm }}"--}}
-{{--                                       class="form-control" readonly></td>--}}
-                            <td><input type="text" name="allocated_sqm" value="{{ $application->allocated_sqm ?: 'Not Provided' }}"
+                            <td><input type="text" name="interested_sqm" value="{{ $application->interested_sqm ?: 'Not Provided' }}"
                                        class="form-control" readonly></td>
-{{--                            <td><input type="text" name="semi_member"--}}
-{{--                                       value="{{ $application->semi_member == 1 ? 'Yes' : 'No' }}" class="form-control"--}}
-{{--                                       readonly></td>--}}
-{{--                            <td><input type="text" name="semi_memberID" value="{{ $application->semi_memberID }}"--}}
-{{--                                       class="form-control" readonly></td>--}}
+                            <td><input type="text" name="allocated_sqm" value="{{ ($application->allocated_sqm ?: $application->interested_sqm) ?: 'Not Provided' }}"
+                                       class="form-control" readonly></td>
+                        @if($application->application_type == 'exhibitor')
+                            <td><input type="text" name="stallNumber" value="{{ $application->stallNumber ?: 'Not Assigned' }}"
+                                       class="form-control" readonly></td>
+                            <td><input type="text" name="zone" value="{{ $application->zone ?: 'Not Assigned' }}"
+                                       class="form-control" readonly></td>
+                            <td><input type="text" name="hallNo" value="{{ $application->hallNo ?: 'Not Assigned' }}"
+                                       class="form-control" readonly></td>
+                        @endif
                         </tr>
                         </tbody>
                     </table>
                 </div>
-            @endif
 
             <!-- Event Contact Person -->
             <h4 class="h5 font-weight-bold mt-4 text-dark">Event Contact Person</h4>
