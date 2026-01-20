@@ -443,7 +443,7 @@
                         @endif
                     </td>
                 </tr>
-                <tr style='display: none;'>
+                <tr style="display: none !important; visibility: hidden;">
                     <td class="label">Currency</td>
                     <td class="value">{{ $order->registration->nationality === 'International' ? 'USD ($)' : 'INR (₹)' }}</td>
                 </tr>
