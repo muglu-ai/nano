@@ -70,6 +70,7 @@ const PAYPAL_SANDBOX_CLIENT_ID = "AdBqjyTeEI9u0lPQpVnXsJsc5YYVzKYNGcWz3DWVSY8N8j
 const PAYPAL_SANDBOX_SECRET = "EKsqobP6xNcMNyPNQIS-XBCS0KMak5Wym_AehrFtHSnLvrNWPRXUJtCeTrEnunrSUCti3lKqV3zN-ERf";
 
 return [
+    'TICKET_REGISTRATION_LINK' => TICKET_REGISTRATION_LINK,
     // Feature toggles
     'RECAPTCHA_ENABLED' => true, // Set true to enable Google reCAPTCHA on startup zone form
     'EVENT_NAME' => EVENT_NAME,

@@ -76,8 +76,8 @@ class PublicTicketController extends Controller
         // if the ticket and nationality is not provided, redirect to the ticket registration link
         if (!$selectedTicketParam && !$selectedNationality) {
             $redirectUrl = config('constants.TICKET_REGISTRATION_LINK');
-            // Ensure we return a proper RedirectResponse if called inside a controller
-            return \Illuminate\Routing\Redirector::to($redirectUrl);
+            // Redirect to the ticket registration link
+            return redirect()->to($redirectUrl);
         }
         
         // Load ticket types
