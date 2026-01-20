@@ -280,6 +280,16 @@
                     </div>
 
                     <div class="col-md-6 mb-3">
+                        <label class="form-label">Base Amount</label>
+                        <div class="form-control" 
+                             id="base_amount_display" 
+                             style="background-color: #f8f9fa; font-weight: 600; color: #0066cc; padding: 0.375rem 0.75rem; border: 1px solid #ced4da; border-radius: 0.375rem;">
+                            <span id="base_amount_value">--</span>
+                            <small class="text-muted d-block mt-1" id="base_amount_breakdown" style="font-weight: normal; font-size: 0.875rem;"></small>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6 mb-3" style="display: none;">
                         <label class="form-label required-field">Currency</label>
                         @if(isset($isNationalityLocked) && $isNationalityLocked)
                             {{-- Hidden field to submit the value --}}
@@ -804,6 +814,7 @@ document.addEventListener('DOMContentLoaded', function() {
         ticketTypeSelect.addEventListener('change', function() {
             updateDayAccessInfo();
             updateDaySelection();
+            updateBaseAmount();
         });
         // Trigger on load in case ticket type is pre-selected
         updateDayAccessInfo();
@@ -1537,6 +1548,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     option.textContent = ticketName + ' - ' + currency + priceFormat;
                 }
             });
+            // Update base amount when nationality changes
+            updateBaseAmount();
         });
     }
     
@@ -1545,6 +1558,95 @@ document.addEventListener('DOMContentLoaded', function() {
         const factor = Math.pow(10, decimals);
         return (Math.round(number * factor) / factor).toFixed(decimals);
     }
+
+    // Function to calculate and update base amount
+    function updateBaseAmount() {
+        const baseAmountDisplay = document.getElementById('base_amount_value');
+        const baseAmountBreakdown = document.getElementById('base_amount_breakdown');
+        
+        if (!baseAmountDisplay) return;
+        
+        // Get delegate count
+        const delegateCountInput = document.getElementById('delegate_count');
+        const delegateCount = parseInt(delegateCountInput?.value || 1) || 1;
+        
+        // Get nationality
+        const nationality = nationalitySelect?.value || '{{ old("nationality", $selectedNationality ?? "national") }}';
+        const isInternational = nationality === 'international';
+        const currency = isInternational ? '$' : '₹';
+        const priceDecimals = isInternational ? 2 : 0;
+        
+        // Get ticket type data
+        const ticketTypeData = getTicketTypeData();
+        if (!ticketTypeData) {
+            baseAmountDisplay.textContent = '--';
+            baseAmountBreakdown.textContent = '';
+            return;
+        }
+        
+        // Get selected day if per-day pricing is enabled
+        const selectedDayId = selectedEventDaySelect?.value;
+        const hasPerDayPricing = ticketTypeData.hasPerDayPricing === '1';
+        const selectedAllDays = selectedDayId === 'all' || !selectedDayId;
+        
+        // Determine which price to use
+        let unitPrice = 0;
+        if (hasPerDayPricing && selectedDayId && !selectedAllDays) {
+            // Use per-day price
+            unitPrice = isInternational 
+                ? parseFloat(ticketTypeData.perDayPriceInternational || 0)
+                : parseFloat(ticketTypeData.perDayPriceNational || 0);
+        } else {
+            // Use regular price
+            unitPrice = isInternational 
+                ? parseFloat(ticketTypeData.priceInternational || 0)
+                : parseFloat(ticketTypeData.priceNational || 0);
+        }
+        
+        // Calculate base amount
+        const baseAmount = unitPrice * delegateCount;
+        
+        // Update display
+        if (baseAmount > 0) {
+            baseAmountDisplay.textContent = currency + number_format(baseAmount, priceDecimals);
+            baseAmountBreakdown.textContent = `${delegateCount} delegate${delegateCount > 1 ? 's' : ''} × ${currency}${number_format(unitPrice, priceDecimals)}`;
+        } else {
+            baseAmountDisplay.textContent = '--';
+            baseAmountBreakdown.textContent = '';
+        }
+    }
+    
+    // Update base amount when delegate count changes
+    if (delegateCountInput) {
+        delegateCountInput.addEventListener('input', function() {
+            updateBaseAmount();
+        });
+        delegateCountInput.addEventListener('change', function() {
+            updateBaseAmount();
+        });
+    }
+    
+    // Update base amount when ticket type changes
+    if (ticketTypeSelect) {
+        ticketTypeSelect.addEventListener('change', function() {
+            updateBaseAmount();
+        });
+    } else if (lockedTicketType) {
+        // For locked ticket type, update on load
+        updateBaseAmount();
+    }
+    
+    // Update base amount when day selection changes
+    if (selectedEventDaySelect) {
+        selectedEventDaySelect.addEventListener('change', function() {
+            updateBaseAmount();
+        });
+    }
+    
+    // Initial update on page load
+    setTimeout(function() {
+        updateBaseAmount();
+    }, 100);
 
     gstRequired.addEventListener('change', function() {
         if (this.value === '1') {
