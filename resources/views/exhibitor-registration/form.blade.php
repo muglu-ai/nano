@@ -604,40 +604,7 @@
     </div>
 </div>
 
-@push('styles')
-<style>
-    /* Fix intl-tel-input alignment with Bootstrap grid - Match startup zone (minimal styling) */
-    .iti {
-        width: 100%;
-    }
-    
-    /* Ensure the input field container takes full width */
-    .iti input[type=tel] {
-        width: 100%;
-    }
-    
-    /* Fix alignment for separate dial code mode */
-    .iti--separate-dial-code {
-        width: 100%;
-    }
-    
-    .iti--separate-dial-code .iti__selected-flag {
-        background-color: #f8f9fa;
-        border-right: 1px solid #ced4da;
-        border-radius: 0.375rem 0 0 0.375rem;
-    }
-    
-    .iti--separate-dial-code .iti__selected-dial-code {
-        padding: 0 8px;
-    }
-    
-    /* Match Bootstrap form-control styling */
-    .iti input[type=tel].form-control {
-        border-left: 0;
-        border-radius: 0 0.375rem 0.375rem 0;
-    }
-</style>
-@endpush
+
 
 @push('scripts')
 @if(config('constants.RECAPTCHA_ENABLED'))
