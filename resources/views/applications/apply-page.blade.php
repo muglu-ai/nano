@@ -115,61 +115,6 @@
                                             </div>
                                         </div>
 
-                                        <div class="col-md-6">
-                                            <label class="red-label" for="semi_member">Are you a SEMI- Member </label>
-                                            <div style="display: flex; flex-wrap: wrap; gap: 40px;"
-                                                class="form-check is-filled">
-                                                <div style="display: flex; align-items: center;">
-                                                    <input class="form-check-input" type="radio" name="semi_member"
-                                                        value="1" id="semi_member_yes"
-                                                        {{ old('semi_member', $application->semi_member) == 1 ? 'checked' : '' }}
-                                                        {{ $isDisabled }} style="margin-right: 5px;"
-                                                        onchange="toggleSemiMemberId(this)">
-                                                    <label for="semi_member_yes" style=" margin-top: 10px;">Yes</label>
-                                                </div>
-                                                <div style="display: flex; align-items: center;  ">
-                                                    <input class="form-check-input" type="radio" name="semi_member"
-                                                        value="0" id="semi_member_no"
-                                                        {{ old('semi_member', $application->semi_member) == 0 ? 'checked' : '' }}
-                                                        {{ $isDisabled }} style="margin-right: 5px;"
-                                                        onchange="toggleSemiMemberId(this)">
-                                                    <label for="semi_member_no" style=" margin-top: 10px;">No</label>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <hr class="custom-hr">
-                                        <div class="col-md-4 " id="semi_member_id_container" style="display: none;">
-                                            <label class="red-label" for="semi_member_id ">SEMI Membership ID </label>
-                                            <div class="input-group input-group-dynamic">
-                                                <input type="text" name="semi_member_id" id="semi_member_id"
-                                                    class="multisteps-form__input form-control"
-                                                    value="{{ old('semi_member_id', $application->semi_memberID) }}"
-                                                    {{ $isDisabled }}>
-                                            </div>
-                                        </div>
-
-                                        <script>
-                                            function toggleSemiMemberId(radio) {
-                                                const container = document.getElementById('semi_member_id_container');
-                                                const divform = document.getElementById('card-body');
-                                                if (radio.value === '1') {
-                                                    container.style.display = 'block';
-                                                    // document.getElementById('semi_member_id').required = true;
-                                                    divform.style.height = '1550px';
-                                                } else {
-                                                    container.style.display = 'none';
-                                                    // document.getElementById('semi_member_id').required = false;
-                                                    divform.style.height = '100%';
-                                                }
-                                            }
-
-                                            document.addEventListener('DOMContentLoaded', function() {
-                                                const semiMemberYes = document.getElementById('semi_member_yes');
-                                                if (semiMemberYes.checked) {
-                                                    toggleSemiMemberId(semiMemberYes);
-                                                }
-                                            });
-                                        </script>
 
                                     </div>
 

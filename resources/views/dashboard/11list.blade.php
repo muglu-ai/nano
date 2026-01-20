@@ -89,7 +89,6 @@
                                     <th class=" text-uppercase text-white" style="min-width: 150px;">Country</th>
                                     <th class="text-uppercase text-white text-wrap">Requested Booth Size <br> (in sqm)</th>
                                     <th class="text-uppercase text-white text-wrap">Preferred Location</th>
-                                    <th class="text-uppercase text-white text-wrap">Semi Member</th>
                                     <th class=" text-uppercase text-secondary text-xs font-weight-bolder text-wrap " style="min-width: 150px;">
                                         <div class="d-flex flex-column justify-content-center">
                                             <h6 class="mb-0  text-uppercase text-white text-wrap">Name</h6>
@@ -147,14 +146,6 @@
                                                     </div>
                                                 </div>
                                             </td>
-                                            <td class="custom-td">
-                                                <div class="d-flex flex-column" style="word-break: break-word; overflow-wrap: break-word; white-space: normal; max-width: 200px;" >
-                                                    <p class="mb-0 text-md text-dark">{{ $application->semi_member == 1 ? 'Y' : 'N' }}</p>
-                                                    @if(($application->semi_member == 1))
-                                                        <p class="text-md text-secondary mb-0">{{ $application->semi_memberID }}</p>
-                                                    @endif
-                                                </div>
-                                            </td>
                                             <td class=" custom-td">
                                                 <div class="d-flex flex-column " style="word-break: break-word; overflow-wrap: break-word; white-space: normal; max-width: 180px;">
                                                     <p class="mb-0 text-md text-dark">{{ $application->eventContact->first_name }} {{ $application->eventContact->last_name }}</p>
@@ -208,14 +199,6 @@
                                                             <i class="material-symbols-rounded text-secondary position-relative text-lg">visibility</i> View
                                                         </button>
 
-                                                        @if($application->submission_status == 'submitted' && $application->semi_member == 1)
-                                                            <button type="submit" data-bs-toggle="tooltip"
-                                                                    data-bs-original-title="Verify Membership"
-                                                                    style="border:none; background:none; padding:0; margin-top: 5px; padding-right: 30px; gap:5px;"
-                                                                    onclick="verifyMembership('{{ $application->application_id }}', '{{ $application->semi_memberID }}')">
-                                                                <i class="material-symbols-rounded text-secondary position-relative text-lg">verified</i> Verify Membership
-                                                            </button>
-                                                        @endif
                                                     </div>
                                                 </td>
                                             @else
@@ -423,87 +406,5 @@
 
             </script>
 
-            <script>
-                function verifyMembership(applicationId, semiMemberID) {
-                    Swal.fire({
-                        title: 'Verify Membership',
-                        text: "Please confirm to membership ID to verify " + semiMemberID,
-                        icon: 'question',
-                        showCancelButton: true,
-                        confirmButtonText: 'Verify',
-                        cancelButtonText: 'Reject',
-                        customClass: {
-                            confirmButton: 'btn bg-gradient-success',
-                            cancelButton: 'btn bg-gradient-danger'
-                        },
-                        preConfirm: () => {
-                            return {
-                                action: 'verify'
-                            };
-                        }
-                    }).then((result) => {
-                        if (result.isConfirmed) {
-                            fetch('/membership/verify', {
-                                method: 'POST',
-                                headers: {
-                                    'Content-Type': 'application/json',
-                                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                                },
-                                body: JSON.stringify({
-                                    application_id: applicationId,
-                                    semi_memberID: semiMemberID
-                                })
-                            })
-                                .then(response => response.json())
-                                .then(data => {
-                                    Swal.fire('Success', 'Membership verified successfully!', 'success').then(() => {
-                                        location.reload();
-                                    });
-                                })
-                                .catch(error => {
-                                    Swal.fire('Error', 'Verification failed!', 'error');
-                                });
-                        } else if (result.dismiss === Swal.DismissReason.cancel) {
-                            Swal.fire({
-                                title: 'Rejection Reason',
-                                input: 'textarea',
-                                inputPlaceholder: 'Enter reason for rejection...',
-                                showCancelButton: true,
-                                confirmButtonText: 'Submit',
-                                cancelButtonText: 'Cancel',
-                                preConfirm: (reason) => {
-                                    if (!reason) {
-                                        Swal.showValidationMessage('Please provide a reason for rejection');
-                                    }
-                                    return reason;
-                                }
-                            }).then((rejectResult) => {
-                                if (rejectResult.isConfirmed) {
-                                    fetch('/membership/reject', {
-                                        method: 'POST',
-                                        headers: {
-                                            'Content-Type': 'application/json',
-                                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                                        },
-                                        body: JSON.stringify({
-                                            application_id: applicationId,
-                                            reason: rejectResult.value
-                                        })
-                                    })
-                                        .then(response => response.json())
-                                        .then(data => {
-                                            Swal.fire('Rejected', 'Membership rejected successfully!', 'error').then(() => {
-                                                location.reload();
-                                            });
-                                        })
-                                        .catch(error => {
-                                            Swal.fire('Error', 'Rejection submission failed!', 'error');
-                                        });
-                                }
-                            });
-                        }
-                    });
-                }
-            </script>
 
 @endsection

@@ -134,10 +134,6 @@
                             @if(!empty($application->allocated_sqm))
                                 <th class="text-nowrap">Allocated Stall Size</th>
                             @endif
-                            <th class="text-nowrap">SEMI Member</th>
-                            @if($application->semi_member == 1)
-                                <th class="text-nowrap">Membership ID</th>
-                            @endif
                         </tr>
                         </thead>
                         <tbody>
@@ -146,10 +142,6 @@
                             <td class="text-start text-dark">{{ $application->interested_sqm }} sqm</td>
                             @if(!empty($application->allocated_sqm))
                                 <td class="text-start text-dark">{{ $application->allocated_sqm }} sqm</td>
-                            @endif
-                            <td class="text-start text-dark">{{ $application->semi_member == 1 ? 'Yes' : 'No' }}</td>
-                            @if($application->semi_member == 1)
-                                <td class="text-start text-dark">{{ $application->semi_memberID }}</td>
                             @endif
                         </tr>
                         </tbody>
