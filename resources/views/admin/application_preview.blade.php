@@ -227,12 +227,16 @@
                 <table class="table table-bordered table-striped shadow-sm">
                     <thead class="table-dark text-white text-center">
                     <tr>
-                        <th>Main Product Category</th>                        <th>Type of Business</th>                        <th>Sectors</th>
+                        {{-- <th>Main Product Category</th>         --}}
+                                        {{-- <th>Type of Business</th>             --}}
+                                        
+                                                    <th>Sectors</th>
                         <th>Sub-Sector</th>
                     </tr>
                     </thead>
                     <tbody>
                     <tr>
+                    {{--
                         <td style="width: 30%;">                            <select name="main_product_category" class="form-control" readonly disabled>                                @foreach($productCategories as $category)                                    <option value="{{ $category->id }}" {{ $application->main_product_category == $category->id ? 'selected' : '' }}>                                        {{ $category->name }}                                    </option>                                @endforeach                            </select>                        </td>                        <td style="width: 35%;"><input type="text" name="type_of_business"                                                       value="{{ $application->type_of_business }}" class="form-control"                                                       readonly></td>                        <td style="width: 35%;">
                             @php
                                 $sectorDisplay = 'Not Provided';
@@ -295,6 +299,7 @@
                                 <strong>Display:</strong> <span id="sectorDisplay">{{ $sectorDisplay }}</span>
                             </div>
                         </td>
+                        --}}
                         <td style="width: 35%;"><input type="text" name="sub_sector"
                                                        value="{{ $application->subSector ?: 'Not Provided' }}" class="form-control"
                                                        readonly></td>
@@ -337,8 +342,10 @@
                         </td>
                         <td><input type="text" name="participant_type" value="{{ $application->participant_type ?: 'Not Provided' }}"
                                    class="form-control" readonly></td>
+                        {{--
                         <td><input type="text" name="type_of_business" value="{{ $application->type_of_business ?: 'Not Provided' }}"
                                    class="form-control" readonly></td>
+                        --}}
                         <td>
                             @php
                                 $assocDisplay = 'Not Provided';
