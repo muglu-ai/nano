@@ -288,44 +288,81 @@
                         Pricing Configuration
                     </h5>
                     <div class="row">
-                        <div class="col-md-4 mb-4">
-                            <label class="form-label">Shell Scheme Rate (per sqm)</label>
-                            <div class="input-group-custom">
+                        <div class="col-12 mb-3">
+                            <h6 class="mb-3" style="color: #667eea; font-weight: 600;">
+                                <i class="fas fa-rupee-sign"></i> INR Rates (per sqm)
+                            </h6>
+                        </div>
+                        <div class="col-md-6 mb-4">
+                            <label class="form-label">Shell Scheme Rate (INR)</label>
+                            <div class="input-group">
+                                <span class="input-group-text">₹</span>
                                 <input type="number" step="0.01" class="form-control" name="shell_scheme_rate" 
                                        value="{{ old('shell_scheme_rate', $config->shell_scheme_rate ?? '') }}"
-                                       placeholder="0.00">
+                                       placeholder="14000.00">
                             </div>
                         </div>
-                        <div class="col-md-4 mb-4">
-                            <label class="form-label">Raw Space Rate (per sqm)</label>
-                            <div class="input-group-custom">
+                        <div class="col-md-6 mb-4">
+                            <label class="form-label">Raw Space Rate (INR)</label>
+                            <div class="input-group">
+                                <span class="input-group-text">₹</span>
                                 <input type="number" step="0.01" class="form-control" name="raw_space_rate" 
                                        value="{{ old('raw_space_rate', $config->raw_space_rate ?? '') }}"
-                                       placeholder="0.00">
+                                       placeholder="13000.00">
                             </div>
+                        </div>
+                        
+                        <div class="col-12 mb-3 mt-3">
+                            <h6 class="mb-3" style="color: #667eea; font-weight: 600;">
+                                <i class="fas fa-dollar-sign"></i> USD Rates (per sqm)
+                            </h6>
+                        </div>
+                        <div class="col-md-6 mb-4">
+                            <label class="form-label">Shell Scheme Rate (USD)</label>
+                            <div class="input-group">
+                                <span class="input-group-text">$</span>
+                                <input type="number" step="0.01" class="form-control" name="shell_scheme_rate_usd" 
+                                       value="{{ old('shell_scheme_rate_usd', $config->shell_scheme_rate_usd ?? '') }}"
+                                       placeholder="175.00">
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-4">
+                            <label class="form-label">Raw Space Rate (USD)</label>
+                            <div class="input-group">
+                                <span class="input-group-text">$</span>
+                                <input type="number" step="0.01" class="form-control" name="raw_space_rate_usd" 
+                                       value="{{ old('raw_space_rate_usd', $config->raw_space_rate_usd ?? '') }}"
+                                       placeholder="160.00">
+                            </div>
+                        </div>
+                        
+                        <div class="col-12 mb-3 mt-3">
+                            <h6 class="mb-3" style="color: #667eea; font-weight: 600;">
+                                <i class="fas fa-percentage"></i> Charges & Rates
+                            </h6>
                         </div>
                         <div class="col-md-4 mb-4">
                             <label class="form-label">GST Rate (%)</label>
                             <div class="input-group-custom">
                                 <input type="number" step="0.01" class="form-control" name="gst_rate" 
                                        value="{{ old('gst_rate', $config->gst_rate ?? '') }}"
-                                       placeholder="0.00">
+                                       placeholder="18.00">
                             </div>
                         </div>
-                        <div class="col-md-6 mb-4">
+                        <div class="col-md-4 mb-4">
                             <label class="form-label">Indian Processing Charge (%)</label>
                             <div class="input-group-custom">
                                 <input type="number" step="0.01" class="form-control" name="ind_processing_charge" 
                                        value="{{ old('ind_processing_charge', $config->ind_processing_charge ?? '') }}"
-                                       placeholder="0.00">
+                                       placeholder="3.00">
                             </div>
                         </div>
-                        <div class="col-md-6 mb-4">
+                        <div class="col-md-4 mb-4">
                             <label class="form-label">International Processing Charge (%)</label>
                             <div class="input-group-custom">
                                 <input type="number" step="0.01" class="form-control" name="int_processing_charge" 
                                        value="{{ old('int_processing_charge', $config->int_processing_charge ?? '') }}"
-                                       placeholder="0.00">
+                                       placeholder="9.00">
                             </div>
                         </div>
                     </div>
