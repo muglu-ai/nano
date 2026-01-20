@@ -3,7 +3,10 @@
 @section('title', 'Exhibitor Registration - ' . config('constants.EVENT_NAME') . ' ' . config('constants.EVENT_YEAR'))
 @push('styles')
 <style>
-   
+    /* Force invalid-feedback to display when it has content */
+    .invalid-feedback:not(:empty) {
+        display: block !important;
+    }
 
     .form-section {
         background: #f8f9fa;
@@ -103,7 +106,7 @@
     </div>
 
     {{-- Form Container --}}
-    <form id="exhibitorRegistrationForm" enctype="multipart/form-data">
+    <form id="exhibitorRegistrationForm" enctype="multipart/form-data" novalidate>
         @csrf
         <input type="hidden" name="session_id" value="{{ session()->getId() }}">
                 {{-- Booth & Exhibition Details --}}
@@ -1212,12 +1215,36 @@ $(document).ready(function() {
                         window.location.href = response.redirect_url;
                     } else {
                         if (response.errors) {
+                            // Clear previous errors
+                            $('.is-invalid').removeClass('is-invalid');
+                            $('.invalid-feedback').text('').hide();
+                            
                             // Display validation errors
+                            let firstErrorField = null;
                             Object.keys(response.errors).forEach(function(field) {
                                 const input = $(`[name="${field}"]`);
-                                input.addClass('is-invalid');
-                                input.siblings('.invalid-feedback').text(response.errors[field][0]);
+                                if (input.length) {
+                                    input.addClass('is-invalid');
+                                    // Find invalid-feedback in parent container
+                                    const feedback = input.siblings('.invalid-feedback').length 
+                                        ? input.siblings('.invalid-feedback') 
+                                        : input.closest('.col-md-4, .col-md-6, .col-md-12, .col-12').find('.invalid-feedback');
+                                    feedback.text(response.errors[field][0]).show();
+                                    
+                                    // Track first error field
+                                    if (!firstErrorField) {
+                                        firstErrorField = input;
+                                    }
+                                }
                             });
+                            
+                            // Scroll to first error field
+                            if (firstErrorField) {
+                                $('html, body').animate({
+                                    scrollTop: firstErrorField.offset().top - 100
+                                }, 500);
+                                firstErrorField.focus();
+                            }
                         } else {
                             alert(response.message || 'An error occurred');
                         }
@@ -1226,11 +1253,36 @@ $(document).ready(function() {
                 error: function(xhr) {
                     const response = xhr.responseJSON;
                     if (response && response.errors) {
+                        // Clear previous errors
+                        $('.is-invalid').removeClass('is-invalid');
+                        $('.invalid-feedback').text('').hide();
+                        
+                        // Display validation errors
+                        let firstErrorField = null;
                         Object.keys(response.errors).forEach(function(field) {
                             const input = $(`[name="${field}"]`);
-                            input.addClass('is-invalid');
-                            input.siblings('.invalid-feedback').text(response.errors[field][0]);
+                            if (input.length) {
+                                input.addClass('is-invalid');
+                                // Find invalid-feedback in parent container
+                                const feedback = input.siblings('.invalid-feedback').length 
+                                    ? input.siblings('.invalid-feedback') 
+                                    : input.closest('.col-md-4, .col-md-6, .col-md-12, .col-12').find('.invalid-feedback');
+                                feedback.text(response.errors[field][0]).show();
+                                
+                                // Track first error field
+                                if (!firstErrorField) {
+                                    firstErrorField = input;
+                                }
+                            }
                         });
+                        
+                        // Scroll to first error field
+                        if (firstErrorField) {
+                            $('html, body').animate({
+                                scrollTop: firstErrorField.offset().top - 100
+                            }, 500);
+                            firstErrorField.focus();
+                        }
                     } else {
                         alert(response?.message || 'An error occurred. Please try again.');
                     }

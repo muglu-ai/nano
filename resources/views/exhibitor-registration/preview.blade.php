@@ -628,7 +628,7 @@
 
             {{-- Action Buttons --}}
             <div class="d-flex justify-content-between mt-4">
-                <a href="{{ route('exhibitor-registration.register') }}" class="btn btn-edit btn-lg">
+                <a href="{{ route('exhibitor-registration.register', ['currency' => ($currency ?? 'INR') === 'USD' ? 'int' : 'ind']) }}" class="btn btn-edit btn-lg">
                     <i class="fas fa-arrow-left me-2"></i>
                     Edit Details
                 </a>
