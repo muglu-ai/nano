@@ -366,7 +366,7 @@
                 <div class="row mb-3">
                     <div class="col-12">
                         <button type="button" class="btn btn-primary btn-sm mb-3" id="copy_from_billing" style="color: #fff;">
-                            <i class="fas fa-copy"></i> Copy from Billing Information
+                            <i class="fas fa-copy"></i> Click here to Copy from Billing Information
                         </button>
                     </div>
                 </div>
