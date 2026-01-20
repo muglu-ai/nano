@@ -181,8 +181,20 @@ class AdminController extends Controller
         }
 
         // Build base query
-        $query = Application::with('eventContact')
-            ->where('application_type', $applicationType);
+        $query = Application::with('eventContact');
+        
+        // Filter by application type
+        // For 'exhibitor' type, show all non-startup-zone applications (including null and 'exhibitor')
+        if ($applicationType === 'startup-zone') {
+            $query->where('application_type', 'startup-zone');
+        } else {
+            // For exhibitor or other types, exclude startup-zone
+            $query->where(function($q) {
+                $q->where('application_type', '!=', 'startup-zone')
+                  ->orWhereNull('application_type')
+                  ->orWhere('application_type', 'exhibitor');
+            });
+        }
 
         // Handle Startup Zone specific filters
         if ($applicationType === 'startup-zone' && $filter) {
@@ -233,15 +245,25 @@ class AdminController extends Controller
                           });
                     });
                 }
-                }
+            }
+        }
+
+        // Handle approved status separately for revenue calculation
+        if ($status == 'approved') {
+            $query = Application::with('eventContact', 'invoice');
+            
+            // Filter by application type
+            if ($applicationType === 'startup-zone') {
+                $query->where('application_type', 'startup-zone');
+            } else {
+                $query->where(function($q) {
+                    $q->where('application_type', '!=', 'startup-zone')
+                      ->orWhereNull('application_type')
+                      ->orWhere('application_type', 'exhibitor');
+                });
             }
             
-            $applications = $query->orderBy('submission_date', 'desc')->get();
-
-        if ($status == 'approved') {
-            $query = Application::with('eventContact', 'invoice')
-                ->where('submission_status', 'approved')
-                ->where('application_type', $applicationType);
+            $query->where('submission_status', 'approved');
             
             $applications = $query->orderBy('submission_date', 'desc')->get();
             
@@ -254,6 +276,8 @@ class AdminController extends Controller
             return view('dashboard.approved_list', compact('applications', 'slug', 'totalRevenue'));
         }
 
+        // Get applications for all other cases
+        $applications = $query->orderBy('submission_date', 'desc')->get();
 
         return view('dashboard.list', compact('applications', 'slug'));
     }
