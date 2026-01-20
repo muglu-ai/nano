@@ -1248,8 +1248,8 @@ class AdminController extends Controller
         // dd($applicationId);
         $productCategories = ProductCategory::select('id', 'name')->get();
 
-        //get application details from application model
-        $application = Application::where('application_id', $applicationId)->first();
+        //get application details from application model with user relationship
+        $application = Application::with('user')->where('application_id', $applicationId)->first();
         //if not application return to route dashboard.admin
         if (!$application) {
             return redirect()->route('dashboard.admin');

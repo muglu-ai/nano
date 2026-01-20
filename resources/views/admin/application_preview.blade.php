@@ -83,6 +83,80 @@
                     </tbody>
                 </table>
             </div>
+
+            <!-- Company Registration Certificate -->
+            @php
+                $certificatePath = null;
+                // Check for certificate in different possible locations
+                if (!empty($application->certificate)) {
+                    $certificatePath = $application->certificate;
+                } elseif ($application->application_type === 'startup-zone') {
+                    // For startup zone, check if there's a draft with certificate_path
+                    $draft = \App\Models\StartupZoneDraft::where('converted_to_application_id', $application->id)->first();
+                    if ($draft && !empty($draft->certificate_path)) {
+                        $certificatePath = $draft->certificate_path;
+                    }
+                }
+            @endphp
+            @if($certificatePath)
+            <h4 class="h5 font-weight-bold mt-4 text-dark">Company Registration Certificate</h4>
+            <div class="table-responsive">
+                <table class="table table-bordered table-striped shadow-sm">
+                    <thead class="table-dark text-white text-center">
+                    <tr>
+                        <th>Certificate File</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr>
+                        <td>
+                            @php
+                                // Determine the full path to the certificate
+                                $fileExists = false;
+                                $downloadUrl = null;
+                                
+                                // Normalize path - remove leading storage/ or public/ if present
+                                $normalizedPath = preg_replace('#^(storage/|public/|/storage/|/public/)#', '', $certificatePath);
+                                
+                                // Check if file exists in public storage
+                                if (\Storage::disk('public')->exists($normalizedPath)) {
+                                    $fileExists = true;
+                                    $downloadUrl = \Storage::disk('public')->url($normalizedPath);
+                                } elseif (\Storage::disk('public')->exists($certificatePath)) {
+                                    $fileExists = true;
+                                    $downloadUrl = \Storage::disk('public')->url($certificatePath);
+                                } elseif (file_exists(storage_path('app/public/' . $normalizedPath))) {
+                                    $fileExists = true;
+                                    $downloadUrl = asset('storage/' . $normalizedPath);
+                                } elseif (file_exists(storage_path('app/public/' . $certificatePath))) {
+                                    $fileExists = true;
+                                    $downloadUrl = asset('storage/' . $certificatePath);
+                                }
+                                
+                                $fileName = basename($certificatePath);
+                            @endphp
+                            @if($fileExists)
+                                <div class="d-flex align-items-center gap-3">
+                                    <i class="fas fa-file-pdf text-danger" style="font-size: 2rem;"></i>
+                                    <div>
+                                        <strong>{{ $fileName }}</strong>
+                                        <br>
+                                        <a href="{{ $downloadUrl }}" target="_blank" class="btn btn-sm btn-primary mt-2">
+                                            <i class="fas fa-download"></i> View/Download PDF
+                                        </a>
+                                    </div>
+                                </div>
+                            @else
+                                <div class="text-muted">
+                                    <i class="fas fa-exclamation-triangle"></i> Certificate file not found at: {{ $certificatePath }}
+                                </div>
+                            @endif
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+            @endif
             <!-- Main Product Category, Type of Business, Sectors -->
             <h4 class="h5 font-weight-bold mt-4 text-dark">Sector and Sub-Sector</h4>
             <div class="table-responsive">
@@ -110,23 +184,66 @@
 {{--                                                       value="{{ $application->type_of_business }}" class="form-control"--}}
 {{--                                                       readonly></td>--}}
                         <td style="width: 35%;">
-                            <select name="sectors[]" class="form-control" multiple readonly disabled id="sectorSelect">
-                                @php
+                            @php
+                                $sectorDisplay = 'Not Provided';
+                                $sectorIds = [];
+                                
+                                // Handle different formats: array, JSON string, comma-separated string, or plain string
+                                if (!empty($application->sector_id)) {
                                     if (is_array($application->sector_id)) {
                                         $sectorIds = $application->sector_id;
-                                    } else {
+                                    } elseif (is_string($application->sector_id)) {
+                                        // Try to decode as JSON first
                                         $decodedValue = json_decode($application->sector_id, true);
-                                        $sectorIds = is_array($decodedValue) ? $decodedValue : explode(',', trim($application->sector_id, '[]"'));
+                                        if (json_last_error() === JSON_ERROR_NONE && is_array($decodedValue)) {
+                                            $sectorIds = $decodedValue;
+                                        } elseif (strpos($application->sector_id, ',') !== false) {
+                                            // Comma-separated string
+                                            $sectorIds = array_filter(array_map('trim', explode(',', $application->sector_id)));
+                                        } elseif (is_numeric($application->sector_id)) {
+                                            // Single numeric ID
+                                            $sectorIds = [(string)$application->sector_id];
+                                        } else {
+                                            // Plain string - try to find matching sector by name
+                                            $matchingSector = \App\Models\Sector::where('name', 'like', '%' . $application->sector_id . '%')->first();
+                                            if ($matchingSector) {
+                                                $sectorIds = [(string)$matchingSector->id];
+                                            } else {
+                                                // If no match found, display the string as-is
+                                                $sectorDisplay = $application->sector_id;
+                                            }
+                                        }
+                                    } elseif (is_numeric($application->sector_id)) {
+                                        $sectorIds = [(string)$application->sector_id];
                                     }
-                                @endphp
-
+                                    
+                                    // Build sector display from IDs
+                                    if (!empty($sectorIds) && $sectorDisplay === 'Not Provided') {
+                                        $sectorNames = [];
+                                        foreach ($sectorIds as $sid) {
+                                            $sid = trim($sid);
+                                            if (is_numeric($sid)) {
+                                                $sector = \App\Models\Sector::find($sid);
+                                                if ($sector) {
+                                                    $sectorNames[] = $sector->name;
+                                                }
+                                            }
+                                        }
+                                        $sectorDisplay = !empty($sectorNames) ? implode(', ', $sectorNames) : 'Not Provided';
+                                    }
+                                }
+                            @endphp
+                            <select name="sectors[]" class="form-control" multiple readonly disabled id="sectorSelect">
                                 @foreach($sectors as $sector)
                                     <option value="{{ $sector->id }}"
-                                            {{ in_array((string)$sector->id, $sectorIds) ? 'selected' : 'hidden' }}>
+                                            {{ in_array((string)$sector->id, array_map('strval', $sectorIds)) ? 'selected' : 'hidden' }}>
                                         {{ $sector->name }}
                                     </option>
                                 @endforeach
                             </select>
+                            <div class="mt-2">
+                                <strong>Display:</strong> <span id="sectorDisplay">{{ $sectorDisplay }}</span>
+                            </div>
                         </td>
                         <td style="width: 35%;"><input type="text" name="sub_sector"
                                                        value="{{ $application->subSector ?: 'Not Provided' }}" class="form-control"
@@ -138,17 +255,20 @@
             </div>
 
 
-            @if($application->application_type == 'exhibitor')
-                <h4 class="h5 font-weight-bold mt-4 text-dark">Exhibition Info</h4>
-                <div class="table-responsive">
-                    <table class="table table-bordered table-striped shadow-sm">
-                        <thead class="table-dark text-white text-center">
-                        <tr>
-                            <th>Stall Type</th>
-{{--                            <th>Requested Stall Size (sqm)</th>--}}
-                            <th>Allocated Stall Size (sqm)</th>
-{{--                            <th>SEMI Member</th>--}}
-{{--                            <th>Membership ID</th>--}}
+            <!-- Booth Information - Show for all application types -->
+            <h4 class="h5 font-weight-bold mt-4 text-dark">Booth Information</h4>
+            <div class="table-responsive">
+                <table class="table table-bordered table-striped shadow-sm">
+                    <thead class="table-dark text-white text-center">
+                    <tr>
+                        <th>Stall/Booth Type</th>
+                        <th>Requested Size</th>
+                        <th>Allocated Size</th>
+                        @if($application->application_type == 'exhibitor')
+                        <th>Stall Number</th>
+                        <th>Zone</th>
+                        <th>Hall Number</th>
+                        @endif
                         </tr>
                         </thead>
                         <tbody>
@@ -231,32 +351,67 @@
                 </div>
             @endif
 
-            <!-- Company Details -->
-            <h4 class="h5 font-weight-bold mt-4 text-dark">GST Details</h4>
+            <!-- GST & Tax Details -->
+            <h4 class="h5 font-weight-bold mt-4 text-dark">GST & Tax Details</h4>
             <div class="table-responsive">
                 <table class="table table-bordered table-striped shadow-sm">
                     <thead class="table-dark text-white text-center">
                     <tr>
-                        {{-- <th>Billing Country</th> --}}
                         <th>GST Compliance</th>
                         <th>GST Number</th>
                         <th>PAN Number</th>
+                        <th>TAN Number</th>
                     </tr>
                     </thead>
                     <tbody>
                     <tr>
-                        {{-- <td><input type="text" name="billing_country" value="{{ $application->country->name }}" class="form-control" readonly></td> --}}
-                        <td><input type="text" name="gst_compliance"
-                                   value="{{ is_null($application->gst_compliance) ? 'Not Provided' : ($application->gst_compliance == 1 ? 'Yes' : 'No') }}" class="form-control"
-                                   readonly></td>
-                        @if($application->gst_compliance === 1)
-                            <td><input type="text" name="gst_no" value="{{ $application->gst_no ?: 'Not Provided' }}" class="form-control"
-                                       readonly></td>
-                            <td><input type="text" name="pan_no" value="{{ $application->pan_no ?: 'Not Provided' }}" class="form-control"
-                                       readonly></td>
-                        @else
-                            <td colspan="2" class="text-center">{{ is_null($application->gst_compliance) ? 'Not Provided' : 'N/A' }}</td>
-                        @endif
+                        <td>
+                            @php
+                                $gstCompliance = $application->gst_compliance;
+                                if (is_null($gstCompliance)) {
+                                    $gstDisplay = 'Not Provided';
+                                } elseif ($gstCompliance === 1 || $gstCompliance === true || $gstCompliance === '1' || strtolower($gstCompliance) === 'yes' || strtolower($gstCompliance) === 'true') {
+                                    $gstDisplay = 'Yes';
+                                } else {
+                                    $gstDisplay = 'No';
+                                }
+                            @endphp
+                            <input type="text" name="gst_compliance" value="{{ $gstDisplay }}" class="form-control" readonly>
+                        </td>
+                        <td>
+                            @php
+                                $gstNo = $application->gst_no;
+                                // Handle string values - check if it contains any GST number pattern
+                                if (empty($gstNo) || $gstNo === null || $gstNo === 'null' || $gstNo === '') {
+                                    $gstNoDisplay = 'Not Provided';
+                                } else {
+                                    $gstNoDisplay = $gstNo;
+                                }
+                            @endphp
+                            <input type="text" name="gst_no" value="{{ $gstNoDisplay }}" class="form-control" readonly>
+                        </td>
+                        <td>
+                            @php
+                                $panNo = $application->pan_no;
+                                if (empty($panNo) || $panNo === null || $panNo === 'null' || $panNo === '') {
+                                    $panNoDisplay = 'Not Provided';
+                                } else {
+                                    $panNoDisplay = $panNo;
+                                }
+                            @endphp
+                            <input type="text" name="pan_no" value="{{ $panNoDisplay }}" class="form-control" readonly>
+                        </td>
+                        <td>
+                            @php
+                                $tanNo = $application->tan_no;
+                                if (empty($tanNo) || $tanNo === null || $tanNo === 'null' || $tanNo === '') {
+                                    $tanNoDisplay = 'Not Provided';
+                                } else {
+                                    $tanNoDisplay = $tanNo;
+                                }
+                            @endphp
+                            <input type="text" name="tan_no" value="{{ $tanNoDisplay }}" class="form-control" readonly>
+                        </td>
                     </tr>
                     </tbody>
                 </table>
@@ -340,6 +495,56 @@
                 </table>
             </div>
 
+            <!-- Assigned Sales Person / Portal Handler -->
+            <h4 class="h5 font-weight-bold mt-4 text-dark">Assigned Sales Person / Portal Handler</h4>
+            <div class="table-responsive">
+                <table class="table table-bordered table-striped shadow-sm">
+                    <thead class="table-dark text-white text-center">
+                    <tr>
+                        <th>Sales Person</th>
+                        <th>Registration Source</th>
+                        <th>Application Created By</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr>
+                        <td>
+                            @php
+                                $salesPerson = $application->salesPerson ?? null;
+                                if (empty($salesPerson) || $salesPerson === 'null' || $salesPerson === '') {
+                                    $salesPersonDisplay = 'Not Assigned';
+                                } else {
+                                    $salesPersonDisplay = $salesPerson;
+                                }
+                            @endphp
+                            <input type="text" name="salesPerson" value="{{ $salesPersonDisplay }}" class="form-control" readonly>
+                        </td>
+                        <td>
+                            @php
+                                $regSource = $application->RegSource ?? null;
+                                if (empty($regSource) || $regSource === 'null' || $regSource === '') {
+                                    $regSourceDisplay = 'Not Provided';
+                                } else {
+                                    $regSourceDisplay = $regSource;
+                                }
+                            @endphp
+                            <input type="text" name="RegSource" value="{{ $regSourceDisplay }}" class="form-control" readonly>
+                        </td>
+                        <td>
+                            @php
+                                $createdByUser = $application->user ?? null;
+                                if ($createdByUser) {
+                                    $createdByDisplay = $createdByUser->name . ' (' . $createdByUser->email . ')';
+                                } else {
+                                    $createdByDisplay = 'N/A';
+                                }
+                            @endphp
+                            <input type="text" value="{{ $createdByDisplay }}" class="form-control" readonly>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
 
         </form>
 
