@@ -59,6 +59,8 @@ const GUIDE_LINK = 'https://bengalurutechsummit.com/pdf/BTS-Exhibitor-Portal-Gui
 const GST_API_URL = 'https://my.gstzen.in/api/gstin-validator/';
 const GST_API_KEY = '5479841c-b3ff-42ba-90bf-cb9866f52321';
 
+const TICKET_REGISTRATION_LINK = 'https://bengalurutechsummit.com/conference.php#delegate-tariff';
+
 //define("DEFAULT_REGISTRATION_LINK", route('register.form'));
 const DEFAULT_REGISTRATION_LINK = null;
 const PAYPAL_MODE = "live";

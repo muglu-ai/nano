@@ -72,6 +72,11 @@ class PublicTicketController extends Controller
         // Get selected ticket type from query parameter (can be slug or ID for backward compatibility)
         $selectedTicketParam = request()->query('ticket');
         $selectedNationality = request()->query('nationality'); // Get nationality from URL
+
+        // if the ticket and nationality is not provided, redirect to the ticket registration link
+        if (!$selectedTicketParam && !$selectedNationality) {
+            return redirect(config('constants.TICKET_REGISTRATION_LINK'));
+        }
         
         // Load ticket types
         $ticketTypes = TicketType::where('event_id', $event->id)
@@ -220,7 +225,7 @@ class PublicTicketController extends Controller
             'company_state' => 'nullable|string|max:255',
             'company_city' => 'nullable|string|max:255',
             'postal_code' => 'nullable|string|max:20',
-            'phone' => 'required|string|max:20',
+            'phone' => 'required|string|min:8|max:20',
             'email' => 'nullable|email|max:255',
             'gst_required' => 'required|in:0,1',
             'gstin' => 'nullable|string|max:15|regex:/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/',
@@ -234,7 +239,7 @@ class PublicTicketController extends Controller
             'delegates.*.first_name' => 'required|string|max:255',
             'delegates.*.last_name' => 'required|string|max:255',
             'delegates.*.email' => 'required|email|max:255',
-            'delegates.*.phone' => 'nullable|string|max:20',
+            'delegates.*.phone' => 'nullable|string|min:8|max:20',
             'delegates.*.salutation' => 'nullable|string|max:10',
             'delegates.*.job_title' => 'nullable|string|max:255',
         ], [
