@@ -46,7 +46,7 @@
                                 @if($application->application_id)
                                 <table role="presentation" width="100%" cellpadding="5" cellspacing="0" style="margin-bottom: 10px;">
                                     <tr>
-                                        <td style="width: 40%; font-weight: bold; color: #555555; padding: 5px 0;">Application ID (TIN):</td>
+                                        <td style="width: 40%; font-weight: bold; color: #555555; padding: 5px 0;"> TIN Number:</td>
                                         <td style="color: #333333; padding: 5px 0;"><strong>{{ $application->application_id }}</strong></td>
                                     </tr>
                                 </table>

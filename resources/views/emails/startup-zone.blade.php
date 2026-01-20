@@ -158,7 +158,7 @@
                                     <tr>
                                         <td style="width: 40%; font-weight: bold; color: #555555; padding: 5px 0;">
                                             @if($isAdminNotification)
-                                                Application ID (TIN):
+                                                TIN Number:
                                             @else
                                                 TIN Number:
                                             @endif
