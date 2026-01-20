@@ -1002,17 +1002,17 @@ $(document).ready(function() {
         const billingAddress = $('#billing_address').val() || '';
         $('#exhibitor_address').val(billingAddress);
         
-        // Copy country and state
-        const billingCountryId = $('#billing_country_id').val() || '';
-        const billingStateId = $('#billing_state_id').val() || '';
+        // Copy country and state (check hidden fields first for locked GST fields)
+        const billingCountryId = $('#billing_country_id_hidden').val() || $('#billing_country_id').val() || '';
+        const billingStateId = $('#billing_state_id_hidden').val() || $('#billing_state_id').val() || '';
+        
         if (billingCountryId) {
-            $('#exhibitor_country_id').val(billingCountryId).trigger('change');
-            // Wait for states to load, then set state
-            setTimeout(function() {
-                if (billingStateId) {
-                    $('#exhibitor_state_id').val(billingStateId);
-                }
-            }, 500);
+            $('#exhibitor_country_id').val(billingCountryId);
+            // Load states for the exhibitor country and then set state
+            loadStatesForCountry(billingCountryId, '#exhibitor_state_id', billingStateId, function() {
+                // State will be set by the loadStatesForCountry function via preserveSelectedStateId
+                console.log('Exhibitor states loaded, state set to:', billingStateId);
+            });
         }
         
         // Copy city
