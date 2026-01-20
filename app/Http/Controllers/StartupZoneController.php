@@ -353,15 +353,18 @@ class StartupZoneController extends Controller
         $mobileCountryCode = '91'; // Default to India
         
         if ($request->has('contact_mobile_national') && $request->input('contact_mobile_national')) {
-            $mobileNational = preg_replace('/\s+/', '', trim($request->input('contact_mobile_national'))); // Remove all spaces
-            $mobileCountryCode = $request->input('contact_country_code') ?: '91';
+            // Extract only digits from national number (remove spaces and non-digits)
+            $mobileNational = preg_replace('/[^0-9]/', '', trim($request->input('contact_mobile_national')));
+            // Extract only digits from country code (remove + and non-digits)
+            $mobileCountryCode = preg_replace('/[^0-9]/', '', $request->input('contact_country_code') ?: '91');
         } elseif ($request->has('contact_mobile') && $request->input('contact_mobile')) {
             // If mobile is provided directly, extract and format
-            $mobileValue = preg_replace('/\s+/', '', trim($request->input('contact_mobile')));
-            // Try to extract country code if present
-            if (preg_match('/^\+?(\d{1,3})(\d+)$/', $mobileValue, $matches)) {
-                $mobileCountryCode = $matches[1];
-                $mobileNational = $matches[2];
+            $mobileValue = preg_replace('/[^0-9]/', '', trim($request->input('contact_mobile')));
+            // Try to extract country code if present (first 1-4 digits as country code, rest as national)
+            if (strlen($mobileValue) > 10) {
+                // Assume last 10 digits are national number for Indian numbers
+                $mobileNational = substr($mobileValue, -10);
+                $mobileCountryCode = substr($mobileValue, 0, -10) ?: '91';
             } else {
                 $mobileNational = $mobileValue;
             }
@@ -416,6 +419,26 @@ class StartupZoneController extends Controller
         
         if (!empty($exhibitorData)) {
             $formData['exhibitor_data'] = $exhibitorData;
+        }
+        
+        // Handle landline: format as country_code-national_number (e.g., 91-9801217815)
+        if ($request->has('landline_national') && $request->input('landline_national')) {
+            // Extract only digits from landline national number (remove alphabets and special chars)
+            $landlineNational = preg_replace('/[^0-9]/', '', $request->input('landline_national'));
+            // Extract only digits from country code (remove + and non-digits)
+            $landlineCountryCode = preg_replace('/[^0-9]/', '', $request->input('landline_country_code') ?: '91');
+            $formData['landline'] = $landlineCountryCode . '-' . $landlineNational;
+        } elseif ($request->has('landline') && $request->input('landline')) {
+            // If landline is provided directly, extract and format
+            $landlineValue = preg_replace('/[^0-9]/', '', trim($request->input('landline')));
+            if (strlen($landlineValue) > 10) {
+                // Assume last 10 digits are national number
+                $landlineNational = substr($landlineValue, -10);
+                $landlineCountryCode = substr($landlineValue, 0, -10) ?: '91';
+                $formData['landline'] = $landlineCountryCode . '-' . $landlineNational;
+            } elseif (!empty($landlineValue)) {
+                $formData['landline'] = '91-' . $landlineValue; // Default to India
+            }
         }
         
         // Store in session
@@ -675,11 +698,20 @@ class StartupZoneController extends Controller
                 $allData['city_id'] = $request->input('billing_city');
             }
             if ($request->has('billing_telephone_national') && !empty($request->input('billing_telephone_national'))) {
+                // Extract only digits from national number and country code
+                $landlineNational = preg_replace('/[^0-9]/', '', $request->input('billing_telephone_national'));
+                $landlineCountryCode = preg_replace('/[^0-9]/', '', $request->input('billing_telephone_country_code') ?: '91');
+                $allData['landline'] = $landlineCountryCode . '-' . $landlineNational;
+            } elseif ($request->has('billing_telephone') && !empty($request->input('billing_telephone'))) {
                 // Extract only digits (remove alphabets and special chars)
-                $allData['landline'] = preg_replace('/[^0-9]/', '', $request->input('billing_telephone_national'));
-            } elseif ($request->has('billing_telephone')) {
-                // Extract only digits (remove alphabets and special chars)
-                $allData['landline'] = preg_replace('/[^0-9]/', '', $request->input('billing_telephone'));
+                $landlineValue = preg_replace('/[^0-9]/', '', $request->input('billing_telephone'));
+                if (strlen($landlineValue) > 10) {
+                    $landlineNational = substr($landlineValue, -10);
+                    $landlineCountryCode = substr($landlineValue, 0, -10) ?: '91';
+                    $allData['landline'] = $landlineCountryCode . '-' . $landlineNational;
+                } else {
+                    $allData['landline'] = '91-' . $landlineValue;
+                }
             }
             if ($request->has('billing_website')) {
                 $allData['website'] = $request->input('billing_website');
@@ -691,8 +723,10 @@ class StartupZoneController extends Controller
                 $allData['contact_mobile'] = $request->input('contact_mobile_national');
             }
             if ($request->has('landline_national') && !empty($request->input('landline_national'))) {
-                // Extract only digits (remove alphabets and special chars)
-                $allData['landline'] = preg_replace('/[^0-9]/', '', $request->input('landline_national'));
+                // Extract only digits from national number and country code
+                $landlineNational = preg_replace('/[^0-9]/', '', $request->input('landline_national'));
+                $landlineCountryCode = preg_replace('/[^0-9]/', '', $request->input('landline_country_code') ?: '91');
+                $allData['landline'] = $landlineCountryCode . '-' . $landlineNational;
             }
             
             // CRITICAL: Check if contact email already exists in users table - BLOCK SUBMISSION
@@ -944,15 +978,18 @@ class StartupZoneController extends Controller
                 $mobileCountryCode = '91'; // Default to India
                 
                 if ($request->has('contact_mobile_national') && $request->input('contact_mobile_national')) {
-                    $mobileNational = preg_replace('/\s+/', '', trim($request->input('contact_mobile_national'))); // Remove all spaces
-                    $mobileCountryCode = $request->input('contact_country_code') ?: '91';
+                    // Extract only digits from national number (remove spaces and non-digits)
+                    $mobileNational = preg_replace('/[^0-9]/', '', trim($request->input('contact_mobile_national')));
+                    // Extract only digits from country code (remove + and non-digits)
+                    $mobileCountryCode = preg_replace('/[^0-9]/', '', $request->input('contact_country_code') ?: '91');
                 } elseif ($request->has('contact_mobile') && $request->input('contact_mobile')) {
                     // If mobile is provided directly, extract and format
-                    $mobileValue = preg_replace('/\s+/', '', trim($request->input('contact_mobile')));
-                    // Try to extract country code if present
-                    if (preg_match('/^\+?(\d{1,3})(\d+)$/', $mobileValue, $matches)) {
-                        $mobileCountryCode = $matches[1];
-                        $mobileNational = $matches[2];
+                    $mobileValue = preg_replace('/[^0-9]/', '', trim($request->input('contact_mobile')));
+                    // Try to extract country code if present (first 1-4 digits as country code, rest as national)
+                    if (strlen($mobileValue) > 10) {
+                        // Assume last 10 digits are national number for Indian numbers
+                        $mobileNational = substr($mobileValue, -10);
+                        $mobileCountryCode = substr($mobileValue, 0, -10) ?: '91';
                     } else {
                         $mobileNational = $mobileValue;
                     }
@@ -1180,14 +1217,19 @@ class StartupZoneController extends Controller
                     $allData['city_id'] = $billingData['city'];
                 }
                 if (isset($billingData['telephone'])) {
-                    // Extract only digits from telephone (remove alphabets and special chars)
+                    // Keep telephone in format country_code-national_number
                     $telephoneValue = $billingData['telephone'];
-                    // If in format "91-9801217815", extract only digits and reformat
+                    // If already in format "91-9801217815", keep it
                     if (preg_match('/^(\d+)-(\d+)$/', $telephoneValue, $matches)) {
-                        $allData['landline'] = $matches[2]; // Use only national number (digits only)
+                        $allData['landline'] = $matches[1] . '-' . $matches[2]; // Keep country code with national number
                     } else {
-                        // Extract only digits
-                        $allData['landline'] = preg_replace('/[^0-9]/', '', $telephoneValue);
+                        // Extract only digits and add default country code
+                        $digits = preg_replace('/[^0-9]/', '', $telephoneValue);
+                        if (strlen($digits) > 10) {
+                            $allData['landline'] = substr($digits, 0, -10) . '-' . substr($digits, -10);
+                        } else {
+                            $allData['landline'] = '91-' . $digits;
+                        }
                     }
                 }
                 if (isset($billingData['website'])) {
@@ -1218,11 +1260,20 @@ class StartupZoneController extends Controller
                 $allData['city_id'] = $request->input('billing_city');
             }
             if ($request->has('billing_telephone_national') && !empty($request->input('billing_telephone_national'))) {
+                // Extract only digits from national number and country code
+                $landlineNational = preg_replace('/[^0-9]/', '', $request->input('billing_telephone_national'));
+                $landlineCountryCode = preg_replace('/[^0-9]/', '', $request->input('billing_telephone_country_code') ?: '91');
+                $allData['landline'] = $landlineCountryCode . '-' . $landlineNational;
+            } elseif ($request->has('billing_telephone') && !empty($request->input('billing_telephone'))) {
                 // Extract only digits (remove alphabets and special chars)
-                $allData['landline'] = preg_replace('/[^0-9]/', '', $request->input('billing_telephone_national'));
-            } elseif ($request->has('billing_telephone')) {
-                // Extract only digits (remove alphabets and special chars)
-                $allData['landline'] = preg_replace('/[^0-9]/', '', $request->input('billing_telephone'));
+                $landlineValue = preg_replace('/[^0-9]/', '', $request->input('billing_telephone'));
+                if (strlen($landlineValue) > 10) {
+                    $landlineNational = substr($landlineValue, -10);
+                    $landlineCountryCode = substr($landlineValue, 0, -10) ?: '91';
+                    $allData['landline'] = $landlineCountryCode . '-' . $landlineNational;
+                } else {
+                    $allData['landline'] = '91-' . $landlineValue;
+                }
             }
             if ($request->has('billing_website')) {
                 $allData['website'] = $request->input('billing_website');
@@ -1344,14 +1395,18 @@ class StartupZoneController extends Controller
                 $allData['city_id'] = $draft->city_id;
             }
             if (empty($allData['landline']) && !empty($draft->landline)) {
-                // Extract only digits from draft landline (remove alphabets and special chars)
-                // If in format "91-9801217815", extract only digits
+                // Keep landline in format country_code-national_number
                 $landlineValue = $draft->landline;
                 if (preg_match('/^(\d+)-(\d+)$/', $landlineValue, $matches)) {
-                    $allData['landline'] = $matches[2]; // Use only national number (digits only)
+                    $allData['landline'] = $matches[1] . '-' . $matches[2]; // Keep country code with national number
                 } else {
-                    // Extract only digits
-                    $allData['landline'] = preg_replace('/[^0-9]/', '', $landlineValue);
+                    // Extract only digits and add default country code
+                    $digits = preg_replace('/[^0-9]/', '', $landlineValue);
+                    if (strlen($digits) > 10) {
+                        $allData['landline'] = substr($digits, 0, -10) . '-' . substr($digits, -10);
+                    } else {
+                        $allData['landline'] = '91-' . $digits;
+                    }
                 }
             }
             if (empty($allData['website']) && !empty($draft->website)) {
@@ -1385,7 +1440,10 @@ class StartupZoneController extends Controller
                 ]);
             }
             if ($request->has('landline_national') && !empty($request->input('landline_national'))) {
-                $allData['landline'] = $request->input('landline_national');
+                // Extract only digits from national number and country code
+                $landlineNational = preg_replace('/[^0-9]/', '', $request->input('landline_national'));
+                $landlineCountryCode = preg_replace('/[^0-9]/', '', $request->input('landline_country_code') ?: '91');
+                $allData['landline'] = $landlineCountryCode . '-' . $landlineNational;
             }
             
             // CRITICAL: Check if contact email already exists in users table - BLOCK SUBMISSION
@@ -1791,14 +1849,23 @@ class StartupZoneController extends Controller
             $countryId = $exhibitorData['country_id'] ?? $draft->country_id ?? null;
             
             // Get landline from exhibitor_data only (for application table)
+            // Keep format as country_code-national_number (e.g., 91-9801217815)
             $landlineRaw = $exhibitorData['telephone'] ?? $draft->landline ?? '';
-            // Extract only digits from telephone/landline (remove alphabets and special chars)
-            // If in format "91-9801217815", extract only digits and reformat
             if (preg_match('/^(\d+)-(\d+)$/', $landlineRaw, $matches)) {
-                $landline = $matches[2]; // Use only national number (digits only)
+                // Already in correct format, keep it
+                $landline = $matches[1] . '-' . $matches[2];
             } else {
-                // Extract only digits
-                $landline = preg_replace('/[^0-9]/', '', $landlineRaw);
+                // Extract only digits and add default country code
+                $digits = preg_replace('/[^0-9]/', '', $landlineRaw);
+                if (!empty($digits)) {
+                    if (strlen($digits) > 10) {
+                        $landline = substr($digits, 0, -10) . '-' . substr($digits, -10);
+                    } else {
+                        $landline = '91-' . $digits;
+                    }
+                } else {
+                    $landline = '';
+                }
             }
             
             // Get website from exhibitor_data only (for application table)
@@ -2487,13 +2554,18 @@ class StartupZoneController extends Controller
         $mobileCountryCode = '91'; // Default to India
         
         if ($request->has('contact_mobile_national') && $request->input('contact_mobile_national')) {
-            $mobileNational = preg_replace('/\s+/', '', trim($request->input('contact_mobile_national')));
-            $mobileCountryCode = $request->input('contact_country_code') ?: '91';
+            // Extract only digits from national number (remove spaces and non-digits)
+            $mobileNational = preg_replace('/[^0-9]/', '', trim($request->input('contact_mobile_national')));
+            // Extract only digits from country code (remove + and non-digits)
+            $mobileCountryCode = preg_replace('/[^0-9]/', '', $request->input('contact_country_code') ?: '91');
         } elseif ($request->has('contact_mobile') && $request->input('contact_mobile')) {
-            $mobileValue = preg_replace('/\s+/', '', trim($request->input('contact_mobile')));
-            if (preg_match('/^\+?(\d{1,3})(\d+)$/', $mobileValue, $matches)) {
-                $mobileCountryCode = $matches[1];
-                $mobileNational = $matches[2];
+            // If mobile is provided directly, extract and format
+            $mobileValue = preg_replace('/[^0-9]/', '', trim($request->input('contact_mobile')));
+            // Try to extract country code if present (first 1-4 digits as country code, rest as national)
+            if (strlen($mobileValue) > 10) {
+                // Assume last 10 digits are national number for Indian numbers
+                $mobileNational = substr($mobileValue, -10);
+                $mobileCountryCode = substr($mobileValue, 0, -10) ?: '91';
             } else {
                 $mobileNational = $mobileValue;
             }
@@ -2548,6 +2620,26 @@ class StartupZoneController extends Controller
         
         if (!empty($exhibitorData)) {
             $formData['exhibitor_data'] = $exhibitorData;
+        }
+        
+        // Handle landline: format as country_code-national_number (e.g., 91-9801217815)
+        if ($request->has('landline_national') && $request->input('landline_national')) {
+            // Extract only digits from landline national number (remove alphabets and special chars)
+            $landlineNational = preg_replace('/[^0-9]/', '', $request->input('landline_national'));
+            // Extract only digits from country code (remove + and non-digits)
+            $landlineCountryCode = preg_replace('/[^0-9]/', '', $request->input('landline_country_code') ?: '91');
+            $formData['landline'] = $landlineCountryCode . '-' . $landlineNational;
+        } elseif ($request->has('landline') && $request->input('landline')) {
+            // If landline is provided directly, extract and format
+            $landlineValue = preg_replace('/[^0-9]/', '', trim($request->input('landline')));
+            if (strlen($landlineValue) > 10) {
+                // Assume last 10 digits are national number
+                $landlineNational = substr($landlineValue, -10);
+                $landlineCountryCode = substr($landlineValue, 0, -10) ?: '91';
+                $formData['landline'] = $landlineCountryCode . '-' . $landlineNational;
+            } elseif (!empty($landlineValue)) {
+                $formData['landline'] = '91-' . $landlineValue; // Default to India
+            }
         }
         
         // Store in session - merge with existing session data to preserve other fields
