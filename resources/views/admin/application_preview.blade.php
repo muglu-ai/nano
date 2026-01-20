@@ -227,17 +227,13 @@
                 <table class="table table-bordered table-striped shadow-sm">
                     <thead class="table-dark text-white text-center">
                     <tr>
-                        {{-- <th>Main Product Category</th>         --}}
-                                        {{-- <th>Type of Business</th>             --}}
-                                        
-                                                    <th>Sectors</th>
+                        <th>Sectors</th>
                         <th>Sub-Sector</th>
                     </tr>
                     </thead>
                     <tbody>
                     <tr>
-                    {{--
-                        <td style="width: 30%;">                            <select name="main_product_category" class="form-control" readonly disabled>                                @foreach($productCategories as $category)                                    <option value="{{ $category->id }}" {{ $application->main_product_category == $category->id ? 'selected' : '' }}>                                        {{ $category->name }}                                    </option>                                @endforeach                            </select>                        </td>                        <td style="width: 35%;"><input type="text" name="type_of_business"                                                       value="{{ $application->type_of_business }}" class="form-control"                                                       readonly></td>                        <td style="width: 35%;">
+                        <td style="width: 50%;">
                             @php
                                 $sectorDisplay = 'Not Provided';
                                 $sectorIds = [];
@@ -299,11 +295,9 @@
                                 <strong>Display:</strong> <span id="sectorDisplay">{{ $sectorDisplay }}</span>
                             </div>
                         </td>
-                        --}}
-                        <td style="width: 35%;"><input type="text" name="sub_sector"
+                        <td style="width: 50%;"><input type="text" name="sub_sector"
                                                        value="{{ $application->subSector ?: 'Not Provided' }}" class="form-control"
                                                        readonly></td>
-
                     </tr>
                     </tbody>
                 </table>
@@ -317,11 +311,8 @@
                     <tr>
                         <th>Company Age (Years)</th>
                         <th>Participant Type</th>
-                        <th>Type of Business</th>
                         <th>Association/Promocode</th>
                         @if($application->application_type == 'exhibitor')
-                        <th>SEMI Member</th>
-                        <th>SEMI Member ID</th>
                         <th>Exhibitor Type/Category</th>
                         <th>Payment Currency</th>
                         <th>Participation Type</th>
@@ -342,10 +333,6 @@
                         </td>
                         <td><input type="text" name="participant_type" value="{{ $application->participant_type ?: 'Not Provided' }}"
                                    class="form-control" readonly></td>
-                        {{--
-                        <td><input type="text" name="type_of_business" value="{{ $application->type_of_business ?: 'Not Provided' }}"
-                                   class="form-control" readonly></td>
-                        --}}
                         <td>
                             @php
                                 $assocDisplay = 'Not Provided';
@@ -361,21 +348,6 @@
                             <input type="text" value="{{ $assocDisplay }}" class="form-control" readonly>
                         </td>
                         @if($application->application_type == 'exhibitor')
-                        <td>
-                            @php
-                                $semiMember = $application->semi_member;
-                                if (is_null($semiMember)) {
-                                    $semiDisplay = 'Not Provided';
-                                } elseif ($semiMember === 1 || $semiMember === true || $semiMember === '1' || strtolower($semiMember) === 'yes') {
-                                    $semiDisplay = 'Yes';
-                                } else {
-                                    $semiDisplay = 'No';
-                                }
-                            @endphp
-                            <input type="text" value="{{ $semiDisplay }}" class="form-control" readonly>
-                        </td>
-                        <td><input type="text" name="semi_memberID" value="{{ $application->semi_memberID ?: 'Not Provided' }}"
-                                   class="form-control" readonly></td>
                         <td><input type="text" name="exhibitorType" value="{{ $application->exhibitorType ?: 'Not Provided' }}"
                                    class="form-control" readonly></td>
                         <td>
@@ -615,7 +587,6 @@
                                     <option selected>Not Provided</option>
                                 @endif
                                 @foreach($states as $state)
-                                    <option value="{{ $state->id  }}" {{ ($billingDetails->state_id ?? null) == $state->id ? 'selected' : '' }}>
                                     <option value="{{ $state->id }}" {{ ($billingDetails->state_id ?? null) == $state->id ? 'selected' : 'hidden' }}>
                                         {{ $state->name }}
                                     </option>
@@ -628,9 +599,8 @@
                                     <option selected>Not Provided</option>
                                 @endif
                                 @foreach($countries as $country)
-                                    <option value="{{ $country->id }}" {{ ($billingDetails->country_id ?? null) == $country->id ? 'selected' : '' }}>
-                                        <option value="{{ $country->id }}" {{ ($billingDetails->country_id ?? null) == $country->id ? 'selected' : 'hidden' }}>
-                                            {{ $country->name }}
+                                    <option value="{{ $country->id }}" {{ ($billingDetails->country_id ?? null) == $country->id ? 'selected' : 'hidden' }}>
+                                        {{ $country->name }}
                                     </option>
                                 @endforeach
                             </select>
@@ -742,23 +712,25 @@
 
         const sectorSelect = document.getElementById('sectorSelect');
 
-        editButton.addEventListener('click', () => {
-            sectorSelect.removeAttribute('disabled');
-            const options = sectorSelect.options;
-            for (let i = 0; i < options.length; i++) {
-                options[i].hidden = false; // Show all options on edit
-            }
-        });
-
-        cancelButton.addEventListener('click', () => {
-            sectorSelect.setAttribute('disabled', true);
-            const options = sectorSelect.options;
-            for (let i = 0; i < options.length; i++) {
-                if (!options[i].selected) {
-                    options[i].hidden = true; // Hide unselected options on cancel
+        if (sectorSelect) {
+            editButton.addEventListener('click', () => {
+                sectorSelect.removeAttribute('disabled');
+                const options = sectorSelect.options;
+                for (let i = 0; i < options.length; i++) {
+                    options[i].hidden = false; // Show all options on edit
                 }
-            }
-        });
+            });
+
+            cancelButton.addEventListener('click', () => {
+                sectorSelect.setAttribute('disabled', true);
+                const options = sectorSelect.options;
+                for (let i = 0; i < options.length; i++) {
+                    if (!options[i].selected) {
+                        options[i].hidden = true; // Hide unselected options on cancel
+                    }
+                }
+            });
+        }
     </script>
 @endsection
 
