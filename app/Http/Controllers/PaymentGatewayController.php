@@ -45,8 +45,8 @@ class PaymentGatewayController extends Controller
         $this->merchantId = '7700';
         $this->accessCode = 'AVJS71ME17AS68SJSA';
         $this->workingKey = '7AF39D44C8DC0DE71EDD69C288C96694';
-        $this->redirectUrl = 'https://bengalurutechsummit.com/bts-portal/public/payment/ccavenue-success';
-        $this->cancelUrl = 'https://bengalurutechsummit.com/bts-portal/public/payment/ccavenue-success';
+        $this->redirectUrl = config('constants.APP_URL') . '/payment/ccavenue-success';
+        $this->cancelUrl = config('constants.APP_URL') . '/payment/ccavenue-success';
     }
 
     public function handleResponse(Request $request)

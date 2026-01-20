@@ -355,8 +355,8 @@
                 <h5 class="mb-3 mt-4 border-bottom pb-2"><i class="fas fa-building"></i> Exhibitor Information</h5>
                 <div class="row mb-3">
                     <div class="col-12">
-                        <button type="button" class="btn btn-outline-primary btn-sm mb-3" id="copy_from_billing">
-                            <i class="fas fa-copy"></i> Copy from Billing Information
+                        <button type="button" class="btn btn-outline-primary btn-sm mb-3" id="copy_from_billing" style="color: #fff;">
+                            <i class="fas fa-copy"></i> Click here to Copy from Billing Information
                         </button>
                     </div>
                 </div>
