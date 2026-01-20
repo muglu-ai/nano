@@ -64,6 +64,15 @@
     overflow: visible;
 } */
 
+    /* GST Locked Fields Styling */
+    .gst-locked {
+        background-color: #f8f9fa !important;
+        cursor: not-allowed;
+    }
+    .gst-locked:focus {
+        box-shadow: none !important;
+    }
+
 </style>
 @endpush
 @section('content')
@@ -738,12 +747,13 @@ $(document).ready(function() {
         $('#contact_mobile_national').val(nationalNumber);
     });
 
-    // Function to load states for a country
-    function loadStatesForCountry(countryId, stateSelectId, preserveSelectedStateId = null) {
+    // Function to load states for a country (with optional callback)
+    function loadStatesForCountry(countryId, stateSelectId, preserveSelectedStateId = null, callback = null) {
         const stateSelect = $(stateSelectId);
         
         if (!countryId) {
             stateSelect.html('<option value="">Select Country First</option>');
+            if (callback) callback();
             return;
         }
         
@@ -767,10 +777,12 @@ $(document).ready(function() {
                     });
                 }
                 stateSelect.prop('disabled', false);
+                if (callback) callback();
             },
             error: function() {
                 stateSelect.html('<option value="">Error loading states</option>');
                 stateSelect.prop('disabled', false);
+                if (callback) callback();
             }
         });
     }
@@ -901,13 +913,31 @@ $(document).ready(function() {
     // GST Status change handler
     $('#gst_status').on('change', function() {
         if ($(this).val() === 'Registered') {
+            // Registered selected - show GST field and reset to editable state
             $('#gst_no_container').show();
             $('#gst_required_indicator').show();
             $('#gst_no').prop('required', true);
+            
+            // Reset GST field to editable state (in case it was locked before)
+            $('#gst_no').prop('readonly', false).removeClass('bg-light gst-locked').val('');
+            
+            // Reset validate button to original state
+            $('#validateGstBtn').html('<i class="fas fa-search"></i> Validate').removeClass('btn-success').addClass('btn-outline-primary').prop('disabled', false);
+            
+            // Clear GST feedback
+            $('#gst_feedback').html('');
+            
+            // Unlock and reset billing fields for fresh entry
+            unlockAndResetGstFields();
         } else {
+            // Unregistered selected - hide GST field and unlock all GST-locked fields
             $('#gst_no_container').hide();
             $('#gst_required_indicator').hide();
-            $('#gst_no').prop('required', false);
+            $('#gst_no').prop('required', false).val('');
+            $('#gst_feedback').html('');
+            
+            // Unlock and reset all GST-locked fields
+            unlockAndResetGstFields();
         }
     });
 
@@ -1010,12 +1040,23 @@ $(document).ready(function() {
 
     // GST Validation
     $('#validateGstBtn').on('click', function() {
-        const gstNo = $('#gst_no').val();
+        const gstNo = $('#gst_no').val().trim().toUpperCase();
+        
+        // Validate GST format
+        const gstPattern = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/;
+        
         if (!gstNo) {
-            alert('Please enter GST number first');
+            $('#gst_feedback').html('<small class="text-danger">Please enter GST number first</small>');
             return;
         }
         
+        if (!gstPattern.test(gstNo)) {
+            $('#gst_feedback').html('<small class="text-danger">Invalid GST format. Format: 22AAAAA0000A1Z5</small>');
+            return;
+        }
+        
+        // Disable button and show loading
+        $('#validateGstBtn').prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Validating...');
         $('#gst_loading').removeClass('d-none');
         $('#gst_feedback').html('');
         
@@ -1028,19 +1069,67 @@ $(document).ready(function() {
             },
             success: function(response) {
                 $('#gst_loading').addClass('d-none');
+                $('#validateGstBtn').prop('disabled', false).html('<i class="fas fa-search"></i> Validate');
+                
                 if (response.success) {
                     const data = response.data;
+                    
+                    // Fill billing fields
                     $('#billing_company_name').val(data.company_name || '');
                     $('#billing_address').val(data.billing_address || '');
                     $('#billing_city').val(data.city || '');
-                    if (data.state_id) {
+                    $('#billing_postal_code').val(data.pincode || '');
+                    
+                    // Extract PAN from GST number if not provided by API
+                    let panValue = data.pan;
+                    if (!panValue && gstNo.length >= 12) {
+                        panValue = gstNo.substring(2, 12);
+                    }
+                    if (panValue) {
+                        $('#pan_no').val(panValue);
+                    }
+                    
+                    // Set Billing Country to India (GST is India-specific)
+                    const indiaOption = $('#billing_country_id option').filter(function() {
+                        return $(this).text().toLowerCase() === 'india' || $(this).val() === '101';
+                    });
+                    if (indiaOption.length) {
+                        $('#billing_country_id').val(indiaOption.val());
+                    }
+                    
+                    // Check if states are already loaded
+                    const statesAlreadyLoaded = $('#billing_state_id option').length > 1;
+                    
+                    if (statesAlreadyLoaded && data.state_id) {
+                        $('#billing_state_id').val(data.state_id);
+                    }
+                    
+                    // IMMEDIATELY lock all fields
+                    lockFieldsAfterGstValidation();
+                    
+                    // Load states if not loaded and set state value
+                    if (!statesAlreadyLoaded && data.state_id) {
                         const billingCountryId = $('#billing_country_id').val();
                         if (billingCountryId) {
-                            loadStatesForCountry(billingCountryId, '#billing_state_id', data.state_id);
+                            loadStatesForCountry(billingCountryId, '#billing_state_id', data.state_id, function() {
+                                // Re-lock state field after loading
+                                $('#billing_state_id').prop('disabled', true).addClass('bg-light gst-locked');
+                                // Update hidden field
+                                let hiddenState = $('#billing_state_id_hidden');
+                                if (hiddenState.length === 0) {
+                                    $('<input>').attr({
+                                        type: 'hidden',
+                                        id: 'billing_state_id_hidden',
+                                        name: 'billing_state_id',
+                                        value: data.state_id
+                                    }).insertAfter('#billing_state_id');
+                                } else {
+                                    hiddenState.val(data.state_id);
+                                }
+                            });
                         }
                     }
-                    $('#billing_postal_code').val(data.pincode || '');
-                    $('#pan_no').val(data.pan || '');
+                    
                     $('#gst_feedback').html('<small class="text-success"><i class="fas fa-check"></i> GST details fetched successfully!</small>');
                 } else {
                     $('#gst_feedback').html(`<small class="text-danger"><i class="fas fa-times"></i> ${response.message}</small>`);
@@ -1048,11 +1137,87 @@ $(document).ready(function() {
             },
             error: function(xhr) {
                 $('#gst_loading').addClass('d-none');
+                $('#validateGstBtn').prop('disabled', false).html('<i class="fas fa-search"></i> Validate');
                 const response = xhr.responseJSON;
                 $('#gst_feedback').html(`<small class="text-danger"><i class="fas fa-times"></i> ${response?.message || 'Error fetching GST details'}</small>`);
             }
         });
     });
+    
+    // Function to lock PAN and Billing Information fields after successful GST validation
+    function lockFieldsAfterGstValidation() {
+        // Lock PAN Number field
+        $('#pan_no').prop('readonly', true).addClass('bg-light gst-locked').attr('title', 'Auto-filled from GST validation');
+        
+        // Lock Billing Information fields
+        const billingFields = ['billing_company_name', 'billing_address', 'billing_city', 'billing_postal_code'];
+        billingFields.forEach(function(fieldId) {
+            $('#' + fieldId).prop('readonly', true).addClass('bg-light gst-locked').attr('title', 'Auto-filled from GST validation');
+        });
+        
+        // Lock billing country dropdown
+        $('#billing_country_id').prop('disabled', true).addClass('bg-light gst-locked').attr('title', 'Auto-filled from GST validation');
+        // Add hidden field for country
+        if ($('#billing_country_id_hidden').length === 0) {
+            $('<input>').attr({
+                type: 'hidden',
+                id: 'billing_country_id_hidden',
+                name: 'billing_country_id',
+                value: $('#billing_country_id').val()
+            }).insertAfter('#billing_country_id');
+        } else {
+            $('#billing_country_id_hidden').val($('#billing_country_id').val());
+        }
+        
+        // Lock billing state dropdown
+        $('#billing_state_id').prop('disabled', true).addClass('bg-light gst-locked').attr('title', 'Auto-filled from GST validation');
+        // Add hidden field for state
+        if ($('#billing_state_id_hidden').length === 0) {
+            $('<input>').attr({
+                type: 'hidden',
+                id: 'billing_state_id_hidden',
+                name: 'billing_state_id',
+                value: $('#billing_state_id').val()
+            }).insertAfter('#billing_state_id');
+        } else {
+            $('#billing_state_id_hidden').val($('#billing_state_id').val());
+        }
+        
+        // Change validate button to show validated state
+        $('#validateGstBtn').html('<i class="fas fa-check-circle"></i> Validated').removeClass('btn-outline-primary').addClass('btn-success').prop('disabled', true);
+        
+        // Lock GST number field
+        $('#gst_no').prop('readonly', true).addClass('bg-light gst-locked');
+    }
+    
+    // Function to unlock AND reset/clear all GST-locked fields
+    function unlockAndResetGstFields() {
+        // Unlock and clear PAN Number field
+        $('#pan_no').prop('readonly', false).removeClass('bg-light gst-locked').attr('title', '').val('');
+        
+        // Unlock and clear Billing Information fields
+        const billingFields = ['billing_company_name', 'billing_address', 'billing_city', 'billing_postal_code'];
+        billingFields.forEach(function(fieldId) {
+            $('#' + fieldId).prop('readonly', false).removeClass('bg-light gst-locked').attr('title', '').val('');
+        });
+        
+        // Unlock and reset billing country dropdown
+        $('#billing_country_id').prop('disabled', false).removeClass('bg-light gst-locked').attr('title', '').val('');
+        $('#billing_country_id_hidden').remove();
+        
+        // Unlock and reset billing state dropdown
+        $('#billing_state_id').prop('disabled', false).removeClass('bg-light gst-locked').attr('title', '').html('<option value="">Select State</option>');
+        $('#billing_state_id_hidden').remove();
+        
+        // Reset validate button
+        $('#validateGstBtn').html('<i class="fas fa-search"></i> Validate').removeClass('btn-success').addClass('btn-outline-primary').prop('disabled', false);
+        
+        // Unlock GST number field
+        $('#gst_no').prop('readonly', false).removeClass('bg-light gst-locked').val('');
+        
+        // Clear GST feedback
+        $('#gst_feedback').html('');
+    }
 
     // Promocode Validation
     $('#validatePromocodeBtn').on('click', function() {

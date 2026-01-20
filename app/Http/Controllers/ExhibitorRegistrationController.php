@@ -884,6 +884,33 @@ class ExhibitorRegistrationController extends Controller
                 ], 422);
             }
             
+            // SERVER-SIDE GST VALIDATION: When GST is provided, enforce PAN and Country
+            $gstNo = $request->input('gst_no');
+            $gstStatus = $request->input('gst_status');
+            
+            if ($gstStatus === 'Registered' && !empty($gstNo) && strlen($gstNo) >= 12) {
+                // Extract PAN from GST number (characters 3-12, 0-indexed: positions 2-11)
+                $extractedPan = strtoupper(substr($gstNo, 2, 10));
+                
+                // Auto-set PAN from GST (server-side enforcement)
+                $allData['pan_no'] = $extractedPan;
+                
+                // Ensure country is India (ID 101) when GST is provided
+                $india = \App\Models\Country::where('name', 'India')->first();
+                if ($india) {
+                    $allData['country_id'] = $india->id;
+                    $allData['billing_country_id'] = $india->id;
+                }
+                
+                // Log for audit
+                \Log::info('Exhibitor GST Validation - Server-side enforcement', [
+                    'gst_no' => $gstNo,
+                    'extracted_pan' => $extractedPan,
+                    'submitted_pan' => $request->input('pan_no'),
+                    'country_set_to' => $india ? $india->id : 'not found'
+                ]);
+            }
+            
             // Validation rules - All text fields must not start with space
             // Note: We validate the original request input (before trimming) to catch leading spaces
             $rules = [
