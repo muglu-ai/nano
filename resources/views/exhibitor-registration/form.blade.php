@@ -93,11 +93,11 @@
     </div>
 
     {{-- Progress Bar --}}
-            <div class="progress-bar-custom" style="position: relative; display: flex; align-items: center;">
+            <!-- <div class="progress-bar-custom" style="position: relative; display: flex; align-items: center;">
                 <div class="progress-fill" id="progressBar" style="width: 33%; position: relative; overflow: visible;">
                     <span id="progressText" style="position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); color: white; font-size: 0.75rem; font-weight: 600; white-space: nowrap; text-shadow: 0 1px 2px rgba(0,0,0,0.3);">Step 1 of 3</span>
             </div>
-        </div>
+        </div> -->
     </div>
 
     {{-- Auto-save Indicator --}}

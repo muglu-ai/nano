@@ -1,0 +1,99 @@
+.form-header{
+    background: linear-gradient(90deg, #9F3694 0%, #5962B0 100%);
+}
+.form-container {
+    background-color: #fff;
+    border-radius: 6px;
+}
+.step-item.active .step-number {
+    border-color: #c81980;
+    color: white;
+    background: linear-gradient(180deg, #D2175D 14.61%, #7B2FEB 373.21%);
+}
+.step-number {
+    border: 3px solid #7B2FEB;    
+}
+.step-label {
+    color: #121212;
+}
+.step-item.active .step-label {
+    color: #D9237D;
+}
+.progress-bar-custom {
+	height: 17px;
+}
+.progress-fill {
+    background: linear-gradient(90deg, #9F3694 0%, #5962B0 100%);
+}
+h5.border-bottom {
+    color: #000000 !important;
+}
+h5.border-bottom i {
+    background: -webkit-linear-gradient(#9F3694, #5962B0);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+.btn-primary , .btn-outline-primary {
+    background: linear-gradient(to right, #4D2FB2, #0E21A0) !important;
+    color: #fff !important;
+}
+
+
+.step-connector {
+    background: #7054A7;    
+}
+.step-number {
+    border: 3px solid #7B2FEB;
+}
+.step-label {
+    color: #121212;
+}
+.step-item.active .step-number {
+    background: linear-gradient(180deg, #D2175D 14.61%, #7B2FEB 373.21%) !important;
+    border-color: #c81980 !important;    
+}
+.step-item.active .step-label {
+    color: #D9237D !important;
+}
+
+.section-title i {
+    background: -webkit-linear-gradient(#9F3694, #5962B0);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+.step-item.completed ~ .step-connector, .step-item.active ~ .step-connector {
+    background: #7054A7 !important;
+}
+.price-table .total-row td {
+    background: linear-gradient(to right, #4D2FB2, #0E21A0) !important;
+}
+.section-title {
+    border-color: #4D2FB2;
+}
+
+.step-item.completed ~ .step-connector, .step-item.active ~ .step-connector {
+    background: #7054A7;
+}
+.step-number {
+    background: #fff;
+    border: 3px solid #7B2FEB;
+}
+.step-item.active .step-number {
+    background: linear-gradient(180deg, #D2175D 14.61%, #7B2FEB 373.21%);
+    border-color: #c81980;
+}
+.section-title {
+	border-bottom: 2px solid var(--primary-color);
+}
+.section-title i {
+    background: -webkit-linear-gradient(#9F3694, #5962B0);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+
+
+
+
+
+
