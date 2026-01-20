@@ -3,6 +3,7 @@
 @section('title', 'Payment - ' . config('constants.EVENT_NAME') . ' ' . config('constants.EVENT_YEAR'))
 
 @push('styles')
+<link rel="stylesheet" href="{{ asset('asset/css/custom.css') }}">
 <style>
     .preview-container {
         max-width: 1200px;
@@ -122,11 +123,13 @@
             padding: 0.5rem 0.4rem;
         }
     }
+    .form-container {padding: 1rem 0px;}
+</style>
 </style>
 @endpush
 
 @section('content')
-<div class="container py-5">
+<div class="container">
     {{-- Step Indicator --}}
     <div class="row mb-4">
         <div class="col-12">
@@ -175,7 +178,7 @@
             <div class="alert alert-info mb-4">
                 <h5 class="mb-2"><i class="fas fa-info-circle"></i> Application Information</h5>
                 <p class="mb-0">
-                    <strong>Application ID:</strong> {{ $application->application_id }}<br>
+                    <strong>TIN No:</strong> {{ $application->application_id }}<br>
                     <strong>Exhibitor:</strong> {{ $application->company_name }}
                 </p>
             </div>
@@ -508,7 +511,7 @@
             </div> -->
 
             @if($application->invoice->payment_status === 'paid')
-                        <div class="alert alert-success">
+                        <div class="alert alert-success mt-4">
                             <i class="fas fa-check-circle"></i> Payment already completed!
                         </div>
                         <a href="{{ route('exhibitor-registration.confirmation', $application->application_id) }}" class="btn btn-success">
@@ -516,7 +519,7 @@
                         </a>
                     @elseif(isset($approval_pending) && $approval_pending)
                         {{-- Approval Pending - Disable Payment --}}
-                        <div class="alert alert-warning">
+                        <div class="alert alert-warning mt-4">
                             <i class="fas fa-clock"></i> Payment options will be available once your application is approved by the admin.
                         </div>
                     @else
@@ -577,16 +580,16 @@
 
                             */ ?>
 
-                            <div class="alert alert-warning">
+                            <div class="alert alert-warning mt-4">
                                 <strong>Note:</strong> After clicking "Proceed to Payment", you will be redirected to the payment gateway.
                             </div>
 
                             <div class="d-flex justify-content-between mt-4">
                                 <a href="{{ route('exhibitor-registration.preview', ['application_id' => $application->application_id]) }}" 
-                                   class="btn btn-secondary">
+                                   class="btn btn-outline-danger fs-6">
                                     <i class="fas fa-arrow-left"></i> Back
                                 </a>
-                                <button type="submit" class="btn btn-success btn-lg">
+                                <button type="submit" class="btn btn-success fs-6">
                                     Proceed to Payment <i class="fas fa-arrow-right"></i>
                                 </button>
                             </div>

@@ -3,7 +3,9 @@
 @section('title', 'Preview Registration - ' . config('constants.EVENT_NAME') . ' ' . config('constants.EVENT_YEAR'))
 
 @push('styles')
+<link rel="stylesheet" href="{{ asset('asset/css/custom.css') }}">
 <style>
+     .form-container {padding: 1rem 0px;}
     .preview-container {
         max-width: 1200px;
         margin: 0 auto;
@@ -153,7 +155,7 @@
 </style>
 @endpush
 @section('content')
-<div class="container py-5">
+<div class="container">
     {{-- Step Indicator --}}
     <div class="row mb-4">
         <div class="col-12">
@@ -628,17 +630,17 @@
 
             {{-- Action Buttons --}}
             <div class="d-flex justify-content-between mt-4">
-                <a href="{{ route('exhibitor-registration.register', ['currency' => ($currency ?? 'INR') === 'USD' ? 'int' : 'ind']) }}" class="btn btn-edit btn-lg">
+                <a href="{{ route('exhibitor-registration.register', ['currency' => ($currency ?? 'INR') === 'USD' ? 'int' : 'ind']) }}" class="btn btn-outline-danger fs-6">
                     <i class="fas fa-arrow-left me-2"></i>
                     Edit Details
                 </a>
                 @if($hasApplication)
-                    <a href="{{ route('exhibitor-registration.payment', $application->application_id) }}" class="btn btn-primary btn-lg">
+                    <a href="{{ route('exhibitor-registration.payment', $application->application_id) }}" class="btn btn-success fs-6">
                         <i class="fas fa-arrow-right me-2"></i>
                         Proceed to Payment
                     </a>
                 @elseif($hasDraft || $hasSubmittedData)
-                    <button type="button" class="btn btn-primary btn-lg" id="proceedToPaymentBtn">
+                    <button type="button" class="btn btn-success fs-6" id="proceedToPaymentBtn">
                         <i class="fas fa-arrow-right me-2"></i>
                         Proceed to Payment
                     </button>

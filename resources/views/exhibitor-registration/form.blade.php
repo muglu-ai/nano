@@ -2,7 +2,9 @@
 
 @section('title', 'Exhibitor Registration - ' . config('constants.EVENT_NAME') . ' ' . config('constants.EVENT_YEAR'))
 @push('styles')
+<link rel="stylesheet" href="{{ asset('asset/css/custom.css') }}">
 <style>
+     .form-container {padding: 0 !important;}
     /* Force invalid-feedback to display when it has content */
     .invalid-feedback:not(:empty) {
         display: block !important;
