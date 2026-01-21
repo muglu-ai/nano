@@ -604,40 +604,7 @@
     </div>
 </div>
 
-@push('styles')
-<style>
-    /* Fix intl-tel-input alignment with Bootstrap grid - Match startup zone (minimal styling) */
-    .iti {
-        width: 100%;
-    }
-    
-    /* Ensure the input field container takes full width */
-    .iti input[type=tel] {
-        width: 100%;
-    }
-    
-    /* Fix alignment for separate dial code mode */
-    .iti--separate-dial-code {
-        width: 100%;
-    }
-    
-    .iti--separate-dial-code .iti__selected-flag {
-        background-color: #f8f9fa;
-        border-right: 1px solid #ced4da;
-        border-radius: 0.375rem 0 0 0.375rem;
-    }
-    
-    .iti--separate-dial-code .iti__selected-dial-code {
-        padding: 0 8px;
-    }
-    
-    /* Match Bootstrap form-control styling */
-    .iti input[type=tel].form-control {
-        border-left: 0;
-        border-radius: 0 0.375rem 0.375rem 0;
-    }
-</style>
-@endpush
+
 
 @push('scripts')
 @if(config('constants.RECAPTCHA_ENABLED'))
@@ -1002,17 +969,17 @@ $(document).ready(function() {
         const billingAddress = $('#billing_address').val() || '';
         $('#exhibitor_address').val(billingAddress);
         
-        // Copy country and state
-        const billingCountryId = $('#billing_country_id').val() || '';
-        const billingStateId = $('#billing_state_id').val() || '';
+        // Copy country and state (check hidden fields first for locked GST fields)
+        const billingCountryId = $('#billing_country_id_hidden').val() || $('#billing_country_id').val() || '';
+        const billingStateId = $('#billing_state_id_hidden').val() || $('#billing_state_id').val() || '';
+        
         if (billingCountryId) {
-            $('#exhibitor_country_id').val(billingCountryId).trigger('change');
-            // Wait for states to load, then set state
-            setTimeout(function() {
-                if (billingStateId) {
-                    $('#exhibitor_state_id').val(billingStateId);
-                }
-            }, 500);
+            $('#exhibitor_country_id').val(billingCountryId);
+            // Load states for the exhibitor country and then set state
+            loadStatesForCountry(billingCountryId, '#exhibitor_state_id', billingStateId, function() {
+                // State will be set by the loadStatesForCountry function via preserveSelectedStateId
+                console.log('Exhibitor states loaded, state set to:', billingStateId);
+            });
         }
         
         // Copy city

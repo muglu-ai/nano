@@ -242,6 +242,11 @@
                     ] : null;
                 } elseif ($hasDraft) {
                     // Data from draft table
+                    // First extract the JSON data fields from draft
+                    $billingData = $draft->billing_data ?? [];
+                    $exhibitorData = $draft->exhibitor_data ?? [];
+                    $contactData = $draft->contact_data ?? [];
+                    
                     $boothSpace = $draft->stall_category ?? '';
                     $boothSize = $draft->interested_sqm ?? '';
                     $sector = $draft->sector_id ?? '';

@@ -1054,15 +1054,30 @@ class ExhibitorRegistrationController extends Controller
             // Handle contact mobile for session storage
             $contactData = $allData['contact_data'] ?? [];
             $contactMobile = '';
+            $contactCountryCode = '91';
             if ($request->has('contact_mobile_national') && !empty($request->input('contact_mobile_national'))) {
                 $contactCountryCode = $request->input('contact_country_code') ?: '91';
                 $contactNational = preg_replace('/\s+/', '', trim($request->input('contact_mobile_national')));
                 $contactMobile = $contactCountryCode . '-' . $contactNational;
-            } elseif (isset($contactData['mobile'])) {
+            } elseif (isset($contactData['mobile']) && !empty($contactData['mobile'])) {
                 $contactMobile = $contactData['mobile'];
-            } elseif ($request->has('contact_mobile')) {
+            } elseif ($request->has('contact_mobile') && !empty($request->input('contact_mobile'))) {
                 $contactMobile = $request->input('contact_mobile');
             }
+            
+            // Build complete contact_data with mobile number
+            $contactData = [
+                'title' => $contactData['title'] ?? $request->input('contact_title'),
+                'first_name' => $contactData['first_name'] ?? trim($request->input('contact_first_name') ?? ''),
+                'last_name' => $contactData['last_name'] ?? trim($request->input('contact_last_name') ?? ''),
+                'designation' => $contactData['designation'] ?? trim($request->input('contact_designation') ?? ''),
+                'email' => $contactData['email'] ?? trim($request->input('contact_email') ?? ''),
+                'mobile' => $contactMobile,
+                'country_code' => $contactCountryCode,
+            ];
+            
+            // Also store contact_mobile in allData for later use
+            $allData['contact_mobile'] = $contactMobile;
             
             // Save to draft table (NOT creating application yet)
             $sessionId = session()->getId();
@@ -1083,6 +1098,11 @@ class ExhibitorRegistrationController extends Controller
             $draft->contact_data = $contactData;
             $draft->billing_data = $billingData;
             $draft->exhibitor_data = $allData['exhibitor_data'] ?? [];
+            
+            \Log::info('Exhibitor Registration submitForm: Saving contact_data to draft', [
+                'contact_data' => $contactData,
+                'contact_mobile' => $contactMobile,
+            ]);
             
             // Store individual fields
             $draft->stall_category = $allData['booth_space'] ?? null;
@@ -1699,11 +1719,14 @@ class ExhibitorRegistrationController extends Controller
             }
             
             // Create or update event contact with correct field names
-            $contactMobile = $allData['contact_mobile'] ?? '';
+            // Get contact mobile from allData (built from contactData) or directly from contactData
+            $contactMobile = $allData['contact_mobile'] ?? $contactData['mobile'] ?? '';
             
             \Log::info('Exhibitor Registration: Creating event contact', [
                 'application_id' => $application->id,
-                'contact_mobile' => $contactMobile,
+                'contact_mobile_from_allData' => $allData['contact_mobile'] ?? 'not_set',
+                'contact_mobile_from_contactData' => $contactData['mobile'] ?? 'not_set',
+                'contact_mobile_final' => $contactMobile,
                 'contact_email' => $contactData['email'] ?? $allData['contact_email'] ?? 'not_set',
             ]);
             
