@@ -2083,7 +2083,13 @@ class StartupZoneController extends Controller
             } else {
                 $invoice->amount = $pricing['total']; // Required field - total amount
                 $invoice->price = $pricing['base_price'];
-                $invoice->gst = $pricing['gst'];
+                // Store IGST, CGST, SGST breakdown
+                $invoice->igst_rate = $pricing['igst_rate'] ?? null;
+                $invoice->igst_amount = $pricing['igst_amount'] ?? null;
+                $invoice->cgst_rate = $pricing['cgst_rate'] ?? null;
+                $invoice->cgst_amount = $pricing['cgst_amount'] ?? null;
+                $invoice->sgst_rate = $pricing['sgst_rate'] ?? null;
+                $invoice->sgst_amount = $pricing['sgst_amount'] ?? null;
                 $invoice->processing_charges = $pricing['processing_charges'];
                 $invoice->processing_chargesRate = $pricing['processing_rate'];
                 $invoice->total_final_price = $pricing['total'];
@@ -3080,17 +3086,52 @@ class StartupZoneController extends Controller
             $processingRate = ($eventConfig->ind_processing_charge ?? 3) / 100; // 3% for INR
         }
 
-        $gstRate = ($eventConfig->gst_rate ?? 18) / 100; // 18% GST
-        $gst = $basePrice * $gstRate;
-        $processingCharges = ($basePrice + $gst) * $processingRate;
-        $total = $basePrice + $gst + $processingCharges;
+        // Get GST rates
+        $igstRatePercent = $eventConfig->igst_rate ?? 18;
+        $cgstRatePercent = $eventConfig->cgst_rate ?? 9;
+        $sgstRatePercent = $eventConfig->sgst_rate ?? 9;
+        
+        // Determine GST type (IGST vs CGST+SGST) based on GST validation and state matching
+        $organizerStateCode = substr(config('constants.GSTIN'), 0, 2); // e.g., '29' for Karnataka
+        $gstNo = $draft->gst_no ?? null;
+        $validatedGstStateCode = $gstNo && strlen($gstNo) >= 2 ? substr($gstNo, 0, 2) : null;
+        $isSameState = $validatedGstStateCode && $validatedGstStateCode === $organizerStateCode;
+        
+        // Calculate IGST, CGST, SGST amounts - only store applicable GST
+        if ($isSameState) {
+            // Same state - apply CGST + SGST only
+            $igstRate = null;
+            $igstAmount = null;
+            $cgstRate = $cgstRatePercent;
+            $sgstRate = $sgstRatePercent;
+            $cgstAmount = $basePrice * ($cgstRatePercent / 100);
+            $sgstAmount = $basePrice * ($sgstRatePercent / 100);
+            $totalGst = $cgstAmount + $sgstAmount;
+        } else {
+            // Different state or GST not provided - apply IGST only
+            $igstRate = $igstRatePercent;
+            $igstAmount = $basePrice * ($igstRatePercent / 100);
+            $cgstRate = null;
+            $sgstRate = null;
+            $cgstAmount = null;
+            $sgstAmount = null;
+            $totalGst = $igstAmount;
+        }
+        
+        $processingCharges = ($basePrice + $totalGst) * $processingRate;
+        $total = $basePrice + $totalGst + $processingCharges;
 
         return [
             'base_price' => $this->roundAmount($basePrice),
-            'gst' => $this->roundAmount($gst),
+            'igst_rate' => $igstRate,
+            'igst_amount' => $igstAmount ? $this->roundAmount($igstAmount) : null,
+            'cgst_rate' => $cgstRate,
+            'cgst_amount' => $cgstAmount ? $this->roundAmount($cgstAmount) : null,
+            'sgst_rate' => $sgstRate,
+            'sgst_amount' => $sgstAmount ? $this->roundAmount($sgstAmount) : null,
+            'is_same_state' => $isSameState,
             'processing_charges' => $this->roundAmount($processingCharges),
             'processing_rate' => $processingRate * 100,
-            'gst_rate' => $gstRate * 100,
             'total' => $this->roundAmount($total),
             'currency' => $currency,
             'has_tv' => $hasTV,

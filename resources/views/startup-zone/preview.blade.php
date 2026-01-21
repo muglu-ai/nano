@@ -156,7 +156,7 @@
 @endpush
 
 @section('content')
-<div class="container">
+<div class="container py-3">
     {{-- Step Indicator --}}
     <div class="row mb-4">
         <div class="col-12">
@@ -538,10 +538,30 @@
                         <td class="label-cell">Base Price</td>
                         <td class="value-cell">{{ $invoice->currency }} {{ number_format($invoice->price, 2) }}</td>
                     </tr>
+                    @if(($invoice->cgst_amount ?? 0) > 0)
+                    <tr>
+                        <td class="label-cell">CGST ({{ $invoice->cgst_rate ?? 9 }}%)</td>
+                        <td class="value-cell">{{ $invoice->currency }} {{ number_format($invoice->cgst_amount, 2) }}</td>
+                    </tr>
+                    @endif
+                    @if(($invoice->sgst_amount ?? 0) > 0)
+                    <tr>
+                        <td class="label-cell">SGST ({{ $invoice->sgst_rate ?? 9 }}%)</td>
+                        <td class="value-cell">{{ $invoice->currency }} {{ number_format($invoice->sgst_amount, 2) }}</td>
+                    </tr>
+                    @endif
+                    @if(($invoice->igst_amount ?? 0) > 0)
+                    <tr>
+                        <td class="label-cell">IGST ({{ $invoice->igst_rate ?? 18 }}%)</td>
+                        <td class="value-cell">{{ $invoice->currency }} {{ number_format($invoice->igst_amount, 2) }}</td>
+                    </tr>
+                    @endif
+                    @if(!$invoice->cgst_amount && !$invoice->sgst_amount && !$invoice->igst_amount && $invoice->gst)
                     <tr>
                         <td class="label-cell">GST (18%)</td>
                         <td class="value-cell">{{ $invoice->currency }} {{ number_format($invoice->gst, 2) }}</td>
                     </tr>
+                    @endif
                     <tr>
                         <td class="label-cell">Processing Charges ({{ $invoice->processing_chargesRate ?? 3 }}%)</td>
                         <td class="value-cell">{{ $invoice->currency }} {{ number_format($invoice->processing_charges, 2) }}</td>
@@ -555,10 +575,24 @@
                         <td class="label-cell">Base Price</td>
                         <td class="value-cell">{{ $currency ?? $pricing['currency'] ?? 'INR' }} {{ number_format($pricing['base_price'], 2) }}</td>
                     </tr>
+                    @if(($pricing['cgst_amount'] ?? 0) > 0)
                     <tr>
-                        <td class="label-cell">GST ({{ $pricing['gst_rate'] ?? 18 }}%)</td>
-                        <td class="value-cell">{{ $currency ?? $pricing['currency'] ?? 'INR' }} {{ number_format($pricing['gst'], 2) }}</td>
+                        <td class="label-cell">CGST ({{ $pricing['cgst_rate'] ?? 9 }}%)</td>
+                        <td class="value-cell">{{ $currency ?? $pricing['currency'] ?? 'INR' }} {{ number_format($pricing['cgst_amount'], 2) }}</td>
                     </tr>
+                    @endif
+                    @if(($pricing['sgst_amount'] ?? 0) > 0)
+                    <tr>
+                        <td class="label-cell">SGST ({{ $pricing['sgst_rate'] ?? 9 }}%)</td>
+                        <td class="value-cell">{{ $currency ?? $pricing['currency'] ?? 'INR' }} {{ number_format($pricing['sgst_amount'], 2) }}</td>
+                    </tr>
+                    @endif
+                    @if(($pricing['igst_amount'] ?? 0) > 0)
+                    <tr>
+                        <td class="label-cell">IGST ({{ $pricing['igst_rate'] ?? 18 }}%)</td>
+                        <td class="value-cell">{{ $currency ?? $pricing['currency'] ?? 'INR' }} {{ number_format($pricing['igst_amount'], 2) }}</td>
+                    </tr>
+                    @endif
                     <tr>
                         <td class="label-cell">Processing Charges ({{ $pricing['processing_rate'] }}%)</td>
                         <td class="value-cell">{{ $currency ?? $pricing['currency'] ?? 'INR' }} {{ number_format($pricing['processing_charges'], 2) }}</td>
@@ -667,7 +701,7 @@ document.getElementById('confirmAndProceed')?.addEventListener('click', function
         display: flex;
         align-items: center;
         justify-content: center;
-        margin-bottom: 2rem;
+        /* margin-bottom: 2rem; */
         padding: 1.5rem;
         background: #f8f9fa;
         border-radius: 10px;

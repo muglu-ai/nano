@@ -236,10 +236,30 @@
                             <td><strong>Base Price:</strong></td>
                             <td class="text-end">{{ $invoice->currency }} {{ number_format($invoice->price, 2) }}</td>
                         </tr>
+                        @if(($invoice->cgst_amount ?? 0) > 0)
+                        <tr>
+                            <td><strong>CGST ({{ $invoice->cgst_rate ?? 9 }}%):</strong></td>
+                            <td class="text-end">{{ $invoice->currency }} {{ number_format($invoice->cgst_amount, 2) }}</td>
+                        </tr>
+                        @endif
+                        @if(($invoice->sgst_amount ?? 0) > 0)
+                        <tr>
+                            <td><strong>SGST ({{ $invoice->sgst_rate ?? 9 }}%):</strong></td>
+                            <td class="text-end">{{ $invoice->currency }} {{ number_format($invoice->sgst_amount, 2) }}</td>
+                        </tr>
+                        @endif
+                        @if(($invoice->igst_amount ?? 0) > 0)
+                        <tr>
+                            <td><strong>IGST ({{ $invoice->igst_rate ?? 18 }}%):</strong></td>
+                            <td class="text-end">{{ $invoice->currency }} {{ number_format($invoice->igst_amount, 2) }}</td>
+                        </tr>
+                        @endif
+                        @if(!$invoice->cgst_amount && !$invoice->sgst_amount && !$invoice->igst_amount && $invoice->gst)
                         <tr>
                             <td><strong>GST (18%):</strong></td>
                             <td class="text-end">{{ $invoice->currency }} {{ number_format($invoice->gst, 2) }}</td>
                         </tr>
+                        @endif
                         <tr>
                             <td><strong>Processing Charges:</strong></td>
                             <td class="text-end">{{ $invoice->currency }} {{ number_format($invoice->processing_charges, 2) }}</td>
