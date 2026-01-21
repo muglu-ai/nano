@@ -1,6 +1,9 @@
 .form-header{
-    background: linear-gradient(90deg, #9F3694 0%, #5962B0 100%);
+    background: linear-gradient(90deg, #9F3694 0%, #5962B0 100% ) !important;
 }
+
+.form-container {padding: 0 !important;}
+
 .form-container {
     background-color: #fff;
     border-radius: 6px;
