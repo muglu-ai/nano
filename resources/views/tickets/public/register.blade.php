@@ -525,7 +525,7 @@
                     </div>
 
                     <div class="row">
-                        <div class="col-md-12 mb-3">
+                        <div class="col-md-6 mb-3">
                             <label class="form-label">GST Legal Name</label>
                             <input type="text" name="gst_legal_name" class="form-control" 
                                    value="{{ old('gst_legal_name') }}" 
@@ -536,10 +536,7 @@
                                 <div class="text-danger">{{ $message }}</div>
                             @enderror
                         </div>
-                    </div>
-
-                    <div class="row">
-                        <div class="col-md-12 mb-3">
+                        <div class="col-md-6 mb-3">
                             <label class="form-label">GST Address</label>
                             <textarea name="gst_address" class="form-control" rows="3" 
                                       placeholder="Enter address for invoice"
@@ -552,7 +549,7 @@
                     </div>
 
                     <div class="row">
-                        <div class="col-md-12 mb-3">
+                        <div class="col-md-6 mb-3">
                             <label class="form-label">State</label>
                             <input type="hidden" name="gst_country" value="India">
                             <select name="gst_state" class="form-select" id="gst_state" {{ old('gst_state') ? '' : '' }}>
@@ -577,44 +574,41 @@
                             @error('gst_state')
                                 <div class="text-danger">{{ $message }}</div>
                             @enderror
-                </div>
-            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label required-field">Primary Contact Full Name</label>
+                            <input type="text" name="contact_name" class="form-control" 
+                                   value="{{ old('contact_name') }}" 
+                                   placeholder="Enter full name" id="contact_name">
+                            @error('contact_name')
+                                <div class="text-danger">{{ $message }}</div>
+                            @enderror
+                        </div>
+                    </div>
 
                     <!-- Primary Contact Information - Only visible when GST is Yes -->
-                <div class="row">
-                    <div class="col-md-6 mb-3">
-                            <label class="form-label required-field">Primary Contact Full Name</label>
-                        <input type="text" name="contact_name" class="form-control" 
-                               value="{{ old('contact_name') }}" 
-                               placeholder="Enter full name" id="contact_name">
-                        @error('contact_name')
-                            <div class="text-danger">{{ $message }}</div>
-                        @enderror
-                    </div>
-                    <div class="col-md-6 mb-3">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
                             <label class="form-label required-field">Primary Contact Email Address</label>
-                        <input type="email" name="contact_email" class="form-control" 
-                               value="{{ old('contact_email') }}" 
-                               placeholder="Enter email address" id="contact_email">
-                        @error('contact_email')
-                            <div class="text-danger">{{ $message }}</div>
-                        @enderror
-                    </div>
-                </div>
-
-                <div class="row">
-                    <div class="col-md-6 mb-3">
+                            <input type="email" name="contact_email" class="form-control" 
+                                   value="{{ old('contact_email') }}" 
+                                   placeholder="Enter email address" id="contact_email">
+                            @error('contact_email')
+                                <div class="text-danger">{{ $message }}</div>
+                            @enderror
+                        </div>
+                        <div class="col-md-6 mb-3">
                             <label class="form-label required-field">Primary Contact Mobile Number</label>
-                        <input type="tel" name="contact_phone" class="form-control" 
+                            <input type="tel" name="contact_phone" class="form-control" 
                                    value="{{ old('contact_phone') ? preg_replace('/\s+/', '', old('contact_phone')) : '' }}" 
                                    placeholder="Enter mobile number" 
                                    id="contact_phone"
                                    pattern="[0-9]*"
                                    inputmode="numeric">
-                        <input type="hidden" name="contact_phone_country_code" id="contact_phone_country_code" value="{{ old('contact_phone_country_code', '+91') }}">
-                        @error('contact_phone')
-                            <div class="text-danger">{{ $message }}</div>
-                        @enderror
+                            <input type="hidden" name="contact_phone_country_code" id="contact_phone_country_code" value="{{ old('contact_phone_country_code', '+91') }}">
+                            @error('contact_phone')
+                                <div class="text-danger">{{ $message }}</div>
+                            @enderror
                         </div>
                     </div>
                 </div>
