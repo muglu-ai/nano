@@ -186,7 +186,7 @@
                 </h4>
 
                 <div class="row">
-                    <div class="col-md-12 mb-3">
+                    <div class="col-md-6 mb-3">
                         <label class="form-label required-field">Ticket Type</label>
                         @if(isset($isTicketTypeLocked) && $isTicketTypeLocked)
                             {{-- Hidden field to submit the value --}}
@@ -247,9 +247,8 @@
                         
                         
                     </div>
-                </div>
 
-                {{-- Day Selection Dropdown - shown when ticket has per-day pricing --}}
+                    {{-- Day Selection Dropdown - shown when ticket has per-day pricing --}}
                 <div class="row" id="day_selection_row" style="display: none;">
                     <div class="col-md-12 mb-3">
                         <label class="form-label required-field">Select Event Day</label>
@@ -262,6 +261,9 @@
                         @enderror
                     </div>
                 </div>
+                </div>
+
+                
 
                 <div class="row">
                     <div class="col-md-6 mb-3">
