@@ -1095,18 +1095,24 @@ class ExhibitorRegistrationController extends Controller
             $validatedGstStateCode = $gstNo && strlen($gstNo) >= 2 ? substr($gstNo, 0, 2) : null;
             $isSameState = $validatedGstStateCode && $validatedGstStateCode === $organizerStateCode;
             
-            // Calculate IGST, CGST, SGST amounts
+            // Calculate IGST, CGST, SGST amounts - only store applicable GST
             if ($isSameState) {
-                // Same state - apply CGST + SGST
-                $igstAmount = 0;
+                // Same state - apply CGST + SGST only
+                $igstRate = null;
+                $igstAmount = null;
+                $cgstRate = $cgstRatePercent;
+                $sgstRate = $sgstRatePercent;
                 $cgstAmount = $basePrice * ($cgstRatePercent / 100);
                 $sgstAmount = $basePrice * ($sgstRatePercent / 100);
                 $totalGst = $cgstAmount + $sgstAmount;
             } else {
-                // Different state or GST not provided - apply IGST
+                // Different state or GST not provided - apply IGST only
+                $igstRate = $igstRatePercent;
                 $igstAmount = $basePrice * ($igstRatePercent / 100);
-                $cgstAmount = 0;
-                $sgstAmount = 0;
+                $cgstRate = null;
+                $sgstRate = null;
+                $cgstAmount = null;
+                $sgstAmount = null;
                 $totalGst = $igstAmount;
             }
             
@@ -1209,14 +1215,14 @@ class ExhibitorRegistrationController extends Controller
             $exhibitorData['category'] = $allData['category'] ?? null;
             $draft->exhibitor_data = $exhibitorData;
             
-            // Store pricing in pricing_data column
+            // Store pricing in pricing_data column - only store applicable GST
             $pricingData = [
                 'base_price' => $basePrice,
-                'igst_rate' => $igstRatePercent,
+                'igst_rate' => $igstRate,
                 'igst_amount' => $igstAmount,
-                'cgst_rate' => $cgstRatePercent,
+                'cgst_rate' => $cgstRate,
                 'cgst_amount' => $cgstAmount,
-                'sgst_rate' => $sgstRatePercent,
+                'sgst_rate' => $sgstRate,
                 'sgst_amount' => $sgstAmount,
                 'is_same_state' => $isSameState,
                 'processing_charges' => $processingCharges,
@@ -1342,15 +1348,22 @@ class ExhibitorRegistrationController extends Controller
             $validatedGstStateCode = $gstNo && strlen($gstNo) >= 2 ? substr($gstNo, 0, 2) : null;
             $isSameState = $validatedGstStateCode && $validatedGstStateCode === $organizerStateCode;
             
+            // Only store applicable GST
             if ($isSameState) {
-                $igstAmount = 0;
+                $igstRate = null;
+                $igstAmount = null;
+                $cgstRate = $cgstRatePercent;
+                $sgstRate = $sgstRatePercent;
                 $cgstAmount = $basePrice * ($cgstRatePercent / 100);
                 $sgstAmount = $basePrice * ($sgstRatePercent / 100);
                 $totalGst = $cgstAmount + $sgstAmount;
             } else {
+                $igstRate = $igstRatePercent;
                 $igstAmount = $basePrice * ($igstRatePercent / 100);
-                $cgstAmount = 0;
-                $sgstAmount = 0;
+                $cgstRate = null;
+                $sgstRate = null;
+                $cgstAmount = null;
+                $sgstAmount = null;
                 $totalGst = $igstAmount;
             }
             
@@ -1359,11 +1372,11 @@ class ExhibitorRegistrationController extends Controller
             
             $pricing = [
                 'base_price' => $basePrice,
-                'igst_rate' => $igstRatePercent,
+                'igst_rate' => $igstRate,
                 'igst_amount' => $igstAmount,
-                'cgst_rate' => $cgstRatePercent,
+                'cgst_rate' => $cgstRate,
                 'cgst_amount' => $cgstAmount,
-                'sgst_rate' => $sgstRatePercent,
+                'sgst_rate' => $sgstRate,
                 'sgst_amount' => $sgstAmount,
                 'is_same_state' => $isSameState,
                 'processing_charges' => $processingCharges,
@@ -1489,15 +1502,22 @@ class ExhibitorRegistrationController extends Controller
             $validatedGstStateCode = $gstNo && strlen($gstNo) >= 2 ? substr($gstNo, 0, 2) : null;
             $isSameState = $validatedGstStateCode && $validatedGstStateCode === $organizerStateCode;
             
+            // Only store applicable GST
             if ($isSameState) {
-                $igstAmount = 0;
+                $igstRate = null;
+                $igstAmount = null;
+                $cgstRate = $cgstRatePercent;
+                $sgstRate = $sgstRatePercent;
                 $cgstAmount = $basePrice * ($cgstRatePercent / 100);
                 $sgstAmount = $basePrice * ($sgstRatePercent / 100);
                 $totalGst = $cgstAmount + $sgstAmount;
             } else {
+                $igstRate = $igstRatePercent;
                 $igstAmount = $basePrice * ($igstRatePercent / 100);
-                $cgstAmount = 0;
-                $sgstAmount = 0;
+                $cgstRate = null;
+                $sgstRate = null;
+                $cgstAmount = null;
+                $sgstAmount = null;
                 $totalGst = $igstAmount;
             }
             
@@ -1506,11 +1526,11 @@ class ExhibitorRegistrationController extends Controller
             
             $pricing = [
                 'base_price' => $basePrice,
-                'igst_rate' => $igstRatePercent,
+                'igst_rate' => $igstRate,
                 'igst_amount' => $igstAmount,
-                'cgst_rate' => $cgstRatePercent,
+                'cgst_rate' => $cgstRate,
                 'cgst_amount' => $cgstAmount,
-                'sgst_rate' => $sgstRatePercent,
+                'sgst_rate' => $sgstRate,
                 'sgst_amount' => $sgstAmount,
                 'is_same_state' => $isSameState,
                 'processing_charges' => $processingCharges,
