@@ -21,7 +21,6 @@
     }
 
     .form-header {
-        background: linear-gradient(135deg, var(--primary-color) 0%, #0066cc 100%);
         color: white;
         padding: 1.5rem 2rem;
         text-align: center;

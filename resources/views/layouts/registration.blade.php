@@ -150,7 +150,6 @@
         }
 
         .form-header {
-            background: var(--primary-gradient);
             color: white;
             padding: 2rem;
             text-align: center;
