@@ -234,15 +234,15 @@ class PublicTicketController extends Controller
             ],
             'industry_sector' => 'required|string|max:255',
             'organisation_type' => [
-                function ($attribute, $value, $fail) use ($request) {
-                    $registrationType = $request->input('registration_type');
-                    if ($registrationType === 'Organisation' && empty($value)) {
-                        $fail('The organisation type field is required when registration type is Organisation.');
-                    }
-                },
-                'nullable',
+                'required',
                 'string',
                 'max:255',
+                function ($attribute, $value, $fail) {
+                    $allowedTypes = ['Incubator', 'Accelerator', 'Investors', 'Consulting', 'Service Enabler / Consulting', 'Students', 'Others'];
+                    if (!in_array($value, $allowedTypes)) {
+                        $fail('Please select a valid organisation type.');
+                    }
+                },
             ],
             'company_country' => 'required|string|max:255',
             'company_state' => 'nullable|string|max:255',
@@ -494,10 +494,10 @@ class PublicTicketController extends Controller
             }
         }
 
-        // Handle Individual registration type - set organisation_name to null
+        // Handle Individual registration type - set organisation_name to null, but keep organisation_type (now required)
         if (isset($validated['registration_type']) && $validated['registration_type'] === 'Individual') {
             $validated['organisation_name'] = null;
-            $validated['organisation_type'] = null;
+            // organisation_type is now required for both Individual and Organisation, so keep it
         }
         
         // Format phone numbers: Remove spaces and add dash after country code (e.g., +91-8619276031)
