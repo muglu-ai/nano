@@ -304,25 +304,29 @@
             </table>
             </div>
 
-        <!-- Organisation Information -->
+        <!-- Organisation/Individual Information -->
         <div class="preview-section">
             <h4 class="section-title">
-                <i class="fas fa-building"></i>
-                Organisation Information
+                <i class="fas {{ ($order->registration->registration_type ?? 'Organisation') === 'Individual' ? 'fa-user' : 'fa-building' }}"></i>
+                {{ ($order->registration->registration_type ?? 'Organisation') === 'Individual' ? 'Individual' : 'Organisation' }} Information
             </h4>
             <table class="info-table">
+                @if(($order->registration->registration_type ?? 'Organisation') === 'Organisation')
                 <tr>
                     <td class="label-cell">Organisation Name</td>
                     <td class="value-cell"><strong>{{ $order->registration->company_name ?? 'N/A' }}</strong></td>
                 </tr>
+                @endif
                 <tr>
                     <td class="label-cell">Industry Sector</td>
                     <td class="value-cell">{{ $order->registration->industry_sector ?? 'N/A' }}</td>
                 </tr>
+                @if(($order->registration->registration_type ?? 'Organisation') === 'Organisation')
                 <tr>
                     <td class="label-cell">Organisation Type</td>
                     <td class="value-cell">{{ $order->registration->organisation_type ?? 'N/A' }}</td>
                 </tr>
+                @endif
                 <tr>
                     <td class="label-cell">Country</td>
                     <td class="value-cell">{{ $order->registration->company_country ?? 'N/A' }}</td>

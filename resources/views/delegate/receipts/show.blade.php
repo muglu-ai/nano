@@ -298,10 +298,12 @@
                         </span>
                     </td>
                 </tr>
+                @if(($receipt->order->registration->registration_type ?? 'Organisation') === 'Organisation')
                 <tr>
                     <td class="label-cell">Company Name</td>
                     <td class="value-cell"><strong>{{ $receipt->order->registration->company_name ?? 'N/A' }}</strong></td>
                 </tr>
+                @endif
                 <tr>
                     <td class="label-cell">Contact Name</td>
                     <td class="value-cell">{{ $receipt->order->registration->contact->name ?? 'N/A' }}</td>

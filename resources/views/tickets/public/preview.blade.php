@@ -234,6 +234,12 @@
                     <td class="label-cell">Ticket Type</td>
                     <td class="value-cell"><strong>{{ $ticketType->name }}</strong></td>
                 </tr>
+                @if(isset($registrationData['registration_type']))
+                <tr>
+                    <td class="label-cell">Registration Type</td>
+                    <td class="value-cell"><strong>{{ $registrationData['registration_type'] }}</strong></td>
+                </tr>
+                @endif
                 <tr>
                     <td class="label-cell">Day Access</td>
                     <td class="value-cell">
@@ -306,25 +312,29 @@
         </div>
         @endif
 
-        <!-- Organisation Information -->
+        <!-- Organisation/Individual Information -->
         <div class="preview-section">
             <h4 class="section-title">
-                <i class="fas fa-building"></i>
-                Organisation Information
+                <i class="fas {{ ($registrationData['registration_type'] ?? 'Organisation') === 'Individual' ? 'fa-user' : 'fa-building' }}"></i>
+                {{ ($registrationData['registration_type'] ?? 'Organisation') === 'Individual' ? 'Individual' : 'Organisation' }} Information
             </h4>
             <table class="info-table">
+                @if(($registrationData['registration_type'] ?? 'Organisation') === 'Organisation')
                 <tr>
                     <td class="label-cell">Organisation Name</td>
-                    <td class="value-cell"><strong>{{ $registrationData['organisation_name'] }}</strong></td>
+                    <td class="value-cell"><strong>{{ $registrationData['organisation_name'] ?? 'N/A' }}</strong></td>
                 </tr>
+                @endif
                 <tr>
                     <td class="label-cell">Industry Sector</td>
                     <td class="value-cell">{{ $registrationData['industry_sector'] }}</td>
                 </tr>
+                @if(($registrationData['registration_type'] ?? 'Organisation') === 'Organisation')
                 <tr>
                     <td class="label-cell">Organisation Type</td>
-                    <td class="value-cell">{{ $registrationData['organisation_type'] }}</td>
+                    <td class="value-cell">{{ $registrationData['organisation_type'] ?? 'N/A' }}</td>
                 </tr>
+                @endif
                 <tr>
                     <td class="label-cell">Country</td>
                     <td class="value-cell">{{ $registrationData['company_country'] ?? $registrationData['country'] ?? 'N/A' }}</td>

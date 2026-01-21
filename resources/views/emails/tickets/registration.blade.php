@@ -431,21 +431,25 @@
 
             </table>
 
-            <!-- Organisation Information -->
-            <div class="section-title">🏢 Organisation Information</div>
+            <!-- Organisation/Individual Information -->
+            <div class="section-title">{{ ($order->registration->registration_type ?? 'Organisation') === 'Individual' ? '👤' : '🏢' }} {{ ($order->registration->registration_type ?? 'Organisation') === 'Individual' ? 'Individual' : 'Organisation' }} Information</div>
             <table class="info-table">
+                @if(($order->registration->registration_type ?? 'Organisation') === 'Organisation')
                 <tr>
                     <td class="label">Organisation Name</td>
-                    <td class="value">{{ $order->registration->company_name }}</td>
+                    <td class="value">{{ $order->registration->company_name ?? 'N/A' }}</td>
                 </tr>
+                @endif
                 <tr>
                     <td class="label">Industry Sector</td>
-                    <td class="value">{{ $order->registration->industry_sector }}</td>
+                    <td class="value">{{ $order->registration->industry_sector ?? 'N/A' }}</td>
                 </tr>
+                @if(($order->registration->registration_type ?? 'Organisation') === 'Organisation')
                 <tr>
                     <td class="label">Organisation Type</td>
-                    <td class="value">{{ $order->registration->organisation_type }}</td>
+                    <td class="value">{{ $order->registration->organisation_type ?? 'N/A' }}</td>
                 </tr>
+                @endif
                 <tr>
                     <td class="label">Country</td>
                     <td class="value">{{ $order->registration->company_country }}</td>
