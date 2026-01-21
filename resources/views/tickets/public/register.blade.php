@@ -20,17 +20,17 @@
     .form-section {
         background: #f8f9fa;
         border-radius: 10px;
-        padding: 1.5rem;
-        margin-bottom: 2rem;
+        padding: 1.25rem;
+        margin-bottom: 1.5rem;
         border: 1px solid #e0e0e0;
     }
 
     .section-title {
         font-size: 1.25rem;
         font-weight: 600;
-        margin-bottom: 1.5rem;
+        margin-bottom: 1rem;
         color: var(--text-primary);
-        padding-bottom: 0.75rem;
+        padding-bottom: 0.5rem;
         border-bottom: 2px solid var(--progress-inactive);
         display: flex;
         align-items: center;
@@ -486,46 +486,46 @@
                     Organisation Details for Raising the Invoice
                 </h4>
 
-                <div class="row">
-                    <div class="col-md-12 mb-3">
+                <div class="row" id="gst_required_row">
+                    <div class="col-md-12 mb-2" id="gst_required_full_width">
                         <label class="form-label required-field">Do you require GST Invoice?</label>
                         <select name="gst_required" class="form-select" id="gst_required" required>
                             <option value="0" {{ old('gst_required') == '0' ? 'selected' : '' }}>No</option>
                             <option value="1" {{ old('gst_required') == '1' ? 'selected' : '' }}>Yes</option>
                         </select>
                         @error('gst_required')
-                            <div class="text-danger">{{ $message }}</div>
+                            <div class="text-danger" style="font-size: 0.875rem; margin-top: 0.25rem;">{{ $message }}</div>
                         @enderror
+                    </div>
+                    <div class="col-md-12 mb-2" id="gstin_full_width" style="display: none;">
+                        <label class="form-label">GSTIN</label>
+                        <div class="input-group">
+                            <input type="text" name="gstin" class="form-control" 
+                                   value="{{ old('gstin') }}" 
+                                   placeholder="Enter 15-character GSTIN" 
+                                   id="gstin_input"
+                                   maxlength="15">
+                            <button type="button" class="btn btn-outline-primary" id="validateGstBtn" style="display: none;">
+                                <i class="fas fa-search me-1"></i>Validate
+                            </button>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center mt-1">
+                            <small class="form-text text-muted" style="font-size: 0.75rem; margin: 0;">Click "Validate" to auto-fill details</small>
+                            <div id="gst_loading" class="d-none">
+                                <small class="text-info" style="font-size: 0.75rem;"><i class="fas fa-spinner fa-spin"></i> Validating...</small>
+                            </div>
+                        </div>
+                        @error('gstin')
+                            <div class="text-danger" style="font-size: 0.875rem; margin-top: 0.25rem;">{{ $message }}</div>
+                        @enderror
+                        <div id="gst_validation_message" style="margin-top: 0.5rem;"></div>
                     </div>
                 </div>
 
                 <div id="gst_fields" style="display: {{ old('gst_required') == '1' ? 'block' : 'none' }};">
-                    <div class="row">
-                        <div class="col-md-12 mb-3">
-                            <label class="form-label">GSTIN</label>
-                            <div class="input-group">
-                            <input type="text" name="gstin" class="form-control" 
-                                   value="{{ old('gstin') }}" 
-                                   placeholder="Enter GSTIN" 
-                                   id="gstin_input"
-                                   maxlength="15">
-                                <button type="button" class="btn btn-outline-primary" id="validateGstBtn" style="display: none;">
-                                    <i class="fas fa-search me-1"></i>Validate GST
-                                </button>
-                            </div>
-                            <small class="form-text text-muted">Enter 15-character GSTIN and click "Validate GST" to auto-fill details</small>
-                            @error('gstin')
-                                <div class="text-danger">{{ $message }}</div>
-                            @enderror
-                            <div id="gst_loading" class="d-none mt-2">
-                                <small class="text-info"><i class="fas fa-spinner fa-spin"></i> Validating GST...</small>
-                            </div>
-                            <div id="gst_validation_message" class="mt-2"></div>
-                        </div>
-                    </div>
 
                     <div class="row">
-                        <div class="col-md-12 mb-3">
+                        <div class="col-md-6 mb-2">
                             <label class="form-label">GST Legal Name</label>
                             <input type="text" name="gst_legal_name" class="form-control" 
                                    value="{{ old('gst_legal_name') }}" 
@@ -533,26 +533,23 @@
                                    id="gst_legal_name_input"
                                    readonly>
                             @error('gst_legal_name')
-                                <div class="text-danger">{{ $message }}</div>
+                                <div class="text-danger" style="font-size: 0.875rem; margin-top: 0.25rem;">{{ $message }}</div>
                             @enderror
                         </div>
-                    </div>
-
-                    <div class="row">
-                        <div class="col-md-12 mb-3">
+                        <div class="col-md-6 mb-2">
                             <label class="form-label">GST Address</label>
-                            <textarea name="gst_address" class="form-control" rows="3" 
+                            <textarea name="gst_address" class="form-control" rows="2" 
                                       placeholder="Enter address for invoice"
                                       id="gst_address_input"
                                       readonly>{{ old('gst_address') }}</textarea>
                             @error('gst_address')
-                                <div class="text-danger">{{ $message }}</div>
+                                <div class="text-danger" style="font-size: 0.875rem; margin-top: 0.25rem;">{{ $message }}</div>
                             @enderror
                         </div>
                     </div>
 
                     <div class="row">
-                        <div class="col-md-12 mb-3">
+                        <div class="col-md-6 mb-2">
                             <label class="form-label">State</label>
                             <input type="hidden" name="gst_country" value="India">
                             <select name="gst_state" class="form-select" id="gst_state" {{ old('gst_state') ? '' : '' }}>
@@ -575,46 +572,43 @@
                                 @endforeach
                             </select>
                             @error('gst_state')
-                                <div class="text-danger">{{ $message }}</div>
+                                <div class="text-danger" style="font-size: 0.875rem; margin-top: 0.25rem;">{{ $message }}</div>
                             @enderror
-                </div>
-            </div>
+                        </div>
+                        <div class="col-md-6 mb-2">
+                            <label class="form-label required-field">Primary Contact Full Name</label>
+                            <input type="text" name="contact_name" class="form-control" 
+                                   value="{{ old('contact_name') }}" 
+                                   placeholder="Enter full name" id="contact_name">
+                            @error('contact_name')
+                                <div class="text-danger" style="font-size: 0.875rem; margin-top: 0.25rem;">{{ $message }}</div>
+                            @enderror
+                        </div>
+                    </div>
 
                     <!-- Primary Contact Information - Only visible when GST is Yes -->
-                <div class="row">
-                    <div class="col-md-6 mb-3">
-                            <label class="form-label required-field">Primary Contact Full Name</label>
-                        <input type="text" name="contact_name" class="form-control" 
-                               value="{{ old('contact_name') }}" 
-                               placeholder="Enter full name" id="contact_name">
-                        @error('contact_name')
-                            <div class="text-danger">{{ $message }}</div>
-                        @enderror
-                    </div>
-                    <div class="col-md-6 mb-3">
+                    <div class="row">
+                        <div class="col-md-6 mb-2">
                             <label class="form-label required-field">Primary Contact Email Address</label>
-                        <input type="email" name="contact_email" class="form-control" 
-                               value="{{ old('contact_email') }}" 
-                               placeholder="Enter email address" id="contact_email">
-                        @error('contact_email')
-                            <div class="text-danger">{{ $message }}</div>
-                        @enderror
-                    </div>
-                </div>
-
-                <div class="row">
-                    <div class="col-md-6 mb-3">
+                            <input type="email" name="contact_email" class="form-control" 
+                                   value="{{ old('contact_email') }}" 
+                                   placeholder="Enter email address" id="contact_email">
+                            @error('contact_email')
+                                <div class="text-danger" style="font-size: 0.875rem; margin-top: 0.25rem;">{{ $message }}</div>
+                            @enderror
+                        </div>
+                        <div class="col-md-6 mb-2">
                             <label class="form-label required-field">Primary Contact Mobile Number</label>
-                        <input type="tel" name="contact_phone" class="form-control" 
+                            <input type="tel" name="contact_phone" class="form-control" 
                                    value="{{ old('contact_phone') ? preg_replace('/\s+/', '', old('contact_phone')) : '' }}" 
                                    placeholder="Enter mobile number" 
                                    id="contact_phone"
                                    pattern="[0-9]*"
                                    inputmode="numeric">
-                        <input type="hidden" name="contact_phone_country_code" id="contact_phone_country_code" value="{{ old('contact_phone_country_code', '+91') }}">
-                        @error('contact_phone')
-                            <div class="text-danger">{{ $message }}</div>
-                        @enderror
+                            <input type="hidden" name="contact_phone_country_code" id="contact_phone_country_code" value="{{ old('contact_phone_country_code', '+91') }}">
+                            @error('contact_phone')
+                                <div class="text-danger" style="font-size: 0.875rem; margin-top: 0.25rem;">{{ $message }}</div>
+                            @enderror
                         </div>
                     </div>
                 </div>
@@ -1025,20 +1019,18 @@ document.addEventListener('DOMContentLoaded', function() {
                     </div>
                 </div>
                 <div class="row">
-                    <div class="col-md-12 mb-3">
+                    <div class="col-md-6 mb-3">
                         <label class="form-label required-field">Designation</label>
                         <input type="text" name="delegates[${i}][job_title]" class="form-control" 
                                value="${delegateData.job_title || ''}" 
                                placeholder="Enter Designation" required>
                     </div>
-                </div>
-                <div class="row">
-                    <div class="col-md-12 mb-3">
+                    <div class="col-md-6 mb-3">
                         <label class="form-label">LinkedIn Profile</label>
                         <input type="url" name="delegates[${i}][linkedin_profile]" class="form-control" 
                                value="${delegateData.linkedin_profile || ''}" 
                                placeholder="https://linkedin.com/in/yourprofile">
-                        <small class="text-muted">Optional: Enter your LinkedIn profile URL</small>
+                        <small class="text-muted">Optional</small>
                     </div>
                 </div>
             `;
@@ -1765,21 +1757,49 @@ document.addEventListener('DOMContentLoaded', function() {
         updateBaseAmount();
     }, 100);
 
-    gstRequired.addEventListener('change', function() {
-        if (this.value === '1') {
+    // Elements for side-by-side layout
+    const gstRequiredFullWidth = document.getElementById('gst_required_full_width');
+    const gstinFullWidth = document.getElementById('gstin_full_width');
+    const gstRequiredRow = document.getElementById('gst_required_row');
+    
+    // Function to handle GST required change and layout
+    function handleGstRequiredChange() {
+        if (gstRequired.value === '1') {
             gstFields.style.display = 'block';
             if (contactName) contactName.required = true;
             if (contactEmail) contactEmail.required = true;
             if (contactPhone) contactPhone.required = true;
             if (validateGstBtn) validateGstBtn.style.display = 'inline-block';
+            
+            // Show GSTIN field and make them side by side
+            if (gstinFullWidth) {
+                gstinFullWidth.style.display = 'block';
+            }
+            if (gstRequiredFullWidth && gstinFullWidth) {
+                gstRequiredFullWidth.className = 'col-md-6 mb-2';
+                gstinFullWidth.className = 'col-md-6 mb-2';
+            }
         } else {
             gstFields.style.display = 'none';
             if (contactName) contactName.required = false;
             if (contactEmail) contactEmail.required = false;
             if (contactPhone) contactPhone.required = false;
             if (validateGstBtn) validateGstBtn.style.display = 'none';
+            
+            // Hide GSTIN field and make GST required full width
+            if (gstinFullWidth) {
+                gstinFullWidth.style.display = 'none';
+            }
+            if (gstRequiredFullWidth) {
+                gstRequiredFullWidth.className = 'col-md-12 mb-2';
+            }
         }
-    });
+    }
+    
+    gstRequired.addEventListener('change', handleGstRequiredChange);
+    
+    // Initialize layout on page load
+    handleGstRequiredChange();
     
     // Initialize validate button visibility
     if (gstRequired.value === '1' && validateGstBtn) {
@@ -1796,14 +1816,14 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // Validate format
             if (gstin.length !== 15) {
-                gstValidationMessage.innerHTML = '<div class="alert alert-warning mt-2"><i class="fas fa-exclamation-triangle"></i> GSTIN must be 15 characters</div>';
+                gstValidationMessage.innerHTML = '<div class="alert alert-warning py-1 px-2 mb-0" style="font-size: 0.8rem;"><i class="fas fa-exclamation-triangle"></i> GSTIN must be 15 characters</div>';
                 return;
             }
             
             // Validate pattern
             const gstPattern = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/;
             if (!gstPattern.test(gstin)) {
-                gstValidationMessage.innerHTML = '<div class="alert alert-warning mt-2"><i class="fas fa-exclamation-triangle"></i> Invalid GSTIN format</div>';
+                gstValidationMessage.innerHTML = '<div class="alert alert-warning py-1 px-2 mb-0" style="font-size: 0.8rem;"><i class="fas fa-exclamation-triangle"></i> Invalid GSTIN format</div>';
                 return;
             }
             
@@ -1850,18 +1870,21 @@ document.addEventListener('DOMContentLoaded', function() {
                         const stateOption = Array.from(stateSelect.options).find(opt => opt.text === data.gst.state_name || opt.value === data.gst.state_name);
                         if (stateOption) {
                             stateSelect.value = stateOption.value;
+                            // Set background color to indicate auto-filled, but keep it editable
                             stateSelect.style.backgroundColor = '#e9ecef';
-                            // Keep enabled but readonly to ensure value is submitted
                             stateSelect.disabled = false;
-                            stateSelect.setAttribute('readonly', 'readonly');
+                            // Remove readonly attribute if it exists (select elements don't support readonly, but remove it anyway)
+                            stateSelect.removeAttribute('readonly');
                             stateSelect.dataset.apiFetched = 'true';
+                            // Allow user to change the state value
+                            stateSelect.title = 'Auto-filled from GST validation. You can change this if needed.';
                         }
                     }
                     
-                    gstValidationMessage.innerHTML = '<div class="alert alert-success mt-2"><i class="fas fa-check-circle"></i> GST validated successfully./div>';
+                    gstValidationMessage.innerHTML = '<div class="alert alert-success py-1 px-2 mb-0" style="font-size: 0.8rem;"><i class="fas fa-check-circle"></i> GST validated successfully.</div>';
                 } else if (status === 429 || data.limit_exceeded) {
                     // Rate limit exceeded - enable manual entry
-                    gstValidationMessage.innerHTML = '<div class="alert alert-warning mt-2"><i class="fas fa-exclamation-triangle"></i> ' + data.message + '</div>';
+                    gstValidationMessage.innerHTML = '<div class="alert alert-warning py-1 px-2 mb-0" style="font-size: 0.8rem;"><i class="fas fa-exclamation-triangle"></i> ' + data.message + '</div>';
 
                     // Enable GST fields for manual entry
                     const legalNameInput = document.getElementById('gst_legal_name_input');
@@ -1884,7 +1907,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                         } else {
                     // Error or not found - enable manual entry
-                    gstValidationMessage.innerHTML = '<div class="alert alert-info mt-2"><i class="fas fa-info-circle"></i> ' + (data.message || 'GST not found. Please fill details manually.') + '</div>';
+                    gstValidationMessage.innerHTML = '<div class="alert alert-info py-1 px-2 mb-0" style="font-size: 0.8rem;"><i class="fas fa-info-circle"></i> ' + (data.message || 'GST not found. Please fill details manually.') + '</div>';
 
                     // Enable GST fields for manual entry
                     const legalNameInput = document.getElementById('gst_legal_name_input');
@@ -1931,7 +1954,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     stateSelect.removeAttribute('data-api-fetched');
                 }
 
-                gstValidationMessage.innerHTML = '<div class="alert alert-warning mt-2"><i class="fas fa-exclamation-triangle"></i> Error validating GST. Please fill details manually.</div>';
+                gstValidationMessage.innerHTML = '<div class="alert alert-warning py-1 px-2 mb-0" style="font-size: 0.8rem;"><i class="fas fa-exclamation-triangle"></i> Error validating GST. Please fill details manually.</div>';
             });
         });
     }
