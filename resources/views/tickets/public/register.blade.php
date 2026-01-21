@@ -243,14 +243,10 @@
                         @error('ticket_type_id')
                             <div class="text-danger">{{ $message }}</div>
                         @enderror
-                        
-                        
-                        
                     </div>
 
                     {{-- Day Selection Dropdown - shown when ticket has per-day pricing --}}
-                <div id="day_selection_row" style="display: none;">
-                    <div class="col-md-6 mb-3">
+                    <div id="day_selection_row" class="col-md-6 mb-3" style="display: none;">
                         <label class="form-label required-field">Select Event Day</label>
                         <select name="selected_event_day_id" class="form-select" id="selected_event_day">
                             
@@ -260,7 +256,6 @@
                             <div class="text-danger">{{ $message }}</div>
                         @enderror
                     </div>
-                </div>
                 </div>
 
                 
