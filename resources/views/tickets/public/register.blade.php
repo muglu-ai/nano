@@ -249,7 +249,7 @@
                     </div>
 
                     {{-- Day Selection Dropdown - shown when ticket has per-day pricing --}}
-                <div class="row" id="day_selection_row" style="display: none;">
+                <div id="day_selection_row" style="display: none;">
                     <div class="col-md-6 mb-3">
                         <label class="form-label required-field">Select Event Day</label>
                         <select name="selected_event_day_id" class="form-select" id="selected_event_day">
