@@ -32,7 +32,7 @@ h5.border-bottom {
     color: #000000 !important;
 }
 h5.border-bottom i {
-    background: -webkit-linear-gradient(#9F3694, #5962B0) !important;
+    background: -webkit-linear-gradient(#9F3694, #5962B0);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent !important;
 }
