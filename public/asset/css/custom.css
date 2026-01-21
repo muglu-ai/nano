@@ -14,27 +14,27 @@
     background: linear-gradient(180deg, #D2175D 14.61%, #7B2FEB 373.21%);
 }
 .step-number {
-    border: 3px solid #7B2FEB;    
+    border: 3px solid #7B2FEB !important;    
 }
 .step-label {
-    color: #121212;
+    color: #121212 !important;
 }
 .step-item.active .step-label {
-    color: #D9237D;
+    color: #D9237D !important;
 }
 .progress-bar-custom {
-	height: 17px;
+	height: 17px !important;
 }
 .progress-fill {
-    background: linear-gradient(90deg, #9F3694 0%, #5962B0 100%);
+    background: linear-gradient(90deg, #9F3694 0%, #5962B0 100%) !important;
 }
 h5.border-bottom {
     color: #000000 !important;
 }
 h5.border-bottom i {
-    background: -webkit-linear-gradient(#9F3694, #5962B0);
+    background: -webkit-linear-gradient(#9F3694, #5962B0) !important;
     -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
+    -webkit-text-fill-color: transparent !important;
 }
 .btn-primary , .btn-outline-primary {
     background: linear-gradient(to right, #4D2FB2, #0E21A0) !important;
@@ -43,10 +43,10 @@ h5.border-bottom i {
 
 
 .step-connector {
-    background: #7054A7;    
+    background: #7054A7 !important;    
 }
 .step-number {
-    border: 3px solid #7B2FEB;
+    border: 3px solid #7B2FEB !important;
 }
 .step-label {
     color: #121212;
@@ -82,16 +82,16 @@ h5.border-bottom i {
     border: 3px solid #7B2FEB;
 }
 .step-item.active .step-number {
-    background: linear-gradient(180deg, #D2175D 14.61%, #7B2FEB 373.21%);
+    background: linear-gradient(180deg, #D2175D 14.61%, #7B2FEB 373.21%) !important;
     border-color: #c81980;
 }
 .section-title {
-	border-bottom: 2px solid var(--primary-color);
+	border-bottom: 2px solid var(--primary-color) !important;
 }
 .section-title i {
-    background: -webkit-linear-gradient(#9F3694, #5962B0);
+    background: -webkit-linear-gradient(#9F3694, #5962B0) !important;
     -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
+    -webkit-text-fill-color: transparent !important ;
 }
 
 
