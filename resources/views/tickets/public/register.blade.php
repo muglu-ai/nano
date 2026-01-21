@@ -486,8 +486,8 @@
                     Organisation Details for Raising the Invoice
                 </h4>
 
-                <div class="row">
-                    <div class="col-md-12 mb-2">
+                <div class="row" id="gst_required_row">
+                    <div class="col-md-12 mb-2" id="gst_required_full_width">
                         <label class="form-label required-field">Do you require GST Invoice?</label>
                         <select name="gst_required" class="form-select" id="gst_required" required>
                             <option value="0" {{ old('gst_required') == '0' ? 'selected' : '' }}>No</option>
@@ -497,34 +497,32 @@
                             <div class="text-danger" style="font-size: 0.875rem; margin-top: 0.25rem;">{{ $message }}</div>
                         @enderror
                     </div>
+                    <div class="col-md-12 mb-2" id="gstin_full_width" style="display: none;">
+                        <label class="form-label">GSTIN</label>
+                        <div class="input-group">
+                            <input type="text" name="gstin" class="form-control" 
+                                   value="{{ old('gstin') }}" 
+                                   placeholder="Enter 15-character GSTIN" 
+                                   id="gstin_input"
+                                   maxlength="15">
+                            <button type="button" class="btn btn-outline-primary" id="validateGstBtn" style="display: none;">
+                                <i class="fas fa-search me-1"></i>Validate
+                            </button>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center mt-1">
+                            <small class="form-text text-muted" style="font-size: 0.75rem; margin: 0;">Click "Validate" to auto-fill details</small>
+                            <div id="gst_loading" class="d-none">
+                                <small class="text-info" style="font-size: 0.75rem;"><i class="fas fa-spinner fa-spin"></i> Validating...</small>
+                            </div>
+                        </div>
+                        @error('gstin')
+                            <div class="text-danger" style="font-size: 0.875rem; margin-top: 0.25rem;">{{ $message }}</div>
+                        @enderror
+                        <div id="gst_validation_message" style="margin-top: 0.5rem;"></div>
+                    </div>
                 </div>
 
                 <div id="gst_fields" style="display: {{ old('gst_required') == '1' ? 'block' : 'none' }};">
-                    <div class="row">
-                        <div class="col-md-12 mb-2">
-                            <label class="form-label">GSTIN</label>
-                            <div class="input-group">
-                                <input type="text" name="gstin" class="form-control" 
-                                       value="{{ old('gstin') }}" 
-                                       placeholder="Enter 15-character GSTIN" 
-                                       id="gstin_input"
-                                       maxlength="15">
-                                <button type="button" class="btn btn-outline-primary" id="validateGstBtn" style="display: none;">
-                                    <i class="fas fa-search me-1"></i>Validate
-                                </button>
-                            </div>
-                            <div class="d-flex justify-content-between align-items-center mt-1">
-                                <small class="form-text text-muted" style="font-size: 0.75rem; margin: 0;">Click "Validate" to auto-fill details</small>
-                                <div id="gst_loading" class="d-none">
-                                    <small class="text-info" style="font-size: 0.75rem;"><i class="fas fa-spinner fa-spin"></i> Validating...</small>
-                                </div>
-                            </div>
-                            @error('gstin')
-                                <div class="text-danger" style="font-size: 0.875rem; margin-top: 0.25rem;">{{ $message }}</div>
-                            @enderror
-                            <div id="gst_validation_message" style="margin-top: 0.5rem;"></div>
-                        </div>
-                    </div>
 
                     <div class="row">
                         <div class="col-md-6 mb-2">
@@ -1759,21 +1757,49 @@ document.addEventListener('DOMContentLoaded', function() {
         updateBaseAmount();
     }, 100);
 
-    gstRequired.addEventListener('change', function() {
-        if (this.value === '1') {
+    // Elements for side-by-side layout
+    const gstRequiredFullWidth = document.getElementById('gst_required_full_width');
+    const gstinFullWidth = document.getElementById('gstin_full_width');
+    const gstRequiredRow = document.getElementById('gst_required_row');
+    
+    // Function to handle GST required change and layout
+    function handleGstRequiredChange() {
+        if (gstRequired.value === '1') {
             gstFields.style.display = 'block';
             if (contactName) contactName.required = true;
             if (contactEmail) contactEmail.required = true;
             if (contactPhone) contactPhone.required = true;
             if (validateGstBtn) validateGstBtn.style.display = 'inline-block';
+            
+            // Show GSTIN field and make them side by side
+            if (gstinFullWidth) {
+                gstinFullWidth.style.display = 'block';
+            }
+            if (gstRequiredFullWidth && gstinFullWidth) {
+                gstRequiredFullWidth.className = 'col-md-6 mb-2';
+                gstinFullWidth.className = 'col-md-6 mb-2';
+            }
         } else {
             gstFields.style.display = 'none';
             if (contactName) contactName.required = false;
             if (contactEmail) contactEmail.required = false;
             if (contactPhone) contactPhone.required = false;
             if (validateGstBtn) validateGstBtn.style.display = 'none';
+            
+            // Hide GSTIN field and make GST required full width
+            if (gstinFullWidth) {
+                gstinFullWidth.style.display = 'none';
+            }
+            if (gstRequiredFullWidth) {
+                gstRequiredFullWidth.className = 'col-md-12 mb-2';
+            }
         }
-    });
+    }
+    
+    gstRequired.addEventListener('change', handleGstRequiredChange);
+    
+    // Initialize layout on page load
+    handleGstRequiredChange();
     
     // Initialize validate button visibility
     if (gstRequired.value === '1' && validateGstBtn) {
