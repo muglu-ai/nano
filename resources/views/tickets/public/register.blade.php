@@ -665,11 +665,21 @@ document.addEventListener('DOMContentLoaded', function() {
     ];
     
     // Organisation Type options for Organisation (from config)
-    const organisationOrgTypes = @json($organizationTypes ?? []);
+    // Get organization types from PHP variable passed from controller
+    @php
+        $orgTypes = $organizationTypes ?? [];
+        if (empty($orgTypes)) {
+            $orgTypes = config('constants.organization_types', []);
+        }
+    @endphp
+    const organisationOrgTypes = @json($orgTypes);
     
     // Function to populate organisation type dropdown based on registration type
     function populateOrganisationType(registrationType, preserveValue = false) {
-        if (!organisationTypeSelect) return;
+        if (!organisationTypeSelect) {
+            console.error('Organisation type select element not found');
+            return;
+        }
         
         const currentValue = organisationTypeSelect.value;
         const oldValue = '{{ old("organisation_type") }}';
@@ -680,10 +690,29 @@ document.addEventListener('DOMContentLoaded', function() {
         organisationTypeSelect.innerHTML = '<option value="">Select Organisation Type</option>';
         
         // Get the appropriate options based on registration type
-        const options = registrationType === 'Individual' ? individualOrgTypes : organisationOrgTypes;
+        let options = [];
+        if (registrationType === 'Individual') {
+            options = individualOrgTypes;
+        } else {
+            // For Organisation or default/empty, use organisation types
+            options = organisationOrgTypes;
+        }
+        
+        // Ensure options is an array and has values
+        if (!Array.isArray(options)) {
+            console.error('Options is not an array for registration type:', registrationType, 'Options:', options);
+            return;
+        }
+        
+        if (options.length === 0) {
+            console.warn('No organisation type options available for registration type:', registrationType);
+            return;
+        }
         
         // Populate options
         options.forEach(optionValue => {
+            if (!optionValue) return; // Skip empty values
+            
             const option = document.createElement('option');
             option.value = optionValue;
             option.textContent = optionValue;
@@ -789,11 +818,13 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Initialize on page load
     if (registrationTypeSelect) {
-        // Initialize dropdown based on current selection or default
+        // Initialize dropdown based on current selection or default to Organisation
         const currentRegistrationType = registrationTypeSelect.value || 'Organisation';
+        
+        // First populate the dropdown
         populateOrganisationType(currentRegistrationType, true);
         
-        // Handle initial state
+        // Then handle the initial state (which may repopulate based on actual value)
         handleRegistrationTypeChange();
         
         // Listen for changes
