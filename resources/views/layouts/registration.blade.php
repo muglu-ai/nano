@@ -200,7 +200,7 @@
         }
 
         .form-body {
-            padding: 2.5rem;
+            padding: 2.1rem;
         }
 
         /* Progress Bar Styles */

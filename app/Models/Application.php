@@ -36,6 +36,8 @@ class Application extends Model
         'payment_currency',
         'status',
         'certificate',
+        'indian_gst',
+        'tax_no',
         'gst_no',
         'pan_no',
         'tan_no',

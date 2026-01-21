@@ -465,6 +465,12 @@
                         <td class="label-cell">PAN Number</td>
                         <td class="value-cell">{{ $panNo ?: 'N/A' }}</td>
                     </tr>
+                        @if($billingData['tax_no'])
+                        <tr>
+                            <td class="label-cell">Tax Number</td>
+                            <td class="value-cell">{{ $billingData['tax_no'] }}</td>
+                        </tr>
+                        @endif
                    
                 </table>
             </div>
@@ -613,10 +619,29 @@
                         <td class="label-cell">Base Price</td>
                         <td class="value-cell">{{ $currencySymbol }}{{ number_format($pricing['base_price'], $priceFormat) }}</td>
                     </tr>
-                    @if($pricing['gst_amount'])
+                    {{-- @if($pricing['gst_amount'])
                     <tr>
                         <td class="label-cell">GST ({{ $pricing['gst_rate'] }}%)</td>
                         <td class="value-cell">{{ $currencySymbol }}{{ number_format($pricing['gst_amount'], $priceFormat) }}</td>
+                    </tr> 
+                    @endif--}}
+                    
+                    @if($pricing['cgst_amount'])
+                    <tr>
+                        <td class="label-cell">CGST ({{ $pricing['cgst_rate'] }}%)</td>
+                        <td class="value-cell">{{ $currencySymbol }}{{ number_format($pricing['cgst_amount'], $priceFormat) }}</td>
+                    </tr>
+                    @endif
+                    @if($pricing['sgst_amount'])
+                    <tr>
+                        <td class="label-cell">SGST ({{ $pricing['sgst_rate'] }}%)</td>
+                        <td class="value-cell">{{ $currencySymbol }}{{ number_format($pricing['sgst_amount'], $priceFormat) }}</td>
+                    </tr>
+                    @endif
+                    @if($pricing['igst_amount'])
+                    <tr>
+                        <td class="label-cell">IGST ({{ $pricing['igst_rate'] }}%)</td>
+                        <td class="value-cell">{{ $currencySymbol }}{{ number_format($pricing['igst_amount'], $priceFormat) }}</td>
                     </tr>
                     @endif
                     @if($pricing['processing_charges'])

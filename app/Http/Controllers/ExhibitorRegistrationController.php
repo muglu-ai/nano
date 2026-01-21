@@ -106,7 +106,10 @@ class ExhibitorRegistrationController extends Controller
         $rawSpaceRate = $eventConfig->raw_space_rate ?? 13000;
         $shellSchemeRateUSD = $eventConfig->shell_scheme_rate_usd ?? 175;
         $rawSpaceRateUSD = $eventConfig->raw_space_rate_usd ?? 160;
-        $gstRate = $eventConfig->gst_rate ?? 18;
+        // $gstRate = $eventConfig->gst_rate ?? 18;
+        $igstRate = $eventConfig->igst_rate ?? 18;
+        $cgstRate = $eventConfig->cgst_rate ?? 9;
+        $sgstRate = $eventConfig->sgst_rate ?? 9;
         
         // Get dropdown data
      /*   $sectors = [
@@ -168,7 +171,10 @@ class ExhibitorRegistrationController extends Controller
             'countries',
             'shellSchemeRate',
             'rawSpaceRate',
-            'gstRate',
+            // 'gstRate',
+            'igstRate',
+            'cgstRate',
+            'sgstRate',
             'boothSizes',
             'selectedCurrency',
             'isCurrencyReadOnly'
@@ -184,7 +190,7 @@ class ExhibitorRegistrationController extends Controller
             'booth_space' => 'required|in:Raw,Shell',
             'booth_size' => 'required|string',
             'currency' => 'required|in:INR,USD',
-            'gst_rate' => 'nullable|numeric|min:0|max:100'
+            // 'gst_rate' => 'nullable|numeric|min:0|max:100'
         ]);
 
         if ($validator->fails()) {
@@ -199,8 +205,9 @@ class ExhibitorRegistrationController extends Controller
         
         // Get event configuration
         $eventConfig = DB::table('event_configurations')->where('id', 1)->first();
-        $gstRatePercent = $request->input('gst_rate') ?? ($eventConfig->gst_rate ?? 18);
-        $gstRate = $gstRatePercent / 100;
+        $cgstRate = $eventConfig->cgst_rate ?? 9;
+        $sgstRate = $eventConfig->sgst_rate ?? 9;
+        $igstRate = $eventConfig->igst_rate ?? 18;
         
         // Get processing charge rate based on currency
         // For INR: use ind_processing_charge, for USD: use int_processing_charge
@@ -240,15 +247,22 @@ class ExhibitorRegistrationController extends Controller
         
         // Calculate base price
         $basePrice = $sqm * $ratePerSqm;
+
+        // Calculate CGST and SGST (rates are in percentage, need to divide by 100)
+        $cgstAmount = $basePrice * ($cgstRate / 100);
+        $sgstAmount = $basePrice * ($sgstRate / 100);
+
+        // Calculate IGST
+        $igstAmount = $basePrice * ($igstRate / 100);
         
-        // Calculate GST
-        $gstAmount = $basePrice * $gstRate;
+        // Total GST is IGST (used for processing charges calculation)
+        $totalGst = $igstAmount;
         
         // Calculate processing charges on (base price + GST)
-        $processingCharges = ($basePrice + $gstAmount) * $processingRate;
+        $processingCharges = ($basePrice + $totalGst) * $processingRate;
         
         // Calculate total
-        $totalPrice = $basePrice + $gstAmount + $processingCharges;
+        $totalPrice = $basePrice + $totalGst + $processingCharges;
         
         return response()->json([
             'success' => true,
@@ -256,8 +270,12 @@ class ExhibitorRegistrationController extends Controller
                 'sqm' => $sqm,
                 'rate_per_sqm' => $ratePerSqm,
                 'base_price' => round($basePrice, 2),
-                'gst_rate' => $gstRatePercent,
-                'gst_amount' => round($gstAmount, 2),
+                'igst_rate' => $igstRate,
+                'cgst_rate' => $cgstRate,
+                'sgst_rate' => $sgstRate,
+                'cgst_amount' => round($cgstAmount, 2),
+                'sgst_amount' => round($sgstAmount, 2),
+                'igst_amount' => round($igstAmount, 2),
                 'processing_rate' => $processingRatePercent,
                 'processing_charges' => round($processingCharges, 2),
                 'total_price' => round($totalPrice, 2),
@@ -344,7 +362,9 @@ class ExhibitorRegistrationController extends Controller
             'gst_no' => trim($request->input('gst_no') ?? ''),
             'pan_no' => trim($request->input('pan_no') ?? ''),
             'tan_no' => trim($request->input('tan_no') ?? ''),
-            'tan_status' => $request->input('tan_status')
+            'tan_status' => $request->input('tan_status'),
+            'has_indian_gst' => $request->input('has_indian_gst'),
+            'tax_no' => trim($request->input('tax_no') ?? ''),
         ];
         
         if (!empty($billingData)) {
@@ -959,23 +979,56 @@ class ExhibitorRegistrationController extends Controller
                         }
                     }
                 }],
-                'tan_status' => 'required|in:Registered,Unregistered',
-                'gst_status' => 'required|in:Registered,Unregistered',
-                'pan_no' => 'required|string|regex:/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/',
                 'sales_executive_name' => ['required', 'string', 'max:255', 'regex:/^\S/'],
             ];
+            
+            // Get currency to determine tax field requirements
+            $currency = $request->input('currency', 'INR');
+            $hasIndianGst = $request->input('has_indian_gst');
+            
+            // Tax & Compliance fields validation based on currency and has_indian_gst
+            if ($currency === 'USD') {
+                // USD currency - require has_indian_gst selection
+                $rules['has_indian_gst'] = 'required|in:yes,no';
+                
+                if ($hasIndianGst === 'yes') {
+                    // If they have Indian GST, require all Indian tax fields
+                    $rules['tan_status'] = 'required|in:Registered,Unregistered';
+                    $rules['gst_status'] = 'required|in:Registered,Unregistered';
+                    $rules['pan_no'] = 'required|string|regex:/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/';
+                    
+                    // Conditional TAN/GST number validation
+                    if (($request->input('tan_status') ?? '') === 'Registered') {
+                        $rules['tan_no'] = ['required', 'string', 'max:50', 'regex:/^\S/'];
+                    }
+                    if (($request->input('gst_status') ?? '') === 'Registered') {
+                        $rules['gst_no'] = 'required|string|regex:/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/';
+                    }
+                } else {
+                    // If they don't have Indian GST, tax_no (tax_no) is optional
+                    $rules['tax_no'] = 'nullable|string|max:100';
+                    $rules['tan_status'] = 'nullable|in:Registered,Unregistered';
+                    $rules['gst_status'] = 'nullable|in:Registered,Unregistered';
+                    $rules['pan_no'] = 'nullable|string|regex:/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/';
+                }
+            } else {
+                // INR currency - require all Indian tax fields
+                $rules['tan_status'] = 'required|in:Registered,Unregistered';
+                $rules['gst_status'] = 'required|in:Registered,Unregistered';
+                $rules['pan_no'] = 'required|string|regex:/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/';
+                
+                // Conditional TAN/GST number validation
+                if (($request->input('tan_status') ?? '') === 'Registered') {
+                    $rules['tan_no'] = ['required', 'string', 'max:50', 'regex:/^\S/'];
+                }
+                if (($request->input('gst_status') ?? '') === 'Registered') {
+                    $rules['gst_no'] = 'required|string|regex:/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/';
+                }
+            }
             
             // Conditional validations
             if (($request->input('sector') ?? '') === 'Others') {
                 $rules['other_sector_name'] = ['required', 'string', 'max:255', 'regex:/^\S/'];
-            }
-            
-            if (($request->input('tan_status') ?? '') === 'Registered') {
-                $rules['tan_no'] = ['required', 'string', 'max:50', 'regex:/^\S/'];
-            }
-            
-            if (($request->input('gst_status') ?? '') === 'Registered') {
-                $rules['gst_no'] = 'required|string|regex:/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/';
             }
             
             // Custom validation messages
@@ -985,6 +1038,8 @@ class ExhibitorRegistrationController extends Controller
                 'billing_country_id.exists' => 'The selected billing country is invalid.',
                 'exhibitor_country_id.required' => 'The exhibitor country field is required.',
                 'exhibitor_country_id.exists' => 'The selected exhibitor country is invalid.',
+                'has_indian_gst.required' => 'Please select whether you have an Indian GST Number.',
+                'has_indian_gst.in' => 'Please select Yes or No for Indian GST Number.',
             ];
             
             // Validate using original request data (before trimming) to catch leading spaces
@@ -1003,7 +1058,9 @@ class ExhibitorRegistrationController extends Controller
             
             // Calculate price
             $eventConfig = DB::table('event_configurations')->where('id', 1)->first();
-            $gstRate = ($eventConfig->gst_rate ?? 18) / 100;
+            $igstRatePercent = $eventConfig->igst_rate ?? 18;
+            $cgstRatePercent = $eventConfig->cgst_rate ?? 9;
+            $sgstRatePercent = $eventConfig->sgst_rate ?? 9;
             
             // Get processing charge rate based on currency
             if ($currency === 'USD') {
@@ -1031,12 +1088,32 @@ class ExhibitorRegistrationController extends Controller
             $boothSize = preg_replace('/[^0-9]/', '', $allData['booth_size']);
             $sqm = (int) $boothSize;
             $basePrice = $sqm * $ratePerSqm;
-            $gstAmount = $basePrice * $gstRate;
+            
+            // Determine GST type (IGST vs CGST+SGST) based on GST validation and state matching
+            $organizerStateCode = substr(config('constants.GSTIN'), 0, 2); // e.g., '29' for Karnataka
+            $gstNo = $allData['gst_no'] ?? null;
+            $validatedGstStateCode = $gstNo && strlen($gstNo) >= 2 ? substr($gstNo, 0, 2) : null;
+            $isSameState = $validatedGstStateCode && $validatedGstStateCode === $organizerStateCode;
+            
+            // Calculate IGST, CGST, SGST amounts
+            if ($isSameState) {
+                // Same state - apply CGST + SGST
+                $igstAmount = 0;
+                $cgstAmount = $basePrice * ($cgstRatePercent / 100);
+                $sgstAmount = $basePrice * ($sgstRatePercent / 100);
+                $totalGst = $cgstAmount + $sgstAmount;
+            } else {
+                // Different state or GST not provided - apply IGST
+                $igstAmount = $basePrice * ($igstRatePercent / 100);
+                $cgstAmount = 0;
+                $sgstAmount = 0;
+                $totalGst = $igstAmount;
+            }
             
             // Calculate processing charges on (base price + GST)
-            $processingCharges = ($basePrice + $gstAmount) * $processingRate;
+            $processingCharges = ($basePrice + $totalGst) * $processingRate;
             
-            $totalPrice = $basePrice + $gstAmount + $processingCharges;
+            $totalPrice = $basePrice + $totalGst + $processingCharges;
             
             // Handle billing telephone for session storage
             $billingData = $allData['billing_data'] ?? [];
@@ -1135,10 +1212,15 @@ class ExhibitorRegistrationController extends Controller
             // Store pricing in pricing_data column
             $pricingData = [
                 'base_price' => $basePrice,
-                'gst_amount' => $gstAmount,
+                'igst_rate' => $igstRatePercent,
+                'igst_amount' => $igstAmount,
+                'cgst_rate' => $cgstRatePercent,
+                'cgst_amount' => $cgstAmount,
+                'sgst_rate' => $sgstRatePercent,
+                'sgst_amount' => $sgstAmount,
+                'is_same_state' => $isSameState,
                 'processing_charges' => $processingCharges,
                 'processing_rate' => $currency === 'USD' ? ($eventConfig->int_processing_charge ?? 9.5) : ($eventConfig->ind_processing_charge ?? 3),
-                'gst_rate' => $eventConfig->gst_rate ?? 18,
                 'total_price' => $totalPrice,
                 'sqm' => $sqm,
                 'rate_per_sqm' => $ratePerSqm,
@@ -1222,7 +1304,7 @@ class ExhibitorRegistrationController extends Controller
         // If pricing not in draft or session, calculate it
         if (empty($pricing)) {
             $eventConfig = DB::table('event_configurations')->where('id', 1)->first();
-            $gstRate = ($eventConfig->gst_rate ?? 18) / 100;
+            // $gstRate = ($eventConfig->gst_rate ?? 18) / 100;
             
             // Get processing rate based on currency
             if ($currency === 'USD') {
@@ -1250,16 +1332,42 @@ class ExhibitorRegistrationController extends Controller
             $boothSize = preg_replace('/[^0-9]/', '', $draft->interested_sqm ?? '0');
             $sqm = (int) $boothSize;
             $basePrice = $sqm * $ratePerSqm;
-            $gstAmount = $basePrice * $gstRate;
-            $processingCharges = ($basePrice + $gstAmount) * $processingRate;
-            $totalPrice = $basePrice + $gstAmount + $processingCharges;
+            
+            // Determine GST type (IGST vs CGST+SGST) based on GST validation and state matching
+            $igstRatePercent = $eventConfig->igst_rate ?? 18;
+            $cgstRatePercent = $eventConfig->cgst_rate ?? 9;
+            $sgstRatePercent = $eventConfig->sgst_rate ?? 9;
+            $organizerStateCode = substr(config('constants.GSTIN'), 0, 2);
+            $gstNo = $draft->gst_no ?? null;
+            $validatedGstStateCode = $gstNo && strlen($gstNo) >= 2 ? substr($gstNo, 0, 2) : null;
+            $isSameState = $validatedGstStateCode && $validatedGstStateCode === $organizerStateCode;
+            
+            if ($isSameState) {
+                $igstAmount = 0;
+                $cgstAmount = $basePrice * ($cgstRatePercent / 100);
+                $sgstAmount = $basePrice * ($sgstRatePercent / 100);
+                $totalGst = $cgstAmount + $sgstAmount;
+            } else {
+                $igstAmount = $basePrice * ($igstRatePercent / 100);
+                $cgstAmount = 0;
+                $sgstAmount = 0;
+                $totalGst = $igstAmount;
+            }
+            
+            $processingCharges = ($basePrice + $totalGst) * $processingRate;
+            $totalPrice = $basePrice + $totalGst + $processingCharges;
             
             $pricing = [
                 'base_price' => $basePrice,
-                'gst_amount' => $gstAmount,
+                'igst_rate' => $igstRatePercent,
+                'igst_amount' => $igstAmount,
+                'cgst_rate' => $cgstRatePercent,
+                'cgst_amount' => $cgstAmount,
+                'sgst_rate' => $sgstRatePercent,
+                'sgst_amount' => $sgstAmount,
+                'is_same_state' => $isSameState,
                 'processing_charges' => $processingCharges,
                 'processing_rate' => $currency === 'USD' ? ($eventConfig->int_processing_charge ?? 9.5) : ($eventConfig->ind_processing_charge ?? 3),
-                'gst_rate' => $eventConfig->gst_rate ?? 18,
                 'total_price' => $totalPrice,
                 'sqm' => $sqm,
                 'rate_per_sqm' => $ratePerSqm,
@@ -1343,7 +1451,7 @@ class ExhibitorRegistrationController extends Controller
         $pricing = $draft->pricing_data ?? session('exhibitor_registration_pricing', []);
         if (empty($pricing)) {
             $eventConfig = DB::table('event_configurations')->where('id', 1)->first();
-            $gstRate = ($eventConfig->gst_rate ?? 18) / 100;
+            // $gstRate = ($eventConfig->gst_rate ?? 18) / 100;
             
             // Get processing rate based on currency
             if ($currency === 'USD') {
@@ -1371,16 +1479,42 @@ class ExhibitorRegistrationController extends Controller
             $boothSize = preg_replace('/[^0-9]/', '', $draft->interested_sqm ?? '0');
             $sqm = (int) $boothSize;
             $basePrice = $sqm * $ratePerSqm;
-            $gstAmount = $basePrice * $gstRate;
-            $processingCharges = ($basePrice + $gstAmount) * $processingRate;
-            $totalPrice = $basePrice + $gstAmount + $processingCharges;
+            
+            // Determine GST type (IGST vs CGST+SGST) based on GST validation and state matching
+            $igstRatePercent = $eventConfig->igst_rate ?? 18;
+            $cgstRatePercent = $eventConfig->cgst_rate ?? 9;
+            $sgstRatePercent = $eventConfig->sgst_rate ?? 9;
+            $organizerStateCode = substr(config('constants.GSTIN'), 0, 2);
+            $gstNo = $draft->gst_no ?? null;
+            $validatedGstStateCode = $gstNo && strlen($gstNo) >= 2 ? substr($gstNo, 0, 2) : null;
+            $isSameState = $validatedGstStateCode && $validatedGstStateCode === $organizerStateCode;
+            
+            if ($isSameState) {
+                $igstAmount = 0;
+                $cgstAmount = $basePrice * ($cgstRatePercent / 100);
+                $sgstAmount = $basePrice * ($sgstRatePercent / 100);
+                $totalGst = $cgstAmount + $sgstAmount;
+            } else {
+                $igstAmount = $basePrice * ($igstRatePercent / 100);
+                $cgstAmount = 0;
+                $sgstAmount = 0;
+                $totalGst = $igstAmount;
+            }
+            
+            $processingCharges = ($basePrice + $totalGst) * $processingRate;
+            $totalPrice = $basePrice + $totalGst + $processingCharges;
             
             $pricing = [
                 'base_price' => $basePrice,
-                'gst_amount' => $gstAmount,
+                'igst_rate' => $igstRatePercent,
+                'igst_amount' => $igstAmount,
+                'cgst_rate' => $cgstRatePercent,
+                'cgst_amount' => $cgstAmount,
+                'sgst_rate' => $sgstRatePercent,
+                'sgst_amount' => $sgstAmount,
+                'is_same_state' => $isSameState,
                 'processing_charges' => $processingCharges,
                 'processing_rate' => $currency === 'USD' ? ($eventConfig->int_processing_charge ?? 9.5) : ($eventConfig->ind_processing_charge ?? 3),
-                'gst_rate' => $eventConfig->gst_rate ?? 18,
                 'total_price' => $totalPrice,
                 'sqm' => $sqm,
                 'rate_per_sqm' => $ratePerSqm,
@@ -1653,6 +1787,8 @@ class ExhibitorRegistrationController extends Controller
                     'pan_no' => $allData['pan_no'] ?? $draft->pan_no ?? '',
                     'tan_compliance' => ($billingData['tan_status'] ?? $allData['tan_status'] ?? 'Unregistered') === 'Registered' ? 1 : 0,
                     'tan_no' => $billingData['tan_no'] ?? $allData['tan_no'] ?? null,
+                    'indian_gst' => $billingData['has_indian_gst'] ?? $allData['has_indian_gst'] ?? null,
+                    'tax_no' => $billingData['tax_no'] ?? $allData['tax_no'] ?? null,
                     'promocode' => $allData['promocode'] ?? $draft->promocode ?? null,
                     'salesPerson' => $allData['sales_executive_name'] ?? '',
                     'exhibitorType' => $allData['category'] ?? 'Exhibitor',
@@ -1708,6 +1844,8 @@ class ExhibitorRegistrationController extends Controller
                     'pan_no' => $allData['pan_no'],
                     'tan_compliance' => ($billingData['tan_status'] ?? $allData['tan_status'] ?? 'Unregistered') === 'Registered' ? 1 : 0,
                     'tan_no' => $billingData['tan_no'] ?? $allData['tan_no'] ?? null,
+                    'indian_gst' => $billingData['has_indian_gst'] ?? $allData['has_indian_gst'] ?? null,
+                    'tax_no' => $billingData['tax_no'] ?? $allData['tax_no'] ?? null,
                     'promocode' => $allData['promocode'] ?? null,
                     'salesPerson' => $allData['sales_executive_name'] ?? '',
                     'exhibitorType' => $allData['category'] ?? 'Exhibitor',
@@ -1765,6 +1903,8 @@ class ExhibitorRegistrationController extends Controller
                 $billingDetail->country_id = $billingData['country_id'] ?? $allData['billing_country_id'] ?? Country::where('code', 'IN')->first()->id;
                 $billingDetail->postal_code = $billingData['postal_code'] ?? $allData['billing_postal_code'] ?? '';
                 $billingDetail->gst_id = $allData['gst_no'] ?? null;
+                $billingDetail->has_indian_gst = $billingData['has_indian_gst'] ?? $allData['has_indian_gst'] ?? null;
+                $billingDetail->tax_no = $billingData['tax_no'] ?? $allData['tax_no'] ?? null;
                 $billingDetail->same_as_basic = '0'; // Different from exhibitor
             } else {
                 // Fallback: Use contact details only if billing data not available
@@ -1778,6 +1918,8 @@ class ExhibitorRegistrationController extends Controller
                 $billingDetail->country_id = Country::where('code', 'IN')->first()->id;
                 $billingDetail->postal_code = '';
                 $billingDetail->gst_id = $allData['gst_no'] ?? null;
+                $billingDetail->has_indian_gst = $billingData['has_indian_gst'] ?? $allData['has_indian_gst'] ?? null;
+                $billingDetail->tax_no = $billingData['tax_no'] ?? $allData['tax_no'] ?? null;
                 $billingDetail->same_as_basic = '1';
             }
             $billingDetail->save();
@@ -1799,7 +1941,14 @@ class ExhibitorRegistrationController extends Controller
             $invoice->type = 'Exhibitor Registration';
             $invoice->amount = $pricing['total_price'];
             $invoice->price = $pricing['base_price'];
-            $invoice->gst = $pricing['gst_amount']; // Only 'gst' column exists, not 'gst_amount'
+            // $invoice->gst = $pricing['gst_amount']; // Total GST amount
+            // Store IGST, CGST, SGST breakdown
+            $invoice->igst_rate = $pricing['igst_rate'] ?? null;
+            $invoice->igst_amount = $pricing['igst_amount'] ?? null;
+            $invoice->cgst_rate = $pricing['cgst_rate'] ?? null;
+            $invoice->cgst_amount = $pricing['cgst_amount'] ?? null;
+            $invoice->sgst_rate = $pricing['sgst_rate'] ?? null;
+            $invoice->sgst_amount = $pricing['sgst_amount'] ?? null;
             $invoice->processing_chargesRate = $pricing['processing_rate'];
             $invoice->processing_charges = $pricing['processing_charges'];
             $invoice->total_final_price = $pricing['total_price'];
