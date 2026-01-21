@@ -363,13 +363,7 @@
                         <label class="form-label required-field" id="organisation_type_label">Organisation Type</label>
                         <select name="organisation_type" class="form-select" id="organisation_type" required>
                             <option value="">Select Organisation Type</option>
-                            <option value="Incubator" {{ old('organisation_type') == 'Incubator' ? 'selected' : '' }}>Incubator</option>
-                            <option value="Accelerator" {{ old('organisation_type') == 'Accelerator' ? 'selected' : '' }}>Accelerator</option>
-                            <option value="Investors" {{ old('organisation_type') == 'Investors' ? 'selected' : '' }}>Investors</option>
-                            <option value="Consulting" {{ old('organisation_type') == 'Consulting' ? 'selected' : '' }}>Consulting</option>
-                            <option value="Service Enabler / Consulting" {{ old('organisation_type') == 'Service Enabler / Consulting' ? 'selected' : '' }}>Service Enabler / Consulting</option>
-                            <option value="Students" {{ old('organisation_type') == 'Students' ? 'selected' : '' }}>Students</option>
-                            <option value="Others" {{ old('organisation_type') == 'Others' ? 'selected' : '' }}>Others</option>
+                            <!-- Options will be populated dynamically based on Registration Type -->
                         </select>
                         @error('organisation_type')
                             <div class="text-danger">{{ $message }}</div>
@@ -659,6 +653,50 @@ document.addEventListener('DOMContentLoaded', function() {
     const organisationSectionTitle = document.getElementById('organisation_title_text');
     const organisationSectionIcon = document.querySelector('#organisation_section_title i');
     
+    // Organisation Type options for Individual
+    const individualOrgTypes = [
+        'Incubator',
+        'Accelerator',
+        'Investors',
+        'Consulting',
+        'Service Enabler / Consulting',
+        'Students',
+        'Others'
+    ];
+    
+    // Organisation Type options for Organisation (from config)
+    const organisationOrgTypes = @json($organizationTypes ?? []);
+    
+    // Function to populate organisation type dropdown based on registration type
+    function populateOrganisationType(registrationType, preserveValue = false) {
+        if (!organisationTypeSelect) return;
+        
+        const currentValue = organisationTypeSelect.value;
+        const oldValue = '{{ old("organisation_type") }}';
+        // Preserve current value if it exists and is valid, otherwise use old value
+        const valueToPreserve = preserveValue ? (currentValue || oldValue) : oldValue;
+        
+        // Clear existing options
+        organisationTypeSelect.innerHTML = '<option value="">Select Organisation Type</option>';
+        
+        // Get the appropriate options based on registration type
+        const options = registrationType === 'Individual' ? individualOrgTypes : organisationOrgTypes;
+        
+        // Populate options
+        options.forEach(optionValue => {
+            const option = document.createElement('option');
+            option.value = optionValue;
+            option.textContent = optionValue;
+            
+            // Preserve old value or current selection if it matches and is in the current options list
+            if (valueToPreserve && valueToPreserve === optionValue && options.includes(optionValue)) {
+                option.selected = true;
+            }
+            
+            organisationTypeSelect.appendChild(option);
+        });
+    }
+    
     // Function to handle registration type changes
     function handleRegistrationTypeChange() {
         const registrationType = registrationTypeSelect?.value;
@@ -678,6 +716,8 @@ document.addEventListener('DOMContentLoaded', function() {
             if (organisationTypeRow) {
                 organisationTypeRow.style.display = 'block';
             }
+            // Populate with Individual options
+            populateOrganisationType('Individual', true);
             // Make organisation_type required for Individual
             if (organisationTypeSelect) {
                 organisationTypeSelect.setAttribute('required', 'required');
@@ -709,6 +749,8 @@ document.addEventListener('DOMContentLoaded', function() {
             if (organisationTypeRow) {
                 organisationTypeRow.style.display = 'block';
             }
+            // Populate with Organisation options
+            populateOrganisationType('Organisation', true);
             // Add required to organisation_type
             if (organisationTypeSelect) {
                 organisationTypeSelect.setAttribute('required', 'required');
@@ -734,6 +776,8 @@ document.addEventListener('DOMContentLoaded', function() {
             if (organisationTypeRow) {
                 organisationTypeRow.style.display = 'block';
             }
+            // Populate with default (Organisation) options
+            populateOrganisationType('Organisation', true);
             if (organisationSectionTitle) {
                 organisationSectionTitle.textContent = 'Organisation Information';
             }
@@ -745,12 +789,20 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Initialize on page load
     if (registrationTypeSelect) {
+        // Initialize dropdown based on current selection or default
+        const currentRegistrationType = registrationTypeSelect.value || 'Organisation';
+        populateOrganisationType(currentRegistrationType, true);
+        
+        // Handle initial state
         handleRegistrationTypeChange();
         
         // Listen for changes
         registrationTypeSelect.addEventListener('change', function() {
             handleRegistrationTypeChange();
         });
+    } else {
+        // If no registration type select, initialize with Organisation options
+        populateOrganisationType('Organisation', true);
     }
     
     // Day Selection Handler

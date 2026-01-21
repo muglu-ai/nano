@@ -237,10 +237,24 @@ class PublicTicketController extends Controller
                 'required',
                 'string',
                 'max:255',
-                function ($attribute, $value, $fail) {
-                    $allowedTypes = ['Incubator', 'Accelerator', 'Investors', 'Consulting', 'Service Enabler / Consulting', 'Students', 'Others'];
-                    if (!in_array($value, $allowedTypes)) {
-                        $fail('Please select a valid organisation type.');
+                function ($attribute, $value, $fail) use ($request) {
+                    $registrationType = $request->input('registration_type');
+                    
+                    // Individual registration types
+                    $individualTypes = ['Incubator', 'Accelerator', 'Investors', 'Consulting', 'Service Enabler / Consulting', 'Students', 'Others'];
+                    
+                    // Organisation registration types (from config)
+                    $organisationTypes = config('constants.organization_types', []);
+                    
+                    // Validate based on registration type
+                    if ($registrationType === 'Individual') {
+                        if (!in_array($value, $individualTypes)) {
+                            $fail('Please select a valid organisation type for Individual registration.');
+                        }
+                    } else if ($registrationType === 'Organisation') {
+                        if (!in_array($value, $organisationTypes)) {
+                            $fail('Please select a valid organisation type for Organisation registration.');
+                        }
                     }
                 },
             ],
