@@ -360,14 +360,16 @@
                     </div>
 
                     <div class="col-md-6 mb-3" id="organisation_type_row">
-                        <label class="form-label required-field">Organisation Type</label>
-                        <select name="organisation_type" class="form-select" id="organisation_type">
+                        <label class="form-label required-field" id="organisation_type_label">Organisation Type</label>
+                        <select name="organisation_type" class="form-select" id="organisation_type" required>
                             <option value="">Select Organisation Type</option>
-                            @foreach($organizationTypes as $orgType)
-                                <option value="{{ $orgType }}" {{ old('organisation_type') == $orgType ? 'selected' : '' }}>
-                                    {{ $orgType }}
-                                </option>
-                            @endforeach
+                            <option value="Incubator" {{ old('organisation_type') == 'Incubator' ? 'selected' : '' }}>Incubator</option>
+                            <option value="Accelerator" {{ old('organisation_type') == 'Accelerator' ? 'selected' : '' }}>Accelerator</option>
+                            <option value="Investors" {{ old('organisation_type') == 'Investors' ? 'selected' : '' }}>Investors</option>
+                            <option value="Consulting" {{ old('organisation_type') == 'Consulting' ? 'selected' : '' }}>Consulting</option>
+                            <option value="Service Enabler / Consulting" {{ old('organisation_type') == 'Service Enabler / Consulting' ? 'selected' : '' }}>Service Enabler / Consulting</option>
+                            <option value="Students" {{ old('organisation_type') == 'Students' ? 'selected' : '' }}>Students</option>
+                            <option value="Others" {{ old('organisation_type') == 'Others' ? 'selected' : '' }}>Others</option>
                         </select>
                         @error('organisation_type')
                             <div class="text-danger">{{ $message }}</div>
@@ -653,6 +655,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const organisationNameLabel = document.getElementById('organisation_name_label');
     const organisationTypeRow = document.getElementById('organisation_type_row');
     const organisationTypeSelect = document.getElementById('organisation_type');
+    const organisationTypeLabel = document.getElementById('organisation_type_label');
     const organisationSectionTitle = document.getElementById('organisation_title_text');
     const organisationSectionIcon = document.querySelector('#organisation_section_title i');
     
@@ -671,14 +674,17 @@ document.addEventListener('DOMContentLoaded', function() {
                 organisationNameInput.removeAttribute('required');
             }
             
-            // Hide Organisation Type field
+            // Keep Organisation Type field visible and make it required for Individual
             if (organisationTypeRow) {
-                organisationTypeRow.style.display = 'none';
+                organisationTypeRow.style.display = 'block';
             }
-            // Clear and remove required from organisation_type
+            // Make organisation_type required for Individual
             if (organisationTypeSelect) {
-                organisationTypeSelect.value = '';
-                organisationTypeSelect.removeAttribute('required');
+                organisationTypeSelect.setAttribute('required', 'required');
+            }
+            // Update label to show required indicator for Individual
+            if (organisationTypeLabel) {
+                organisationTypeLabel.className = 'form-label required-field';
             }
             
             // Change section title to "Individual Information"
@@ -706,6 +712,10 @@ document.addEventListener('DOMContentLoaded', function() {
             // Add required to organisation_type
             if (organisationTypeSelect) {
                 organisationTypeSelect.setAttribute('required', 'required');
+            }
+            // Update label to show required indicator for Organisation
+            if (organisationTypeLabel) {
+                organisationTypeLabel.className = 'form-label required-field';
             }
             
             // Change section title to "Organisation Information"
