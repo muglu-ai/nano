@@ -75,8 +75,6 @@
     }
 
     .btn-primary {
-        background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-color-dark) 100%);
-        color: white;
         border: none;
         border-radius: 8px;
         padding: 0.75rem 2rem;
