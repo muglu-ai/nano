@@ -324,7 +324,30 @@
                                     </tr>
                                 </table>
                                 @endif
-
+                                @if(($invoice->cgst_amount ?? 0) > 0)
+                                <table role="presentation" width="100%" cellpadding="5" cellspacing="0" style="margin-bottom: 10px;">
+                                    <tr>
+                                        <td style="width: 40%; font-weight: bold; color: #555555; padding: 5px 0;">CGST({{ $invoice->cgst_rate ?? 18 }}%):</td>
+                                        <td style="color: #333333; padding: 5px 0;">{{ $invoice->currency }} {{ number_format($invoice->cgst_amount, 2) }}</td>
+                                    </tr>
+                                </table>
+                                @endif
+                                @if(($invoice->sgst_amount ?? 0) > 0)
+                                <table role="presentation" width="100%" cellpadding="5" cellspacing="0" style="margin-bottom: 10px;">
+                                    <tr>
+                                        <td style="width: 40%; font-weight: bold; color: #555555; padding: 5px 0;">SGST({{ $invoice->sgst_rate ?? 18 }}%):</td>
+                                        <td style="color: #333333; padding: 5px 0;">{{ $invoice->currency }} {{ number_format($invoice->sgst_amount, 2) }}</td>
+                                    </tr>
+                                </table>
+                                @endif
+                                @if(($invoice->igst_amount ?? 0) > 0)
+                                <table role="presentation" width="100%" cellpadding="5" cellspacing="0" style="margin-bottom: 10px;">
+                                    <tr>
+                                        <td style="width: 40%; font-weight: bold; color: #555555; padding: 5px 0;">IGST({{ $invoice->igst_rate ?? 18 }}%):</td>
+                                        <td style="color: #333333; padding: 5px 0;">{{ $invoice->currency }} {{ number_format($invoice->igst_amount, 2) }}</td>
+                                    </tr>
+                                    </table>
+                                @endif
                                 @if($invoice->processing_chargesRate && $invoice->processing_chargesRate > 0)
                                 <table role="presentation" width="100%" cellpadding="5" cellspacing="0" style="margin-bottom: 10px;">
                                     <tr>

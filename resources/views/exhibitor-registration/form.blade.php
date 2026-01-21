@@ -203,7 +203,7 @@
                         <div class="invalid-feedback"></div>
                     </div>
                 </div>
-                <div id="priceDisplay" class="alert alert-success d-none mb-4">
+                <div id="priceDisplay" class="alert alert-success d-none">
                     <h5><i class="fas fa-calculator"></i> Price Calculation</h5>
                     <div id="priceDetails"></div>
                 </div>
@@ -404,7 +404,7 @@
                 <h5 class="mb-3  border-bottom pb-2"><i class="fas fa-building"></i> Exhibitor Information</h5>
                 <div class="row mb-3">
                     <div class="col-12">
-                        <button type="button" class="btn btn-outline-primary btn-sm mb-3" id="copy_from_billing" style="color: #fff;">
+                        <button type="button" class="btn btn-outline-primary btn-sm" id="copy_from_billing" style="color: #fff;">
                             <i class="fas fa-copy"></i> Click here to Copy from Billing Information
                         </button>
                     </div>
@@ -1431,7 +1431,7 @@ $(document).ready(function() {
                         if (contactEmailInput && contactEmailCheck) {
                             contactEmailInput.classList.add('is-invalid');
                             contactEmailCheck.style.display = 'block';
-                            contactEmailCheck.innerHTML = '<small class="text-danger"><i class="fas fa-exclamation-triangle"></i> ' + response.email_message + '</small>';
+                            {{--  contactEmailCheck.innerHTML = '<small class="text-danger"><i class="fas fa-exclamation-triangle"></i> ' + response.email_message + '</small>'; --}}
                             const feedback = contactEmailInput.nextElementSibling;
                             if (feedback && feedback.classList.contains('invalid-feedback')) {
                                 feedback.textContent = 'Email already exists';
