@@ -13,7 +13,8 @@ CREATE TABLE `domain_registrations` (
     `id` INT(11) UNSIGNED NOT NULL AUTO_INCREMENT,
     `name` VARCHAR(255) NOT NULL COMMENT 'Full name of the registrant',
     `email` VARCHAR(255) NOT NULL COMMENT 'Email address',
-    `mobile` VARCHAR(20) NOT NULL COMMENT 'Mobile number (10-15 digits)',
+    `mobile_country_code` VARCHAR(10) NOT NULL COMMENT 'Mobile country code (e.g., 91, 1)',
+    `mobile_number` VARCHAR(20) NOT NULL COMMENT 'Mobile number without country code',
     `org` VARCHAR(255) DEFAULT NULL COMMENT 'Organization name (optional)',
     `designation` VARCHAR(255) DEFAULT NULL COMMENT 'Designation/Job title (optional)',
     `country` VARCHAR(100) NOT NULL COMMENT 'Country name',
@@ -26,7 +27,7 @@ CREATE TABLE `domain_registrations` (
     INDEX `idx_created_at` (`created_at`),
     INDEX `idx_country` (`country`),
     INDEX `idx_user_ip` (`user_ip`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Domain registration form submissions';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Partner with US registration form submissions';
 
 -- Optional: Create a view for recent registrations
 CREATE OR REPLACE VIEW `v_recent_registrations` AS
@@ -34,7 +35,9 @@ SELECT
     id,
     name,
     email,
-    mobile,
+    CONCAT('+', mobile_country_code, ' ', mobile_number) AS mobile,
+    mobile_country_code,
+    mobile_number,
     org,
     designation,
     country,
