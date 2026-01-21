@@ -431,21 +431,25 @@
 
             </table>
 
-            <!-- Organisation Information -->
-            <div class="section-title">🏢 Organisation Information</div>
+            <!-- Organisation/Individual Information -->
+            <div class="section-title">{{ ($order->registration->registration_type ?? 'Organisation') === 'Individual' ? '👤' : '🏢' }} {{ ($order->registration->registration_type ?? 'Organisation') === 'Individual' ? 'Individual' : 'Organisation' }} Information</div>
             <table class="info-table">
+                @if(($order->registration->registration_type ?? 'Organisation') === 'Organisation')
                 <tr>
                     <td class="label">Organisation Name</td>
-                    <td class="value">{{ $order->registration->company_name }}</td>
+                    <td class="value">{{ $order->registration->company_name ?? 'N/A' }}</td>
                 </tr>
+                @endif
                 <tr>
                     <td class="label">Industry Sector</td>
-                    <td class="value">{{ $order->registration->industry_sector }}</td>
+                    <td class="value">{{ $order->registration->industry_sector ?? 'N/A' }}</td>
                 </tr>
+                @if(($order->registration->registration_type ?? 'Organisation') === 'Organisation')
                 <tr>
                     <td class="label">Organisation Type</td>
-                    <td class="value">{{ $order->registration->organisation_type }}</td>
+                    <td class="value">{{ $order->registration->organisation_type ?? 'N/A' }}</td>
                 </tr>
+                @endif
                 <tr>
                     <td class="label">Country</td>
                     <td class="value">{{ $order->registration->company_country }}</td>
@@ -518,16 +522,24 @@
 
             <!-- Delegate Details -->
             @if($order->registration->delegates && $order->registration->delegates->count() > 0)
+            @php 
+                $ticketTypeName = $order->items->first()->ticketType->name ?? 'N/A';
+                $hasLinkedIn = $order->registration->delegates->contains(function($delegate) {
+                    return !empty($delegate->linkedin_profile);
+                });
+            @endphp
             <div class="section-title">👥 Delegate Details</div>
-            @php $ticketTypeName = $order->items->first()->ticketType->name ?? 'N/A'; @endphp
                 <table class="delegates-table">
                     <thead>
                         <tr>
-                        <th style="width: 5%;">#</th>
-                        <th style="width: 30%;">Delegate Name</th>
-                        <th style="width: 30%;">Email</th>
-                        <th style="width: 15%;">Phone</th>
-                        <th style="width: 20%;">Ticket Type</th>
+                        <th style="width: {{ $hasLinkedIn ? '4%' : '5%' }};">#</th>
+                        <th style="width: {{ $hasLinkedIn ? '24%' : '30%' }};">Delegate Name</th>
+                        <th style="width: {{ $hasLinkedIn ? '24%' : '30%' }};">Email</th>
+                        <th style="width: {{ $hasLinkedIn ? '12%' : '15%' }};">Phone</th>
+                        <th style="width: {{ $hasLinkedIn ? '18%' : '20%' }};">Ticket Type</th>
+                        @if($hasLinkedIn)
+                        <th style="width: 18%;">LinkedIn Profile</th>
+                        @endif
                         </tr>
                     </thead>
                     <tbody>
@@ -538,6 +550,15 @@
                             <td>{{ $delegate->email }}</td>
                             <td>{{ $delegate->phone ?? '-' }}</td>
                         <td>{{ $ticketTypeName }}</td>
+                            @if($hasLinkedIn)
+                            <td>
+                                @if(!empty($delegate->linkedin_profile))
+                                    <a href="{{ $delegate->linkedin_profile }}" target="_blank" rel="noopener noreferrer" style="color: #0077b5; text-decoration: none;">View Profile</a>
+                                @else
+                                    <span style="color: #999;">-</span>
+                                @endif
+                            </td>
+                            @endif
                         </tr>
                         @endforeach
                     </tbody>

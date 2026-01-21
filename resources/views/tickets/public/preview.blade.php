@@ -234,6 +234,12 @@
                     <td class="label-cell">Ticket Type</td>
                     <td class="value-cell"><strong>{{ $ticketType->name }}</strong></td>
                 </tr>
+                @if(isset($registrationData['registration_type']))
+                <tr>
+                    <td class="label-cell">Registration Type</td>
+                    <td class="value-cell"><strong>{{ $registrationData['registration_type'] }}</strong></td>
+                </tr>
+                @endif
                 <tr>
                     <td class="label-cell">Day Access</td>
                     <td class="value-cell">
@@ -276,6 +282,11 @@
 
         <!-- Delegate Details -->
         @if(isset($registrationData['delegates']) && count($registrationData['delegates']) > 0)
+        @php
+            $hasLinkedIn = collect($registrationData['delegates'])->contains(function($delegate) {
+                return !empty($delegate['linkedin_profile']);
+            });
+        @endphp
         <div class="preview-section">
             <h4 class="section-title">
                 <i class="fas fa-users"></i>
@@ -284,11 +295,14 @@
                 <table class="delegates-table">
                     <thead>
                         <tr>
-                        <th style="width: 5%;">#</th>
-                        <th style="width: 28%;">Delegate Name</th>
-                        <th style="width: 28%;">Email</th>
-                        <th style="width: 15%;">Phone</th>
-                        <th style="width: 24%;">Ticket Type</th>
+                        <th style="width: {{ $hasLinkedIn ? '4%' : '5%' }};">#</th>
+                        <th style="width: {{ $hasLinkedIn ? '24%' : '30%' }};">Delegate Name</th>
+                        <th style="width: {{ $hasLinkedIn ? '24%' : '30%' }};">Email</th>
+                        <th style="width: {{ $hasLinkedIn ? '12%' : '15%' }};">Phone</th>
+                        <th style="width: {{ $hasLinkedIn ? '20%' : '20%' }};">Ticket Type</th>
+                        @if($hasLinkedIn)
+                        <th style="width: 16%;">LinkedIn Profile</th>
+                        @endif
                         </tr>
                     </thead>
                     <tbody>
@@ -299,6 +313,17 @@
                                 <td>{{ $delegate['email'] }}</td>
                                 <td>{{ $delegate['phone'] ?? '-' }}</td>
                             <td>{{ $ticketType->name ?? '-' }}</td>
+                                @if($hasLinkedIn)
+                                <td>
+                                    @if(!empty($delegate['linkedin_profile']))
+                                        <a href="{{ $delegate['linkedin_profile'] }}" target="_blank" rel="noopener noreferrer" style="color: #0077b5; text-decoration: none;">
+                                            <i class="fab fa-linkedin me-1"></i>View Profile
+                                        </a>
+                                    @else
+                                        <span class="text-muted">-</span>
+                                    @endif
+                                </td>
+                                @endif
                             </tr>
                         @endforeach
                     </tbody>
@@ -306,25 +331,29 @@
         </div>
         @endif
 
-        <!-- Organisation Information -->
+        <!-- Organisation/Individual Information -->
         <div class="preview-section">
             <h4 class="section-title">
-                <i class="fas fa-building"></i>
-                Organisation Information
+                <i class="fas {{ ($registrationData['registration_type'] ?? 'Organisation') === 'Individual' ? 'fa-user' : 'fa-building' }}"></i>
+                {{ ($registrationData['registration_type'] ?? 'Organisation') === 'Individual' ? 'Individual' : 'Organisation' }} Information
             </h4>
             <table class="info-table">
+                @if(($registrationData['registration_type'] ?? 'Organisation') === 'Organisation')
                 <tr>
                     <td class="label-cell">Organisation Name</td>
-                    <td class="value-cell"><strong>{{ $registrationData['organisation_name'] }}</strong></td>
+                    <td class="value-cell"><strong>{{ $registrationData['organisation_name'] ?? 'N/A' }}</strong></td>
                 </tr>
+                @endif
                 <tr>
                     <td class="label-cell">Industry Sector</td>
                     <td class="value-cell">{{ $registrationData['industry_sector'] }}</td>
                 </tr>
+                @if(($registrationData['registration_type'] ?? 'Organisation') === 'Organisation')
                 <tr>
                     <td class="label-cell">Organisation Type</td>
-                    <td class="value-cell">{{ $registrationData['organisation_type'] }}</td>
+                    <td class="value-cell">{{ $registrationData['organisation_type'] ?? 'N/A' }}</td>
                 </tr>
+                @endif
                 <tr>
                     <td class="label-cell">Country</td>
                     <td class="value-cell">{{ $registrationData['company_country'] ?? $registrationData['country'] ?? 'N/A' }}</td>

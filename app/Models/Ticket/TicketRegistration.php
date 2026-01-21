@@ -15,6 +15,7 @@ class TicketRegistration extends Model
     protected $fillable = [
         'event_id',
         'contact_id',
+        'registration_type',
         'company_name',
         'company_country',
         'company_state',

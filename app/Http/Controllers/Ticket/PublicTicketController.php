@@ -220,9 +220,30 @@ class PublicTicketController extends Controller
             ],
             'delegate_count' => 'required|integer|min:1|max:100',
             'nationality' => 'required|in:national,international,Indian,International',
-            'organisation_name' => 'required|string|max:255',
+            'registration_type' => 'required|in:Individual,Organisation',
+            'organisation_name' => [
+                function ($attribute, $value, $fail) use ($request) {
+                    $registrationType = $request->input('registration_type');
+                    if ($registrationType === 'Organisation' && empty($value)) {
+                        $fail('The organisation name field is required when registration type is Organisation.');
+                    }
+                },
+                'nullable',
+                'string',
+                'max:255',
+            ],
             'industry_sector' => 'required|string|max:255',
-            'organisation_type' => 'required|string|max:255',
+            'organisation_type' => [
+                function ($attribute, $value, $fail) use ($request) {
+                    $registrationType = $request->input('registration_type');
+                    if ($registrationType === 'Organisation' && empty($value)) {
+                        $fail('The organisation type field is required when registration type is Organisation.');
+                    }
+                },
+                'nullable',
+                'string',
+                'max:255',
+            ],
             'company_country' => 'required|string|max:255',
             'company_state' => 'nullable|string|max:255',
             'company_city' => 'nullable|string|max:255',
@@ -244,10 +265,12 @@ class PublicTicketController extends Controller
             'delegates.*.phone' => 'nullable|string|min:8|max:20',
             'delegates.*.salutation' => 'nullable|string|max:10',
             'delegates.*.job_title' => 'nullable|string|max:255',
+            'delegates.*.linkedin_profile' => 'nullable|url|max:500',
         ], [
             'ticket_type_id.required' => 'Please select a ticket type.',
+            'registration_type.required' => 'Please select a registration type.',
+            'registration_type.in' => 'Registration type must be either Individual or Organisation.',
             'industry_sector.required' => 'Please select an industry sector.',
-            'organisation_type.required' => 'Please select an organisation type.',
             'gst_required.required' => 'Please specify if GST is required.',
             'gstin.regex' => 'Invalid GSTIN format. Please enter a valid 15-digit GSTIN.',
             'delegates.required' => 'Please provide delegate information.',
@@ -471,6 +494,12 @@ class PublicTicketController extends Controller
             }
         }
 
+        // Handle Individual registration type - set organisation_name to null
+        if (isset($validated['registration_type']) && $validated['registration_type'] === 'Individual') {
+            $validated['organisation_name'] = null;
+            $validated['organisation_type'] = null;
+        }
+        
         // Format phone numbers: Remove spaces and add dash after country code (e.g., +91-8619276031)
         if (isset($validated['phone'])) {
             $validated['phone'] = $this->formatPhoneNumber($validated['phone']);

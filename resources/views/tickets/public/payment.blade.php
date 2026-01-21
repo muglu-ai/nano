@@ -230,24 +230,28 @@
             </div>
         </div>
 
-        <!-- Organisation Information -->
+        <!-- Organisation/Individual Information -->
         <div class="preview-section">
             <h4 class="section-title">
-                <i class="fas fa-building me-2"></i>
-                Organisation Information
+                <i class="fas {{ ($order->registration->registration_type ?? 'Organisation') === 'Individual' ? 'fa-user' : 'fa-building' }} me-2"></i>
+                {{ ($order->registration->registration_type ?? 'Organisation') === 'Individual' ? 'Individual' : 'Organisation' }} Information
             </h4>
+            @if(($order->registration->registration_type ?? 'Organisation') === 'Organisation')
             <div class="info-row">
                 <span class="info-label">Organisation Name:</span>
-                <span class="info-value">{{ $order->registration->company_name }}</span>
+                <span class="info-value">{{ $order->registration->company_name ?? 'N/A' }}</span>
             </div>
+            @endif
             <div class="info-row">
                 <span class="info-label">Industry Sector:</span>
-                <span class="info-value">{{ $order->registration->industry_sector }}</span>
+                <span class="info-value">{{ $order->registration->industry_sector ?? 'N/A' }}</span>
             </div>
+            @if(($order->registration->registration_type ?? 'Organisation') === 'Organisation')
             <div class="info-row">
                 <span class="info-label">Organisation Type:</span>
-                <span class="info-value">{{ $order->registration->organisation_type }}</span>
+                <span class="info-value">{{ $order->registration->organisation_type ?? 'N/A' }}</span>
             </div>
+            @endif
             <div class="info-row">
                 <span class="info-label">Country:</span>
                 <span class="info-value">{{ $order->registration->company_country }}</span>
@@ -268,6 +272,11 @@
 
         <!-- Delegate Details -->
         @if($order->registration->delegates && $order->registration->delegates->count() > 0)
+        @php
+            $hasLinkedIn = $order->registration->delegates->contains(function($delegate) {
+                return !empty($delegate->linkedin_profile);
+            });
+        @endphp
         <div class="preview-section">
             <h4 class="section-title">
                 <i class="fas fa-users me-2"></i>
@@ -281,6 +290,9 @@
                         <th>Email</th>
                         <th>Phone</th>
                         <th>Designation</th>
+                        @if($hasLinkedIn)
+                        <th>LinkedIn Profile</th>
+                        @endif
                     </tr>
                 </thead>
                 <tbody>
@@ -291,6 +303,17 @@
                         <td>{{ $delegate->email }}</td>
                         <td>{{ $delegate->phone ?? '-' }}</td>
                         <td>{{ $delegate->job_title ?? '-' }}</td>
+                        @if($hasLinkedIn)
+                        <td>
+                            @if(!empty($delegate->linkedin_profile))
+                                <a href="{{ $delegate->linkedin_profile }}" target="_blank" rel="noopener noreferrer" style="color: #0077b5; text-decoration: none;">
+                                    <i class="fab fa-linkedin me-1"></i>View Profile
+                                </a>
+                            @else
+                                <span class="text-muted">-</span>
+                            @endif
+                        </td>
+                        @endif
                     </tr>
                     @endforeach
                 </tbody>

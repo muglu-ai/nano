@@ -277,6 +277,20 @@
                     </div>
 
                     <div class="col-md-6 mb-3">
+                        <label class="form-label required-field">Registration Type</label>
+                        <select name="registration_type" class="form-select" id="registration_type" required>
+                            <option value="">Select Registration Type</option>
+                            <option value="Individual" {{ old('registration_type') == 'Individual' ? 'selected' : '' }}>Individual</option>
+                            <option value="Organisation" {{ old('registration_type') == 'Organisation' ? 'selected' : '' }}>Organisation</option>
+                        </select>
+                        @error('registration_type')
+                            <div class="text-danger">{{ $message }}</div>
+                        @enderror
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
                         <label class="form-label">Base Amount</label>
                         <div class="form-control" 
                              id="base_amount_display" 
@@ -310,19 +324,19 @@
                 </div>
             </div>
 
-            <!-- Organisation Information Section -->
-            <div class="form-section">
-                <h4 class="section-title">
+            <!-- Organisation/Individual Information Section -->
+            <div class="form-section" id="organisation_info_section">
+                <h4 class="section-title" id="organisation_section_title">
                     <i class="fas fa-building"></i>
-                    Organisation Information
+                    <span id="organisation_title_text">Organisation Information</span>
                 </h4>
 
-                <div class="row">
+                <div class="row" id="organisation_name_row">
                     <div class="col-md-12 mb-3">
-                        <label class="form-label required-field">Organisation Name</label>
-                        <input type="text" name="organisation_name" class="form-control" 
+                        <label class="form-label required-field" id="organisation_name_label">Organisation Name</label>
+                        <input type="text" name="organisation_name" class="form-control" id="organisation_name"
                                value="{{ old('organisation_name') }}" 
-                               placeholder="Enter organisation name" required>
+                               placeholder="Enter organisation name">
                         @error('organisation_name')
                             <div class="text-danger">{{ $message }}</div>
                         @enderror
@@ -332,7 +346,7 @@
                 <div class="row">
                     <div class="col-md-6 mb-3">
                         <label class="form-label required-field">Industry Sector</label>
-                        <select name="industry_sector" class="form-select" required>
+                        <select name="industry_sector" class="form-select" id="industry_sector" required>
                             <option value="">Select Industry Sector</option>
                             @foreach($sectors as $sector)
                                 <option value="{{ $sector }}" {{ old('industry_sector') == $sector ? 'selected' : '' }}>
@@ -345,9 +359,9 @@
                         @enderror
                     </div>
 
-                    <div class="col-md-6 mb-3">
+                    <div class="col-md-6 mb-3" id="organisation_type_row">
                         <label class="form-label required-field">Organisation Type</label>
-                        <select name="organisation_type" class="form-select" required>
+                        <select name="organisation_type" class="form-select" id="organisation_type">
                             <option value="">Select Organisation Type</option>
                             @foreach($organizationTypes as $orgType)
                                 <option value="{{ $orgType }}" {{ old('organisation_type') == $orgType ? 'selected' : '' }}>
@@ -638,6 +652,103 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    // Registration Type Handler
+    const registrationTypeSelect = document.getElementById('registration_type');
+    const organisationNameRow = document.getElementById('organisation_name_row');
+    const organisationNameInput = document.getElementById('organisation_name');
+    const organisationNameLabel = document.getElementById('organisation_name_label');
+    const organisationTypeRow = document.getElementById('organisation_type_row');
+    const organisationTypeSelect = document.getElementById('organisation_type');
+    const organisationSectionTitle = document.getElementById('organisation_title_text');
+    const organisationSectionIcon = document.querySelector('#organisation_section_title i');
+    
+    // Function to handle registration type changes
+    function handleRegistrationTypeChange() {
+        const registrationType = registrationTypeSelect?.value;
+        
+        if (registrationType === 'Individual') {
+            // Hide Organisation Name field
+            if (organisationNameRow) {
+                organisationNameRow.style.display = 'none';
+            }
+            // Clear and remove required from organisation_name
+            if (organisationNameInput) {
+                organisationNameInput.value = '';
+                organisationNameInput.removeAttribute('required');
+            }
+            
+            // Hide Organisation Type field
+            if (organisationTypeRow) {
+                organisationTypeRow.style.display = 'none';
+            }
+            // Clear and remove required from organisation_type
+            if (organisationTypeSelect) {
+                organisationTypeSelect.value = '';
+                organisationTypeSelect.removeAttribute('required');
+            }
+            
+            // Change section title to "Individual Information"
+            if (organisationSectionTitle) {
+                organisationSectionTitle.textContent = 'Individual Information';
+            }
+            // Change icon to user icon
+            if (organisationSectionIcon) {
+                organisationSectionIcon.className = 'fas fa-user';
+            }
+        } else if (registrationType === 'Organisation') {
+            // Show Organisation Name field
+            if (organisationNameRow) {
+                organisationNameRow.style.display = 'block';
+            }
+            // Add required to organisation_name
+            if (organisationNameInput) {
+                organisationNameInput.setAttribute('required', 'required');
+            }
+            
+            // Show Organisation Type field
+            if (organisationTypeRow) {
+                organisationTypeRow.style.display = 'block';
+            }
+            // Add required to organisation_type
+            if (organisationTypeSelect) {
+                organisationTypeSelect.setAttribute('required', 'required');
+            }
+            
+            // Change section title to "Organisation Information"
+            if (organisationSectionTitle) {
+                organisationSectionTitle.textContent = 'Organisation Information';
+            }
+            // Change icon to building icon
+            if (organisationSectionIcon) {
+                organisationSectionIcon.className = 'fas fa-building';
+            }
+        } else {
+            // Default: show all fields but make them conditionally required
+            if (organisationNameRow) {
+                organisationNameRow.style.display = 'block';
+            }
+            if (organisationTypeRow) {
+                organisationTypeRow.style.display = 'block';
+            }
+            if (organisationSectionTitle) {
+                organisationSectionTitle.textContent = 'Organisation Information';
+            }
+            if (organisationSectionIcon) {
+                organisationSectionIcon.className = 'fas fa-building';
+            }
+        }
+    }
+    
+    // Initialize on page load
+    if (registrationTypeSelect) {
+        handleRegistrationTypeChange();
+        
+        // Listen for changes
+        registrationTypeSelect.addEventListener('change', function() {
+            handleRegistrationTypeChange();
+        });
+    }
+    
     // Day Selection Handler
     const ticketTypeSelect = document.getElementById('ticket_type_select');
     const lockedTicketType = document.getElementById('locked_ticket_type');
@@ -919,6 +1030,15 @@ document.addEventListener('DOMContentLoaded', function() {
                         <input type="text" name="delegates[${i}][job_title]" class="form-control" 
                                value="${delegateData.job_title || ''}" 
                                placeholder="Enter Designation" required>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-12 mb-3">
+                        <label class="form-label">LinkedIn Profile</label>
+                        <input type="url" name="delegates[${i}][linkedin_profile]" class="form-control" 
+                               value="${delegateData.linkedin_profile || ''}" 
+                               placeholder="https://linkedin.com/in/yourprofile">
+                        <small class="text-muted">Optional: Enter your LinkedIn profile URL</small>
                     </div>
                 </div>
             `;
