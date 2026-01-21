@@ -46,6 +46,8 @@
         color: var(--text-primary);
         margin-bottom: 0.5rem;
         font-size: 0.95rem;
+        white-space: nowrap;
+        display: block;
     }
 
     .form-control, .form-select {
@@ -185,7 +187,7 @@
                     Registration Information
                 </h4>
 
-                <div class="row">
+                <div class="row g-3">
                     <div class="col-md-6 mb-3">
                         <label class="form-label required-field">Ticket Type</label>
                         @if(isset($isTicketTypeLocked) && $isTicketTypeLocked)
@@ -251,7 +253,7 @@
                         <select name="selected_event_day_id" class="form-select" id="selected_event_day">
                             
                         </select>
-                        <small class="text-muted">Choose which day you want to attend</small>
+                        <small class="text-muted d-block mt-1">Choose which day you want to attend</small>
                         @error('selected_event_day_id')
                             <div class="text-danger">{{ $message }}</div>
                         @enderror
@@ -916,7 +918,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         <label class="form-label required-field">Designation</label>
                         <input type="text" name="delegates[${i}][job_title]" class="form-control" 
                                value="${delegateData.job_title || ''}" 
-                               placeholder="Enter job title" required>
+                               placeholder="Enter Designation" required>
                     </div>
                 </div>
             `;
