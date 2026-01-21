@@ -18,6 +18,7 @@ class TicketDelegate extends Model
         'email',
         'phone',
         'job_title',
+        'linkedin_profile',
     ];
 
     /**

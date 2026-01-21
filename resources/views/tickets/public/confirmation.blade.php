@@ -402,20 +402,28 @@
 
         <!-- Delegates Information -->
         @if($order->registration->delegates->count() > 0)
+        @php 
+            $ticketTypeName = $order->items->first()->ticketType->name ?? 'N/A';
+            $hasLinkedIn = $order->registration->delegates->contains(function($delegate) {
+                return !empty($delegate->linkedin_profile);
+            });
+        @endphp
         <div class="preview-section">
             <h4 class="section-title">
                 <i class="fas fa-users"></i>
                 Delegate Details
             </h4>
-            @php $ticketTypeName = $order->items->first()->ticketType->name ?? 'N/A'; @endphp
             <table class="delegates-table">
                 <thead>
                     <tr>
-                        <th style="width: 5%;">#</th>
-                        <th style="width: 28%;">Delegate Name</th>
-                        <th style="width: 28%;">Email</th>
-                        <th style="width: 15%;">Phone</th>
-                        <th style="width: 24%;">Ticket Type</th>
+                        <th style="width: {{ $hasLinkedIn ? '4%' : '5%' }};">#</th>
+                        <th style="width: {{ $hasLinkedIn ? '24%' : '30%' }};">Delegate Name</th>
+                        <th style="width: {{ $hasLinkedIn ? '24%' : '30%' }};">Email</th>
+                        <th style="width: {{ $hasLinkedIn ? '12%' : '15%' }};">Phone</th>
+                        <th style="width: {{ $hasLinkedIn ? '20%' : '20%' }};">Ticket Type</th>
+                        @if($hasLinkedIn)
+                        <th style="width: 16%;">LinkedIn Profile</th>
+                        @endif
                     </tr>
                 </thead>
                 <tbody>
@@ -426,6 +434,17 @@
                         <td>{{ $delegate->email }}</td>
                         <td>{{ $delegate->phone ?? '-' }}</td>
                         <td>{{ $ticketTypeName }}</td>
+                        @if($hasLinkedIn)
+                        <td>
+                            @if(!empty($delegate->linkedin_profile))
+                                <a href="{{ $delegate->linkedin_profile }}" target="_blank" rel="noopener noreferrer" style="color: #0077b5; text-decoration: none;">
+                                    <i class="fab fa-linkedin me-1"></i>View Profile
+                                </a>
+                            @else
+                                <span class="text-muted">-</span>
+                            @endif
+                        </td>
+                        @endif
                     </tr>
                 @endforeach
                 </tbody>

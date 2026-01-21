@@ -265,6 +265,7 @@ class PublicTicketController extends Controller
             'delegates.*.phone' => 'nullable|string|min:8|max:20',
             'delegates.*.salutation' => 'nullable|string|max:10',
             'delegates.*.job_title' => 'nullable|string|max:255',
+            'delegates.*.linkedin_profile' => 'nullable|url|max:500',
         ], [
             'ticket_type_id.required' => 'Please select a ticket type.',
             'registration_type.required' => 'Please select a registration type.',

@@ -268,6 +268,7 @@ class TicketPaymentController extends Controller
                         'email' => $delegateData['email'],
                         'phone' => $this->formatPhoneNumber($delegateData['phone'] ?? null),
                         'job_title' => $delegateData['job_title'] ?? null,
+                        'linkedin_profile' => $delegateData['linkedin_profile'] ?? null,
                     ]);
                 }
             } else {

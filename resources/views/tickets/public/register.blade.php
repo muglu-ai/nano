@@ -1032,6 +1032,15 @@ document.addEventListener('DOMContentLoaded', function() {
                                placeholder="Enter Designation" required>
                     </div>
                 </div>
+                <div class="row">
+                    <div class="col-md-12 mb-3">
+                        <label class="form-label">LinkedIn Profile</label>
+                        <input type="url" name="delegates[${i}][linkedin_profile]" class="form-control" 
+                               value="${delegateData.linkedin_profile || ''}" 
+                               placeholder="https://linkedin.com/in/yourprofile">
+                        <small class="text-muted">Optional: Enter your LinkedIn profile URL</small>
+                    </div>
+                </div>
             `;
             delegatesContainer.appendChild(delegateForm);
             
