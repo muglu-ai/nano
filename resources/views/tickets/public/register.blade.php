@@ -1025,20 +1025,18 @@ document.addEventListener('DOMContentLoaded', function() {
                     </div>
                 </div>
                 <div class="row">
-                    <div class="col-md-12 mb-3">
+                    <div class="col-md-6 mb-3">
                         <label class="form-label required-field">Designation</label>
                         <input type="text" name="delegates[${i}][job_title]" class="form-control" 
                                value="${delegateData.job_title || ''}" 
                                placeholder="Enter Designation" required>
                     </div>
-                </div>
-                <div class="row">
-                    <div class="col-md-12 mb-3">
+                    <div class="col-md-6 mb-3">
                         <label class="form-label">LinkedIn Profile</label>
                         <input type="url" name="delegates[${i}][linkedin_profile]" class="form-control" 
                                value="${delegateData.linkedin_profile || ''}" 
                                placeholder="https://linkedin.com/in/yourprofile">
-                        <small class="text-muted">Optional: Enter your LinkedIn profile URL</small>
+                        <small class="text-muted">Optional</small>
                     </div>
                 </div>
             `;
@@ -1858,7 +1856,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         }
                     }
                     
-                    gstValidationMessage.innerHTML = '<div class="alert alert-success mt-2"><i class="fas fa-check-circle"></i> GST validated successfully./div>';
+                    gstValidationMessage.innerHTML = '<div class="alert alert-success mt-2"><i class="fas fa-check-circle"></i> GST validated successfully.</div>';
                 } else if (status === 429 || data.limit_exceeded) {
                     // Rate limit exceeded - enable manual entry
                     gstValidationMessage.innerHTML = '<div class="alert alert-warning mt-2"><i class="fas fa-exclamation-triangle"></i> ' + data.message + '</div>';
