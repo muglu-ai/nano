@@ -78,7 +78,7 @@ h5.border-bottom i {
     background: #7054A7 !important;
 }
 .step-number {
-    background: #fff !important;
+    /* background: #fff !important; */
     border: 3px solid #7B2FEB !important;
 }
 .step-item.active .step-number {

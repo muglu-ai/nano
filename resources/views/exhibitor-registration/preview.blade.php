@@ -155,7 +155,7 @@
 </style>
 @endpush
 @section('content')
-<div class="container">
+<div class="container py-3">
     {{-- Step Indicator --}}
     <div class="row mb-4">
         <div class="col-12">
@@ -724,7 +724,7 @@ document.getElementById('proceedToPaymentBtn')?.addEventListener('click', functi
         display: flex;
         align-items: center;
         justify-content: center;
-        margin-bottom: 2rem;
+        /* margin-bottom: 2rem; */
         padding: 1.5rem;
         background: #f8f9fa;
         border-radius: 10px;
