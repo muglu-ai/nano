@@ -792,7 +792,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                 }
 
-                daySelectionRow.style.display = 'flex';
+                daySelectionRow.style.display = 'block';
                 selectedEventDaySelect.setAttribute('required', 'required');
             } catch(e) {
                 console.error('Error parsing available days:', e);
