@@ -275,6 +275,12 @@
                         <td class="label-cell">PAN Number</td>
                         <td class="value-cell">{{ $panNo ?: 'N/A' }}</td>
                     </tr>
+                    @if($billingDetail->tax_no)
+                    <tr>
+                        <td class="label-cell">Tax Number</td>
+                        <td class="value-cell">{{ $billingDetail->tax_no }}</td>
+                    </tr>
+                    @endif
                    
                 </table>
             </div>
@@ -435,10 +441,28 @@
                         <td class="label-cell">Base Price</td>
                         <td class="value-cell">{{ $currencySymbol }}{{ number_format($application->invoice->price ?? $application->invoice->amount, $priceFormat) }}</td>
                     </tr>
-                    @if($application->invoice->gst_amount || $application->invoice->gst)
+                    <!-- @if($application->invoice->gst_amount || $application->invoice->gst)
                     <tr>
                         <td class="label-cell">GST ({{ $application->invoice->gst_rate ?? 18 }}%)</td>
                         <td class="value-cell">{{ $currencySymbol }}{{ number_format($application->invoice->gst_amount ?? $application->invoice->gst ?? 0, $priceFormat) }}</td>
+                    </tr>
+                    @endif -->
+                    @if(($application->invoice->cgst_amount ?? 0) > 0)
+                    <tr>
+                        <td class="label-cell">CGST ({{ $application->invoice->cgst_rate ?? 9 }}%)</td>
+                        <td class="value-cell">{{ $currencySymbol }}{{ number_format($application->invoice->cgst_amount, $priceFormat) }}</td>
+                    </tr>
+                    @endif
+                    @if(($application->invoice->sgst_amount ?? 0) > 0)
+                    <tr>
+                        <td class="label-cell">SGST ({{ $application->invoice->sgst_rate ?? 9 }}%)</td>
+                        <td class="value-cell">{{ $currencySymbol }}{{ number_format($application->invoice->sgst_amount, $priceFormat) }}</td>
+                    </tr>
+                    @endif
+                    @if(($application->invoice->igst_amount ?? 0) > 0)
+                    <tr>
+                        <td class="label-cell">IGST ({{ $application->invoice->igst_rate ?? 18 }}%)</td>
+                        <td class="value-cell">{{ $currencySymbol }}{{ number_format($application->invoice->igst_amount, $priceFormat) }}</td>
                     </tr>
                     @endif
                     @if($application->invoice->processing_charges)

@@ -23,6 +23,8 @@ class BillingDetail extends Model
         'postal_code',
         'same_as_basic',
         'gst_id',
+        'has_indian_gst',
+        'tax_no',
     ];
 
     public function application()

@@ -13,8 +13,8 @@
     .form-section {
         background: #f8f9fa;
         border-radius: 10px;
-        padding: 1.5rem;
-        margin-bottom: 2rem;
+        padding: 1.1rem;
+        margin-bottom: 1rem;
         border: 1px solid #e0e0e0;
     }
     /* .ui-intl-tel-input .iti input[type=tel] {
@@ -152,6 +152,7 @@
                         </select>
                         <div class="invalid-feedback"></div>
                     </div>
+                    
                 </div>
 
                 <div class="row mb-3">
@@ -183,7 +184,7 @@
                         <div class="invalid-feedback"></div>
                     </div>
 
-                    <div class="col-md-4">
+                    <div class="col-md-4" style="display: none;">
                         <label for="currency" class="form-label">Currency <span class="text-danger">*</span></label>
                         @if(isset($isCurrencyReadOnly) && $isCurrencyReadOnly)
                             <select class="form-select" id="currency" name="currency" required disabled style="background-color: #e9ecef; cursor: not-allowed;">
@@ -195,22 +196,54 @@
                         @else
                             <select class="form-select" id="currency" name="currency" required>
                                 <option value="">Select Currency</option>
-                                <option value="INR" {{ ($draft->currency ?? '') == 'INR' ? 'selected' : '' }}>INR</option>
-                                <option value="USD" {{ ($draft->currency ?? '') == 'USD' ? 'selected' : '' }}>USD</option>
+                                <option value="INR" {{ ($draft->currency ?? '') == 'INR' ? 'selected' : '' }}>INR </option>
+                                <option value="USD" {{ ($draft->currency ?? '') == 'USD' ? 'selected' : '' }}>USD </option>
                             </select>
                         @endif
                         <div class="invalid-feedback"></div>
                     </div>
                 </div>
+                <div id="priceDisplay" class="alert alert-success d-none mb-4">
+                    <h5><i class="fas fa-calculator"></i> Price Calculation</h5>
+                    <div id="priceDetails"></div>
+                </div>
                 </div>
 
                 {{-- Tax & Compliance Details --}}
                 <div class="form-section">
-                <h5 class="mb-3 mt-4 border-bottom pb-2"><i class="fas fa-file-invoice-dollar"></i> Tax & Compliance Details</h5>
+                <h5 class="mb-3  border-bottom pb-2"><i class="fas fa-file-invoice-dollar"></i> Tax & Compliance Details</h5>
+                
+                @if($selectedCurrency == 'USD')
+                {{-- USD Currency: Ask if they have Indian GST --}}
                 <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label for="has_indian_gst" class="form-label">Do you have an Indian GST Number? <span class="text-danger">*</span></label>
+                        <select class="form-select" id="has_indian_gst" name="has_indian_gst" required>
+                            <option value="">Select</option>
+                            <option value="yes" {{ ($draft->billing_data['has_indian_gst'] ?? '') == 'yes' ? 'selected' : '' }}>Yes</option>
+                            <option value="no" {{ ($draft->billing_data['has_indian_gst'] ?? '') == 'no' ? 'selected' : '' }}>No</option>
+                        </select>
+                        <div class="invalid-feedback"></div>
+                    </div>
+                <!-- </div> -->
+                
+                {{-- Show only Tax Number field when "No" is selected --}}
+                <!-- <div class="row mb-3" > -->
+                    <div class="col-md-6" id="usd_no_gst_container" style="display: none;">
+                        <label for="tax_no" class="form-label">Enter your Tax Number (if any)</label>
+                        <input type="text" class="form-control" id="tax_no" name="tax_no" value="{{ $draft->billing_data['tax_no'] ?? '' }}">
+                        <div class="invalid-feedback"></div>
+                    </div>
+                </div>
+                
+                {{-- Show all Indian tax fields when "Yes" is selected --}}
+                <div id="indian_gst_fields_container" style="display: none;">
+                @endif
+                
+                <div class="row mb-3" id="tan_gst_row">
                     <div class="col-md-4">
                         <label for="tan_status" class="form-label">TAN Status <span class="text-danger">*</span></label>
-                        <select class="form-select" id="tan_status" name="tan_status" required>
+                        <select class="form-select" id="tan_status" name="tan_status" {{ $selectedCurrency == 'INR' ? 'required' : '' }}>
                             <option value="">Select TAN Status</option>
                             <option value="Registered" {{ ($draft->tan_status ?? '') == 'Registered' ? 'selected' : '' }}>Registered</option>
                             <option value="Unregistered" {{ ($draft->tan_status ?? '') == 'Unregistered' ? 'selected' : '' }}>Unregistered (Not Available)</option>
@@ -225,7 +258,7 @@
                     </div>
                     <div class="col-md-4">
                         <label for="gst_status" class="form-label">GST Status <span class="text-danger">*</span></label>
-                        <select class="form-select" id="gst_status" name="gst_status" required>
+                        <select class="form-select" id="gst_status" name="gst_status" {{ $selectedCurrency == 'INR' ? 'required' : '' }}>
                             <option value="">Select GST Status</option>
                             <option value="Registered" {{ ($draft->gst_status ?? '') == 'Registered' ? 'selected' : '' }}>Registered</option>
                             <option value="Unregistered" {{ ($draft->gst_status ?? '') == 'Unregistered' ? 'selected' : '' }}>Unregistered (Not Available)</option>
@@ -233,7 +266,7 @@
                         <div class="invalid-feedback"></div>
                     </div>
                 </div>
-                <div class="row mb-3">
+                <div class="row mb-3" id="gst_pan_row">
                     <div class="col-md-6" id="gst_no_container" style="display: none;">
                         <label for="gst_no" class="form-label">GST Number <span class="text-danger" id="gst_required_indicator" style="display: none;">*</span></label>
                         <div class="input-group">
@@ -255,24 +288,29 @@
                         <input type="text" class="form-control" id="pan_no" name="pan_no" 
                                value="{{ $draft->pan_no ?? '' }}" 
                                pattern="[A-Z]{5}[0-9]{4}[A-Z]{1}" 
-                               maxlength="10" required>
+                               maxlength="10" {{ $selectedCurrency == 'INR' ? 'required' : '' }}>
                         <div class="invalid-feedback"></div>
                     </div>
                 </div>
+                
+                @if($selectedCurrency == 'USD')
+                </div>
+                @endif
+               
                 </div>
                 {{-- Billing Information --}}
                 <div class="form-section">
-                <h5 class="mb-3 mt-4 border-bottom pb-2"><i class="fas fa-building"></i> Billing Information</h5>
+                <h5 class="mb-3  border-bottom pb-2"><i class="fas fa-building"></i> Billing Information</h5>
                 <div class="row mb-3">
                     <div class="col-md-6">
-                        <label for="billing_company_name" class="form-label">Billing Company Name <span class="text-danger">*</span></label>
+                        <label for="billing_company_name" class="form-label">Company Name <span class="text-danger">*</span></label>
                         <input type="text" class="form-control" id="billing_company_name" name="billing_company_name" 
                                value="{{ isset($draft->billing_data['company_name']) ? $draft->billing_data['company_name'] : ($draft->company_name ?? ($draft->organisation_name ?? '')) }}" 
                                maxlength="100" required>
                         <div class="invalid-feedback"></div>
                     </div>
                     <div class="col-md-6">
-                        <label for="billing_address" class="form-label">Billing Address <span class="text-danger">*</span></label>
+                        <label for="billing_address" class="form-label">Address <span class="text-danger">*</span></label>
                         <textarea class="form-control" id="billing_address" name="billing_address" rows="2" required>{{ isset($draft->billing_data['address']) ? $draft->billing_data['address'] : ($draft->address ?? ($draft->invoice_address ?? '')) }}</textarea>
                         <div class="invalid-feedback"></div>
                     </div>
@@ -280,7 +318,7 @@
 
                 <div class="row mb-3">
                     <div class="col-md-6">
-                        <label for="billing_country_id" class="form-label">Billing Country <span class="text-danger">*</span></label>
+                        <label for="billing_country_id" class="form-label">Country <span class="text-danger">*</span></label>
                         <select class="form-select" id="billing_country_id" name="billing_country_id" required>
                             <option value="">Select Country</option>
                             @foreach($countries as $country)
@@ -297,7 +335,7 @@
                         <div class="invalid-feedback"></div>
                     </div>
                     <div class="col-md-6">
-                        <label for="billing_state_id" class="form-label">Billing State <span class="text-danger">*</span></label>
+                        <label for="billing_state_id" class="form-label">State <span class="text-danger">*</span></label>
                         <select class="form-select" id="billing_state_id" name="billing_state_id" required>
                             <option value="">Select State</option>
                             @php
@@ -318,14 +356,14 @@
 
                 <div class="row mb-3">
                     <div class="col-md-6">
-                        <label for="billing_city" class="form-label">Billing City <span class="text-danger">*</span></label>
+                        <label for="billing_city" class="form-label">City <span class="text-danger">*</span></label>
                         <input type="text" class="form-control" id="billing_city" name="billing_city" 
                                value="{{ isset($draft->billing_data['city']) ? $draft->billing_data['city'] : ($draft->city_id ?? ($draft->city ?? '')) }}" 
                                maxlength="100" required>
                         <div class="invalid-feedback"></div>
                     </div>
                     <div class="col-md-6">
-                        <label for="billing_postal_code" class="form-label">Billing Postal Code <span class="text-danger">*</span></label>
+                        <label for="billing_postal_code" class="form-label">Postal Code <span class="text-danger">*</span></label>
                         <input type="text" class="form-control" id="billing_postal_code" name="billing_postal_code" 
                                value="{{ isset($draft->billing_data['postal_code']) ? $draft->billing_data['postal_code'] : ($draft->postal_code ?? '') }}" 
                                pattern="[A-Za-z0-9]{4,10}" minlength="4" maxlength="10" required>
@@ -335,7 +373,7 @@
                 </div>
                 <div class="row mb-3">
                     <div class="col-md-6">
-                        <label for="billing_telephone" class="form-label">Billing Telephone Number <span class="text-danger">*</span></label>
+                        <label for="billing_telephone" class="form-label">Telephone Number <span class="text-danger">*</span></label>
                         <input type="tel" class="form-control" id="billing_telephone" name="billing_telephone" 
                                value="{{ isset($draft->billing_data['telephone']) ? $draft->billing_data['telephone'] : ($draft->landline ?? ($draft->organisation_telephone ?? '')) }}" 
                                required>
@@ -354,7 +392,7 @@
 
                 <div class="row mb-3">
                     <div class="col-md-6">
-                        <label for="billing_email" class="form-label">Billing Email <span class="text-danger">*</span></label>
+                        <label for="billing_email" class="form-label">Email <span class="text-danger">*</span></label>
                         <input type="email" class="form-control" id="billing_email" name="billing_email" 
                                value="{{ isset($draft->billing_data['email']) ? $draft->billing_data['email'] : ($draft->company_email ?? '') }}" required>
                         <div class="invalid-feedback"></div>
@@ -363,7 +401,7 @@
                 </div>
                 {{-- Exhibitor Information --}}
                 <div class="form-section">
-                <h5 class="mb-3 mt-4 border-bottom pb-2"><i class="fas fa-building"></i> Exhibitor Information</h5>
+                <h5 class="mb-3  border-bottom pb-2"><i class="fas fa-building"></i> Exhibitor Information</h5>
                 <div class="row mb-3">
                     <div class="col-12">
                         <button type="button" class="btn btn-outline-primary btn-sm mb-3" id="copy_from_billing" style="color: #fff;">
@@ -470,7 +508,7 @@
                 </div>
                 {{-- Primary Contact Person --}}
                 <div class="form-section">
-                <h5 class="mb-3 mt-4 border-bottom pb-2"><i class="fas fa-user"></i> Contact Person Details</h5>
+                <h5 class="mb-3  border-bottom pb-2"><i class="fas fa-user"></i> Contact Person Details</h5>
                 <div class="row mb-3">
                     <div class="col-md-2">
                         <label for="contact_title" class="form-label">Title <span class="text-danger">*</span></label>
@@ -534,7 +572,7 @@
                 </div>
                 {{-- Sales Reference --}}
                 <div class="form-section">
-                <h5 class="mb-3 mt-4 border-bottom pb-2"><i class="fas fa-user-tie"></i> Sales Reference</h5>
+                <h5 class="mb-3  border-bottom pb-2"><i class="fas fa-user-tie"></i> Sales Reference</h5>
                 <div class="row mb-3">
                     <div class="col-md-6">
                         <label for="sales_executive_name" class="form-label">Sales Executive Name (From BTS Team) <span class="text-danger">*</span></label>
@@ -545,7 +583,7 @@
                 </div>
                 </div>
                 {{-- Payment Mode --}}
-                <!-- <h5 class="mb-3 mt-4 border-bottom pb-2"><i class="fas fa-credit-card"></i> Payment Mode</h5>
+                <!-- <h5 class="mb-3  border-bottom pb-2"><i class="fas fa-credit-card"></i> Payment Mode</h5>
                 <div class="row mb-3">
                     <div class="col-md-6">
                         <label class="form-label d-block mb-2">Payment Mode <span class="text-danger">*</span></label>
@@ -565,7 +603,7 @@
                 {{-- Promocode Section --}}
                 <div class="form-section" style="display: none;">
                 <div class="row mb-3" style="display: none;">
-                <h5 class="mb-3 mt-4 border-bottom pb-2"><i class="fas fa-ticket-alt"></i> Promocode (Optional)</h5>
+                <h5 class="mb-3  border-bottom pb-2"><i class="fas fa-ticket-alt"></i> Promocode (Optional)</h5>
                 <div class="row mb-3">
                     <div class="col-md-6">
                         <label for="promocode" class="form-label">Promocode</label>
@@ -584,10 +622,7 @@
 
                 {{-- Price Display --}}
                 <div class="form-section">
-                <div id="priceDisplay" class="alert alert-success d-none mb-4">
-                    <h5><i class="fas fa-calculator"></i> Price Calculation</h5>
-                    <div id="priceDetails"></div>
-                </div>
+                
 
                 <div class="alert alert-info">
                     <i class="fas fa-info-circle"></i> <strong>Note:</strong> After submitting this form, you will be redirected to preview your registration details before making payment.
@@ -595,7 +630,7 @@
                 </div>
 
                 {{-- Submit Button --}}
-                <div class="d-flex justify-content-end mt-4">
+                <div class="d-flex justify-content-end ">
                     <button type="submit" class="btn btn-primary btn-lg">
                         <i class="fas fa-check"></i> Submit & Preview
                     </button>
@@ -679,6 +714,12 @@ $(document).ready(function() {
         placeholderNumberType: false,
         utilsScript: "https://cdn.jsdelivr.net/npm/intl-tel-input@18.1.1/build/js/utils.js"
     });
+    
+    // GST validation tracking
+    // Organizer's GSTIN state code (first 2 digits of GSTIN from config)
+    const organizerGstinStateCode = '{{ substr(config("constants.GSTIN"), 0, 2) }}'; // e.g., '29' for Karnataka
+    let isGstValidated = false;
+    let validatedGstStateCode = null; // Will store the state code from validated GST (first 2 digits)
 
     // Remove any placeholder text from phone inputs
     $('#billing_telephone').attr('placeholder', '');
@@ -839,7 +880,10 @@ $(document).ready(function() {
                 booth_space: boothSpace,
                 booth_size: boothSize,
                 currency: currency,
-                gst_rate: {{ $gstRate }}
+                {{-- gst_rate: {{ $gstRate }}, --}}
+                igst_rate: {{ $igstRate }},
+                cgst_rate: {{ $cgstRate }},
+                sgst_rate: {{ $sgstRate }},
             },
             success: function(response) {
                 if (response.success) {
@@ -850,13 +894,44 @@ $(document).ready(function() {
                         const processingAmount = price.processing_charges || 0;
                         processingHtml = `<p><strong>Processing Charges (${price.processing_rate}%):</strong> ${currencySymbol}${processingAmount.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</p>`;
                     }
+                    // Determine GST display: IGST if different state, CGST+SGST if same state as organizer
+                    let gstHtml = '';
+                    if (isGstValidated && validatedGstStateCode && validatedGstStateCode === organizerGstinStateCode) {
+                        // Same state as organizer - show CGST + SGST
+                        gstHtml = 
+                        `
+                            <strong>CGST (${price.cgst_rate}%):</strong> ${currencySymbol}${price.cgst_amount.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}
+                            <td><strong>SGST (${price.sgst_rate}%):</strong> ${currencySymbol}${price.sgst_amount.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+                        `
+                        
+                    } else {
+                        // Different state or GST not validated - show IGST
+                        gstHtml = `
+                            <strong>IGST (${price.igst_rate}%):</strong> ${currencySymbol}${price.igst_amount.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}
+                        `;
+                    }
+                    
                     $('#priceDetails').html(`
-                        <p><strong>Booth Size:</strong> ${price.sqm} sqm</p>
+                    <table class="table table-bordered text-center" style="color: #000;">
+                        <tr>
+                            <td><strong>Booth Size: </strong>${price.sqm} sqm</td>
+                           
+                        
+                            <td><strong>Rate per sqm: </strong>${currencySymbol}${price.rate_per_sqm.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+                           
+                       
+                            <td><strong>Base Price: </strong>${currencySymbol}${price.base_price.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+                            
+                       
+                            <td>${gstHtml}</td>
+                           
+                        </tr>
+                       {{--  <p><strong>Booth Size:</strong> ${price.sqm} sqm</p>
                         <p><strong>Rate per sqm:</strong> ${currencySymbol}${price.rate_per_sqm.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</p>
                         <p><strong>Base Price:</strong> ${currencySymbol}${price.base_price.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</p>
-                        <p><strong>GST (${price.gst_rate}%):</strong> ${currencySymbol}${price.gst_amount.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</p>
-                        ${processingHtml}
-                        <p><strong>Total Price:</strong> ${currencySymbol}${price.total_price.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</p>
+                        ${gstHtml} --}}
+                        {{-- ${processingHtml} --}}
+                        {{-- <p><strong>Total Price:</strong> ${currencySymbol}${price.total_price.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</p> --}}
                     `);
                     $('#priceDisplay').removeClass('d-none');
                 }
@@ -947,6 +1022,9 @@ $(document).ready(function() {
 
     // Initialize fields on page load
     initializeFields();
+    
+    // Initialize USD GST selection if applicable
+    initializeUsdGstSelection();
 
     // Trigger change handlers for dynamic updates
     $('#sector').on('change', function() {
@@ -958,6 +1036,56 @@ $(document).ready(function() {
             $('#other_sector_name').prop('required', false);
         }
     });
+    
+    // Handle "Do you have an Indian GST Number?" dropdown for USD currency
+    $('#has_indian_gst').on('change', function() {
+        handleUsdGstSelection($(this).val());
+    });
+    
+    // Function to handle USD GST selection
+    function handleUsdGstSelection(value) {
+        if (value === 'yes') {
+            // Show all Indian tax fields
+            $('#indian_gst_fields_container').show();
+            $('#usd_no_gst_container').hide();
+            // Make fields required
+            $('#tan_status').prop('required', true);
+            $('#gst_status').prop('required', true);
+            $('#pan_no').prop('required', true);
+        } else if (value === 'no') {
+            // Show only Tax Number field
+            $('#indian_gst_fields_container').hide();
+            $('#usd_no_gst_container').show();
+            // Make fields not required
+            $('#tan_status').prop('required', false);
+            $('#gst_status').prop('required', false);
+            $('#pan_no').prop('required', false);
+            $('#tan_no').prop('required', false);
+            $('#gst_no').prop('required', false);
+            // Clear values
+            $('#tan_status').val('');
+            $('#gst_status').val('');
+            $('#pan_no').val('');
+            $('#tan_no').val('');
+            $('#gst_no').val('');
+        } else {
+            // Nothing selected - hide both
+            $('#indian_gst_fields_container').hide();
+            $('#usd_no_gst_container').hide();
+            // Make fields not required
+            $('#tan_status').prop('required', false);
+            $('#gst_status').prop('required', false);
+            $('#pan_no').prop('required', false);
+        }
+    }
+    
+    // Initialize USD GST selection on page load
+    function initializeUsdGstSelection() {
+        const hasIndianGst = $('#has_indian_gst').val();
+        if (hasIndianGst) {
+            handleUsdGstSelection(hasIndianGst);
+        }
+    }
 
     // Copy from Billing Information to Exhibitor Information
     $('#copy_from_billing').on('click', function() {
@@ -1097,6 +1225,21 @@ $(document).ready(function() {
                         }
                     }
                     
+                    // Set GST validation tracking variables
+                    isGstValidated = true;
+                    // Extract state code from GST number (first 2 digits)
+                    const gstNumber = $('#gst_no').val();
+                    if (gstNumber && gstNumber.length >= 2) {
+                        validatedGstStateCode = gstNumber.substring(0, 2);
+                    }
+                    
+                    // Recalculate price to update GST display (IGST vs CGST+SGST)
+                    const currentBoothSpace = $('#booth_space').val();
+                    const currentBoothSize = $('#booth_size').val();
+                    if (currentBoothSpace && currentBoothSize) {
+                        calculatePrice(currentBoothSpace, currentBoothSize);
+                    }
+                    
                     $('#gst_feedback').html('<small class="text-success"><i class="fas fa-check"></i> GST details fetched successfully!</small>');
                 } else {
                     $('#gst_feedback').html(`<small class="text-danger"><i class="fas fa-times"></i> ${response.message}</small>`);
@@ -1159,6 +1302,10 @@ $(document).ready(function() {
     
     // Function to unlock AND reset/clear all GST-locked fields
     function unlockAndResetGstFields() {
+        // Reset GST validation tracking
+        isGstValidated = false;
+        validatedGstStateCode = null;
+        
         // Unlock and clear PAN Number field
         $('#pan_no').prop('readonly', false).removeClass('bg-light gst-locked').attr('title', '').val('');
         
@@ -1184,6 +1331,13 @@ $(document).ready(function() {
         
         // Clear GST feedback
         $('#gst_feedback').html('');
+        
+        // Recalculate price to update GST display
+        const currentBoothSpace = $('#booth_space').val();
+        const currentBoothSize = $('#booth_size').val();
+        if (currentBoothSpace && currentBoothSize) {
+            calculatePrice(currentBoothSpace, currentBoothSize);
+        }
     }
 
     // Promocode Validation
@@ -1533,6 +1687,8 @@ $(document).ready(function() {
         });
     }
 });
+
+
 </script>
 
 <script>
