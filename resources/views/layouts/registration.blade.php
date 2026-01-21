@@ -6,7 +6,37 @@
     <title>@yield('title', 'Registration') - {{ $event->event_name ?? config('constants.EVENT_NAME', 'Event') }} {{ $event->event_year ?? config('constants.EVENT_YEAR', date('Y')) }}</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    @if(config('constants.FAVICON'))
+        <link rel="icon" href="{{ config('constants.FAVICON') }}" type="image/x-icon">
+    @endif
+
+    @if(config('constants.FAVICON_APPLE'))
+        <link rel="apple-touch-icon" href="{{ config('constants.FAVICON_APPLE') }}">
+    @endif
+
+    @if(config('constants.FAVICON_16'))
+        <link rel="icon" href="{{ config('constants.FAVICON_16') }}" type="image/x-icon">
+    @endif
+
+    @if(config('constants.FAVICON_32'))
+        <link rel="icon" href="{{ config('constants.FAVICON_32') }}" type="image/x-icon">
+    @endif
+
+    @if(config('constants.FAVICON_64'))
+        <link rel="icon" href="{{ config('constants.FAVICON_64') }}" type="image/x-icon">
+    @endif
+
+
+
+
+
+
+
     @stack('head-links')
+
+
+    <link rel="stylesheet" href="{{ asset('asset/css/custom.css') }}">
     
     <style>
         :root {
