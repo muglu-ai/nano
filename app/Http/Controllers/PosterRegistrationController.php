@@ -1543,6 +1543,9 @@ class PosterRegistrationController extends Controller
                 
                 // Send thank you email after payment confirmation to both lead author and poster presenter
                 try {
+                    // Refresh poster to ensure we have latest data
+                    $poster->refresh();
+                    
                     $paymentDetails = [
                         'transaction_id' => $trackingId,
                         'payment_method' => $responseArray['payment_mode'] ?? 'CCAvenue',
@@ -1550,26 +1553,58 @@ class PosterRegistrationController extends Controller
                         'currency' => $invoice->currency ?? 'INR',
                     ];
                     
+                    Log::info('Poster Payment Callback: Preparing to send emails', [
+                        'poster_id' => $poster->id,
+                        'tin_no' => $poster->tin_no,
+                        'lead_email' => $poster->lead_email,
+                        'pp_email' => $poster->pp_email,
+                    ]);
+                    
                     // Send email to lead author
                     if ($poster->lead_email) {
+                        Log::info('Poster Payment Callback: Sending email to lead author', [
+                            'email' => $poster->lead_email,
+                        ]);
                         Mail::to($poster->lead_email)
                             ->bcc(['test.interlinks@gmail.com'])
                             ->send(new \App\Mail\PosterMail($poster, 'payment_thank_you', $invoice, $paymentDetails));
+                        Log::info('Poster Payment Callback: Email sent to lead author', [
+                            'email' => $poster->lead_email,
+                        ]);
+                    } else {
+                        Log::warning('Poster Payment Callback: No lead email found', [
+                            'poster_id' => $poster->id,
+                        ]);
                     }
                     
                     // Send email to poster presenter (if different from lead author)
                     if ($poster->pp_email && $poster->pp_email !== $poster->lead_email) {
+                        Log::info('Poster Payment Callback: Sending email to poster presenter', [
+                            'email' => $poster->pp_email,
+                        ]);
                         Mail::to($poster->pp_email)
                             ->bcc(['test.interlinks@gmail.com'])
                             ->send(new \App\Mail\PosterMail($poster, 'payment_thank_you', $invoice, $paymentDetails));
+                        Log::info('Poster Payment Callback: Email sent to poster presenter', [
+                            'email' => $poster->pp_email,
+                        ]);
+                    } elseif ($poster->pp_email && $poster->pp_email === $poster->lead_email) {
+                        Log::info('Poster Payment Callback: Skipping poster presenter email (same as lead author)', [
+                            'email' => $poster->pp_email,
+                        ]);
+                    } else {
+                        Log::warning('Poster Payment Callback: No poster presenter email found', [
+                            'poster_id' => $poster->id,
+                        ]);
                     }
                 } catch (\Exception $e) {
-                    Log::error('Failed to send poster payment thank you email', [
+                    Log::error('Failed to send poster payment thank you email (Callback)', [
                         'poster_id' => $poster->id,
                         'tin_no' => $poster->tin_no,
                         'lead_email' => $poster->lead_email ?? 'unknown',
                         'pp_email' => $poster->pp_email ?? 'unknown',
-                        'error' => $e->getMessage()
+                        'error' => $e->getMessage(),
+                        'trace' => $e->getTraceAsString()
                     ]);
                     // Don't fail the payment if email fails
                 }
@@ -1772,6 +1807,9 @@ class PosterRegistrationController extends Controller
 
                 // Send thank you email after payment confirmation to both lead author and poster presenter
                 try {
+                    // Refresh poster to ensure we have latest data
+                    $poster->refresh();
+                    
                     $paymentDetails = [
                         'transaction_id' => $paypalOrderId,
                         'payment_method' => 'PayPal',
@@ -1779,18 +1817,49 @@ class PosterRegistrationController extends Controller
                         'currency' => $invoice->currency ?? 'USD',
                     ];
                     
+                    Log::info('Poster Payment PayPal: Preparing to send emails', [
+                        'poster_id' => $poster->id,
+                        'tin_no' => $poster->tin_no,
+                        'lead_email' => $poster->lead_email,
+                        'pp_email' => $poster->pp_email,
+                    ]);
+                    
                     // Send email to lead author
                     if ($poster->lead_email) {
+                        Log::info('Poster Payment PayPal: Sending email to lead author', [
+                            'email' => $poster->lead_email,
+                        ]);
                         Mail::to($poster->lead_email)
                             ->bcc(['test.interlinks@gmail.com'])
                             ->send(new \App\Mail\PosterMail($poster, 'payment_thank_you', $invoice, $paymentDetails));
+                        Log::info('Poster Payment PayPal: Email sent to lead author', [
+                            'email' => $poster->lead_email,
+                        ]);
+                    } else {
+                        Log::warning('Poster Payment PayPal: No lead email found', [
+                            'poster_id' => $poster->id,
+                        ]);
                     }
                     
                     // Send email to poster presenter (if different from lead author)
                     if ($poster->pp_email && $poster->pp_email !== $poster->lead_email) {
+                        Log::info('Poster Payment PayPal: Sending email to poster presenter', [
+                            'email' => $poster->pp_email,
+                        ]);
                         Mail::to($poster->pp_email)
                             ->bcc(['test.interlinks@gmail.com'])
                             ->send(new \App\Mail\PosterMail($poster, 'payment_thank_you', $invoice, $paymentDetails));
+                        Log::info('Poster Payment PayPal: Email sent to poster presenter', [
+                            'email' => $poster->pp_email,
+                        ]);
+                    } elseif ($poster->pp_email && $poster->pp_email === $poster->lead_email) {
+                        Log::info('Poster Payment PayPal: Skipping poster presenter email (same as lead author)', [
+                            'email' => $poster->pp_email,
+                        ]);
+                    } else {
+                        Log::warning('Poster Payment PayPal: No poster presenter email found', [
+                            'poster_id' => $poster->id,
+                        ]);
                     }
                 } catch (\Exception $e) {
                     Log::error('Failed to send poster payment thank you email (PayPal)', [
@@ -1798,7 +1867,8 @@ class PosterRegistrationController extends Controller
                         'tin_no' => $poster->tin_no,
                         'lead_email' => $poster->lead_email ?? 'unknown',
                         'pp_email' => $poster->pp_email ?? 'unknown',
-                        'error' => $e->getMessage()
+                        'error' => $e->getMessage(),
+                        'trace' => $e->getTraceAsString()
                     ]);
                     // Don't fail the payment if email fails
                 }
