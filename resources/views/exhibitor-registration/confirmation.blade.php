@@ -1,0 +1,314 @@
+@extends('layouts.registration')
+
+@section('title', 'Registration Confirmation - ' . config('constants.EVENT_NAME') . ' ' . config('constants.EVENT_YEAR'))
+
+@section('content')
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-10">
+            {{-- Success Message --}}
+            <div class="card shadow-sm mb-4 border-success">
+                <div class="card-header bg-success text-white text-center">
+                    <h3 class="mb-0"><i class="fas fa-check-circle"></i> Registration Successful!</h3>
+                </div>
+                <div class="card-body text-center">
+                    <p class="lead">Thank you for registering for the Exhibitor Registration at {{ config('constants.EVENT_NAME') }} {{ config('constants.EVENT_YEAR') }}!</p>
+                    <p class="alert alert-info">
+                        <strong>TIN Number:</strong> {{ $application->application_id }}<br>
+                        <strong>Status:</strong> 
+                        @if($invoice->payment_status === 'paid')
+                            <span class="badge bg-success">Payment Completed</span>
+                        @else
+                            <span class="badge bg-warning">Payment Pending</span>
+                        @endif
+                    </p>
+                </div>
+            </div>
+            {{-- Application Details --}}   
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">Application Details</h4>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <strong>TIN Number:</strong><br>
+                            {{ $application->application_id }}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <strong>Submission Date:</strong><br>
+                            {{ $application->created_at->format('d M Y, h:i A') }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {{-- Billing Information --}}
+            @if($billingDetail)
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">Billing Information</h4>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <strong>Company Name:</strong><br>
+                            {{ $billingDetail->billing_company ?? 'N/A' }}
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <strong>Contact Name:</strong><br>
+                            {{ $billingDetail->contact_name ?? 'N/A' }}
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <strong>Email:</strong><br>
+                            {{ $billingDetail->email ?? 'N/A' }}
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <strong>Phone:</strong><br>
+                            {{ $billingDetail->phone ?? 'N/A' }}
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-12 mb-3">
+                            <strong>Address:</strong><br>
+                            {{ $billingDetail->address ?? 'N/A' }}
+                        </div>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <strong>City:</strong><br>
+                        @php
+                            $billingCity = 'N/A';
+                            if ($billingDetail->city_id) {
+                                if (is_numeric($billingDetail->city_id)) {
+                                    $city = \App\Models\City::find($billingDetail->city_id);
+                                    $billingCity = $city ? $city->name : $billingDetail->city_id;
+                                } else {
+                                    $billingCity = $billingDetail->city_id; // It's already a city name
+                                }
+                            }
+                        @endphp
+                        {{ $billingCity }}
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <strong>State:</strong><br>
+                        {{ $billingDetail->state_id ? (\App\Models\State::find($billingDetail->state_id)->name ?? 'N/A') : 'N/A' }}
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <strong>Country:</strong><br>
+                        {{ $billingDetail->country_id ? (\App\Models\Country::find($billingDetail->country_id)->name ?? 'N/A') : 'N/A' }}
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <strong>Postal Code:</strong><br>
+                        {{ $billingDetail->postal_code ?? 'N/A' }}
+                    </div>
+                    @if($billingDetail->gst_id)
+                    <div class="col-md-6 mb-3">
+                        <strong>GST Number:</strong><br>
+                        {{ $billingDetail->gst_id }}
+                    </div>
+                    @endif
+                </div>
+                </div>
+            </div>
+            @endif
+
+            {{-- Exhibitor Information --}}
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">Exhibitor Information</h4>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <strong>Name of Exhibitor:</strong><br>
+                            {{ $application->company_name }}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <strong>Company Email:</strong><br>
+                            {{ $application->email }}
+                        </div>
+                        <div class="col-md-12 mb-3">
+                            <strong>Address:</strong><br>
+                            {{ $application->address ?? 'N/A' }}
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <strong>City:</strong><br>
+                            @php
+                                $exhibitorCity = 'N/A';
+                                if ($application->city_id) {
+                                    if (is_numeric($application->city_id)) {
+                                        $city = \App\Models\City::find($application->city_id);
+                                        $exhibitorCity = $city ? $city->name : $application->city_id;
+                                    } else {
+                                        $exhibitorCity = $application->city_id; // It's already a city name
+                                    }
+                                }
+                            @endphp
+                            {{ $exhibitorCity }}
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <strong>State:</strong><br>
+                            {{ $application->state_id ? (\App\Models\State::find($application->state_id)->name ?? 'N/A') : 'N/A' }}
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <strong>Country:</strong><br>
+                            {{ $application->country_id ? (\App\Models\Country::find($application->country_id)->name ?? 'N/A') : 'N/A' }}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <strong>Postal Code:</strong><br>
+                            {{ $application->postal_code ?? 'N/A' }}
+                        </div>
+                        @if($application->gst_id)
+                        <div class="col-md-6 mb-3">
+                            <strong>GST Number:</strong><br>
+                            {{ $application->gst_id }}
+                        </div>
+                        @endif
+                    </div>
+                    </div>
+                </div>
+            </div>
+
+            {{-- Contact Person --}}
+            @if($contact)
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">Contact Person</h4>
+                </div>
+                <div class="card-body"> 
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <strong>Name:</strong><br>
+                            {{ $contact->salutation ?? '' }} {{ $contact->first_name }} {{ $contact->last_name }}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <strong>Designation:</strong><br>
+                            {{ $contact->job_title ?? 'N/A' }}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <strong>Email:</strong><br>
+                            {{ $contact->email }}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <strong>Mobile:</strong><br>
+                            {{ $contact->contact_number }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            @endif
+
+            {{-- Payment Details --}}
+           
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">Payment Details</h4>
+                </div>
+                <div class="card-body">
+                    <table class="table table-bordered">
+                        <tr>
+                            <td><strong>PIN Number:</strong></td>
+                            <td>{{ $invoice->pin_no ?? 'N/A' }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Base Price:</strong></td>
+                            <td class="text-end">{{ $invoice->currency }} {{ number_format($invoice->price, 2) }}</td>
+                        </tr>
+                        @if(($invoice->cgst_amount ?? 0) > 0)
+                        <tr>
+                            <td><strong>CGST ({{ $invoice->cgst_rate ?? 9 }}%):</strong></td>
+                            <td class="text-end">{{ $invoice->currency }} {{ number_format($invoice->cgst_amount, 2) }}</td>
+                        </tr>
+                        @endif
+                        @if(($invoice->sgst_amount ?? 0) > 0)
+                        <tr>
+                            <td><strong>SGST ({{ $invoice->sgst_rate ?? 9 }}%):</strong></td>
+                            <td class="text-end">{{ $invoice->currency }} {{ number_format($invoice->sgst_amount, 2) }}</td>
+                        </tr>
+                        @endif
+                        @if(($invoice->igst_amount ?? 0) > 0)
+                        <tr>
+                            <td><strong>IGST ({{ $invoice->igst_rate ?? 18 }}%):</strong></td>
+                            <td class="text-end">{{ $invoice->currency }} {{ number_format($invoice->igst_amount, 2) }}</td>
+                        </tr>
+                        @endif
+                        <tr>
+                            <td><strong>Total Amount:</strong></td>
+                            <td class="text-end">{{ $invoice->currency }} {{ number_format($invoice->total_amount, 2) }}</td>
+                        </tr>
+
+                        @if(session('payment_response'))
+                        <tr>
+                            <td><strong>Transaction ID:</strong></td>
+                            <td>{{ session('payment_response.tracking_id') ?? 'N/A' }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Payment Method:</strong></td>
+                            <td>{{ session('payment_response.payment_mode') ?? 'N/A' }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Bank Reference:</strong></td>
+                            <td>{{ session('payment_response.bank_ref_no') ?? 'N/A' }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Payment Status:</strong></td>
+                            <td>
+                                @if($invoice->payment_status === 'paid')
+                                    <span class="badge bg-success">Paid</span>
+                                @elseif($invoice->payment_status === 'partial')
+                                    <span class="badge bg-warning">Partial Payment</span>
+                                @else
+                                    <span class="badge bg-danger">Payment Failed</span>
+                                @endif
+                            </td>
+                        </tr>
+                        @endif
+                    </table>
+                </div>
+            </div>
+
+            {{-- Next Steps --}}
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-info text-white">
+                    <h4 class="mb-0"><i class="fas fa-info-circle"></i> Next Steps</h4>
+                </div>
+                <div class="card-body">
+                    @if($invoice->payment_status === 'paid')
+                    <div class="alert alert-success">
+                        <strong>Payment Completed!</strong> Your registration is confirmed. You will receive a confirmation email shortly.
+                    </div>
+                    <ul>
+                        <li>Check your email for the confirmation and invoice</li>
+                        <li>You will receive further instructions via email</li>
+                        <li>For any queries, please contact the event organizers</li>
+                    </ul>
+                    @else
+                    <div class="alert alert-warning">
+                        <strong>Payment Pending:</strong> Please complete the payment to confirm your registration.
+                    </div>
+                    <a href="{{ route('exhibitor-registration.payment', $application->application_id) }}" class="btn btn-primary">
+                            Complete Payment <i class="fas fa-credit-card"></i>
+                        </a>
+                    @endif
+                </div>
+            </div>
+            {{-- Action Buttons --}}
+            <div class="text-center">
+                <a href="{{ route('exhibitor-registration.register') }}" class="btn btn-secondary">
+                    <i class="fas fa-home"></i> Back to Home
+                </a>
+                @if($invoice->payment_status !== 'paid')
+                <a href="{{ route('exhibitor-registration.payment', $application->application_id) }}" class="btn btn-success">
+                    <i class="fas fa-credit-card"></i> Make Payment
+                </a>
+                @endif
+            </div>
+        </div>
+    </div>
+</div>
+@endsection
