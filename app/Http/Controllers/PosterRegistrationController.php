@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 use PaypalServerSdkLib\PaypalServerSdkClientBuilder;
 use PaypalServerSdkLib\Authentication\ClientCredentialsAuthCredentialsBuilder;
 use PaypalServerSdkLib\Models\Builders\OrderRequestBuilder;
@@ -1539,6 +1540,30 @@ class PosterRegistrationController extends Controller
                     'amount' => $amount,
                     'transaction_id' => $trackingId,
                 ]);
+                
+                // Send thank you email after payment confirmation
+                try {
+                    $userEmail = $poster->lead_email;
+                    
+                    if ($userEmail) {
+                        $paymentDetails = [
+                            'transaction_id' => $trackingId,
+                            'payment_method' => $responseArray['payment_mode'] ?? 'CCAvenue',
+                            'amount' => $amount,
+                            'currency' => $invoice->currency ?? 'INR',
+                        ];
+                        
+                        Mail::to($userEmail)->send(new \App\Mail\PosterMail($poster, 'payment_thank_you', $invoice, $paymentDetails));
+                    }
+                } catch (\Exception $e) {
+                    Log::error('Failed to send poster payment thank you email', [
+                        'poster_id' => $poster->id,
+                        'tin_no' => $poster->tin_no,
+                        'email' => $userEmail ?? 'unknown',
+                        'error' => $e->getMessage()
+                    ]);
+                    // Don't fail the payment if email fails
+                }
                 
                 // Redirect to success page
                 return redirect()

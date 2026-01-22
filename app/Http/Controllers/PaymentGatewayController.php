@@ -741,6 +741,30 @@ class PaymentGatewayController extends Controller
                     'transaction_id' => $responseArray['tracking_id'] ?? null,
                 ]);
                 
+                // Send thank you email after payment confirmation
+                try {
+                    $userEmail = $poster->lead_email;
+                    
+                    if ($userEmail) {
+                        $paymentDetails = [
+                            'transaction_id' => $responseArray['tracking_id'] ?? null,
+                            'payment_method' => $responseArray['payment_mode'] ?? 'CCAvenue',
+                            'amount' => $responseArray['mer_amount'],
+                            'currency' => $invoice->currency ?? 'INR',
+                        ];
+                        
+                        Mail::to($userEmail)->send(new \App\Mail\PosterMail($poster, 'payment_thank_you', $invoice, $paymentDetails));
+                    }
+                } catch (\Exception $e) {
+                    Log::error('Failed to send poster payment thank you email', [
+                        'poster_id' => $poster->id,
+                        'tin_no' => $poster->tin_no,
+                        'email' => $userEmail ?? 'unknown',
+                        'error' => $e->getMessage()
+                    ]);
+                    // Don't fail the payment if email fails
+                }
+                
                 // Redirect to poster success page
                 return redirect()
                     ->route('poster.success', ['tin_no' => $poster->tin_no])

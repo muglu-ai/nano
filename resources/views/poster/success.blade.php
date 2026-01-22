@@ -370,8 +370,7 @@
 @endpush
 
 @section('header-title')
-    <h1>Poster Registration Success</h1>
-    <p>{{ config('constants.EVENT_NAME', 'Bengaluru Tech Summit') }} {{ config('constants.EVENT_YEAR', '2026') }}</p>
+    {{-- Header title removed as requested --}}
 @endsection
 
 @section('content')
