@@ -604,41 +604,93 @@ class RegistrationPaymentController extends Controller
                 ]);
 
             if ($orderStatus === 'Success') {
-                // Update invoice
-                $invoice->update([
-                    'payment_status' => 'paid',
-                    'amount_paid' => $responseArray['mer_amount'] ?? $invoice->total_final_price,
-                    'pending_amount' => 0,
-                    'updated_at' => now(),
-                ]);
-
-                // Create payment record
-                $application = Application::find($invoice->application_id);
-                Payment::create([
-                    'invoice_id' => $invoice->id,
-                    'payment_method' => $responseArray['payment_mode'] ?? 'CCAvenue',
-                    'amount' => $responseArray['mer_amount'] ?? $invoice->total_final_price,
-                    'amount_paid' => $responseArray['mer_amount'] ?? $invoice->total_final_price,
-                    'amount_received' => $responseArray['mer_amount'] ?? $invoice->total_final_price,
-                    'transaction_id' => $responseArray['tracking_id'] ?? null,
-                    'pg_result' => $orderStatus,
-                    'track_id' => $responseArray['tracking_id'] ?? null,
-                    'pg_response_json' => json_encode($responseArray),
-                    'payment_date' => $transDate,
-                    'currency' => $invoice->currency ?? 'INR',
-                    'status' => 'successful',
-                    'order_id' => $orderId,
-                    'user_id' => $application ? $application->user_id : null,
-                ]);
-
-                // Store invoice_no in session for success page
-                session(['invoice_no' => $invoice->invoice_no]);
+                // Start transaction to ensure data consistency
+                DB::beginTransaction();
                 
-                // Clear other payment session data
-                session()->forget(['payment_tin', 'payment_email', 'payment_invoice_id', 'payment_application_id', 'payment_order_id', 'payment_paypal_order_id']);
+                try {
+                    // Get application for logging
+                    $application = Application::find($invoice->application_id);
+                    
+                    \Log::info('Processing successful payment', [
+                        'invoice_no' => $invoice->invoice_no,
+                        'application_id' => $application ? $application->application_id : 'N/A',
+                        'application_type' => $application ? $application->application_type : 'N/A',
+                        'order_id' => $orderId,
+                        'amount' => $responseArray['mer_amount'] ?? $invoice->total_final_price
+                    ]);
+                    
+                    // Update invoice using direct DB query to ensure update
+                    $updateResult = DB::table('invoices')
+                        ->where('id', $invoice->id)
+                        ->update([
+                            'payment_status' => 'paid',
+                            'amount_paid' => $responseArray['mer_amount'] ?? $invoice->total_final_price,
+                            'pending_amount' => 0,
+                            'updated_at' => now(),
+                        ]);
+                    
+                    \Log::info('Invoice update result', [
+                        'invoice_id' => $invoice->id,
+                        'update_result' => $updateResult
+                    ]);
 
-                return redirect()->route('registration.payment.success')
-                    ->with('success', 'Payment successful!');
+                    // Create payment record
+                    Payment::create([
+                        'invoice_id' => $invoice->id,
+                        'payment_method' => $responseArray['payment_mode'] ?? 'CCAvenue',
+                        'amount' => $responseArray['mer_amount'] ?? $invoice->total_final_price,
+                        'amount_paid' => $responseArray['mer_amount'] ?? $invoice->total_final_price,
+                        'amount_received' => $responseArray['mer_amount'] ?? $invoice->total_final_price,
+                        'transaction_id' => $responseArray['tracking_id'] ?? null,
+                        'pg_result' => $orderStatus,
+                        'track_id' => $responseArray['tracking_id'] ?? null,
+                        'pg_response_json' => json_encode($responseArray),
+                        'payment_date' => $transDate,
+                        'currency' => $invoice->currency ?? 'INR',
+                        'status' => 'successful',
+                        'order_id' => $orderId,
+                        'user_id' => $application ? $application->user_id : null,
+                    ]);
+                    
+                    // Verify invoice was updated
+                    $verifyInvoice = Invoice::find($invoice->id);
+                    if ($verifyInvoice->payment_status !== 'paid') {
+                        \Log::error('CRITICAL: Invoice payment_status not updated after DB update', [
+                            'invoice_id' => $invoice->id,
+                            'expected' => 'paid',
+                            'actual' => $verifyInvoice->payment_status
+                        ]);
+                        throw new \Exception('Failed to update invoice payment status');
+                    }
+                    
+                    DB::commit();
+                    
+                    \Log::info('Payment processed successfully', [
+                        'invoice_no' => $invoice->invoice_no,
+                        'application_type' => $application ? $application->application_type : 'N/A'
+                    ]);
+
+                    // Store invoice_no in session for success page
+                    session(['invoice_no' => $invoice->invoice_no]);
+                    
+                    // Clear other payment session data
+                    session()->forget(['payment_tin', 'payment_email', 'payment_invoice_id', 'payment_application_id', 'payment_order_id', 'payment_paypal_order_id']);
+
+                    return redirect()->route('registration.payment.success')
+                        ->with('success', 'Payment successful!');
+                        
+                } catch (\Exception $e) {
+                    DB::rollBack();
+                    
+                    \Log::error('Error processing successful payment', [
+                        'invoice_no' => $invoice->invoice_no,
+                        'error' => $e->getMessage(),
+                        'trace' => $e->getTraceAsString()
+                    ]);
+                    
+                    return redirect()->route('registration.payment.lookup')
+                        ->with('error', 'Payment received but processing failed. Please contact support with Order ID: ' . $orderId);
+                }
             } else {
                 return redirect()->route('registration.payment.select', $invoice->invoice_no)
                     ->with('error', 'Payment failed. Please try again.');
@@ -691,51 +743,103 @@ class RegistrationPaymentController extends Controller
                 ]);
 
             if ($status === 'COMPLETED') {
-                // Get amount from capture
-                $amount = 0;
-                if ($captureResult->getPurchaseUnits() && count($captureResult->getPurchaseUnits()) > 0) {
-                    $purchaseUnit = $captureResult->getPurchaseUnits()[0];
-                    if ($purchaseUnit->getPayments() && $purchaseUnit->getPayments()->getCaptures()) {
-                        $capture = $purchaseUnit->getPayments()->getCaptures()[0];
-                        $amount = $capture->getAmount()->getValue();
-                    }
-                }
-
-                // Update invoice
-                $invoice->update([
-                    'payment_status' => 'paid',
-                    'amount_paid' => $amount,
-                    'pending_amount' => 0,
-                    'updated_at' => now(),
-                ]);
-
-                // Create payment record
-                $application = Application::find($invoice->application_id);
-                Payment::create([
-                    'invoice_id' => $invoice->id,
-                    'payment_method' => 'PayPal',
-                    'amount' => $amount,
-                    'amount_paid' => $amount,
-                    'amount_received' => $amount,
-                    'transaction_id' => $paypalOrderId,
-                    'pg_result' => $status,
-                    'track_id' => $paypalOrderId,
-                    'pg_response_json' => json_encode($captureResult),
-                    'payment_date' => now(),
-                    'currency' => $invoice->currency ?? 'USD',
-                    'status' => 'successful',
-                    'order_id' => $orderId,
-                    'user_id' => $application ? $application->user_id : null,
-                ]);
-
-                // Store invoice_no in session for success page
-                session(['invoice_no' => $invoice->invoice_no]);
+                // Start transaction to ensure data consistency
+                DB::beginTransaction();
                 
-                // Clear other payment session data
-                session()->forget(['payment_tin', 'payment_email', 'payment_invoice_id', 'payment_application_id', 'payment_order_id', 'payment_paypal_order_id']);
+                try {
+                    // Get application for logging
+                    $application = Application::find($invoice->application_id);
+                    
+                    // Get amount from capture
+                    $amount = 0;
+                    if ($captureResult->getPurchaseUnits() && count($captureResult->getPurchaseUnits()) > 0) {
+                        $purchaseUnit = $captureResult->getPurchaseUnits()[0];
+                        if ($purchaseUnit->getPayments() && $purchaseUnit->getPayments()->getCaptures()) {
+                            $capture = $purchaseUnit->getPayments()->getCaptures()[0];
+                            $amount = $capture->getAmount()->getValue();
+                        }
+                    }
+                    
+                    \Log::info('Processing successful PayPal payment', [
+                        'invoice_no' => $invoice->invoice_no,
+                        'application_id' => $application ? $application->application_id : 'N/A',
+                        'application_type' => $application ? $application->application_type : 'N/A',
+                        'paypal_order_id' => $paypalOrderId,
+                        'amount' => $amount
+                    ]);
 
-                return redirect()->route('registration.payment.success')
-                    ->with('success', 'Payment successful!');
+                    // Update invoice using direct DB query
+                    $updateResult = DB::table('invoices')
+                        ->where('id', $invoice->id)
+                        ->update([
+                            'payment_status' => 'paid',
+                            'amount_paid' => $amount,
+                            'pending_amount' => 0,
+                            'updated_at' => now(),
+                        ]);
+                    
+                    \Log::info('Invoice update result', [
+                        'invoice_id' => $invoice->id,
+                        'update_result' => $updateResult
+                    ]);
+
+                    // Create payment record
+                    Payment::create([
+                        'invoice_id' => $invoice->id,
+                        'payment_method' => 'PayPal',
+                        'amount' => $amount,
+                        'amount_paid' => $amount,
+                        'amount_received' => $amount,
+                        'transaction_id' => $paypalOrderId,
+                        'pg_result' => $status,
+                        'track_id' => $paypalOrderId,
+                        'pg_response_json' => json_encode($captureResult),
+                        'payment_date' => now(),
+                        'currency' => $invoice->currency ?? 'USD',
+                        'status' => 'successful',
+                        'order_id' => $orderId,
+                        'user_id' => $application ? $application->user_id : null,
+                    ]);
+                    
+                    // Verify invoice was updated
+                    $verifyInvoice = Invoice::find($invoice->id);
+                    if ($verifyInvoice->payment_status !== 'paid') {
+                        \Log::error('CRITICAL: Invoice payment_status not updated after DB update', [
+                            'invoice_id' => $invoice->id,
+                            'expected' => 'paid',
+                            'actual' => $verifyInvoice->payment_status
+                        ]);
+                        throw new \Exception('Failed to update invoice payment status');
+                    }
+                    
+                    DB::commit();
+                    
+                    \Log::info('PayPal payment processed successfully', [
+                        'invoice_no' => $invoice->invoice_no,
+                        'application_type' => $application ? $application->application_type : 'N/A'
+                    ]);
+
+                    // Store invoice_no in session for success page
+                    session(['invoice_no' => $invoice->invoice_no]);
+                    
+                    // Clear other payment session data
+                    session()->forget(['payment_tin', 'payment_email', 'payment_invoice_id', 'payment_application_id', 'payment_order_id', 'payment_paypal_order_id']);
+
+                    return redirect()->route('registration.payment.success')
+                        ->with('success', 'Payment successful!');
+                        
+                } catch (\Exception $e) {
+                    DB::rollBack();
+                    
+                    \Log::error('Error processing successful PayPal payment', [
+                        'invoice_no' => $invoice->invoice_no,
+                        'error' => $e->getMessage(),
+                        'trace' => $e->getTraceAsString()
+                    ]);
+                    
+                    return redirect()->route('registration.payment.lookup')
+                        ->with('error', 'Payment received but processing failed. Please contact support with PayPal Order ID: ' . $paypalOrderId);
+                }
             } else {
                 return redirect()->route('registration.payment.select', $invoice->invoice_no)
                     ->with('error', 'Payment was not completed. Please try again.');
