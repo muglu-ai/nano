@@ -35,6 +35,7 @@ use App\Http\Controllers\PayPalController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\PaymentGatewayController;
 use App\Http\Controllers\PaymentReceiptController;
+use App\Http\Controllers\PosterRegistrationController;
 use App\Http\Controllers\SalesController;
 use App\Http\Controllers\SponsorController;
 use App\Http\Controllers\SponsorshipController;
@@ -1205,3 +1206,44 @@ Route::middleware(['auth', AdminMiddleware::class])->prefix('admin/delegate-noti
     Route::post('/', [\App\Http\Controllers\Admin\AdminDelegateNotificationController::class, 'store'])->name('store');
     Route::post('/{id}/send', [\App\Http\Controllers\Admin\AdminDelegateNotificationController::class, 'send'])->name('send');
 });
+
+// Poster Registration Routes
+Route::get('/poster/register', [PosterRegistrationController::class, 'create'])
+    ->name('poster.register'); // blank form
+
+Route::get('/poster/register/{token}', [PosterRegistrationController::class, 'edit'])
+    ->name('poster.register.edit'); // prefilled form
+
+Route::post('/poster/register', [PosterRegistrationController::class, 'storeDraft'])
+    ->name('poster.register.storeDraft'); // create OR update draft
+
+Route::get('/poster/preview/{token}', [PosterRegistrationController::class, 'preview'])
+    ->name('poster.preview');
+
+// GET route for submit - redirects to preview (handles direct URL access or browser back button)
+Route::get('/poster/submit/{token}', function ($token) {
+    return redirect()->route('poster.preview', ['token' => $token])
+        ->with('info', 'Please use the "Proceed to Payment" button to submit your registration.');
+})->name('poster.submit.get');
+
+Route::post('/poster/submit/{token}', [PosterRegistrationController::class, 'submit'])
+    ->name('poster.submit');
+
+Route::get('/poster/success/{tin_no}', [PosterRegistrationController::class, 'success'])
+    ->name('poster.success');
+
+// Payment routes
+Route::get('/poster/payment/{tin_no}', [PosterRegistrationController::class, 'payment'])
+    ->name('poster.payment');
+
+Route::post('/poster/payment/callback/{gateway}', [PosterRegistrationController::class, 'paymentCallback'])
+    ->name('poster.payment.callback')
+    ->withoutMiddleware([\App\Http\Middleware\VerifyCsrfToken::class]);
+
+// AJAX route to check if email already exists
+Route::get('/poster/check-email', [PosterRegistrationController::class, 'checkEmail'])
+    ->name('poster.checkEmail');
+
+// Secure file download route
+Route::get('/poster/file/{type}/{token}', [PosterRegistrationController::class, 'downloadFile'])
+    ->name('poster.downloadFile');

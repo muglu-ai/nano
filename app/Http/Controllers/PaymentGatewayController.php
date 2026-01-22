@@ -231,18 +231,53 @@ class PaymentGatewayController extends Controller
             ];
         }
 
+        // Check if this is a poster registration invoice
+        $isPosterInvoice = ($invoice->type === 'poster_registration' && $invoice->poster_reg_id);
+        $poster = null;
+        
+        if ($isPosterInvoice) {
+            $poster = \App\Models\Poster::find($invoice->poster_reg_id);
+            if ($poster) {
+                // Create billing detail object from poster data
+                $billingDetail = (object) [
+                    'contact_name' => $poster->lead_name ?? '',
+                    'email' => $poster->lead_email ?? '',
+                    'phone' => trim(($poster->lead_ccode ?? '') . ' ' . ($poster->lead_phone ?? '')),
+                    'address' => $poster->lead_addr ?? '',
+                    'postal_code' => $poster->lead_zip ?? '',
+                    'state' => (object) ['name' => $poster->lead_state ?? ''],
+                    'country' => (object) ['name' => $poster->lead_country ?? 'India'],
+                    'city_name' => $poster->lead_city ?? '',
+                ];
+                
+                // Store poster info in session for callback
+                session([
+                    'poster_id' => $poster->id,
+                    'poster_tin_no' => $poster->tin_no,
+                    'payment_application_type' => 'poster',
+                ]);
+            }
+        }
+
         // Ensure billingDetail exists
         if (!$billingDetail) {
             Log::error('CCAvenue Payment: Billing details not found', [
                 'invoice_id' => $invoice->id,
                 'invoice_no' => $orderID,
                 'application_id' => $invoice->application_id,
-                'is_startup_zone' => $isStartupZone
+                'is_startup_zone' => $isStartupZone,
+                'is_poster' => $isPosterInvoice,
             ]);
 
             if ($isStartupZone && $application) {
                 return redirect()
                     ->route('startup-zone.payment', $application->application_id)
+                    ->with('error', 'Billing details not found. Please contact support.');
+            }
+            
+            if ($isPosterInvoice) {
+                return redirect()
+                    ->route('poster.payment', ['tin_no' => $poster->tin_no ?? $invoice->invoice_no])
                     ->with('error', 'Billing details not found. Please contact support.');
             }
 
@@ -253,15 +288,23 @@ class PaymentGatewayController extends Controller
 
         // Generate order_id with TIN prefix format: {application_id}_{timestamp}
         // If application exists, use application_id (TIN), otherwise use invoice_no
-        $tinPrefix = $application && $application->application_id
-            ? $application->application_id
-            : $orderID;
+        // For poster invoices, use poster TIN
+        if ($isPosterInvoice && $poster) {
+            $tinPrefix = $poster->tin_no;
+        } elseif ($application && $application->application_id) {
+            $tinPrefix = $application->application_id;
+        } else {
+            $tinPrefix = $orderID;
+        }
         $orderIdWithTimestamp = $tinPrefix . '_' . time();
 
+        // Determine currency - use invoice currency or default based on type
+        $currency = $invoice->currency ?? ($isPosterInvoice && $poster ? ($poster->currency ?? ($poster->nationality === 'India' ? 'INR' : 'USD')) : 'INR');
+        
         $data = [
             'merchant_id' => $this->merchantId,
             'order_id' => $orderIdWithTimestamp,
-            'currency' => 'INR',
+            'currency' => $currency,
             'amount' => $invoice->total_final_price,
             'redirect_url' => $this->redirectUrl,
             'cancel_url' => $this->cancelUrl,
@@ -287,7 +330,7 @@ class PaymentGatewayController extends Controller
             'amount' => $data['amount'],
             'status' => 'Pending',
             'gateway' => 'CCAvenue',
-            'currency' => 'INR',
+            'currency' => $currency,
             'email' => $data['billing_email'],
             'user_id' => $application ? $application->user_id : null,
             'created_at' => now(),
@@ -305,9 +348,25 @@ class PaymentGatewayController extends Controller
         session([
             'invoice_no' => $orderID,
             'payment_user_id' => auth()->check() ? auth()->id() : null,
-            'payment_application_id' => $application ? $application->application_id : null,
-            'payment_application_type' => $application ? $application->application_type : null,
+            'payment_application_id' => $application ? $application->application_id : ($isPosterInvoice && $poster ? $poster->tin_no : null),
+            'payment_application_type' => $application ? $application->application_type : ($isPosterInvoice ? 'poster' : null),
         ]);
+        
+        // Also store poster info if it's a poster invoice (in case session was cleared)
+        if ($isPosterInvoice && $poster) {
+            session([
+                'poster_id' => $poster->id,
+                'poster_tin_no' => $poster->tin_no,
+            ]);
+        }
+        
+        // Also store poster info if it's a poster invoice
+        if ($isPosterInvoice && $poster) {
+            session([
+                'poster_id' => $poster->id,
+                'poster_tin_no' => $poster->tin_no,
+            ]);
+        }
 
         return view('pgway.ccavenue', compact('encryptedData'));
     }
@@ -608,6 +667,20 @@ class PaymentGatewayController extends Controller
 
             $invoice = Invoice::where('invoice_no', $order_id)->first();
 
+            // Check if this is a poster payment (no invoice, uses poster TIN)
+            $isPosterPayment = (session('payment_application_type') === 'poster');
+            $posterTinNo = session('poster_tin_no');
+            
+            if ($isPosterPayment && $posterTinNo) {
+                // Handle poster payment callback
+                $poster = \App\Models\Poster::where('tin_no', $posterTinNo)->first();
+                if ($poster) {
+                    // Redirect to poster callback handler
+                    return redirect()->route('poster.payment.callback', ['gateway' => 'ccavenue'])
+                        ->withInput($request->all());
+                }
+            }
+
             // Check if this is a startup zone invoice FIRST (before any other processing)
             // This helps us redirect correctly even if invoice is not found
             $isStartupZone = false;
@@ -630,13 +703,31 @@ class PaymentGatewayController extends Controller
                 }
             }
 
-            // If invoice not found, log and redirect
+            // If invoice not found, check if it's a poster payment
             if (!$invoice) {
+                // Check if this is a poster payment (order_id format: TIN-BTS2026-PSTR-123456_timestamp)
+                // Extract TIN from order_id (remove timestamp part after underscore)
+                $possibleTinNo = $order_id;
+                if (strpos($order_id, '_') !== false) {
+                    $possibleTinNo = explode('_', $order_id)[0];
+                }
+                
+                if (strpos($possibleTinNo, 'TIN-BTS2026-PSTR-') === 0 || strpos($possibleTinNo, 'TIN-BTS') === 0) {
+                    $poster = \App\Models\Poster::where('tin_no', $possibleTinNo)->first();
+                    
+                    if ($poster) {
+                        // Redirect to poster callback handler with the encrypted response
+                        return redirect()->route('poster.payment.callback', ['gateway' => 'ccavenue'])
+                            ->withInput($request->all());
+                    }
+                }
+                
                 Log::error('CCAvenue Success: Invoice not found', [
                     'order_id' => $order_id,
                     'response' => $responseArray,
                     'is_startup_zone' => $isStartupZone,
-                    'application_id' => $applicationId
+                    'application_id' => $applicationId,
+                    'is_poster' => (strpos($order_id, 'TIN-BTS2026-PSTR-') === 0)
                 ]);
 
                 // If startup zone, redirect to confirmation page

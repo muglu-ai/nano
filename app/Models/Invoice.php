@@ -14,6 +14,7 @@ class Invoice extends Model
         'application_id',
         'sponsorship_id',
         'registration_id',
+        'poster_reg_id',
         'amount',
         'int_amount_value',
         'usd_rate',
@@ -71,6 +72,11 @@ class Invoice extends Model
     public function payments()
     {
         return $this->hasMany(Payment::class);
+    }
+
+    public function poster()
+    {
+        return $this->belongsTo(Poster::class, 'poster_reg_id');
     }
     //make relation with BillingDetails model who has same application id
     public function billingDetails2()
