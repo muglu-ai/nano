@@ -190,6 +190,7 @@ class ExhibitorRegistrationController extends Controller
             'booth_space' => 'required|in:Raw,Shell',
             'booth_size' => 'required|string',
             'currency' => 'required|in:INR,USD',
+            'has_indian_gst' => 'nullable|in:yes,no',
             // 'gst_rate' => 'nullable|numeric|min:0|max:100'
         ]);
 
@@ -255,8 +256,18 @@ class ExhibitorRegistrationController extends Controller
         // Calculate IGST
         $igstAmount = $basePrice * ($igstRate / 100);
         
-        // Total GST is IGST (used for processing charges calculation)
-        $totalGst = $igstAmount;
+        // Determine which GST to apply
+        // For USD without Indian GST, use CGST+SGST instead of IGST
+        $hasIndianGst = $request->input('has_indian_gst');
+        $useCgstSgst = ($currency === 'USD' && $hasIndianGst === 'no');
+        
+        if ($useCgstSgst) {
+            // Use CGST + SGST for USD without Indian GST
+            $totalGst = $cgstAmount + $sgstAmount;
+        } else {
+            // Use IGST for all other cases
+            $totalGst = $igstAmount;
+        }
         
         // Calculate processing charges on (base price + GST)
         $processingCharges = ($basePrice + $totalGst) * $processingRate;
@@ -1095,9 +1106,13 @@ class ExhibitorRegistrationController extends Controller
             $validatedGstStateCode = $gstNo && strlen($gstNo) >= 2 ? substr($gstNo, 0, 2) : null;
             $isSameState = $validatedGstStateCode && $validatedGstStateCode === $organizerStateCode;
             
+            // Check if USD without Indian GST - should apply CGST+SGST
+            $hasIndianGst = $allData['has_indian_gst'] ?? null;
+            $isUsdWithoutIndianGst = ($currency === 'USD' && $hasIndianGst === 'no');
+            
             // Calculate IGST, CGST, SGST amounts - only store applicable GST
-            if ($isSameState) {
-                // Same state - apply CGST + SGST only
+            if ($isSameState || $isUsdWithoutIndianGst) {
+                // Same state OR USD without Indian GST - apply CGST + SGST only
                 $igstRate = null;
                 $igstAmount = null;
                 $cgstRate = $cgstRatePercent;
@@ -1502,8 +1517,14 @@ class ExhibitorRegistrationController extends Controller
             $validatedGstStateCode = $gstNo && strlen($gstNo) >= 2 ? substr($gstNo, 0, 2) : null;
             $isSameState = $validatedGstStateCode && $validatedGstStateCode === $organizerStateCode;
             
+            // Check if USD without Indian GST - should apply CGST+SGST  
+            $billingData = $draft->billing_data ?? [];
+            $hasIndianGst = $billingData['has_indian_gst'] ?? null;
+            $isUsdWithoutIndianGst = ($currency === 'USD' && $hasIndianGst === 'no');
+            
             // Only store applicable GST
-            if ($isSameState) {
+            if ($isSameState || $isUsdWithoutIndianGst) {
+                // Same state OR USD without Indian GST - apply CGST + SGST only
                 $igstRate = null;
                 $igstAmount = null;
                 $cgstRate = $cgstRatePercent;
@@ -1541,9 +1562,6 @@ class ExhibitorRegistrationController extends Controller
                 'currency' => $currency,
             ];
         }
-        
-        // Get currency from draft
-        $currency = $draft->currency ?? 'INR';
         
         // Build allData from draft for compatibility
         $allData = [

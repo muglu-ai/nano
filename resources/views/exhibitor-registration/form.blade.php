@@ -872,6 +872,9 @@ $(document).ready(function() {
         }
         const currencySymbol = currency === 'USD' ? '$' : '₹';
         
+        // Get has_indian_gst value if currency is USD
+        const hasIndianGst = $('#has_indian_gst').val();
+        
         $.ajax({
             url: '{{ route("exhibitor-registration.calculate-price") }}',
             method: 'POST',
@@ -880,6 +883,7 @@ $(document).ready(function() {
                 booth_space: boothSpace,
                 booth_size: boothSize,
                 currency: currency,
+                has_indian_gst: hasIndianGst,
                 {{-- gst_rate: {{ $gstRate }}, --}}
                 igst_rate: {{ $igstRate }},
                 cgst_rate: {{ $cgstRate }},
@@ -894,10 +898,26 @@ $(document).ready(function() {
                         const processingAmount = price.processing_charges || 0;
                         processingHtml = `<p><strong>Processing Charges (${price.processing_rate}%):</strong> ${currencySymbol}${processingAmount.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</p>`;
                     }
+                    
+                    // Debug logging
+                    console.log('Price Calculation Debug:', {
+                        currency: currency,
+                        hasIndianGst: hasIndianGst,
+                        isGstValidated: isGstValidated,
+                        validatedGstStateCode: validatedGstStateCode,
+                        organizerGstinStateCode: organizerGstinStateCode
+                    });
+                    
                     // Determine GST display: IGST if different state, CGST+SGST if same state as organizer
+                    // For USD without Indian GST, apply CGST+SGST
                     let gstHtml = '';
-                    if (isGstValidated && validatedGstStateCode && validatedGstStateCode === organizerGstinStateCode) {
-                        // Same state as organizer - show CGST + SGST
+                    const showCgstSgst = (isGstValidated && validatedGstStateCode && validatedGstStateCode === organizerGstinStateCode) || 
+                                        (currency === 'USD' && hasIndianGst === 'no');
+                    
+                    console.log('Show CGST+SGST:', showCgstSgst);
+                    
+                    if (showCgstSgst) {
+                        // Same state as organizer OR USD without Indian GST - show CGST + SGST
                         gstHtml = 
                         `
                             <strong>CGST (${price.cgst_rate}%):</strong> ${currencySymbol}${price.cgst_amount.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}
@@ -1040,6 +1060,13 @@ $(document).ready(function() {
     // Handle "Do you have an Indian GST Number?" dropdown for USD currency
     $('#has_indian_gst').on('change', function() {
         handleUsdGstSelection($(this).val());
+        
+        // Recalculate price if booth details are available
+        const boothSpace = $('#booth_space').val();
+        const boothSize = $('#booth_size').val();
+        if (boothSpace && boothSize) {
+            calculatePrice(boothSpace, boothSize);
+        }
     });
     
     // Function to handle USD GST selection

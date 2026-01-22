@@ -10,7 +10,7 @@
     .form-section {
         background: #f8f9fa;
         border-radius: 10px;
-        padding: 1.5rem;
+        padding: 1rem;
         margin-bottom: 2rem;
         border: 1px solid #e0e0e0;
     }
@@ -147,7 +147,7 @@
                 </div>
                 {{-- Sector Information --}}
                 <div class="form-section">
-                <h5 class="mb-3 mt-4 border-bottom pb-2"><i class="fas fa-industry"></i> Sector Information</h5>
+                <h5 class="mb-3  border-bottom pb-2"><i class="fas fa-industry"></i> Sector Information</h5>
                 <div class="row mb-3">
                     <div class="col-md-6">
                         <label for="sector_id" class="form-label">Sector <span class="text-danger">*</span></label>
@@ -194,7 +194,7 @@
                 </div>
                 {{-- Tax Information --}}
                 <div class="form-section">
-                <h5 class="mb-3 mt-4 border-bottom pb-2"><i class="fas fa-file-invoice-dollar"></i> Tax Information</h5>
+                <h5 class="mb-3  border-bottom pb-2"><i class="fas fa-file-invoice-dollar"></i> Tax Information</h5>
                 <div class="row mb-3">
                     <div class="col-md-6">
                         <label for="gst_compliance" class="form-label">GST Status <span class="text-danger">*</span></label>
@@ -205,6 +205,17 @@
                         </select>
                         <div class="invalid-feedback"></div>
                     </div>
+                   
+                    <div class="col-md-6">
+                        <label for="pan_no" class="form-label">PAN Number <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="pan_no" name="pan_no" 
+                               value="{{ $draft->pan_no ?? '' }}" 
+                               pattern="[A-Z]{5}[0-9]{4}[A-Z]{1}" 
+                               maxlength="10" placeholder="" required>
+                        <div class="invalid-feedback"></div>
+                    </div>
+                </div>
+                <div class="row mb-3">
                     <div class="col-md-6" id="gst_no_container" style="display: none;">
                         <label for="gst_no" class="form-label">GST Number <span class="text-danger" id="gst_required_indicator" style="display: none;">*</span></label>
                         <div class="input-group">
@@ -225,20 +236,11 @@
                     </div>
                 </div>
 
-                <div class="row mb-3">
-                    <div class="col-md-6">
-                        <label for="pan_no" class="form-label">PAN Number <span class="text-danger">*</span></label>
-                        <input type="text" class="form-control" id="pan_no" name="pan_no" 
-                               value="{{ $draft->pan_no ?? '' }}" 
-                               pattern="[A-Z]{5}[0-9]{4}[A-Z]{1}" 
-                               maxlength="10" placeholder="" required>
-                        <div class="invalid-feedback"></div>
-                    </div>
-                </div>
+                
                 </div>
                 {{-- Billing Information --}}
                 <div class="form-section">
-                <h5 class="mb-3 mt-4 border-bottom pb-2"><i class="fas fa-building"></i> Billing Information</h5>
+                <h5 class="mb-3  border-bottom pb-2"><i class="fas fa-building"></i> Billing Information</h5>
                 <div class="row mb-3">
                     <div class="col-md-6">
                         <label for="billing_company_name" class="form-label">Company Name <span class="text-danger">*</span></label>
@@ -366,7 +368,7 @@
                 </div>
                 {{-- Exhibitor Information --}}
                 <div class="form-section">
-                <h5 class="mb-3 mt-4 border-bottom pb-2"><i class="fas fa-building"></i> Exhibitor Information</h5>
+                <h5 class="mb-3  border-bottom pb-2"><i class="fas fa-building"></i> Exhibitor Information</h5>
                 <div class="row mb-3">
                     <div class="col-12">
                         <button type="button" class="btn btn-primary btn-sm mb-3" id="copy_from_billing" style="color: #fff;">
@@ -472,7 +474,7 @@
 
                 {{-- Contact Person Details --}}
                 <div class="form-section">
-                <h5 class="mb-3 mt-4 border-bottom pb-2"><i class="fas fa-user"></i> Contact Person Details</h5>
+                <h5 class="mb-3  border-bottom pb-2"><i class="fas fa-user"></i> Contact Person Details</h5>
                 <div class="row mb-3">
                     <div class="col-md-3">
                         <label for="contact_title" class="form-label">Title <span class="text-danger">*</span></label>
@@ -529,7 +531,7 @@
                 </div>
                 {{-- Payment Mode --}}
                 <div class="form-section" style="display: none;">
-                <h5 class="mb-3 mt-4 border-bottom pb-2"><i class="fas fa-credit-card"></i> Payment Mode</h5>
+                <h5 class="mb-3  border-bottom pb-2"><i class="fas fa-credit-card"></i> Payment Mode</h5>
                 <div class="row mb-3">
                     <div class="col-md-6">
                         <label for="payment_mode" class="form-label">Payment Mode <span class="text-danger">*</span></label>
@@ -542,7 +544,7 @@
                 </div>
                 </div>
                 {{-- Promocode Section --}}
-                <!-- <h5 class="mb-3 mt-4 border-bottom pb-2"><i class="fas fa-ticket-alt" style="display: none;"></i> Promocode (Optional)</h5> -->
+                <!-- <h5 class="mb-3  border-bottom pb-2"><i class="fas fa-ticket-alt" style="display: none;"></i> Promocode (Optional)</h5> -->
                 <div class="form-section" style="display: none;">
                 <div class="row mb-3" style="display: none;">
                     <div class="col-md-6">
@@ -566,7 +568,7 @@
                 {{-- Google reCAPTCHA temporarily disabled --}}
 
                 {{-- Submit Button --}}
-                <div class="d-flex justify-content-end mt-4">
+                <div class="d-flex justify-content-end ">
                     <button type="button" class="btn btn-primary btn-lg" id="submitForm">
                         <i class="fas fa-check fa-6 me-2"></i> Submit & Preview
                     </button>
