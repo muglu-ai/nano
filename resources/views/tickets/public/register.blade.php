@@ -1966,7 +1966,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         // Make AJAX request
-        fetch(`/tickets/${eventSlug}/validate-promocode`, {
+        fetch(`{{ config('constants.APP_URL') }}/tickets/${eventSlug}/validate-promocode`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
