@@ -11,6 +11,8 @@ use App\Models\Ticket\EventDay;
 use App\Models\Ticket\TicketRegistrationCategory;
 use App\Models\Ticket\TicketRegistrationTracking;
 use App\Models\GstLookup;
+use App\Services\TicketPromoCodeService;
+use App\Services\TicketGstCalculationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -73,11 +75,51 @@ class PublicTicketController extends Controller
         $selectedTicketParam = request()->query('ticket');
         $selectedNationality = request()->query('nationality'); // Get nationality from URL
 
-        // if the ticket and nationality is not provided, redirect to the ticket registration link
+        // If ticket and nationality are not in URL, check session data (for edit flow from preview)
         if (!$selectedTicketParam && !$selectedNationality) {
-            $redirectUrl = config('constants.TICKET_REGISTRATION_LINK');
-            // Redirect to the ticket registration link
-            return redirect()->to($redirectUrl);
+            $registrationData = session('ticket_registration_data');
+            
+            // If session data exists and has ticket type and nationality, use them
+            if ($registrationData && isset($registrationData['event_id']) && $registrationData['event_id'] == $event->id) {
+                // Get ticket type from session - could be slug or ID
+                if (isset($registrationData['ticket_type_id'])) {
+                    $ticketTypeIdOrSlug = $registrationData['ticket_type_id'];
+                    
+                    // Try to find ticket type to get slug if it's an ID
+                    $tempTicketType = \App\Models\Ticket\TicketType::where('event_id', $event->id)
+                        ->where(function($query) use ($ticketTypeIdOrSlug) {
+                            $query->where('slug', $ticketTypeIdOrSlug)
+                                  ->orWhere('id', $ticketTypeIdOrSlug);
+                        })
+                        ->first();
+                    
+                    if ($tempTicketType) {
+                        $selectedTicketParam = $tempTicketType->slug;
+                    } else {
+                        $selectedTicketParam = $ticketTypeIdOrSlug; // Fallback to original value
+                    }
+                }
+                
+                // Get nationality from session and normalize
+                if (isset($registrationData['nationality'])) {
+                    $nationality = $registrationData['nationality'];
+                    // Normalize: 'Indian'/'indian' -> 'national', 'International'/'international' -> 'international'
+                    if (in_array(strtolower($nationality), ['indian', 'national'])) {
+                        $selectedNationality = 'national';
+                    } elseif (in_array(strtolower($nationality), ['international'])) {
+                        $selectedNationality = 'international';
+                    } else {
+                        $selectedNationality = $nationality;
+                    }
+                }
+            }
+            
+            // If still no ticket and nationality, redirect to the ticket registration link
+            if (!$selectedTicketParam && !$selectedNationality) {
+                $redirectUrl = config('constants.TICKET_REGISTRATION_LINK');
+                // Redirect to the ticket registration link
+                return redirect()->to($redirectUrl);
+            }
         }
         
         // Load ticket types
@@ -588,13 +630,36 @@ class PublicTicketController extends Controller
         $isInternational = ($nationality === 'International' || $nationality === 'international');
         $nationalityForPrice = $isInternational ? 'international' : 'national';
 
-        // Calculate pricing
+        // Calculate pricing - check if per-day pricing applies
         $quantity = $registrationData['delegate_count'];
-        $unitPrice = $ticketType->getCurrentPrice($nationalityForPrice);
+        $selectedEventDayId = $registrationData['selected_event_day_id'] ?? null;
+        $selectedAllDays = $registrationData['selected_all_days'] ?? false;
+        
+        // Use per-day price if ticket has per-day pricing and a specific day is selected (not "all")
+        if ($ticketType->hasPerDayPricing() && $selectedEventDayId && $selectedEventDayId !== 'all' && !$selectedAllDays) {
+            // Single day selected - use per-day price
+            $unitPrice = $ticketType->getPerDayPrice($nationalityForPrice) ?? $ticketType->getCurrentPrice($nationalityForPrice);
+        } elseif ($ticketType->hasPerDayPricing() && ($selectedEventDayId === 'all' || $selectedAllDays)) {
+            // "All Days" selected - use regular price (full package)
+            $unitPrice = $ticketType->getCurrentPrice($nationalityForPrice);
+        } else {
+            $unitPrice = $ticketType->getCurrentPrice($nationalityForPrice);
+        }
         $subtotal = $unitPrice * $quantity;
         
-        // Get GST rate (default 18%)
-        $gstRate = config('constants.GST_RATE', 18);
+        // Determine GST type and calculate GST using new service
+        $gstService = new TicketGstCalculationService();
+        $gstType = $gstService->determineGstType($registrationData);
+        $gstCalculation = $gstService->calculateGst($subtotal, $gstType);
+        
+        // Extract GST values
+        $cgstRate = $gstCalculation['cgst_rate'];
+        $cgstAmount = $gstCalculation['cgst_amount'];
+        $sgstRate = $gstCalculation['sgst_rate'];
+        $sgstAmount = $gstCalculation['sgst_amount'];
+        $igstRate = $gstCalculation['igst_rate'];
+        $igstAmount = $gstCalculation['igst_amount'];
+        $gstAmount = $gstCalculation['total_gst']; // Total GST for backward compatibility
         
         // Get processing charge rate (3% for India/National, 9% for International)
         // Use nationality to determine processing charge rate
@@ -602,14 +667,44 @@ class PublicTicketController extends Controller
             ? config('constants.INT_PROCESSING_CHARGE', 9)  // International: 9%
             : config('constants.IND_PROCESSING_CHARGE', 3); // National/Indian: 3%
         
-        // Calculate GST on subtotal
-        $gstAmount = round(($subtotal * $gstRate) / 100);
-        
         // Calculate processing charge on (subtotal + GST)
         $processingChargeAmount = round((($subtotal + $gstAmount) * $processingChargeRate) / 100);
         
-        // Total
-        $total = round($subtotal + $gstAmount + $processingChargeAmount);
+        // Apply promocode discount if exists
+        $discountAmount = 0;
+        $promocodeData = session('ticket_promocode');
+        $promocodeCode = null;
+        $promocodeDiscountPercentage = null;
+        
+        if ($promocodeData && isset($promocodeData['promo_code_id'])) {
+            $promoCode = \App\Models\Ticket\TicketPromoCode::find($promocodeData['promo_code_id']);
+            if ($promoCode) {
+                // Re-validate promocode
+                $promoCodeService = new TicketPromoCodeService();
+                $validationData = [
+                    'ticket_type_id' => $ticketType->id,
+                    'registration_category_id' => $registrationData['registration_category_id'] ?? null,
+                    'selected_event_day_id' => ($selectedEventDayId === 'all' || $selectedAllDays) ? null : $selectedEventDayId,
+                    'delegate_count' => $quantity,
+                    'base_amount' => $subtotal,
+                ];
+                
+                $validationResult = $promoCodeService->validatePromoCode($promoCode->code, $event->id, $validationData);
+                
+                if ($validationResult['valid']) {
+                    // Calculate discount on base amount only
+                    $discountAmount = $promoCodeService->calculateDiscount($promoCode, $subtotal);
+                    $promocodeCode = $promoCode->code;
+                    $promocodeDiscountPercentage = $promoCode->type === 'percentage' ? $promoCode->value : null;
+                } else {
+                    // Invalid promocode, clear from session
+                    session()->forget('ticket_promocode');
+                }
+            }
+        }
+        
+        // Calculate final total with discount
+        $total = round($subtotal + $gstAmount + $processingChargeAmount - $discountAmount);
         
         // Determine currency
         $currency = $isInternational ? 'USD' : 'INR';
@@ -641,10 +736,19 @@ class PublicTicketController extends Controller
             'quantity',
             'unitPrice',
             'subtotal',
-            'gstRate',
-            'gstAmount',
+            'gstType',
+            'cgstRate',
+            'cgstAmount',
+            'sgstRate',
+            'sgstAmount',
+            'igstRate',
+            'igstAmount',
+            'gstAmount', // Keep for backward compatibility
             'processingChargeRate',
             'processingChargeAmount',
+            'discountAmount',
+            'promocodeCode',
+            'promocodeDiscountPercentage',
             'total',
             'currency',
             'isInternational'
@@ -736,6 +840,170 @@ class PublicTicketController extends Controller
                 'success' => false,
                 'message' => 'Error validating GST. Please fill the details manually.',
                 'allow_manual' => true
+            ], 500);
+        }
+    }
+
+    /**
+     * Validate promocode
+     */
+    public function validatePromocode(Request $request, $eventSlug)
+    {
+        try {
+            $event = Events::where('slug', $eventSlug)->orWhere('id', $eventSlug)->firstOrFail();
+            
+            // Validate request - return JSON on validation failure
+            // Note: ticket_type_id can be either ID or slug
+            $validator = \Illuminate\Support\Facades\Validator::make($request->all(), [
+                'code' => 'required|string|max:100',
+                'ticket_type_id' => [
+                    'required',
+                    function ($attribute, $value, $fail) use ($event) {
+                        // Check if ticket type exists by slug or ID, and belongs to this event
+                        $ticketType = TicketType::where('event_id', $event->id)
+                            ->where(function($query) use ($value) {
+                                $query->where('slug', $value)
+                                      ->orWhere('id', $value);
+                            })
+                            ->where('is_active', true)
+                            ->first();
+                        
+                        if (!$ticketType) {
+                            $fail('The selected ticket type is invalid.');
+                        }
+                    },
+                ],
+                'registration_category_id' => 'nullable|exists:ticket_registration_categories,id',
+                'selected_event_day_id' => 'nullable',
+                'delegate_count' => 'required|integer|min:1',
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json([
+                    'valid' => false,
+                    'message' => $validator->errors()->first(),
+                    'errors' => $validator->errors()
+                ], 422);
+            }
+
+            // Get registration data from session or request
+            $registrationData = session('ticket_registration_data', []);
+            
+            // Get ticket type to calculate base amount (can be slug or ID)
+            $ticketType = TicketType::where('event_id', $event->id)
+                ->where(function($query) use ($request) {
+                    $query->where('slug', $request->ticket_type_id)
+                          ->orWhere('id', $request->ticket_type_id);
+                })
+                ->where('is_active', true)
+                ->first();
+                
+            if (!$ticketType) {
+                return response()->json([
+                    'valid' => false,
+                    'message' => 'Invalid ticket type.',
+                ], 400);
+            }
+
+            // Determine nationality for pricing
+            $nationality = $registrationData['nationality'] ?? $request->nationality ?? 'Indian';
+            $isInternational = ($nationality === 'International' || $nationality === 'international');
+            $nationalityForPrice = $isInternational ? 'international' : 'national';
+
+            // Calculate base amount (subtotal before GST/processing charges)
+            $quantity = $request->delegate_count;
+            $selectedEventDayId = $request->selected_event_day_id;
+            $selectedAllDays = ($selectedEventDayId === 'all' || $selectedEventDayId === null);
+            
+            // Use per-day price if applicable
+            if ($ticketType->hasPerDayPricing() && $selectedEventDayId && !$selectedAllDays) {
+                $unitPrice = $ticketType->getPerDayPrice($nationalityForPrice) ?? $ticketType->getCurrentPrice($nationalityForPrice);
+            } else {
+                $unitPrice = $ticketType->getCurrentPrice($nationalityForPrice);
+            }
+            
+            $baseAmount = $unitPrice * $quantity;
+
+            // Prepare validation data
+            $validationData = [
+                'ticket_type_id' => $request->ticket_type_id,
+                'registration_category_id' => $request->registration_category_id,
+                'selected_event_day_id' => $selectedAllDays ? null : $selectedEventDayId,
+                'delegate_count' => $quantity,
+                'base_amount' => $baseAmount,
+                'contact_id' => $registrationData['contact_id'] ?? null,
+            ];
+
+            // Validate promocode
+            $promoCodeService = new TicketPromoCodeService();
+            $result = $promoCodeService->validatePromoCode($request->code, $event->id, $validationData);
+
+            if ($result['valid']) {
+                // Calculate final totals with discount
+                $discountAmount = $result['discount_amount'];
+                $gstRate = config('constants.GST_RATE', 18);
+                $processingChargeRate = $isInternational 
+                    ? config('constants.INT_PROCESSING_CHARGE', 9)
+                    : config('constants.IND_PROCESSING_CHARGE', 3);
+                
+                $gstAmount = round(($baseAmount * $gstRate) / 100);
+                $processingChargeAmount = round((($baseAmount + $gstAmount) * $processingChargeRate) / 100);
+                $finalTotal = round($baseAmount + $gstAmount + $processingChargeAmount - $discountAmount);
+                
+                // Check if complimentary
+                $isComplimentary = $finalTotal <= 0;
+
+                // Store promocode in session
+                session(['ticket_promocode' => [
+                    'code' => $request->code,
+                    'promo_code_id' => $result['promoCode']->id,
+                    'discount_amount' => $discountAmount,
+                    'discount_percentage' => $result['discount_percentage'],
+                ]]);
+
+                return response()->json([
+                    'valid' => true,
+                    'message' => $result['message'],
+                    'discount_amount' => $discountAmount,
+                    'discount_percentage' => $result['discount_percentage'],
+                    'base_amount' => $baseAmount,
+                    'gst_amount' => $gstAmount,
+                    'processing_charge_amount' => $processingChargeAmount,
+                    'final_total' => $finalTotal,
+                    'is_complimentary' => $isComplimentary,
+                ]);
+            }
+
+            // Clear promocode from session if invalid
+            session()->forget('ticket_promocode');
+
+            return response()->json([
+                'valid' => false,
+                'message' => $result['message'],
+            ], 400);
+            
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'valid' => false,
+                'message' => $e->getMessage(),
+                'errors' => $e->errors()
+            ], 422);
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return response()->json([
+                'valid' => false,
+                'message' => 'Event not found.',
+            ], 404);
+        } catch (\Exception $e) {
+            Log::error('Promocode Validation Error', [
+                'code' => $request->code ?? 'N/A',
+                'event_slug' => $eventSlug,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return response()->json([
+                'valid' => false,
+                'message' => 'An error occurred while validating the promocode. Please try again.',
             ], 500);
         }
     }

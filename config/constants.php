@@ -186,6 +186,7 @@ return [
     ],
     'IND_PROCESSING_CHARGE' => IND_PROCESSING_CHARGE, // 3% processing fee for National payments
     'GSTIN' => '29AABCM2615H1ZM',
+    'GST_STATE' => 'Karnataka',
     'PAN'   => 'AABCS1234A',
     'CIN'  => 'U12345DL2025PTC123456',
     'organizer' => [

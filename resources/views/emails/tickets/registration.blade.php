@@ -573,19 +573,52 @@
                     <td class="label-col">Ticket Price ({{ $item->quantity }} × {{ $currencySymbol }}{{ number_format($item->unit_price, $priceFormat) }})</td>
                     <td class="value-col">{{ $currencySymbol }}{{ number_format($item->subtotal, $priceFormat) }}</td>
                 </tr>
+                @if($item->gst_type === 'cgst_sgst')
                 <tr>
-                    <td class="label-col">GST ({{ $item->gst_rate }}%)</td>
-                    <td class="value-col">{{ $currencySymbol }}{{ number_format($item->gst_amount, $priceFormat) }}</td>
+                    <td class="label-col">CGST ({{ number_format($item->cgst_rate ?? 0, 0) }}%)</td>
+                    <td class="value-col">{{ $currencySymbol }}{{ number_format($item->cgst_amount ?? 0, $priceFormat) }}</td>
                 </tr>
+                <tr>
+                    <td class="label-col">SGST ({{ number_format($item->sgst_rate ?? 0, 0) }}%)</td>
+                    <td class="value-col">{{ $currencySymbol }}{{ number_format($item->sgst_amount ?? 0, $priceFormat) }}</td>
+                </tr>
+                @else
+                <tr>
+                    <td class="label-col">IGST ({{ number_format($item->igst_rate ?? 0, 0) }}%)</td>
+                    <td class="value-col">{{ $currencySymbol }}{{ number_format($item->igst_amount ?? 0, $priceFormat) }}</td>
+                </tr>
+                @endif
                 <tr>
                     <td class="label-col">Processing Charge ({{ $item->processing_charge_rate }}%)</td>
                     <td class="value-col">{{ $currencySymbol }}{{ number_format($item->processing_charge_amount, $priceFormat) }}</td>
                 </tr>
                 @endforeach
+                @if($order->discount_amount > 0 && $order->promoCode)
+                <tr style="background-color: #d4edda;">
+                    <td class="label-col" style="color: #155724;">
+                        🏷️ Promocode Discount
+                        @if($order->promoCode->type === 'percentage')
+                            <div style="font-size: 11px; font-weight: normal; margin-top: 3px;">
+                                ({{ number_format($order->promoCode->value, 0) }}% off base amount)
+                            </div>
+                        @endif
+                    </td>
+                    <td class="value-col" style="color: #155724; font-weight: 600;">
+                        -{{ $currencySymbol }}{{ number_format($order->discount_amount, $priceFormat) }}
+                    </td>
+                </tr>
+                @endif
                 <tr class="total-row">
                     <td class="label-col" style="background: #0066cc; color: #ffffff;">Total Amount</td>
                     <td class="value-col" style="background: #0066cc; color: #ffffff;">{{ $currencySymbol }}{{ number_format($order->total, $priceFormat) }}</td>
                 </tr>
+                @if($order->discount_amount > 0 && $order->promoCode)
+                <tr>
+                    <td colspan="2" style="padding: 8px; font-size: 11px; color: #666; border: none;">
+                        <em>Note: Discount applies to base amount only. GST and processing charges are calculated on the original base amount.</em>
+                    </td>
+                </tr>
+                @endif
             </table>
 
             <!-- Pay Now Button -->
@@ -637,7 +670,11 @@
             @endif
             <div style="background: #d4edda; padding: 15px; border: 1px solid #c3e6cb; margin: 8px 0; text-align: center; border-radius: 4px;">
                 <p style="margin: 0; color: #155724; font-size: 15px; font-weight: 700;">
-                    ✓ Payment Completed Successfully
+                    @if($order->payment_status === 'complimentary')
+                        🎁 Complimentary Registration Confirmed
+                    @else
+                        ✓ Payment Completed Successfully
+                    @endif
                 </p>
                 <p style="margin: 5px 0 0 0; color: #155724; font-size: 13px;">
                     Your registration is confirmed. You will receive further communication regarding the event.
