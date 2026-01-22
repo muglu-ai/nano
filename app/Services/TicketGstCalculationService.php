@@ -16,37 +16,63 @@ class TicketGstCalculationService
         $organizerState = config('constants.GST_STATE', 'Karnataka');
         $organizerStateCode = $this->getOrganizerStateCode();
         
-        // Get organization state from registration data
-        $companyState = is_array($registrationData) 
-            ? ($registrationData['company_state'] ?? null)
-            : ($registrationData->company_state ?? null);
+        // Normalize state names for comparison (case-insensitive)
+        $organizerStateNormalized = trim(strtolower($organizerState));
         
-        // If organization state is NOT Karnataka, apply IGST (inter-state)
-        if ($companyState !== $organizerState) {
+        // Get nationality/currency
+        $nationality = is_array($registrationData)
+            ? ($registrationData['nationality'] ?? 'Indian')
+            : ($registrationData->nationality ?? 'Indian');
+        $isInternational = (strtolower($nationality) === 'international');
+        
+        // If currency is international, apply IGST
+        if ($isInternational) {
             return 'igst';
         }
         
-        // If organization state IS Karnataka, check GST requirements
-        $gstRequired = is_array($registrationData)
+        // Get GST required status
+        $gstRequiredRaw = is_array($registrationData)
             ? ($registrationData['gst_required'] ?? false)
             : ($registrationData->gst_required ?? false);
         
-        $gstin = is_array($registrationData)
-            ? ($registrationData['gstin'] ?? null)
-            : ($registrationData->gstin ?? null);
+        // Normalize gst_required (can be string "0"/"1" or boolean)
+        $gstRequired = ($gstRequiredRaw === '1' || $gstRequiredRaw === 1 || $gstRequiredRaw === true);
         
-        // If GST Invoice is required and GSTIN is provided
-        if ($gstRequired && $gstin) {
-            $customerGstinStateCode = $this->getGstinStateCode($gstin);
+        if (!$gstRequired) {
+            // GST required is NO: Match organization state with event state
+            $companyState = is_array($registrationData) 
+                ? ($registrationData['company_state'] ?? null)
+                : ($registrationData->company_state ?? null);
             
-            // If GSTIN state code matches organizer state code, apply CGST + SGST
-            if ($customerGstinStateCode && $customerGstinStateCode === $organizerStateCode) {
-                return 'cgst_sgst';
+            if ($companyState) {
+                $companyStateNormalized = trim(strtolower($companyState));
+                // If organization state matches event state, apply CGST + SGST
+                if ($companyStateNormalized === $organizerStateNormalized) {
+                    return 'cgst_sgst';
+                }
             }
+            // If doesn't match, apply IGST
+            return 'igst';
+        } else {
+            // GST required is YES: Match GST state (from GSTIN) with event state
+            $gstin = is_array($registrationData)
+                ? ($registrationData['gstin'] ?? null)
+                : ($registrationData->gstin ?? null);
+            
+            // Clean GSTIN (remove spaces, convert to uppercase)
+            $gstin = $gstin ? strtoupper(trim($gstin)) : null;
+            
+            if ($gstin && strlen($gstin) >= 2) {
+                $customerGstinStateCode = $this->getGstinStateCode($gstin);
+                
+                // If GSTIN state code matches organizer state code, apply CGST + SGST
+                if ($customerGstinStateCode && $customerGstinStateCode === $organizerStateCode) {
+                    return 'cgst_sgst';
+                }
+            }
+            // If doesn't match or GSTIN not provided, apply IGST
+            return 'igst';
         }
-        
-        // Default to IGST for Karnataka if GST requirements not met
-        return 'igst';
     }
     
     /**

@@ -33,10 +33,10 @@ const SOC_TWITTER = 'https://twitter.com/blrtechsummit';
 const SOC_FACEBOOK = 'https://www.facebook.com/BengaluruTechSummit';
 const SOC_INSTAGRAM = 'https://www.instagram.com/blrtechsummit/';
 const SOC_YOUTUBE = 'https://www.youtube.com/@bengalurutechsummit/streams';
-const ORGANIZER_NAME = 'MM Activ Sci-Tech Communications';
+const ORGANIZER_NAME = 'MM Activ Sci-Tech Communications PVT LTD';
 define('ORGANIZER_ADDRESS', !empty($_ENV['ORGANIZER_ADDRESS'])
     ? $_ENV['ORGANIZER_ADDRESS']
-    : 'No.11/3, NITON, Block C, 2nd Floor, <br> Palace Road, Bengaluru - 560001, Karnataka, India');
+    : 'No.11/3, NITON, Block C, 2nd Floor, Palace Road, <br>Bengaluru - 560001, Karnataka, India');
 const FAVICON_APPLE = 'https://www.bengalurutechsummit.com/apple-touch-icon.png';
 const FAVICON = 'https://www.bengalurutechsummit.com/favicon-32x32.png';
 const FAVICON_16 = 'https://www.bengalurutechsummit.com/favicon-16x16.png';
