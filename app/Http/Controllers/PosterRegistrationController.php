@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 use PaypalServerSdkLib\PaypalServerSdkClientBuilder;
 use PaypalServerSdkLib\Authentication\ClientCredentialsAuthCredentialsBuilder;
 use PaypalServerSdkLib\Models\Builders\OrderRequestBuilder;
@@ -598,6 +599,13 @@ class PosterRegistrationController extends Controller
             $request->session()->put('poster_draft_token', $token);
         }
 
+        // Check if poster already exists and payment is successful - redirect to success page
+        $existingPoster = Poster::where('draft_token', $draft->token)->first();
+        if ($existingPoster && $existingPoster->payment_status === 'successful') {
+            return redirect()->route('poster.success', ['tin_no' => $existingPoster->tin_no])
+                ->with('info', 'Your payment has already been completed. Redirecting to success page...');
+        }
+
         return view('poster.preview', compact('draft'));
     }
 
@@ -728,7 +736,21 @@ class PosterRegistrationController extends Controller
     public function success(string $tin_no)
     {
         $poster = Poster::where('tin_no', $tin_no)->firstOrFail();
-        return view('poster.success', compact('poster'));
+        
+        // Get payment information
+        $invoice = \App\Models\Invoice::where('invoice_no', $tin_no)
+            ->where('type', 'poster_registration')
+            ->first();
+        
+        $payment = null;
+        if ($invoice) {
+            $payment = \App\Models\Payment::where('invoice_id', $invoice->id)
+                ->where('status', 'successful')
+                ->orderBy('created_at', 'desc')
+                ->first();
+        }
+        
+        return view('poster.success', compact('poster', 'invoice', 'payment'));
     }
 
     // Generate unique TIN number
@@ -1519,6 +1541,39 @@ class PosterRegistrationController extends Controller
                     'transaction_id' => $trackingId,
                 ]);
                 
+                // Send thank you email after payment confirmation to both lead author and poster presenter
+                try {
+                    $paymentDetails = [
+                        'transaction_id' => $trackingId,
+                        'payment_method' => $responseArray['payment_mode'] ?? 'CCAvenue',
+                        'amount' => $amount,
+                        'currency' => $invoice->currency ?? 'INR',
+                    ];
+                    
+                    // Send email to lead author
+                    if ($poster->lead_email) {
+                        Mail::to($poster->lead_email)
+                            ->bcc(['test.interlinks@gmail.com'])
+                            ->send(new \App\Mail\PosterMail($poster, 'payment_thank_you', $invoice, $paymentDetails));
+                    }
+                    
+                    // Send email to poster presenter (if different from lead author)
+                    if ($poster->pp_email && $poster->pp_email !== $poster->lead_email) {
+                        Mail::to($poster->pp_email)
+                            ->bcc(['test.interlinks@gmail.com'])
+                            ->send(new \App\Mail\PosterMail($poster, 'payment_thank_you', $invoice, $paymentDetails));
+                    }
+                } catch (\Exception $e) {
+                    Log::error('Failed to send poster payment thank you email', [
+                        'poster_id' => $poster->id,
+                        'tin_no' => $poster->tin_no,
+                        'lead_email' => $poster->lead_email ?? 'unknown',
+                        'pp_email' => $poster->pp_email ?? 'unknown',
+                        'error' => $e->getMessage()
+                    ]);
+                    // Don't fail the payment if email fails
+                }
+                
                 // Redirect to success page
                 return redirect()
                     ->route('poster.success', ['tin_no' => $poster->tin_no])
@@ -1714,6 +1769,39 @@ class PosterRegistrationController extends Controller
 
                 // Clear session
                 session()->forget(['poster_id', 'poster_tin_no', 'poster_payment_id', 'poster_order_id', 'poster_paypal_order_id']);
+
+                // Send thank you email after payment confirmation to both lead author and poster presenter
+                try {
+                    $paymentDetails = [
+                        'transaction_id' => $paypalOrderId,
+                        'payment_method' => 'PayPal',
+                        'amount' => $paymentAmount,
+                        'currency' => $invoice->currency ?? 'USD',
+                    ];
+                    
+                    // Send email to lead author
+                    if ($poster->lead_email) {
+                        Mail::to($poster->lead_email)
+                            ->bcc(['test.interlinks@gmail.com'])
+                            ->send(new \App\Mail\PosterMail($poster, 'payment_thank_you', $invoice, $paymentDetails));
+                    }
+                    
+                    // Send email to poster presenter (if different from lead author)
+                    if ($poster->pp_email && $poster->pp_email !== $poster->lead_email) {
+                        Mail::to($poster->pp_email)
+                            ->bcc(['test.interlinks@gmail.com'])
+                            ->send(new \App\Mail\PosterMail($poster, 'payment_thank_you', $invoice, $paymentDetails));
+                    }
+                } catch (\Exception $e) {
+                    Log::error('Failed to send poster payment thank you email (PayPal)', [
+                        'poster_id' => $poster->id,
+                        'tin_no' => $poster->tin_no,
+                        'lead_email' => $poster->lead_email ?? 'unknown',
+                        'pp_email' => $poster->pp_email ?? 'unknown',
+                        'error' => $e->getMessage()
+                    ]);
+                    // Don't fail the payment if email fails
+                }
 
                 return redirect()->route('poster.success', ['tin_no' => $poster->tin_no])
                     ->with('success', 'Payment successful!');
