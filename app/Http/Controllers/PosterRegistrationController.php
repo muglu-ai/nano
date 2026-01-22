@@ -598,6 +598,13 @@ class PosterRegistrationController extends Controller
             $request->session()->put('poster_draft_token', $token);
         }
 
+        // Check if poster already exists and payment is successful - redirect to success page
+        $existingPoster = Poster::where('draft_token', $draft->token)->first();
+        if ($existingPoster && $existingPoster->payment_status === 'successful') {
+            return redirect()->route('poster.success', ['tin_no' => $existingPoster->tin_no])
+                ->with('info', 'Your payment has already been completed. Redirecting to success page...');
+        }
+
         return view('poster.preview', compact('draft'));
     }
 
@@ -728,7 +735,21 @@ class PosterRegistrationController extends Controller
     public function success(string $tin_no)
     {
         $poster = Poster::where('tin_no', $tin_no)->firstOrFail();
-        return view('poster.success', compact('poster'));
+        
+        // Get payment information
+        $invoice = \App\Models\Invoice::where('invoice_no', $tin_no)
+            ->where('type', 'poster_registration')
+            ->first();
+        
+        $payment = null;
+        if ($invoice) {
+            $payment = \App\Models\Payment::where('invoice_id', $invoice->id)
+                ->where('status', 'successful')
+                ->orderBy('created_at', 'desc')
+                ->first();
+        }
+        
+        return view('poster.success', compact('poster', 'invoice', 'payment'));
     }
 
     // Generate unique TIN number

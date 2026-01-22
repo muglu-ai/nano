@@ -233,6 +233,24 @@
             padding: 16px 20px;
         }
 
+        .alert-success {
+            background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+            color: #065f46;
+            border-left: 4px solid #10b981;
+            border-radius: 12px;
+            border: none;
+            padding: 16px 20px;
+        }
+
+        .alert-danger {
+            background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+            color: #991b1b;
+            border-left: 4px solid #ef4444;
+            border-radius: 12px;
+            border: none;
+            padding: 16px 20px;
+        }
+
         .btn-outline-primary {
             border: 2px solid #8b5cf6;
             color: #8b5cf6;
@@ -392,14 +410,56 @@
                 </div>
             </div>
 
-            {{-- Approval Pending Message --}}
-            <div class="alert alert-info">
-                <div class="fw-bold">Approval Pending</div>
-                <div>
-                    Your profile is not approved yet for payment. Please wait for admin approval.
-                    You will be notified once your application is approved.
+            @if(session('success'))
+                <div class="alert alert-success mb-3" style="background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%); color: #065f46; border-left: 4px solid #10b981; border-radius: 12px; border: none; padding: 16px 20px;">
+                    <div class="fw-bold">✓ {{ session('success') }}</div>
                 </div>
-            </div>
+            @endif
+
+            @if(session('info'))
+                <div class="alert alert-info mb-3">
+                    <div class="fw-bold">{{ session('info') }}</div>
+                </div>
+            @endif
+
+            {{-- Payment Status Messages --}}
+            @if($poster->payment_status === 'successful')
+                <div class="alert alert-success" style="background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%); color: #065f46; border-left: 4px solid #10b981; border-radius: 12px; border: none; padding: 20px;">
+                    <div class="d-flex align-items-center gap-3">
+                        <div style="font-size: 2rem;">✓</div>
+                        <div>
+                            <div class="fw-bold" style="font-size: 1.1rem; margin-bottom: 4px;">Payment Successful!</div>
+                            <div>
+                                Your poster registration and payment have been completed successfully. 
+                                @if($payment && $payment->transaction_id)
+                                    <br><strong>Transaction ID:</strong> {{ $payment->transaction_id }}
+                                @endif
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            @elseif($poster->payment_status === 'pending')
+                <div class="alert alert-warning">
+                    <div class="fw-bold">Payment Pending</div>
+                    <div>
+                        Your registration has been submitted. Please complete the payment to finalize your registration.
+                    </div>
+                </div>
+            @elseif($poster->payment_status === 'failed')
+                <div class="alert alert-danger" style="background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%); color: #991b1b; border-left: 4px solid #ef4444; border-radius: 12px; border: none; padding: 20px;">
+                    <div class="fw-bold">Payment Failed</div>
+                    <div>
+                        Your payment could not be processed. Please try again or contact support if the issue persists.
+                    </div>
+                </div>
+            @else
+                <div class="alert alert-info">
+                    <div class="fw-bold">Registration Submitted</div>
+                    <div>
+                        Your registration has been submitted successfully. Payment information will be available once processed.
+                    </div>
+                </div>
+            @endif
 
             <div class="block mb-3">
 
@@ -586,9 +646,31 @@
                         </tr>
                     </table>
 
-                    <div class="alert alert-warning mt-3 mb-0">
-                        Payment options will be available once your application is approved by the admin.
-                    </div>
+                    @if($poster->payment_status === 'successful')
+                        <div class="alert alert-success mt-3 mb-0" style="background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%); color: #065f46; border-left: 4px solid #10b981; border-radius: 12px; border: none; padding: 16px 20px;">
+                            <div class="fw-bold mb-2">✓ Payment Completed</div>
+                            <div>
+                                @if($payment)
+                                    <strong>Payment Method:</strong> {{ $payment->payment_method ?? 'CCAvenue' }}<br>
+                                    <strong>Amount Paid:</strong> {{ $invoice->currency ?? 'INR' }} {{ number_format($payment->amount_paid ?? $invoice->amount_paid ?? 0, 2) }}<br>
+                                    @if($payment->transaction_id)
+                                        <strong>Transaction ID:</strong> {{ $payment->transaction_id }}<br>
+                                    @endif
+                                    <strong>Payment Date:</strong> {{ $payment->payment_date ? \Carbon\Carbon::parse($payment->payment_date)->format('d M Y, h:i A') : 'N/A' }}
+                                @else
+                                    Payment has been successfully processed.
+                                @endif
+                            </div>
+                        </div>
+                    @elseif($poster->payment_status === 'pending')
+                        <div class="alert alert-warning mt-3 mb-0">
+                            Payment is pending. Please complete the payment to finalize your registration.
+                        </div>
+                    @else
+                        <div class="alert alert-info mt-3 mb-0">
+                            Payment information will be available once your payment is processed.
+                        </div>
+                    @endif
                 </div>
 
             </div>
@@ -600,7 +682,11 @@
             </div>
 
             <div class="text-secondary mt-3" style="font-size: 13px;">
-                Your registration has been submitted successfully. Keep your Registration ID for future reference.
+                @if($poster->payment_status === 'successful')
+                    Your registration and payment have been completed successfully. Keep your TIN Number (<strong>{{ $poster->tin_no }}</strong>) for future reference.
+                @else
+                    Your registration has been submitted successfully. Keep your TIN Number (<strong>{{ $poster->tin_no }}</strong>) for future reference.
+                @endif
             </div>
 
         </div>
