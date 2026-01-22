@@ -741,25 +741,34 @@ class PaymentGatewayController extends Controller
                     'transaction_id' => $responseArray['tracking_id'] ?? null,
                 ]);
                 
-                // Send thank you email after payment confirmation
+                // Send thank you email after payment confirmation to both lead author and poster presenter
                 try {
-                    $userEmail = $poster->lead_email;
+                    $paymentDetails = [
+                        'transaction_id' => $responseArray['tracking_id'] ?? null,
+                        'payment_method' => $responseArray['payment_mode'] ?? 'CCAvenue',
+                        'amount' => $responseArray['mer_amount'],
+                        'currency' => $invoice->currency ?? 'INR',
+                    ];
                     
-                    if ($userEmail) {
-                        $paymentDetails = [
-                            'transaction_id' => $responseArray['tracking_id'] ?? null,
-                            'payment_method' => $responseArray['payment_mode'] ?? 'CCAvenue',
-                            'amount' => $responseArray['mer_amount'],
-                            'currency' => $invoice->currency ?? 'INR',
-                        ];
-                        
-                        Mail::to($userEmail)->send(new \App\Mail\PosterMail($poster, 'payment_thank_you', $invoice, $paymentDetails));
+                    // Send email to lead author
+                    if ($poster->lead_email) {
+                        Mail::to($poster->lead_email)
+                            ->bcc(['test.interlinks@gmail.com'])
+                            ->send(new \App\Mail\PosterMail($poster, 'payment_thank_you', $invoice, $paymentDetails));
+                    }
+                    
+                    // Send email to poster presenter (if different from lead author)
+                    if ($poster->pp_email && $poster->pp_email !== $poster->lead_email) {
+                        Mail::to($poster->pp_email)
+                            ->bcc(['test.interlinks@gmail.com'])
+                            ->send(new \App\Mail\PosterMail($poster, 'payment_thank_you', $invoice, $paymentDetails));
                     }
                 } catch (\Exception $e) {
                     Log::error('Failed to send poster payment thank you email', [
                         'poster_id' => $poster->id,
                         'tin_no' => $poster->tin_no,
-                        'email' => $userEmail ?? 'unknown',
+                        'lead_email' => $poster->lead_email ?? 'unknown',
+                        'pp_email' => $poster->pp_email ?? 'unknown',
                         'error' => $e->getMessage()
                     ]);
                     // Don't fail the payment if email fails
