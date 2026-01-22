@@ -168,7 +168,7 @@
             @if(isset($approval_pending) && $approval_pending)
             <div class="alert alert-warning mb-4">
             <i class="fas fa-exclamation-triangle"></i>
-            <strong>Approval Pending:</strong> Your profile is not approved yet for payment. Please wait for admin approval. You will be notified once your application is approved.
+            <strong>Approval Pending:</strong> Your profile is not approved yet for payment. Please wait for Bengaluru Tech Summit Secretariat approval. You will be notified once your application is approved.
             </div>
             @endif 
 
@@ -531,7 +531,7 @@
             {{-- Payment Notice --}}
             <!-- <div class="alert alert-warning mb-4">
                 <h5 class="mb-2"><i class="fas fa-clock"></i> Payment Notice</h5>
-                <p class="mb-0">Payment options will be available once your application is approved by the admin.</p>
+                <p class="mb-0">Payment options will be available once your application is approved by the Bengaluru Tech Summit Secretariat.</p>
             </div> -->
 
             @if($application->invoice->payment_status === 'paid')
@@ -544,7 +544,7 @@
                     @elseif(isset($approval_pending) && $approval_pending)
                         {{-- Approval Pending - Disable Payment --}}
                         <div class="alert alert-warning mt-4">
-                            <i class="fas fa-clock"></i> Payment options will be available once your application is approved by the admin.
+                            <i class="fas fa-clock"></i> Payment options will be available once your application is approved by the Bengaluru Tech Summit Secretariat.
                         </div>
                     @else
                         {{-- Payment Options --}}

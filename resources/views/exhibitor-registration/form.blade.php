@@ -128,7 +128,7 @@
                         <label for="booth_space" class="form-label">Booth Space <span class="text-danger">*</span></label>
                         <select class="form-select" id="booth_space" name="booth_space" required>
                             <option value="">Select Booth Space</option>
-                            <option value="Raw" {{ ($draft->booth_space ?? '') == 'Raw' ? 'selected' : '' }}>Raw</option>
+                            <option value="Raw" {{ ($draft->booth_space ?? '') == 'Raw' ? 'selected' : '' }}>Raw (Open space above 36sqm)</option>
                             <option value="Shell" {{ ($draft->booth_space ?? '') == 'Shell' ? 'selected' : '' }}>Shell</option>
                         </select>
                         <div class="invalid-feedback"></div>
@@ -621,13 +621,13 @@
                 </div>
 
                 {{-- Price Display --}}
-                <div class="form-section">
+               
                 
 
                 <div class="alert alert-info">
                     <i class="fas fa-info-circle"></i> <strong>Note:</strong> After submitting this form, you will be redirected to preview your registration details before making payment.
                 </div>
-                </div>
+               
 
                 {{-- Submit Button --}}
                 <div class="d-flex justify-content-end ">
