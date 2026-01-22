@@ -125,31 +125,9 @@ class TicketPaymentController extends Controller
             } else {
                 $unitPrice = $ticketType->getCurrentPrice($nationalityForPrice);
             }
-            $subtotal = $unitPrice * $quantity;
+            $subtotal = round($unitPrice * $quantity);
             
-            // Determine GST type and calculate GST using new service
-            $gstService = new TicketGstCalculationService();
-            $gstType = $gstService->determineGstType($registrationData);
-            $gstCalculation = $gstService->calculateGst($subtotal, $gstType);
-            
-            // Extract GST values
-            $cgstRate = $gstCalculation['cgst_rate'];
-            $cgstAmount = $gstCalculation['cgst_amount'];
-            $sgstRate = $gstCalculation['sgst_rate'];
-            $sgstAmount = $gstCalculation['sgst_amount'];
-            $igstRate = $gstCalculation['igst_rate'];
-            $igstAmount = $gstCalculation['igst_amount'];
-            $gstAmount = $gstCalculation['total_gst']; // Total GST for backward compatibility
-            
-            // Get processing charge rate (3% for National/Indian, 9% for International)
-            // Use nationality to determine processing charge rate
-            $processingChargeRate = $isInternational 
-                ? config('constants.INT_PROCESSING_CHARGE', 9)  // International: 9%
-                : config('constants.IND_PROCESSING_CHARGE', 3); // National/Indian: 3%
-            
-            $processingChargeAmount = round((($subtotal + $gstAmount) * $processingChargeRate) / 100);
-            
-            // Apply promocode if exists in session
+            // Apply promocode discount FIRST (before GST calculation)
             $discountAmount = 0;
             $promoCodeId = null;
             $promoCodeService = new TicketPromoCodeService();
@@ -184,8 +162,34 @@ class TicketPaymentController extends Controller
                 }
             }
             
-            // Calculate final total with discount
-            $total = round($subtotal + $gstAmount + $processingChargeAmount - $discountAmount);
+            // Calculate subtotal after discount (GST will be calculated on this)
+            $subtotalAfterDiscount = round($subtotal - $discountAmount);
+            
+            // Determine GST type and calculate GST on discounted amount
+            $gstService = new TicketGstCalculationService();
+            $gstType = $gstService->determineGstType($registrationData);
+            $gstCalculation = $gstService->calculateGst($subtotalAfterDiscount, $gstType);
+            
+            // Extract GST values
+            $cgstRate = $gstCalculation['cgst_rate'];
+            $cgstAmount = $gstCalculation['cgst_amount'];
+            $sgstRate = $gstCalculation['sgst_rate'];
+            $sgstAmount = $gstCalculation['sgst_amount'];
+            $igstRate = $gstCalculation['igst_rate'];
+            $igstAmount = $gstCalculation['igst_amount'];
+            $gstAmount = $gstCalculation['total_gst']; // Total GST for backward compatibility
+            
+            // Get processing charge rate (3% for National/Indian, 9% for International)
+            // Use nationality to determine processing charge rate
+            $processingChargeRate = $isInternational 
+                ? config('constants.INT_PROCESSING_CHARGE', 9)  // International: 9%
+                : config('constants.IND_PROCESSING_CHARGE', 3); // National/Indian: 3%
+            
+            // Calculate processing charge on (discounted subtotal + GST)
+            $processingChargeAmount = round((($subtotalAfterDiscount + $gstAmount) * $processingChargeRate) / 100);
+            
+            // Calculate final total: discounted subtotal + GST + processing charge
+            $total = round($subtotalAfterDiscount + $gstAmount + $processingChargeAmount);
             
             // Determine currency
             $currency = $isInternational ? 'USD' : 'INR';

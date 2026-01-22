@@ -573,6 +573,21 @@
                     <td class="label-col">Ticket Price ({{ $item->quantity }} × {{ $currencySymbol }}{{ number_format($item->unit_price, $priceFormat) }})</td>
                     <td class="value-col">{{ $currencySymbol }}{{ number_format($item->subtotal, $priceFormat) }}</td>
                 </tr>
+                @if($order->discount_amount > 0 && $order->promoCode)
+                <tr style="background-color: #d4edda;">
+                    <td class="label-col" style="color: #155724;">
+                        🏷️ Promocode Discount
+                        @if($order->promoCode->type === 'percentage')
+                            <div style="font-size: 11px; font-weight: normal; margin-top: 3px;">
+                                ({{ number_format($order->promoCode->value, 0) }}% off base amount)
+                            </div>
+                        @endif
+                    </td>
+                    <td class="value-col" style="color: #155724; font-weight: 600;">
+                        -{{ $currencySymbol }}{{ number_format($order->discount_amount, $priceFormat) }}
+                    </td>
+                </tr>
+                @endif
                 @if($item->gst_type === 'cgst_sgst')
                 <tr>
                     <td class="label-col">CGST ({{ number_format($item->cgst_rate ?? 0, 0) }}%)</td>
@@ -593,21 +608,6 @@
                     <td class="value-col">{{ $currencySymbol }}{{ number_format($item->processing_charge_amount, $priceFormat) }}</td>
                 </tr>
                 @endforeach
-                @if($order->discount_amount > 0 && $order->promoCode)
-                <tr style="background-color: #d4edda;">
-                    <td class="label-col" style="color: #155724;">
-                        🏷️ Promocode Discount
-                        @if($order->promoCode->type === 'percentage')
-                            <div style="font-size: 11px; font-weight: normal; margin-top: 3px;">
-                                ({{ number_format($order->promoCode->value, 0) }}% off base amount)
-                            </div>
-                        @endif
-                    </td>
-                    <td class="value-col" style="color: #155724; font-weight: 600;">
-                        -{{ $currencySymbol }}{{ number_format($order->discount_amount, $priceFormat) }}
-                    </td>
-                </tr>
-                @endif
                 <tr class="total-row">
                     <td class="label-col" style="background: #0066cc; color: #ffffff;">Total Amount</td>
                     <td class="value-col" style="background: #0066cc; color: #ffffff;">{{ $currencySymbol }}{{ number_format($order->total, $priceFormat) }}</td>
@@ -615,7 +615,7 @@
                 @if($order->discount_amount > 0 && $order->promoCode)
                 <tr>
                     <td colspan="2" style="padding: 8px; font-size: 11px; color: #666; border: none;">
-                        <em>Note: Discount applies to base amount only. GST and processing charges are calculated on the original base amount.</em>
+                        <em>Note: Discount applies to base amount. GST and processing charges are calculated on the discounted amount.</em>
                     </td>
                 </tr>
                 @endif
