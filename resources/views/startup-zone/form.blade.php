@@ -109,11 +109,13 @@
                        
                     </div>
                     <div class="col-md-6">
+                        <div style="height: 200px">
                         @if($hasTV)
-                        <img src="{{ asset('asset/img/POD-V01.png') }}" alt="TV" class="img-fluid" style="width: 100%; height: 90%;">
+                        <img src="{{ asset('asset/img/POD-V01.png') }}" alt="TV" class="img-fluid" style="width: 100%; height: 100%;">
                         @else
-                        <img src="{{ asset('asset/img/POD-V02.png') }}" alt="TV" class="img-fluid" style="width: 100%; height: 90%;">
+                        <img src="{{ asset('asset/img/POD-V02.png') }}" alt="TV" class="img-fluid" style="width: 100%; height: 100%;">
                         @endif
+                        </div>
                     </div>
                 </div>
 
@@ -246,7 +248,7 @@
                         <div class="invalid-feedback"></div>
                     </div>
                     <div class="col-md-6">
-                        <label for="certificate" class="form-label">Company Registration Certificate (PDF, Max 2MB) <span class="text-danger">*</span></label>
+                        <label for="certificate" class="form-label">Company Registration Certificate (PDF-Max 2MB) <span class="text-danger">*</span></label>
                         <input type="file" class="form-control" id="certificate" name="certificate" 
                                accept=".pdf" required>
                         @if($draft && isset($draft->certificate_path) && $draft->certificate_path)
