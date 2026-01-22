@@ -17,7 +17,7 @@ const EVENT_DATE_START = '19-11-2026';
 const EVENT_DATE_END = '21-11-2026';
 const EVENT_VENUE = 'Bengaluru International Exhibition Centre (BIEC), Bengaluru, India';
 
-const APP_URL = 'http://bengalurutechsummit.com/bts-2026/public';
+const APP_URL = 'https://bengalurutechsummit.com/bts-2026/public';
 const SHELL_SCHEME_RATE = 14000; // per sqm
 const SHELL_SCHEME_RATE_USD = 175; // per sqm
 const RAW_SPACE_RATE = 13000; // per sqm
