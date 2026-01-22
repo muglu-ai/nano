@@ -118,14 +118,14 @@
                 </div>
 
                 {{-- Booth Information --}}
-                <div class="form-section">
+                <div class="form-section" style="display: none;">
                 <h5 class="mb-3 border-bottom pb-2"><i class="fas fa-cube"></i> Booth Information</h5>
                 <div class="row mb-3">
                     <div class="col-md-6">
                         <label for="stall_category" class="form-label">Booth Space <span class="text-danger">*</span></label>
                         <select class="form-select" id="stall_category" name="stall_category" required>
                             <option value="">Select Booth Space</option>
-                            <option value="Startup Booth" {{ ($draft->stall_category ?? '') == 'Startup Booth' ? 'selected' : '' }}>Startup Booth</option>
+                            <option value="Startup Booth" selected>Startup Booth</option>
                         </select>
                         <div class="invalid-feedback"></div>
                     </div>
@@ -134,9 +134,9 @@
                         <select class="form-select" id="interested_sqm" name="interested_sqm" required>
                             <option value="">Select Booth Type</option>
                             @if($hasTV)
-                            <option value="POD with TV" {{ ($draft->interested_sqm ?? '') == 'POD with TV' ? 'selected' : '' }}>POD with TV</option>
+                            <option value="POD with TV" selected>POD with TV</option>
                             @else
-                            <option value="POD" {{ ($draft->interested_sqm ?? '') == 'POD' ? 'selected' : '' }}>POD</option>
+                            <option value="POD" selected>POD</option>
                             @endif
                         </select>
                         <div class="invalid-feedback"></div>
@@ -239,7 +239,7 @@
                 <h5 class="mb-3 mt-4 border-bottom pb-2"><i class="fas fa-building"></i> Billing Information</h5>
                 <div class="row mb-3">
                     <div class="col-md-6">
-                        <label for="billing_company_name" class="form-label">Billing Company Name <span class="text-danger">*</span></label>
+                        <label for="billing_company_name" class="form-label">Company Name <span class="text-danger">*</span></label>
                         <input type="text" class="form-control" id="billing_company_name" name="billing_company_name" 
                                value="{{ isset($draft->billing_data['company_name']) ? $draft->billing_data['company_name'] : ($draft->company_name ?? '') }}" 
                                maxlength="100" required>
@@ -268,7 +268,7 @@
                         <div class="invalid-feedback"></div>
                     </div>
                     <div class="col-md-6">
-                        <label for="billing_address" class="form-label">Billing Address <span class="text-danger">*</span></label>
+                        <label for="billing_address" class="form-label">Address <span class="text-danger">*</span></label>
                         <textarea class="form-control" id="billing_address" name="billing_address" rows="2" required>{{ isset($draft->billing_data['address']) ? $draft->billing_data['address'] : ($draft->address ?? '') }}</textarea>
                         <div class="invalid-feedback"></div>
                     </div>
@@ -276,7 +276,7 @@
 
                 <div class="row mb-3">
                     <div class="col-md-6">
-                        <label for="billing_country_id" class="form-label">Billing Country <span class="text-danger">*</span></label>
+                        <label for="billing_country_id" class="form-label">Country <span class="text-danger">*</span></label>
                         <select class="form-select" id="billing_country_id" name="billing_country_id" required>
                             <option value="">Select Country</option>
                             @foreach($countries as $country)
@@ -293,7 +293,7 @@
                         <div class="invalid-feedback"></div>
                     </div>
                     <div class="col-md-6">
-                        <label for="billing_state_id" class="form-label">Billing State <span class="text-danger">*</span></label>
+                        <label for="billing_state_id" class="form-label">State <span class="text-danger">*</span></label>
                         <select class="form-select" id="billing_state_id" name="billing_state_id" required>
                             <option value="">Select State</option>
                             @if(isset($draft->billing_data['state_id']) && $draft->billing_data['state_id'])
@@ -319,14 +319,14 @@
 
                 <div class="row mb-3">
                     <div class="col-md-6">
-                        <label for="billing_city" class="form-label">Billing City <span class="text-danger">*</span></label>
+                        <label for="billing_city" class="form-label">City <span class="text-danger">*</span></label>
                         <input type="text" class="form-control" id="billing_city" name="billing_city" 
                                value="{{ isset($draft->billing_data['city']) ? $draft->billing_data['city'] : ($draft->city_id ?? '') }}" 
                                maxlength="100" required>
                         <div class="invalid-feedback"></div>
                     </div>
                     <div class="col-md-6">
-                        <label for="billing_postal_code" class="form-label">Billing Postal Code <span class="text-danger">*</span></label>
+                        <label for="billing_postal_code" class="form-label">Postal Code <span class="text-danger">*</span></label>
                         <input type="text" class="form-control" id="billing_postal_code" name="billing_postal_code" 
                                value="{{ isset($draft->billing_data['postal_code']) ? $draft->billing_data['postal_code'] : ($draft->postal_code ?? '') }}" 
                                pattern="[0-9]{6}" maxlength="6" required>
@@ -336,7 +336,7 @@
                 </div>
                 <div class="row mb-3">
                     <div class="col-md-6">
-                        <label for="billing_telephone" class="form-label">Billing Telephone Number <span class="text-danger">*</span></label>
+                        <label for="billing_telephone" class="form-label">Telephone Number <span class="text-danger">*</span></label>
                         <input type="tel" class="form-control" id="billing_telephone" name="billing_telephone" 
                                value="{{ isset($draft->billing_data['telephone']) ? $draft->billing_data['telephone'] : ($draft->landline ?? '') }}" 
                                placeholder="" required>
@@ -355,7 +355,7 @@
 
                 <div class="row mb-3">
                     <div class="col-md-6">
-                        <label for="billing_email" class="form-label">Billing Email <span class="text-danger">*</span></label>
+                        <label for="billing_email" class="form-label">Email <span class="text-danger">*</span></label>
                         <input type="email" class="form-control" id="billing_email" name="billing_email" 
                                value="{{ isset($draft->billing_data['email']) ? $draft->billing_data['email'] : ($draft->company_email ?? '') }}" required>
                         <div class="invalid-feedback"></div>
@@ -526,7 +526,7 @@
                 </div>
                 </div>
                 {{-- Payment Mode --}}
-                <div class="form-section">
+                <div class="form-section" style="display: none;">
                 <h5 class="mb-3 mt-4 border-bottom pb-2"><i class="fas fa-credit-card"></i> Payment Mode</h5>
                 <div class="row mb-3">
                     <div class="col-md-6">
