@@ -83,6 +83,11 @@ Route::post('/ccavenue/webhook', [PaymentGatewayController::class, 'ccAvenueWebh
 Route::get('/admin/ccavenue-transactions', [PaymentGatewayController::class, 'listTransactions'])->name('admin.ccavenue.transactions')->middleware(Auth::class);
 Route::get('/admin/ccavenue-transactions/{id}/details', [PaymentGatewayController::class, 'getTransactionDetails'])->name('admin.ccavenue.transactions.details')->middleware(Auth::class);
 
+// Log Viewer Routes
+Route::get('/admin/logs', [\App\Http\Controllers\LogViewController::class, 'index'])->name('admin.logs')->middleware(Auth::class);
+Route::post('/admin/logs/clear', [\App\Http\Controllers\LogViewController::class, 'clear'])->name('admin.logs.clear')->middleware(Auth::class);
+Route::get('/admin/logs/download', [\App\Http\Controllers\LogViewController::class, 'download'])->name('admin.logs.download')->middleware(Auth::class);
+
 /* Payment Gateway Routes Ends
 */
 
