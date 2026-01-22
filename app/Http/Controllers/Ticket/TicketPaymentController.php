@@ -17,6 +17,8 @@ use App\Models\Payment;
 use App\Models\Invoice;
 use App\Services\CcAvenueService;
 use App\Services\TicketIssuanceService;
+use App\Services\TicketPromoCodeService;
+use App\Services\TicketGstCalculationService;
 use App\Mail\TicketRegistrationMail;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -32,6 +34,7 @@ class TicketPaymentController extends Controller
     public function __construct(CcAvenueService $ccAvenueService, TicketIssuanceService $ticketIssuanceService)
     {
         $this->ccAvenueService = $ccAvenueService;
+        $this->ticketIssuanceService = $ticketIssuanceService;
     }
 
     /**
@@ -124,19 +127,71 @@ class TicketPaymentController extends Controller
             }
             $subtotal = $unitPrice * $quantity;
             
-            $gstRate = config('constants.GST_RATE', 18);
+            // Determine GST type and calculate GST using new service
+            $gstService = new TicketGstCalculationService();
+            $gstType = $gstService->determineGstType($registrationData);
+            $gstCalculation = $gstService->calculateGst($subtotal, $gstType);
+            
+            // Extract GST values
+            $cgstRate = $gstCalculation['cgst_rate'];
+            $cgstAmount = $gstCalculation['cgst_amount'];
+            $sgstRate = $gstCalculation['sgst_rate'];
+            $sgstAmount = $gstCalculation['sgst_amount'];
+            $igstRate = $gstCalculation['igst_rate'];
+            $igstAmount = $gstCalculation['igst_amount'];
+            $gstAmount = $gstCalculation['total_gst']; // Total GST for backward compatibility
+            
             // Get processing charge rate (3% for National/Indian, 9% for International)
             // Use nationality to determine processing charge rate
             $processingChargeRate = $isInternational 
                 ? config('constants.INT_PROCESSING_CHARGE', 9)  // International: 9%
                 : config('constants.IND_PROCESSING_CHARGE', 3); // National/Indian: 3%
             
-            $gstAmount = round(($subtotal * $gstRate) / 100);
             $processingChargeAmount = round((($subtotal + $gstAmount) * $processingChargeRate) / 100);
-            $total = round($subtotal + $gstAmount + $processingChargeAmount);
+            
+            // Apply promocode if exists in session
+            $discountAmount = 0;
+            $promoCodeId = null;
+            $promoCodeService = new TicketPromoCodeService();
+            
+            $promocodeData = session('ticket_promocode');
+            if ($promocodeData && isset($promocodeData['promo_code_id'])) {
+                $promoCode = \App\Models\Ticket\TicketPromoCode::find($promocodeData['promo_code_id']);
+                if ($promoCode) {
+                    // Re-validate promocode with current registration data
+                    $validationData = [
+                        'ticket_type_id' => $ticketType->id,
+                        'registration_category_id' => $registrationData['registration_category_id'] ?? null,
+                        'selected_event_day_id' => $selectedAllDays ? null : $selectedEventDayId,
+                        'delegate_count' => $quantity,
+                        'base_amount' => $subtotal,
+                    ];
+                    
+                    $validationResult = $promoCodeService->validatePromoCode($promoCode->code, $event->id, $validationData);
+                    
+                    if ($validationResult['valid']) {
+                        // Calculate discount on base amount (subtotal) only
+                        $discountAmount = $promoCodeService->calculateDiscount($promoCode, $subtotal);
+                        $promoCodeId = $promoCode->id;
+                    } else {
+                        // Promocode invalid, clear from session
+                        session()->forget('ticket_promocode');
+                        Log::warning('Promocode validation failed during payment initiation', [
+                            'code' => $promoCode->code,
+                            'reason' => $validationResult['message'],
+                        ]);
+                    }
+                }
+            }
+            
+            // Calculate final total with discount
+            $total = round($subtotal + $gstAmount + $processingChargeAmount - $discountAmount);
             
             // Determine currency
             $currency = $isInternational ? 'USD' : 'INR';
+            
+            // Check if complimentary (100% discount)
+            $isComplimentary = $total <= 0;
 
             // Create or get contact (use first delegate email if contact email not provided)
             $contactEmail = $registrationData['contact_email'] ?? ($registrationData['delegates'][0]['email'] ?? null);
@@ -196,12 +251,31 @@ class TicketPaymentController extends Controller
                 'registration_id' => $registration->id,
                 'order_no' => $orderNo,
                 'subtotal' => $subtotal,
-                'gst_total' => $gstAmount,
+                'gst_total' => $gstAmount, // Keep for backward compatibility
+                'cgst_rate' => $cgstRate,
+                'cgst_total' => $cgstAmount ?? 0,
+                'sgst_rate' => $sgstRate,
+                'sgst_total' => $sgstAmount ?? 0,
+                'igst_rate' => $igstRate,
+                'igst_total' => $igstAmount ?? 0,
+                'gst_type' => $gstType,
                 'processing_charge_total' => $processingChargeAmount,
-                'discount_amount' => 0,
-                'total' => $total,
-                'status' => 'pending',
+                'discount_amount' => $discountAmount,
+                'promo_code_id' => $promoCodeId,
+                'total' => max(0, $total), // Ensure total doesn't go negative
+                'status' => $isComplimentary ? 'paid' : 'pending',
+                'payment_status' => $isComplimentary ? 'complimentary' : 'pending',
             ]);
+            
+            // Create promocode redemption if applied
+            if ($promoCodeId && $discountAmount > 0) {
+                \App\Models\Ticket\TicketPromoRedemption::create([
+                    'promo_id' => $promoCodeId,
+                    'contact_id' => $contact->id,
+                    'order_id' => $order->id,
+                    'discount_amount' => $discountAmount,
+                ]);
+            }
 
             // Update tracking with order information and complete registration data
             $trackingToken = session('ticket_registration_tracking_token');
@@ -232,8 +306,15 @@ class TicketPaymentController extends Controller
                 'quantity' => $quantity,
                 'unit_price' => $unitPrice,
                 'subtotal' => $subtotal,
-                'gst_rate' => $gstRate,
-                'gst_amount' => $gstAmount,
+                'gst_rate' => $gstType === 'cgst_sgst' ? ($cgstRate + $sgstRate) : $igstRate, // Keep for backward compatibility
+                'gst_amount' => $gstAmount, // Keep for backward compatibility
+                'cgst_rate' => $cgstRate,
+                'cgst_amount' => $cgstAmount ?? 0,
+                'sgst_rate' => $sgstRate,
+                'sgst_amount' => $sgstAmount ?? 0,
+                'igst_rate' => $igstRate,
+                'igst_amount' => $igstAmount ?? 0,
+                'gst_type' => $gstType,
                 'processing_charge_rate' => $processingChargeRate,
                 'processing_charge_amount' => $processingChargeAmount,
                 'total' => $total,
@@ -246,15 +327,59 @@ class TicketPaymentController extends Controller
                 'type'               => 'ticket_registration',
                 'registration_id'    => $registration->id, // link to ticket registration for traceability
                 'currency'           => $currency,
-                'amount'             => $total, // base amount required by DB
+                'amount'             => max(0, $total), // base amount required by DB
                 'price'              => $subtotal,
                 'gst'                => $gstAmount,
                 'processing_charges' => $processingChargeAmount,
-                'total_final_price'  => $total,
-                'amount_paid'        => 0,
-                'pending_amount'     => $total,
-                'payment_status'     => 'unpaid', // Initially unpaid
+                'total_final_price'  => max(0, $total),
+                'amount_paid'        => $isComplimentary ? max(0, $total) : 0,
+                'pending_amount'     => $isComplimentary ? 0 : max(0, $total),
+                'payment_status'     => $isComplimentary ? 'complimentary' : 'unpaid',
             ]);
+            
+            // If complimentary, process immediately
+            if ($isComplimentary) {
+                DB::commit();
+                
+                // Generate PIN number
+                $pinNo = $this->generateTicketPinNo();
+                $invoice->update(['pin_no' => $pinNo]);
+                
+                // Issue tickets immediately
+                try {
+                    $ticketsIssued = $this->ticketIssuanceService->issueTicketsForOrder($order);
+                    if ($ticketsIssued) {
+                        Log::info('Complimentary Order - Tickets issued successfully', [
+                            'order_id' => $order->id,
+                            'order_no' => $order->order_no,
+                        ]);
+                    }
+                } catch (\Exception $e) {
+                    Log::error('Complimentary Order - Error issuing tickets', [
+                        'order_id' => $order->id,
+                        'error' => $e->getMessage(),
+                    ]);
+                }
+                
+                // Send confirmation email
+                try {
+                    $contact->sendTicketRegistrationConfirmation($order);
+                } catch (\Exception $e) {
+                    Log::error('Complimentary Order - Error sending confirmation email', [
+                        'order_id' => $order->id,
+                        'error' => $e->getMessage(),
+                    ]);
+                }
+                
+                // Clear promocode from session
+                session()->forget('ticket_promocode');
+                
+                // Redirect to confirmation page
+                return redirect()->route('tickets.confirmation', [
+                    'eventSlug' => $event->slug ?? $event->id,
+                    'token' => $order->secure_token
+                ])->with('success', 'Your complimentary registration has been confirmed!');
+            }
 
             // Create delegates (always required now)
             $delegates = $registrationData['delegates'] ?? [];
@@ -736,6 +861,43 @@ class TicketPaymentController extends Controller
         
         // Show payment page
         return view('tickets.public.payment', compact('event', 'order', 'ticketType', 'registrationCategory'));
+    }
+
+    /**
+     * Generate unique PIN number for tickets
+     */
+    private function generateTicketPinNo()
+    {
+        // Use ticket-specific prefix: PRN-BTS-2026-TKT-
+        $shortName = config('constants.SHORT_NAME', 'BTS');
+        $eventYear = config('constants.EVENT_YEAR', date('Y'));
+        $prefix = 'PRN-' . $shortName . '-' . $eventYear . '-TKT-';
+
+        $maxAttempts = 100;
+        $attempts = 0;
+
+        while ($attempts < $maxAttempts) {
+            // Generate 6-digit random number
+            $randomNumber = str_pad(rand(100000, 999999), 6, '0', STR_PAD_LEFT);
+            $pinNo = $prefix . $randomNumber;
+            $attempts++;
+
+            // Check if it already exists in invoices table
+            if (!Invoice::where('pin_no', $pinNo)->exists()) {
+                return $pinNo;
+            }
+        }
+
+        // Fallback: use timestamp-based
+        $timestamp = substr(time(), -6);
+        $pinNo = $prefix . $timestamp;
+        if (!Invoice::where('pin_no', $pinNo)->exists()) {
+            return $pinNo;
+        }
+
+        // Last resort: use microtime
+        $microtime = substr(str_replace('.', '', microtime(true)), -6);
+        return $prefix . $microtime;
     }
 
     /**

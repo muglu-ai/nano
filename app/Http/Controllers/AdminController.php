@@ -298,9 +298,9 @@ class AdminController extends Controller
             return response()->json(['message' => 'Application not found'], 404);
         }
 
-        // Check if it's a startup zone application
-        if ($application->application_type !== 'startup-zone') {
-            return response()->json(['message' => 'This method is only for startup zone applications'], 400);
+        // Check if it's a startup zone or exhibitor registration application
+        if (!in_array($application->application_type, ['startup-zone', 'exhibitor-registration'])) {
+            return response()->json(['message' => 'This method is only for startup zone and exhibitor registration applications'], 400);
         }
 
         // Check if already approved
@@ -308,17 +308,60 @@ class AdminController extends Controller
             return response()->json(['message' => 'Application already approved', 'application_id' => $application->id, 'company_name' => $application->company_name]);
         }
 
-        // Approve the application
-        $application->submission_status = 'approved';
-        $application->approved_date = now();
-        $application->approved_by = auth()->id();
-        $application->save();
-
-        \Log::info('Startup Zone Application Approved', [
-            'application_id' => $application->application_id,
-            'company_name' => $application->company_name,
-            'approved_by' => auth()->id()
-        ]);
+        // Use direct DB update to ensure the change persists
+        try {
+            $updateResult = \DB::table('applications')
+                ->where('id', $id)
+                ->update([
+                    'submission_status' => 'approved',
+                    'approved_date' => now(),
+                    'approved_by' => auth()->id(),
+                    'updated_at' => now()
+                ]);
+            
+            // Refresh the model to get updated values
+            $application = Application::find($id);
+            
+            \Log::info('Application Approved via DB Update', [
+                'application_id' => $application->application_id,
+                'application_type' => $application->application_type,
+                'company_name' => $application->company_name,
+                'approved_by' => auth()->id(),
+                'update_result' => $updateResult,
+                'final_submission_status' => $application->submission_status,
+                'approved_date' => $application->approved_date
+            ]);
+            
+            // Verify the update actually happened
+            if ($application->submission_status !== 'approved') {
+                \Log::error('CRITICAL: Application status still not approved after DB update', [
+                    'application_id' => $application->application_id,
+                    'id' => $id,
+                    'current_status' => $application->submission_status,
+                    'update_result' => $updateResult
+                ]);
+                
+                return response()->json([
+                    'message' => 'Failed to update application status',
+                    'error' => 'Database update did not persist',
+                    'debug' => [
+                        'id' => $id,
+                        'current_status' => $application->submission_status
+                    ]
+                ], 500);
+            }
+        } catch (\Exception $e) {
+            \Log::error('Exception during application approval', [
+                'application_id' => $application->application_id ?? 'unknown',
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            return response()->json([
+                'message' => 'Error updating application status',
+                'error' => $e->getMessage()
+            ], 500);
+        }
 
         // Send approval email to user with payment link
         try {
@@ -331,14 +374,31 @@ class AdminController extends Controller
                 
                 // Get user email
                 $userEmail = $contact->email ?? $application->company_email;
+
+                // Get BCC emails from config
+                $bccEmails = config('constants.admin_emails.bcc', []);
                 
                 if ($userEmail) {
-                    Mail::to($userEmail)->send(new \App\Mail\StartupZoneMail($application, 'approval', $invoice, $contact));
+                    // Send appropriate email based on application type
+                    if ($application->application_type === 'exhibitor-registration') {
+                        $mail = Mail::to($userEmail);
+                        if (!empty($bccEmails)) {
+                            $mail->bcc($bccEmails);
+                        }
+                        $mail->send(new \App\Mail\ExhibitorRegistrationMail($application, $invoice, $contact, 'approval'));
+                    } else {
+                        $mail = Mail::to($userEmail);
+                        if (!empty($bccEmails)) {
+                            $mail->bcc($bccEmails);
+                        }
+                        $mail->send(new \App\Mail\StartupZoneMail($application, 'approval', $invoice, $contact));
+                    }
                 }
             }
         } catch (\Exception $e) {
             \Log::error('Failed to send approval email to user', [
                 'application_id' => $application->application_id,
+                'application_type' => $application->application_type,
                 'email' => $userEmail ?? 'unknown',
                 'error' => $e->getMessage()
             ]);
@@ -1458,7 +1518,8 @@ class AdminController extends Controller
         //send the email to the applicant
         foreach ($applications as $application) {
             $name = $application->user->name;
-            $setupProfileUrl = 'http://bengalurutechsummit.com/portal/public';
+            //todo: change the url to the new url
+            $setupProfileUrl = config('constants.APP_URL');
             $username = $application->user->email;
             $password = $application->user->simplePass;
 
@@ -2525,7 +2586,7 @@ class AdminController extends Controller
         }
 
         try {
-            $remoteUrl = env('EXHIBITOR_EXPORT_REMOTE_URL', 'https://portal.semiconindia.org/exhibitor_export_runner.php');
+            $remoteUrl = env('EXHIBITOR_EXPORT_REMOTE_URL', ' ');
             if (empty($remoteUrl)) {
                 return response()->json([
                     'success' => false,

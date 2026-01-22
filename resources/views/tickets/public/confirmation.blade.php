@@ -297,10 +297,36 @@
                     <td class="label-cell">Currency</td>
                     <td class="value-cell">{{ $isInternational ? 'USD ($)' : 'INR (₹)' }}</td>
                 </tr>
+                @if($order->discount_amount > 0 && $order->promoCode)
+                <tr style="background-color: #d4edda;">
+                    <td class="label-cell" style="color: #155724;">
+                        <i class="fas fa-tag me-1"></i>
+                        Promocode Discount
+                    </td>
+                    <td class="value-cell" style="color: #155724;">
+                        <strong>-{{ $currencySymbol }}{{ number_format($order->discount_amount, $priceFormat) }}</strong>
+                        @if($order->promoCode->type === 'percentage')
+                            <small class="d-block" style="font-weight: normal; font-size: 0.75rem;">
+                                ({{ number_format($order->promoCode->value, 0) }}% off base amount)
+                            </small>
+                        @endif
+                    </td>
+                </tr>
+                @endif
                 <tr>
                     <td class="label-cell">Total Amount</td>
                     <td class="value-cell"><strong style="font-size: 1.1rem; color: var(--primary-color);">{{ $currencySymbol }}{{ number_format($order->total, $priceFormat) }}</strong></td>
                 </tr>
+                @if($order->payment_status === 'complimentary')
+                <tr>
+                    <td class="label-cell" style="color: #155724;">Payment Type</td>
+                    <td class="value-cell">
+                        <span class="badge bg-success" style="font-size: 0.875rem; padding: 0.375rem 0.75rem;">
+                            <i class="fas fa-gift me-1"></i>Complimentary Registration
+                        </span>
+                    </td>
+                </tr>
+                @endif
             </table>
             </div>
 

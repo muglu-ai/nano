@@ -84,7 +84,7 @@ return [
     'EVENT_DATE_END' => EVENT_DATE_END,
     'EVENT_VENUE' => EVENT_VENUE,
     'EVENT_WEBSITE' => EVENT_WEBSITE,
-    'APP_URL' => EVENT_WEBSITE . '/portal',
+    'APP_URL' => APP_URL,
     'APP_NAME' => APP_NAME,
     'APP_NAME_SHORT' => SHORT_NAME,
     'APPLICATION_ID_PREFIX' => 'TIN-BTS-2026-EXH-',
@@ -186,6 +186,7 @@ return [
     ],
     'IND_PROCESSING_CHARGE' => IND_PROCESSING_CHARGE, // 3% processing fee for National payments
     'GSTIN' => '29AABCM2615H1ZM',
+    'GST_STATE' => 'Karnataka',
     'PAN'   => 'AABCS1234A',
     'CIN'  => 'U12345DL2025PTC123456',
     'organizer' => [

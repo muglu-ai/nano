@@ -191,8 +191,8 @@
                     <div class="col-md-6 mb-3">
                         <label class="form-label required-field">Ticket Type</label>
                         @if(isset($isTicketTypeLocked) && $isTicketTypeLocked)
-                            {{-- Hidden field to submit the value --}}
-                            <input type="hidden" name="ticket_type_id" value="{{ $selectedTicketType->slug }}">
+                            {{-- Hidden field to submit the value (slug for form submission) --}}
+                            <input type="hidden" name="ticket_type_id" value="{{ $selectedTicketType->slug }}" id="hidden_ticket_type_id" data-ticket-type-id="{{ $selectedTicketType->id }}">
                             {{-- Display field (readonly) with data attributes for day selection --}}
                             @php
                                 $nationalityForPrice = $selectedNationality ?? 'national';
@@ -205,6 +205,7 @@
                                    value="{{ $selectedTicketType->name }} - {{ $currency }}{{ $priceFormat }}" 
                                    readonly 
                                    style="background-color: #e9ecef; cursor: not-allowed;"
+                                   data-ticket-type-id="{{ $selectedTicketType->id }}"
                                    data-price-national="{{ $selectedTicketType->getCurrentPrice('national') }}"
                                    data-price-international="{{ $selectedTicketType->getCurrentPrice('international') }}"
                                    data-per-day-price-national="{{ $selectedTicketType->getPerDayPrice('national') ?? '' }}"
@@ -227,6 +228,7 @@
                                         $priceLabel = $perDayPrice ? '/day' : '';
                                     @endphp
                                     <option value="{{ $ticketType->slug }}" 
+                                            data-ticket-type-id="{{ $ticketType->id }}"
                                             data-price-national="{{ $ticketType->getCurrentPrice('national') }}"
                                             data-price-international="{{ $ticketType->getCurrentPrice('international') }}"
                                             data-per-day-price-national="{{ $ticketType->getPerDayPrice('national') ?? '' }}"
@@ -297,6 +299,39 @@
                              style="background-color: #f8f9fa; font-weight: 600; color: #0066cc; padding: 0.375rem 0.75rem; border: 1px solid #ced4da; border-radius: 0.375rem;">
                             <span id="base_amount_value">--</span>
                             <small class="text-muted d-block mt-1" id="base_amount_breakdown" style="font-weight: normal; font-size: 0.875rem;"></small>
+                        </div>
+                    </div>
+
+                    <!-- Promocode Section -->
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Promocode (Optional)</label>
+                        <div class="input-group">
+                            <input type="text" 
+                                   class="form-control" 
+                                   id="promocode_input" 
+                                   name="promocode" 
+                                   placeholder="Enter promocode"
+                                   value="{{ old('promocode', session('ticket_promocode.code') ?? '') }}"
+                                   style="text-transform: uppercase;">
+                            <button type="button" 
+                                    class="btn btn-outline-primary" 
+                                    id="apply_promocode_btn"
+                                    style="border-color: #667eea; color: #667eea;">
+                                <i class="fas fa-tag"></i> Apply
+                            </button>
+                        </div>
+                        <div id="promocode_message" class="mt-2" style="min-height: 20px;"></div>
+                        <div id="promocode_discount_display" class="mt-2" style="display: none;">
+                            <div class="alert alert-success mb-0 py-2" style="font-size: 0.875rem;">
+                                <i class="fas fa-check-circle me-1"></i>
+                                Promocode applied!
+                                <div class="mt-1">
+                                    Discount: <strong id="promocode_discount_amount"></strong>
+                                    @if(session('ticket_promocode.discount_percentage'))
+                                        (<span id="promocode_discount_percentage"></span>%)
+                                    @endif
+                                </div>
+                            </div>
                         </div>
                     </div>
 
@@ -1849,6 +1884,228 @@ document.addEventListener('DOMContentLoaded', function() {
     setTimeout(function() {
         updateBaseAmount();
     }, 100);
+
+    // Promocode validation
+    const promocodeInput = document.getElementById('promocode_input');
+    const applyPromocodeBtn = document.getElementById('apply_promocode_btn');
+    const promocodeMessage = document.getElementById('promocode_message');
+    const promocodeDiscountDisplay = document.getElementById('promocode_discount_display');
+    const promocodeCodeDisplay = document.getElementById('promocode_code_display');
+    const promocodeDiscountAmount = document.getElementById('promocode_discount_amount');
+    const promocodeDiscountPercentage = document.getElementById('promocode_discount_percentage');
+    const eventSlug = '{{ $event->slug ?? $event->id }}';
+
+    function validatePromocode() {
+        // Check if required elements exist
+        if (!promocodeInput || !applyPromocodeBtn) {
+            console.error('Promocode elements not found in DOM');
+            return;
+        }
+
+        const code = promocodeInput.value.trim().toUpperCase();
+        if (!code) {
+            if (promocodeMessage) {
+                promocodeMessage.innerHTML = '<div class="text-danger small">Please enter a promocode.</div>';
+            }
+            if (promocodeDiscountDisplay) {
+                promocodeDiscountDisplay.style.display = 'none';
+            }
+            return;
+        }
+
+        // Get current form values
+        // Check for locked ticket type (hidden input) first, then select dropdown
+        const hiddenTicketTypeInput = document.querySelector('input[name="ticket_type_id"][type="hidden"]');
+        let ticketTypeId = '';
+        
+        if (hiddenTicketTypeInput) {
+            // Ticket type is locked - get ID from data attribute, fallback to value (slug)
+            ticketTypeId = hiddenTicketTypeInput.getAttribute('data-ticket-type-id') || hiddenTicketTypeInput.value;
+        } else if (lockedTicketType) {
+            // Fallback: get from locked display field's data attribute
+            ticketTypeId = lockedTicketType.getAttribute('data-ticket-type-id') || '';
+        } else if (ticketTypeSelect && ticketTypeSelect.value) {
+            // Ticket type from dropdown (value is slug, but we need ID)
+            // Get ID from selected option's data attribute
+            if (ticketTypeSelect.selectedIndex >= 0 && ticketTypeSelect.selectedIndex > 0) {
+                const selectedOption = ticketTypeSelect.options[ticketTypeSelect.selectedIndex];
+                if (selectedOption && selectedOption.dataset && selectedOption.dataset.ticketTypeId) {
+                    ticketTypeId = selectedOption.dataset.ticketTypeId;
+                } else {
+                    // Fallback: use the value (slug) - backend will handle it
+                    ticketTypeId = ticketTypeSelect.value;
+                }
+            } else {
+                ticketTypeId = ticketTypeSelect.value;
+            }
+        }
+        
+        const registrationCategoryId = document.querySelector('select[name="registration_category_id"]')?.value || '';
+        const selectedEventDayId = selectedEventDaySelect ? selectedEventDaySelect.value : '';
+        const delegateCount = delegateCountInput ? parseInt(delegateCountInput.value) : 1;
+        const nationality = document.querySelector('select[name="nationality"]')?.value || 
+                           document.querySelector('input[name="nationality"]')?.value || 'national';
+
+        if (!ticketTypeId) {
+            if (promocodeMessage) {
+                promocodeMessage.innerHTML = '<div class="text-warning small">Please select a ticket type first.</div>';
+            }
+            return;
+        }
+
+        // Show loading state
+        if (applyPromocodeBtn) {
+            applyPromocodeBtn.disabled = true;
+            applyPromocodeBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+        }
+        if (promocodeMessage) {
+            promocodeMessage.innerHTML = '<div class="text-info small"><i class="fas fa-spinner fa-spin"></i> Validating promocode...</div>';
+        }
+        if (promocodeDiscountDisplay) {
+            promocodeDiscountDisplay.style.display = 'none';
+        }
+
+        // Make AJAX request
+        fetch(`/tickets/${eventSlug}/validate-promocode`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({
+                code: code,
+                ticket_type_id: ticketTypeId,
+                registration_category_id: registrationCategoryId || null,
+                selected_event_day_id: selectedEventDayId || null,
+                delegate_count: delegateCount,
+                nationality: nationality
+            })
+        })
+        .then(async response => {
+            // Check if response is JSON
+            const contentType = response.headers.get('content-type');
+            if (contentType && contentType.includes('application/json')) {
+                return response.json();
+            } else {
+                // If not JSON, read as text to see what we got
+                const text = await response.text();
+                console.error('Non-JSON response received:', text.substring(0, 200));
+                throw new Error('Server returned an invalid response. Please try again.');
+            }
+        })
+        .then(data => {
+            if (applyPromocodeBtn) {
+                applyPromocodeBtn.disabled = false;
+                applyPromocodeBtn.innerHTML = '<i class="fas fa-tag"></i> Apply';
+            }
+
+            if (data.valid) {
+                // Promocode is valid
+                if (promocodeMessage) {
+                    promocodeMessage.innerHTML = '<div class="text-success small"><i class="fas fa-check-circle"></i> ' + data.message + '</div>';
+                }
+                if (promocodeDiscountDisplay) {
+                    promocodeDiscountDisplay.style.display = 'block';
+                }
+                if (promocodeCodeDisplay) {
+                    promocodeCodeDisplay.textContent = code;
+                }
+                
+                const currency = nationality === 'international' ? 'USD' : 'INR';
+                const currencySymbol = currency === 'USD' ? '$' : '₹';
+                if (promocodeDiscountAmount) {
+                    promocodeDiscountAmount.textContent = currencySymbol + parseFloat(data.discount_amount).toFixed(2);
+                }
+                
+                if (data.discount_percentage) {
+                    if (promocodeDiscountPercentage) {
+                        promocodeDiscountPercentage.textContent = data.discount_percentage;
+                    }
+                } else {
+                    const discountPercentageElement = document.getElementById('promocode_discount_percentage');
+                    if (discountPercentageElement && discountPercentageElement.parentElement) {
+                        discountPercentageElement.parentElement.style.display = 'none';
+                    }
+                }
+
+                // Update base amount display to show discount
+                updateBaseAmountWithDiscount(data);
+            } else {
+                // Promocode is invalid
+                if (promocodeMessage) {
+                    promocodeMessage.innerHTML = '<div class="text-danger small"><i class="fas fa-times-circle"></i> ' + data.message + '</div>';
+                }
+                if (promocodeDiscountDisplay) {
+                    promocodeDiscountDisplay.style.display = 'none';
+                }
+                updateBaseAmount(); // Reset to original
+            }
+        })
+        .catch(error => {
+            console.error('Promocode validation error:', error);
+            if (applyPromocodeBtn) {
+                applyPromocodeBtn.disabled = false;
+                applyPromocodeBtn.innerHTML = '<i class="fas fa-tag"></i> Apply';
+            }
+            if (promocodeMessage) {
+                promocodeMessage.innerHTML = '<div class="text-danger small"><i class="fas fa-exclamation-triangle"></i> ' + (error.message || 'An error occurred. Please try again.') + '</div>';
+            }
+            if (promocodeDiscountDisplay) {
+                promocodeDiscountDisplay.style.display = 'none';
+            }
+        });
+    }
+
+    function updateBaseAmountWithDiscount(discountData) {
+        // This will be called after promocode validation to show updated totals
+        // The actual calculation will be done on the preview page
+    }
+
+    // Apply promocode button click
+    if (applyPromocodeBtn) {
+        applyPromocodeBtn.addEventListener('click', validatePromocode);
+    }
+
+    // Allow Enter key to apply promocode
+    if (promocodeInput) {
+        promocodeInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                validatePromocode();
+            }
+        });
+
+        // Auto-uppercase input
+        promocodeInput.addEventListener('input', function() {
+            this.value = this.value.toUpperCase();
+        });
+    }
+
+    // Re-validate promocode when form values change
+    if (ticketTypeSelect) {
+        ticketTypeSelect.addEventListener('change', function() {
+            if (promocodeInput && promocodeInput.value.trim()) {
+                validatePromocode();
+            }
+        });
+    }
+
+    if (delegateCountInput) {
+        delegateCountInput.addEventListener('change', function() {
+            if (promocodeInput && promocodeInput.value.trim()) {
+                validatePromocode();
+            }
+        });
+    }
+
+    if (selectedEventDaySelect) {
+        selectedEventDaySelect.addEventListener('change', function() {
+            if (promocodeInput && promocodeInput.value.trim()) {
+                validatePromocode();
+            }
+        });
+    }
 
     // Elements for side-by-side layout
     const gstRequiredFullWidth = document.getElementById('gst_required_full_width');

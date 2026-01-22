@@ -22,6 +22,7 @@ Route::get('/tickets/{eventSlug}/register', [PublicTicketController::class, 'reg
 Route::post('/tickets/{eventSlug}/register', [PublicTicketController::class, 'store'])->name('tickets.store');
 Route::get('/tickets/{eventSlug}/preview', [PublicTicketController::class, 'preview'])->name('tickets.preview');
 Route::post('/tickets/validate-gst', [PublicTicketController::class, 'validateGst'])->name('tickets.validate-gst');
+Route::post('/tickets/{eventSlug}/validate-promocode', [PublicTicketController::class, 'validatePromocode'])->name('tickets.validate-promocode');
 Route::get('/tickets/{eventSlug}/register/{token}', [PublicTicketController::class, 'continueRegistration'])->name('tickets.continue');
 
 // Guest management (magic links)

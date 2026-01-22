@@ -168,6 +168,17 @@ Route::middleware(['auth', Auth::class])->prefix('admin/tickets')->name('admin.t
     Route::post('/events/{eventId}/rules', [AdminTicketConfigController::class, 'storeRule'])->name('events.rules.store');
     Route::delete('/events/{eventId}/rules/{ruleId}', [AdminTicketConfigController::class, 'deleteRule'])->name('events.rules.delete');
     
+    // Promocode Management
+    Route::get('/events/{eventId}/promo-codes', [\App\Http\Controllers\Ticket\AdminPromoCodeController::class, 'index'])->name('events.promo-codes');
+    Route::get('/events/{eventId}/promo-codes/create', [\App\Http\Controllers\Ticket\AdminPromoCodeController::class, 'create'])->name('events.promo-codes.create');
+    Route::post('/events/{eventId}/promo-codes', [\App\Http\Controllers\Ticket\AdminPromoCodeController::class, 'store'])->name('events.promo-codes.store');
+    Route::get('/events/{eventId}/promo-codes/{promoCodeId}/edit', [\App\Http\Controllers\Ticket\AdminPromoCodeController::class, 'edit'])->name('events.promo-codes.edit');
+    Route::put('/events/{eventId}/promo-codes/{promoCodeId}', [\App\Http\Controllers\Ticket\AdminPromoCodeController::class, 'update'])->name('events.promo-codes.update');
+    Route::delete('/events/{eventId}/promo-codes/{promoCodeId}', [\App\Http\Controllers\Ticket\AdminPromoCodeController::class, 'destroy'])->name('events.promo-codes.delete');
+    Route::post('/events/{eventId}/promo-codes/{promoCodeId}/toggle-status', [\App\Http\Controllers\Ticket\AdminPromoCodeController::class, 'toggleStatus'])->name('events.promo-codes.toggle-status');
+    Route::get('/events/{eventId}/promo-codes/{promoCodeId}/analytics', [\App\Http\Controllers\Ticket\AdminPromoCodeController::class, 'analytics'])->name('events.promo-codes.analytics');
+    Route::get('/events/{eventId}/promo-codes/organization/{organizationName}', [\App\Http\Controllers\Ticket\AdminPromoCodeController::class, 'organizationReport'])->name('events.promo-codes.organization');
+    
     // Registrations Management
     Route::get('/registrations', [\App\Http\Controllers\Ticket\AdminTicketController::class, 'registrations'])->name('registrations');
     Route::get('/registrations/{id}', [\App\Http\Controllers\Ticket\AdminTicketController::class, 'showRegistration'])->name('registrations.show');

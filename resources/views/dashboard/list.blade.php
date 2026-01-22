@@ -270,7 +270,7 @@
                                                             <i class="material-symbols-rounded text-secondary position-relative text-lg">visibility</i>
                                                             View
                                                         </button>
-                                                        @if($application->application_type === 'startup-zone' && $application->submission_status === 'submitted')
+                                                        @if(($application->application_type === 'startup-zone' || $application->application_type === 'exhibitor-registration') && $application->submission_status === 'submitted')
                                                             <button type="button" data-bs-toggle="tooltip" data-bs-original-title="Approve Application" style="border:none; background:none; padding:0; margin-top: 5px; padding-right: 30px; gap:5px;" onclick="approveStartupZone({{ $application->id }}, {{ json_encode($application->company_name) }})">
                                                                 <i class="material-symbols-rounded text-success position-relative text-lg">check_circle</i>
                                                                 Approve
