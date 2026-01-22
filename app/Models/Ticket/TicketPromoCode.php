@@ -235,11 +235,11 @@ class TicketPromoCode extends Model
     {
         if ($this->type === 'percentage') {
             $discount = ($baseAmount * $this->value) / 100;
-            // For 100% discount, ensure we don't exceed base amount
-            return min($discount, $baseAmount);
+            // Round to whole number and ensure we don't exceed base amount
+            return min(round($discount), $baseAmount);
         } else {
             // Fixed amount, but not more than base amount
-            return min($this->value, $baseAmount);
+            return min(round($this->value), $baseAmount);
         }
     }
 }

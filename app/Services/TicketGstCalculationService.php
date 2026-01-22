@@ -63,9 +63,9 @@ class TicketGstCalculationService
         $igstRate = config('constants.IGST_RATE', 18);
         
         if ($gstType === 'cgst_sgst') {
-            $cgstAmount = round(($subtotal * $cgstRate) / 100, 2);
-            $sgstAmount = round(($subtotal * $sgstRate) / 100, 2);
-            $totalGst = $cgstAmount + $sgstAmount;
+            $cgstAmount = round(($subtotal * $cgstRate) / 100);
+            $sgstAmount = round(($subtotal * $sgstRate) / 100);
+            $totalGst = round($cgstAmount + $sgstAmount);
             
             return [
                 'cgst_rate' => $cgstRate,
@@ -79,7 +79,7 @@ class TicketGstCalculationService
             ];
         } else {
             // IGST
-            $igstAmount = round(($subtotal * $igstRate) / 100, 2);
+            $igstAmount = round(($subtotal * $igstRate) / 100);
             
             return [
                 'cgst_rate' => null,

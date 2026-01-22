@@ -444,6 +444,20 @@
                     <td class="label-cell">Ticket Price ({{ $quantity }} × {{ $currencySymbol }}{{ number_format($unitPrice, $priceFormat) }})</td>
                     <td class="value-cell">{{ $currencySymbol }}{{ number_format($subtotal, $priceFormat) }}</td>
                 </tr>
+                @if(isset($discountAmount) && $discountAmount > 0)
+                <tr style="background-color: #d4edda;">
+                    <td class="label-cell" style="color: #155724;">
+                        <i class="fas fa-tag me-1"></i>
+                        Promocode Discount
+                        @if($promocodeDiscountPercentage)
+                            <small class="d-block" style="font-weight: normal; font-size: 0.75rem;">({{ number_format($promocodeDiscountPercentage, 0) }}% off base amount)</small>
+                        @endif
+                    </td>
+                    <td class="value-cell" style="color: #155724; font-weight: 600;">
+                        -{{ $currencySymbol }}{{ number_format($discountAmount, $priceFormat) }}
+                    </td>
+                </tr>
+                @endif
                 @if(isset($gstType) && $gstType === 'cgst_sgst')
                 <tr>
                     <td class="label-cell">CGST ({{ number_format($cgstRate ?? 0, 0) }}%)</td>
@@ -463,20 +477,6 @@
                     <td class="label-cell">Processing Charge ({{ $processingChargeRate }}%)</td>
                     <td class="value-cell">{{ $currencySymbol }}{{ number_format($processingChargeAmount, $priceFormat) }}</td>
                 </tr>
-                @if(isset($discountAmount) && $discountAmount > 0)
-                <tr style="background-color: #d4edda;">
-                    <td class="label-cell" style="color: #155724;">
-                        <i class="fas fa-tag me-1"></i>
-                        Promocode Discount
-                        @if($promocodeDiscountPercentage)
-                            <small class="d-block" style="font-weight: normal; font-size: 0.75rem;">({{ number_format($promocodeDiscountPercentage, 0) }}% off base amount)</small>
-                        @endif
-                    </td>
-                    <td class="value-cell" style="color: #155724; font-weight: 600;">
-                        -{{ $currencySymbol }}{{ number_format($discountAmount, $priceFormat) }}
-                    </td>
-                </tr>
-                @endif
                 <tr class="total-row">
                     <td class="label-cell" style="background: var(--primary-color); color: white;">Total Amount</td>
                     <td class="value-cell" style="background: var(--primary-color); color: white;">{{ $currencySymbol }}{{ number_format($total, $priceFormat) }}</td>
@@ -485,7 +485,7 @@
                 <tr>
                     <td colspan="2" class="text-muted" style="font-size: 0.75rem; padding: 0.5rem 0.75rem; border: none;">
                         <i class="fas fa-info-circle me-1"></i>
-                        Note: Discount applies to base amount only. GST and processing charges are calculated on the original base amount.
+                        Note: Discount applies to base amount. GST and processing charges are calculated on the discounted amount.
                     </td>
                 </tr>
                 @endif
