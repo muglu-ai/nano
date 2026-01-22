@@ -374,13 +374,24 @@ class AdminController extends Controller
                 
                 // Get user email
                 $userEmail = $contact->email ?? $application->company_email;
+
+                // Get BCC emails from config
+                $bccEmails = config('constants.admin_emails.bcc', []);
                 
                 if ($userEmail) {
                     // Send appropriate email based on application type
                     if ($application->application_type === 'exhibitor-registration') {
-                        Mail::to($userEmail)->send(new \App\Mail\ExhibitorRegistrationMail($application, $invoice, $contact, 'approval'));
+                        $mail = Mail::to($userEmail);
+                        if (!empty($bccEmails)) {
+                            $mail->bcc($bccEmails);
+                        }
+                        $mail->send(new \App\Mail\ExhibitorRegistrationMail($application, $invoice, $contact, 'approval'));
                     } else {
-                        Mail::to($userEmail)->send(new \App\Mail\StartupZoneMail($application, 'approval', $invoice, $contact));
+                        $mail = Mail::to($userEmail);
+                        if (!empty($bccEmails)) {
+                            $mail->bcc($bccEmails);
+                        }
+                        $mail->send(new \App\Mail\StartupZoneMail($application, 'approval', $invoice, $contact));
                     }
                 }
             }
@@ -1507,7 +1518,8 @@ class AdminController extends Controller
         //send the email to the applicant
         foreach ($applications as $application) {
             $name = $application->user->name;
-            $setupProfileUrl = 'http://bengalurutechsummit.com/portal/public';
+            //todo: change the url to the new url
+            $setupProfileUrl = config('constants.APP_URL');
             $username = $application->user->email;
             $password = $application->user->simplePass;
 
@@ -2574,7 +2586,7 @@ class AdminController extends Controller
         }
 
         try {
-            $remoteUrl = env('EXHIBITOR_EXPORT_REMOTE_URL', 'https://portal.semiconindia.org/exhibitor_export_runner.php');
+            $remoteUrl = env('EXHIBITOR_EXPORT_REMOTE_URL', ' ');
             if (empty($remoteUrl)) {
                 return response()->json([
                     'success' => false,
