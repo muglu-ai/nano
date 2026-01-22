@@ -1436,7 +1436,7 @@ class PosterRegistrationController extends Controller
                     'type' => 'poster_registration',
                     'invoice_no' => $tinNo,
                     'poster_reg_id' => $poster->id, // Map to posters table
-                    'currency' => $poster->currency ?? 'INR',
+                    'currency' => $poster->currency ?? ($poster->nationality === 'India' ? 'INR' : 'USD'),
                     'amount' => (float) ($amount ?? $poster->total_amount),
                     'price' => $poster->base_amount ?? ($amount ?? $poster->total_amount),
                     'gst' => $poster->gst_amount ?? 0,
@@ -1452,27 +1452,7 @@ class PosterRegistrationController extends Controller
                     $invoice->update(['poster_reg_id' => $poster->id]);
                 }
             }
-
-            // Find payment record
-            $payment = Payment::where('order_id', $orderId)
-                ->where('invoice_id', $invoice->id)
-                ->first();
-
-            if (!$payment) {
-                $payment = Payment::create([
-                    'invoice_id' => $invoice->id, // Use invoice ID (foreign key constraint)
-                    'payment_method' => 'CCAvenue',
-                    'amount' => (float) ($amount ?? $poster->total_amount),
-                    'amount_paid' => 0,
-                    'amount_received' => 0,
-                    'transaction_id' => $trackingId ?? $orderId,
-                    'status' => 'pending',
-                    'order_id' => $orderId,
-                    'currency' => $poster->currency ?? 'INR',
-                    'payment_date' => now(),
-                ]);
-            }
-
+            
             // Update payment gateway response
             DB::table('payment_gateway_response')
                 ->where('order_id', $orderId)
@@ -1481,53 +1461,94 @@ class PosterRegistrationController extends Controller
                     'response_json' => json_encode($responseArray),
                     'updated_at' => now(),
                 ]);
-
+            
+            // Process payment only if status is Success
             if ($orderStatus === 'Success') {
-                // Find invoice for this poster
-                $invoice = Invoice::where('invoice_no', $tinNo)
-                    ->where('type', 'poster_registration')
-                    ->first();
-
-                // Update payment record
-                $payment->update([
-                    'status' => 'successful',
-                    'amount_paid' => (float) ($amount ?? $poster->total_amount),
-                    'amount_received' => (float) ($amount ?? $poster->total_amount),
-                    'transaction_id' => $trackingId ?? $orderId,
-                    'pg_result' => 'Success',
-                    'response' => json_encode($responseArray),
-                    'payment_date' => now(),
+                // Update invoice
+                $invoice->update([
+                    'payment_status' => 'paid',
+                    'amount_paid' => (float) $amount,
+                    'pending_amount' => 0,
+                    'updated_at' => now(),
                 ]);
-
-                // Update invoice payment status
-                if ($invoice) {
-                    $invoice->update([
-                        'payment_status' => 'paid',
-                        'amount_paid' => (float) ($amount ?? $poster->total_amount),
-                        'pending_amount' => 0,
+                
+                // Find or create payment record
+                $payment = Payment::where('order_id', $orderId)
+                    ->where('invoice_id', $invoice->id)
+                    ->first();
+                
+                if ($payment) {
+                    $payment->update([
+                        'status' => 'successful',
+                        'amount_paid' => (float) $amount,
+                        'amount_received' => (float) $amount,
+                        'transaction_id' => $trackingId,
+                        'pg_result' => 'Success',
+                        'payment_method' => $responseArray['payment_mode'] ?? 'CCAvenue',
+                        'payment_date' => now(),
+                        'pg_response_json' => json_encode($responseArray),
+                    ]);
+                } else {
+                    Payment::create([
+                        'invoice_id' => $invoice->id,
+                        'payment_method' => $responseArray['payment_mode'] ?? 'CCAvenue',
+                        'amount' => (float) $amount,
+                        'amount_paid' => (float) $amount,
+                        'amount_received' => (float) $amount,
+                        'transaction_id' => $trackingId,
+                        'status' => 'successful',
+                        'order_id' => $orderId,
+                        'currency' => $invoice->currency ?? 'INR',
+                        'payment_date' => now(),
+                        'pg_result' => 'Success',
+                        'pg_response_json' => json_encode($responseArray),
                     ]);
                 }
-
+                
                 // Update poster payment status
                 $poster->update(['payment_status' => 'successful']);
-
+                
                 // Clear session
                 session()->forget(['poster_id', 'poster_tin_no', 'poster_payment_id', 'poster_order_id']);
-
-                return redirect()->route('poster.success', ['tin_no' => $poster->tin_no])
-                    ->with('success', 'Payment successful!');
-            } else {
-                // Payment failed
-                $payment->update([
-                    'status' => 'failed',
-                    'pg_result' => $orderStatus ?? 'Failed',
-                    'response' => json_encode($responseArray),
+                
+                Log::info('Poster CCAvenue Payment Success via Callback', [
+                    'poster_id' => $poster->id,
+                    'tin_no' => $poster->tin_no,
+                    'invoice_id' => $invoice->id,
+                    'amount' => $amount,
+                    'transaction_id' => $trackingId,
                 ]);
-
+                
+                // Redirect to success page
+                return redirect()
+                    ->route('poster.success', ['tin_no' => $poster->tin_no])
+                    ->with('success', 'Payment successful! Your registration is complete.');
+            } else {
+                // Payment failed - update all tables
+                $payment = Payment::where('order_id', $orderId)
+                    ->where('invoice_id', $invoice->id)
+                    ->first();
+                
+                if ($payment) {
+                    $payment->update([
+                        'status' => 'failed',
+                        'pg_result' => $orderStatus ?? 'Failed',
+                        'pg_response_json' => json_encode($responseArray),
+                    ]);
+                }
+                
                 $poster->update(['payment_status' => 'failed']);
-
-                return redirect()->route('poster.payment', ['tin_no' => $poster->tin_no])
-                    ->with('error', 'Payment failed. Please try again.');
+                
+                Log::warning('Poster CCAvenue Payment Failed', [
+                    'poster_id' => $poster->id,
+                    'tin_no' => $poster->tin_no,
+                    'order_status' => $orderStatus,
+                    'response' => $responseArray,
+                ]);
+                
+                return redirect()
+                    ->route('poster.payment', ['tin_no' => $poster->tin_no])
+                    ->with('error', 'Payment failed: ' . ($responseArray['failure_message'] ?? 'Unknown error'));
             }
 
         } catch (\Exception $e) {
