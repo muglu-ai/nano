@@ -2102,13 +2102,26 @@ class ExhibitorRegistrationController extends Controller
         $exhibitorInfo = \App\Models\ExhibitorInfo::where('application_id', $application->id)->first();
         
         // Security: Verify ownership using session
+        // Check if this application_id matches the one stored in session (from form submission)
         $sessionApplicationId = session('exhibitor_registration_application_id');
+        if ($sessionApplicationId && $sessionApplicationId !== $applicationId) {
+            // If session has a different application_id, this is unauthorized access attempt
+            \Log::warning('Unauthorized exhibitor registration payment access attempt', [
+                'requested_application_id' => $applicationId,
+                'session_application_id' => $sessionApplicationId,
+                'ip' => request()->ip(),
+                'user_agent' => request()->userAgent()
+            ]);
+            abort(403, 'Unauthorized access to this application');
+        }
         
-        // Check if the application_id (TIN number) in session matches the application
-        if (!$sessionApplicationId || $sessionApplicationId !== $application->application_id) {
-            // Unauthorized access attempt - redirect back to form
-            return redirect()->route('exhibitor-registration.register')
-                ->with('error', 'Unauthorized access. Please submit the form again.');
+        // If no session, log for security monitoring (may be from approval email link)
+        if (!$sessionApplicationId) {
+            \Log::info('Exhibitor registration payment access without session validation', [
+                'application_id' => $applicationId,
+                'ip' => request()->ip(),
+                'referer' => request()->header('referer')
+            ]);
         }
         
         if (!$application->invoice) {
@@ -2182,12 +2195,22 @@ class ExhibitorRegistrationController extends Controller
         
         // Security: Verify ownership using session
         $sessionApplicationId = session('exhibitor_registration_application_id');
+        if ($sessionApplicationId && $sessionApplicationId !== $applicationId) {
+            // If session has a different application_id, this is unauthorized access attempt
+            \Log::warning('Unauthorized exhibitor registration process payment attempt', [
+                'requested_application_id' => $applicationId,
+                'session_application_id' => $sessionApplicationId,
+                'ip' => request()->ip(),
+            ]);
+            abort(403, 'Unauthorized access to this application');
+        }
         
-        // Check if the application_id (TIN number) in session matches the application
-        if (!$sessionApplicationId || $sessionApplicationId !== $application->application_id) {
-            // Unauthorized access attempt - redirect back to form
-            return redirect()->route('exhibitor-registration.register')
-                ->with('error', 'Unauthorized access. Please submit the form again.');
+        // If no session, log for security monitoring
+        if (!$sessionApplicationId) {
+            \Log::info('Exhibitor registration process payment without session validation', [
+                'application_id' => $applicationId,
+                'ip' => request()->ip(),
+            ]);
         }
         
         $invoice = Invoice::where('application_id', $application->id)->firstOrFail();

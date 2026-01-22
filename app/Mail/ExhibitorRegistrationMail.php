@@ -23,15 +23,24 @@ class ExhibitorRegistrationMail extends Mailable
     public $billingDetail;
     public $paymentUrl;
     public $sectorName;
+    public $emailType;
+    public $isApprovalEmail;
 
     /**
      * Create a new message instance.
+     * 
+     * @param Application $application
+     * @param Invoice $invoice
+     * @param EventContact|null $contact
+     * @param string $emailType 'registration' | 'approval'
      */
-    public function __construct(Application $application, Invoice $invoice, $contact = null)
+    public function __construct(Application $application, Invoice $invoice, $contact = null, string $emailType = 'registration')
     {
         $this->application = $application;
         $this->invoice = $invoice;
         $this->contact = $contact;
+        $this->emailType = $emailType;
+        $this->isApprovalEmail = ($emailType === 'approval');
         $this->billingDetail = \App\Models\BillingDetail::where('application_id', $application->id)->first();
         
         // Determine payment URL based on application type
@@ -54,23 +63,29 @@ class ExhibitorRegistrationMail extends Mailable
      */
     public function envelope(): Envelope
     {
-        // Set subject based on payment status and application type
+        // Set subject based on email type and payment status
         $isPaid = $this->invoice->payment_status === 'paid';
         $isExhibitorRegistration = $this->application->application_type === 'exhibitor-registration';
         
-        if ($isExhibitorRegistration) {
-            // Exhibitor Registration emails
-            if ($isPaid) {
-                $subject = config('constants.EVENT_NAME') . ' ' . config('constants.EVENT_YEAR') . ' - Exhibitor Registration Confirmation & Payment';
-            } else {
-                $subject = config('constants.EVENT_NAME') . ' ' . config('constants.EVENT_YEAR') . ' - Exhibitor Registration Initiated & Payment Link';
-            }
+        if ($this->isApprovalEmail) {
+            // Approval email subject
+            $subject = config('constants.EVENT_NAME') . ' ' . config('constants.EVENT_YEAR') . ' - Application Approved & Payment Link';
         } else {
-            // Startup Zone emails
-            if ($isPaid) {
-                $subject = config('constants.EVENT_NAME') . ' ' . config('constants.EVENT_YEAR') . ' - Startup Exhibitor Registration Confirmation & Payment';
+            // Regular registration email subjects
+            if ($isExhibitorRegistration) {
+                // Exhibitor Registration emails
+                if ($isPaid) {
+                    $subject = config('constants.EVENT_NAME') . ' ' . config('constants.EVENT_YEAR') . ' - Exhibitor Registration Confirmation & Payment';
+                } else {
+                    $subject = config('constants.EVENT_NAME') . ' ' . config('constants.EVENT_YEAR') . ' - Exhibitor Registration Initiated & Payment Link';
+                }
             } else {
-                $subject = config('constants.EVENT_NAME') . ' ' . config('constants.EVENT_YEAR') . ' - Startup Exhibitor Registration Initiated & Payment Link';
+                // Startup Zone emails
+                if ($isPaid) {
+                    $subject = config('constants.EVENT_NAME') . ' ' . config('constants.EVENT_YEAR') . ' - Startup Exhibitor Registration Confirmation & Payment';
+                } else {
+                    $subject = config('constants.EVENT_NAME') . ' ' . config('constants.EVENT_YEAR') . ' - Startup Exhibitor Registration Initiated & Payment Link';
+                }
             }
         }
         
@@ -84,8 +99,13 @@ class ExhibitorRegistrationMail extends Mailable
      */
     public function content(): Content
     {
+        // Use approval template if this is an approval email
+        $viewName = $this->isApprovalEmail 
+            ? 'emails.exhibitor-registration-approval' 
+            : 'emails.exhibitor-registration';
+        
         return new Content(
-            view: 'emails.exhibitor-registration',
+            view: $viewName,
             with: [
                 'application' => $this->application,
                 'invoice' => $this->invoice,
@@ -93,6 +113,7 @@ class ExhibitorRegistrationMail extends Mailable
                 'billingDetail' => $this->billingDetail,
                 'paymentUrl' => $this->paymentUrl,
                 'sectorName' => $this->sectorName,
+                'isApprovalEmail' => $this->isApprovalEmail,
             ],
         );
     }
