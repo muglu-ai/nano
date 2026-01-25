@@ -32,11 +32,6 @@
             height: auto;
             max-height: 80px;
         }
-        .emailer-header {
-            max-width: auto%;
-            height: auto;
-            max-height: 100px;
-        }
         .social-links a {
             display: inline-block;
             margin: 0 4px;
@@ -251,7 +246,7 @@
     <div class="email-container">
         <!-- Header -->
         <table width="100%" cellpadding="0" cellspacing="0" style="background: #ffffff; border-bottom: 2px solid #e0e0e0;">
-            {{--<tr>
+            <tr>
                 <td style="padding: 12px 15px; width: 65%;">
                 @if(config('constants.event_logo'))
                 <img src="{{ config('constants.event_logo') }}" alt="{{ config('constants.EVENT_NAME') }}" class="event-logo">
@@ -282,16 +277,6 @@
                 </div>
                 </td>
             </tr>
---}}
-
-<tr>
-    <td style="padding: 2px 2px; width: 100%;">
-    @if(config('constants.EMAILER_HEADER_LOGO'))
-    <img src="{{ config('constants.EMAILER_HEADER_LOGO') }}" alt="{{ config('constants.EVENT_NAME') }}" class="emailer-header">
-    @endif
-    </td>
-</tr>
-
         </table>
 
         <!-- Receipt Header -->

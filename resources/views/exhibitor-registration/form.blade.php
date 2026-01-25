@@ -73,6 +73,32 @@
         box-shadow: none !important;
     }
 
+    /* Validation styling - matching startup-zone form */
+    .form-control:invalid, .form-select:invalid {
+        border-color: #dc3545;
+    }
+    .form-control.is-invalid, .form-select.is-invalid {
+        border-color: #dc3545 !important;
+        border-width: 2px !important;
+        padding-right: calc(1.5em + 0.75rem);
+        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' width='12' height='12' fill='none' stroke='%23dc3545'%3e%3ccircle cx='6' cy='6' r='4.5'/%3e%3cpath d='m5.8 3.6 .4.4.4-.4m0 4.8-.4-.4-.4.4'/%3e%3c/svg%3e");
+        background-repeat: no-repeat;
+        background-position: right calc(0.375em + 0.1875rem) center;
+        background-size: calc(0.75em + 0.375rem) calc(0.75em + 0.375rem);
+    }
+
+    .invalid-feedback {
+        display: none;
+        width: 100%;
+        margin-top: 0.25rem;
+        font-size: 0.875rem;
+        color: #dc3545;
+    }
+
+    .invalid-feedback:not(:empty) {
+        display: block !important;
+    }
+
 </style>
 @endpush
 @section('content')
@@ -123,7 +149,7 @@
                 {{-- Booth & Exhibition Details --}}
                 <div class="form-section">
                 <h5 class="mb-3 border-bottom pb-2"><i class="fas fa-cube"></i> Booth & Exhibition Details</h5>
-                <div class="row mb-3">
+                <div class="row">
                     <div class="col-md-4">
                         <label for="booth_space" class="form-label">Booth Space <span class="text-danger">*</span></label>
                         <select class="form-select" id="booth_space" name="booth_space" required>
@@ -155,7 +181,7 @@
                     
                 </div>
 
-                <div class="row mb-3">
+                <div class="row">
                     <div class="col-md-4">
                         <label for="subsector" class="form-label">Subsector <span class="text-danger">*</span></label>
                         <select class="form-select" id="subsector" name="subsector" required>
@@ -215,7 +241,7 @@
                 
                 @if($selectedCurrency == 'USD')
                 {{-- USD Currency: Ask if they have Indian GST --}}
-                <div class="row mb-3">
+                <div class="row">
                     <div class="col-md-6">
                         <label for="has_indian_gst" class="form-label">Do you have an Indian GST Number? <span class="text-danger">*</span></label>
                         <select class="form-select" id="has_indian_gst" name="has_indian_gst" required>
@@ -228,7 +254,7 @@
                 <!-- </div> -->
                 
                 {{-- Show only Tax Number field when "No" is selected --}}
-                <!-- <div class="row mb-3" > -->
+                <!-- <div class="row" > -->
                     <div class="col-md-6" id="usd_no_gst_container" style="display: none;">
                         <label for="tax_no" class="form-label">Enter your Tax Number (if any)</label>
                         <input type="text" class="form-control" id="tax_no" name="tax_no" value="{{ $draft->billing_data['tax_no'] ?? '' }}">
@@ -240,7 +266,7 @@
                 <div id="indian_gst_fields_container" style="display: none;">
                 @endif
                 
-                <div class="row mb-3" id="tan_gst_row">
+                <div class="row" id="tan_gst_row">
                     <div class="col-md-4">
                         <label for="tan_status" class="form-label">TAN Status <span class="text-danger">*</span></label>
                         <select class="form-select" id="tan_status" name="tan_status" {{ $selectedCurrency == 'INR' ? 'required' : '' }}>
@@ -266,7 +292,7 @@
                         <div class="invalid-feedback"></div>
                     </div>
                 </div>
-                <div class="row mb-3" id="gst_pan_row">
+                <div class="row" id="gst_pan_row">
                     <div class="col-md-6" id="gst_no_container" style="display: none;">
                         <label for="gst_no" class="form-label">GST Number <span class="text-danger" id="gst_required_indicator" style="display: none;">*</span></label>
                         <div class="input-group">
@@ -316,7 +342,7 @@
                     </div>
                 </div>
 
-                <div class="row mb-3">
+                <div class="row">
                     <div class="col-md-6">
                         <label for="billing_country_id" class="form-label">Country <span class="text-danger">*</span></label>
                         <select class="form-select" id="billing_country_id" name="billing_country_id" required>
@@ -354,7 +380,7 @@
                    
                 </div>
 
-                <div class="row mb-3">
+                <div class="row">
                     <div class="col-md-6">
                         <label for="billing_city" class="form-label">City <span class="text-danger">*</span></label>
                         <input type="text" class="form-control" id="billing_city" name="billing_city" 
@@ -371,7 +397,7 @@
                     </div>
                     
                 </div>
-                <div class="row mb-3">
+                <div class="row">
                     <div class="col-md-6">
                         <label for="billing_telephone" class="form-label">Telephone Number <span class="text-danger">*</span></label>
                         <input type="tel" class="form-control" id="billing_telephone" name="billing_telephone" 
@@ -390,7 +416,7 @@
                     </div>
                 </div>
 
-                <div class="row mb-3">
+                <div class="row">
                     <div class="col-md-6">
                         <label for="billing_email" class="form-label">Email <span class="text-danger">*</span></label>
                         <input type="email" class="form-control" id="billing_email" name="billing_email" 
@@ -401,15 +427,13 @@
                 </div>
                 {{-- Exhibitor Information --}}
                 <div class="form-section">
-                <h5 class="mb-3  border-bottom pb-2"><i class="fas fa-building"></i> Exhibitor Information</h5>
-                <div class="row mb-3">
-                    <div class="col-12">
-                        <button type="button" class="btn btn-outline-primary btn-sm" id="copy_from_billing" style="color: #fff;">
-                            <i class="fas fa-copy"></i> Click here to Copy from Billing Information
-                        </button>
-                    </div>
+                <div class="d-flex justify-content-between align-items-center mb-3 border-bottom pb-2">
+                    <h5 class="mb-0"><i class="fas fa-building"></i> Exhibitor Information</h5>
+                    <button type="button" class="btn btn-primary btn-sm" id="copy_from_billing" style="color: #fff;">
+                        <i class="fas fa-copy"></i> Click here to Copy from Billing Information
+                    </button>
                 </div>
-                <div class="row mb-3">
+                <div class="row">
                     <div class="col-md-6">
                         <label for="exhibitor_name" class="form-label">Name of Exhibitor (Organisation Name) <span class="text-danger">*</span></label>
                         <input type="text" class="form-control" id="exhibitor_name" name="exhibitor_name" 
@@ -424,7 +448,7 @@
                     </div>
                 </div>
 
-                <div class="row mb-3">
+                <div class="row">
                     <div class="col-md-6">
                         <label for="exhibitor_country_id" class="form-label">Country <span class="text-danger">*</span></label>
                         <select class="form-select" id="exhibitor_country_id" name="exhibitor_country_id" required>
@@ -461,7 +485,7 @@
                     
                 </div>
 
-                <div class="row mb-3">
+                <div class="row">
                      <div class="col-md-6">
                         <label for="exhibitor_city" class="form-label">City <span class="text-danger">*</span></label>
                         <input type="text" class="form-control" id="exhibitor_city" name="exhibitor_city" 
@@ -478,7 +502,7 @@
                     </div>
                     
                 </div>
-                <div class="row mb-3">
+                <div class="row">
                     <div class="col-md-6">
                         <label for="exhibitor_telephone" class="form-label">Telephone Number <span class="text-danger">*</span></label>
                         <input type="tel" class="form-control" id="exhibitor_telephone" name="exhibitor_telephone" 
@@ -497,7 +521,7 @@
                     </div>
                 </div>
 
-                <div class="row mb-3">
+                <div class="row">
                     <div class="col-md-6">
                         <label for="exhibitor_email" class="form-label">Company Email <span class="text-danger">*</span></label>
                         <input type="email" class="form-control" id="exhibitor_email" name="exhibitor_email" 
@@ -509,7 +533,7 @@
                 {{-- Primary Contact Person --}}
                 <div class="form-section">
                 <h5 class="mb-3  border-bottom pb-2"><i class="fas fa-user"></i> Contact Person Details</h5>
-                <div class="row mb-3">
+                <div class="row">
                     <div class="col-md-2">
                         <label for="contact_title" class="form-label">Title <span class="text-danger">*</span></label>
                         <select class="form-select" id="contact_title" name="contact_title" required>
@@ -536,7 +560,7 @@
                     </div>
                     
                 </div>
-                <div class="row mb-3">
+                <div class="row">
 
 
 
@@ -557,7 +581,7 @@
                     
                    
                 </div>
-                <div class="row mb-3">
+                <div class="row">
                    
                     <div class="col-md-6 ui-intl-tel-input">
                         <label for="contact_mobile" class="form-label">Mobile <span class="text-danger">*</span></label>
@@ -584,7 +608,7 @@
                 </div>
                 {{-- Payment Mode --}}
                 <!-- <h5 class="mb-3  border-bottom pb-2"><i class="fas fa-credit-card"></i> Payment Mode</h5>
-                <div class="row mb-3">
+                <div class="row">
                     <div class="col-md-6">
                         <label class="form-label d-block mb-2">Payment Mode <span class="text-danger">*</span></label>
                         <div>
@@ -602,9 +626,11 @@
 
                 {{-- Promocode Section --}}
                 <div class="form-section" style="display: none;">
-                <div class="row mb-3" style="display: none;">
-                <h5 class="mb-3  border-bottom pb-2"><i class="fas fa-ticket-alt"></i> Promocode (Optional)</h5>
-                <div class="row mb-3">
+                <div class="row" style="display: none;">
+                <div class="d-flex justify-content-between align-items-center mb-3 border-bottom pb-2">
+                    <h5 class="mb-0"><i class="fas fa-ticket-alt"></i> Promocode (Optional)</h5>
+                </div>
+                <div class="row">
                     <div class="col-md-6">
                         <label for="promocode" class="form-label">Promocode</label>
                         <div class="input-group">
@@ -1477,9 +1503,80 @@ $(document).ready(function() {
         });
     }
 
+    // Form validation function - matching startup-zone form logic
+    function validateExhibitorForm() {
+        let isValid = true;
+        const form = document.getElementById('exhibitorRegistrationForm');
+        
+        // Clear previous validation
+        form.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
+        
+        // Get all required fields
+        const requiredFields = form.querySelectorAll('[required]');
+        
+        requiredFields.forEach(field => {
+            // Skip hidden fields
+            if (field.type === 'hidden') {
+                return;
+            }
+            
+            // Check if field is visible (not in hidden sections)
+            const isVisible = field.offsetParent !== null;
+            if (!isVisible) {
+                return;
+            }
+            
+            // Skip disabled fields
+            if (field.disabled) {
+                return;
+            }
+            
+            // Simple check: if field value is empty (works for both text and select)
+            if (!field.value.trim()) {
+                field.classList.add('is-invalid');
+                const feedback = field.nextElementSibling;
+                if (feedback && feedback.classList.contains('invalid-feedback')) {
+                    feedback.textContent = 'This field is required.';
+                }
+                isValid = false;
+            } else {
+                field.classList.remove('is-invalid');
+                
+                // Additional validations
+                if (field.type === 'email' && !isValidEmail(field.value)) {
+                    field.classList.add('is-invalid');
+                    const feedback = field.nextElementSibling;
+                    if (feedback && feedback.classList.contains('invalid-feedback')) {
+                        feedback.textContent = 'Please enter a valid email address.';
+                    }
+                    isValid = false;
+                }
+            }
+        });
+        
+        // Scroll to first error
+        if (!isValid) {
+            const firstError = form.querySelector('.is-invalid');
+            if (firstError) {
+                firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        }
+        
+        return isValid;
+    }
+
+    function isValidEmail(email) {
+        return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+    }
+
     // Form submission
     $('#exhibitorRegistrationForm').on('submit', function(e) {
         e.preventDefault();
+        
+        // Validate form before submission
+        if (!validateExhibitorForm()) {
+            return false;
+        }
         
         // Update phone fields before submitting
         if (billingTelInput) {
@@ -1532,19 +1629,32 @@ $(document).ready(function() {
                         if (response.errors) {
                             // Clear previous errors
                             $('.is-invalid').removeClass('is-invalid');
-                            $('.invalid-feedback').text('').hide();
+                            $('.invalid-feedback').each(function() {
+                                $(this).text('');
+                                this.style.display = 'none';
+                            });
                             
                             // Display validation errors
                             let firstErrorField = null;
                             Object.keys(response.errors).forEach(function(field) {
                                 const input = $(`[name="${field}"]`);
                                 if (input.length) {
-                                    input.addClass('is-invalid');
+                                    input[0].classList.add('is-invalid');
                                     // Find invalid-feedback in parent container
-                                    const feedback = input.siblings('.invalid-feedback').length 
-                                        ? input.siblings('.invalid-feedback') 
-                                        : input.closest('.col-md-4, .col-md-6, .col-md-12, .col-12').find('.invalid-feedback');
-                                    feedback.text(response.errors[field][0]).show();
+                                    let feedback = input.siblings('.invalid-feedback');
+                                    if (!feedback.length) {
+                                        feedback = input.closest('.col-md-4, .col-md-6, .col-md-12, .col-12').find('.invalid-feedback');
+                                    }
+                                    if (feedback.length) {
+                                        feedback.text(response.errors[field][0]);
+                                        feedback[0].style.display = 'block';
+                                    } else {
+                                        // Create feedback if it doesn't exist
+                                        const newFeedback = $('<div class="invalid-feedback"></div>');
+                                        newFeedback.text(response.errors[field][0]);
+                                        newFeedback.css('display', 'block');
+                                        input.after(newFeedback);
+                                    }
                                     
                                     // Track first error field
                                     if (!firstErrorField) {
@@ -1570,19 +1680,32 @@ $(document).ready(function() {
                     if (response && response.errors) {
                         // Clear previous errors
                         $('.is-invalid').removeClass('is-invalid');
-                        $('.invalid-feedback').text('').hide();
+                        $('.invalid-feedback').each(function() {
+                            $(this).text('');
+                            this.style.display = 'none';
+                        });
                         
                         // Display validation errors
                         let firstErrorField = null;
                         Object.keys(response.errors).forEach(function(field) {
                             const input = $(`[name="${field}"]`);
                             if (input.length) {
-                                input.addClass('is-invalid');
+                                input[0].classList.add('is-invalid');
                                 // Find invalid-feedback in parent container
-                                const feedback = input.siblings('.invalid-feedback').length 
-                                    ? input.siblings('.invalid-feedback') 
-                                    : input.closest('.col-md-4, .col-md-6, .col-md-12, .col-12').find('.invalid-feedback');
-                                feedback.text(response.errors[field][0]).show();
+                                let feedback = input.siblings('.invalid-feedback');
+                                if (!feedback.length) {
+                                    feedback = input.closest('.col-md-4, .col-md-6, .col-md-12, .col-12').find('.invalid-feedback');
+                                }
+                                if (feedback.length) {
+                                    feedback.text(response.errors[field][0]);
+                                    feedback[0].style.display = 'block';
+                                } else {
+                                    // Create feedback if it doesn't exist
+                                    const newFeedback = $('<div class="invalid-feedback"></div>');
+                                    newFeedback.text(response.errors[field][0]);
+                                    newFeedback.css('display', 'block');
+                                    input.after(newFeedback);
+                                }
                                 
                                 // Track first error field
                                 if (!firstErrorField) {
@@ -1628,6 +1751,32 @@ $(document).ready(function() {
         submitFormWithRecaptcha('');
         @endif
     });
+
+    // Add event listeners to clear validation on input/change - matching startup-zone form
+    const exhibitorForm = document.getElementById('exhibitorRegistrationForm');
+    if (exhibitorForm) {
+        exhibitorForm.querySelectorAll('input, select, textarea').forEach(field => {
+            field.addEventListener('input', function() {
+                if (this.classList.contains('is-invalid')) {
+                    this.classList.remove('is-invalid');
+                    const feedback = this.nextElementSibling;
+                    if (feedback && feedback.classList.contains('invalid-feedback')) {
+                        feedback.textContent = '';
+                    }
+                }
+            });
+            
+            field.addEventListener('change', function() {
+                if (this.classList.contains('is-invalid')) {
+                    this.classList.remove('is-invalid');
+                    const feedback = this.nextElementSibling;
+                    if (feedback && feedback.classList.contains('invalid-feedback')) {
+                        feedback.textContent = '';
+                    }
+                }
+            });
+        });
+    }
 
     // Email validation - check if email already exists in users table
     const contactEmailInput = document.getElementById('contact_email');

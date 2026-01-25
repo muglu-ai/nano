@@ -148,7 +148,7 @@
                 {{-- Sector Information --}}
                 <div class="form-section">
                 <h5 class="mb-3  border-bottom pb-2"><i class="fas fa-industry"></i> Sector Information</h5>
-                <div class="row mb-3">
+                <div class="row">
                     <div class="col-md-6">
                         <label for="sector_id" class="form-label">Sector <span class="text-danger">*</span></label>
                         <select class="form-select" id="sector_id" name="sector_id" required>
@@ -183,7 +183,7 @@
                     </div>
                 </div>
 
-                <div class="row mb-3">
+                <div class="row">
                     <div class="col-md-6" id="other_sector_container" style="display: none;">
                         <label for="type_of_business" class="form-label">Other Sector Name</label>
                         <input type="text" class="form-control" id="type_of_business" name="type_of_business" 
@@ -195,7 +195,7 @@
                 {{-- Tax Information --}}
                 <div class="form-section">
                 <h5 class="mb-3  border-bottom pb-2"><i class="fas fa-file-invoice-dollar"></i> Tax Information</h5>
-                <div class="row mb-3">
+                <div class="row">
                     <div class="col-md-6">
                         <label for="gst_compliance" class="form-label">GST Status <span class="text-danger">*</span></label>
                         <select class="form-select" id="gst_compliance" name="gst_compliance" required>
@@ -215,7 +215,7 @@
                         <div class="invalid-feedback"></div>
                     </div>
                 </div>
-                <div class="row mb-3">
+                <div class="row">
                     <div class="col-md-6" id="gst_no_container" style="display: none;">
                         <label for="gst_no" class="form-label">GST Number <span class="text-danger" id="gst_required_indicator" style="display: none;">*</span></label>
                         <div class="input-group">
@@ -241,7 +241,7 @@
                 {{-- Billing Information --}}
                 <div class="form-section">
                 <h5 class="mb-3  border-bottom pb-2"><i class="fas fa-building"></i> Billing Information</h5>
-                <div class="row mb-3">
+                <div class="row">
                     <div class="col-md-6">
                         <label for="billing_company_name" class="form-label">Company Name <span class="text-danger">*</span></label>
                         <input type="text" class="form-control" id="billing_company_name" name="billing_company_name" 
@@ -260,7 +260,7 @@
                     </div>
                 </div>
 
-                <div class="row mb-3">
+                <div class="row">
                     <div class="col-md-6">
                         <label for="how_old_startup" class="form-label">Company Age (Years) <span class="text-danger">*</span></label>
                         <select class="form-select" id="how_old_startup" name="how_old_startup" required>
@@ -278,7 +278,7 @@
                     </div>
                 </div>
 
-                <div class="row mb-3">
+                <div class="row">
                     <div class="col-md-6">
                         <label for="billing_country_id" class="form-label">Country <span class="text-danger">*</span></label>
                         <select class="form-select" id="billing_country_id" name="billing_country_id" required>
@@ -321,7 +321,7 @@
                    
                 </div>
 
-                <div class="row mb-3">
+                <div class="row">
                     <div class="col-md-6">
                         <label for="billing_city" class="form-label">City <span class="text-danger">*</span></label>
                         <input type="text" class="form-control" id="billing_city" name="billing_city" 
@@ -338,7 +338,7 @@
                     </div>
                    
                 </div>
-                <div class="row mb-3">
+                <div class="row">
                     <div class="col-md-6">
                         <label for="billing_telephone" class="form-label">Telephone Number <span class="text-danger">*</span></label>
                         <input type="tel" class="form-control" id="billing_telephone" name="billing_telephone" 
@@ -357,7 +357,7 @@
                     </div>
                 </div>
 
-                <div class="row mb-3">
+                <div class="row">
                     <div class="col-md-6">
                         <label for="billing_email" class="form-label">Email <span class="text-danger">*</span></label>
                         <input type="email" class="form-control" id="billing_email" name="billing_email" 
@@ -368,7 +368,13 @@
                 </div>
                 {{-- Exhibitor Information --}}
                 <div class="form-section">
-                <h5 class="mb-3  border-bottom pb-2"><i class="fas fa-building"></i> Exhibitor Information</h5>
+                <div class="d-flex justify-content-between align-items-center mb-3 border-bottom pb-2">
+                    <h5 class="mb-0"><i class="fas fa-building"></i> Exhibitor Information</h5>
+                    <button type="button" class="btn btn-primary btn-sm" id="copy_from_billing" style="color: #fff;">
+                        <i class="fas fa-copy"></i> Click here to Copy from Billing Information
+                    </button>
+                </div>
+                {{--
                 <div class="row mb-3">
                     <div class="col-12">
                         <button type="button" class="btn btn-primary btn-sm mb-3" id="copy_from_billing" style="color: #fff;">
@@ -376,7 +382,8 @@
                         </button>
                     </div>
                 </div>
-                <div class="row mb-3">
+                --}}
+                <div class="row">
                     <div class="col-md-6">
                         <label for="exhibitor_name" class="form-label">Name of Exhibitor (Organisation Name) <span class="text-danger">*</span></label>
                         <input type="text" class="form-control" id="exhibitor_name" name="exhibitor_name" 
@@ -391,7 +398,7 @@
                     </div>
                 </div>
 
-                <div class="row mb-3">
+                <div class="row">
                     <div class="col-md-6">
                         <label for="exhibitor_country_id" class="form-label">Country <span class="text-danger">*</span></label>
                         <select class="form-select" id="exhibitor_country_id" name="exhibitor_country_id" required>
@@ -426,7 +433,7 @@
                     
                 </div>
 
-                <div class="row mb-3">
+                <div class="row">
                     <div class="col-md-6">
                         <label for="exhibitor_city" class="form-label">City <span class="text-danger">*</span></label>
                         <input type="text" class="form-control" id="exhibitor_city" name="exhibitor_city" 
@@ -443,7 +450,7 @@
                     </div>
                     
                 </div>
-                <div class="row mb-3">
+                <div class="row">
                     <div class="col-md-6">
                         <label for="exhibitor_telephone" class="form-label">Telephone Number <span class="text-danger">*</span></label>
                         <input type="tel" class="form-control" id="exhibitor_telephone" name="exhibitor_telephone" 
@@ -457,12 +464,12 @@
                         <label for="exhibitor_website" class="form-label">Website <span class="text-danger">*</span></label>
                         <input type="url" class="form-control" id="exhibitor_website" name="exhibitor_website" 
                                value="{{ isset($draft->exhibitor_data['website']) ? $draft->exhibitor_data['website'] : '' }}" 
-                               placeholder="https://example.com" required>
+                               placeholder="" required>
                         <div class="invalid-feedback"></div>
                     </div>
                 </div>
 
-                <div class="row mb-3">
+                <div class="row">
                     <div class="col-md-6">
                         <label for="exhibitor_email" class="form-label">Company Email <span class="text-danger">*</span></label>
                         <input type="email" class="form-control" id="exhibitor_email" name="exhibitor_email" 
@@ -475,7 +482,7 @@
                 {{-- Contact Person Details --}}
                 <div class="form-section">
                 <h5 class="mb-3  border-bottom pb-2"><i class="fas fa-user"></i> Contact Person Details</h5>
-                <div class="row mb-3">
+                <div class="row">
                     <div class="col-md-3">
                         <label for="contact_title" class="form-label">Title <span class="text-danger">*</span></label>
                         <select class="form-select" id="contact_title" name="contact_title" required>
@@ -502,7 +509,7 @@
                     </div>
                 </div>
 
-                <div class="row mb-3">
+                <div class="row">
                     <div class="col-md-6">
                         <label for="contact_designation" class="form-label">Designation <span class="text-danger">*</span></label>
                         <input type="text" class="form-control" id="contact_designation" name="contact_designation" 
@@ -517,7 +524,7 @@
                     </div>
                 </div>
 
-                <div class="row mb-3">
+                <div class="row">
                     <div class="col-md-6">
                         <label for="contact_mobile" class="form-label">Mobile Number <span class="text-danger">*</span></label>
                         <input type="tel" class="form-control" id="contact_mobile" name="contact_mobile" 
@@ -532,7 +539,7 @@
                 {{-- Payment Mode --}}
                 <div class="form-section" style="display: none;">
                 <h5 class="mb-3  border-bottom pb-2"><i class="fas fa-credit-card"></i> Payment Mode</h5>
-                <div class="row mb-3">
+                <div class="row">
                     <div class="col-md-6">
                         <label for="payment_mode" class="form-label">Payment Mode <span class="text-danger">*</span></label>
                         <select class="form-select" id="payment_mode" name="payment_mode" required>

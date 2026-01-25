@@ -16,6 +16,28 @@
     .justification-section.show {
         display: block;
     }
+
+    /* Validation styling */
+    .form-control.is-invalid, .form-select.is-invalid {
+        border-color: #dc3545;
+        padding-right: calc(1.5em + 0.75rem);
+        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' width='12' height='12' fill='none' stroke='%23dc3545'%3e%3ccircle cx='6' cy='6' r='4.5'/%3e%3cpath d='m5.8 3.6 .4.4.4-.4m0 4.8-.4-.4-.4.4'/%3e%3c/svg%3e");
+        background-repeat: no-repeat;
+        background-position: right calc(0.375em + 0.1875rem) center;
+        background-size: calc(0.75em + 0.375rem) calc(0.75em + 0.375rem);
+    }
+
+    .invalid-feedback {
+        display: none;
+        width: 100%;
+        margin-top: 0.25rem;
+        font-size: 0.875rem;
+        color: #dc3545;
+    }
+
+    .invalid-feedback:not(:empty) {
+        display: block;
+    }
 </style>
 @endpush
 
@@ -80,6 +102,7 @@
                                value="{{ old('elevate_2025_id', $formData['elevate_2025_id'] ?? '') }}" 
                                placeholder="EL20250000XXX"
                                required>
+                        <div class="invalid-feedback"></div>
                         @error('elevate_2025_id')
                             <div class="error-message">{{ $message }}</div>
                         @enderror
@@ -102,6 +125,7 @@
                                name="company_name" 
                                value="{{ old('company_name', $formData['company_name'] ?? '') }}" 
                                required>
+                        <div class="invalid-feedback"></div>
                         @error('company_name')
                             <div class="error-message">{{ $message }}</div>
                         @enderror
@@ -117,6 +141,7 @@
                                name="sector" 
                                value="{{ old('sector', $formData['sector'] ?? '') }}" 
                                required>
+                        <div class="invalid-feedback"></div>
                         @error('sector')
                             <div class="error-message">{{ $message }}</div>
                         @enderror
@@ -149,6 +174,7 @@
                                name="city" 
                                value="{{ old('city') }}" 
                                required>
+                        <div class="invalid-feedback"></div>
                         @error('city')
                             <div class="error-message">{{ $message }}</div>
                         @enderror
@@ -162,6 +188,7 @@
                                name="postal_code" 
                                value="{{ old('postal_code') }}" 
                                required>
+                        <div class="invalid-feedback"></div>
                         @error('postal_code')
                             <div class="error-message">{{ $message }}</div>
                         @enderror
@@ -225,6 +252,7 @@
                               id="attendance_reason" 
                               name="attendance_reason" 
                               rows="3">{{ old('attendance_reason', $formData['attendance_reason'] ?? '') }}</textarea>
+                    <div class="invalid-feedback"></div>
                     @error('attendance_reason')
                         <div class="error-message">{{ $message }}</div>
                     @enderror
@@ -892,6 +920,135 @@
 
     // Country and State fields are hidden - no need for state loading logic
 
+    // Form validation function
+    function validateElevateForm() {
+        let isValid = true;
+        const form = document.getElementById('elevateRegistrationForm');
+        
+        // Clear previous validation
+        form.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
+        form.querySelectorAll('.invalid-feedback').forEach(el => el.textContent = '');
+        
+        // Validate Elevate Application Call Name
+        const checkedCount = document.querySelectorAll('.elevate-call-checkbox:checked').length;
+        if (checkedCount === 0) {
+            elevateErrorMsg.style.display = 'block';
+            elevateErrorMsg.textContent = 'Please select at least one Elevate Application Call Name';
+            elevateErrorMsg.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            isValid = false;
+        } else {
+            elevateErrorMsg.style.display = 'none';
+        }
+        
+        // Get all required fields
+        const requiredFields = form.querySelectorAll('[required]');
+        
+        requiredFields.forEach(field => {
+            // Skip hidden fields
+            if (field.type === 'hidden') {
+                return;
+            }
+            
+            // Check if field is visible (not in hidden sections)
+            const isVisible = field.offsetParent !== null;
+            if (!isVisible) {
+                return;
+            }
+            
+            let fieldValue = field.value;
+            
+            // Handle checkboxes and radio buttons
+            if (field.type === 'checkbox' || field.type === 'radio') {
+                const name = field.name;
+                const checked = form.querySelector(`input[name="${name}"]:checked`);
+                if (!checked) {
+                    field.classList.add('is-invalid');
+                    isValid = false;
+                } else {
+                    field.classList.remove('is-invalid');
+                }
+                return;
+            }
+            
+            // Handle select fields
+            if (field.tagName === 'SELECT') {
+                if (!fieldValue || fieldValue.trim() === '' || fieldValue === '-- Select --' || fieldValue === 'Select') {
+                    field.classList.add('is-invalid');
+                    const feedback = field.nextElementSibling;
+                    if (feedback && feedback.classList.contains('invalid-feedback')) {
+                        feedback.textContent = 'This field is required.';
+                    }
+                    isValid = false;
+                } else {
+                    field.classList.remove('is-invalid');
+                }
+                return;
+            }
+            
+            // Handle text inputs, textareas, etc.
+            if (!fieldValue || fieldValue.trim() === '') {
+                field.classList.add('is-invalid');
+                const feedback = field.nextElementSibling;
+                if (feedback && feedback.classList.contains('invalid-feedback')) {
+                    feedback.textContent = 'This field is required.';
+                }
+                isValid = false;
+            } else {
+                field.classList.remove('is-invalid');
+                
+                // Additional validations
+                if (field.type === 'email' && !isValidEmail(fieldValue)) {
+                    field.classList.add('is-invalid');
+                    const feedback = field.nextElementSibling;
+                    if (feedback && feedback.classList.contains('invalid-feedback')) {
+                        feedback.textContent = 'Please enter a valid email address.';
+                    }
+                    isValid = false;
+                }
+            }
+        });
+        
+        // Scroll to first error
+        if (!isValid) {
+            const firstError = form.querySelector('.is-invalid');
+            if (firstError) {
+                firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        }
+        
+        return isValid;
+    }
+
+    function isValidEmail(email) {
+        return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+    }
+
+    // Add event listeners to clear validation on input/change
+    const elevateForm = document.getElementById('elevateRegistrationForm');
+    if (elevateForm) {
+        elevateForm.querySelectorAll('input, select, textarea').forEach(field => {
+            field.addEventListener('input', function() {
+                if (this.classList.contains('is-invalid')) {
+                    this.classList.remove('is-invalid');
+                    const feedback = this.nextElementSibling;
+                    if (feedback && feedback.classList.contains('invalid-feedback')) {
+                        feedback.textContent = '';
+                    }
+                }
+            });
+            
+            field.addEventListener('change', function() {
+                if (this.classList.contains('is-invalid')) {
+                    this.classList.remove('is-invalid');
+                    const feedback = this.nextElementSibling;
+                    if (feedback && feedback.classList.contains('invalid-feedback')) {
+                        feedback.textContent = '';
+                    }
+                }
+            });
+        });
+    }
+
     // Validate Elevate Application Call Name
     function validateElevateCallNames() {
         const checkedCount = document.querySelectorAll('.elevate-call-checkbox:checked').length;
@@ -1043,7 +1200,12 @@
             return;
         }
         
-        // Basic form validation
+        // Custom form validation
+        if (!validateElevateForm()) {
+            return;
+        }
+        
+        // Also check HTML5 validation as fallback
         if (!form.checkValidity()) {
             form.reportValidity();
             return;

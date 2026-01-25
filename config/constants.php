@@ -71,8 +71,9 @@ const PAYPAL_CLIENT_ID = "Acv2dOnqohq3Ty2yKnWFaHsjWEEo9jF6KlzXDoNfgFcG7ZZ8z1wBc2
 const PAYPAL_SECRET = "EErD4CPPTPWzpUFSU4mNlZrLgF_ZlradgkfFLrk9B875BooSGI7_ElX1uiMvYC7MPXKPsDk3Q8_GtgqE";
 const PAYPAL_SANDBOX_CLIENT_ID = "AdBqjyTeEI9u0lPQpVnXsJsc5YYVzKYNGcWz3DWVSY8N8j9Yugu8x6_XYr0h9ITzmP-G_kZ1TSVyZzEp";
 const PAYPAL_SANDBOX_SECRET = "EKsqobP6xNcMNyPNQIS-XBCS0KMak5Wym_AehrFtHSnLvrNWPRXUJtCeTrEnunrSUCti3lKqV3zN-ERf";
-
+const EMAILER_HEADER_LOGO = APP_URL . "/mails/emailer-header.png";
 return [
+    'EMAILER_HEADER_LOGO' => EMAILER_HEADER_LOGO,
     'TICKET_REGISTRATION_LINK' => TICKET_REGISTRATION_LINK,
     // Feature toggles
     'RECAPTCHA_ENABLED' => true, // Set true to enable Google reCAPTCHA on startup zone form

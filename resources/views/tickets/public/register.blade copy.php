@@ -131,108 +131,22 @@
         display: block;
     }
 
-    /* Ensure input-group keeps button inline - Dynamic and responsive */
-    #gstin_full_width {
-        width: 100% !important;
-        max-width: 100% !important;
+    /* Ensure input-group keeps button inline */
+    .input-group {
+        display: flex;
+        flex-wrap: nowrap;
+        align-items: stretch;
     }
 
-    #gstin_full_width .input-group {
-        display: flex !important;
-        flex-wrap: nowrap !important;
-        align-items: stretch !important;
-        width: 100% !important;
-        max-width: 100% !important;
-        position: relative !important;
-    }
-    
-    /* Override any Bootstrap defaults that might interfere */
-    #gstin_full_width .input-group > * {
-        margin-left: 0;
-        margin-right: 0;
+    .input-group .form-control {
+        flex: 1 1 auto;
+        width: 1%;
+        min-width: 0;
     }
 
-    #gstin_full_width .input-group .form-control {
-        flex: 1 1 auto !important;
-        min-width: 0 !important;
-        width: auto !important;
-        border-top-right-radius: 0 !important;
-        border-bottom-right-radius: 0 !important;
-        border-right: none !important;
-        margin-right: 0 !important;
-    }
-
-    #gstin_full_width .input-group .btn,
-    #gstin_full_width .input-group #validateGstBtn {
-        flex: 0 0 auto !important;
-        flex-shrink: 0 !important;
-        flex-grow: 0 !important;
-        white-space: nowrap !important;
-        border-top-left-radius: 0 !important;
-        border-bottom-left-radius: 0 !important;
-        border-left: 1px solid #ced4da !important;
-        margin-left: -1px !important;
-        padding: 0.75rem 1rem !important;
-        display: inline-flex !important;
-        align-items: center !important;
-        position: relative !important;
-        z-index: 2 !important;
-        width: auto !important;
-        min-width: auto !important;
-    }
-    
-    /* Ensure button stays visible and connected when shown */
-    #gstin_full_width .input-group #validateGstBtn[style*="display: none"] {
-        display: none !important;
-    }
-    
-    #gstin_full_width .input-group #validateGstBtn:not([style*="display: none"]) {
-        display: inline-flex !important;
-    }
-
-    #gstin_full_width .input-group .input-group-text {
-        flex-shrink: 0 !important;
-        flex-grow: 0 !important;
-        flex-basis: auto !important;
-        border: none !important;
-        background: transparent !important;
-        padding-left: 0.5rem !important;
-        padding-right: 0.5rem !important;
-        display: inline-flex !important;
-        align-items: center !important;
-        white-space: nowrap !important;
-    }
-
-    #gstin_full_width .input-group .form-control:focus {
-        z-index: 3;
-        border-right: none !important;
-    }
-
-    #gstin_full_width .input-group .form-control:focus + .btn {
-        border-left-color: var(--primary-color);
-        z-index: 2;
-    }
-
-    #gstin_full_width .input-group .form-control.is-invalid {
-        border-right: none !important;
-    }
-
-    /* Ensure no gaps between input and button - they must be side by side */
-    #gstin_full_width .input-group .form-control + .btn {
-        margin-left: -1px !important;
-    }
-    
-    /* Style hint text when outside input-group */
-    #gstin_full_width #gstin_hint_text {
-        display: inline-block !important;
-        margin-top: 0.5rem;
-        padding: 0;
-        border: none;
-        background: transparent;
-    }
-    
-    #gstin_full_width #gstin_hint_text[style*="display: none"] {
-        display: none !important;
+    .input-group .btn {
+        flex: 0 0 auto;
+        white-space: nowrap;
     }
 
     .text-muted {
@@ -314,7 +228,7 @@
                 </h4>
 
                 <div class="row g-3">
-                    <div class="col-md-6">
+                    <div class="col-md-6 mb-3">
                         <label class="form-label required-field">Ticket Type</label>
                         @if(isset($isTicketTypeLocked) && $isTicketTypeLocked)
                             {{-- Hidden field to submit the value (slug for form submission) --}}
@@ -421,7 +335,7 @@
                 </div>
 
                 <div class="row">
-                    <div class="col-md-6">
+                    <div class="col-md-6 mb-3">
                         <label class="form-label">Base Amount</label>
                         <div class="form-control" 
                              id="base_amount_display" 
@@ -432,7 +346,7 @@
                     </div>
 
                     <!-- Promocode Section -->
-                    <div class="col-md-6">
+                    <div class="col-md-6 mb-3">
                         <label class="form-label">Promocode</label>
                         <div class="input-group">
                             <input type="text" 
@@ -464,7 +378,7 @@
                         </div>
                     </div>
 
-                    <div class="col-md-6" style="display: none;">
+                    <div class="col-md-6 mb-3" style="display: none;">
                         <label class="form-label required-field">Currency</label>
                         @if(isset($isNationalityLocked) && $isNationalityLocked)
                             {{-- Hidden field to submit the value --}}
@@ -508,7 +422,7 @@
                 </div>
 
                 <div class="row">
-                    <div class="col-md-6">
+                    <div class="col-md-6 mb-3">
                         <label class="form-label required-field">Industry Sector</label>
                         <select name="industry_sector" class="form-select" id="industry_sector" required>
                             <option value="">Select Industry Sector</option>
@@ -523,7 +437,7 @@
                         @enderror
                     </div>
 
-                    <div class="col-md-6" id="organisation_type_row">
+                    <div class="col-md-6 mb-3" id="organisation_type_row">
                         <label class="form-label required-field" id="organisation_type_label">Organisation Type</label>
                         <select name="organisation_type" class="form-select" id="organisation_type" required>
                             <option value="">Select Organisation Type</option>
@@ -536,7 +450,7 @@
                 </div>
 
                 <div class="row">
-                    <div class="col-md-6">
+                    <div class="col-md-6 mb-3">
                         <label class="form-label required-field">Country</label>
                         <select name="company_country" class="form-select" id="company_country" required>
                             <option value="">-- Select Country --</option>
@@ -564,7 +478,7 @@
                         @enderror
                     </div>
 
-                    <div class="col-md-6">
+                    <div class="col-md-6 mb-3">
                         <label class="form-label required-field">State</label>
                         <select name="company_state" class="form-select" id="company_state" required>
                             <option value="">-- Select State --</option>
@@ -579,7 +493,7 @@
                 </div>
 
                 <div class="row">
-                    <div class="col-md-6">
+                    <div class="col-md-6 mb-3">
                         <label class="form-label required-field">City</label>
                         <input type="text" name="company_city" class="form-control" 
                                value="{{ old('company_city') }}" 
@@ -589,7 +503,7 @@
                         @enderror
                     </div>
 
-                    <div class="col-md-6">
+                    <div class="col-md-6 mb-3">
                         <label class="form-label required-field">Postal Code</label>
                         <input type="text" name="postal_code" class="form-control" 
                                value="{{ old('postal_code') }}" 
@@ -601,7 +515,7 @@
                 </div>
 
                 <div class="row">
-                    <div class="col-md-6">
+                    <div class="col-md-6 mb-3">
                         <label class="form-label required-field">Phone Number</label>
                         <input type="tel" name="phone" class="form-control" id="company_phone" 
                                value="{{ old('phone') ? preg_replace('/\s+/', '', old('phone')) : '' }}" 
@@ -615,7 +529,7 @@
                         @enderror
                     </div>
 
-                    <div class="col-md-6">
+                    <div class="col-md-6 mb-3">
                         <label class="form-label required-field">Email</label>
                         <input type="email" name="email" class="form-control" 
                                value="{{ old('email') }}" 
@@ -633,7 +547,7 @@
                     <i class="fas fa-users"></i>
                     Delegates Information
                 </h4>
-                <p class="text-muted">Please provide details for each delegate attending the event.</p>
+                <p class="text-muted mb-3">Please provide details for each delegate attending the event.</p>
                 <div id="delegates_container">
                     <!-- Delegates will be dynamically added here -->
                 </div>
@@ -647,7 +561,7 @@
                 </h4>
 
                 <div class="row" id="gst_required_row">
-                    <div class="col-md-4 mb-2" id="gst_required_full_width">
+                    <div class="col-md-12 mb-2" id="gst_required_full_width">
                         <label class="form-label required-field">Do you require GST Invoice?</label>
                         <select name="gst_required" class="form-select" id="gst_required" required>
                             <option value="0" {{ old('gst_required') == '0' ? 'selected' : '' }}>No</option>
@@ -657,7 +571,7 @@
                             <div class="text-danger" style="font-size: 0.875rem; margin-top: 0.25rem;">{{ $message }}</div>
                         @enderror
                     </div>
-                    <div class="col-md-8 mb-2" id="gstin_full_width" style="display: none;">
+                    <div class="col-md-12 mb-2" id="gstin_full_width" style="display: none;">
                         <label class="form-label" id="gstin_label">GSTIN</label>
                         <div class="input-group">
                             <input type="text" name="gstin" class="form-control" 
@@ -665,15 +579,13 @@
                                    placeholder="Enter 15-character GSTIN" 
                                    id="gstin_input"
                                    maxlength="15">
-                            <button type="button" class="btn btn-outline-primary" id="validateGstBtn" style="display: none;">
+                            <button type="button" class="btn btn-outline-primary" id="validateGstBtn" style="display: none; white-space: nowrap;">
                                 <i class="fas fa-search me-1"></i>Validate
                             </button>
                         </div>
-                        <span class="input-group-text" id="gstin_hint_text" style="display: none; border: none; padding: 0.25rem 0; background: transparent;">
-                            <small class="text-muted" style="font-size: 0.75rem; margin: 0;">Click "Validate" to auto-fill details</small>
-                        </span>
                         <div class="invalid-feedback"></div>
-                        <div class="d-flex justify-content-end align-items-center mt-1">
+                        <div class="d-flex justify-content-between align-items-center mt-1">
+                            <small class="form-text text-muted" style="font-size: 0.75rem; margin: 0;">Click "Validate" to auto-fill details</small>
                             <div id="gst_loading" class="d-none">
                                 <small class="text-info" style="font-size: 0.75rem;"><i class="fas fa-spinner fa-spin"></i> Validating...</small>
                             </div>
@@ -2295,62 +2207,17 @@ document.addEventListener('DOMContentLoaded', function() {
             if (contactEmail) contactEmail.required = true;
             if (contactPhone) contactPhone.required = true;
             if (validateGstBtn) {
-                validateGstBtn.style.display = 'inline-flex';
+                validateGstBtn.style.display = 'inline-block';
                 validateGstBtn.style.whiteSpace = 'nowrap';
-                // Fix layout after button is shown
-                setTimeout(function() {
-                    const inputGroup = document.querySelector('#gstin_full_width .input-group');
-                    if (inputGroup) {
-                        inputGroup.style.display = 'flex';
-                        inputGroup.style.flexWrap = 'nowrap';
-                        validateGstBtn.style.flex = '0 0 auto';
-                    }
-                }, 10);
             }
             
-            // Show hint text below input-group
-            const hintText = document.getElementById('gstin_hint_text');
-            if (hintText) {
-                hintText.style.display = 'inline-block';
-            }
-            
-            // Show GSTIN field - it's already in col-md-6, just show it
+            // Show GSTIN field and make them side by side
             if (gstinFullWidth) {
                 gstinFullWidth.style.display = 'block';
             }
-            
-            // Remove invalid class from GSTIN field when shown (user hasn't entered anything yet)
-            if (gstinInput) {
-                gstinInput.classList.remove('is-invalid');
-            }
-            
-            // Ensure both columns are col-md-6 for side-by-side layout
-            if (gstRequiredFullWidth) {
+            if (gstRequiredFullWidth && gstinFullWidth) {
                 gstRequiredFullWidth.className = 'col-md-6 mb-2';
-            }
-            if (gstinFullWidth) {
                 gstinFullWidth.className = 'col-md-6 mb-2';
-            }
-            
-            // Force input-group to maintain flex layout
-            const inputGroup = document.querySelector('#gstin_full_width .input-group');
-            if (inputGroup) {
-                inputGroup.style.display = 'flex';
-                inputGroup.style.flexWrap = 'nowrap';
-                inputGroup.style.width = '100%';
-                inputGroup.style.alignItems = 'stretch';
-            }
-            
-            // Ensure input and button maintain proper flex properties
-            if (gstinInput) {
-                gstinInput.style.flex = '1 1 auto';
-                gstinInput.style.minWidth = '0';
-                gstinInput.style.width = 'auto';
-            }
-            
-            if (validateGstBtn) {
-                validateGstBtn.style.flex = '0 0 auto';
-                validateGstBtn.style.whiteSpace = 'nowrap';
             }
             
             // Set up validation listeners for GST fields
@@ -2358,13 +2225,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 window.setupGstFieldValidation();
             }
             
-            // Validate GST fields immediately when shown (skip GSTIN - it will be validated on blur/submit)
+            // Validate GST fields immediately when shown
             setTimeout(function() {
-                // Remove invalid class from GSTIN if it exists
-                if (gstinInput) {
-                    gstinInput.classList.remove('is-invalid');
-                }
-                // Validate other fields
+                if (gstinInput) validateSingleField(gstinInput);
                 if (gstLegalNameInput) validateSingleField(gstLegalNameInput);
                 if (gstAddressInput) validateSingleField(gstAddressInput);
                 if (gstStateSelect) validateSingleField(gstStateSelect);
@@ -2402,71 +2265,25 @@ document.addEventListener('DOMContentLoaded', function() {
             if (contactPhone) contactPhone.required = false;
             if (validateGstBtn) validateGstBtn.style.display = 'none';
             
-            // Hide hint text when button is hidden
-            const hintText = document.getElementById('gstin_hint_text');
-            if (hintText) {
-                hintText.style.display = 'none';
+            // Hide GSTIN field and make GST required full width
+            if (gstinFullWidth) {
+                gstinFullWidth.style.display = 'none';
             }
-            
-                        // Hide GSTIN field and make GST required full width
-                        if (gstinFullWidth) {
-                            gstinFullWidth.style.display = 'none';
-                        }
-                        if (gstRequiredFullWidth) {
-                            gstRequiredFullWidth.className = 'col-md-6 mb-2';
-                        }
+            if (gstRequiredFullWidth) {
+                gstRequiredFullWidth.className = 'col-md-12 mb-2';
+            }
         }
     }
     
     gstRequired.addEventListener('change', handleGstRequiredChange);
     
-    // Function to fix input-group layout
-    function fixInputGroupLayout() {
-        const inputGroup = document.querySelector('#gstin_full_width .input-group');
-        const gstinInput = document.getElementById('gstin_input');
-        const validateBtn = document.getElementById('validateGstBtn');
-        
-        if (inputGroup && gstinInput) {
-            // Force input-group to use flex
-            inputGroup.style.display = 'flex';
-            inputGroup.style.flexWrap = 'nowrap';
-            inputGroup.style.width = '100%';
-            inputGroup.style.alignItems = 'stretch';
-            
-            // Ensure input expands
-            gstinInput.style.flex = '1 1 auto';
-            gstinInput.style.minWidth = '0';
-            gstinInput.style.width = 'auto';
-            
-            // Ensure button stays fixed width
-            if (validateBtn && validateBtn.style.display !== 'none') {
-                validateBtn.style.flex = '0 0 auto';
-                validateBtn.style.whiteSpace = 'nowrap';
-                validateBtn.style.display = 'inline-flex';
-            }
-        }
-    }
-    
     // Initialize layout on page load
     handleGstRequiredChange();
     
-    // Fix layout after a short delay to ensure DOM is ready
-    setTimeout(function() {
-        if (gstRequired.value === '1') {
-            fixInputGroupLayout();
-        }
-    }, 100);
-    
     // Initialize validate button visibility
     if (gstRequired.value === '1' && validateGstBtn) {
-        validateGstBtn.style.display = 'inline-flex';
+        validateGstBtn.style.display = 'inline-block';
         validateGstBtn.style.whiteSpace = 'nowrap';
-        const hintText = document.getElementById('gstin_hint_text');
-        if (hintText) {
-            hintText.style.display = 'inline-block';
-        }
-        // Fix layout after button is shown
-        setTimeout(fixInputGroupLayout, 50);
     }
 
     // GST validation via button
@@ -2529,34 +2346,18 @@ document.addEventListener('DOMContentLoaded', function() {
                         addressInput.style.backgroundColor = '#e9ecef';
                     }
                     if (data.gst.state_name && stateSelect) {
-                        // Find and select the state - case-insensitive matching with trimmed values
-                        const apiStateName = String(data.gst.state_name).trim();
-                        console.log('GST Validation - Setting state:', apiStateName);
-                        
-                        const stateOption = Array.from(stateSelect.options).find(opt => {
-                            const optText = String(opt.text).trim().toLowerCase();
-                            const optValue = String(opt.value).trim().toLowerCase();
-                            const apiState = apiStateName.toLowerCase();
-                            return optText === apiState || optValue === apiState;
-                        });
-                        
+                        // Find and select the state
+                        const stateOption = Array.from(stateSelect.options).find(opt => opt.text === data.gst.state_name || opt.value === data.gst.state_name);
                         if (stateOption) {
                             stateSelect.value = stateOption.value;
-                            // Trigger change event to ensure form validation recognizes the value
-                            stateSelect.dispatchEvent(new Event('change', { bubbles: true }));
                             // Set background color to indicate auto-filled, but keep it editable
                             stateSelect.style.backgroundColor = '#e9ecef';
                             stateSelect.disabled = false;
+                            // Remove readonly attribute if it exists (select elements don't support readonly, but remove it anyway)
                             stateSelect.removeAttribute('readonly');
                             stateSelect.dataset.apiFetched = 'true';
+                            // Allow user to change the state value
                             stateSelect.title = 'Auto-filled from GST validation. You can change this if needed.';
-                            console.log('GST Validation - State set successfully:', stateOption.value);
-                        } else {
-                            console.warn('GST Validation - State not found in dropdown:', apiStateName);
-                            // Enable manual selection if state not found
-                            stateSelect.disabled = false;
-                            stateSelect.style.backgroundColor = '';
-                            stateSelect.removeAttribute('readonly');
                         }
                     }
                     
@@ -2939,7 +2740,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     const feedback = field.closest('.mb-3')?.querySelector('.invalid-feedback') || 
                                    field.parentElement?.querySelector('.invalid-feedback');
                     if (feedback) {
-                        feedback.textContent = '';
+                        feedback.textContent = 'This field is required.';
                     }
                     isValid = false;
                 } else {
@@ -2954,7 +2755,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     field.classList.add('is-invalid');
                     const feedback = field.nextElementSibling;
                     if (feedback && feedback.classList.contains('invalid-feedback')) {
-                        feedback.textContent = '';
+                        feedback.textContent = 'This field is required.';
                     }
                     isValid = false;
                 } else {
@@ -2968,7 +2769,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 field.classList.add('is-invalid');
                 const feedback = field.nextElementSibling;
                 if (feedback && feedback.classList.contains('invalid-feedback')) {
-                    feedback.textContent = '';
+                    feedback.textContent = 'This field is required.';
                 }
                 isValid = false;
             } else {
@@ -3006,11 +2807,6 @@ document.addEventListener('DOMContentLoaded', function() {
     if (registrationForm) {
         // Function to set up validation listeners for a field
         function setupFieldValidation(field) {
-            // Skip GSTIN field - it will be validated on form submit or when Validate button is clicked
-            if (field.id === 'gstin_input') {
-                return;
-            }
-            
             // Skip if field is not required
             if (!field.hasAttribute('required')) {
                 return;
@@ -3069,11 +2865,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Function to validate a single field in real-time
     function validateSingleField(field) {
-        // Skip GSTIN field - it will be validated on form submit or when Validate button is clicked
-        if (field.id === 'gstin_input') {
-            return;
-        }
-        
         // Skip hidden fields
         if (field.type === 'hidden') {
             return;
@@ -3106,7 +2897,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (!checked) {
                 field.classList.add('is-invalid');
                 if (feedback && feedback.classList.contains('invalid-feedback')) {
-                    feedback.textContent = '';
+                    feedback.textContent = 'This field is required.';
                 }
             } else {
                 field.classList.remove('is-invalid');
@@ -3123,12 +2914,12 @@ document.addEventListener('DOMContentLoaded', function() {
             if (!fieldValue || !fieldValue.trim()) {
                 field.classList.add('is-invalid');
                 if (feedback && feedback.classList.contains('invalid-feedback')) {
-                    feedback.textContent = '';
+                    feedback.textContent = 'This field is required.';
                 } else {
                     // Create feedback if it doesn't exist
                     const newFeedback = document.createElement('div');
                     newFeedback.className = 'invalid-feedback';
-                    newFeedback.textContent = '';
+                    newFeedback.textContent = 'This field is required.';
                     field.parentElement.appendChild(newFeedback);
                 }
             } else {
@@ -3145,12 +2936,12 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!fieldValue || !fieldValue.trim()) {
             field.classList.add('is-invalid');
             if (feedback && feedback.classList.contains('invalid-feedback')) {
-                feedback.textContent = '';
+                feedback.textContent = 'This field is required.';
             } else {
                 // Create feedback if it doesn't exist
                 const newFeedback = document.createElement('div');
                 newFeedback.className = 'invalid-feedback';
-                newFeedback.textContent = '';
+                newFeedback.textContent = 'This field is required.';
                 // Insert after the field
                 field.parentNode.insertBefore(newFeedback, field.nextSibling);
             }

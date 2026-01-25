@@ -9,6 +9,28 @@
         color: var(--text-secondary);
         margin-bottom: 0.75rem;
     }
+
+    /* Validation styling */
+    .form-control.is-invalid, .form-select.is-invalid {
+        border-color: #dc3545;
+        padding-right: calc(1.5em + 0.75rem);
+        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' width='12' height='12' fill='none' stroke='%23dc3545'%3e%3ccircle cx='6' cy='6' r='4.5'/%3e%3cpath d='m5.8 3.6 .4.4.4-.4m0 4.8-.4-.4-.4.4'/%3e%3c/svg%3e");
+        background-repeat: no-repeat;
+        background-position: right calc(0.375em + 0.1875rem) center;
+        background-size: calc(0.75em + 0.375rem) calc(0.75em + 0.375rem);
+    }
+
+    .invalid-feedback {
+        display: none;
+        width: 100%;
+        margin-top: 0.25rem;
+        font-size: 0.875rem;
+        color: #dc3545;
+    }
+
+    .invalid-feedback:not(:empty) {
+        display: block;
+    }
 </style>
 @endpush
 
@@ -65,11 +87,13 @@
                         <label class="form-label">Organisation Name <span class="required">*</span></label>
                         <input type="text" name="organisation_name" class="form-control"
                                value="{{ old('organisation_name') }}" required>
+                        <div class="invalid-feedback"></div>
                     </div>
                     <div class="col-md-6 mb-3">
                         <label class="form-label">Designation <span class="required">*</span></label>
                         <input type="text" name="designation" class="form-control"
                                value="{{ old('designation') }}" required>
+                        <div class="invalid-feedback"></div>
                     </div>
                 </div>
 
@@ -78,11 +102,13 @@
                         <label class="form-label">Passport Name <span class="required">*</span></label>
                         <input type="text" name="passport_name" class="form-control"
                                value="{{ old('passport_name') }}" required>
+                        <div class="invalid-feedback"></div>
                     </div>
                     <div class="col-md-6 mb-3">
                         <label class="form-label">Father's / Husband's Name <span class="required">*</span></label>
                         <input type="text" name="father_husband_name" class="form-control"
                                value="{{ old('father_husband_name') }}" required>
+                        <div class="invalid-feedback"></div>
                     </div>
                 </div>
 
@@ -90,11 +116,13 @@
                     <div class="col-md-4 mb-3">
                         <label class="form-label">Date of Birth <span class="required">*</span></label>
                         <input type="date" name="dob" class="form-control" value="{{ old('dob') }}" required>
+                        <div class="invalid-feedback"></div>
                     </div>
                     <div class="col-md-4 mb-3">
                         <label class="form-label">Place of Birth <span class="required">*</span></label>
                         <input type="text" name="place_of_birth" class="form-control"
                                value="{{ old('place_of_birth') }}" required>
+                        <div class="invalid-feedback"></div>
                     </div>
                     <div class="col-md-4 mb-3">
                         <label class="form-label">Nationality <span class="required">*</span></label>
@@ -106,6 +134,7 @@
                                 </option>
                             @endforeach
                         </select>
+                        <div class="invalid-feedback"></div>
                         @error('nationality')
                             <div class="error-message">{{ $message }}</div>
                         @enderror
@@ -125,16 +154,19 @@
                         <label class="form-label">Passport Number <span class="required">*</span></label>
                         <input type="text" name="passport_number" class="form-control"
                                value="{{ old('passport_number') }}" required>
+                        <div class="invalid-feedback"></div>
                     </div>
                     <div class="col-md-4 mb-3">
                         <label class="form-label">Date of Issue <span class="required">*</span></label>
                         <input type="date" name="passport_issue_date" class="form-control"
                                value="{{ old('passport_issue_date') }}" required>
+                        <div class="invalid-feedback"></div>
                     </div>
                     <div class="col-md-4 mb-3">
                         <label class="form-label">Place of Issue <span class="required">*</span></label>
                         <input type="text" name="passport_issue_place" class="form-control"
                                value="{{ old('passport_issue_place') }}" required>
+                        <div class="invalid-feedback"></div>
                     </div>
                 </div>
 
@@ -143,16 +175,19 @@
                         <label class="form-label">Date of Expiry <span class="required">*</span></label>
                         <input type="date" name="passport_expiry_date" class="form-control"
                                value="{{ old('passport_expiry_date') }}" required>
+                        <div class="invalid-feedback"></div>
                     </div>
                     <div class="col-md-4 mb-3">
                         <label class="form-label">Entry Date in India <span class="required">*</span></label>
                         <input type="date" name="entry_date_india" class="form-control"
                                value="{{ old('entry_date_india') }}" required>
+                        <div class="invalid-feedback"></div>
                     </div>
                     <div class="col-md-4 mb-3">
                         <label class="form-label">Exit Date from India <span class="required">*</span></label>
                         <input type="date" name="exit_date_india" class="form-control"
                                value="{{ old('exit_date_india') }}" required>
+                        <div class="invalid-feedback"></div>
                     </div>
                 </div>
             </div>
@@ -175,11 +210,13 @@
                                maxlength="20"
                                required>
                         <input type="hidden" name="phone_country_code" id="phone_country_code">
+                        <div class="invalid-feedback"></div>
                     </div>
                     <div class="col-md-6 mb-3">
                         <label class="form-label">Email <span class="required">*</span></label>
                         <input type="email" name="email" class="form-control"
                                value="{{ old('email') }}" required>
+                        <div class="invalid-feedback"></div>
                     </div>
                 </div>
             </div>
@@ -195,6 +232,7 @@
                     <label class="form-label">Address Line 1 <span class="required">*</span></label>
                     <input type="text" name="address_line1" class="form-control"
                            value="{{ old('address_line1') }}" required>
+                    <div class="invalid-feedback"></div>
                 </div>
                 <div class="mb-3">
                     <label class="form-label">Address Line 2</label>
@@ -203,7 +241,7 @@
                 </div>
 
                 <div class="row">
-                <div class="col-md-4 mb-3">
+                    <div class="col-md-4 mb-3">
                         <label class="form-label">Country <span class="required">*</span></label>
                         <select name="country" id="country" class="form-select" required>
                             <option value="">-- Select Country --</option>
@@ -213,6 +251,7 @@
                                 </option>
                             @endforeach
                         </select>
+                        <div class="invalid-feedback"></div>
                         @error('country')
                             <div class="error-message">{{ $message }}</div>
                         @enderror
@@ -223,6 +262,7 @@
                         <select name="state" id="state" class="form-select" required>
                             <option value="">-- Select State --</option>
                         </select>
+                        <div class="invalid-feedback"></div>
                         @error('state')
                             <div class="error-message">{{ $message }}</div>
                         @enderror
@@ -231,6 +271,7 @@
                         <label class="form-label">City <span class="required">*</span></label>
                         <input type="text" name="city" class="form-control"
                                value="{{ old('city') }}" required>
+                        <div class="invalid-feedback"></div>
                         @error('city')
                             <div class="error-message">{{ $message }}</div>
                         @enderror
@@ -243,6 +284,7 @@
                         <label class="form-label">Postal Code <span class="required">*</span></label>
                         <input type="text" name="postal_code" class="form-control"
                                value="{{ old('postal_code') }}" required>
+                        <div class="invalid-feedback"></div>
                     </div>
                 </div>
             </div>
@@ -298,8 +340,106 @@
         });
     }
 
-    // Simple progress bar update
+    // Form validation function
+    function validateVisaForm() {
+        let isValid = true;
+        const form = document.getElementById('visaClearanceForm');
+        
+        // Clear previous validation
+        form.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
+        form.querySelectorAll('.invalid-feedback').forEach(el => el.textContent = '');
+        
+        // Get all required fields
+        const requiredFields = form.querySelectorAll('[required]');
+        
+        requiredFields.forEach(field => {
+            // Skip hidden fields
+            if (field.type === 'hidden') {
+                return;
+            }
+            
+            let fieldValue = field.value;
+            
+            // Handle select fields
+            if (field.tagName === 'SELECT') {
+                if (!fieldValue || fieldValue.trim() === '' || fieldValue === '-- Select --' || fieldValue === '-- Select Country --' || fieldValue === '-- Select State --' || fieldValue === '-- Select Nationality --') {
+                    field.classList.add('is-invalid');
+                    const feedback = field.nextElementSibling;
+                    if (feedback && feedback.classList.contains('invalid-feedback')) {
+                        feedback.textContent = 'This field is required.';
+                    }
+                    isValid = false;
+                } else {
+                    field.classList.remove('is-invalid');
+                }
+                return;
+            }
+            
+            // Handle text inputs, date inputs, etc.
+            if (!fieldValue || fieldValue.trim() === '') {
+                field.classList.add('is-invalid');
+                const feedback = field.nextElementSibling;
+                if (feedback && feedback.classList.contains('invalid-feedback')) {
+                    feedback.textContent = 'This field is required.';
+                }
+                isValid = false;
+            } else {
+                field.classList.remove('is-invalid');
+                
+                // Additional validations
+                if (field.type === 'email' && !isValidEmail(fieldValue)) {
+                    field.classList.add('is-invalid');
+                    const feedback = field.nextElementSibling;
+                    if (feedback && feedback.classList.contains('invalid-feedback')) {
+                        feedback.textContent = 'Please enter a valid email address.';
+                    }
+                    isValid = false;
+                }
+            }
+        });
+        
+        // Scroll to first error
+        if (!isValid) {
+            const firstError = form.querySelector('.is-invalid');
+            if (firstError) {
+                firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        }
+        
+        return isValid;
+    }
+
+    function isValidEmail(email) {
+        return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+    }
+
+    // Add event listeners to clear validation on input/change
     const formVisa = document.getElementById('visaClearanceForm');
+    if (formVisa) {
+        formVisa.querySelectorAll('input, select, textarea').forEach(field => {
+            field.addEventListener('input', function() {
+                if (this.classList.contains('is-invalid')) {
+                    this.classList.remove('is-invalid');
+                    const feedback = this.nextElementSibling;
+                    if (feedback && feedback.classList.contains('invalid-feedback')) {
+                        feedback.textContent = '';
+                    }
+                }
+            });
+            
+            field.addEventListener('change', function() {
+                if (this.classList.contains('is-invalid')) {
+                    this.classList.remove('is-invalid');
+                    const feedback = this.nextElementSibling;
+                    if (feedback && feedback.classList.contains('invalid-feedback')) {
+                        feedback.textContent = '';
+                    }
+                }
+            });
+        });
+    }
+
+    // Simple progress bar update
     function updateProgressVisa() {
         const inputs = formVisa.querySelectorAll('input[required], select[required]');
         let filled = 0;
@@ -316,6 +456,14 @@
         el.addEventListener('change', updateProgressVisa);
     });
     updateProgressVisa();
+
+    // Add form submission validation
+    formVisa.addEventListener('submit', function(e) {
+        if (!validateVisaForm()) {
+            e.preventDefault();
+            return false;
+        }
+    });
 
     // Load states based on country selection using GeoController API (similar to enquiry form)
     const countrySelect = document.getElementById('country');
