@@ -431,7 +431,7 @@
                     <i class="fas fa-edit"></i> Edit Registration
                 </a>
                 
-                <form action="{{ route('poster.submit', ['token' => $draft->token]) }}" method="POST" id="submitForm">
+                <form action="{{ route('poster.register.newSubmit', ['token' => $draft->token]) }}" method="POST" id="submitForm">
                     @csrf
                     <button type="submit" class="btn btn-primary btn-lg" id="proceedBtn">
                         <i class="fas fa-arrow-right"></i> Proceed to Payment

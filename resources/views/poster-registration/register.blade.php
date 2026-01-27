@@ -206,6 +206,7 @@
             </div>
 
             {{-- 3) Authors Section --}}
+            
             <div class="form-section">
                 <div class="d-flex justify-content-between align-items-center mb-3 border-bottom pb-2">
                     <h5 class="mb-0"><i class="fas fa-users"></i> Authors</h5>
@@ -353,7 +354,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     function addAuthor() {
-        if (authorCount >= maxAuthors) {
+        if (authorCount >= maxAuthors - 1) {
             Swal.fire('Maximum Reached', 'You can add maximum 4 authors.', 'warning');
             return;
         }
@@ -409,7 +410,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     <small class="text-muted">Required for Lead Author. Max file size: 5MB.</small>
                 </div>
             </div>
-            
+             <div class="form-section">
             <div class="row mb-3">
                 <div class="col-md-4">
                     <label class="form-label">Lead Author? <span class="text-danger">*</span></label>
@@ -419,7 +420,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             <label class="form-check-label" for="lead_author_yes_${authorCount}">Yes</label>
                         </div>
                         <div class="form-check">
-                            <input class="form-check-input" type="radio" name="lead_author" id="lead_author_no_${authorCount}" value="-1" ${authorCount !== 0 ? 'checked' : ''}>
+                            <input class="form-check-input" type="radio" name="lead_author" id="lead_author_no_${authorCount}" value="-1" ${authorCount !== 0 ? 'checked' : ''} onchange="clearLeadAuthor(${authorCount})">
                             <label class="form-check-label" for="lead_author_no_${authorCount}">No</label>
                         </div>
                     </div>
@@ -444,6 +445,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     </div>
                 </div>
             </div>
+        </div>
             
             <h6 class="mt-4 mb-3">Affiliation Address</h6>
             <div class="row mb-3">
@@ -529,7 +531,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     window.removeAuthor = function(index) {
-        if (authorCount <= 1) {
+        if (authorCount <= 0) {
             Swal.fire('Cannot Remove', 'At least one author is required.', 'warning');
             return;
         }
@@ -557,16 +559,16 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function renumberAuthors() {
         const blocks = document.querySelectorAll('.author-block');
-        let newCount = 0;
+        let newCount = -1;
         blocks.forEach(block => {
             newCount++;
             block.dataset.authorIndex = newCount;
-            block.querySelector('.author-number').textContent = `Author ${newCount}`;
+            block.querySelector('.author-number').textContent = `Author ${newCount + 1}`;
             
             // Enable/disable remove button
             const removeBtn = block.querySelector('.remove-author-btn');
             if (removeBtn) {
-                removeBtn.disabled = newCount === 1;
+                removeBtn.disabled = newCount === 0;
             }
         });
         authorCount = newCount;
@@ -574,7 +576,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function updateAddAuthorButton() {
         const btn = document.getElementById('addAuthorBtn');
-        if (authorCount >= maxAuthors) {
+        if (authorCount >= maxAuthors - 1) {
             btn.disabled = true;
             btn.innerHTML = '<i class="fas fa-ban"></i> Maximum Authors Reached';
         } else {
@@ -589,12 +591,35 @@ document.addEventListener('DOMContentLoaded', function() {
             block.classList.remove('lead-author');
         });
         
+        // Uncheck all "Yes" radio buttons first
+        document.querySelectorAll('.lead-author-radio').forEach(radio => {
+            if (radio.value !== String(index)) {
+                radio.checked = false;
+                // Check the corresponding "No" radio for other authors
+                const authorIdx = radio.value;
+                const noRadio = document.getElementById(`lead_author_no_${authorIdx}`);
+                if (noRadio) noRadio.checked = true;
+            }
+        });
+        
         // Add to selected block
         const selectedBlock = document.querySelector(`[data-author-index="${index}"]`);
         if (selectedBlock) {
             selectedBlock.classList.add('lead-author');
             leadAuthorIndex = index;
             updateRoleBadges(index);
+        }
+    }
+
+    window.clearLeadAuthor = function(index) {
+        // Prevent clearing if this is the only author or current lead author
+        if (leadAuthorIndex === index) {
+            // Show warning and revert the radio button
+            Swal.fire('Cannot Deselect', 'Please select another author as Lead Author before deselecting this one.', 'warning');
+            // Recheck the "Yes" radio button
+            const yesRadio = document.getElementById(`lead_author_yes_${index}`);
+            if (yesRadio) yesRadio.checked = true;
+            return;
         }
     }
 
@@ -799,7 +824,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         // Check lead author
-        if (leadAuthorIndex === null || leadAuthorIndex === undefined) {
+        if (leadAuthorIndex === null || leadAuthorIndex === undefined || leadAuthorIndex < 0) {
             Swal.fire('Validation Error', 'Please select exactly one Lead Author.', 'error');
             return;
         }
@@ -826,6 +851,9 @@ document.addEventListener('DOMContentLoaded', function() {
         submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
         
         const formData = new FormData(form);
+        
+        // Ensure lead_author has the correct value (not -1)
+        formData.set('lead_author', leadAuthorIndex);
         
         fetch('{{ route("poster.register.newDraft") }}', {
             method: 'POST',
