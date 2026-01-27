@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Application;
 use App\Models\EventContact;
 use App\Models\Invoice;
+use App\Models\Payment;
 use App\Models\State;
 use App\Models\Country;
 use App\Models\GstLookup;
@@ -2320,7 +2321,16 @@ class ExhibitorRegistrationController extends Controller
         $contact = EventContact::where('application_id', $application->id)->first();
         $billingDetail = \App\Models\BillingDetail::where('application_id', $application->id)->first();
         
-        return view('exhibitor-registration.confirmation', compact('application', 'invoice', 'contact', 'billingDetail'));
+        // Load payment information if payment is successful
+        $payment = null;
+        if ($invoice->payment_status === 'paid') {
+            $payment = Payment::where('invoice_id', $invoice->id)
+                ->where('status', 'successful')
+                ->orderBy('created_at', 'desc')
+                ->first();
+        }
+        
+        return view('exhibitor-registration.confirmation', compact('application', 'invoice', 'contact', 'billingDetail', 'payment'));
     }
 
     /**
