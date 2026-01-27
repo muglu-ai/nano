@@ -1347,9 +1347,9 @@ class PaymentGatewayController extends Controller
             // order_id
             $order_id = explode('_', $responseArray['order_id'])[0];
 
-            dd($order_id);
+            // dd($order_id);
 
-            
+
 
             // Find invoice for failure handling
             $invoice = Invoice::where('invoice_no', $order_id)->first();
@@ -1363,6 +1363,8 @@ class PaymentGatewayController extends Controller
                     $isStartupZone = true;
                 }
             }
+
+            dd($invoice);
 
             // If invoice not found, check session
             if (!$invoice) {
