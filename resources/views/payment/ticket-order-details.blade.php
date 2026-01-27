@@ -647,12 +647,12 @@
                     <td class="value-cell" style="background: var(--primary-color); color: white;">{{ $currencySymbol }}{{ number_format($order->total, $priceFormat) }}</td>
                 </tr>
                 @if($order->discount_amount > 0 && $order->promoCode)
-                <tr>
+                {{-- <tr>
                     <td colspan="2" class="text-muted" style="font-size: 0.75rem; padding: 0.5rem 0.75rem; border: none;">
                         <i class="fas fa-info-circle me-1"></i>
                         Note: Discount applies to base amount. GST and processing charges are calculated on the discounted amount.
                     </td>
-                </tr>
+                </tr> --}}
                 @endif
             </table>
         </div>
