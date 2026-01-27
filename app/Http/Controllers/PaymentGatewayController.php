@@ -324,7 +324,7 @@ class PaymentGatewayController extends Controller
         // dd(config('constants.APP_URL'));
 
 
-        dd($data);
+        //dd($data);
 
         $merchantData = json_encode($data);
 
