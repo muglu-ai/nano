@@ -1038,7 +1038,7 @@ class PaymentGatewayController extends Controller
             }
 
 
-            dd($invoice);
+            // dd($invoice);
 
             // check for the application_type as exhibitor-registration  
 
@@ -1154,6 +1154,9 @@ class PaymentGatewayController extends Controller
                     ->route('payment.lookup')
                     ->with('error', 'Invoice not found. Please contact support.');
             }
+
+
+            dd($responseArray);
 
 
 
