@@ -248,7 +248,7 @@
                         <div id="attendeesList" class="mt-2"></div>
                     </div>
                     <div class="col-md-6">
-                        <label class="form-label fw-bold">Registration Fee:</label>
+                        <label class="form-label fw-bold">Calculating Amount:</label>
                         <p class="fee-display" id="registrationFee">₹ 0</p>
                         <small class="text-muted" id="feeCalculation"></small>
                     </div>
@@ -257,27 +257,29 @@
 
             {{-- 6) Publication Permission --}}
             <div class="form-section">
-                <h5 class="mb-3 border-bottom pb-2"><i class="fas fa-file-signature"></i> Publication Permission</h5>
-                <div class="form-check">
+               
                     <input class="form-check-input" type="checkbox" id="publication_permission" name="publication_permission" value="1" required>
                     <label class="form-check-label" for="publication_permission">
                         <strong>I grant permission to publish this abstract/poster.</strong>
                     </label>
+                    <br>
                     <div class="invalid-feedback"></div>
-                </div>
-            </div>
 
-            {{-- 7) Author(s) Approval --}}
-            <div class="form-section">
-                <h5 class="mb-3 border-bottom pb-2"><i class="fas fa-check-circle"></i> Author(s) Approval</h5>
-                <div class="form-check">
-                    <input class="form-check-input" type="checkbox" id="authors_approval" name="authors_approval" value="1" required>
+                      <input class="form-check-input" type="checkbox" id="authors_approval" name="authors_approval" value="1" required>
                     <label class="form-check-label" for="authors_approval">
                         <strong>I declare that all authors have approved this submission and the information provided is accurate.</strong>
                     </label>
                     <div class="invalid-feedback"></div>
-                </div>
+                
             </div>
+
+            {{-- 7) Author(s) Approval --}}
+            {{-- <div class="form-section">
+                <h5 class="mb-3 border-bottom pb-2"><i class="fas fa-check-circle"></i> Author(s) Approval</h5>
+                <div class="form-check">
+                  
+                </div>
+            </div> --}}
 
             <div class="alert alert-info">
                 <i class="fas fa-info-circle"></i> <strong>Note:</strong> After submitting this form, you will be redirected to preview your registration details before making payment.
@@ -306,7 +308,7 @@
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    let authorCount = 0;
+    let authorCount = -1;
     const maxAuthors = 4;
     let leadAuthorIndex = null;
     let presenterIndex = null;
@@ -365,7 +367,7 @@ document.addEventListener('DOMContentLoaded', function() {
         authorBlock.innerHTML = `
             <div class="author-block-header">
                 <div>
-                    <span class="author-number">Author ${authorCount}</span>
+                    <span class="author-number">Author ${authorCount + 1}</span>
                     <div class="role-badges" id="roleBadges${authorCount}"></div>
                 </div>
                 <button type="button" class="btn btn-danger btn-sm remove-author-btn" onclick="removeAuthor(${authorCount})" ${authorCount === 1 ? 'disabled' : ''}>
@@ -399,10 +401,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 </div>
             </div>
             
-            <div class="row mb-3 cv-upload-section" id="cv_upload_section_${authorCount}" style="display: ${authorCount === 1 ? 'block' : 'none'};">
+            <div class="row mb-3 cv-upload-section" id="cv_upload_section_${authorCount}" style="display: ${authorCount === 0 ? 'block' : 'none'};">
                 <div class="col-md-12">
                     <label for="author_cv_${authorCount}" class="form-label">Upload CV (PDF only) <span class="text-danger">*</span></label>
-                    <input type="file" class="form-control cv-upload-input" id="author_cv_${authorCount}" name="authors[${authorCount}][cv]" accept=".pdf" ${authorCount === 1 ? 'required' : ''}>
+                    <input type="file" class="form-control cv-upload-input" id="author_cv_${authorCount}" name="authors[${authorCount}][cv]" accept=".pdf" ${authorCount === 0 ? 'required' : ''}>
                     <div class="invalid-feedback"></div>
                     <small class="text-muted">Required for Lead Author. Max file size: 5MB.</small>
                 </div>
@@ -413,11 +415,11 @@ document.addEventListener('DOMContentLoaded', function() {
                     <label class="form-label">Lead Author? <span class="text-danger">*</span></label>
                     <div class="d-flex gap-3">
                         <div class="form-check">
-                            <input class="form-check-input lead-author-radio" type="radio" name="lead_author" id="lead_author_yes_${authorCount}" value="${authorCount}" ${authorCount === 1 ? 'checked' : ''} onchange="updateLeadAuthor(${authorCount})">
+                            <input class="form-check-input lead-author-radio" type="radio" name="lead_author" id="lead_author_yes_${authorCount}" value="${authorCount}" ${authorCount === 0 ? 'checked' : ''} onchange="updateLeadAuthor(${authorCount})">
                             <label class="form-check-label" for="lead_author_yes_${authorCount}">Yes</label>
                         </div>
                         <div class="form-check">
-                            <input class="form-check-input" type="radio" name="lead_author" id="lead_author_no_${authorCount}" value="0" ${authorCount !== 1 ? 'checked' : ''}>
+                            <input class="form-check-input" type="radio" name="lead_author" id="lead_author_no_${authorCount}" value="-1" ${authorCount !== 0 ? 'checked' : ''}>
                             <label class="form-check-label" for="lead_author_no_${authorCount}">No</label>
                         </div>
                     </div>
@@ -426,7 +428,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     <label class="form-label">Presenter? <span class="text-danger">*</span></label>
                     <div class="d-flex gap-3">
                         <div class="form-check">
-                            <input class="form-check-input presenter-checkbox" type="checkbox" id="presenter_${authorCount}" name="authors[${authorCount}][is_presenter]" value="1" ${authorCount === 1 ? 'checked' : ''} onchange="updatePresenter(${authorCount})">
+                            <input class="form-check-input presenter-checkbox" type="checkbox" id="presenter_${authorCount}" name="authors[${authorCount}][is_presenter]" value="1" ${authorCount === 0 ? 'checked' : ''} onchange="updatePresenter(${authorCount})">
                             <label class="form-check-label" for="presenter_${authorCount}">Yes</label>
                         </div>
                     </div>
@@ -436,7 +438,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     <label class="form-label">Will Attend Event? <span class="text-danger">*</span></label>
                     <div class="d-flex gap-3">
                         <div class="form-check">
-                            <input class="form-check-input attend-checkbox" type="checkbox" id="will_attend_${authorCount}" name="authors[${authorCount}][will_attend]" value="1" ${authorCount === 1 ? 'checked' : ''} onchange="updateAttendanceSummary()">
+                            <input class="form-check-input attend-checkbox" type="checkbox" id="will_attend_${authorCount}" name="authors[${authorCount}][will_attend]" value="1" ${authorCount === 0 ? 'checked' : ''} onchange="updateAttendanceSummary()">
                             <label class="form-check-label" for="will_attend_${authorCount}">Yes</label>
                         </div>
                     </div>
@@ -505,12 +507,12 @@ document.addEventListener('DOMContentLoaded', function() {
         container.appendChild(authorBlock);
         
         // Load states for India (default selected country)
-        if (authorCount === 1) {
+        if (authorCount === 0) {
             // Find India's country ID from the countriesData
             const indiaCountry = countriesData.find(country => country.code === 'IN');
             if (indiaCountry) {
                 setTimeout(() => {
-                    loadStatesForAuthorCountry(indiaCountry.id, 1);
+                    loadStatesForAuthorCountry(indiaCountry.id, 0);
                 }, 100);
             }
         }
@@ -519,9 +521,10 @@ document.addEventListener('DOMContentLoaded', function() {
         updateAddAuthorButton();
         
         // Set first author as lead by default
-        if (authorCount === 1) {
-            leadAuthorIndex = 1;
-            updateRoleBadges(1);
+        if (authorCount === 0) {
+            leadAuthorIndex = 0;
+            presenterIndex = 0;
+            updateRoleBadges(0);
         }
     }
 
@@ -658,7 +661,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (willAttend && willAttend.checked) {
                 count++;
                 const name = (firstName?.value || '') + ' ' + (lastName?.value || '');
-                attendees.push(name.trim() || `Author ${index} (name not entered)`);
+                attendees.push(name.trim() || `Author ${parseInt(index) + 1} (name not entered)`);
             }
         });
         
@@ -738,7 +741,12 @@ document.addEventListener('DOMContentLoaded', function() {
             },
             body: JSON.stringify({ country_id: countryId })
         })
-        .then(response => response.json())
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Failed to load states');
+            }
+            return response.json();
+        })
         .then(data => {
             stateSelect.innerHTML = '<option value="">Select State</option>';
             if (data && data.length > 0) {
@@ -771,19 +779,36 @@ document.addEventListener('DOMContentLoaded', function() {
     updateAttendanceSummary();
 
     // Form submission
-    document.getElementById('submitForm').addEventListener('click', function() {
+    document.getElementById('submitForm').addEventListener('click', function(e) {
+        e.preventDefault();
         const form = document.getElementById('posterRegistrationForm');
         
         // Validation
         if (!form.checkValidity()) {
             form.classList.add('was-validated');
-            Swal.fire('Validation Error', 'Please fill all required fields.', 'error');
+            
+            // Find first invalid field and focus on it
+            const firstInvalid = form.querySelector(':invalid');
+            if (firstInvalid) {
+                firstInvalid.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                firstInvalid.focus();
+            }
+            
+            Swal.fire('Validation Error', 'Please fill all required fields correctly.', 'error');
             return;
         }
         
         // Check lead author
-        if (!leadAuthorIndex) {
+        if (leadAuthorIndex === null || leadAuthorIndex === undefined) {
             Swal.fire('Validation Error', 'Please select exactly one Lead Author.', 'error');
+            return;
+        }
+        
+        // Check lead author CV upload
+        const leadAuthorCvInput = document.getElementById(`author_cv_${leadAuthorIndex}`);
+        if (leadAuthorCvInput && !leadAuthorCvInput.files.length) {
+            leadAuthorCvInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            Swal.fire('Validation Error', 'Please upload CV (PDF) for the Lead Author.', 'error');
             return;
         }
         
@@ -806,10 +831,27 @@ document.addEventListener('DOMContentLoaded', function() {
             method: 'POST',
             body: formData,
             headers: {
-                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                'Accept': 'application/json'
             }
         })
-        .then(response => response.json())
+        .then(response => {
+            if (!response.ok) {
+                // Try to parse error as JSON, fallback to text
+                return response.json().catch(() => {
+                    throw new Error('Server error: ' + response.status);
+                }).then(errorData => {
+                    // Handle Laravel validation errors
+                    if (errorData.errors) {
+                        const errorMessages = Object.values(errorData.errors).flat();
+                        const errorList = errorMessages.map(msg => `• ${msg}`).join('<br>');
+                        throw new Error(errorList);
+                    }
+                    throw new Error(errorData.message || 'Validation failed. Please check the form.');
+                });
+            }
+            return response.json();
+        })
         .then(data => {
             if (data.success) {
                 if (data.redirect) {
@@ -825,7 +867,14 @@ document.addEventListener('DOMContentLoaded', function() {
             console.error('Error:', error);
             submitBtn.disabled = false;
             submitBtn.innerHTML = originalText;
-            Swal.fire('Error', error.message || 'An error occurred. Please try again.', 'error');
+            
+            // Display error with HTML support for lists
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                html: error.message || 'An error occurred. Please try again.',
+                confirmButtonText: 'OK'
+            });
         });
     });
 });
