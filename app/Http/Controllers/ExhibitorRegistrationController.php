@@ -2318,8 +2318,9 @@ class ExhibitorRegistrationController extends Controller
 
         $invoice = Invoice::where('application_id', $application->id)->firstOrFail();
         $contact = EventContact::where('application_id', $application->id)->first();
+        $billingDetail = \App\Models\BillingDetail::where('application_id', $application->id)->first();
         
-        return view('exhibitor-registration.confirmation', compact('application', 'invoice', 'contact'));
+        return view('exhibitor-registration.confirmation', compact('application', 'invoice', 'contact', 'billingDetail'));
     }
 
     /**
