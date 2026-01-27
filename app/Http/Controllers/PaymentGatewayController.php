@@ -401,6 +401,14 @@ class PaymentGatewayController extends Controller
             }
         }
 
+        Log::error('CCAvenue Payment Error: No invoice found', [
+            'order_id' => $orderId ?? 'N/A',
+            'message' => $message ?? 'N/A',
+            'invoice_no' => $invoiceNo ?? 'N/A',
+            'application_tin' => $applicationTin ?? 'N/A',
+        ]);
+
+
         // 2. If we have an invoice_no, try to resolve the invoice and its type
         if ($invoiceNo) {
             $invoice = Invoice::where('invoice_no', $invoiceNo)->first();
@@ -453,6 +461,8 @@ class PaymentGatewayController extends Controller
                 return $this->redirectForPaymentError($base, null, null, $message);
             }
         }
+
+        
 
         // 4. Final fallback – take user to lookup page where they can
         //    enter Application ID or Invoice No to resume payment.
