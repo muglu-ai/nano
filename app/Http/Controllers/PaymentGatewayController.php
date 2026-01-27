@@ -319,10 +319,12 @@ class PaymentGatewayController extends Controller
             'billing_email' => $billingDetail->email ?? '',
         ];
 
+
+
         // dd(config('constants.APP_URL'));
 
 
-        // dd($data);
+        dd($data);
 
         $merchantData = json_encode($data);
 
