@@ -383,7 +383,6 @@
     </div>
 
     {{-- Exhibitor Information --}}
-    @if($exhibitorName && ($exhibitorName !== $billingCompany || $exhibitorAddress !== $billingAddress))
     <div class="preview-section">
         <h4 class="section-title">
             <i class="fas fa-building"></i>
@@ -392,7 +391,7 @@
         <table class="info-table">
             <tr>
                 <td class="label-cell">Name of Exhibitor</td>
-                <td class="value-cell"><strong>{{ $exhibitorName }}</strong></td>
+                <td class="value-cell"><strong>{{ $exhibitorName ?: 'N/A' }}</strong></td>
             </tr>
             <tr>
                 <td class="label-cell">Address</td>
@@ -414,12 +413,10 @@
                 <td class="label-cell">Country</td>
                 <td class="value-cell">{{ $exhibitorCountry ?? 'N/A' }}</td>
             </tr>
-            @if($exhibitorPhone)
             <tr>
                 <td class="label-cell">Telephone</td>
-                <td class="value-cell">{{ $exhibitorPhone }}</td>
+                <td class="value-cell">{{ $exhibitorPhone ?: 'N/A' }}</td>
             </tr>
-            @endif
             @if($exhibitorWebsite)
             <tr>
                 <td class="label-cell">Website</td>
@@ -434,7 +431,6 @@
             @endif
         </table>
     </div>
-    @endif
 
     {{-- Contact Person Details --}}
     @if($contact)
