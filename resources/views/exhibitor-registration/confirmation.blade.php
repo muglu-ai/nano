@@ -635,9 +635,11 @@
 
     {{-- Action Buttons --}}
     <div class="text-center mt-4">
+    {{--
         <a href="{{ route('exhibitor-registration.register') }}" class="btn btn-secondary">
             <i class="fas fa-home"></i> Back to Home
         </a>
+        --}}
         @if($invoice->payment_status !== 'paid')
         <a href="{{ route('exhibitor-registration.payment', $application->application_id) }}" class="btn btn-success">
             <i class="fas fa-credit-card"></i> Make Payment
