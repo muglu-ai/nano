@@ -226,6 +226,10 @@
                 </h4>
                 <table class="info-table">
                     <tr>
+                        <td class="label-cell">Presentation</td>
+                        <td class="value-cell">{{ $draft->presentation_mode ?? 'Poster' }}</td>
+                    </tr>
+                    <tr>
                         <td class="label-cell">Sector</td>
                         <td class="value-cell">{{ $draft->sector ?? 'N/A' }}</td>
                     </tr>
@@ -277,78 +281,55 @@
                 </h4>
                 
                 @if(isset($draft->authors) && count($draft->authors) > 0)
-                    @foreach($draft->authors as $index => $author)
-                        <div class="author-card {{ isset($author['is_lead']) && $author['is_lead'] ? 'lead-author' : '' }}">
-                            <div class="author-header">
-                                <div>
-                                    <div class="author-name">
-                                        {{ $author['first_name'] ?? '' }} {{ $author['last_name'] ?? '' }}
-                                    </div>
-                                    <small class="text-muted">Author {{ $index + 1 }}</small>
-                                </div>
-                                <div class="role-badges">
-                                    @if(isset($author['is_lead']) && $author['is_lead'])
-                                        <span class="role-badge badge-lead">Lead Author</span>
-                                    @endif
-                                    @if(isset($author['is_presenter']) && $author['is_presenter'])
-                                        <span class="role-badge badge-presenter">Presenter</span>
-                                    @endif
-                                    @if(isset($author['will_attend']) && $author['will_attend'])
-                                        <span class="role-badge badge-attending">Attending</span>
-                                    @endif
-                                </div>
-                            </div>
-                            
-                            <div class="row">
-                                <div class="col-md-6">
-                                    <small class="text-muted">Email:</small>
-                                    <p class="mb-2">{{ $author['email'] ?? 'N/A' }}</p>
-                                </div>
-                                <div class="col-md-6">
-                                    <small class="text-muted">Mobile:</small>
-                                    <p class="mb-2">{{ $author['mobile'] ?? 'N/A' }}</p>
-                                </div>
-                            </div>
-                            
-                            <div class="row">
-                                <div class="col-md-12">
-                                    <small class="text-muted">Affiliation Address:</small>
-                                    <p class="mb-2">{{ $author['city'] ?? '' }}, {{ $author['state'] ?? '' }}, {{ $author['country'] ?? '' }} - {{ $author['postal_code'] ?? '' }}</p>
-                                </div>
-                            </div>
-                            
-                            <div class="row">
-                                <div class="col-md-12">
-                                    <small class="text-muted">Affiliation:</small>
-                                    <p class="mb-0">{{ $author['institution'] ?? 'N/A' }}, {{ $author['affiliation_city'] ?? '' }}, {{ $author['affiliation_country'] ?? '' }}</p>
-                                </div>
-                            </div>
-                        </div>
-                    @endforeach
+                    <div class="table-responsive">
+                        <table class="table table-bordered">
+                            <thead style="background: #f8f9fa;">
+                                <tr>
+                                    <th style="width: 5%;">#</th>
+                                    <th style="width: 15%;">Name</th>
+                                    <th style="width: 10%;">Designation</th>
+                                    <th style="width: 15%;">Email</th>
+                                    <th style="width: 10%;">Mobile</th>
+                                    <th style="width: 15%;">Address</th>
+                                    <th style="width: 15%;">Institute / Organization</th>
+                                    <th style="width: 15%;">Role</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach($draft->authors as $index => $author)
+                                    <tr class="{{ isset($author['is_lead']) && $author['is_lead'] ? 'table-primary' : '' }}">
+                                        <td class="text-center"><strong>{{ $index + 1 }}</strong></td>
+                                        <td>{{ $author['title'] ?? '' }} {{ $author['first_name'] ?? '' }} {{ $author['last_name'] ?? '' }}</td>
+                                        <td>{{ $author['designation'] ?? 'N/A' }}</td>
+                                        <td><small>{{ $author['email'] ?? 'N/A' }}</small></td>
+                                        <td><small>{{ $author['mobile'] ?? 'N/A' }}</small></td>
+                                        <td><small>{{ $author['city'] ?? '' }}, {{ $author['state'] ?? '' }}, {{ $author['country'] ?? '' }} - {{ $author['postal_code'] ?? '' }}</small></td>
+                                        <td><small>{{ $author['institution'] ?? 'N/A' }}, {{ $author['affiliation_city'] ?? '' }}, {{ $author['affiliation_country'] ?? '' }}</small></td>
+                                        <td>
+                                            @if(isset($author['is_lead']) && $author['is_lead'])
+                                                <span class="role-badge badge-lead">Lead</span><br>
+                                            @endif
+                                            @if(isset($author['is_presenter']) && $author['is_presenter'])
+                                                <span class="role-badge badge-presenter">Presenter</span><br>
+                                            @endif
+                                            @if(isset($author['will_attend']) && $author['will_attend'])
+                                                <span class="role-badge badge-attending">Attending</span>
+                                            @endif
+                                        </td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
                 @else
                     <p class="text-muted">No authors added.</p>
                 @endif
             </div>
-
-            {{-- Presentation Preference --}}
-            <div class="preview-section">
-                <h4 class="section-title">
-                    <i class="fas fa-presentation"></i>
-                    Presentation Preference
-                </h4>
-                <table class="info-table">
-                    <tr>
-                        <td class="label-cell">Preferred Mode</td>
-                        <td class="value-cell">{{ $draft->presentation_mode ?? 'Poster only' }}</td>
-                    </tr>
-                </table>
-            </div>
-
             {{-- Attendance & Pricing --}}
             <div class="price-section">
                 <h4 class="section-title">
                     <i class="fas fa-calculator"></i>
-                    Attendance Summary & Registration Fee
+                    Price Calculation
                 </h4>
                 
                 @php
@@ -358,7 +339,7 @@
                         foreach($draft->authors as $author) {
                             if(isset($author['will_attend']) && $author['will_attend']) {
                                 $attendeeCount++;
-                                $attendees[] = ($author['first_name'] ?? '') . ' ' . ($author['last_name'] ?? '');
+                                $attendees[] =  ($author['title'] ?? '') . ' ' . ($author['first_name'] ?? '') . ' ' . ($author['last_name'] ?? '');
                             }
                         }
                     }
@@ -372,57 +353,41 @@
                 <div class="mb-3">
                     <strong>Attendees ({{ $attendeeCount }}):</strong>
                     @if(count($attendees) > 0)
-                        <ul class="mb-0 mt-2">
+                        <ol class="mb-0 mt-2">
                             @foreach($attendees as $attendee)
                                 <li>{{ $attendee }}</li>
                             @endforeach
-                        </ul>
+                        </ol>
                     @else
                         <p class="text-muted mb-0">No attendees marked.</p>
                     @endif
                 </div>
                 
                 <table class="price-table">
-                    <tr>
+                    {{-- <tr>
                         <td class="label-cell">Number of Attendees</td>
                         <td class="value-cell">{{ $attendeeCount }}</td>
+                    </tr> --}}
+                    <tr>
+                        <td class="label-cell">Base Amount</td>
+                        <td class="value-cell">{{ $currencySymbol }} {{ number_format($draft->base_amount, 2) }}</td>
                     </tr>
                     <tr>
-                        <td class="label-cell">Per Attendee Fee</td>
-                        <td class="value-cell">{{ $currencySymbol }} {{ number_format($pricePerAttendee) }}</td>
+                        <td class="label-cell">GST (18%)</td>
+                        <td class="value-cell">{{ $currencySymbol }} {{ number_format($draft->gst_amount, 2) }}</td>
+                    </tr>
+                    <tr>
+                        <td class="label-cell">Processing Charges</td>
+                        <td class="value-cell">{{ $currencySymbol }} {{ number_format($draft->processing_fee, 2) }}</td>
                     </tr>
                     <tr class="total-row">
-                        <td>Total Registration Fee</td>
-                        <td>{{ $currencySymbol }} {{ number_format($totalFee) }}</td>
+                        <td>Total Amount</td>
+                        <td>{{ $currencySymbol }} {{ number_format($draft->total_amount, 2) }}</td>
                     </tr>
                 </table>
             </div>
 
-            {{-- Permissions & Approvals --}}
-            <div class="preview-section">
-                <h4 class="section-title">
-                    <i class="fas fa-check-circle"></i>
-                    Permissions & Approvals
-                </h4>
-                <table class="info-table">
-                    <tr>
-                        <td class="label-cell">Publication Permission</td>
-                        <td class="value-cell">
-                            <span class="badge bg-success">
-                                <i class="fas fa-check"></i> Granted
-                            </span>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td class="label-cell">Author(s) Approval</td>
-                        <td class="value-cell">
-                            <span class="badge bg-success">
-                                <i class="fas fa-check"></i> Approved
-                            </span>
-                        </td>
-                    </tr>
-                </table>
-            </div>
+          
 
             {{-- Action Buttons --}}
             <div class="d-flex justify-content-between flex-wrap gap-2 mt-4">
@@ -431,7 +396,7 @@
                     <i class="fas fa-edit"></i> Edit Registration
                 </a>
                 
-                <form action="{{ route('poster.register.newSubmit', ['token' => $draft->token]) }}" method="POST" id="submitForm">
+                <form action="{{ route('poster.register.newSubmit', ['tin_no' => $draft->tin_no]) }}" method="POST" id="submitForm">
                     @csrf
                     <button type="submit" class="btn btn-primary btn-lg" id="proceedBtn">
                         <i class="fas fa-arrow-right"></i> Proceed to Payment

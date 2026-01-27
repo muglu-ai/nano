@@ -171,39 +171,39 @@
                 </div>
             @endif
 
-            {{-- Registration Summary --}}
-            <div class="alert alert-info mb-4">
-                <h5 class="mb-2"><i class="fas fa-info-circle"></i> Registration Information</h5>
-                <p class="mb-0">
-                    <strong>TIN No:</strong> {{ $poster->tin_no ?? 'N/A' }}<br>
-                    <strong>Abstract Title:</strong> {{ $poster->abstract_title ?? 'N/A' }}<br>
-                    <strong>Lead Author:</strong> 
-                    @if(isset($poster->authors) && is_array($poster->authors))
-                        @php
-                            $leadAuthor = collect($poster->authors)->firstWhere('is_lead', true);
-                        @endphp
-                        @if($leadAuthor)
-                            {{ $leadAuthor['first_name'] ?? '' }} {{ $leadAuthor['last_name'] ?? '' }}
-                        @else
-                            N/A
-                        @endif
-                    @else
-                        N/A
-                    @endif
-                </p>
-            </div>
-
             {{-- Registration Details --}}
             <div class="preview-section">
                 <h4 class="section-title">
-                    <i class="fas fa-file-alt"></i>
+                    <i class="fas fa-info-circle"></i>
                     Registration Details
                 </h4>
                 <table class="info-table">
                     <tr>
+                        <td class="label-cell">TIN No</td>
+                        <td class="value-cell">{{ $poster->tin_no ?? 'N/A' }}</td>
+                    </tr>
+                    <tr>
+                        <td class="label-cell">Presentation</td>
+                        <td class="value-cell">{{ $poster->presentation_mode ?? 'Poster' }}</td>
+                    </tr>
+                    <tr>
                         <td class="label-cell">Sector</td>
                         <td class="value-cell">{{ $poster->sector ?? 'N/A' }}</td>
                     </tr>
+                    <tr>
+                        <td class="label-cell">Currency</td>
+                        <td class="value-cell">{{ $poster->currency ?? 'INR' }}</td>
+                    </tr>
+                </table>
+            </div>
+
+            {{-- Abstract/Poster Details --}}
+            <div class="preview-section">
+                <h4 class="section-title">
+                    <i class="fas fa-file-alt"></i>
+                    Abstract / Poster Details
+                </h4>
+                <table class="info-table">
                     <tr>
                         <td class="label-cell">Poster Category</td>
                         <td class="value-cell">{{ $poster->poster_category ?? 'Breaking Boundaries' }}</td>
@@ -213,89 +213,142 @@
                         <td class="value-cell"><strong>{{ $poster->abstract_title ?? 'N/A' }}</strong></td>
                     </tr>
                     <tr>
-                        <td class="label-cell">Presentation Mode</td>
-                        <td class="value-cell">{{ $poster->presentation_mode ?? 'Poster only' }}</td>
+                        <td class="label-cell">Abstract</td>
+                        <td class="value-cell">{{ $poster->abstract ?? 'N/A' }}</td>
                     </tr>
                 </table>
             </div>
 
-            {{-- Attendees Summary --}}
+            {{-- Authors --}}
             <div class="preview-section">
+                <h4 class="section-title">
+                    <i class="fas fa-users"></i>
+                    Authors ({{ $authors->count() }})
+                </h4>
+                
+                @if($authors->count() > 0)
+                    <div class="table-responsive">
+                        <table class="table table-bordered">
+                            <thead style="background: #f8f9fa;">
+                                <tr>
+                                    <th style="width: 5%;">#</th>
+                                    <th style="width: 15%;">Name</th>
+                                    <th style="width: 10%;">Designation</th>
+                                    <th style="width: 15%;">Email</th>
+                                    <th style="width: 10%;">Mobile</th>
+                                    <th style="width: 15%;">Address</th>
+                                    <th style="width: 15%;">Affiliation</th>
+                                    <th style="width: 15%;">Role</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach($authors as $index => $author)
+                                    <tr class="{{ $author->is_lead_author ? 'table-primary' : '' }}">
+                                        <td class="text-center"><strong>{{ $index + 1 }}</strong></td>
+                                        <td>{{ $author->title ?? '' }} {{ $author->first_name }} {{ $author->last_name }}</td>
+                                        <td>{{ $author->designation ?? 'N/A' }}</td>
+                                        <td><small>{{ $author->email }}</small></td>
+                                        <td><small>{{ $author->mobile }}</small></td>
+                                        <td><small>{{ $author->city }}, {{ $author->state->name ?? 'N/A' }}, {{ $author->country->name ?? 'N/A' }} - {{ $author->postal_code }}</small></td>
+                                        <td><small>{{ $author->institution }}, {{ $author->affiliation_city }}, {{ $author->affiliationCountry->name ?? 'N/A' }}</small></td>
+                                        <td>
+                                            @if($author->is_lead_author)
+                                                <span class="badge bg-primary">Lead</span><br>
+                                            @endif
+                                            @if($author->is_presenter)
+                                                <span class="badge bg-success">Presenter</span><br>
+                                            @endif
+                                            @if($author->will_attend)
+                                                <span class="badge bg-info">Attending</span>
+                                            @endif
+                                        </td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                @else
+                    <p class="text-muted">No authors found.</p>
+                @endif
+            </div>
+
+            {{-- Attendees Summary --}}
+            {{-- <div class="preview-section">
                 <h4 class="section-title">
                     <i class="fas fa-users"></i>
                     Attendees
                 </h4>
                 @php
-                    $attendees = [];
-                    if(isset($poster->authors) && is_array($poster->authors)) {
-                        foreach($poster->authors as $author) {
-                            if(isset($author['will_attend']) && $author['will_attend']) {
-                                $attendees[] = ($author['first_name'] ?? '') . ' ' . ($author['last_name'] ?? '');
-                            }
-                        }
-                    }
+                    $attendeesList = $authors->where('will_attend', true);
                 @endphp
                 
-                @if(count($attendees) > 0)
+                @if($attendeesList->count() > 0)
                     <ul class="mb-0">
-                        @foreach($attendees as $attendee)
-                            <li>{{ $attendee }}</li>
+                        @foreach($attendeesList as $attendee)
+                            <li>{{ $attendee->first_name }} {{ $attendee->last_name }}</li>
                         @endforeach
                     </ul>
                 @else
                     <p class="text-muted mb-0">No attendees registered for the event.</p>
                 @endif
-            </div>
+            </div> --}}
 
             {{-- Payment Summary --}}
             <div class="price-section">
                 <h4 class="section-title">
                     <i class="fas fa-calculator"></i>
-                    Payment Summary
+                    Price Calculation
                 </h4>
                 
                 @php
+                    $attendeesList = $authors->where('will_attend', true);
                     $currency = $poster->currency ?? 'INR';
-                    $attendeeCount = count($attendees);
-                    $pricePerAttendee = $currency === 'INR' ? 2000 : 25;
-                    $subtotal = $attendeeCount * $pricePerAttendee;
-                    $gst = $currency === 'INR' ? $subtotal * 0.18 : 0;
-                    $total = $subtotal + $gst;
+                    $attendeeCount = $attendeesList->count();
                     $currencySymbol = $currency === 'INR' ? '₹' : '$';
+                    $pricePerAttendee = $currency === 'INR' ? 2000 : 25;
                 @endphp
+                
+                <div class="mb-3">
+                    <strong>Attendees ({{ $attendeeCount }}):</strong>
+                    @if($attendeesList->count() > 0)
+                        <ol class="mb-0 mt-2">
+                            @foreach($attendeesList as $attendee)
+                                <li>{{ $attendee->title ?? '' }} {{ $attendee->first_name }} {{ $attendee->last_name }}</li>
+                            @endforeach
+                        </ol>
+                    @else
+                        <p class="text-muted mb-0">No attendees marked.</p>
+                    @endif
+                </div>
                 
                 <table class="price-table">
                     <tr>
-                        <td class="label-cell">Number of Attendees</td>
-                        <td class="value-cell">{{ $attendeeCount }}</td>
+                        <td class="label-cell">Base Amount</td>
+                        <td class="value-cell">{{ $currencySymbol }} {{ number_format($poster->base_amount, 2) }}</td>
                     </tr>
-                    <tr>
-                        <td class="label-cell">Registration Fee ({{ $currencySymbol }}{{ number_format($pricePerAttendee) }} × {{ $attendeeCount }})</td>
-                        <td class="value-cell">{{ $currencySymbol }} {{ number_format($subtotal, 2) }}</td>
-                    </tr>
-                    @if($gst > 0)
                     <tr>
                         <td class="label-cell">GST (18%)</td>
-                        <td class="value-cell">{{ $currencySymbol }} {{ number_format($gst, 2) }}</td>
+                        <td class="value-cell">{{ $currencySymbol }} {{ number_format($poster->gst_amount, 2) }}</td>
                     </tr>
-                    @endif
+                    <tr>
+                        <td class="label-cell">Processing Charges (3%)</td>
+                        <td class="value-cell">{{ $currencySymbol }} {{ number_format($poster->processing_fee, 2) }}</td>
+                    </tr>
+                    
                     <tr class="total-row">
                         <td>Total Amount Payable</td>
-                        <td>{{ $currencySymbol }} {{ number_format($total, 2) }}</td>
+                        <td>{{ $currencySymbol }} {{ number_format($poster->total_amount, 2) }}</td>
                     </tr>
                 </table>
             </div>
 
             {{-- Payment Method Selection --}}
             <div class="preview-section">
-                <h4 class="section-title">
-                    <i class="fas fa-credit-card"></i>
-                    Select Payment Method
-                </h4>
+                
 
                 @if($currency === 'INR')
                     {{-- CCAvenue for Indian Payments --}}
-                    <div class="payment-method-card selected" id="ccavenue-card">
+                    {{-- <div class="payment-method-card selected" id="ccavenue-card">
                         <div class="d-flex justify-content-between align-items-center">
                             <div>
                                 <h5 class="mb-2">CCAvenue</h5>
@@ -303,23 +356,21 @@
                             </div>
                             <img src="{{ asset('asset/img/ccavenue-logo.png') }}" alt="CCAvenue" class="payment-logo">
                         </div>
-                    </div>
+                    </div> --}}
 
-                    <form action="{{ route('poster.payment.callback', ['gateway' => 'ccavenue']) }}" method="POST" id="paymentForm">
+                    <form action="{{ route('poster.register.processPayment', ['tin_no' => $poster->tin_no]) }}" method="POST" id="paymentForm">
                         @csrf
-                        <input type="hidden" name="tin_no" value="{{ $poster->tin_no }}">
-                        <input type="hidden" name="amount" value="{{ $total }}">
-                        <input type="hidden" name="currency" value="{{ $currency }}">
+                        <input type="hidden" name="payment_method" value="CCAvenue">
                         
                         <div class="d-flex justify-content-end mt-4">
                             <button type="submit" class="btn btn-primary btn-lg" id="payBtn">
-                                <i class="fas fa-lock"></i> Proceed to Secure Payment
+                                <i class="fas fa-lock"></i> Make Payment
                             </button>
                         </div>
                     </form>
                 @else
                     {{-- PayPal for International Payments --}}
-                    <div class="payment-method-card selected" id="paypal-card">
+                    {{-- <div class="payment-method-card selected" id="paypal-card">
                         <div class="d-flex justify-content-between align-items-center">
                             <div>
                                 <h5 class="mb-2">PayPal</h5>
@@ -327,17 +378,15 @@
                             </div>
                             <img src="{{ asset('asset/img/paypal-logo.png') }}" alt="PayPal" class="payment-logo">
                         </div>
-                    </div>
+                    </div> --}}
 
-                    <form action="{{ route('poster.payment.callback', ['gateway' => 'paypal']) }}" method="POST" id="paymentForm">
+                    <form action="{{ route('poster.register.processPayment', ['tin_no' => $poster->tin_no]) }}" method="POST" id="paymentForm">
                         @csrf
-                        <input type="hidden" name="tin_no" value="{{ $poster->tin_no }}">
-                        <input type="hidden" name="amount" value="{{ $total }}">
-                        <input type="hidden" name="currency" value="{{ $currency }}">
+                        <input type="hidden" name="payment_method" value="PayPal">
                         
-                        <div class="d-flex justify-content-end mt-4">
+                        <div class="d-flex justify-content-end">
                             <button type="submit" class="btn btn-primary btn-lg" id="payBtn">
-                                <i class="fas fa-lock"></i> Proceed to PayPal
+                                <i class="fas fa-lock"></i> Make Payment
                             </button>
                         </div>
                     </form>
@@ -347,7 +396,7 @@
             {{-- Security Notice --}}
             <div class="alert alert-info mt-4">
                 <i class="fas fa-shield-alt"></i>
-                <strong>Secure Payment:</strong> Your payment information is processed securely. We do not store your credit card details.
+                <strong>Secure Payment:</strong> Your payment information is processed securely.
             </div>
         </div>
     </div>

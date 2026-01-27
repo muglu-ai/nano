@@ -13,7 +13,9 @@ return new class extends Migration
     {
         Schema::create('poster_authors', function (Blueprint $table) {
             $table->id();
-            $table->string('token'); // References poster_registration_demos or poster_registrations
+            $table->foreignId('poster_registration_id')->constrained('poster_registrations')->onDelete('cascade');
+            $table->string('tin_no', 50)->index(); // TIN number from poster_registrations
+            $table->string('token')->nullable(); // Keep for backward compatibility
             $table->integer('author_index'); // 0-based index from form
             
             // Personal Information
@@ -45,8 +47,8 @@ return new class extends Migration
             $table->timestamps();
             
             // Indexes for faster queries
-            $table->index('token');
-            $table->index(['token', 'author_index']);
+            $table->index('poster_registration_id');
+            $table->index(['poster_registration_id', 'author_index']);
             $table->index('email');
         });
     }

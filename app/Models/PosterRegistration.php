@@ -3,11 +3,13 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class PosterRegistration extends Model
 {
     protected $fillable = [
         'tin_no',
+        'pin_no',
         'token',
         'sector',
         'currency',
@@ -47,4 +49,30 @@ class PosterRegistration extends Model
         'total_amount' => 'decimal:2',
         'payment_date' => 'datetime',
     ];
+
+    /**
+     * Get all authors for this poster registration
+     */
+    public function posterAuthors(): HasMany
+    {
+        return $this->hasMany(PosterAuthor::class, 'poster_registration_id');
+    }
+
+    /**
+     * Get the lead author for this poster registration
+     */
+    public function leadAuthor()
+    {
+        return $this->hasOne(PosterAuthor::class, 'poster_registration_id')
+            ->where('is_lead_author', true);
+    }
+
+    /**
+     * Get the presenter for this poster registration
+     */
+    public function presenter()
+    {
+        return $this->hasOne(PosterAuthor::class, 'poster_registration_id')
+            ->where('is_presenter', true);
+    }
 }

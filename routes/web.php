@@ -1266,10 +1266,10 @@ Route::get('/poster/check-email', [PosterController::class, 'checkEmail'])
 Route::post('/poster/register/new', [PosterController::class, 'storeNewDraft'])
     ->name('poster.register.newDraft'); // Store to demo table
 
-Route::get('/poster/register/preview/{token}', [PosterController::class, 'newPreview'])
+Route::get('/poster/register/preview/{tin_no}', [PosterController::class, 'newPreview'])
     ->name('poster.register.preview'); // Preview from demo table
 
-Route::post('/poster/register/submit/{token}', [PosterController::class, 'newSubmit'])
+Route::post('/poster/register/submit/{tin_no}', [PosterController::class, 'newSubmit'])
     ->name('poster.register.newSubmit'); // Move from demo to main table
 
 Route::get('/poster/register/payment/{tin_no}', [PosterController::class, 'showPayment'])

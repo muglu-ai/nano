@@ -1534,12 +1534,25 @@ class PosterController extends Controller
                 // Update poster payment status
                 $poster->update(['payment_status' => 'successful']);
                 
+                // Generate and assign PIN number after successful payment
+                if (empty($poster->pin_no)) {
+                    $poster->pin_no = $this->generatePosterPinNumber();
+                    $poster->save();
+                    
+                    Log::info('Poster PIN Generated', [
+                        'poster_id' => $poster->id,
+                        'tin_no' => $poster->tin_no,
+                        'pin_no' => $poster->pin_no,
+                    ]);
+                }
+                
                 // Clear session
                 session()->forget(['poster_id', 'poster_tin_no', 'poster_payment_id', 'poster_order_id']);
                 
                 Log::info('Poster CCAvenue Payment Success via Callback', [
                     'poster_id' => $poster->id,
                     'tin_no' => $poster->tin_no,
+                    'pin_no' => $poster->pin_no,
                     'invoice_id' => $invoice->id,
                     'amount' => $amount,
                     'transaction_id' => $trackingId,
@@ -1805,6 +1818,18 @@ class PosterController extends Controller
 
                 // Update poster payment status
                 $poster->update(['payment_status' => 'successful']);
+                
+                // Generate and assign PIN number after successful payment
+                if (empty($poster->pin_no)) {
+                    $poster->pin_no = $this->generatePosterPinNumber();
+                    $poster->save();
+                    
+                    Log::info('Poster PIN Generated (PayPal)', [
+                        'poster_id' => $poster->id,
+                        'tin_no' => $poster->tin_no,
+                        'pin_no' => $poster->pin_no,
+                    ]);
+                }
 
                 // Clear session
                 session()->forget(['poster_id', 'poster_tin_no', 'poster_payment_id', 'poster_order_id', 'poster_paypal_order_id']);
@@ -1929,8 +1954,10 @@ class PosterController extends Controller
             'abstract' => 'required|string',
             'extended_abstract' => 'required|file|mimes:pdf|max:5120',
             'authors' => 'required|array|min:1|max:4',
+            'authors.*.title' => 'required|string|in:Dr.,Prof.,Mr.,Ms.,Mrs.',
             'authors.*.first_name' => 'required|string|max:100',
             'authors.*.last_name' => 'required|string|max:100',
+            'authors.*.designation' => 'required|string|max:100',
             'authors.*.email' => 'required|email|max:200',
             'authors.*.mobile' => 'required|string|max:20',
             'authors.*.cv' => 'nullable|file|mimes:pdf|max:5120',
@@ -2022,8 +2049,15 @@ class PosterController extends Controller
         // Create or update draft
         $token = $request->input('token') ?? (string) Str::uuid();
         
+        // Check if draft already exists, if not generate TIN number
+        $existingDraft = \App\Models\PosterRegistrationDemo::where('token', $token)->first();
+        $tinNo = $existingDraft && $existingDraft->tin_no 
+            ? $existingDraft->tin_no 
+            : $this->generatePosterTinNumber();
+        
         $draftData = [
             'token' => $token,
+            'tin_no' => $tinNo,
             'session_id' => $validated['session_id'] ?? session()->getId(),
             'sector' => $validated['sector'],
             'currency' => $currency,
@@ -2051,38 +2085,8 @@ class PosterController extends Controller
             $draftData
         );
         
-        // Delete existing authors for this token (in case of update)
-        \App\Models\PosterAuthor::where('token', $token)->delete();
-        
-        // Store authors in separate table
-        foreach ($validated['authors'] as $index => $authorData) {
-            $authorRecord = [
-                'token' => $token,
-                'author_index' => $index,
-                'first_name' => $authorData['first_name'],
-                'last_name' => $authorData['last_name'],
-                'email' => $authorData['email'],
-                'mobile' => $authorData['mobile'],
-                'is_lead_author' => ($index === $leadAuthorIndex),
-                'is_presenter' => isset($authorData['is_presenter']) && $authorData['is_presenter'],
-                'will_attend' => isset($authorData['will_attend']) && $authorData['will_attend'],
-                'country_id' => $authorData['country_id'],
-                'state_id' => $authorData['state_id'],
-                'city' => $authorData['city'],
-                'postal_code' => $authorData['postal_code'],
-                'institution' => $authorData['institution'],
-                'affiliation_city' => $authorData['affiliation_city'],
-                'affiliation_country_id' => $authorData['affiliation_country_id'],
-            ];
-            
-            // Add CV path and name if available
-            if (isset($validated['authors'][$index]['cv_path'])) {
-                $authorRecord['cv_path'] = $validated['authors'][$index]['cv_path'];
-                $authorRecord['cv_original_name'] = $validated['authors'][$index]['cv_name'];
-            }
-            
-            \App\Models\PosterAuthor::create($authorRecord);
-        }
+        // Authors will be created only when draft is submitted to main table
+        // Draft table stores authors as JSON in 'authors' column
         
         // Store token in session
         session(['poster_registration_token' => $token]);
@@ -2090,25 +2094,45 @@ class PosterController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Draft saved successfully',
-            'redirect' => route('poster.register.preview', ['token' => $token]),
+            'redirect' => route('poster.register.preview', ['tin_no' => $tinNo]),
         ]);
     }
     
     /**
      * Preview the registration before final submission
      */
-    public function newPreview(Request $request, string $token)
+    public function newPreview(Request $request, string $tin_no)
     {
-        $draft = \App\Models\PosterRegistrationDemo::where('token', $token)->firstOrFail();
+        $draft = \App\Models\PosterRegistrationDemo::where('tin_no', $tin_no)->firstOrFail();
         
-        // Load authors from separate table
-        $authors = \App\Models\PosterAuthor::where('token', $token)
-            ->orderBy('author_index')
-            ->get();
+        // Authors are stored as JSON in draft table
+        $authors = collect($draft->authors);
+        
+        // Enrich authors with country and state names
+        $authors = $authors->map(function($author, $index) use ($draft) {
+            if (isset($author['country_id'])) {
+                $country = \App\Models\Country::find($author['country_id']);
+                $author['country'] = $country ? $country->name : 'N/A';
+            }
+            if (isset($author['state_id'])) {
+                $state = \App\Models\State::find($author['state_id']);
+                $author['state'] = $state ? $state->name : 'N/A';
+            }
+            if (isset($author['affiliation_country_id'])) {
+                $affiliationCountry = \App\Models\Country::find($author['affiliation_country_id']);
+                $author['affiliation_country'] = $affiliationCountry ? $affiliationCountry->name : 'N/A';
+            }
+            // Mark lead author
+            $author['is_lead'] = ($index == $draft->lead_author_index);
+            return $author;
+        });
+        
+        // Update draft with enriched authors for display
+        $draft->authors = $authors->toArray();
         
         // Verify session
         $sessionToken = session('poster_registration_token');
-        if ($sessionToken !== $token) {
+        if ($sessionToken !== $draft->token) {
             abort(403, 'This registration does not belong to your session.');
         }
         
@@ -2118,9 +2142,10 @@ class PosterController extends Controller
     /**
      * Submit the registration from preview - moves data from demo to main table
      */
-    public function newSubmit(Request $request, string $token)
+    public function newSubmit(Request $request, string $tin_no)
     {
-        $draft = \App\Models\PosterRegistrationDemo::where('token', $token)->firstOrFail();
+        $draft = \App\Models\PosterRegistrationDemo::where('tin_no', $tin_no)->firstOrFail();
+        $token = $draft->token;
         
         // Verify session
         $sessionToken = session('poster_registration_token');
@@ -2142,17 +2167,21 @@ class PosterController extends Controller
                 ->with('info', 'Registration already submitted. Please proceed with payment.');
         }
         
-        // Generate TIN number
-        $tinNo = $this->generatePosterTinNumber();
+        // Use TIN number from draft (already generated)
+        $tinNo = $draft->tin_no;
         
-        // Get lead author details from separate authors table
-        $leadAuthor = \App\Models\PosterAuthor::where('token', $token)
-            ->where('is_lead_author', true)
-            ->first();
+        // If TIN not in draft (shouldn't happen), generate new one
+        if (!$tinNo) {
+            $tinNo = $this->generatePosterTinNumber();
+        }
+        
+        // Get lead author details from draft JSON
+        $leadAuthorIndex = $draft->lead_author_index;
+        $leadAuthorData = $draft->authors[$leadAuthorIndex] ?? null;
             
-        $leadAuthorName = $leadAuthor ? ($leadAuthor->first_name . ' ' . $leadAuthor->last_name) : '';
-        $leadAuthorEmail = $leadAuthor ? $leadAuthor->email : '';
-        $leadAuthorMobile = $leadAuthor ? $leadAuthor->mobile : '';
+        $leadAuthorName = $leadAuthorData ? ($leadAuthorData['first_name'] . ' ' . $leadAuthorData['last_name']) : '';
+        $leadAuthorEmail = $leadAuthorData['email'] ?? '';
+        $leadAuthorMobile = $leadAuthorData['mobile'] ?? '';
         
         // Move data to main table
         $posterRegistration = \App\Models\PosterRegistration::create([
@@ -2182,6 +2211,34 @@ class PosterController extends Controller
             'payment_status' => 'pending',
             'status' => 'submitted',
         ]);
+        
+        // Create authors from draft JSON data in poster_authors table
+        foreach ($draft->authors as $index => $authorData) {
+            \App\Models\PosterAuthor::create([
+                'poster_registration_id' => $posterRegistration->id,
+                'tin_no' => $tinNo,
+                'token' => $token, // Keep for backward compatibility
+                'author_index' => $index,
+                'title' => $authorData['title'] ?? null,
+                'first_name' => $authorData['first_name'],
+                'last_name' => $authorData['last_name'],
+                'designation' => $authorData['designation'] ?? null,
+                'email' => $authorData['email'],
+                'mobile' => $authorData['mobile'],
+                'cv_path' => $authorData['cv_path'] ?? null,
+                'cv_original_name' => $authorData['cv_original_name'] ?? ($authorData['cv_name'] ?? null),
+                'is_lead_author' => ($index === $draft->lead_author_index),
+                'is_presenter' => isset($authorData['is_presenter']) && $authorData['is_presenter'],
+                'will_attend' => isset($authorData['will_attend']) && $authorData['will_attend'],
+                'country_id' => $authorData['country_id'],
+                'state_id' => $authorData['state_id'],
+                'city' => $authorData['city'],
+                'postal_code' => $authorData['postal_code'],
+                'institution' => $authorData['institution'],
+                'affiliation_city' => $authorData['affiliation_city'],
+                'affiliation_country_id' => $authorData['affiliation_country_id'],
+            ]);
+        }
         
         // Create invoice for payment processing
         $invoice = \App\Models\Invoice::create([
@@ -2228,9 +2285,7 @@ class PosterController extends Controller
         }
         
         // Load authors from separate table
-        $authors = \App\Models\PosterAuthor::where('token', $registration->token)
-            ->orderBy('author_index')
-            ->get();
+        $authors = $registration->posterAuthors()->orderBy('author_index')->get();
         
         // Get lead author
         $leadAuthor = $authors->where('is_lead_author', true)->first();
@@ -2300,15 +2355,9 @@ class PosterController extends Controller
         
         // Redirect to payment gateway
         if ($paymentMethod === 'CCAvenue' && $registration->currency === 'INR') {
-            return redirect()->route('payment.ccavenue.initiate', [
-                'invoice_no' => $invoice->invoice_no,
-                'type' => 'poster_registration',
-            ]);
+            return redirect()->route('payment.ccavenue', ['id' => $invoice->invoice_no]);
         } elseif ($paymentMethod === 'PayPal' && $registration->currency === 'USD') {
-            return redirect()->route('payment.paypal.initiate', [
-                'invoice_no' => $invoice->invoice_no,
-                'type' => 'poster_registration',
-            ]);
+            return redirect()->route('paypal.form', ['id' => $invoice->invoice_no]);
         }
         
         return back()->with('error', 'Invalid payment method selected');
@@ -2322,9 +2371,24 @@ class PosterController extends Controller
         do {
             $randomNumber = str_pad((string) mt_rand(1, 999999), 6, '0', STR_PAD_LEFT);
             $tinNo = 'TIN-BTS-2026-PSTR-' . $randomNumber;
-        } while (\App\Models\PosterRegistration::where('tin_no', $tinNo)->exists());
+        } while (
+            \App\Models\PosterRegistration::where('tin_no', $tinNo)->exists() ||
+            \App\Models\PosterRegistrationDemo::where('tin_no', $tinNo)->exists()
+        );
 
         return $tinNo;
     }
-}
+    
+    /**
+     * Generate unique PIN number for poster registrations after payment
+     */
+    private function generatePosterPinNumber(): string
+    {
+        do {
+            $randomNumber = str_pad((string) mt_rand(1, 999999), 6, '0', STR_PAD_LEFT);
+            $pinNo = 'PIN-BTS-2026-PSTR-' . $randomNumber;
+        } while (\App\Models\PosterRegistration::where('pin_no', $pinNo)->exists());
 
+        return $pinNo;
+    }
+}

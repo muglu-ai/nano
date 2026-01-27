@@ -8,10 +8,14 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class PosterAuthor extends Model
 {
     protected $fillable = [
+        'poster_registration_id',
+        'tin_no',
         'token',
         'author_index',
+        'title',
         'first_name',
         'last_name',
+        'designation',
         'email',
         'mobile',
         'cv_path',
@@ -56,6 +60,14 @@ class PosterAuthor extends Model
     public function affiliationCountry(): BelongsTo
     {
         return $this->belongsTo(Country::class, 'affiliation_country_id');
+    }
+
+    /**
+     * Get the poster registration this author belongs to
+     */
+    public function posterRegistration(): BelongsTo
+    {
+        return $this->belongsTo(PosterRegistration::class, 'poster_registration_id');
     }
 
     /**

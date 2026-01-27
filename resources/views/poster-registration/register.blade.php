@@ -202,6 +202,13 @@
                         <div class="invalid-feedback"></div>
                         <small class="text-muted d-block mt-2">Max file size: 5MB. Download Extended Abstract Submission Template /Format: <a href="{{ asset('asset/docs/Extended_Abstract_Template.pdf') }}" target="_blank">Click Here</a></small>
                     </div>
+                    <div class="col-md-6">
+                        <label for="presentation_mode" class="form-label">Preferred Presentation <span class="text-danger">*</span></label>
+                        <select class="form-select" id="presentation_mode" name="presentation_mode" required>
+                            <option value="Poster" selected>Poster</option>
+                        </select>
+                        <div class="invalid-feedback"></div>
+                    </div>
                 </div>
             </div>
 
@@ -225,34 +232,23 @@
                     </button>
             </div>
 
-            {{-- 4) Presentation Preference --}}
-            <div class="form-section">
-                <h5 class="mb-3 border-bottom pb-2"><i class="fas fa-presentation"></i> Presentation Preference</h5>
-                <div class="row">
-                    <div class="col-md-6">
-                        <label for="presentation_mode" class="form-label">Preferred Mode of Presentation <span class="text-danger">*</span></label>
-                        <select class="form-select" id="presentation_mode" name="presentation_mode" required>
-                            <option value="Poster only" selected>Poster only</option>
-                        </select>
-                        <div class="invalid-feedback"></div>
-                    </div>
-                </div>
-            </div>
+           
 
             {{-- 5) Attendance Summary & Pricing --}}
-            <div class="attendance-summary">
-                <h5 class="mb-3"><i class="fas fa-users"></i> Summary & Pricing</h5>
-                <div class="row">
-                    <div class="col-md-6">
-                        <label class="form-label fw-bold">Attendees Count:</label>
-                        <p class="h4" id="attendeeCount">0</p>
-                        <div id="attendeesList" class="mt-2"></div>
-                    </div>
-                    <div class="col-md-6">
-                        <label class="form-label fw-bold">Calculating Amount:</label>
-                        <p class="fee-display" id="registrationFee">₹ 0</p>
-                        <small class="text-muted" id="feeCalculation"></small>
-                    </div>
+            <div id="priceDisplay" class="alert alert-success d-none mt-2">
+                <h5><i class="fas fa-calculator"></i> Price Calculation</h5>
+                <div id="priceDetails">
+                    <table class="table table-bordered text-center" style="color: #000;">
+                        <tr>
+                            <td><strong>Attendees Count: </strong><span id="attendeeCount">0</span></td>
+                            <td><strong>Rate per Attendee: </strong><span id="ratePerAttendee">₹0</span></td>
+                            <td><strong>Base Price: </strong><span id="registrationFee">₹0</span></td>
+                            <td><strong>GST (18%): </strong><span id="gstAmount">₹0</span></td>
+                            <td><strong>Processing Charge: </strong><span id="processingCharge">₹0</span></td>
+                            <td><strong>Total Amount Payable: </strong><span id="totalAmount">₹0</span></td>
+                        </tr>
+                    </table>
+                    <div id="attendeesList" class="mt-2" style="display: none"></div>
                 </div>
             </div>
 
@@ -348,7 +344,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Add author button
     document.getElementById('addAuthorBtn').addEventListener('click', function() {
-        if (authorCount < maxAuthors) {
+        if (authorCount < maxAuthors - 1) {
             addAuthor();
         }
     });
@@ -377,12 +373,24 @@ document.addEventListener('DOMContentLoaded', function() {
             </div>
             
             <div class="row mb-3">
-                <div class="col-md-6">
+                <div class="col-md-2">
+                    <label for="author_title_${authorCount}" class="form-label">Title <span class="text-danger">*</span></label>
+                    <select class="form-select" id="author_title_${authorCount}" name="authors[${authorCount}][title]" required>
+                        <option value="">Select Title</option>
+                        <option value="Dr.">Dr.</option>
+                        <option value="Prof.">Prof.</option>
+                        <option value="Mr.">Mr.</option>
+                        <option value="Ms.">Ms.</option>
+                        <option value="Mrs.">Mrs.</option>
+                    </select>
+                    <div class="invalid-feedback"></div>
+                </div>
+                <div class="col-md-5">
                     <label for="author_first_name_${authorCount}" class="form-label">First Name <span class="text-danger">*</span></label>
                     <input type="text" class="form-control" id="author_first_name_${authorCount}" name="authors[${authorCount}][first_name]" required>
                     <div class="invalid-feedback"></div>
                 </div>
-                <div class="col-md-6">
+                <div class="col-md-5">
                     <label for="author_last_name_${authorCount}" class="form-label">Last Name <span class="text-danger">*</span></label>
                     <input type="text" class="form-control" id="author_last_name_${authorCount}" name="authors[${authorCount}][last_name]" required>
                     <div class="invalid-feedback"></div>
@@ -391,19 +399,25 @@ document.addEventListener('DOMContentLoaded', function() {
             
             <div class="row mb-3">
                 <div class="col-md-6">
+                    <label for="author_designation_${authorCount}" class="form-label">Designation <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control" id="author_designation_${authorCount}" name="authors[${authorCount}][designation]" required>
+                    <div class="invalid-feedback"></div>
+                </div>
+                <div class="col-md-6">
                     <label for="author_email_${authorCount}" class="form-label">Email <span class="text-danger">*</span></label>
                     <input type="email" class="form-control" id="author_email_${authorCount}" name="authors[${authorCount}][email]" required>
                     <div class="invalid-feedback"></div>
                 </div>
+                
+            </div>
+            
+            <div class="row mb-3">
                 <div class="col-md-6">
                     <label for="author_mobile_${authorCount}" class="form-label">Mobile Number <span class="text-danger">*</span></label>
                     <input type="tel" class="form-control" id="author_mobile_${authorCount}" name="authors[${authorCount}][mobile]" required>
                     <div class="invalid-feedback"></div>
                 </div>
-            </div>
-            
-            <div class="row mb-3 cv-upload-section" id="cv_upload_section_${authorCount}" style="display: ${authorCount === 0 ? 'block' : 'none'};">
-                <div class="col-md-12">
+                <div class="col-md-6 cv-upload-section" id="cv_upload_section_${authorCount}" style="display: ${authorCount === 0 ? 'block' : 'none'};">
                     <label for="author_cv_${authorCount}" class="form-label">Upload CV (PDF only) <span class="text-danger">*</span></label>
                     <input type="file" class="form-control cv-upload-input" id="author_cv_${authorCount}" name="authors[${authorCount}][cv]" accept=".pdf" ${authorCount === 0 ? 'required' : ''}>
                     <div class="invalid-feedback"></div>
@@ -413,41 +427,49 @@ document.addEventListener('DOMContentLoaded', function() {
              <div class="form-section">
             <div class="row mb-3">
                 <div class="col-md-4">
-                    <label class="form-label">Lead Author? <span class="text-danger">*</span></label>
+                    <label class="form-label">is this the Lead Author? <span class="text-danger">*</span></label>
                     <div class="d-flex gap-3">
                         <div class="form-check">
-                            <input class="form-check-input lead-author-radio" type="radio" name="lead_author" id="lead_author_yes_${authorCount}" value="${authorCount}" ${authorCount === 0 ? 'checked' : ''} onchange="updateLeadAuthor(${authorCount})">
+                            <input class="form-check-input lead-author-checkbox" type="checkbox" id="lead_author_yes_${authorCount}" value="${authorCount}" ${authorCount === 0 ? 'checked' : ''} onchange="toggleLeadAuthor(${authorCount}, true)">
                             <label class="form-check-label" for="lead_author_yes_${authorCount}">Yes</label>
                         </div>
                         <div class="form-check">
-                            <input class="form-check-input" type="radio" name="lead_author" id="lead_author_no_${authorCount}" value="-1" ${authorCount !== 0 ? 'checked' : ''} onchange="clearLeadAuthor(${authorCount})">
+                            <input class="form-check-input" type="checkbox" id="lead_author_no_${authorCount}" value="-1" ${authorCount !== 0 ? 'checked' : ''} onchange="toggleLeadAuthor(${authorCount}, false)">
                             <label class="form-check-label" for="lead_author_no_${authorCount}">No</label>
                         </div>
                     </div>
                 </div>
                 <div class="col-md-4">
-                    <label class="form-label">Presenter? <span class="text-danger">*</span></label>
+                    <label class="form-label">are you a Presenter? <span class="text-danger">*</span></label>
                     <div class="d-flex gap-3">
                         <div class="form-check">
-                            <input class="form-check-input presenter-checkbox" type="checkbox" id="presenter_${authorCount}" name="authors[${authorCount}][is_presenter]" value="1" ${authorCount === 0 ? 'checked' : ''} onchange="updatePresenter(${authorCount})">
-                            <label class="form-check-label" for="presenter_${authorCount}">Yes</label>
+                            <input class="form-check-input presenter-checkbox" type="checkbox" id="presenter_yes_${authorCount}" name="authors[${authorCount}][is_presenter]" value="1" ${authorCount === 0 ? 'checked' : ''} onchange="togglePresenter(${authorCount}, true)">
+                            <label class="form-check-label" for="presenter_yes_${authorCount}">Yes</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="presenter_no_${authorCount}" value="0" ${authorCount !== 0 ? 'checked' : ''} onchange="togglePresenter(${authorCount}, false)">
+                            <label class="form-check-label" for="presenter_no_${authorCount}">No</label>
                         </div>
                     </div>
-                    <small class="text-muted">Optional: Only one presenter allowed</small>
+                    
                 </div>
                 <div class="col-md-4">
                     <label class="form-label">Will Attend Event? <span class="text-danger">*</span></label>
                     <div class="d-flex gap-3">
                         <div class="form-check">
-                            <input class="form-check-input attend-checkbox" type="checkbox" id="will_attend_${authorCount}" name="authors[${authorCount}][will_attend]" value="1" ${authorCount === 0 ? 'checked' : ''} onchange="updateAttendanceSummary()">
-                            <label class="form-check-label" for="will_attend_${authorCount}">Yes</label>
+                            <input class="form-check-input attend-checkbox" type="checkbox" id="will_attend_yes_${authorCount}" name="authors[${authorCount}][will_attend]" value="1" ${authorCount === 0 ? 'checked' : ''} onchange="toggleAttendance(${authorCount}, true)">
+                            <label class="form-check-label" for="will_attend_yes_${authorCount}">Yes</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="will_attend_no_${authorCount}" value="0" ${authorCount !== 0 ? 'checked' : ''} onchange="toggleAttendance(${authorCount}, false)">
+                            <label class="form-check-label" for="will_attend_no_${authorCount}">No</label>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
             
-            <h6 class="mt-4 mb-3">Affiliation Address</h6>
+            </div>
             <div class="row mb-3">
                 <div class="col-md-6">
                     <label for="author_country_${authorCount}" class="form-label">Country <span class="text-danger">*</span></label>
@@ -461,13 +483,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 </div>
                 <div class="col-md-6">
                     <label for="author_state_${authorCount}" class="form-label">State <span class="text-danger">*</span></label>
-                    <select class="form-select author-state-select" id="author_state_${authorCount}" name="authors[${authorCount}][state_id]" data-author-index="${authorCount}" required>
-                        <option value="">Select State</option>
+                    <select class="form-select" id="author_state_${authorCount}" name="authors[${authorCount}][state_id]" required disabled>
+                        <option value="">Select Country First</option>
                     </select>
                     <div class="invalid-feedback"></div>
                 </div>
             </div>
-            
             <div class="row mb-3">
                 <div class="col-md-6">
                     <label for="author_city_${authorCount}" class="form-label">City <span class="text-danger">*</span></label>
@@ -484,7 +505,7 @@ document.addEventListener('DOMContentLoaded', function() {
             <h6 class="mt-4 mb-3">Affiliation</h6>
             <div class="row mb-3">
                 <div class="col-md-4">
-                    <label for="author_institution_${authorCount}" class="form-label">Institution <span class="text-danger">*</span></label>
+                    <label for="author_institution_${authorCount}" class="form-label">Institution / Organisation <span class="text-danger">*</span></label>
                     <input type="text" class="form-control" id="author_institution_${authorCount}" name="authors[${authorCount}][institution]" required>
                     <div class="invalid-feedback"></div>
                 </div>
@@ -578,67 +599,110 @@ document.addEventListener('DOMContentLoaded', function() {
         const btn = document.getElementById('addAuthorBtn');
         if (authorCount >= maxAuthors - 1) {
             btn.disabled = true;
-            btn.innerHTML = '<i class="fas fa-ban"></i> Maximum Authors Reached';
+            btn.innerHTML = '<i class="fas fa-ban"></i> Maximum Authors Reached (4)';
         } else {
             btn.disabled = false;
             btn.innerHTML = '<i class="fas fa-plus"></i> Add Another Author';
         }
     }
 
-    window.updateLeadAuthor = function(index) {
-        // Remove lead author styling from all blocks
-        document.querySelectorAll('.author-block').forEach(block => {
-            block.classList.remove('lead-author');
-        });
+    window.toggleLeadAuthor = function(index, isLead) {
+        const yesCheckbox = document.getElementById(`lead_author_yes_${index}`);
+        const noCheckbox = document.getElementById(`lead_author_no_${index}`);
         
-        // Uncheck all "Yes" radio buttons first
-        document.querySelectorAll('.lead-author-radio').forEach(radio => {
-            if (radio.value !== String(index)) {
-                radio.checked = false;
-                // Check the corresponding "No" radio for other authors
-                const authorIdx = radio.value;
-                const noRadio = document.getElementById(`lead_author_no_${authorIdx}`);
-                if (noRadio) noRadio.checked = true;
+        if (isLead) {
+            // User wants to make this author the lead
+            yesCheckbox.checked = true;
+            noCheckbox.checked = false;
+            
+            // Remove lead author styling from all blocks
+            document.querySelectorAll('.author-block').forEach(block => {
+                block.classList.remove('lead-author');
+            });
+            
+            // Uncheck all other "Yes" checkboxes and check their "No" checkboxes
+            document.querySelectorAll('.lead-author-checkbox').forEach(checkbox => {
+                const otherIndex = checkbox.value;
+                if (otherIndex !== String(index)) {
+                    checkbox.checked = false;
+                    const otherNoCheckbox = document.getElementById(`lead_author_no_${otherIndex}`);
+                    if (otherNoCheckbox) otherNoCheckbox.checked = true;
+                }
+            });
+            
+            // Add to selected block
+            const selectedBlock = document.querySelector(`[data-author-index="${index}"]`);
+            if (selectedBlock) {
+                selectedBlock.classList.add('lead-author');
+                leadAuthorIndex = index;
+                updateRoleBadges(index);
             }
-        });
-        
-        // Add to selected block
-        const selectedBlock = document.querySelector(`[data-author-index="${index}"]`);
-        if (selectedBlock) {
-            selectedBlock.classList.add('lead-author');
-            leadAuthorIndex = index;
-            updateRoleBadges(index);
+        } else {
+            // User wants to deselect this as lead
+            if (leadAuthorIndex === index) {
+                // Prevent deselecting if this is the current lead author
+                Swal.fire('Cannot Deselect', 'Please select another author as Lead Author before deselecting this one.', 'warning');
+                yesCheckbox.checked = true;
+                noCheckbox.checked = false;
+                return;
+            }
+            yesCheckbox.checked = false;
+            noCheckbox.checked = true;
         }
     }
 
-    window.clearLeadAuthor = function(index) {
-        // Prevent clearing if this is the only author or current lead author
-        if (leadAuthorIndex === index) {
-            // Show warning and revert the radio button
-            Swal.fire('Cannot Deselect', 'Please select another author as Lead Author before deselecting this one.', 'warning');
-            // Recheck the "Yes" radio button
-            const yesRadio = document.getElementById(`lead_author_yes_${index}`);
-            if (yesRadio) yesRadio.checked = true;
-            return;
-        }
-    }
-
-    window.updatePresenter = function(index) {
-        const checkbox = document.getElementById(`presenter_${index}`);
+    window.togglePresenter = function(index, isPresenter) {
+        const yesCheckbox = document.getElementById(`presenter_yes_${index}`);
+        const noCheckbox = document.getElementById(`presenter_no_${index}`);
         
-        if (checkbox.checked) {
-            // Uncheck all other presenter checkboxes
-            document.querySelectorAll('.presenter-checkbox').forEach(cb => {
-                if (cb.id !== `presenter_${index}`) {
-                    cb.checked = false;
+        if (isPresenter) {
+            yesCheckbox.checked = true;
+            noCheckbox.checked = false;
+            
+            // Uncheck all other presenter "Yes" checkboxes and check their "No" checkboxes
+            document.querySelectorAll('.presenter-checkbox').forEach(checkbox => {
+                if (checkbox.id !== `presenter_yes_${index}`) {
+                    checkbox.checked = false;
+                    const otherIndex = checkbox.id.replace('presenter_yes_', '');
+                    const otherNoCheckbox = document.getElementById(`presenter_no_${otherIndex}`);
+                    if (otherNoCheckbox) otherNoCheckbox.checked = true;
                 }
             });
             presenterIndex = index;
         } else {
-            presenterIndex = null;
+            yesCheckbox.checked = false;
+            noCheckbox.checked = true;
+            if (presenterIndex === index) {
+                presenterIndex = null;
+            }
         }
         
         updateRoleBadges(index);
+    }
+
+    window.toggleAttendance = function(index, willAttend) {
+        const yesCheckbox = document.getElementById(`will_attend_yes_${index}`);
+        const noCheckbox = document.getElementById(`will_attend_no_${index}`);
+        
+        if (willAttend) {
+            yesCheckbox.checked = true;
+            noCheckbox.checked = false;
+        } else {
+            // Check if at least one author needs to attend
+            const anyAttending = Array.from(document.querySelectorAll('.attend-checkbox')).some(cb => cb.checked && cb.id !== `will_attend_yes_${index}`);
+            
+            if (!anyAttending) {
+                Swal.fire('Cannot Deselect', 'At least one author must attend the event.', 'warning');
+                yesCheckbox.checked = true;
+                noCheckbox.checked = false;
+                return;
+            }
+            
+            yesCheckbox.checked = false;
+            noCheckbox.checked = true;
+        }
+        
+        updateAttendanceSummary();
     }
 
     function updateRoleBadges(index) {
@@ -679,7 +743,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         document.querySelectorAll('.author-block').forEach(block => {
             const index = block.dataset.authorIndex;
-            const willAttend = document.getElementById(`will_attend_${index}`);
+            const willAttend = document.getElementById(`will_attend_yes_${index}`);
             const firstName = document.getElementById(`author_first_name_${index}`);
             const lastName = document.getElementById(`author_last_name_${index}`);
             
@@ -689,18 +753,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 attendees.push(name.trim() || `Author ${parseInt(index) + 1} (name not entered)`);
             }
         });
-        
-        // Update count
-        document.getElementById('attendeeCount').textContent = count;
-        
-        // Update attendees list
-        const attendeesList = document.getElementById('attendeesList');
-        if (attendees.length > 0) {
-            attendeesList.innerHTML = '<small class="text-muted"><strong>Attendees:</strong><br>' + 
-                attendees.map(name => `• ${name}`).join('<br>') + '</small>';
-        } else {
-            attendeesList.innerHTML = '';
-        }
         
         // Calculate fee
         const currency = document.querySelector('#currency')?.value || 'INR';
@@ -723,20 +775,35 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         const currencySymbol = currency === 'INR' ? '₹' : '$';
-        document.getElementById('registrationFee').textContent = `${currencySymbol} ${totalFee.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
         
-        let calculationText = `${count} attendee(s) × ${currencySymbol}${pricePerAttendee.toLocaleString()} = ${currencySymbol}${baseAmount.toLocaleString()}<br>`;
+        // Format numbers with commas
+        const formatNumber = (num) => num.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2});
         
-        if (currency === 'INR') {
-            calculationText += `GST (${gstRate}%): ${currencySymbol}${gstAmount.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2})}<br>`;
-            calculationText += `Processing Charge (${indProcessingCharge}%): ${currencySymbol}${processingAmount.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2})}<br>`;
+        // Update the display if there are attendees
+        if (count > 0) {
+            // Update table cells
+            document.getElementById('attendeeCount').textContent = count;
+            document.getElementById('ratePerAttendee').textContent = `${currencySymbol}${formatNumber(pricePerAttendee)}`;
+            document.getElementById('registrationFee').textContent = `${currencySymbol}${formatNumber(baseAmount)}`;
+            document.getElementById('gstAmount').textContent = `${currencySymbol}${formatNumber(gstAmount)}`;
+            document.getElementById('processingCharge').textContent = `${currencySymbol}${formatNumber(processingAmount)}`;
+            document.getElementById('totalAmount').textContent = `${currencySymbol}${formatNumber(totalFee)}`;
+            
+            // Update attendees list
+            const attendeesList = document.getElementById('attendeesList');
+            if (attendees.length > 0) {
+                attendeesList.innerHTML = '<small class="text-muted"><strong>Attendees:</strong><br>' + 
+                    attendees.map(name => `• ${name}`).join('<br>') + '</small>';
+            } else {
+                attendeesList.innerHTML = '';
+            }
+            
+            // Show the price display
+            document.getElementById('priceDisplay').classList.remove('d-none');
         } else {
-            calculationText += `Processing Charge (${intProcessingCharge}%): ${currencySymbol}${processingAmount.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2})}<br>`;
+            // Hide the price display if no attendees
+            document.getElementById('priceDisplay').classList.add('d-none');
         }
-        
-        calculationText += `<strong>Total: ${currencySymbol}${totalFee.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</strong>`;
-        
-        document.getElementById('feeCalculation').innerHTML = calculationText;
     }
 
     // Currency change listener
