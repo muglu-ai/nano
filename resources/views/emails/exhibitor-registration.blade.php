@@ -38,7 +38,6 @@
                     <!-- Content -->
                     <tr>
                         <td style="padding: 30px;">
-                            
                             <!-- Greeting -->
                             <p style="margin: 0 0 20px; font-size: 16px; color: #333333; line-height: 1.6;">
                                 Dear @if($contact && $contact->first_name){{ $contact->first_name }}@else{{ $application->company_name }}@endif,

@@ -2,7 +2,7 @@
     $currentStep = $currentStep ?? 1; // 1 = Registration, 2 = Preview, 3 = Confirmation
 @endphp
 
-<div class="registration-progress mb-4">
+<div class="registration-progress mb-1">
     <div class="progress-steps">
         <!-- Step 1: Registration -->
         <div class="progress-step {{ $currentStep >= 1 ? 'active' : '' }} {{ $currentStep > 1 ? 'completed' : '' }}">
