@@ -1384,8 +1384,8 @@ class PaymentGatewayController extends Controller
             // Handle startup zone payment failure - redirect to startup zone payment page
             if ($isStartupZone || $application) {
                 echo "isStartupZone: " . $isStartupZone;
-                // echo "application: " . $application;
-                // exit;
+                echo "application: " . $application;
+                exit;
                 // Create failed payment record for startup zone
                 if ($invoice) {
                     // echo "invoice: " . $invoice;
@@ -1414,6 +1414,8 @@ class PaymentGatewayController extends Controller
                     ->with('error', 'Payment failed. Please try again.')
                     ->with('payment_response', $responseArray);
             }
+
+            //chec
 
 
 
