@@ -867,6 +867,9 @@ class PaymentGatewayController extends Controller
 
             $invoice = Invoice::where('invoice_no', $order_id)->first();
 
+            dd($invoice);
+            
+
             // Check if this is a poster payment
             $isPosterPayment = (session('payment_application_type') === 'poster');
             $posterTinNo = session('poster_tin_no');
@@ -1364,7 +1367,7 @@ class PaymentGatewayController extends Controller
                 }
             }
 
-            dd($invoice);
+            // dd($invoice);
 
             // If invoice not found, check session
             if (!$invoice) {
@@ -1376,9 +1379,21 @@ class PaymentGatewayController extends Controller
                 }
             }
 
-            if ($isStartupZone && $application) {
+            // echo "isStartupZone: " . $isStartupZone;
+            // echo "application: " . $application;
+
+            // exit;
+
+            // Handle startup zone payment failure - redirect to startup zone payment page
+            if ($isStartupZone || $application) {
+                // echo "isStartupZone: " . $isStartupZone;
+                // echo "application: " . $application;
+                // echo "invoice: " . $invoice;
+                // exit;
                 // Create failed payment record for startup zone
                 if ($invoice) {
+                    // echo "invoice: " . $invoice;
+                    // exit;
                     Payment::create([
                         'invoice_id' => $invoice->id,
                         'payment_method' => $responseArray['payment_mode'] ?? 'CCAvenue',
@@ -1398,11 +1413,33 @@ class PaymentGatewayController extends Controller
                     ]);
                 }
 
-                return redirect()
-                    ->route('startup-zone.payment', $application->application_id)
-                    ->with('error', 'Payment failed. Please try again.')
-                    ->with('payment_response', $responseArray);
+                //if application_type is startup-zone then redirect to startup-zone.payment page
+                //elseif application_type is exhibitor-registration then redirect to exhibitor-registration.payment page
+                //else redirect to payment.lookup page
+
+                if ($application->application_type === 'startup-zone') {
+                    return redirect()
+                        ->route('startup-zone.payment', $application->application_id)
+                        ->with('error', 'Payment failed. Please try again.')
+                        ->with('payment_response', $responseArray);
+                } elseif ($application->application_type === 'exhibitor-registration') {
+                    return redirect()
+                        ->route('exhibitor-registration.payment', $application->application_id)
+                        ->with('error', 'Payment failed. Please try again.')
+                        ->with('payment_response', $responseArray);
+                } else {
+                    return redirect()
+                        ->route('payment.lookup')
+                        ->with('error', 'Payment failed. Please try again.')
+                        ->with('payment_response', $responseArray);
+                }
+
+                
             }
+
+            //chec
+
+
 
             // For non-startup-zone invoices or if invoice not found
             if ($invoice) {
@@ -1413,6 +1450,9 @@ class PaymentGatewayController extends Controller
                     ->route('payment.lookup')
                     ->with('error', 'Payment failed. Invoice not found.');
             }
+
+            // echo "invoice: " . $invoice;
+            // exit;
 
             // return to /payment/{id}
         } else {
@@ -1448,10 +1488,10 @@ class PaymentGatewayController extends Controller
             }
         }
 
-        // Final fallback redirect
+        // Final fallback redirect to payment.lookup page
         return redirect()
-            ->route('exhibitor.orders')
-            ->with('error', 'Payment response incomplete. Please contact support if payment was deducted.');
+            ->route('payment.lookup')
+            ->with('error', 'Payment failed. Please try again.');
     }
 
     /**
