@@ -1312,6 +1312,10 @@ class ExhibitorRegistrationController extends Controller
                 ->first();
             
             if ($application) {
+                // If application is approved, user can only go to payment — no edit/back
+                if (($application->submission_status ?? '') === 'approved') {
+                    return redirect()->route('exhibitor-registration.payment', $application->application_id);
+                }
                 return view('exhibitor-registration.preview', compact('application'));
             }
         }
