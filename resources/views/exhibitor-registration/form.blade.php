@@ -171,7 +171,7 @@
                         <select class="form-select" id="sector" name="sector" required>
                             <option value="">Select Sector</option>
                             @foreach($sectors as $sector)
-                            <option value="{{ $sector }}" {{ ($draft->sector ?? '') == $sector ? 'selected' : '' }}>
+                            <option value="{{ $sector }}" {{ (($draft->sector_id ?? '') == $sector || ($draft->sector ?? '') == $sector) ? 'selected' : '' }}>
                                 {{ $sector }}
                             </option>
                             @endforeach
@@ -187,7 +187,7 @@
                         <select class="form-select" id="subsector" name="subsector" required>
                             <option value="">Select Subsector</option>
                             @foreach($subSectors as $subSector)
-                            <option value="{{ $subSector }}" {{ ($draft->subsector ?? '') == $subSector ? 'selected' : '' }}>
+                            <option value="{{ $subSector }}" {{ (($draft->subSector ?? '') == $subSector || ($draft->subsector ?? '') == $subSector) ? 'selected' : '' }}>
                                 {{ $subSector }}
                             </option>
                             @endforeach
@@ -197,15 +197,15 @@
                     <div class="col-md-4" id="other_sector_container" style="display: none;">
                         <label for="other_sector_name" class="form-label">Other Sector Name <span class="text-danger">*</span></label>
                         <input type="text" class="form-control" id="other_sector_name" name="other_sector_name" 
-                               value="{{ $draft->other_sector_name ?? '' }}">
+                               value="{{ $draft->type_of_business ?? $draft->other_sector_name ?? '' }}">
                         <div class="invalid-feedback"></div>
                     </div>
                     <div class="col-md-4">
                         <label for="category" class="form-label">Category <span class="text-danger">*</span></label>
                         <select class="form-select" id="category" name="category" required>
                             <option value="">Select Category</option>
-                            <option value="Exhibitor" {{ ($draft->category ?? '') == 'Exhibitor' ? 'selected' : '' }}>Exhibitor</option>
-                            <option value="Sponsor" {{ ($draft->category ?? '') == 'Sponsor' ? 'selected' : '' }}>Sponsor</option>
+                            <option value="Exhibitor" {{ (($draft->category ?? '') == 'Exhibitor' || (isset($draft->exhibitor_data['category']) && $draft->exhibitor_data['category'] == 'Exhibitor')) ? 'selected' : '' }}>Exhibitor</option>
+                            <option value="Sponsor" {{ (($draft->category ?? '') == 'Sponsor' || (isset($draft->exhibitor_data['category']) && $draft->exhibitor_data['category'] == 'Sponsor')) ? 'selected' : '' }}>Sponsor</option>
                         </select>
                         <div class="invalid-feedback"></div>
                     </div>
@@ -271,8 +271,8 @@
                         <label for="tan_status" class="form-label">TAN Status <span class="text-danger">*</span></label>
                         <select class="form-select" id="tan_status" name="tan_status" {{ $selectedCurrency == 'INR' ? 'required' : '' }}>
                             <option value="">Select TAN Status</option>
-                            <option value="Registered" {{ ($draft->tan_status ?? '') == 'Registered' ? 'selected' : '' }}>Registered</option>
-                            <option value="Unregistered" {{ ($draft->tan_status ?? '') == 'Unregistered' ? 'selected' : '' }}>Unregistered (Not Available)</option>
+                            <option value="Registered" {{ (($draft->tan_status ?? '') == 'Registered' || (isset($draft->billing_data['tan_status']) && $draft->billing_data['tan_status'] == 'Registered')) ? 'selected' : '' }}>Registered</option>
+                            <option value="Unregistered" {{ (($draft->tan_status ?? '') == 'Unregistered' || (isset($draft->billing_data['tan_status']) && $draft->billing_data['tan_status'] == 'Unregistered')) ? 'selected' : '' }}>Unregistered (Not Available)</option>
                         </select>
                         <div class="invalid-feedback"></div>
                     </div>
@@ -286,8 +286,8 @@
                         <label for="gst_status" class="form-label">GST Status <span class="text-danger">*</span></label>
                         <select class="form-select" id="gst_status" name="gst_status" {{ $selectedCurrency == 'INR' ? 'required' : '' }}>
                             <option value="">Select GST Status</option>
-                            <option value="Registered" {{ ($draft->gst_status ?? '') == 'Registered' ? 'selected' : '' }}>Registered</option>
-                            <option value="Unregistered" {{ ($draft->gst_status ?? '') == 'Unregistered' ? 'selected' : '' }}>Unregistered (Not Available)</option>
+                            <option value="Registered" {{ (($draft->gst_status ?? '') == 'Registered' || ($draft->gst_compliance ?? false) || (isset($draft->billing_data['gst_status']) && $draft->billing_data['gst_status'] == 'Registered')) ? 'selected' : '' }}>Registered</option>
+                            <option value="Unregistered" {{ (($draft->gst_status ?? '') == 'Unregistered' || (!$draft->gst_compliance && !isset($draft->billing_data['gst_status'])) || (isset($draft->billing_data['gst_status']) && $draft->billing_data['gst_status'] == 'Unregistered')) ? 'selected' : '' }}>Unregistered (Not Available)</option>
                         </select>
                         <div class="invalid-feedback"></div>
                     </div>
@@ -603,7 +603,7 @@
                     <div class="col-md-6">
                         <label for="sales_executive_name" class="form-label">Sales Executive Name (From Bengaluru Tech Summit Team) <span class="text-danger">*</span></label>
                         <input type="text" class="form-control" id="sales_executive_name" name="sales_executive_name" 
-                               value="{{ isset($draft->exhibitor_data['sales_executive_name']) ? $draft->exhibitor_data['sales_executive_name'] : '' }}" required>
+                               value="{{ isset($draft->exhibitor_data['sales_executive_name']) ? $draft->exhibitor_data['sales_executive_name'] : ($draft->salesPerson ?? '') }}" required>
                         <div class="invalid-feedback"></div>
                     </div>
                 </div>
