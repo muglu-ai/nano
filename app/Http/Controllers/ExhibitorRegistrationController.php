@@ -557,11 +557,9 @@ class ExhibitorRegistrationController extends Controller
         if (isset($formData['other_sector_name'])) {
             $draft->type_of_business = $formData['other_sector_name'];
         }
-        // Save GST status to both gst_compliance (boolean) and gst_status (string) for compatibility
+        // Save GST status to gst_compliance (boolean) - gst_status is stored in billing_data JSON
         if (isset($billingData['gst_status'])) {
             $draft->gst_compliance = ($billingData['gst_status'] === 'Registered');
-            // Also save as string for form compatibility
-            $draft->gst_status = $billingData['gst_status'];
         }
         if (isset($billingData['gst_no'])) {
             $draft->gst_no = $billingData['gst_no'];
@@ -569,22 +567,8 @@ class ExhibitorRegistrationController extends Controller
         if (isset($billingData['pan_no'])) {
             $draft->pan_no = $billingData['pan_no'];
         }
-        // Save TAN status to direct column for form compatibility
-        if (isset($billingData['tan_status'])) {
-            $draft->tan_status = $billingData['tan_status'];
-            $draft->tan_compliance = ($billingData['tan_status'] === 'Registered');
-        }
-        if (isset($billingData['tan_no'])) {
-            $draft->tan_no = $billingData['tan_no'];
-        }
-        // Save category to direct column for form compatibility
-        if (isset($exhibitorData['category'])) {
-            $draft->category = $exhibitorData['category'];
-        }
-        // Save sales executive name to direct column if needed
-        if (isset($exhibitorData['sales_executive_name'])) {
-            $draft->salesPerson = $exhibitorData['sales_executive_name'];
-        }
+        // Note: tan_status, tan_no, category, sales_executive_name are stored in JSON columns only
+        // They are accessible via billing_data['tan_status'], exhibitor_data['category'], etc.
         if (isset($formData['promocode'])) {
             $draft->promocode = $formData['promocode'];
         }
