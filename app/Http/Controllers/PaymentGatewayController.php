@@ -1382,6 +1382,9 @@ class PaymentGatewayController extends Controller
             // exit;
 
             if ($isStartupZone && $application) {
+                echo "isStartupZone: " . $isStartupZone;
+                echo "application: " . $application;
+                exit;
                 // Create failed payment record for startup zone
                 if ($invoice) {
                     echo "invoice: " . $invoice;
