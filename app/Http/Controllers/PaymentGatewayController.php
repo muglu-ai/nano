@@ -1376,14 +1376,16 @@ class PaymentGatewayController extends Controller
                 }
             }
 
-            echo "isStartupZone: " . $isStartupZone;
-            echo "application: " . $application;
+            // echo "isStartupZone: " . $isStartupZone;
+            // echo "application: " . $application;
 
-            exit;
+            // exit;
 
             if ($isStartupZone && $application) {
                 // Create failed payment record for startup zone
                 if ($invoice) {
+                    echo "invoice: " . $invoice;
+                    exit;
                     Payment::create([
                         'invoice_id' => $invoice->id,
                         'payment_method' => $responseArray['payment_mode'] ?? 'CCAvenue',
@@ -1409,6 +1411,8 @@ class PaymentGatewayController extends Controller
                     ->with('payment_response', $responseArray);
             }
 
+
+
             // For non-startup-zone invoices or if invoice not found
             if ($invoice) {
                 return redirect('/payment/' . $order_id . '?status=failed');
@@ -1418,6 +1422,9 @@ class PaymentGatewayController extends Controller
                     ->route('payment.lookup')
                     ->with('error', 'Payment failed. Invoice not found.');
             }
+
+            echo "invoice: " . $invoice;
+            exit;
 
             // return to /payment/{id}
         } else {
