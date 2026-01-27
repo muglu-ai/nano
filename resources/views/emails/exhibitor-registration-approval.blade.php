@@ -257,10 +257,38 @@
                                 </table>
                                 @endif
 
-                                @if($invoice->gst)
+                                @if(isset($invoice->cgst_amount) && $invoice->cgst_amount)
                                 <table role="presentation" width="100%" cellpadding="5" cellspacing="0" style="margin-bottom: 10px;">
                                     <tr>
-                                        <td style="width: 40%; font-weight: bold; color: #555555; padding: 5px 0;">GST @ 18%:</td>
+                                        <td style="width: 40%; font-weight: bold; color: #555555; padding: 5px 0;">CGST ({{ $invoice->cgst_rate ?? 9 }}%):</td>
+                                        <td style="color: #333333; padding: 5px 0;">{{ $invoice->currency }} {{ number_format($invoice->cgst_amount, 2) }}</td>
+                                    </tr>
+                                </table>
+                                @endif
+
+                                @if(isset($invoice->sgst_amount) && $invoice->sgst_amount)
+                                <table role="presentation" width="100%" cellpadding="5" cellspacing="0" style="margin-bottom: 10px;">
+                                    <tr>
+                                        <td style="width: 40%; font-weight: bold; color: #555555; padding: 5px 0;">SGST ({{ $invoice->sgst_rate ?? 9 }}%):</td>
+                                        <td style="color: #333333; padding: 5px 0;">{{ $invoice->currency }} {{ number_format($invoice->sgst_amount, 2) }}</td>
+                                    </tr>
+                                </table>
+                                @endif
+
+                                @if(isset($invoice->igst_amount) && $invoice->igst_amount)
+                                <table role="presentation" width="100%" cellpadding="5" cellspacing="0" style="margin-bottom: 10px;">
+                                    <tr>
+                                        <td style="width: 40%; font-weight: bold; color: #555555; padding: 5px 0;">IGST ({{ $invoice->igst_rate ?? 18 }}%):</td>
+                                        <td style="color: #333333; padding: 5px 0;">{{ $invoice->currency }} {{ number_format($invoice->igst_amount, 2) }}</td>
+                                    </tr>
+                                </table>
+                                @endif
+
+                                {{-- Fallback to old GST field if new breakdown fields are not available --}}
+                                @if(!isset($invoice->cgst_amount) && !isset($invoice->igst_amount) && $invoice->gst)
+                                <table role="presentation" width="100%" cellpadding="5" cellspacing="0" style="margin-bottom: 10px;">
+                                    <tr>
+                                        <td style="width: 40%; font-weight: bold; color: #555555; padding: 5px 0;">GST:</td>
                                         <td style="color: #333333; padding: 5px 0;">{{ $invoice->currency }} {{ number_format($invoice->gst, 2) }}</td>
                                     </tr>
                                 </table>
