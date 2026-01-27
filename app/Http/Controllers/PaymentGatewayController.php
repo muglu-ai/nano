@@ -867,6 +867,9 @@ class PaymentGatewayController extends Controller
 
             $invoice = Invoice::where('invoice_no', $order_id)->first();
 
+            dd($invoice);
+            
+
             // Check if this is a poster payment
             $isPosterPayment = (session('payment_application_type') === 'poster');
             $posterTinNo = session('poster_tin_no');
@@ -1448,8 +1451,8 @@ class PaymentGatewayController extends Controller
                     ->with('error', 'Payment failed. Invoice not found.');
             }
 
-            echo "invoice: " . $invoice;
-            exit;
+            // echo "invoice: " . $invoice;
+            // exit;
 
             // return to /payment/{id}
         } else {
@@ -1485,10 +1488,10 @@ class PaymentGatewayController extends Controller
             }
         }
 
-        // Final fallback redirect
+        // Final fallback redirect to payment.lookup page
         return redirect()
-            ->route('exhibitor.orders')
-            ->with('error', 'Payment response incomplete. Please contact support if payment was deducted.');
+            ->route('payment.lookup')
+            ->with('error', 'Payment failed. Please try again.');
     }
 
     /**
