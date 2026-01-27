@@ -194,13 +194,13 @@
                 </div>
                 <div class="row">
                     <div class="col-md-6">
-                        <label for="extended_abstract" class="form-label">Extended Abstract Upload (PDF only)</label>
-                        <input type="file" class="form-control" id="extended_abstract" name="extended_abstract" accept=".pdf">
+                        <label for="extended_abstract" class="form-label">Extended Abstract Upload (PDF only) <span class="text-danger">*</span></label>
+                        <input type="file" class="form-control" id="extended_abstract" name="extended_abstract" accept=".pdf" required>
                         @if(isset($draft->extended_abstract_path) && $draft->extended_abstract_path)
                         <small class="text-muted">Current file: {{ basename($draft->extended_abstract_path) }}</small>
                         @endif
                         <div class="invalid-feedback"></div>
-                        <small class="text-muted d-block mt-2">Download Extended Abstract Submission Template /Format: <a href="{{ asset('asset/docs/Extended_Abstract_Template.pdf') }}" target="_blank">Click Here</a></small>
+                        <small class="text-muted d-block mt-2">Max file size: 5MB. Download Extended Abstract Submission Template /Format: <a href="{{ asset('asset/docs/Extended_Abstract_Template.pdf') }}" target="_blank">Click Here</a></small>
                     </div>
                 </div>
             </div>
@@ -414,7 +414,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     <label class="form-label">Presenter? <span class="text-danger">*</span></label>
                     <div class="d-flex gap-3">
                         <div class="form-check">
-                            <input class="form-check-input presenter-checkbox" type="checkbox" id="presenter_${authorCount}" name="authors[${authorCount}][is_presenter]" value="1" onchange="updatePresenter(${authorCount})">
+                            <input class="form-check-input presenter-checkbox" type="checkbox" id="presenter_${authorCount}" name="authors[${authorCount}][is_presenter]" value="1" ${authorCount === 1 ? 'checked' : ''} onchange="updatePresenter(${authorCount})">
                             <label class="form-check-label" for="presenter_${authorCount}">Yes</label>
                         </div>
                     </div>
@@ -424,7 +424,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     <label class="form-label">Will Attend Event? <span class="text-danger">*</span></label>
                     <div class="d-flex gap-3">
                         <div class="form-check">
-                            <input class="form-check-input attend-checkbox" type="checkbox" id="will_attend_${authorCount}" name="authors[${authorCount}][will_attend]" value="1" onchange="updateAttendanceSummary()">
+                            <input class="form-check-input attend-checkbox" type="checkbox" id="will_attend_${authorCount}" name="authors[${authorCount}][will_attend]" value="1" ${authorCount === 1 ? 'checked' : ''} onchange="updateAttendanceSummary()">
                             <label class="form-check-label" for="will_attend_${authorCount}">Yes</label>
                         </div>
                     </div>

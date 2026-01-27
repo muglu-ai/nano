@@ -1916,7 +1916,7 @@ class PosterController extends Controller
             'poster_category' => 'required|string',
             'abstract_title' => 'required|string|max:250',
             'abstract' => 'required|string',
-            'extended_abstract' => 'nullable|file|mimes:pdf|max:2048',
+            'extended_abstract' => 'required|file|mimes:pdf|max:5120',
             'authors' => 'required|array|min:1|max:4',
             'authors.*.first_name' => 'required|string|max:100',
             'authors.*.last_name' => 'required|string|max:100',
