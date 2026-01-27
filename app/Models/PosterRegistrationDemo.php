@@ -18,6 +18,8 @@ class PosterRegistrationDemo extends Model
         'abstract',
         'extended_abstract_path',
         'extended_abstract_original_name',
+        'lead_auth_cv_path',
+        'lead_auth_cv_original_name',
         'authors',
         'lead_author_index',
         'presenter_index',

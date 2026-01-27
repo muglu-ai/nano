@@ -269,6 +269,19 @@
                             </a>
                         </td>
                     </tr>
+                   
+                    @endif
+                     {{-- Lead Author CV --}}
+                    @if(isset($draft->lead_auth_cv_path) && $draft->lead_auth_cv_path)
+                    <tr>
+                        <td class="label-cell">Lead Author CV</td>
+                        <td class="value-cell">
+                            <a href="{{ route('poster.downloadFile', ['type' => 'lead_auth_cv', 'token' => $draft->token]) }}" 
+                               class="btn btn-sm btn-outline-primary" target="_blank">
+                                <i class="fas fa-download"></i> Download
+                            </a>
+                        </td>
+                    </tr>
                     @endif
                 </table>
             </div>

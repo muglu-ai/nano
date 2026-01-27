@@ -798,7 +798,13 @@ class PosterController extends Controller
     // Download file securely
     public function downloadFile(Request $request, string $type, string $token)
     {
-        $draft = PosterDraft::where('token', $token)->first();
+        // Try to find in demo table first (draft), then in main table
+        $draft = \App\Models\PosterRegistrationDemo::where('token', $token)->first();
+        
+        if (!$draft) {
+            // If not found in demo, try main PosterDraft table
+            $draft = PosterDraft::where('token', $token)->first();
+        }
         
         if (!$draft) {
             abort(404, 'Draft not found');
@@ -810,6 +816,9 @@ class PosterController extends Controller
         if ($type === 'sess_abstract') {
             $path = $draft->sess_abstract_path;
             $filename = $draft->sess_abstract_original_name ?? 'abstract.pdf';
+        } elseif ($type === 'extended_abstract') {
+            $path = $draft->extended_abstract_path;
+            $filename = $draft->extended_abstract_original_name ?? 'extended_abstract.pdf';
         } elseif ($type === 'lead_auth_cv') {
             $path = $draft->lead_auth_cv_path;
             $filename = $draft->lead_auth_cv_original_name ?? 'cv.pdf';
@@ -2056,6 +2065,10 @@ class PosterController extends Controller
             ? $existingDraft->tin_no 
             : $this->generatePosterTinNumber();
         
+        // Extract lead author CV path for easier access
+        $leadAuthorCvPath = $validated['authors'][$leadAuthorArrayIndex]['cv_path'] ?? null;
+        $leadAuthorCvName = $validated['authors'][$leadAuthorArrayIndex]['cv_name'] ?? null;
+        
         $draftData = [
             'token' => $token,
             'tin_no' => $tinNo,
@@ -2067,6 +2080,8 @@ class PosterController extends Controller
             'abstract' => $validated['abstract'],
             'extended_abstract_path' => $extendedAbstractPath,
             'extended_abstract_original_name' => $extendedAbstractName,
+            'lead_auth_cv_path' => $leadAuthorCvPath,
+            'lead_auth_cv_original_name' => $leadAuthorCvName,
             'authors' => $validated['authors'],
             'lead_author_index' => $leadAuthorIndex,
             'presenter_index' => $presenterIndex,
