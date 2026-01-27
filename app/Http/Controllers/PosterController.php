@@ -1912,8 +1912,13 @@ class PosterController extends Controller
      */
     public function storeNewDraft(Request $request)
     {
-        // First get the lead author index (already 0-indexed from form)
-        $leadAuthorIndex = (int) $request->input('lead_author', 0);
+        // First validate the lead_author field to ensure it's valid
+        $request->validate([
+            'lead_author' => 'required|integer|min:0|max:3',
+        ]);
+        
+        // Now get the validated lead author index
+        $leadAuthorIndex = (int) $request->input('lead_author');
         
         $validated = $request->validate([
             'session_id' => 'nullable|string',
@@ -2046,6 +2051,39 @@ class PosterController extends Controller
             $draftData
         );
         
+        // Delete existing authors for this token (in case of update)
+        \App\Models\PosterAuthor::where('token', $token)->delete();
+        
+        // Store authors in separate table
+        foreach ($validated['authors'] as $index => $authorData) {
+            $authorRecord = [
+                'token' => $token,
+                'author_index' => $index,
+                'first_name' => $authorData['first_name'],
+                'last_name' => $authorData['last_name'],
+                'email' => $authorData['email'],
+                'mobile' => $authorData['mobile'],
+                'is_lead_author' => ($index === $leadAuthorIndex),
+                'is_presenter' => isset($authorData['is_presenter']) && $authorData['is_presenter'],
+                'will_attend' => isset($authorData['will_attend']) && $authorData['will_attend'],
+                'country_id' => $authorData['country_id'],
+                'state_id' => $authorData['state_id'],
+                'city' => $authorData['city'],
+                'postal_code' => $authorData['postal_code'],
+                'institution' => $authorData['institution'],
+                'affiliation_city' => $authorData['affiliation_city'],
+                'affiliation_country_id' => $authorData['affiliation_country_id'],
+            ];
+            
+            // Add CV path and name if available
+            if (isset($validated['authors'][$index]['cv_path'])) {
+                $authorRecord['cv_path'] = $validated['authors'][$index]['cv_path'];
+                $authorRecord['cv_original_name'] = $validated['authors'][$index]['cv_name'];
+            }
+            
+            \App\Models\PosterAuthor::create($authorRecord);
+        }
+        
         // Store token in session
         session(['poster_registration_token' => $token]);
         
@@ -2063,13 +2101,18 @@ class PosterController extends Controller
     {
         $draft = \App\Models\PosterRegistrationDemo::where('token', $token)->firstOrFail();
         
+        // Load authors from separate table
+        $authors = \App\Models\PosterAuthor::where('token', $token)
+            ->orderBy('author_index')
+            ->get();
+        
         // Verify session
         $sessionToken = session('poster_registration_token');
         if ($sessionToken !== $token) {
             abort(403, 'This registration does not belong to your session.');
         }
         
-        return view('poster-registration.preview', compact('draft'));
+        return view('poster-registration.preview', compact('draft', 'authors'));
     }
     
     /**
@@ -2082,22 +2125,34 @@ class PosterController extends Controller
         // Verify session
         $sessionToken = session('poster_registration_token');
         if ($sessionToken !== $token) {
-            return response()->json([
-                'success' => false,
-                'message' => 'This registration does not belong to your session.',
-            ], 403);
+            abort(403, 'This registration does not belong to your session.');
+        }
+        
+        // Check if registration already exists for this token
+        $existingRegistration = \App\Models\PosterRegistration::where('token', $token)->first();
+        if ($existingRegistration) {
+            // Registration already exists, redirect to payment page
+            session([
+                'poster_registration_id' => $existingRegistration->id,
+                'poster_registration_tin' => $existingRegistration->tin_no,
+                'poster_registration_token' => $token,
+            ]);
+            
+            return redirect()->route('poster.register.showPayment', ['tin_no' => $existingRegistration->tin_no])
+                ->with('info', 'Registration already submitted. Please proceed with payment.');
         }
         
         // Generate TIN number
         $tinNo = $this->generatePosterTinNumber();
         
-        // Extract lead author details for quick access
-        $leadAuthor = $draft->authors[$draft->lead_author_index - 1] ?? null;
-        $leadAuthorName = $leadAuthor 
-            ? ($leadAuthor['first_name'] . ' ' . $leadAuthor['last_name']) 
-            : '';
-        $leadAuthorEmail = $leadAuthor['email'] ?? '';
-        $leadAuthorMobile = $leadAuthor['mobile'] ?? '';
+        // Get lead author details from separate authors table
+        $leadAuthor = \App\Models\PosterAuthor::where('token', $token)
+            ->where('is_lead_author', true)
+            ->first();
+            
+        $leadAuthorName = $leadAuthor ? ($leadAuthor->first_name . ' ' . $leadAuthor->last_name) : '';
+        $leadAuthorEmail = $leadAuthor ? $leadAuthor->email : '';
+        $leadAuthorMobile = $leadAuthor ? $leadAuthor->mobile : '';
         
         // Move data to main table
         $posterRegistration = \App\Models\PosterRegistration::create([
@@ -2128,6 +2183,23 @@ class PosterController extends Controller
             'status' => 'submitted',
         ]);
         
+        // Create invoice for payment processing
+        $invoice = \App\Models\Invoice::create([
+            'type' => 'poster_registration',
+            'invoice_no' => $tinNo,
+            // Don't set poster_reg_id as it references old posters table
+            // We'll use invoice_no to link to poster_registrations
+            'currency' => $draft->currency,
+            'amount' => (float) $draft->total_amount,
+            'price' => (float) $draft->base_amount,
+            'gst' => (float) $draft->gst_amount,
+            'processing_charges' => (float) $draft->processing_fee,
+            'total_final_price' => (float) $draft->total_amount,
+            'amount_paid' => 0,
+            'pending_amount' => (float) $draft->total_amount,
+            'payment_status' => 'unpaid',
+        ]);
+        
         // Update draft status
         $draft->update(['status' => 'submitted']);
         
@@ -2135,13 +2207,111 @@ class PosterController extends Controller
         session([
             'poster_registration_id' => $posterRegistration->id,
             'poster_registration_tin' => $tinNo,
+            'poster_registration_token' => $token,
         ]);
         
-        return response()->json([
-            'success' => true,
-            'message' => 'Registration submitted successfully',
-            'redirect' => route('poster.register.payment', ['tin_no' => $tinNo]),
+        // Redirect to payment page
+        return redirect()->route('poster.register.showPayment', ['tin_no' => $tinNo]);
+    }
+    
+    /**
+     * Show payment page for poster registration
+     */
+    public function showPayment($tinNo)
+    {
+        $registration = \App\Models\PosterRegistration::where('tin_no', $tinNo)->first();
+        
+        if (!$registration) {
+            \Log::error('Poster registration not found', ['tin_no' => $tinNo]);
+            return redirect()->route('poster.register')
+                ->with('error', 'Registration not found. Please complete your registration first.');
+        }
+        
+        // Load authors from separate table
+        $authors = \App\Models\PosterAuthor::where('token', $registration->token)
+            ->orderBy('author_index')
+            ->get();
+        
+        // Get lead author
+        $leadAuthor = $authors->where('is_lead_author', true)->first();
+        
+        if (!$leadAuthor) {
+            \Log::error('Lead author not found', ['token' => $registration->token, 'tin_no' => $tinNo]);
+        }
+        
+        // Check if already paid
+        if ($registration->payment_status === 'paid') {
+            return redirect()->route('poster.register.success', ['tin_no' => $tinNo])
+                ->with('info', 'Payment already completed');
+        }
+        
+        // Get invoice
+        $invoice = \App\Models\Invoice::where('invoice_no', $tinNo)
+            ->where('type', 'poster_registration')
+            ->first();
+        
+        if (!$invoice) {
+            \Log::error('Invoice not found', ['tin_no' => $tinNo]);
+            return redirect()->route('poster.register')
+                ->with('error', 'Invoice not found. Please contact support.');
+        }
+        
+        // Store in session for payment gateway callback
+        session([
+            'poster_registration_id' => $registration->id,
+            'poster_registration_tin' => $tinNo,
+            'payment_application_type' => 'poster_registration',
         ]);
+        
+        // Pass $registration as $poster for view compatibility
+        $poster = $registration;
+        
+        return view('poster-registration.payment', compact('poster', 'registration', 'authors', 'leadAuthor', 'invoice'));
+    }
+    
+    /**
+     * Process payment for poster registration
+     */
+    public function processPayment(Request $request, $tinNo)
+    {
+        $registration = \App\Models\PosterRegistration::where('tin_no', $tinNo)->firstOrFail();
+        
+        // Verify session
+        $sessionTin = session('poster_registration_tin');
+        if ($sessionTin && $sessionTin !== $tinNo) {
+            abort(403, 'Unauthorized access to this registration');
+        }
+        
+        // Check if already paid
+        if ($registration->payment_status === 'paid') {
+            return redirect()->route('poster.register.success', $tinNo)
+                ->with('info', 'Payment already processed');
+        }
+        
+        $invoice = \App\Models\Invoice::where('invoice_no', $tinNo)
+            ->where('type', 'poster_registration')
+            ->firstOrFail();
+        
+        // Determine payment gateway based on currency
+        $paymentMethod = $request->input('payment_method', $registration->currency === 'INR' ? 'CCAvenue' : 'PayPal');
+        
+        // Store payment method in session
+        session(['payment_method' => $paymentMethod]);
+        
+        // Redirect to payment gateway
+        if ($paymentMethod === 'CCAvenue' && $registration->currency === 'INR') {
+            return redirect()->route('payment.ccavenue.initiate', [
+                'invoice_no' => $invoice->invoice_no,
+                'type' => 'poster_registration',
+            ]);
+        } elseif ($paymentMethod === 'PayPal' && $registration->currency === 'USD') {
+            return redirect()->route('payment.paypal.initiate', [
+                'invoice_no' => $invoice->invoice_no,
+                'type' => 'poster_registration',
+            ]);
+        }
+        
+        return back()->with('error', 'Invalid payment method selected');
     }
     
     /**
