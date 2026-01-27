@@ -488,7 +488,7 @@
                         <td class="label-cell">PAN Number</td>
                         <td class="value-cell">{{ $panNo ?: 'N/A' }}</td>
                     </tr>
-                        @if($billingData['tax_no'])
+                        @if(isset($billingData['tax_no']) && $billingData['tax_no'])
                         <tr>
                             <td class="label-cell">Tax Number</td>
                             <td class="value-cell">{{ $billingData['tax_no'] }}</td>

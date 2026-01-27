@@ -489,6 +489,15 @@
                 <td class="value-cell">{{ $currencySymbol }}{{ number_format($invoice->igst_amount, $priceFormat) }}</td>
             </tr>
             @endif
+
+            {{-- Fallback to old GST field if new breakdown fields are not available --}}
+            @if(!isset($invoice->cgst_amount) && !isset($invoice->igst_amount) && isset($invoice->gst) && $invoice->gst)
+            <tr>
+                <td class="label-cell">GST ({{ $invoice->gst_rate ?? 18 }}%)</td>
+                <td class="value-cell">{{ $currencySymbol }}{{ number_format($invoice->gst, $priceFormat) }}</td>
+            </tr>
+            @endif
+
             @if($invoice->processing_charges)
             <tr>
                 <td class="label-cell">Processing Charges ({{ $invoice->processing_chargesRate ?? 3 }}%)</td>
