@@ -1381,7 +1381,8 @@ class PaymentGatewayController extends Controller
 
             // exit;
 
-            if ($isStartupZone && $application) {
+            // Handle startup zone payment failure - redirect to startup zone payment page
+            if ($isStartupZone || $application) {
                 echo "isStartupZone: " . $isStartupZone;
                 echo "application: " . $application;
                 exit;
