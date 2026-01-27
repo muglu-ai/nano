@@ -1019,7 +1019,7 @@ class PaymentGatewayController extends Controller
             // This helps us redirect correctly even if invoice is not found
             $isStartupZone = false;
             $application = null;
-            $applicationId = session('payment_application_id');
+            $applicationId = $invoice->application_id;
 
             if ($invoice && $invoice->application_id) {
                 $application = Application::find($invoice->application_id);
@@ -1036,6 +1036,11 @@ class PaymentGatewayController extends Controller
                     $isStartupZone = true;
                 }
             }
+
+
+            dd($invoice);
+
+            // check for the application_type as exhibitor-registration  
 
             // If invoice not found, check if it's a poster payment
             if (!$invoice) {
@@ -1149,6 +1154,8 @@ class PaymentGatewayController extends Controller
                     ->route('payment.lookup')
                     ->with('error', 'Invoice not found. Please contact support.');
             }
+
+
 
             // update the invoice table with the status as paid
             if ($responseArray['order_status'] == 'Success') {
