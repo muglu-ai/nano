@@ -867,7 +867,7 @@ class PaymentGatewayController extends Controller
 
             $invoice = Invoice::where('invoice_no', $order_id)->first();
 
-            dd($invoice);
+            //dd($invoice);
             
 
             // Check if this is a poster payment
