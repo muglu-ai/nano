@@ -195,7 +195,7 @@
                 {{-- Tax Information --}}
                 <div class="form-section">
                 <h5 class="mb-3  border-bottom pb-2"><i class="fas fa-file-invoice-dollar"></i> Tax Information</h5>
-                <div class="row">
+                <div class="row" id="gst_status_row">
                     <div class="col-md-6">
                         <label for="gst_compliance" class="form-label">GST Status <span class="text-danger">*</span></label>
                         <select class="form-select" id="gst_compliance" name="gst_compliance" required>
@@ -206,16 +206,7 @@
                         <div class="invalid-feedback"></div>
                     </div>
                    
-                    <div class="col-md-6">
-                        <label for="pan_no" class="form-label">PAN Number <span class="text-danger">*</span></label>
-                        <input type="text" class="form-control" id="pan_no" name="pan_no" 
-                               value="{{ $draft->pan_no ?? '' }}" 
-                               pattern="[A-Z]{5}[0-9]{4}[A-Z]{1}" 
-                               maxlength="10" placeholder="" required>
-                        <div class="invalid-feedback"></div>
-                    </div>
-                </div>
-                <div class="row">
+                    <!-- GST Number container - shown when Registered -->
                     <div class="col-md-6" id="gst_no_container" style="display: none;">
                         <label for="gst_no" class="form-label">GST Number <span class="text-danger" id="gst_required_indicator" style="display: none;">*</span></label>
                         <div class="input-group">
@@ -234,6 +225,20 @@
                         <div class="invalid-feedback"></div>
                         <!-- <small class="form-text text-muted">Click "Validate" to auto-fill company details from GST database</small> -->
                     </div>
+                    
+                    <!-- PAN Number container - shown when Unregistered, moved to second row when Registered -->
+                    <div class="col-md-6" id="pan_no_container">
+                        <label for="pan_no" class="form-label">PAN Number <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="pan_no" name="pan_no" 
+                               value="{{ $draft->pan_no ?? '' }}" 
+                               pattern="[A-Z]{5}[0-9]{4}[A-Z]{1}" 
+                               maxlength="10" placeholder="" required>
+                        <div class="invalid-feedback"></div>
+                    </div>
+                </div>
+                <!-- Second row for PAN Number when GST is Registered -->
+                <div class="row" id="pan_no_row" style="display: none;">
+                    <!-- PAN Number will be moved here via JavaScript when Registered -->
                 </div>
 
                 
@@ -1213,12 +1218,41 @@ document.addEventListener('DOMContentLoaded', function() {
         const gstRequiredIndicator = document.getElementById('gst_required_indicator');
         
         gstCompliance.addEventListener('change', function() {
+            const panNoContainer = document.getElementById('pan_no_container');
+            const panNoRow = document.getElementById('pan_no_row');
+            
             if (this.value === '1') {
                 // Registered selected - show GST field and reset it to editable state
                 gstNoContainer.style.display = 'block';
                 gstNo.setAttribute('required', 'required');
                 if (gstRequiredIndicator) {
                     gstRequiredIndicator.style.display = 'inline';
+                }
+                
+                // Move PAN Number to second row
+                if (panNoContainer && panNoRow) {
+                    // Remove any existing moved container
+                    const panMoved = document.getElementById('pan_no_container_moved');
+                    if (panMoved) {
+                        panMoved.remove();
+                    }
+                    
+                    // Create wrapper div in second row
+                    const wrapperDiv = document.createElement('div');
+                    wrapperDiv.className = 'col-md-6';
+                    wrapperDiv.id = 'pan_no_container_moved';
+                    
+                    // Move the PAN container content to the wrapper
+                    while (panNoContainer.firstChild) {
+                        wrapperDiv.appendChild(panNoContainer.firstChild);
+                    }
+                    
+                    panNoRow.innerHTML = '';
+                    panNoRow.appendChild(wrapperDiv);
+                    panNoRow.style.display = 'block';
+                    
+                    // Hide original PAN container in first row (it's now empty)
+                    panNoContainer.style.display = 'none';
                 }
                 
                 // Reset GST field to editable state (in case it was locked before)
@@ -1250,6 +1284,23 @@ document.addEventListener('DOMContentLoaded', function() {
                 gstNo.value = '';
                 gstFeedback.innerHTML = '';
                 
+                // Move PAN Number back to first row (next to GST Status)
+                if (panNoContainer && panNoRow) {
+                    // Get the moved container
+                    const panMoved = document.getElementById('pan_no_container_moved');
+                    if (panMoved) {
+                        // Move content back to original container
+                        while (panMoved.firstChild) {
+                            panNoContainer.appendChild(panMoved.firstChild);
+                        }
+                        panMoved.remove();
+                    }
+                    
+                    // Show original PAN container in first row
+                    panNoContainer.style.display = 'block';
+                    panNoRow.style.display = 'none';
+                }
+                
                 // Unlock and reset all GST-locked fields when switching to Unregistered
                 unlockAndResetGstFields();
             }
@@ -1262,6 +1313,24 @@ document.addEventListener('DOMContentLoaded', function() {
             gstNo.setAttribute('required', 'required');
             if (gstRequiredIndicator) {
                 gstRequiredIndicator.style.display = 'inline';
+            }
+            // Trigger layout change for Registered status
+            const panNoContainer = document.getElementById('pan_no_container');
+            const panNoRow = document.getElementById('pan_no_row');
+            if (panNoContainer && panNoRow) {
+                const wrapperDiv = document.createElement('div');
+                wrapperDiv.className = 'col-md-6';
+                wrapperDiv.id = 'pan_no_container_moved';
+                
+                // Move the PAN container content to the wrapper
+                while (panNoContainer.firstChild) {
+                    wrapperDiv.appendChild(panNoContainer.firstChild);
+                }
+                
+                panNoRow.innerHTML = '';
+                panNoRow.appendChild(wrapperDiv);
+                panNoRow.style.display = 'block';
+                panNoContainer.style.display = 'none';
             }
         }
     }

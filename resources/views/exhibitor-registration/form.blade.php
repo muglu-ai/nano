@@ -229,7 +229,7 @@
                         <div class="invalid-feedback"></div>
                     </div>
                 </div>
-                <div id="priceDisplay" class="alert alert-success d-none">
+                <div id="priceDisplay" class="alert alert-success d-none mt-2">
                     <h5><i class="fas fa-calculator"></i> Price Calculation</h5>
                     <div id="priceDetails"></div>
                 </div>
@@ -381,14 +381,14 @@
                 </div>
 
                 <div class="row">
-                    <div class="col-md-6">
+                    <div class="col-md-6 mt-2">
                         <label for="billing_city" class="form-label">City <span class="text-danger">*</span></label>
                         <input type="text" class="form-control" id="billing_city" name="billing_city" 
                                value="{{ isset($draft->billing_data['city']) ? $draft->billing_data['city'] : ($draft->city_id ?? ($draft->city ?? '')) }}" 
                                maxlength="100" required>
                         <div class="invalid-feedback"></div>
                     </div>
-                    <div class="col-md-6">
+                    <div class="col-md-6 mt-2">
                         <label for="billing_postal_code" class="form-label">Postal Code <span class="text-danger">*</span></label>
                         <input type="text" class="form-control" id="billing_postal_code" name="billing_postal_code" 
                                value="{{ isset($draft->billing_data['postal_code']) ? $draft->billing_data['postal_code'] : ($draft->postal_code ?? '') }}" 
@@ -398,7 +398,7 @@
                     
                 </div>
                 <div class="row">
-                    <div class="col-md-6">
+                    <div class="col-md-6 mt-2">
                         <label for="billing_telephone" class="form-label">Telephone Number <span class="text-danger">*</span></label>
                         <input type="tel" class="form-control" id="billing_telephone" name="billing_telephone" 
                                value="{{ isset($draft->billing_data['telephone']) ? $draft->billing_data['telephone'] : ($draft->landline ?? ($draft->organisation_telephone ?? '')) }}" 
@@ -407,17 +407,18 @@
                         <input type="hidden" id="billing_telephone_national" name="billing_telephone_national">
                         <div class="invalid-feedback"></div>
                     </div>
-                    <div class="col-md-6">
+                    <div class="col-md-6 mt-2 ">
                         <label for="billing_website" class="form-label">Website <span class="text-danger">*</span></label>
                         <input type="url" class="form-control" id="billing_website" name="billing_website" 
                                value="{{ isset($draft->billing_data['website']) ? $draft->billing_data['website'] : ($draft->website ?? ($draft->organisation_website ?? '')) }}" 
                                required>
+                            <small class="form-text text-muted">Please include the http:// or https:// prefix</small>
                         <div class="invalid-feedback"></div>
                     </div>
                 </div>
 
                 <div class="row">
-                    <div class="col-md-6">
+                    <div class="col-md-6 mt-2">
                         <label for="billing_email" class="form-label">Email <span class="text-danger">*</span></label>
                         <input type="email" class="form-control" id="billing_email" name="billing_email" 
                                value="{{ isset($draft->billing_data['email']) ? $draft->billing_data['email'] : ($draft->company_email ?? '') }}" required>
@@ -465,7 +466,7 @@
                         </select>
                         <div class="invalid-feedback"></div>
                     </div>
-                    <div class="col-md-6">
+                    <div class="col-md-6 ">
                         <label for="exhibitor_state_id" class="form-label">State <span class="text-danger">*</span></label>
                         <select class="form-select" id="exhibitor_state_id" name="exhibitor_state_id" required>
                             <option value="">Select State</option>
@@ -486,14 +487,14 @@
                 </div>
 
                 <div class="row">
-                     <div class="col-md-6">
+                     <div class="col-md-6 mt-2">
                         <label for="exhibitor_city" class="form-label">City <span class="text-danger">*</span></label>
                         <input type="text" class="form-control" id="exhibitor_city" name="exhibitor_city" 
                                value="{{ isset($draft->exhibitor_data['city']) ? $draft->exhibitor_data['city'] : ($draft->city ?? '') }}" 
                                maxlength="100" required>
                         <div class="invalid-feedback"></div>
                     </div>
-                    <div class="col-md-6">
+                    <div class="col-md-6 mt-2">
                         <label for="exhibitor_postal_code" class="form-label">Postal Code <span class="text-danger">*</span></label>
                         <input type="text" class="form-control" id="exhibitor_postal_code" name="exhibitor_postal_code" 
                                value="{{ isset($draft->exhibitor_data['postal_code']) ? $draft->exhibitor_data['postal_code'] : ($draft->postal_code ?? '') }}" 
@@ -503,7 +504,7 @@
                     
                 </div>
                 <div class="row">
-                    <div class="col-md-6">
+                    <div class="col-md-6 mt-2">
                         <label for="exhibitor_telephone" class="form-label">Telephone Number <span class="text-danger">*</span></label>
                         <input type="tel" class="form-control" id="exhibitor_telephone" name="exhibitor_telephone" 
                                value="{{ isset($draft->exhibitor_data['telephone']) ? $draft->exhibitor_data['telephone'] : ($draft->organisation_telephone ?? '') }}" 
@@ -512,17 +513,18 @@
                         <input type="hidden" id="exhibitor_telephone_national" name="exhibitor_telephone_national">
                         <div class="invalid-feedback"></div>
                     </div>
-                    <div class="col-md-6">
+                    <div class="col-md-6 mt-2">
                         <label for="exhibitor_website" class="form-label">Website <span class="text-danger">*</span></label>
                         <input type="url" class="form-control" id="exhibitor_website" name="exhibitor_website" 
                                value="{{ isset($draft->exhibitor_data['website']) ? $draft->exhibitor_data['website'] : ($draft->organisation_website ?? '') }}" 
                                required>
+                               <small class="form-text text-muted">Please include the http:// or https:// prefix</small>
                         <div class="invalid-feedback"></div>
                     </div>
                 </div>
 
                 <div class="row">
-                    <div class="col-md-6">
+                    <div class="col-md-6 mt-2">
                         <label for="exhibitor_email" class="form-label">Company Email <span class="text-danger">*</span></label>
                         <input type="email" class="form-control" id="exhibitor_email" name="exhibitor_email" 
                                value="{{ isset($draft->exhibitor_data['email']) ? $draft->exhibitor_data['email'] : '' }}" required>
@@ -564,13 +566,13 @@
 
 
 
-                    <div class="col-md-6">
+                    <div class="col-md-6 mt-2">
                         <label for="contact_designation" class="form-label">Designation <span class="text-danger">*</span></label>
                         <input type="text" class="form-control" id="contact_designation" name="contact_designation" 
                                value="{{ isset($draft->contact_data['designation']) ? $draft->contact_data['designation'] : ($draft->contact_designation ?? '') }}" required>
                         <div class="invalid-feedback"></div>
                     </div>
-                    <div class="col-md-6">
+                    <div class="col-md-6 mt-2">
                         <label for="contact_email" class="form-label">Email <span class="text-danger">*</span></label>
                         <input type="email" class="form-control" id="contact_email" name="contact_email" 
                                value="{{ isset($draft->contact_data['email']) ? $draft->contact_data['email'] : ($draft->contact_email ?? '') }}" required>
