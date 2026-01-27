@@ -399,6 +399,15 @@ document.addEventListener('DOMContentLoaded', function() {
                 </div>
             </div>
             
+            <div class="row mb-3 cv-upload-section" id="cv_upload_section_${authorCount}" style="display: ${authorCount === 1 ? 'block' : 'none'};">
+                <div class="col-md-12">
+                    <label for="author_cv_${authorCount}" class="form-label">Upload CV (PDF only) <span class="text-danger">*</span></label>
+                    <input type="file" class="form-control cv-upload-input" id="author_cv_${authorCount}" name="authors[${authorCount}][cv]" accept=".pdf" ${authorCount === 1 ? 'required' : ''}>
+                    <div class="invalid-feedback"></div>
+                    <small class="text-muted">Required for Lead Author. Max file size: 5MB.</small>
+                </div>
+            </div>
+            
             <div class="row mb-3">
                 <div class="col-md-4">
                     <label class="form-label">Lead Author? <span class="text-danger">*</span></label>
@@ -609,11 +618,24 @@ document.addEventListener('DOMContentLoaded', function() {
         document.querySelectorAll('.author-block').forEach(block => {
             const blockIndex = parseInt(block.dataset.authorIndex);
             const badgesContainer = document.getElementById(`roleBadges${blockIndex}`);
+            const cvUploadSection = document.getElementById(`cv_upload_section_${blockIndex}`);
+            const cvUploadInput = document.getElementById(`author_cv_${blockIndex}`);
+            
             if (badgesContainer) {
                 badgesContainer.innerHTML = '';
                 
                 if (leadAuthorIndex === blockIndex) {
                     badgesContainer.innerHTML += '<span class="role-badge badge-lead">Lead Author</span>';
+                    // Show CV upload for lead author
+                    if (cvUploadSection) cvUploadSection.style.display = 'block';
+                    if (cvUploadInput) cvUploadInput.required = true;
+                } else {
+                    // Hide CV upload for non-lead authors
+                    if (cvUploadSection) cvUploadSection.style.display = 'none';
+                    if (cvUploadInput) {
+                        cvUploadInput.required = false;
+                        cvUploadInput.value = ''; // Clear file if any
+                    }
                 }
                 
                 if (presenterIndex === blockIndex) {

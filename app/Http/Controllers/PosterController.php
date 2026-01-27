@@ -1912,6 +1912,9 @@ class PosterController extends Controller
      */
     public function storeNewDraft(Request $request)
     {
+        // First get the lead author index
+        $leadAuthorIndex = (int) $request->input('lead_author', 1) - 1; // Convert to 0-indexed
+        
         $validated = $request->validate([
             'session_id' => 'nullable|string',
             'sector' => 'required|string',
@@ -1925,28 +1928,48 @@ class PosterController extends Controller
             'authors.*.last_name' => 'required|string|max:100',
             'authors.*.email' => 'required|email|max:200',
             'authors.*.mobile' => 'required|string|max:20',
+            'authors.*.cv' => 'nullable|file|mimes:pdf|max:5120',
+            "authors.{$leadAuthorIndex}.cv" => 'required|file|mimes:pdf|max:5120',
             'authors.*.is_presenter' => 'nullable|boolean',
             'authors.*.will_attend' => 'nullable|boolean',
-            'authors.*.country' => 'required|string|max:100',
-            'authors.*.state' => 'required|string|max:100',
+            'authors.*.country_id' => 'required|exists:countries,id',
+            'authors.*.state_id' => 'required|exists:states,id',
             'authors.*.city' => 'required|string|max:100',
             'authors.*.postal_code' => 'required|string|max:20',
             'authors.*.institution' => 'required|string|max:250',
             'authors.*.affiliation_city' => 'required|string|max:100',
-            'authors.*.affiliation_country' => 'required|string|max:100',
+            'authors.*.affiliation_country_id' => 'required|exists:countries,id',
             'lead_author' => 'required|integer|min:1|max:4',
             'presentation_mode' => 'required|string',
             'publication_permission' => 'required|accepted',
             'authors_approval' => 'required|accepted',
         ]);
         
-        // Handle file upload
+        // Handle file uploads
         $extendedAbstractPath = null;
         $extendedAbstractName = null;
         if ($request->hasFile('extended_abstract')) {
             $file = $request->file('extended_abstract');
-            $extendedAbstractPath = $file->store('poster_extended_abstracts', 'public');
+            $extendedAbstractPath = $file->store('author_abstract', 'public');
             $extendedAbstractName = $file->getClientOriginalName();
+        }
+        
+        // Get lead author index (1-indexed in form, 0-indexed in array)
+        $leadAuthorArrayIndex = (int) $validated['lead_author'] - 1;
+        $leadAuthor = $validated['authors'][$leadAuthorArrayIndex];
+        
+        // Handle CV upload for lead author with custom filename
+        if ($request->hasFile("authors.{$leadAuthorArrayIndex}.cv")) {
+            $cvFile = $request->file("authors.{$leadAuthorArrayIndex}.cv");
+            $leadAuthorName = $leadAuthor['first_name'] . '_' . $leadAuthor['last_name'];
+            $leadAuthorName = preg_replace('/[^A-Za-z0-9_]/', '_', $leadAuthorName); // Sanitize filename
+            $timestamp = now()->format('YmdHis');
+            $cvFileName = "{$leadAuthorName}_{$timestamp}.pdf";
+            
+            // Store with custom filename
+            $cvPath = $cvFile->storeAs('poster_author_cv', $cvFileName, 'public');
+            $validated['authors'][$leadAuthorArrayIndex]['cv_path'] = $cvPath;
+            $validated['authors'][$leadAuthorArrayIndex]['cv_name'] = $cvFile->getClientOriginalName();
         }
         
         // Calculate pricing
