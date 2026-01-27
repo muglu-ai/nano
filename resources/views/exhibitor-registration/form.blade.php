@@ -1914,7 +1914,7 @@ document.querySelector("form").addEventListener("submit", function (e) {
         const indiaRegex = /^[6-9][0-9]{9}$/;
 
         if (!indiaRegex.test(cleanNumber)) {
-            alert("Invalid Mobile Number");
+            //alert("Invalid Mobile Number");
             phoneInput.focus();
             e.preventDefault();
             return false;
@@ -1927,7 +1927,7 @@ document.querySelector("form").addEventListener("submit", function (e) {
         const intlRegex = /^[A-Za-z0-9]{8,15}$/;
 
         if (!intlRegex.test(cleanNumber)) {
-            alert("Invalid Mobile Number");
+            // alert("Invalid Mobile Number");
             phoneInput.focus();
             e.preventDefault();
             return false;
