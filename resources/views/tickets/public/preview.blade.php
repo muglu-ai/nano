@@ -457,6 +457,12 @@
                         -{{ $currencySymbol }}{{ number_format($discountAmount, $priceFormat) }}
                     </td>
                 </tr>
+                <tr>
+                    <td class="label-cell">Price After Discount</td>
+                    <td class="value-cell" style="font-weight: 600;">
+                        {{ $currencySymbol }}{{ number_format($subtotal - $discountAmount, $priceFormat) }}
+                    </td>
+                </tr>
                 @endif
                 @if(isset($gstType) && $gstType === 'cgst_sgst')
                 <tr>

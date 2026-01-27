@@ -602,6 +602,12 @@
                         -{{ $currencySymbol }}{{ number_format($order->discount_amount, $priceFormat) }}
                     </td>
                 </tr>
+                <tr>
+                    <td class="label-col">Price After Discount</td>
+                    <td class="value-col" style="font-weight: 600;">
+                        {{ $currencySymbol }}{{ number_format($item->subtotal - $order->discount_amount, $priceFormat) }}
+                    </td>
+                </tr>
                 @endif
                 @if($item->gst_type === 'cgst_sgst')
                 <tr>

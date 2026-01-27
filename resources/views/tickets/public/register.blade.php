@@ -2324,12 +2324,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 gstinInput.classList.remove('is-invalid');
             }
             
-            // Ensure both columns are col-md-6 for side-by-side layout
+            // Ensure both columns are col-md-4 and col-md-8 for side-by-side layout
             if (gstRequiredFullWidth) {
-                gstRequiredFullWidth.className = 'col-md-6 mb-2';
+                gstRequiredFullWidth.className = 'col-md-4 mb-2';
             }
             if (gstinFullWidth) {
-                gstinFullWidth.className = 'col-md-6 mb-2';
+                gstinFullWidth.className = 'col-md-8 mb-2';
             }
             
             // Force input-group to maintain flex layout
@@ -2413,7 +2413,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             gstinFullWidth.style.display = 'none';
                         }
                         if (gstRequiredFullWidth) {
-                            gstRequiredFullWidth.className = 'col-md-6 mb-2';
+                            gstRequiredFullWidth.className = 'col-md-4 mb-2';
                         }
         }
     }

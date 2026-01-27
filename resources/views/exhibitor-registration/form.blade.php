@@ -673,6 +673,12 @@
 @endif
 <script>
 $(document).ready(function() {
+    // Setup CSRF token for all AJAX requests
+    $.ajaxSetup({
+        headers: {
+            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') || $('input[name="_token"]').val() || '{{ csrf_token() }}'
+        }
+    });
     // Auto-calculate price on page load if currency is set from URL and booth details are available
     @if(isset($isCurrencyReadOnly) && $isCurrencyReadOnly)
         const initialBoothSpace = $('#booth_space').val();
@@ -794,11 +800,12 @@ $(document).ready(function() {
         stateSelect.html('<option value="">Loading states...</option>');
         stateSelect.prop('disabled', true);
         
+        const csrfToken = $('input[name="_token"]').val() || $('meta[name="csrf-token"]').attr('content') || '{{ csrf_token() }}';
         $.ajax({
             url: '{{ route("get.states") }}',
             method: 'POST',
             headers: {
-                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                'X-CSRF-TOKEN': csrfToken,
                 'Content-Type': 'application/json'
             },
             data: JSON.stringify({ country_id: countryId }),
@@ -901,11 +908,15 @@ $(document).ready(function() {
         // Get has_indian_gst value if currency is USD
         const hasIndianGst = $('#has_indian_gst').val();
         
+        const csrfToken = $('input[name="_token"]').val() || '{{ csrf_token() }}';
         $.ajax({
             url: '{{ route("exhibitor-registration.calculate-price") }}',
             method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': csrfToken
+            },
             data: {
-                _token: '{{ csrf_token() }}',
+                _token: csrfToken,
                 booth_space: boothSpace,
                 booth_size: boothSize,
                 currency: currency,
@@ -918,11 +929,18 @@ $(document).ready(function() {
             success: function(response) {
                 if (response.success) {
                     const price = response.price;
+                    
+                    // Helper function to format numbers with commas
+                    function formatNumber(num) {
+                        const numValue = typeof num === 'string' ? parseFloat(num) : num;
+                        return numValue.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+                    }
+                    
                     let processingHtml = '';
                     // Always show processing charges if processing_rate > 0, even if amount is 0
                     if (price.processing_rate && price.processing_rate > 0) {
                         const processingAmount = price.processing_charges || 0;
-                        processingHtml = `<p><strong>Processing Charges (${price.processing_rate}%):</strong> ${currencySymbol}${processingAmount.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</p>`;
+                        processingHtml = `<p><strong>Processing Charges (${price.processing_rate}%):</strong> ${currencySymbol}${formatNumber(processingAmount)}</p>`;
                     }
                     
                     // Debug logging
@@ -946,14 +964,14 @@ $(document).ready(function() {
                         // Same state as organizer OR USD without Indian GST - show CGST + SGST
                         gstHtml = 
                         `
-                            <strong>CGST (${price.cgst_rate}%):</strong> ${currencySymbol}${price.cgst_amount.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}
-                            <td><strong>SGST (${price.sgst_rate}%):</strong> ${currencySymbol}${price.sgst_amount.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+                            <strong>CGST (${price.cgst_rate}%):</strong> ${currencySymbol}${formatNumber(price.cgst_amount)}
+                            <td><strong>SGST (${price.sgst_rate}%):</strong> ${currencySymbol}${formatNumber(price.sgst_amount)}</td>
                         `
                         
                     } else {
                         // Different state or GST not validated - show IGST
                         gstHtml = `
-                            <strong>IGST (${price.igst_rate}%):</strong> ${currencySymbol}${price.igst_amount.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}
+                            <strong>IGST (${price.igst_rate}%):</strong> ${currencySymbol}${formatNumber(price.igst_amount)}
                         `;
                     }
                     
@@ -963,18 +981,18 @@ $(document).ready(function() {
                             <td><strong>Booth Size: </strong>${price.sqm} sqm</td>
                            
                         
-                            <td><strong>Rate per sqm: </strong>${currencySymbol}${price.rate_per_sqm.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+                            <td><strong>Rate per sqm: </strong>${currencySymbol}${formatNumber(price.rate_per_sqm)}</td>
                            
                        
-                            <td><strong>Base Price: </strong>${currencySymbol}${price.base_price.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+                            <td><strong>Base Price: </strong>${currencySymbol}${formatNumber(price.base_price)}</td>
                             
                        
                             <td>${gstHtml}</td>
                            
                         </tr>
                        {{--  <p><strong>Booth Size:</strong> ${price.sqm} sqm</p>
-                        <p><strong>Rate per sqm:</strong> ${currencySymbol}${price.rate_per_sqm.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</p>
-                        <p><strong>Base Price:</strong> ${currencySymbol}${price.base_price.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</p>
+                        <p><strong>Rate per sqm:</strong> ${currencySymbol}${formatNumber(price.rate_per_sqm)}</p>
+                        <p><strong>Base Price:</strong> ${currencySymbol}${formatNumber(price.base_price)}</p>
                         ${gstHtml} --}}
                         {{-- ${processingHtml} --}}
                         {{-- <p><strong>Total Price:</strong> ${currencySymbol}${price.total_price.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</p> --}}
@@ -1464,11 +1482,20 @@ $(document).ready(function() {
         
         const formData = new FormData($('#exhibitorRegistrationForm')[0]);
         
+        // Ensure CSRF token is included in FormData
+        const csrfToken = $('input[name="_token"]').val() || '{{ csrf_token() }}';
+        if (!formData.has('_token')) {
+            formData.append('_token', csrfToken);
+        }
+        
         $('#autoSaveIndicator').removeClass('d-none');
         
         $.ajax({
             url: '{{ route("exhibitor-registration.auto-save") }}',
             method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': csrfToken
+            },
             data: formData,
             processData: false,
             contentType: false,
