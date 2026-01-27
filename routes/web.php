@@ -35,7 +35,7 @@ use App\Http\Controllers\PayPalController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\PaymentGatewayController;
 use App\Http\Controllers\PaymentReceiptController;
-use App\Http\Controllers\PosterRegistrationController;
+use App\Http\Controllers\PosterController;
 use App\Http\Controllers\SalesController;
 use App\Http\Controllers\SponsorController;
 use App\Http\Controllers\SponsorshipController;
@@ -1224,16 +1224,16 @@ Route::middleware(['auth', AdminMiddleware::class])->prefix('admin/delegate-noti
 });
 
 // Poster Registration Routes
-Route::get('/poster/register', [PosterRegistrationController::class, 'create'])
+Route::get('/poster/register', [PosterController::class, 'create'])
     ->name('poster.register'); // blank form
 
-Route::get('/poster/register/{token}', [PosterRegistrationController::class, 'edit'])
+Route::get('/poster/register/{token}', [PosterController::class, 'edit'])
     ->name('poster.register.edit'); // prefilled form
 
-Route::post('/poster/register', [PosterRegistrationController::class, 'storeDraft'])
+Route::post('/poster/register', [PosterController::class, 'storeDraft'])
     ->name('poster.register.storeDraft'); // create OR update draft
 
-Route::get('/poster/preview/{token}', [PosterRegistrationController::class, 'preview'])
+Route::get('/poster/preview/{token}', [PosterController::class, 'preview'])
     ->name('poster.preview');
 
 // GET route for submit - redirects to preview (handles direct URL access or browser back button)
@@ -1242,24 +1242,42 @@ Route::get('/poster/submit/{token}', function ($token) {
         ->with('info', 'Please use the "Proceed to Payment" button to submit your registration.');
 })->name('poster.submit.get');
 
-Route::post('/poster/submit/{token}', [PosterRegistrationController::class, 'submit'])
+Route::post('/poster/submit/{token}', [PosterController::class, 'submit'])
     ->name('poster.submit');
 
-Route::get('/poster/success/{tin_no}', [PosterRegistrationController::class, 'success'])
+Route::get('/poster/success/{tin_no}', [PosterController::class, 'success'])
     ->name('poster.success');
 
 // Payment routes
-Route::get('/poster/payment/{tin_no}', [PosterRegistrationController::class, 'payment'])
+Route::get('/poster/payment/{tin_no}', [PosterController::class, 'payment'])
     ->name('poster.payment');
 
-Route::post('/poster/payment/callback/{gateway}', [PosterRegistrationController::class, 'paymentCallback'])
+Route::post('/poster/payment/callback/{gateway}', [PosterController::class, 'paymentCallback'])
     ->name('poster.payment.callback')
     ->withoutMiddleware([\App\Http\Middleware\VerifyCsrfToken::class]);
 
 // AJAX route to check if email already exists
-Route::get('/poster/check-email', [PosterRegistrationController::class, 'checkEmail'])
-    ->name('poster.checkEmail');
+Route::get('/poster/check-email', [PosterController::class, 'checkEmail'])
+    ->name('poster.check-email');
+
+// ====================================================================================
+// NEW POSTER REGISTRATION ROUTES (using new form structure with demo/main tables)
+// ====================================================================================
+Route::post('/poster/register/new', [PosterController::class, 'storeNewDraft'])
+    ->name('poster.register.newDraft'); // Store to demo table
+
+Route::get('/poster/register/preview/{token}', [PosterController::class, 'newPreview'])
+    ->name('poster.register.preview'); // Preview from demo table
+
+Route::post('/poster/register/submit/{token}', [PosterController::class, 'newSubmit'])
+    ->name('poster.register.newSubmit'); // Move from demo to main table
+
+Route::get('/poster/register/payment/{tin_no}', [PosterController::class, 'payment'])
+    ->name('poster.register.payment'); // Payment page (reuses existing payment method)
+
+Route::get('/poster/register/success/{tin_no}', [PosterController::class, 'success'])
+    ->name('poster.register.success'); // Success page (reuses existing success method)
 
 // Secure file download route
-Route::get('/poster/file/{type}/{token}', [PosterRegistrationController::class, 'downloadFile'])
+Route::get('/poster/file/{type}/{token}', [PosterController::class, 'downloadFile'])
     ->name('poster.downloadFile');
