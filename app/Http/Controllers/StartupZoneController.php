@@ -72,6 +72,29 @@ class StartupZoneController extends Controller
         
         // end tv parameter check
         
+        // Check if draft is converted (user came back after payment)
+        // If so, clear session to show empty form
+        $sessionId = session()->getId();
+        $databaseDraft = StartupZoneDraft::bySession($sessionId)
+            ->where(function($query) {
+                $query->where('application_type', 'startup-zone')
+                      ->orWhereNull('application_type'); // Handle old drafts without application_type
+            })
+            ->first();
+        
+        if ($databaseDraft && $databaseDraft->converted_to_application_id) {
+            // Draft is converted - clear session and delete draft to show empty form
+            session()->forget('startup_zone_draft');
+            session()->forget('startup_zone_application_id');
+            $databaseDraft->delete();
+        }
+        
+        // If draft exists but is not active (expired or abandoned), also clear session
+        if ($databaseDraft && ($databaseDraft->is_abandoned || ($databaseDraft->expires_at && $databaseDraft->expires_at <= now()))) {
+            session()->forget('startup_zone_draft');
+            session()->forget('startup_zone_application_id');
+        }
+        
         // Get draft data from session (if exists)
         $sessionData = session('startup_zone_draft', []);
         
@@ -2323,6 +2346,21 @@ class StartupZoneController extends Controller
         session()->forget('payment_application_id');
         session()->forget('payment_application_type');
         session()->forget('invoice_no');
+        
+        // Mark draft as converted to prevent reuse
+        $sessionId = session()->getId();
+        $draft = StartupZoneDraft::bySession($sessionId)
+            ->where(function($query) {
+                $query->where('application_type', 'startup-zone')
+                      ->orWhereNull('application_type'); // Handle old drafts without application_type
+            })
+            ->first();
+            
+        if ($draft && !$draft->converted_to_application_id) {
+            $draft->converted_to_application_id = $application->id;
+            $draft->converted_at = now();
+            $draft->save();
+        }
         
         return view('startup-zone.payment', compact('application', 'invoice', 'billingDetail', 'eventContact'));
     }
