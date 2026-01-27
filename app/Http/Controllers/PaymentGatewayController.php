@@ -1015,32 +1015,35 @@ class PaymentGatewayController extends Controller
                     ->with('success', 'Payment successful! Your registration is complete.');
             }
 
-            // Check if this is a startup zone invoice FIRST (before any other processing)
+            // Check if this is a startup zone or exhibitor-registration invoice FIRST (before any other processing)
             // This helps us redirect correctly even if invoice is not found
             $isStartupZone = false;
+            $isExhibitorRegistration = false;
             $application = null;
-            $applicationId = $invoice->application_id;
+            $applicationId = $invoice ? $invoice->application_id : null;
 
             if ($invoice && $invoice->application_id) {
                 $application = Application::find($invoice->application_id);
-                if ($application && $application->application_type === 'startup-zone') {
-                    $isStartupZone = true;
-                    $applicationId = $application->application_id;  // Update from invoice if found
+                if ($application) {
+                    if ($application->application_type === 'startup-zone') {
+                        $isStartupZone = true;
+                        $applicationId = $application->application_id;  // Update from invoice if found
+                    } elseif ($application->application_type === 'exhibitor-registration') {
+                        $isExhibitorRegistration = true;
+                        $applicationId = $application->application_id;
+                    }
                 }
             } elseif ($applicationId) {
                 // Try to get application from session application_id
-                $application = Application::where('application_id', $applicationId)
-                    ->where('application_type', 'startup-zone')
-                    ->first();
+                $application = Application::where('application_id', $applicationId)->first();
                 if ($application) {
-                    $isStartupZone = true;
+                    if ($application->application_type === 'startup-zone') {
+                        $isStartupZone = true;
+                    } elseif ($application->application_type === 'exhibitor-registration') {
+                        $isExhibitorRegistration = true;
+                    }
                 }
-            }
-
-
-            // dd($invoice);
-
-            // check for the application_type as exhibitor-registration  
+            }  
 
             // If invoice not found, check if it's a poster payment
             if (!$invoice) {
@@ -1138,6 +1141,7 @@ class PaymentGatewayController extends Controller
                     'order_id' => $order_id,
                     'response' => $responseArray,
                     'is_startup_zone' => $isStartupZone,
+                    'is_exhibitor_registration' => $isExhibitorRegistration,
                     'application_id' => $applicationId,
                     'is_poster' => (strpos($order_id, 'TIN-BTS2026-PSTR-') === 0)
                 ]);
@@ -1150,34 +1154,126 @@ class PaymentGatewayController extends Controller
                         ->with('payment_response', $responseArray);
                 }
 
+                // If exhibitor-registration, redirect to confirmation page
+                if ($isExhibitorRegistration && $applicationId) {
+                    return redirect()
+                        ->route('exhibitor-registration.confirmation', $applicationId)
+                        ->with('error', 'Invoice not found. Please contact support.')
+                        ->with('payment_response', $responseArray);
+                }
+
                 return redirect()
                     ->route('payment.lookup')
                     ->with('error', 'Invoice not found. Please contact support.');
             }
 
 
-            dd($responseArray);
-
-
-
             // update the invoice table with the status as paid
             if ($responseArray['order_status'] == 'Success') {
-                // Generate PIN number if not already set (for startup zone)
-                if (!$invoice->pin_no && $isStartupZone && $application) {
-                    $pinNo = $this->generatePinNo();
-                    $invoice->pin_no = $pinNo;
-                }
-                
                 $invoice->update([
                     'payment_status' => 'paid',
                     'amount_paid' => $responseArray['mer_amount'],
                     'updated_at' => now(),
                     'pending_amount' => 0,
-                    'currency' => 'INR',
+                    'currency' => $invoice->currency ?? 'INR',
                 ]);
+
+                // Handle exhibitor-registration payment success
+                if ($isExhibitorRegistration && $application) {
+                    // Generate PIN number after successful payment (only if not already set)
+                    if (!$invoice->pin_no) {
+                        $pinNo = $this->generatePinNo();
+                        $invoice->pin_no = $pinNo;
+                        $invoice->save();
+                    }
+                    // Check if payment record already exists (from webhook or previous attempt)
+                    $payment = Payment::where('order_id', $responseArray['order_id'])
+                        ->where('invoice_id', $invoice->id)
+                        ->first();
+
+                    if ($payment) {
+                        // Update existing payment record
+                        $payment->update([
+                            'payment_method' => $responseArray['payment_mode'] ?? 'CCAvenue',
+                            'amount' => $responseArray['mer_amount'],
+                            'amount_paid' => $responseArray['mer_amount'],
+                            'amount_received' => $responseArray['mer_amount'],
+                            'transaction_id' => $responseArray['tracking_id'] ?? null,
+                            'pg_result' => $responseArray['order_status'],
+                            'track_id' => $responseArray['tracking_id'] ?? null,
+                            'pg_response_json' => json_encode($responseArray),
+                            'payment_date' => $trans_date ?? now(),
+                            'status' => 'successful',
+                        ]);
+                    } else {
+                        // Create new payment record
+                        Payment::create([
+                            'invoice_id' => $invoice->id,
+                            'payment_method' => $responseArray['payment_mode'] ?? 'CCAvenue',
+                            'amount' => $responseArray['mer_amount'],
+                            'amount_paid' => $responseArray['mer_amount'],
+                            'amount_received' => $responseArray['mer_amount'],
+                            'transaction_id' => $responseArray['tracking_id'] ?? null,
+                            'pg_result' => $responseArray['order_status'],
+                            'track_id' => $responseArray['tracking_id'] ?? null,
+                            'pg_response_json' => json_encode($responseArray),
+                            'payment_date' => $trans_date ?? now(),
+                            'currency' => $invoice->currency ?? 'INR',
+                            'status' => 'successful',
+                            'order_id' => $responseArray['order_id'],
+                            'user_id' => $application->user_id ?? null,
+                        ]);
+                    }
+
+                    Log::info('Exhibitor Registration CCAvenue Payment Success', [
+                        'application_id' => $application->application_id,
+                        'invoice_no' => $invoice->invoice_no,
+                        'amount' => $responseArray['mer_amount'],
+                        'transaction_id' => $responseArray['tracking_id'] ?? null,
+                    ]);
+
+                    // Send thank you email after payment confirmation
+                    try {
+                        $contact = \App\Models\EventContact::where('application_id', $application->id)->first();
+                        $application->load(['country', 'state', 'eventContact']);
+                        
+                        $userEmail = $contact && $contact->email ? $contact->email : $application->company_email;
+                        
+                        if ($userEmail) {
+                            $paymentDetails = [
+                                'transaction_id' => $responseArray['tracking_id'] ?? null,
+                                'payment_method' => $responseArray['payment_mode'] ?? 'CCAvenue',
+                                'amount' => $responseArray['mer_amount'],
+                                'currency' => $invoice->currency ?? 'INR',
+                            ];
+                            
+                            Mail::to($userEmail)->send(new \App\Mail\ExhibitorRegistrationMail($application, $invoice, $contact));
+                        }
+                    } catch (\Exception $e) {
+                        Log::error('Failed to send exhibitor registration payment thank you email', [
+                            'application_id' => $application->application_id,
+                            'email' => $userEmail ?? 'unknown',
+                            'error' => $e->getMessage()
+                        ]);
+                        // Don't fail the payment if email fails
+                    }
+
+                    // Redirect to exhibitor-registration confirmation with payment response - MUST RETURN HERE
+                    return redirect()
+                        ->route('exhibitor-registration.confirmation', $application->application_id)
+                        ->with('success', 'Payment successful!')
+                        ->with('payment_response', $responseArray);
+                }
 
                 // Create payment record for startup zone (only after payment is completed)
                 if ($isStartupZone && $application) {
+                    // Generate PIN number after successful payment (only if not already set)
+                    if (!$invoice->pin_no) {
+                        $pinNo = $this->generatePinNo();
+                        $invoice->pin_no = $pinNo;
+                        $invoice->save();
+                    }
+                    
                     // Check if payment record already exists (from webhook or previous attempt)
                     $payment = Payment::where('order_id', $responseArray['order_id'])
                         ->where('invoice_id', $invoice->id)
@@ -1367,13 +1463,18 @@ class PaymentGatewayController extends Controller
             // Find invoice for failure handling
             $invoice = Invoice::where('invoice_no', $order_id)->first();
 
-            // Check if this is a startup zone invoice
+            // Check if this is a startup zone or exhibitor-registration invoice
             $isStartupZone = false;
+            $isExhibitorRegistration = false;
             $application = null;
             if ($invoice && $invoice->application_id) {
                 $application = Application::find($invoice->application_id);
-                if ($application && $application->application_type === 'startup-zone') {
-                    $isStartupZone = true;
+                if ($application) {
+                    if ($application->application_type === 'startup-zone') {
+                        $isStartupZone = true;
+                    } elseif ($application->application_type === 'exhibitor-registration') {
+                        $isExhibitorRegistration = true;
+                    }
                 }
             }
 
@@ -1383,6 +1484,19 @@ class PaymentGatewayController extends Controller
             if (!$invoice) {
                 $applicationId = session('payment_application_id');
                 if ($applicationId) {
+                    $application = Application::where('application_id', $applicationId)->first();
+                    if ($application) {
+                        if ($application->application_type === 'startup-zone') {
+                            return redirect()
+                                ->route('startup-zone.payment', $applicationId)
+                                ->with('error', 'Payment failed. Please try again.');
+                        } elseif ($application->application_type === 'exhibitor-registration') {
+                            return redirect()
+                                ->route('exhibitor-registration.payment', $applicationId)
+                                ->with('error', 'Payment failed. Please try again.');
+                        }
+                    }
+                    // Fallback to startup-zone if type unknown
                     return redirect()
                         ->route('startup-zone.payment', $applicationId)
                         ->with('error', 'Payment failed. Please try again.');
@@ -1394,8 +1508,8 @@ class PaymentGatewayController extends Controller
 
             // exit;
 
-            // Handle startup zone payment failure - redirect to startup zone payment page
-            if ($isStartupZone || $application) {
+            // Handle startup zone and exhibitor-registration payment failure
+            if ($isStartupZone || $isExhibitorRegistration || $application) {
                 // echo "isStartupZone: " . $isStartupZone;
                 // echo "application: " . $application;
                 // echo "invoice: " . $invoice;
