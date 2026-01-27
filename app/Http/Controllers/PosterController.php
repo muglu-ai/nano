@@ -1073,6 +1073,7 @@ class PosterController extends Controller
             // Prepare order data for CCAvenue (format exactly like PaymentGatewayController)
             // Use same redirect URL format as PaymentGatewayController
             $redirectUrl = config('constants.APP_URL') . '/payment/ccavenue-success';
+            $cancelUrl = route('poster.payment', ['tin_no' => $poster->tin_no]);
             
             // Format amount exactly like PaymentGatewayController - use raw decimal value
             // PaymentGatewayController uses $invoice->total_final_price directly (not formatted)
@@ -1084,7 +1085,7 @@ class PosterController extends Controller
                 'amount' => $formattedAmount, // String with 2 decimals
                 'currency' => $currency,
                 'redirect_url' => $redirectUrl, // Use same format as PaymentGatewayController
-                'cancel_url' => $redirectUrl, // Use same format as PaymentGatewayController
+                'cancel_url' => $cancelUrl, // Redirect back to poster payment page on cancel
                 'language' => 'EN', // Add language like PaymentGatewayController
                 'billing_name' => $billingName ?? '',
                 'billing_address' => $billingAddress ?? '',
