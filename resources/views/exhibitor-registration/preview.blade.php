@@ -204,6 +204,23 @@
                     $tanNo = $application->tan_no ?? null;
                     // TAN Status from tan_compliance field (similar to gst_compliance)
                     $tanStatus = $application->tan_compliance ? 'Registered' : 'Unregistered';
+                    
+                    // Construct billingData array from application for consistency with draft flow
+                    $billingData = [
+                        'company_name' => $application->company_name ?? '',
+                        'email' => $application->company_email ?? '',
+                        'address' => $application->address ?? '',
+                        'city' => is_numeric($application->city_id) ? (\App\Models\City::find($application->city_id)->name ?? $application->city_id) : ($application->city_id ?? ''),
+                        'state_id' => $application->state_id ?? null,
+                        'country_id' => $application->country_id ?? null,
+                        'postal_code' => $application->postal_code ?? '',
+                        'telephone' => $application->landline ?? '',
+                        'website' => $application->website ?? '',
+                        'tax_no' => $application->tax_no ?? null,
+                        'tan_no' => $application->tan_no ?? null,
+                        'tan_status' => $application->tan_compliance ? 'Registered' : 'Unregistered',
+                    ];
+                    
                     $billingCompany = $application->company_name ?? '';
                     $billingEmail = $application->company_email ?? '';
                     $billingAddress = $application->address ?? '';
@@ -239,6 +256,12 @@
                         'processing_rate' => $application->invoice->processing_chargesRate ?? 3,
                         'gst_rate' => 18,
                         'total_price' => $application->invoice->total_final_price ?? $application->invoice->amount,
+                        'cgst_rate' => $application->invoice->cgst_rate ?? null,
+                        'cgst_amount' => $application->invoice->cgst_amount ?? null,
+                        'sgst_rate' => $application->invoice->sgst_rate ?? null,
+                        'sgst_amount' => $application->invoice->sgst_amount ?? null,
+                        'igst_rate' => $application->invoice->igst_rate ?? null,
+                        'igst_amount' => $application->invoice->igst_amount ?? null,
                     ] : null;
                 } elseif ($hasDraft) {
                     // Data from draft table
@@ -626,21 +649,21 @@
                     </tr> 
                     @endif--}}
                     
-                    @if($pricing['cgst_amount'])
+                    @if(isset($pricing['cgst_amount']) && $pricing['cgst_amount'])
                     <tr>
-                        <td class="label-cell">CGST ({{ $pricing['cgst_rate'] }}%)</td>
+                        <td class="label-cell">CGST ({{ $pricing['cgst_rate'] ?? 0 }}%)</td>
                         <td class="value-cell">{{ $currencySymbol }}{{ number_format($pricing['cgst_amount'], $priceFormat) }}</td>
                     </tr>
                     @endif
-                    @if($pricing['sgst_amount'])
+                    @if(isset($pricing['sgst_amount']) && $pricing['sgst_amount'])
                     <tr>
-                        <td class="label-cell">SGST ({{ $pricing['sgst_rate'] }}%)</td>
+                        <td class="label-cell">SGST ({{ $pricing['sgst_rate'] ?? 0 }}%)</td>
                         <td class="value-cell">{{ $currencySymbol }}{{ number_format($pricing['sgst_amount'], $priceFormat) }}</td>
                     </tr>
                     @endif
-                    @if($pricing['igst_amount'])
+                    @if(isset($pricing['igst_amount']) && $pricing['igst_amount'])
                     <tr>
-                        <td class="label-cell">IGST ({{ $pricing['igst_rate'] }}%)</td>
+                        <td class="label-cell">IGST ({{ $pricing['igst_rate'] ?? 0 }}%)</td>
                         <td class="value-cell">{{ $currencySymbol }}{{ number_format($pricing['igst_amount'], $priceFormat) }}</td>
                     </tr>
                     @endif

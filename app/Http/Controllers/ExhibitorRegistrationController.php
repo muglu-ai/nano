@@ -62,10 +62,22 @@ class ExhibitorRegistrationController extends Controller
         $sessionId = session()->getId();
         $draft = StartupZoneDraft::where('session_id', $sessionId)
             ->where('application_type', 'exhibitor-registration')
-            ->active()
             ->first();
         
-        // If no draft exists, create a new draft record
+        // If draft exists but is converted, delete it and create new one
+        // This prevents users from seeing old data if they navigate back after payment
+        if ($draft && $draft->converted_to_application_id) {
+            $draft->delete();
+            $draft = null;
+        }
+        
+        // If draft exists but is not active (expired or abandoned), also delete and create new one
+        if ($draft && ($draft->is_abandoned || ($draft->expires_at && $draft->expires_at <= now()))) {
+            $draft->delete();
+            $draft = null;
+        }
+        
+        // If no draft exists (or was deleted above), create a new draft record
         if (!$draft) {
             $draft = new StartupZoneDraft();
             $draft->session_id = $sessionId;
@@ -1300,6 +1312,10 @@ class ExhibitorRegistrationController extends Controller
                 ->first();
             
             if ($application) {
+                // If application is approved, user can only go to payment — no edit/back
+                if (($application->submission_status ?? '') === 'approved') {
+                    return redirect()->route('exhibitor-registration.payment', $application->application_id);
+                }
                 return view('exhibitor-registration.preview', compact('application'));
             }
         }
@@ -2140,6 +2156,25 @@ class ExhibitorRegistrationController extends Controller
                 'ip' => request()->ip(),
                 'referer' => request()->header('referer')
             ]);
+        }
+        
+        // Clear all exhibitor registration session data to prevent back navigation
+        session()->forget([
+            'exhibitor_registration_draft',
+            'exhibitor_registration_pricing',
+            'exhibitor_registration_application_id'
+        ]);
+        
+        // Mark draft as converted to prevent reuse
+        $sessionId = session()->getId();
+        $draft = StartupZoneDraft::where('session_id', $sessionId)
+            ->where('application_type', 'exhibitor-registration')
+            ->first();
+            
+        if ($draft && !$draft->converted_to_application_id) {
+            $draft->converted_to_application_id = $application->id;
+            $draft->converted_at = now();
+            $draft->save();
         }
         
         if (!$application->invoice) {

@@ -609,10 +609,14 @@
                             </div>
 
                             <div class="d-flex justify-content-between mt-4">
+                                @if(($application->submission_status ?? '') !== 'approved')
                                 <a href="{{ route('exhibitor-registration.preview', ['application_id' => $application->application_id]) }}" 
                                    class="btn btn-outline-danger fs-6">
                                     <i class="fas fa-arrow-left"></i> Back
                                 </a>
+                                @else
+                                <div></div>
+                                @endif
                                 <button type="submit" class="btn btn-success fs-6">
                                     Proceed to Payment <i class="fas fa-arrow-right"></i>
                                 </button>
