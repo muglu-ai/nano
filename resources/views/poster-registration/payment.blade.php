@@ -248,7 +248,7 @@
                                         <td>{{ $author->title ?? '' }} {{ $author->first_name }} {{ $author->last_name }}</td>
                                         <td>{{ $author->designation ?? 'N/A' }}</td>
                                         <td><small>{{ $author->email }}</small></td>
-                                        <td><small>{{ $author->mobile }}</small></td>
+                                        <td style="white-space: nowrap;"><small>{{ $author->mobile }}</small></td>
                                         <td><small>{{ $author->city }}, {{ $author->state->name ?? 'N/A' }}, {{ $author->country->name ?? 'N/A' }} - {{ $author->postal_code }}</small></td>
                                         <td><small>{{ $author->institution }}, {{ $author->affiliation_city }}, {{ $author->affiliationCountry->name ?? 'N/A' }}</small></td>
                                         <td>

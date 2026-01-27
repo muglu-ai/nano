@@ -1969,7 +1969,8 @@ class PosterController extends Controller
             'authors.*.last_name' => 'required|string|max:100',
             'authors.*.designation' => 'required|string|max:100',
             'authors.*.email' => 'required|email|max:200',
-            'authors.*.mobile' => 'required|string|max:20',
+            'authors.*.mobile' => 'required|string|max:30',
+            'authors.*.phone_country_code' => 'nullable|string|max:10',
             'authors.*.cv' => 'nullable|file|mimes:pdf|max:5120',
             "authors.{$leadAuthorIndex}.cv" => 'required|file|mimes:pdf|max:5120',
             'authors.*.is_presenter' => 'nullable|boolean',
@@ -2095,6 +2096,9 @@ class PosterController extends Controller
             'authors_approval' => true,
             'status' => 'draft',
         ];
+        
+        // Debug: Log mobile numbers
+        \Log::info('Storing authors data:', ['authors' => $validated['authors']]);
         
         $draft = \App\Models\PosterRegistrationDemo::updateOrCreate(
             ['token' => $token],

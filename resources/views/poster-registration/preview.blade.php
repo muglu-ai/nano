@@ -315,7 +315,7 @@
                                         <td>{{ $author['title'] ?? '' }} {{ $author['first_name'] ?? '' }} {{ $author['last_name'] ?? '' }}</td>
                                         <td>{{ $author['designation'] ?? 'N/A' }}</td>
                                         <td><small>{{ $author['email'] ?? 'N/A' }}</small></td>
-                                        <td><small>{{ $author['mobile'] ?? 'N/A' }}</small></td>
+                                        <td style="white-space: nowrap;"><small>{{ $author['mobile'] ?? 'N/A' }}</small></td>
                                         <td><small>{{ $author['city'] ?? '' }}, {{ $author['state'] ?? '' }}, {{ $author['country'] ?? '' }} - {{ $author['postal_code'] ?? '' }}</small></td>
                                         <td><small>{{ $author['institution'] ?? 'N/A' }}, {{ $author['affiliation_city'] ?? '' }}, {{ $author['affiliation_country'] ?? '' }}</small></td>
                                         <td>
