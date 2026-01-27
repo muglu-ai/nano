@@ -623,9 +623,9 @@ class PaymentGatewayController extends Controller
 
         // {"request_data":{"encResp":"7dde374e74e78d29d2fcb344bdac4f8dc395fa8935a0c61c04a9eed8716036433c76851406bcc50ef787d9ad57594d40afde5dc1a983700b0b1134e523ce6dee26ba0fcd824132128a19ef0ca9c0a6b5de3dcf2b16456f85f06e4aa50b2b153c33e5595d0974762424050d1e7d0862f94233dac1a550a4424d4dbabcfa61cb5faaad8c364e40f7eaa09387457805d7bfeaa07e54ce6ce06c83f9c9d5acfd64e5f6daa1e92b4e1a0d40a212db4b95425954888df1c8898b1ed4a9dd977276cf134016eeec294cea59507b76d5fe1603b1c886640fc2b86e5f06ee94a9d847b363d7b3f84cd22d5ffbd611f931e31fad8445cf74baa7dbaea76fb2e5660f34ba1b8dfd9bb4a017d34128bf2d453fba113af8b59fca8a098e97de8848f1e3cade6da47ca9fec399641e54ff67a21da1cbfe48dbbdf2d0dc285e568c09d765d41c30fe599a1a902b9e2affa52a82de81c3e08aa24197ba899b458e61f269122934057100ba77fdd6cb8ccea3409969feb31653ce0be1007704c8e3905702b5925f8443dba29afc50f599b076299ef1d815521b7cc1195439a0801becdb25a2ece453f60bff6e4cf148014c600697ffdd23a4fbcbc4f95425b8e9576099004fdf4f82c4aad128d3126f8014d87af8df9cb0b239e367556c921b6b7e4138a1d85b0265765d96c5039aa54d1d78dc9b164da1e1329d7cbf5ffbd4ab42a9b4708457be6c2477f7cfbe6331a61ed6e4247a1897de3dbcd7b6fdc84dfd4e3016afea3123d6b4ae17671e58be107a39f0911cee539ad3f4057556e734ef9a25bb0d34131dfaf8e56f7f8f0de50bb35f60ab7daa0f8636eb5fa1b063442c61fbcf030063cf7468df38a3f9bc59e060eae156e85150b8e635be64f462bb1658de87a8b66d730452fff1a5aaafc5da755e3bfbad2e1f19d8e5c30c0a0fb6cb1ef14b79e93b23e992ccad5a2a3d69fda3d98d3efd0c9f95a9c57bf3ca1c9ffbebcf15149a3ace7b193f986f0cf0547aac099a195ab9491e8611035060cc6ff718fc51d8fb1021f843b57b3ff5a0e5f55582e1e8ed2546c9e18f86bebcba0f3cf59b0f4739e320f2f878f6d4227aea7f6de8bb2f614586460142fd0f44900ef1febed9004be85476bb6eaa74c1368608937bf6ba0b59e531c59d62f4dc67be6a1c59aecf32f4ce44","orderNo":"TIN-BTS-2026-EXH-830358_1769512940","settingIntegrationType":null,"accessCode":"AVJS71ME17AS68SJSA"},"has_encResp":true} 
 
-        dd($encResponse);
+        // dd($encResponse);
 
-        
+
         if (empty($encResponse)) {
             Log::warning('CCAvenue Success: Missing encResp parameter', [
                 'request_data' => $request->all(),
@@ -1346,6 +1346,10 @@ class PaymentGatewayController extends Controller
 
             // order_id
             $order_id = explode('_', $responseArray['order_id'])[0];
+
+            dd($order_id);
+
+            
 
             // Find invoice for failure handling
             $invoice = Invoice::where('invoice_no', $order_id)->first();
