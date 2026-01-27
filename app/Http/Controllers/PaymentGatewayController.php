@@ -1383,9 +1383,10 @@ class PaymentGatewayController extends Controller
 
             // Handle startup zone payment failure - redirect to startup zone payment page
             if ($isStartupZone || $application) {
-                echo "isStartupZone: " . $isStartupZone;
-                echo "application: " . $application;
-                exit;
+                // echo "isStartupZone: " . $isStartupZone;
+                // echo "application: " . $application;
+                // echo "invoice: " . $invoice;
+                // exit;
                 // Create failed payment record for startup zone
                 if ($invoice) {
                     // echo "invoice: " . $invoice;
@@ -1409,10 +1410,28 @@ class PaymentGatewayController extends Controller
                     ]);
                 }
 
-                return redirect()
-                    ->route('startup-zone.payment', $application->application_id)
-                    ->with('error', 'Payment failed. Please try again.')
-                    ->with('payment_response', $responseArray);
+                //if application_type is startup-zone then redirect to startup-zone.payment page
+                //elseif application_type is exhibitor-registration then redirect to exhibitor-registration.payment page
+                //else redirect to payment.lookup page
+
+                if ($application->application_type === 'startup-zone') {
+                    return redirect()
+                        ->route('startup-zone.payment', $application->application_id)
+                        ->with('error', 'Payment failed. Please try again.')
+                        ->with('payment_response', $responseArray);
+                } elseif ($application->application_type === 'exhibitor-registration') {
+                    return redirect()
+                        ->route('exhibitor-registration.payment', $application->application_id)
+                        ->with('error', 'Payment failed. Please try again.')
+                        ->with('payment_response', $responseArray);
+                } else {
+                    return redirect()
+                        ->route('payment.lookup')
+                        ->with('error', 'Payment failed. Please try again.')
+                        ->with('payment_response', $responseArray);
+                }
+
+                
             }
 
             //chec
