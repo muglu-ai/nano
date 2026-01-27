@@ -311,6 +311,9 @@ document.addEventListener('DOMContentLoaded', function() {
     let leadAuthorIndex = null;
     let presenterIndex = null;
     
+    // Countries data from server
+    const countriesData = @json($countries);
+    
     // Pricing configuration (per attendee)
     const pricingINR = 2000;
     const pricingUSD = 25;
@@ -435,12 +438,19 @@ document.addEventListener('DOMContentLoaded', function() {
             <div class="row mb-3">
                 <div class="col-md-6">
                     <label for="author_country_${authorCount}" class="form-label">Country <span class="text-danger">*</span></label>
-                    <input type="text" class="form-control" id="author_country_${authorCount}" name="authors[${authorCount}][country]" required>
+                    <select class="form-select author-country-select" id="author_country_${authorCount}" name="authors[${authorCount}][country_id]" data-author-index="${authorCount}" required>
+                        <option value="">Select Country</option>
+                        ${countriesData.map(country => 
+                            `<option value="${country.id}" ${country.code === 'IN' ? 'selected' : ''}>${country.name}</option>`
+                        ).join('')}
+                    </select>
                     <div class="invalid-feedback"></div>
                 </div>
                 <div class="col-md-6">
                     <label for="author_state_${authorCount}" class="form-label">State <span class="text-danger">*</span></label>
-                    <input type="text" class="form-control" id="author_state_${authorCount}" name="authors[${authorCount}][state]" required>
+                    <select class="form-select author-state-select" id="author_state_${authorCount}" name="authors[${authorCount}][state_id]" data-author-index="${authorCount}" required>
+                        <option value="">Select State</option>
+                    </select>
                     <div class="invalid-feedback"></div>
                 </div>
             </div>
@@ -472,13 +482,29 @@ document.addEventListener('DOMContentLoaded', function() {
                 </div>
                 <div class="col-md-4">
                     <label for="author_affiliation_country_${authorCount}" class="form-label">Country <span class="text-danger">*</span></label>
-                    <input type="text" class="form-control" id="author_affiliation_country_${authorCount}" name="authors[${authorCount}][affiliation_country]" required>
+                    <select class="form-select" id="author_affiliation_country_${authorCount}" name="authors[${authorCount}][affiliation_country_id]" required>
+                        <option value="">Select Country</option>
+                        ${countriesData.map(country => 
+                            `<option value="${country.id}" ${country.code === 'IN' ? 'selected' : ''}>${country.name}</option>`
+                        ).join('')}
+                    </select>
                     <div class="invalid-feedback"></div>
                 </div>
             </div>
         `;
         
         container.appendChild(authorBlock);
+        
+        // Load states for India (default selected country)
+        if (authorCount === 1) {
+            // Find India's country ID from the countriesData
+            const indiaCountry = countriesData.find(country => country.code === 'IN');
+            if (indiaCountry) {
+                setTimeout(() => {
+                    loadStatesForAuthorCountry(indiaCountry.id, 1);
+                }, 100);
+            }
+        }
         
         // Update button state
         updateAddAuthorButton();
@@ -668,6 +694,56 @@ document.addEventListener('DOMContentLoaded', function() {
     if (currencySelect) {
         currencySelect.addEventListener('change', updateAttendanceSummary);
     }
+    
+    // Function to load states for a country
+    function loadStatesForAuthorCountry(countryId, authorIndex) {
+        const stateSelect = document.getElementById(`author_state_${authorIndex}`);
+        
+        if (!countryId) {
+            stateSelect.innerHTML = '<option value="">Select State</option>';
+            stateSelect.disabled = false;
+            return;
+        }
+        
+        stateSelect.innerHTML = '<option value="">Loading states...</option>';
+        stateSelect.disabled = true;
+        
+        fetch('{{ route("get.states") }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+            },
+            body: JSON.stringify({ country_id: countryId })
+        })
+        .then(response => response.json())
+        .then(data => {
+            stateSelect.innerHTML = '<option value="">Select State</option>';
+            if (data && data.length > 0) {
+                data.forEach(state => {
+                    const option = document.createElement('option');
+                    option.value = state.id;
+                    option.textContent = state.name;
+                    stateSelect.appendChild(option);
+                });
+            }
+            stateSelect.disabled = false;
+        })
+        .catch(error => {
+            console.error('Error loading states:', error);
+            stateSelect.innerHTML = '<option value="">Error loading states</option>';
+            stateSelect.disabled = false;
+        });
+    }
+    
+    // Event delegation for dynamically added country selects
+    document.getElementById('authorsContainer').addEventListener('change', function(e) {
+        if (e.target.classList.contains('author-country-select')) {
+            const authorIndex = e.target.dataset.authorIndex;
+            const countryId = e.target.value;
+            loadStatesForAuthorCountry(countryId, authorIndex);
+        }
+    });
     
     // Initial call to update attendance summary on page load
     updateAttendanceSummary();

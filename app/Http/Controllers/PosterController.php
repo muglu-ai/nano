@@ -298,10 +298,13 @@ class PosterController extends Controller
     public function create()
     {
         $draft = (object) [];
+        $countries = \App\Models\Country::orderBy('name', 'asc')->get();
+        
         return view('poster-registration.register', [
             'draft' => $draft,
             'sectorOptions' => $this->sectorOptions,
             'countryList' => $this->countryList,
+            'countries' => $countries,
         ]);
     }
 
