@@ -1912,8 +1912,8 @@ class PosterController extends Controller
      */
     public function storeNewDraft(Request $request)
     {
-        // First get the lead author index
-        $leadAuthorIndex = (int) $request->input('lead_author', 1) - 1; // Convert to 0-indexed
+        // First get the lead author index (already 0-indexed from form)
+        $leadAuthorIndex = (int) $request->input('lead_author', 0);
         
         $validated = $request->validate([
             'session_id' => 'nullable|string',
@@ -1939,7 +1939,7 @@ class PosterController extends Controller
             'authors.*.institution' => 'required|string|max:250',
             'authors.*.affiliation_city' => 'required|string|max:100',
             'authors.*.affiliation_country_id' => 'required|exists:countries,id',
-            'lead_author' => 'required|integer|min:1|max:4',
+            'lead_author' => 'required|integer|min:0|max:3',
             'presentation_mode' => 'required|string',
             'publication_permission' => 'required|accepted',
             'authors_approval' => 'required|accepted',
@@ -1954,8 +1954,8 @@ class PosterController extends Controller
             $extendedAbstractName = $file->getClientOriginalName();
         }
         
-        // Get lead author index (1-indexed in form, 0-indexed in array)
-        $leadAuthorArrayIndex = (int) $validated['lead_author'] - 1;
+        // Get lead author index (now 0-indexed from form)
+        $leadAuthorArrayIndex = (int) $validated['lead_author'];
         $leadAuthor = $validated['authors'][$leadAuthorArrayIndex];
         
         // Handle CV upload for lead author with custom filename
@@ -2009,7 +2009,7 @@ class PosterController extends Controller
         $presenterIndex = null;
         foreach ($validated['authors'] as $index => $author) {
             if (isset($author['is_presenter']) && $author['is_presenter']) {
-                $presenterIndex = $index + 1; // 1-indexed
+                $presenterIndex = $index; // 0-indexed
                 break;
             }
         }
