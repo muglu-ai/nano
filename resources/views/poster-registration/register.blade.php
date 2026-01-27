@@ -2,6 +2,10 @@
 
 @section('title', 'Poster Registration - ' . config('constants.EVENT_NAME') . ' ' . config('constants.EVENT_YEAR'))
 
+@push('head-links')
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/intl-tel-input@18.1.1/build/css/intlTelInput.min.css">
+@endpush
+
 @push('styles')
 <link rel="stylesheet" href="{{ asset('asset/css/custom.css') }}">
 <style>
@@ -303,12 +307,18 @@
 
 @push('scripts')
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<!-- intl-tel-input -->
+<script src="https://cdn.jsdelivr.net/npm/intl-tel-input@18.1.1/build/js/intlTelInput.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/intl-tel-input@18.1.1/build/js/utils.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     let authorCount = -1;
     const maxAuthors = 4;
     let leadAuthorIndex = null;
     let presenterIndex = null;
+    
+    // Store intl-tel-input instances for phone fields
+    const authorPhoneInstances = new Map();
     
     // Countries data from server
     const countriesData = @json($countries);
@@ -348,6 +358,45 @@ document.addEventListener('DOMContentLoaded', function() {
             addAuthor();
         }
     });
+    
+    // Restrict phone inputs to numbers only
+    function restrictToNumbers(input) {
+        if (input.dataset.restricted === 'true') {
+            return;
+        }
+        input.dataset.restricted = 'true';
+        
+        input.addEventListener('beforeinput', function(e) {
+            if (e.inputType === 'deleteContentBackward' || 
+                e.inputType === 'deleteContentForward' || 
+                e.inputType === 'deleteByCut') {
+                return;
+            }
+            if (e.data && !/^\d+$/.test(e.data)) {
+                e.preventDefault();
+                e.stopImmediatePropagation();
+                return false;
+            }
+        }, { capture: true, passive: false });
+        
+        input.addEventListener('input', function(e) {
+            let value = e.target.value;
+            const cursorPos = e.target.selectionStart || 0;
+            const numbersOnly = value.replace(/[^\d]/g, '').replace(/\s/g, '');
+            
+            if (value !== numbersOnly) {
+                e.target.value = numbersOnly;
+                e.target.setSelectionRange(cursorPos - 1, cursorPos - 1);
+            }
+        });
+        
+        input.addEventListener('keypress', function(e) {
+            if (!/[0-9]/.test(e.key) && e.key !== 'Backspace' && e.key !== 'Delete' && e.key !== 'Tab' && e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') {
+                e.preventDefault();
+                return false;
+            }
+        });
+    }
 
     function addAuthor() {
         if (authorCount >= maxAuthors - 1) {
@@ -414,7 +463,9 @@ document.addEventListener('DOMContentLoaded', function() {
             <div class="row mb-3">
                 <div class="col-md-6">
                     <label for="author_mobile_${authorCount}" class="form-label">Mobile Number <span class="text-danger">*</span></label>
-                    <input type="tel" class="form-control" id="author_mobile_${authorCount}" name="authors[${authorCount}][mobile]" required>
+                    <input type="tel" class="form-control author-mobile" id="author_mobile_${authorCount}" name="authors[${authorCount}][mobile]" 
+                           pattern="[0-9]*" inputmode="numeric" required>
+                    <input type="hidden" name="authors[${authorCount}][phone_country_code]" id="author_mobile_country_code_${authorCount}" value="+91">
                     <div class="invalid-feedback"></div>
                 </div>
                 <div class="col-md-6 cv-upload-section" id="cv_upload_section_${authorCount}" style="display: ${authorCount === 0 ? 'block' : 'none'};">
@@ -528,6 +579,41 @@ document.addEventListener('DOMContentLoaded', function() {
         `;
         
         container.appendChild(authorBlock);
+        
+        // Initialize intl-tel-input for mobile number
+        setTimeout(() => {
+            const mobileInput = document.getElementById(`author_mobile_${authorCount}`);
+            const mobileCountryCodeInput = document.getElementById(`author_mobile_country_code_${authorCount}`);
+            
+            if (mobileInput && typeof window.intlTelInput !== 'undefined') {
+                // Apply restriction BEFORE initializing intl-tel-input
+                restrictToNumbers(mobileInput);
+                
+                mobileInput.placeholder = '';
+                const itiMobile = window.intlTelInput(mobileInput, {
+                    initialCountry: 'in',
+                    preferredCountries: ['in', 'us', 'gb'],
+                    utilsScript: "https://cdn.jsdelivr.net/npm/intl-tel-input@18.1.1/build/js/utils.js",
+                    separateDialCode: true,
+                    nationalMode: false,
+                    autoPlaceholder: 'off',
+                });
+                
+                // Store the instance for later use
+                authorPhoneInstances.set(mobileInput, itiMobile);
+                
+                // Re-apply restriction after intl-tel-input initialization
+                restrictToNumbers(mobileInput);
+                
+                // Update hidden field when country changes
+                mobileInput.addEventListener('countrychange', function() {
+                    const selectedCountryData = itiMobile.getSelectedCountryData();
+                    if (mobileCountryCodeInput && selectedCountryData && selectedCountryData.dialCode) {
+                        mobileCountryCodeInput.value = '+' + selectedCountryData.dialCode;
+                    }
+                });
+            }
+        }, 100);
         
         // Load states for India (default selected country)
         if (authorCount === 0) {
