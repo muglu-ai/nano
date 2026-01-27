@@ -234,6 +234,7 @@ class PaymentGatewayController extends Controller
         // Check if this is a poster registration invoice
         $isPosterInvoice = ($invoice->type === 'poster_registration' && $invoice->poster_reg_id);
         $poster = null;
+        $newPosterRegistration = null;
         
         if ($isPosterInvoice) {
             $poster = \App\Models\Poster::find($invoice->poster_reg_id);
@@ -257,6 +258,35 @@ class PaymentGatewayController extends Controller
                     'payment_application_type' => 'poster',
                 ]);
             }
+        } elseif ($invoice->type === 'poster_registration') {
+            // Check if this is a new poster registration (using invoice_no to find registration)
+            $newPosterRegistration = \App\Models\PosterRegistration::where('tin_no', $invoice->invoice_no)->first();
+            
+            if ($newPosterRegistration) {
+                // Get lead author details
+                $leadAuthor = \App\Models\PosterAuthor::where('poster_registration_id', $newPosterRegistration->id)
+                    ->where('is_lead_author', true)
+                    ->first();
+                
+                // Create billing detail object from new poster registration data
+                $billingDetail = (object) [
+                    'contact_name' => $newPosterRegistration->lead_author_name ?? '',
+                    'email' => $newPosterRegistration->lead_author_email ?? '',
+                    'phone' => $newPosterRegistration->lead_author_mobile ?? ($leadAuthor ? $leadAuthor->mobile : ''),
+                    'address' => ($leadAuthor ? $leadAuthor->city : ''),
+                    'postal_code' => ($leadAuthor ? $leadAuthor->postal_code : ''),
+                    'state' => (object) ['name' => ($leadAuthor && $leadAuthor->state_id ? (\App\Models\State::find($leadAuthor->state_id)->name ?? '') : '')],
+                    'country' => (object) ['name' => ($leadAuthor && $leadAuthor->country_id ? (\App\Models\Country::find($leadAuthor->country_id)->name ?? 'India') : 'India')],
+                    'city_name' => ($leadAuthor ? $leadAuthor->city : ''),
+                ];
+                
+                // Store poster info in session for callback
+                session([
+                    'poster_registration_id' => $newPosterRegistration->id,
+                    'poster_registration_tin' => $newPosterRegistration->tin_no,
+                    'payment_application_type' => 'new_poster_registration',
+                ]);
+            }
         }
 
         // Ensure billingDetail exists
@@ -275,9 +305,15 @@ class PaymentGatewayController extends Controller
                     ->with('error', 'Billing details not found. Please contact support.');
             }
             
-            if ($isPosterInvoice) {
+            if ($isPosterInvoice && $poster) {
                 return redirect()
-                    ->route('poster.payment', ['tin_no' => $poster->tin_no ?? $invoice->invoice_no])
+                    ->route('poster.payment', ['tin_no' => $poster->tin_no])
+                    ->with('error', 'Billing details not found. Please contact support.');
+            }
+            
+            if ($newPosterRegistration) {
+                return redirect()
+                    ->route('poster.register.showPayment', $newPosterRegistration->tin_no)
                     ->with('error', 'Billing details not found. Please contact support.');
             }
 
@@ -291,6 +327,8 @@ class PaymentGatewayController extends Controller
         // For poster invoices, use poster TIN
         if ($isPosterInvoice && $poster) {
             $tinPrefix = $poster->tin_no;
+        } elseif ($newPosterRegistration) {
+            $tinPrefix = $newPosterRegistration->tin_no;
         } elseif ($application && $application->application_id) {
             $tinPrefix = $application->application_id;
         } else {
@@ -299,7 +337,9 @@ class PaymentGatewayController extends Controller
         $orderIdWithTimestamp = $tinPrefix . '_' . time();
 
         // Determine currency - use invoice currency or default based on type
-        $currency = $invoice->currency ?? ($isPosterInvoice && $poster ? ($poster->currency ?? ($poster->nationality === 'India' ? 'INR' : 'USD')) : 'INR');
+        $currency = $invoice->currency ?? 
+            ($isPosterInvoice && $poster ? ($poster->currency ?? ($poster->nationality === 'India' ? 'INR' : 'USD')) : 
+            ($newPosterRegistration ? $newPosterRegistration->currency : 'INR'));
         
         $data = [
             'merchant_id' => $this->merchantId,
@@ -1132,6 +1172,123 @@ class PaymentGatewayController extends Controller
                             // Redirect to poster success page
                             return redirect()
                                 ->route('poster.success', ['tin_no' => $poster->tin_no])
+                                ->with('success', 'Payment successful! Your registration is complete.');
+                        }
+                    }
+                    
+                    // Check if this is a new poster registration (poster_registrations table)
+                    $newPosterRegistration = \App\Models\PosterRegistration::where('tin_no', $possibleTinNo)->first();
+                    
+                    if ($newPosterRegistration) {
+                        // Create or find invoice for new poster registration
+                        $invoice = Invoice::firstOrCreate(
+                            ['invoice_no' => $possibleTinNo, 'type' => 'poster_registration'],
+                            [
+                                'currency' => $newPosterRegistration->currency ?? 'INR',
+                                'amount' => (float) ($responseArray['mer_amount'] ?? $newPosterRegistration->total_amount),
+                                'price' => $newPosterRegistration->base_amount ?? ($responseArray['mer_amount'] ?? $newPosterRegistration->total_amount),
+                                'gst' => $newPosterRegistration->gst_amount ?? 0,
+                                'processing_charges' => $newPosterRegistration->processing_fee ?? 0,
+                                'total_final_price' => (float) ($responseArray['mer_amount'] ?? $newPosterRegistration->total_amount),
+                                'amount_paid' => 0,
+                                'pending_amount' => (float) ($responseArray['mer_amount'] ?? $newPosterRegistration->total_amount),
+                                'payment_status' => 'unpaid',
+                            ]
+                        );
+                        
+                        // Handle successful payment
+                        if ($responseArray['order_status'] == 'Success') {
+                            // Update invoice
+                            $invoice->update([
+                                'payment_status' => 'paid',
+                                'amount_paid' => (float) $responseArray['mer_amount'],
+                                'pending_amount' => 0,
+                                'updated_at' => now(),
+                            ]);
+                            
+                            // Find or create payment record
+                            $payment = Payment::where('order_id', $responseArray['order_id'])
+                                ->where('invoice_id', $invoice->id)
+                                ->first();
+                            
+                            if ($payment) {
+                                $payment->update([
+                                    'status' => 'successful',
+                                    'amount_paid' => (float) $responseArray['mer_amount'],
+                                    'amount_received' => (float) $responseArray['mer_amount'],
+                                    'transaction_id' => $responseArray['tracking_id'] ?? null,
+                                    'pg_result' => 'Success',
+                                    'payment_method' => $responseArray['payment_mode'] ?? 'CCAvenue',
+                                    'payment_date' => $trans_date ?? now(),
+                                    'pg_response_json' => json_encode($responseArray),
+                                ]);
+                            } else {
+                                Payment::create([
+                                    'invoice_id' => $invoice->id,
+                                    'payment_method' => $responseArray['payment_mode'] ?? 'CCAvenue',
+                                    'amount' => (float) $responseArray['mer_amount'],
+                                    'amount_paid' => (float) $responseArray['mer_amount'],
+                                    'amount_received' => (float) $responseArray['mer_amount'],
+                                    'transaction_id' => $responseArray['tracking_id'] ?? null,
+                                    'status' => 'successful',
+                                    'order_id' => $responseArray['order_id'],
+                                    'currency' => $invoice->currency ?? 'INR',
+                                    'payment_date' => $trans_date ?? now(),
+                                    'pg_result' => 'Success',
+                                    'pg_response_json' => json_encode($responseArray),
+                                ]);
+                            }
+                            
+                            // Update poster registration payment status
+                            $newPosterRegistration->update(['payment_status' => 'paid']);
+                            
+                            Log::info('New Poster Registration CCAvenue Payment Success', [
+                                'poster_registration_id' => $newPosterRegistration->id,
+                                'tin_no' => $newPosterRegistration->tin_no,
+                                'invoice_id' => $invoice->id,
+                                'amount' => $responseArray['mer_amount'],
+                                'transaction_id' => $responseArray['tracking_id'] ?? null,
+                            ]);
+                            
+                            // Send thank you email after payment confirmation
+                            try {
+                                // Refresh registration to ensure we have latest data
+                                $newPosterRegistration->refresh();
+                                
+                                // Get admin emails from config for BCC
+                                $bccEmails = config('constants.admin_emails.bcc', []);
+                                
+                                Log::info('New Poster Registration Payment: Sending thank you email', [
+                                    'tin_no' => $newPosterRegistration->tin_no,
+                                    'email' => $newPosterRegistration->lead_author_email,
+                                    'bcc' => $bccEmails,
+                                ]);
+                                
+                                $mail = \Mail::to($newPosterRegistration->lead_author_email);
+                                
+                                // Add BCC if configured
+                                if (!empty($bccEmails)) {
+                                    $mail->bcc($bccEmails);
+                                }
+                                
+                                $mail->send(new \App\Mail\PosterRegistrationMail($newPosterRegistration, $invoice, 'payment_thank_you'));
+                                
+                                Log::info('New Poster Registration Payment: Thank you email sent', [
+                                    'tin_no' => $newPosterRegistration->tin_no,
+                                    'email' => $newPosterRegistration->lead_author_email,
+                                ]);
+                            } catch (\Exception $e) {
+                                Log::error('New Poster Registration Payment: Failed to send thank you email', [
+                                    'tin_no' => $newPosterRegistration->tin_no,
+                                    'email' => $newPosterRegistration->lead_author_email,
+                                    'error' => $e->getMessage(),
+                                ]);
+                                // Don't fail the payment if email fails
+                            }
+                            
+                            // Redirect to poster success page
+                            return redirect()
+                                ->route('poster.register.success', $newPosterRegistration->tin_no)
                                 ->with('success', 'Payment successful! Your registration is complete.');
                         }
                     }

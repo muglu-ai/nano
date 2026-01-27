@@ -2331,10 +2331,24 @@ class PosterController extends Controller
     {
         $registration = \App\Models\PosterRegistration::where('tin_no', $tinNo)->firstOrFail();
         
-        // Verify session
+        // Security: Verify ownership using session
         $sessionTin = session('poster_registration_tin');
         if ($sessionTin && $sessionTin !== $tinNo) {
+            // If session has a different TIN, this is unauthorized access attempt
+            \Log::warning('Unauthorized poster registration process payment attempt', [
+                'requested_tin' => $tinNo,
+                'session_tin' => $sessionTin,
+                'ip' => request()->ip(),
+            ]);
             abort(403, 'Unauthorized access to this registration');
+        }
+        
+        // If no session, log for security monitoring
+        if (!$sessionTin) {
+            \Log::info('Poster registration process payment without session validation', [
+                'tin_no' => $tinNo,
+                'ip' => request()->ip(),
+            ]);
         }
         
         // Check if already paid
@@ -2347,20 +2361,50 @@ class PosterController extends Controller
             ->where('type', 'poster_registration')
             ->firstOrFail();
         
-        // Determine payment gateway based on currency
-        $paymentMethod = $request->input('payment_method', $registration->currency === 'INR' ? 'CCAvenue' : 'PayPal');
-        
-        // Store payment method in session
-        session(['payment_method' => $paymentMethod]);
-        
-        // Redirect to payment gateway
-        if ($paymentMethod === 'CCAvenue' && $registration->currency === 'INR') {
-            return redirect()->route('payment.ccavenue', ['id' => $invoice->invoice_no]);
-        } elseif ($paymentMethod === 'PayPal' && $registration->currency === 'USD') {
-            return redirect()->route('paypal.form', ['id' => $invoice->invoice_no]);
+        if ($invoice->payment_status === 'paid') {
+            return redirect()->route('poster.register.success', $tinNo)
+                ->with('info', 'Payment already processed');
         }
         
-        return back()->with('error', 'Invalid payment method selected');
+        // Send provisional receipt email before redirecting to payment gateway
+        try {
+            // Get admin emails from config for BCC
+            $adminEmails = config('constants.admin_emails.to', []);
+            $bccEmails = config('constants.admin_emails.bcc', []);
+            
+            $mail = \Mail::to($registration->lead_author_email);
+            
+            // Add BCC if configured
+            if (!empty($bccEmails)) {
+                $mail->bcc($bccEmails);
+            }
+            
+            $mail->send(new \App\Mail\PosterRegistrationMail($registration, $invoice, 'provisional_receipt'));
+            
+            \Log::info('Poster Registration: Provisional receipt email sent', [
+                'tin_no' => $tinNo,
+                'email' => $registration->lead_author_email,
+                'bcc' => $bccEmails,
+            ]);
+        } catch (\Exception $mailError) {
+            \Log::warning('Poster Registration: Failed to send provisional receipt email', [
+                'tin_no' => $tinNo,
+                'email' => $registration->lead_author_email,
+                'error' => $mailError->getMessage()
+            ]);
+            // Don't fail the payment flow if email fails
+        }
+        
+        // Redirect to payment gateway based on currency
+        $paymentMethod = $request->input('payment_method', $registration->currency === 'INR' ? 'CCAvenue' : 'PayPal');
+        
+        if ($paymentMethod === 'PayPal' || $registration->currency === 'USD') {
+            // PayPal for USD
+            return redirect()->route('paypal.form', ['id' => $invoice->invoice_no]);
+        } else {
+            // CCAvenue for INR (default)
+            return redirect()->route('payment.ccavenue', ['id' => $invoice->invoice_no]);
+        }
     }
     
     /**
