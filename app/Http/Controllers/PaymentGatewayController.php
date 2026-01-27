@@ -1384,12 +1384,12 @@ class PaymentGatewayController extends Controller
             // Handle startup zone payment failure - redirect to startup zone payment page
             if ($isStartupZone || $application) {
                 echo "isStartupZone: " . $isStartupZone;
-                echo "application: " . $application;
-                exit;
+                // echo "application: " . $application;
+                // exit;
                 // Create failed payment record for startup zone
                 if ($invoice) {
-                    echo "invoice: " . $invoice;
-                    exit;
+                    // echo "invoice: " . $invoice;
+                    // exit;
                     Payment::create([
                         'invoice_id' => $invoice->id,
                         'payment_method' => $responseArray['payment_mode'] ?? 'CCAvenue',
