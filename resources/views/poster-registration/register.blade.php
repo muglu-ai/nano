@@ -1005,6 +1005,21 @@ document.addEventListener('DOMContentLoaded', function() {
         
         const formData = new FormData(form);
         
+        // Combine country code and mobile number for each author
+        document.querySelectorAll('.author-block').forEach(block => {
+            const index = block.dataset.authorIndex;
+            const mobileInput = document.getElementById(`author_mobile_${index}`);
+            const countryCodeInput = document.getElementById(`author_mobile_country_code_${index}`);
+            
+            if (mobileInput && countryCodeInput && mobileInput.value) {
+                const countryCode = countryCodeInput.value || '+91';
+                const mobileNumber = mobileInput.value.replace(/\s/g, '');
+                // Format: +CC-NUMBER (e.g., +91-1234567890)
+                const fullPhoneNumber = `${countryCode}-${mobileNumber}`;
+                formData.set(`authors[${index}][mobile]`, fullPhoneNumber);
+            }
+        });
+        
         // Ensure lead_author has the correct value (not -1)
         formData.set('lead_author', leadAuthorIndex);
         
