@@ -443,7 +443,20 @@ class PaymentGatewayController extends Controller
                         ->with('error', $message);
                 }
 
-                // 2.c Fallback for exhibitor / other invoice types – send to lookup
+                // 2.c Exhibitor Registration
+                if (
+                    ($invoice->type === 'exhibitor-registration') ||
+                    ($application && $application->application_type === 'exhibitor-registration')
+                ) {
+                    $applicationId = $application ? $application->application_id : ($invoice->application_no ?? null);
+                    if ($applicationId) {
+                        return redirect()
+                            ->route('exhibitor-registration.payment', $applicationId)
+                            ->with('error', $message);
+                    }
+                }
+
+                // 2.d Fallback for other invoice types – send to lookup
                 return redirect()
                     ->route('payment.lookup')
                     ->with('error', $message)
@@ -599,21 +612,181 @@ class PaymentGatewayController extends Controller
 
         // Check if encResp parameter exists
         $encResponse = $request->input('encResp');
+        $orderNo = $request->input('orderNo');
 
         if (empty($encResponse)) {
             Log::warning('CCAvenue Success: Missing encResp parameter', [
                 'request_data' => $request->all(),
+                'orderNo' => $orderNo,
                 'session_invoice' => session('invoice_no'),
             ]);
 
-            // Try to resolve from session and redirect appropriately
+            // If orderNo is provided, try to extract order ID and find invoice/application
+            if ($orderNo) {
+                // Extract base order ID (remove timestamp suffix if present)
+                // Format: TIN-BTS-2026-EXH-830358_1769512940 -> TIN-BTS-2026-EXH-830358
+                $baseOrderId = explode('_', $orderNo)[0];
+                
+                Log::info('CCAvenue Success: Attempting to resolve from orderNo', [
+                    'orderNo' => $orderNo,
+                    'baseOrderId' => $baseOrderId,
+                ]);
+
+                // Try to find invoice by invoice_no
+                $invoice = Invoice::where('invoice_no', $baseOrderId)->first();
+                
+                // Try to find application by application_id (for exhibitor-registration, startup-zone)
+                $application = null;
+                if (!$invoice) {
+                    $application = Application::where('application_id', $baseOrderId)->first();
+                    if ($application && $application->invoice) {
+                        $invoice = $application->invoice;
+                    }
+                } elseif ($invoice->application_id) {
+                    $application = Application::find($invoice->application_id);
+                }
+
+                // Handle exhibitor-registration
+                if ($application && $application->application_type === 'exhibitor-registration') {
+                    Log::info('CCAvenue Success: Found exhibitor-registration application', [
+                        'application_id' => $application->application_id,
+                        'invoice_id' => $invoice->id ?? null,
+                    ]);
+                    
+                    // Check payment gateway response table for this order
+                    $pgResponse = \DB::table('payment_gateway_response')
+                        ->where('order_id', $orderNo)
+                        ->orWhere('order_id', 'like', $baseOrderId . '_%')
+                        ->orderBy('created_at', 'desc')
+                        ->first();
+                    
+                    if ($pgResponse && $pgResponse->status === 'Success' && $invoice) {
+                        // Payment was successful - update invoice and payment records if not already updated
+                        if ($invoice->payment_status !== 'paid') {
+                            try {
+                                // Parse response JSON if available
+                                $responseData = $pgResponse->response_json ? json_decode($pgResponse->response_json, true) : [];
+                                $amount = $pgResponse->amount ?? ($responseData['mer_amount'] ?? $invoice->total_final_price);
+                                
+                                // Update invoice
+                                $invoice->update([
+                                    'payment_status' => 'paid',
+                                    'amount_paid' => (float) $amount,
+                                    'pending_amount' => 0,
+                                    'updated_at' => now(),
+                                ]);
+                                
+                                // Find or create payment record
+                                $payment = Payment::where('order_id', $orderNo)
+                                    ->orWhere('order_id', 'like', $baseOrderId . '_%')
+                                    ->where('invoice_id', $invoice->id)
+                                    ->first();
+                                
+                                if ($payment) {
+                                    $payment->update([
+                                        'status' => 'successful',
+                                        'amount_paid' => (float) $amount,
+                                        'amount_received' => (float) $amount,
+                                        'transaction_id' => $pgResponse->transaction_id ?? ($responseData['tracking_id'] ?? null),
+                                        'pg_result' => 'Success',
+                                        'payment_method' => $pgResponse->payment_method ?? ($responseData['payment_mode'] ?? 'CCAvenue'),
+                                        'payment_date' => $pgResponse->trans_date ?? now(),
+                                        'pg_response_json' => $pgResponse->response_json,
+                                    ]);
+                                } else {
+                                    Payment::create([
+                                        'invoice_id' => $invoice->id,
+                                        'payment_method' => $pgResponse->payment_method ?? ($responseData['payment_mode'] ?? 'CCAvenue'),
+                                        'amount' => (float) $amount,
+                                        'amount_paid' => (float) $amount,
+                                        'amount_received' => (float) $amount,
+                                        'transaction_id' => $pgResponse->transaction_id ?? ($responseData['tracking_id'] ?? null),
+                                        'status' => 'successful',
+                                        'order_id' => $orderNo,
+                                        'currency' => $invoice->currency ?? 'INR',
+                                        'payment_date' => $pgResponse->trans_date ?? now(),
+                                        'pg_result' => 'Success',
+                                        'pg_response_json' => $pgResponse->response_json,
+                                        'user_id' => $application->user_id ?? null,
+                                    ]);
+                                }
+                                
+                                Log::info('Exhibitor Registration: Payment processed from payment_gateway_response', [
+                                    'application_id' => $application->application_id,
+                                    'invoice_id' => $invoice->id,
+                                    'amount' => $amount,
+                                ]);
+                            } catch (\Exception $e) {
+                                Log::error('Exhibitor Registration: Failed to process payment from pg_response', [
+                                    'application_id' => $application->application_id,
+                                    'error' => $e->getMessage(),
+                                ]);
+                            }
+                        }
+                        
+                        // Redirect to confirmation
+                        return redirect()
+                            ->route('exhibitor-registration.confirmation', $application->application_id)
+                            ->with('success', 'Payment successful!');
+                    } else {
+                        // Payment status unclear, redirect to payment page
+                        return redirect()
+                            ->route('exhibitor-registration.payment', $application->application_id)
+                            ->with('error', 'Payment response incomplete. Please check your payment status or contact support if amount was deducted.');
+                    }
+                }
+
+                // Handle startup-zone
+                if ($application && $application->application_type === 'startup-zone') {
+                    return $this->redirectForPaymentError(
+                        $invoice->invoice_no ?? null,
+                        $application->application_id,
+                        $orderNo,
+                        'Payment response incomplete. Please try again. If amount was deducted, please contact support.'
+                    );
+                }
+
+                // Handle poster
+                if (strpos($baseOrderId, 'TIN-BTS2026-PSTR-') === 0 || strpos($baseOrderId, 'TIN-BTS') === 0) {
+                    $poster = \App\Models\Poster::where('tin_no', $baseOrderId)->first();
+                    if ($poster) {
+                        $pgResponse = \DB::table('payment_gateway_response')
+                            ->where('order_id', $orderNo)
+                            ->orWhere('order_id', 'like', $baseOrderId . '_%')
+                            ->orderBy('created_at', 'desc')
+                            ->first();
+                        
+                        if ($pgResponse && $pgResponse->status === 'Success') {
+                            return redirect()
+                                ->route('poster.success', ['tin_no' => $poster->tin_no])
+                                ->with('success', 'Payment successful! Your registration is complete.');
+                        } else {
+                            return redirect()
+                                ->route('poster.payment', ['tin_no' => $poster->tin_no])
+                                ->with('error', 'Payment response incomplete. Please check your payment status or contact support if amount was deducted.');
+                        }
+                    }
+                }
+
+                // If we found invoice/application but couldn't determine type, use redirectForPaymentError
+                if ($invoice || $application) {
+                    return $this->redirectForPaymentError(
+                        $invoice->invoice_no ?? null,
+                        $application->application_id ?? null,
+                        $orderNo,
+                        'Payment response incomplete. Please try again. If amount was deducted, please contact support.'
+                    );
+                }
+            }
+
+            // Fallback: Try to resolve from session and redirect appropriately
             $invoiceNo = session('invoice_no');
             $applicationTin = session('payment_application_id');  // TIN for startup-zone
 
             return $this->redirectForPaymentError(
                 $invoiceNo,
                 $applicationTin,
-                null,
+                $orderNo,
                 'Payment response incomplete. Please try again. If amount was deducted, please contact support.'
             );
         }
