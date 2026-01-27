@@ -1364,7 +1364,7 @@ class PaymentGatewayController extends Controller
                 }
             }
 
-            dd($invoice);
+            // dd($invoice);
 
             // If invoice not found, check session
             if (!$invoice) {
@@ -1375,6 +1375,11 @@ class PaymentGatewayController extends Controller
                         ->with('error', 'Payment failed. Please try again.');
                 }
             }
+
+            echo "isStartupZone: " . $isStartupZone;
+            echo "application: " . $application;
+
+            exit;
 
             if ($isStartupZone && $application) {
                 // Create failed payment record for startup zone
