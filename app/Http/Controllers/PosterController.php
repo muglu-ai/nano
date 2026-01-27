@@ -2335,7 +2335,7 @@ class PosterController extends Controller
         $sessionTin = session('poster_registration_tin');
         if ($sessionTin && $sessionTin !== $tinNo) {
             // If session has a different TIN, this is unauthorized access attempt
-            \Log::warning('Unauthorized poster registration process payment attempt', [
+            Log::warning('Unauthorized poster registration process payment attempt', [
                 'requested_tin' => $tinNo,
                 'session_tin' => $sessionTin,
                 'ip' => request()->ip(),
@@ -2345,7 +2345,7 @@ class PosterController extends Controller
         
         // If no session, log for security monitoring
         if (!$sessionTin) {
-            \Log::info('Poster registration process payment without session validation', [
+            Log::info('Poster registration process payment without session validation', [
                 'tin_no' => $tinNo,
                 'ip' => request()->ip(),
             ]);
@@ -2372,7 +2372,14 @@ class PosterController extends Controller
             $adminEmails = config('constants.admin_emails.to', []);
             $bccEmails = config('constants.admin_emails.bcc', []);
             
-            $mail = \Mail::to($registration->lead_author_email);
+            Log::info('Poster Registration: Preparing to send provisional receipt email', [
+                'tin_no' => $tinNo,
+                'email' => $registration->lead_author_email,
+                'bcc' => $bccEmails,
+                'admin_to' => $adminEmails,
+            ]);
+            
+            $mail = Mail::to($registration->lead_author_email);
             
             // Add BCC if configured
             if (!empty($bccEmails)) {
@@ -2381,16 +2388,17 @@ class PosterController extends Controller
             
             $mail->send(new \App\Mail\PosterRegistrationMail($registration, $invoice, 'provisional_receipt'));
             
-            \Log::info('Poster Registration: Provisional receipt email sent', [
+            Log::info('Poster Registration: Provisional receipt email sent successfully', [
                 'tin_no' => $tinNo,
                 'email' => $registration->lead_author_email,
                 'bcc' => $bccEmails,
             ]);
         } catch (\Exception $mailError) {
-            \Log::warning('Poster Registration: Failed to send provisional receipt email', [
+            Log::error('Poster Registration: Failed to send provisional receipt email', [
                 'tin_no' => $tinNo,
                 'email' => $registration->lead_author_email,
-                'error' => $mailError->getMessage()
+                'error' => $mailError->getMessage(),
+                'trace' => $mailError->getTraceAsString()
             ]);
             // Don't fail the payment flow if email fails
         }

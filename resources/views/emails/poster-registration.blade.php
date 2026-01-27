@@ -210,6 +210,9 @@
                                 </table>
 
                                 <!-- Attendee List -->
+                                @endif
+
+                                <!-- Attendee List -->
                                 @php
                                     $attendingAuthors = $authors->filter(function($author) {
                                         return $author->will_attend;
