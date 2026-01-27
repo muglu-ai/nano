@@ -204,6 +204,23 @@
                     $tanNo = $application->tan_no ?? null;
                     // TAN Status from tan_compliance field (similar to gst_compliance)
                     $tanStatus = $application->tan_compliance ? 'Registered' : 'Unregistered';
+                    
+                    // Construct billingData array from application for consistency with draft flow
+                    $billingData = [
+                        'company_name' => $application->company_name ?? '',
+                        'email' => $application->company_email ?? '',
+                        'address' => $application->address ?? '',
+                        'city' => is_numeric($application->city_id) ? (\App\Models\City::find($application->city_id)->name ?? $application->city_id) : ($application->city_id ?? ''),
+                        'state_id' => $application->state_id ?? null,
+                        'country_id' => $application->country_id ?? null,
+                        'postal_code' => $application->postal_code ?? '',
+                        'telephone' => $application->landline ?? '',
+                        'website' => $application->website ?? '',
+                        'tax_no' => $application->tax_no ?? null,
+                        'tan_no' => $application->tan_no ?? null,
+                        'tan_status' => $application->tan_compliance ? 'Registered' : 'Unregistered',
+                    ];
+                    
                     $billingCompany = $application->company_name ?? '';
                     $billingEmail = $application->company_email ?? '';
                     $billingAddress = $application->address ?? '';
