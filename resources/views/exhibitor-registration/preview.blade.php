@@ -256,6 +256,12 @@
                         'processing_rate' => $application->invoice->processing_chargesRate ?? 3,
                         'gst_rate' => 18,
                         'total_price' => $application->invoice->total_final_price ?? $application->invoice->amount,
+                        'cgst_rate' => $application->invoice->cgst_rate ?? null,
+                        'cgst_amount' => $application->invoice->cgst_amount ?? null,
+                        'sgst_rate' => $application->invoice->sgst_rate ?? null,
+                        'sgst_amount' => $application->invoice->sgst_amount ?? null,
+                        'igst_rate' => $application->invoice->igst_rate ?? null,
+                        'igst_amount' => $application->invoice->igst_amount ?? null,
                     ] : null;
                 } elseif ($hasDraft) {
                     // Data from draft table
@@ -643,21 +649,21 @@
                     </tr> 
                     @endif--}}
                     
-                    @if($pricing['cgst_amount'])
+                    @if(isset($pricing['cgst_amount']) && $pricing['cgst_amount'])
                     <tr>
-                        <td class="label-cell">CGST ({{ $pricing['cgst_rate'] }}%)</td>
+                        <td class="label-cell">CGST ({{ $pricing['cgst_rate'] ?? 0 }}%)</td>
                         <td class="value-cell">{{ $currencySymbol }}{{ number_format($pricing['cgst_amount'], $priceFormat) }}</td>
                     </tr>
                     @endif
-                    @if($pricing['sgst_amount'])
+                    @if(isset($pricing['sgst_amount']) && $pricing['sgst_amount'])
                     <tr>
-                        <td class="label-cell">SGST ({{ $pricing['sgst_rate'] }}%)</td>
+                        <td class="label-cell">SGST ({{ $pricing['sgst_rate'] ?? 0 }}%)</td>
                         <td class="value-cell">{{ $currencySymbol }}{{ number_format($pricing['sgst_amount'], $priceFormat) }}</td>
                     </tr>
                     @endif
-                    @if($pricing['igst_amount'])
+                    @if(isset($pricing['igst_amount']) && $pricing['igst_amount'])
                     <tr>
-                        <td class="label-cell">IGST ({{ $pricing['igst_rate'] }}%)</td>
+                        <td class="label-cell">IGST ({{ $pricing['igst_rate'] ?? 0 }}%)</td>
                         <td class="value-cell">{{ $currencySymbol }}{{ number_format($pricing['igst_amount'], $priceFormat) }}</td>
                     </tr>
                     @endif
