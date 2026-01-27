@@ -418,7 +418,7 @@
                 </div>
 
                 <div class="row">
-                    <div class="col-md-6 mt-2">
+                    <div class="col-md-6">
                         <label for="billing_email" class="form-label">Email <span class="text-danger">*</span></label>
                         <input type="email" class="form-control" id="billing_email" name="billing_email" 
                                value="{{ isset($draft->billing_data['email']) ? $draft->billing_data['email'] : ($draft->company_email ?? '') }}" required>
@@ -524,7 +524,7 @@
                 </div>
 
                 <div class="row">
-                    <div class="col-md-6 mt-2">
+                    <div class="col-md-6 mt-1">
                         <label for="exhibitor_email" class="form-label">Company Email <span class="text-danger">*</span></label>
                         <input type="email" class="form-control" id="exhibitor_email" name="exhibitor_email" 
                                value="{{ isset($draft->exhibitor_data['email']) ? $draft->exhibitor_data['email'] : '' }}" required>
@@ -585,7 +585,7 @@
                 </div>
                 <div class="row">
                    
-                    <div class="col-md-6 ui-intl-tel-input">
+                    <div class="col-md-6 ui-intl-tel-input mt-2">
                         <label for="contact_mobile" class="form-label">Mobile <span class="text-danger">*</span></label>
                         <input type="tel" class="form-control" id="contact_mobile" name="contact_mobile" 
                                value="{{ isset($draft->contact_data['mobile']) ? $draft->contact_data['mobile'] : ($draft->contact_mobile ?? '') }}" required>
