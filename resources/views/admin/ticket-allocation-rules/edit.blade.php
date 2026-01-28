@@ -151,11 +151,14 @@
                 <div class="mb-3">
                     <label class="form-label">Ticket Allocations <span class="text-danger">*</span></label>
                     <div class="d-flex justify-content-between align-items-center mb-2">
-                        <small class="text-muted">Select ticket types and specify count for each</small>
+                        <small class="text-muted">
+                            <strong>All ticket types are shown below.</strong> Select ticket types and specify count for each.
+                            <br><span class="text-info"><i class="fas fa-info-circle"></i> Use the filter toggle to show only exhibitor-only types if needed.</span>
+                        </small>
                         <div class="form-check form-switch">
                             <input class="form-check-input" type="checkbox" id="filter_exhibitor_only" onchange="filterExhibitorOnly()">
                             <label class="form-check-label" for="filter_exhibitor_only">
-                                Show only Exhibitor-Only ticket types
+                                Filter: Show only Exhibitor-Only
                             </label>
                         </div>
                     </div>
@@ -169,6 +172,7 @@
                             <thead class="table-light">
                                 <tr>
                                     <th>Ticket Type</th>
+                                    <th>Event</th>
                                     <th>Category</th>
                                     <th>Type</th>
                                     <th>Count</th>
@@ -184,6 +188,9 @@
                                             <label class="form-check-label">
                                                 {{ $ticketType->name }}
                                             </label>
+                                        </td>
+                                        <td>
+                                            <small class="text-muted">{{ $ticketType->event->event_name ?? 'N/A' }}</small>
                                         </td>
                                         <td>{{ $ticketType->category->name ?? 'N/A' }}</td>
                                         <td>
