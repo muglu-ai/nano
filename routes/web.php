@@ -112,6 +112,12 @@ Route::middleware(['auth', Auth::class])->prefix('super-admin')->name('super-adm
     Route::delete('/sectors/{id}', [SuperAdminController::class, 'deleteSector'])->name('sectors.delete');
     
     Route::post('/sub-sectors', [SuperAdminController::class, 'addSubSector'])->name('sub-sectors.add');
+});
+    
+// Admin Ticket Allocation Rules Management (accessible to admin and super-admin)
+Route::middleware(['auth', Auth::class])->prefix('admin')->name('admin.')->group(function () {
+    Route::resource('ticket-allocation-rules', \App\Http\Controllers\Admin\TicketAllocationRuleController::class);
+    Route::post('/ticket-allocation-rules/preview', [\App\Http\Controllers\Admin\TicketAllocationRuleController::class, 'preview'])->name('ticket-allocation-rules.preview');
     Route::post('/sub-sectors/{id}', [SuperAdminController::class, 'updateSubSector'])->name('sub-sectors.update');
     Route::delete('/sub-sectors/{id}', [SuperAdminController::class, 'deleteSubSector'])->name('sub-sectors.delete');
     
@@ -231,6 +237,7 @@ Route::get('/exhibitor/list/{type}', [ExhibitorController::class, 'list'])->name
 Route::get('/exhibitor/list2/{type}', [ExhibitorController::class, 'list2'])->name('exhibition2.list')->middleware(CheckUser::class); //invite delegates to the event
 Route::get('/exhibitor/export/complimentary', [ExhibitorController::class, 'exportComplimentary'])->name('exhibitor.export.complimentary')->middleware(CheckUser::class); //export complimentary delegates
 Route::post('/invite', [ExhibitorController::class, 'invite'])->name('exhibition.invite')->middleware(SharedMiddleware::class);
+Route::post('/invite/cancel', [ExhibitorController::class, 'cancelInvitation'])->name('exhibition.invite.cancel')->middleware(SharedMiddleware::class);
 Route::post('/accept-coex-terms', [ExhibitorController::class, 'acceptTerms'])->name('coex.acceptTerms')->middleware(CheckUser::class);
 //get the invited delegates form the exhibitor controller
 Route::get('/invited/{token}/', [ExhibitorController::class, 'invited'])->name('exhibition.invited');

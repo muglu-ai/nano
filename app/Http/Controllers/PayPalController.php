@@ -21,6 +21,7 @@ use Illuminate\Support\Facades\DB;
 use App\Mail\ExtraRequirementsMail;
 use Illuminate\Support\Facades\Mail;
 use App\Services\ExtraRequirementsMailService;
+use App\Helpers\TicketAllocationHelper;
 use Illuminate\Support\Facades\Response;
 use App\Models\Country;
 use Carbon\Carbon;
@@ -1211,6 +1212,42 @@ private function formatBillingFromEventContact($eventContact, $applicationId)
                         'invoice_no' => $invoice->invoice_no,
                         'amount' => $amountPaid
                     ]);
+
+                    // Auto-allocate tickets based on booth area
+                    try {
+                        // Get booth area - handle both numeric and string values
+                        $boothArea = $application->allocated_sqm ?? $application->interested_sqm ?? null;
+                        
+                        // Convert string values to numeric if possible, or use default
+                        if (is_string($boothArea)) {
+                            if (preg_match('/(\d+)\s*sqm/i', $boothArea, $matches)) {
+                                $boothArea = (float) $matches[1];
+                            } else {
+                                // Use default rule for startup booths
+                                $boothArea = 6; // Default to middle of smallest range
+                            }
+                        }
+                        
+                        if ($boothArea && is_numeric($boothArea)) {
+                            TicketAllocationHelper::autoAllocateAfterPayment(
+                                $application->id, 
+                                (float) $boothArea,
+                                $application->event_id ?? null,
+                                $application->application_type
+                            );
+                            Log::info('Auto-allocated tickets after PayPal payment', [
+                                'application_id' => $application->application_id,
+                                'booth_area' => $boothArea,
+                                'application_type' => $application->application_type
+                            ]);
+                        }
+                    } catch (\Exception $e) {
+                        Log::error('Failed to auto-allocate tickets after PayPal payment', [
+                            'application_id' => $application->application_id,
+                            'error' => $e->getMessage()
+                        ]);
+                        // Don't fail payment if allocation fails
+                    }
                     
                     // Send thank you email after payment confirmation
                     try {

@@ -108,12 +108,17 @@ class CoExhibitUser extends BaseController
         // dd($exhibitionParticipant);
 
         if ($exhibitionParticipant) {
-            // Get the total passes allocated
-            $total_passes = $exhibitionParticipant->stall_manning_count ?? 0;
+            // Get counts from ticketAllocation JSON using helper
+            $countsData = \App\Helpers\TicketAllocationHelper::getCountsFromAllocation(
+                null, // application_id is null for co-exhibitors
+                $this->coExhibitor->id // coExhibitor_id
+            );
+            $total_passes = $countsData['stall_manning_count'] ?? 0;
 
-            //get the count from StallManning by matching  exhibition_participant_id then calculate used passes
-            $used_passes = StallManning::where('exhibition_participant_id', $exhibitionParticipant->id)->count();
-
+            // Get used passes (non-cancelled)
+            $used_passes = StallManning::where('exhibition_participant_id', $exhibitionParticipant->id)
+                ->where('status', '!=', 'cancelled')
+                ->count();
 
             // Calculate remaining passes
             $remaining_passes = max(0, $total_passes - $used_passes);
@@ -143,12 +148,17 @@ class CoExhibitUser extends BaseController
         // dd($exhibitionParticipant);
 
         if ($exhibitionParticipant) {
-            // Get the total passes allocated
-            $total_passes = $exhibitionParticipant->complimentary_delegate_count ?? 0;
+            // Get counts from ticketAllocation JSON using helper
+            $countsData = \App\Helpers\TicketAllocationHelper::getCountsFromAllocation(
+                null, // application_id is null for co-exhibitors
+                $this->coExhibitor->id // coExhibitor_id
+            );
+            $total_passes = $countsData['complimentary_delegate_count'] ?? 0;
 
-            //get the count from StallManning by matching  exhibition_participant_id then calculate used passes
-            $used_passes = ComplimentaryDelegate::where('exhibition_participant_id', $exhibitionParticipant->id)->count();
-
+            // Get used passes (non-cancelled)
+            $used_passes = ComplimentaryDelegate::where('exhibition_participant_id', $exhibitionParticipant->id)
+                ->where('status', '!=', 'cancelled')
+                ->count();
 
             // Calculate remaining passes
             $remaining_passes = max(0, $total_passes - $used_passes);

@@ -12,6 +12,7 @@ use App\Models\RequirementsOrder;
 use App\Models\User;
 use App\Services\CcAvenueService;
 use App\Services\ExtraRequirementsMailService;
+use App\Helpers\TicketAllocationHelper;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -1389,6 +1390,44 @@ class PaymentGatewayController extends Controller
                         'transaction_id' => $responseArray['tracking_id'] ?? null,
                     ]);
 
+                    // Auto-allocate tickets based on booth area
+                    try {
+                        // Get booth area - handle both numeric and string values
+                        $boothArea = $application->allocated_sqm ?? $application->interested_sqm ?? null;
+                        
+                        // Convert string values to numeric if possible, or use default
+                        if (is_string($boothArea)) {
+                            // For "Startup Booth" or "Booth / POD", use default allocation or skip
+                            // Could also parse if format is like "4 SQM"
+                            if (preg_match('/(\d+)\s*sqm/i', $boothArea, $matches)) {
+                                $boothArea = (float) $matches[1];
+                            } else {
+                                // Use default rule for startup booths (e.g., 3-8 sqm rule)
+                                $boothArea = 6; // Default to middle of smallest range
+                            }
+                        }
+                        
+                        if ($boothArea && is_numeric($boothArea)) {
+                            TicketAllocationHelper::autoAllocateAfterPayment(
+                                $application->id, 
+                                (float) $boothArea,
+                                $application->event_id ?? null,
+                                $application->application_type
+                            );
+                            Log::info('Auto-allocated tickets after payment', [
+                                'application_id' => $application->application_id,
+                                'booth_area' => $boothArea,
+                                'application_type' => $application->application_type
+                            ]);
+                        }
+                    } catch (\Exception $e) {
+                        Log::error('Failed to auto-allocate tickets after payment', [
+                            'application_id' => $application->application_id,
+                            'error' => $e->getMessage()
+                        ]);
+                        // Don't fail payment if allocation fails
+                    }
+
                     // Send thank you email after payment confirmation
                     try {
                         $contact = \App\Models\EventContact::where('application_id', $application->id)->first();
@@ -1476,6 +1515,43 @@ class PaymentGatewayController extends Controller
                         'amount' => $responseArray['mer_amount'],
                         'transaction_id' => $responseArray['tracking_id'] ?? null,
                     ]);
+
+                    // Auto-allocate tickets based on booth area
+                    try {
+                        // Get booth area - handle both numeric and string values
+                        $boothArea = $application->allocated_sqm ?? $application->interested_sqm ?? null;
+                        
+                        // Convert string values to numeric if possible, or use default
+                        if (is_string($boothArea)) {
+                            // For "Startup Booth" or "Booth / POD", use default allocation or skip
+                            if (preg_match('/(\d+)\s*sqm/i', $boothArea, $matches)) {
+                                $boothArea = (float) $matches[1];
+                            } else {
+                                // Use default rule for startup booths (e.g., 3-8 sqm rule)
+                                $boothArea = 6; // Default to middle of smallest range
+                            }
+                        }
+                        
+                        if ($boothArea && is_numeric($boothArea)) {
+                            TicketAllocationHelper::autoAllocateAfterPayment(
+                                $application->id, 
+                                (float) $boothArea,
+                                $application->event_id ?? null,
+                                $application->application_type
+                            );
+                            Log::info('Auto-allocated tickets after payment', [
+                                'application_id' => $application->application_id,
+                                'booth_area' => $boothArea,
+                                'application_type' => $application->application_type
+                            ]);
+                        }
+                    } catch (\Exception $e) {
+                        Log::error('Failed to auto-allocate tickets after payment', [
+                            'application_id' => $application->application_id,
+                            'error' => $e->getMessage()
+                        ]);
+                        // Don't fail payment if allocation fails
+                    }
 
                     // Send thank you email after payment confirmation
                     try {
