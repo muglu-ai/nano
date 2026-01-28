@@ -265,7 +265,7 @@
                         <td class="value-cell">
                             <a href="{{ route('poster.downloadFile', ['type' => 'extended_abstract', 'token' => $draft->token]) }}" 
                                class="btn btn-sm btn-outline-primary" target="_blank">
-                                <i class="fas fa-download"></i> Download
+                                <i class="fas fa-download"></i> Download Extended Abstract
                             </a>
                         </td>
                     </tr>
@@ -278,7 +278,7 @@
                         <td class="value-cell">
                             <a href="{{ route('poster.downloadFile', ['type' => 'lead_auth_cv', 'token' => $draft->token]) }}" 
                                class="btn btn-sm btn-outline-primary" target="_blank">
-                                <i class="fas fa-download"></i> Download
+                                <i class="fas fa-download"></i> Download CV
                             </a>
                         </td>
                     </tr>
