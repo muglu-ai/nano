@@ -32,15 +32,28 @@ class PublicTicketController extends Controller
             abort(404, 'Ticket registration is not available for this event.');
         }
         
-        // Load ticket types with relationships
+        // Load ticket types with relationships - exclude exhibitor-only ticket types
         $ticketTypes = TicketType::where('event_id', $event->id)
             ->where('is_active', true)
-            ->with(['category', 'subcategory', 'eventDays', 'inventory'])
+            ->with(['category' => function($query) {
+                $query->select('id', 'name', 'is_exhibitor_only');
+            }, 'subcategory', 'eventDays', 'inventory'])
+            ->where(function($query) {
+                $query->whereDoesntHave('category')
+                      ->orWhereHas('category', function($q) {
+                          $q->where('is_exhibitor_only', false)
+                            ->orWhereNull('is_exhibitor_only');
+                      });
+            })
             ->orderBy('sort_order')
             ->get();
         
-        // Group by category
+        // Group by category - exclude exhibitor-only categories
         $categories = TicketCategory::where('event_id', $event->id)
+            ->where(function($query) {
+                $query->where('is_exhibitor_only', false)
+                      ->orWhereNull('is_exhibitor_only');
+            })
             ->with(['ticketTypes' => function($query) {
                 $query->where('is_active', true)
                       ->with(['subcategory', 'eventDays', 'inventory'])
@@ -86,10 +99,18 @@ class PublicTicketController extends Controller
                     $ticketTypeIdOrSlug = $registrationData['ticket_type_id'];
                     
                     // Try to find ticket type to get slug if it's an ID
+                    // Exclude exhibitor-only ticket types
                     $tempTicketType = \App\Models\Ticket\TicketType::where('event_id', $event->id)
                         ->where(function($query) use ($ticketTypeIdOrSlug) {
                             $query->where('slug', $ticketTypeIdOrSlug)
                                   ->orWhere('id', $ticketTypeIdOrSlug);
+                        })
+                        ->where(function($query) {
+                            $query->whereDoesntHave('category')
+                                  ->orWhereHas('category', function($q) {
+                                      $q->where('is_exhibitor_only', false)
+                                        ->orWhereNull('is_exhibitor_only');
+                                  });
                         })
                         ->first();
                     
@@ -122,10 +143,19 @@ class PublicTicketController extends Controller
             }
         }
         
-        // Load ticket types
+        // Load ticket types - exclude exhibitor-only ticket types
         $ticketTypes = TicketType::where('event_id', $event->id)
             ->where('is_active', true)
-            ->with(['category', 'subcategory', 'eventDays', 'inventory'])
+            ->with(['category' => function($query) {
+                $query->select('id', 'name', 'is_exhibitor_only');
+            }, 'subcategory', 'eventDays', 'inventory'])
+            ->where(function($query) {
+                $query->whereDoesntHave('category')
+                      ->orWhereHas('category', function($q) {
+                          $q->where('is_exhibitor_only', false)
+                            ->orWhereNull('is_exhibitor_only');
+                      });
+            })
             ->orderBy('sort_order')
             ->get();
         
@@ -247,16 +277,21 @@ class PublicTicketController extends Controller
                 'required',
                 function ($attribute, $value, $fail) use ($event) {
                     // Check if ticket type exists by slug or ID, and belongs to this event
+                    // Also ensure it's not an exhibitor-only ticket type
                     $ticketType = TicketType::where('event_id', $event->id)
                         ->where(function($query) use ($value) {
                             $query->where('slug', $value)
                                   ->orWhere('id', $value);
                         })
                         ->where('is_active', true)
+                        ->whereHas('category', function($query) {
+                            $query->where('is_exhibitor_only', false)
+                                  ->orWhereNull('is_exhibitor_only');
+                        })
                         ->first();
                     
                     if (!$ticketType) {
-                        $fail('The selected ticket type is invalid.');
+                        $fail('The selected ticket type is invalid or not available for public registration.');
                     }
                 },
             ],
@@ -461,12 +496,20 @@ class PublicTicketController extends Controller
         }
 
         // Verify ticket type belongs to this event (can be slug or ID)
+        // Also ensure it's not an exhibitor-only ticket type
         $ticketType = TicketType::where('event_id', $event->id)
             ->where(function($query) use ($validated) {
                 $query->where('slug', $validated['ticket_type_id'])
                       ->orWhere('id', $validated['ticket_type_id']);
             })
             ->where('is_active', true)
+            ->where(function($query) {
+                $query->whereDoesntHave('category')
+                      ->orWhereHas('category', function($q) {
+                          $q->where('is_exhibitor_only', false)
+                            ->orWhereNull('is_exhibitor_only');
+                      });
+            })
             ->firstOrFail();
         
         // Store ticket type ID (not slug) in validated data for consistency
@@ -863,16 +906,24 @@ class PublicTicketController extends Controller
                     'required',
                     function ($attribute, $value, $fail) use ($event) {
                         // Check if ticket type exists by slug or ID, and belongs to this event
+                        // Also ensure it's not an exhibitor-only ticket type
                         $ticketType = TicketType::where('event_id', $event->id)
                             ->where(function($query) use ($value) {
                                 $query->where('slug', $value)
                                       ->orWhere('id', $value);
                             })
                             ->where('is_active', true)
+                            ->where(function($query) {
+                                $query->whereDoesntHave('category')
+                                      ->orWhereHas('category', function($q) {
+                                          $q->where('is_exhibitor_only', false)
+                                            ->orWhereNull('is_exhibitor_only');
+                                      });
+                            })
                             ->first();
                         
                         if (!$ticketType) {
-                            $fail('The selected ticket type is invalid.');
+                            $fail('The selected ticket type is invalid or not available for public registration.');
                         }
                     },
                 ],
@@ -893,12 +944,20 @@ class PublicTicketController extends Controller
             $registrationData = session('ticket_registration_data', []);
             
             // Get ticket type to calculate base amount (can be slug or ID)
+            // Exclude exhibitor-only ticket types
             $ticketType = TicketType::where('event_id', $event->id)
                 ->where(function($query) use ($request) {
                     $query->where('slug', $request->ticket_type_id)
                           ->orWhere('id', $request->ticket_type_id);
                 })
                 ->where('is_active', true)
+                ->where(function($query) {
+                    $query->whereDoesntHave('category')
+                          ->orWhereHas('category', function($q) {
+                              $q->where('is_exhibitor_only', false)
+                                ->orWhereNull('is_exhibitor_only');
+                          });
+                })
                 ->first();
                 
             if (!$ticketType) {
