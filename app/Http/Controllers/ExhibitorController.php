@@ -161,17 +161,23 @@ class ExhibitorController extends Controller
         }
     }
 
-    //get the count of filled complimentary and delegate count from the exhibition_participants table, complimentary_delegates table and complimentary_delegates with the exhibition_participant_id
+    //get the count of filled complimentary and delegate count (excluding cancelled invitations)
     public function usedcount()
     {
         $this->__Construct();
         $count = $this->checkCount();
         $complimentaryDelegates = DB::table('complimentary_delegates')
             ->where('exhibition_participant_id', $count['exhibition_participant_id'])
+            ->where(function ($q) {
+                $q->whereNull('status')->orWhere('status', '!=', 'cancelled');
+            })
             ->count();
 
         $stallManning = DB::table('stall_manning')
             ->where('exhibition_participant_id', $count['exhibition_participant_id'])
+            ->where(function ($q) {
+                $q->whereNull('status')->orWhere('status', '!=', 'cancelled');
+            })
             ->count();
 
         return [
@@ -240,10 +246,13 @@ class ExhibitorController extends Controller
                 $ticketName = $ticket['ticket_type'];
                 $allocated = $ticket['count'];
                 $ticketId = $ticket['ticket_id'];
-                // complimentary_delegates.ticketType stores ticket_type ID (e.g. 3), not the name
+                // complimentary_delegates.ticketType stores ticket_type ID; exclude cancelled so slot is freed
                 $usedCount = DB::table('complimentary_delegates')
                     ->where('exhibition_participant_id', $count['exhibition_participant_id'])
                     ->where('ticketType', $ticketId)
+                    ->where(function ($q) {
+                        $q->whereNull('status')->orWhere('status', '!=', 'cancelled');
+                    })
                     ->count();
 
                 $data = DB::table('complimentary_delegates')

@@ -243,17 +243,20 @@ class TicketAllocationHelper
     private static function getUsedCount(int $exhibitionParticipantId, int $ticketTypeId): int
     {
         $count = 0;
+        $notCancelled = function ($q) {
+            $q->whereNull('status')->orWhere('status', '!=', 'cancelled');
+        };
 
-        // Count from complimentary_delegates
+        // Count from complimentary_delegates (exclude cancelled so slot is freed)
         $count += ComplimentaryDelegate::where('exhibition_participant_id', $exhibitionParticipantId)
             ->where('ticketType', $ticketTypeId)
-            ->where('status', '!=', 'cancelled')
+            ->where($notCancelled)
             ->count();
 
-        // Count from stall_manning
+        // Count from stall_manning (exclude cancelled so slot is freed)
         $count += StallManning::where('exhibition_participant_id', $exhibitionParticipantId)
             ->where('ticketType', $ticketTypeId)
-            ->where('status', '!=', 'cancelled')
+            ->where($notCancelled)
             ->count();
 
         return $count;
