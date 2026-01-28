@@ -122,6 +122,12 @@
 @endpush
 
 @section('poster-content')
+@php
+    // Ensure $poster variable exists for backward compatibility
+    if (isset($posterRegistration) && !isset($poster)) {
+        $poster = $posterRegistration;
+    }
+@endphp
 <div class="success-container">
     {{-- Success Header --}}
     <div class="success-card">
@@ -169,7 +175,10 @@
             <div class="info-label">TIN Number</div>
             <div class="info-value"><strong>{{ $poster->tin_no ?? 'N/A' }}</strong></div>
         </div>
-        
+        <div class="info-row">
+            <div class="info-label">PIN Number</div>
+            <div class="info-value"><strong>{{ $poster->pin_no ?? 'N/A' }}</strong></div>
+        </div>
         <div class="info-row">
             <div class="info-label">Registration Date</div>
             <div class="info-value">{{ $poster->created_at ? $poster->created_at->format('d M Y, h:i A') : 'N/A' }}</div>

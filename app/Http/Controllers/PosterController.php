@@ -740,6 +740,31 @@ class PosterController extends Controller
     // STEP 3: success
     public function success(string $tin_no)
     {
+        // Try new PosterRegistration first
+        $posterRegistration = \App\Models\PosterRegistration::where('tin_no', $tin_no)->first();
+        
+        if ($posterRegistration) {
+            // New poster registration system
+            // Load authors
+            $authors = $posterRegistration->posterAuthors()->orderBy('author_index')->get();
+            
+            // Get payment information
+            $invoice = \App\Models\Invoice::where('invoice_no', $tin_no)
+                ->where('type', 'poster_registration')
+                ->first();
+            
+            $payment = null;
+            if ($invoice) {
+                $payment = \App\Models\Payment::where('invoice_id', $invoice->id)
+                    ->where('status', 'successful')
+                    ->orderBy('created_at', 'desc')
+                    ->first();
+            }
+            
+            return view('poster-registration.success', compact('posterRegistration', 'authors', 'invoice', 'payment'));
+        }
+        
+        // Fallback to old Poster model
         $poster = Poster::where('tin_no', $tin_no)->firstOrFail();
         
         // Get payment information

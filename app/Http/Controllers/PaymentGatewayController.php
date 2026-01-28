@@ -1308,7 +1308,7 @@ class PaymentGatewayController extends Controller
                             
                             // Redirect to poster success page
                             return redirect()
-                                ->route('poster.register.success', $newPosterRegistration->tin_no)
+                                ->route('poster.register.success', ['tin_no' => $newPosterRegistration->tin_no])
                                 ->with('success', 'Payment successful! Your registration is complete.');
                         }
                     }
@@ -1742,6 +1742,40 @@ class PaymentGatewayController extends Controller
 
             // exit;
 
+            // Check if this is a poster registration payment failure
+            if (!$invoice || ($invoice && $invoice->type === 'poster_registration')) {
+                // Extract TIN from order_id if possible
+                $posterTinNo = $order_id;
+                if (strpos($posterTinNo, '_') !== false) {
+                    $posterTinNo = explode('_', $posterTinNo)[0];
+                }
+                
+                // Check if it's a poster registration
+                $posterRegistration = null;
+                if (strpos($posterTinNo, 'TIN-BTS-2026-PSTR-') === 0 || strpos($posterTinNo, 'TIN-BTS') === 0) {
+                    $posterRegistration = \App\Models\PosterRegistration::where('tin_no', $posterTinNo)->first();
+                    
+                    if (!$posterRegistration) {
+                        // Try old poster table
+                        $posterRegistration = \App\Models\Poster::where('tin_no', $posterTinNo)->first();
+                    }
+                }
+                
+                // If poster registration found, redirect to payment page
+                if ($posterRegistration) {
+                    Log::info('Poster Registration Payment Failed', [
+                        'tin_no' => $posterTinNo,
+                        'order_status' => $responseArray['order_status'] ?? 'Unknown',
+                        'failure_message' => $responseArray['failure_message'] ?? 'Payment failed',
+                    ]);
+                    
+                    return redirect()
+                        ->route('poster.register.payment', ['tin_no' => $posterTinNo])
+                        ->with('error', 'Payment failed or cancelled. Please try again.')
+                        ->with('payment_response', $responseArray);
+                }
+            }
+            
             // Handle startup zone and exhibitor-registration payment failure
             if ($isStartupZone || $isExhibitorRegistration || $application) {
                 // echo "isStartupZone: " . $isStartupZone;

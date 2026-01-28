@@ -1281,20 +1281,13 @@ Route::post('/poster/register/submit/{tin_no}', [PosterController::class, 'newSu
     ->name('poster.register.newSubmit'); // Move from demo to main table
 
 Route::get('/poster/register/payment/{tin_no}', [PosterController::class, 'showPayment'])
-    ->name('poster.register.showPayment'); // Show payment page
+    ->name('poster.register.payment'); // Payment page for NEW poster registrations
 
 Route::post('/poster/register/payment/{tin_no}/process', [PosterController::class, 'processPayment'])
     ->name('poster.register.processPayment'); // Process payment
 
-Route::get('/poster/register/success/{tin_no}', [PosterController::class, 'posterSuccess'])
-    ->name('poster.register.success'); // Success page
-
-// Old payment route (keeping for backward compatibility)
-Route::get('/poster/register/payment-old/{tin_no}', [PosterController::class, 'payment'])
-    ->name('poster.register.payment'); // Payment page (reuses existing payment method)
-
 Route::get('/poster/register/success/{tin_no}', [PosterController::class, 'success'])
-    ->name('poster.register.success'); // Success page (reuses existing success method)
+    ->name('poster.register.success'); // Success page
 
 // Secure file download route
 Route::get('/poster/file/{type}/{token}', [PosterController::class, 'downloadFile'])
