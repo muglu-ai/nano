@@ -208,6 +208,13 @@ $idTypes = ['Aadhaar Card', 'PAN Card', 'Driving License', 'Passport', 'Voter ID
               <p> Inaugural registration for SEMICON India 2025 is now closed as all seats are filled. </p>
         </div>
         </div>
+    @elseif(isset($invitationCancelled) && $invitationCancelled)
+        <div class="col-md-6 d-flex flex-column justify-content-center mt-3">
+            <div class="alert alert-warning" role="alert">
+                <h4 class="alert-heading">Invitation cancelled</h4>
+                <p class="mb-0">This invitation has been cancelled by the exhibitor. You can no longer complete registration using this link. If you believe this is an error, please contact the exhibitor who invited you.</p>
+            </div>
+        </div>
     @else
 
     <div class="col-md-8 d-flex flex-column justify-content-center mt-3">

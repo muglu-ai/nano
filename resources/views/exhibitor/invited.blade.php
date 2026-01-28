@@ -64,6 +64,13 @@
                         <p>Invalid or expired invitation link.</p>
                     </div>
                 </div>
+            @elseif(isset($invitationCancelled) && $invitationCancelled)
+                <div class="col-md-6 d-flex flex-column justify-content-center mt-3">
+                    <div class="alert alert-warning" role="alert">
+                        <h4 class="alert-heading">Invitation cancelled</h4>
+                        <p class="mb-0">This invitation has been cancelled by the exhibitor. You can no longer complete registration using this link. If you believe this is an error, please contact the exhibitor who invited you.</p>
+                    </div>
+                </div>
             @elseif(isset($token) && !empty($token) && $token == 'success')
                 <div class="col-md-6 d-flex flex-column justify-content-center mt-3">
                     <div class="alert alert-success" role="alert">
