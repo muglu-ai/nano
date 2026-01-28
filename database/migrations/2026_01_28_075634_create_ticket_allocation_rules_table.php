@@ -11,6 +11,9 @@ return new class extends Migration
      */
     public function up(): void
     {
+        // Drop table if it exists (from previous failed migration)
+        Schema::dropIfExists('ticket_allocation_rules');
+        
         Schema::create('ticket_allocation_rules', function (Blueprint $table) {
             $table->id();
             $table->foreignId('event_id')->nullable()->constrained('events')->onDelete('cascade');
@@ -22,8 +25,8 @@ return new class extends Migration
             $table->boolean('is_active')->default(true);
             $table->timestamps();
             
-            $table->index(['event_id', 'application_type', 'is_active']);
-            $table->index(['booth_area_min', 'booth_area_max']);
+            $table->index(['event_id', 'application_type', 'is_active'], 'idx_tar_event_app_active');
+            $table->index(['booth_area_min', 'booth_area_max'], 'idx_tar_booth_area');
         });
     }
 
