@@ -2036,6 +2036,44 @@ class PosterController extends Controller
             'authors_approval' => 'required|accepted',
         ]);
         
+        // Validate mobile numbers based on country code
+        foreach ($validated['authors'] as $index => $author) {
+            $mobile = $author['mobile'] ?? '';
+            $countryCode = $author['phone_country_code'] ?? '+91';
+            
+            // Extract just the number part (after the country code and dash)
+            $parts = explode('-', $mobile);
+            $mobileNumber = end($parts);
+            $mobileNumber = preg_replace('/[^0-9]/', '', $mobileNumber);
+            
+            // Get dial code
+            $dialCode = str_replace('+', '', $countryCode);
+            
+            if ($dialCode === '91') {
+                // India: exactly 10 digits
+                if (strlen($mobileNumber) !== 10) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => "Author " . ($index + 1) . ": Invalid Mobile Number.",
+                        'errors' => [
+                            "authors.{$index}.mobile" => ['Invalid Mobile Number.']
+                        ]
+                    ], 422);
+                }
+            } else {
+                // Other countries: 6-15 digits
+                if (strlen($mobileNumber) < 6 || strlen($mobileNumber) > 15) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => "Author " . ($index + 1) . ": Invalid Mobile Number.",
+                        'errors' => [
+                            "authors.{$index}.mobile" => ['Invalid Mobile Number.']
+                        ]
+                    ], 422);
+                }
+            }
+        }
+        
         // Handle file uploads
         $extendedAbstractPath = null;
         $extendedAbstractName = null;

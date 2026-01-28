@@ -956,6 +956,30 @@ document.addEventListener('DOMContentLoaded', function() {
     // Initial call to update attendance summary on page load
     updateAttendanceSummary();
 
+    // Function to validate mobile number based on country code
+    function validateMobileNumber(mobileInput, countryCode) {
+        const mobileNumber = mobileInput.value.replace(/\s/g, '');
+        const dialCode = countryCode.replace('+', '');
+        
+        if (!mobileNumber) {
+            return { valid: false, message: 'Mobile number is required.' };
+        }
+        
+        if (dialCode === '91') {
+            // India: exactly 10 digits
+            if (mobileNumber.length !== 10) {
+                return { valid: false, message: 'Invalid Mobile Number.' };
+            }
+        } else {
+            // Other countries: 6-15 digits
+            if (mobileNumber.length < 6 || mobileNumber.length > 15) {
+                return { valid: false, message: 'Invalid Mobile Number.' };
+            }
+        }
+        
+        return { valid: true, message: '' };
+    }
+
     // Function to check if lead author email is unique
     async function checkLeadAuthorEmailUniqueness(email) {
         try {
@@ -1013,6 +1037,35 @@ document.addEventListener('DOMContentLoaded', function() {
                 Swal.fire('Validation Error', 'This email is already registered as a lead author. Please use a different email address.', 'error');
                 return;
             }
+        }
+        
+        // Validate mobile numbers for all authors
+        let mobileValidationFailed = false;
+        document.querySelectorAll('.author-block').forEach(block => {
+            const index = block.dataset.authorIndex;
+            const mobileInput = document.getElementById(`author_mobile_${index}`);
+            const countryCodeInput = document.getElementById(`author_mobile_country_code_${index}`);
+            
+            if (mobileInput && countryCodeInput) {
+                const validation = validateMobileNumber(mobileInput, countryCodeInput.value);
+                if (!validation.valid) {
+                    mobileValidationFailed = true;
+                    mobileInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    mobileInput.focus();
+                    mobileInput.classList.add('is-invalid');
+                    const feedbackDiv = mobileInput.nextElementSibling?.nextElementSibling;
+                    if (feedbackDiv && feedbackDiv.classList.contains('invalid-feedback')) {
+                        feedbackDiv.textContent = validation.message;
+                        feedbackDiv.style.display = 'block';
+                    }
+                    Swal.fire('Validation Error', validation.message, 'error');
+                    return;
+                }
+            }
+        });
+        
+        if (mobileValidationFailed) {
+            return;
         }
         
         // Check lead author CV upload
