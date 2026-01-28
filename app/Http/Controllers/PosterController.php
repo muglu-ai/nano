@@ -2119,15 +2119,8 @@ class PosterController extends Controller
         
         // Calculate amounts
         $baseAmount = $attendeeCount * $pricePerAttendee;
-        $gstAmount = 0;
-        $processingFee = 0;
-        
-        if ($currency === 'INR') {
-            $gstAmount = ($baseAmount * $gstRate) / 100;
-            $processingFee = ($baseAmount * $processingChargeRate) / 100;
-        } else {
-            $processingFee = ($baseAmount * $processingChargeRate) / 100;
-        }
+        $gstAmount = ($baseAmount * $gstRate) / 100;
+        $processingFee = ($baseAmount * $processingChargeRate) / 100;
         
         $totalAmount = $baseAmount + $gstAmount + $processingFee;
         

@@ -216,6 +216,33 @@
                         <td class="label-cell">Abstract</td>
                         <td class="value-cell">{{ $poster->abstract ?? 'N/A' }}</td>
                     </tr>
+                    <tr>
+                        <td class="label-cell">Extended Abstract</td>
+                        <td class="value-cell">
+                            @if($poster->extended_abstract_path)
+                                <a href="{{ asset('storage/' . $poster->extended_abstract_path) }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-download"></i> Download Extended Abstract
+                                </a>
+                            @else
+                                N/A
+                            @endif
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="label-cell">Lead Author CV</td>
+                        <td class="value-cell">
+                            @php
+                                $leadAuthor = $authors->where('is_lead_author', true)->first();
+                            @endphp
+                            @if($leadAuthor && $leadAuthor->cv_path)
+                                <a href="{{ asset('storage/' . $leadAuthor->cv_path) }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-download"></i> Download CV
+                                </a>
+                            @else
+                                N/A
+                            @endif
+                        </td>
+                    </tr>
                 </table>
             </div>
 
@@ -237,7 +264,7 @@
                                     <th style="width: 15%;">Email</th>
                                     <th style="width: 10%;">Mobile</th>
                                     <th style="width: 15%;">Address</th>
-                                    <th style="width: 15%;">Affiliation</th>
+                                    <th style="width: 15%;">Institute / Organization</th>
                                     <th style="width: 15%;">Role</th>
                                 </tr>
                             </thead>
@@ -306,6 +333,16 @@
                     $attendeeCount = $attendeesList->count();
                     $currencySymbol = $currency === 'INR' ? '₹' : '$';
                     $pricePerAttendee = $currency === 'INR' ? 2000 : 25;
+                    $gstRate = config('constants.GST_RATE', 18);
+                    $processingRate = $currency === 'INR' 
+                        ? config('constants.IND_PROCESSING_CHARGE', 3) 
+                        : config('constants.INT_PROCESSING_CHARGE', 9);
+                    
+                    // Recalculate amounts (in case old data has incorrect calculations)
+                    $baseAmount = $poster->base_amount;
+                    $gstAmount = ($baseAmount * $gstRate) / 100;
+                    $processingFee = ($baseAmount * $processingRate) / 100;
+                    $totalAmount = $baseAmount + $gstAmount + $processingFee;
                 @endphp
                 
                 <div class="mb-3">
@@ -327,11 +364,11 @@
                         <td class="value-cell">{{ $currencySymbol }} {{ number_format($poster->base_amount, 2) }}</td>
                     </tr>
                     <tr>
-                        <td class="label-cell">GST (18%)</td>
+                        <td class="label-cell">GST ({{ $gstRate }}%)</td>
                         <td class="value-cell">{{ $currencySymbol }} {{ number_format($poster->gst_amount, 2) }}</td>
                     </tr>
                     <tr>
-                        <td class="label-cell">Processing Charges (3%)</td>
+                        <td class="label-cell">Processing Charges ({{ $processingRate }}%)</td>
                         <td class="value-cell">{{ $currencySymbol }} {{ number_format($poster->processing_fee, 2) }}</td>
                     </tr>
                     
