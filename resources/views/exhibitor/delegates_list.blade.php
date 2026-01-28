@@ -227,9 +227,11 @@
             //     <button class="btn btn-sm btn-primary" onclick="showConfirmationModal('${user.email}', '${user.first_name}')">Status</button>
             // </td>
             function renderTable(users) {
+                if (!tableBody) return;
                 tableBody.innerHTML = '';
                 if (!users || users.length === 0) {
-                    const colCount = document.querySelector('#datatable-basic thead tr').cells.length;
+                    const theadRow = document.querySelector('#datatable-basic thead tr');
+                    const colCount = theadRow ? theadRow.cells.length : 7;
                     tableBody.innerHTML = `<tr><td colspan="${colCount}" class="text-center text-muted py-4">No entries found</td></tr>`;
                     return;
                 }
@@ -285,6 +287,7 @@
             }
 
             function renderPagination(data) {
+                if (!paginationContainer) return;
                 paginationContainer.innerHTML = '';
                 for (let i = 1; i <= data.last_page; i++) {
                     paginationContainer.innerHTML += `
@@ -303,22 +306,27 @@
             }
 
             // Sorting headers
-            document.querySelectorAll('.thead-light th').forEach(header => {
-                header.addEventListener('click', function() {
-                    const field = this.dataset.sort;
-                    if (field) {
-                        sortField = field;
-                        sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
-                        fetchUsers();
-                    }
+            const sortHeaders = document.querySelectorAll('.thead-light th');
+            if (sortHeaders.length) {
+                sortHeaders.forEach(header => {
+                    header.addEventListener('click', function() {
+                        const field = this.dataset.sort;
+                        if (field) {
+                            sortField = field;
+                            sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
+                            fetchUsers();
+                        }
+                    });
                 });
-            });
+            }
 
-            // Per page selector
-            perPageSelector.addEventListener('change', function() {
-                perPage = this.value;
-                fetchUsers();
-            });
+            // Per page selector (only if present)
+            if (perPageSelector) {
+                perPageSelector.addEventListener('change', function() {
+                    perPage = this.value;
+                    fetchUsers();
+                });
+            }
 
             // Initial fetch
             fetchUsers();
@@ -819,7 +827,9 @@
             addModal.show();
         }
 
-        document.getElementById('inviteForm').addEventListener('submit', function(event) {
+        var inviteFormEl = document.getElementById('inviteForm');
+        if (inviteFormEl) {
+            inviteFormEl.addEventListener('submit', function(event) {
             event.preventDefault();
 
             const formData = {
@@ -852,6 +862,7 @@
                     Swal.fire('Error', 'Something went wrong! ' + error.message, 'error');
                 });
         });
+        }
     </script>
 
     <script>
