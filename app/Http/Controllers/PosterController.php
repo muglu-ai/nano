@@ -2478,6 +2478,8 @@ class PosterController extends Controller
                 'admin_to' => $adminEmails,
             ]);
             
+            $posterMail = new \App\Mail\PosterRegistrationMail($registration, $invoice, 'provisional_receipt');
+            
             $mail = Mail::to($registration->lead_author_email);
             
             // Add BCC if configured
@@ -2485,7 +2487,8 @@ class PosterController extends Controller
                 $mail->bcc($bccEmails);
             }
             
-            $mail->send(new \App\Mail\PosterRegistrationMail($registration, $invoice, 'provisional_receipt'));
+            // Send immediately, don't queue
+            $mail->send($posterMail);
             
             Log::info('Poster Registration: Provisional receipt email sent successfully', [
                 'tin_no' => $tinNo,
