@@ -1390,27 +1390,13 @@ class PaymentGatewayController extends Controller
                         'transaction_id' => $responseArray['tracking_id'] ?? null,
                     ]);
 
-                    // Auto-allocate tickets based on booth area
+                    // Auto-allocate tickets based on booth area (numeric sqm or special: POD, Booth / POD, Startup Booth)
                     try {
-                        // Get booth area - handle both numeric and string values
                         $boothArea = $application->allocated_sqm ?? $application->interested_sqm ?? null;
-                        
-                        // Convert string values to numeric if possible, or use default
-                        if (is_string($boothArea)) {
-                            // For "Startup Booth" or "Booth / POD", use default allocation or skip
-                            // Could also parse if format is like "4 SQM"
-                            if (preg_match('/(\d+)\s*sqm/i', $boothArea, $matches)) {
-                                $boothArea = (float) $matches[1];
-                            } else {
-                                // Use default rule for startup booths (e.g., 3-8 sqm rule)
-                                $boothArea = 6; // Default to middle of smallest range
-                            }
-                        }
-                        
-                        if ($boothArea && is_numeric($boothArea)) {
+                        if ($boothArea !== null && $boothArea !== '') {
                             TicketAllocationHelper::autoAllocateAfterPayment(
-                                $application->id, 
-                                (float) $boothArea,
+                                $application->id,
+                                $boothArea,
                                 $application->event_id ?? null,
                                 $application->application_type
                             );
@@ -1516,26 +1502,13 @@ class PaymentGatewayController extends Controller
                         'transaction_id' => $responseArray['tracking_id'] ?? null,
                     ]);
 
-                    // Auto-allocate tickets based on booth area
+                    // Auto-allocate tickets based on booth area (numeric sqm or special: POD, Booth / POD, Startup Booth)
                     try {
-                        // Get booth area - handle both numeric and string values
                         $boothArea = $application->allocated_sqm ?? $application->interested_sqm ?? null;
-                        
-                        // Convert string values to numeric if possible, or use default
-                        if (is_string($boothArea)) {
-                            // For "Startup Booth" or "Booth / POD", use default allocation or skip
-                            if (preg_match('/(\d+)\s*sqm/i', $boothArea, $matches)) {
-                                $boothArea = (float) $matches[1];
-                            } else {
-                                // Use default rule for startup booths (e.g., 3-8 sqm rule)
-                                $boothArea = 6; // Default to middle of smallest range
-                            }
-                        }
-                        
-                        if ($boothArea && is_numeric($boothArea)) {
+                        if ($boothArea !== null && $boothArea !== '') {
                             TicketAllocationHelper::autoAllocateAfterPayment(
-                                $application->id, 
-                                (float) $boothArea,
+                                $application->id,
+                                $boothArea,
                                 $application->event_id ?? null,
                                 $application->application_type
                             );

@@ -989,50 +989,22 @@ class PassesController extends Controller
             ]);
 
             $application = Application::with(['exhibitionParticipant'])->findOrFail($request->application_id);
-            $stallSize = $application->allocated_sqm ?? 0;
+            $boothValue = $application->allocated_sqm ?? $application->interested_sqm ?? null;
 
-            if ($stallSize < 9) {
+            // For numeric booth area, require at least 9 sqm (unless using rules). Special types (POD, etc.) skip this.
+            $isSpecialBoothType = is_string($boothValue) && trim($boothValue) !== '' && !preg_match('/^\d+(\.\d+)?\s*sqm?$/i', trim($boothValue));
+            if (!$isSpecialBoothType && (empty($boothValue) || (is_numeric($boothValue) && (float) $boothValue < 9))) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Stall size must be at least 9 sqm to allocate passes.'
+                    'message' => 'Stall size must be at least 9 sqm (or a valid special type like POD) to allocate passes.'
                 ], 400);
             }
 
-            // Pass allocation rules based on stall size
-            $passAllocation = [
-                ['min' => 9, 'max' => 17, 'passes' => 5],
-                ['min' => 18, 'max' => 26, 'passes' => 10],
-                ['min' => 27, 'max' => 54, 'passes' => 20],
-                ['min' => 55, 'max' => 100, 'passes' => 30],
-                ['min' => 101, 'max' => 400, 'passes' => 40],
-                ['min' => 401, 'max' => PHP_INT_MAX, 'passes' => 50],
-            ];
-
-            // Find the correct pass count based on stall size
-            $allocatedPasses = 0;
-            foreach ($passAllocation as $range) {
-                if ($stallSize >= $range['min'] && $stallSize <= $range['max']) {
-                    $allocatedPasses = $range['passes'];
-                    break;
-                }
-            }
-
-            // Calculate complimentaryDelegateCount based on stall size
-            if ($stallSize >= 9 && $stallSize < 36) {
-                $complimentaryDelegateCount = 2;
-            } elseif ($stallSize < 101) {
-                $complimentaryDelegateCount = 5;
-            } elseif ($stallSize >= 101) {
-                $complimentaryDelegateCount = 10;
-            } else {
-                $complimentaryDelegateCount = 0;
-            }
-
-            // Use TicketAllocationHelper to auto-allocate based on booth area
+            // Use TicketAllocationHelper to auto-allocate (handles numeric sqm and special types: POD, Booth / POD, Startup Booth)
             try {
                 $exhibitionParticipant = TicketAllocationHelper::autoAllocateAfterPayment(
                     $application->id,
-                    $stallSize,
+                    $boothValue,
                     $application->event_id ?? null,
                     $application->application_type ?? null
                 );
@@ -1044,10 +1016,10 @@ class PassesController extends Controller
                 $totalAllocated = $countsData['total_allocated'] ?? 0;
 
                 // Log the auto-allocation
-                \Log::info('Passes auto-allocated based on stall size', [
+                \Log::info('Passes auto-allocated based on booth area/type', [
                     'application_id' => $application->id,
                     'company_name' => $application->company_name,
-                    'stall_size' => $stallSize,
+                    'booth_value' => $boothValue,
                     'stall_manning_count' => $stallManningCount,
                     'complimentary_delegate_count' => $complimentaryCount,
                     'total_allocated' => $totalAllocated,
@@ -1057,9 +1029,9 @@ class PassesController extends Controller
 
                 return response()->json([
                     'success' => true,
-                    'message' => 'Passes auto-allocated successfully for ' . $application->company_name . ' based on ' . $stallSize . ' sqm stall size',
+                    'message' => 'Passes auto-allocated successfully for ' . $application->company_name . ' based on ' . (is_scalar($boothValue) ? $boothValue : json_encode($boothValue)),
                     'data' => [
-                        'stall_size' => $stallSize,
+                        'booth_value' => $boothValue,
                         'stall_manning_count' => $stallManningCount,
                         'complimentary_delegate_count' => $complimentaryCount,
                         'total_allocated' => $totalAllocated,

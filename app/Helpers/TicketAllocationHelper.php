@@ -552,7 +552,8 @@ class TicketAllocationHelper
 
     /**
      * Calculate allocation from booth area using rules
-     * 
+     * Handles numeric sqm and special strings (POD, Booth / POD, Startup Booth, etc.)
+     *
      * @param float|string|null $boothArea
      * @param int|null $eventId
      * @param string|null $applicationType
@@ -563,14 +564,20 @@ class TicketAllocationHelper
         ?int $eventId = null,
         ?string $applicationType = null
     ): array {
-        // Handle string values like "Startup Booth" or "Booth / POD"
+        // Handle string values: special booth types (POD, Booth / POD, Startup Booth) or "4 SQM"
         if (is_string($boothArea)) {
+            $trimmed = trim($boothArea);
+            // Special booth types: 1 exhibitor + 1 standard pass
+            $special = self::getSpecialBoothTypeAllocation($trimmed, $eventId);
+            if (!empty($special)) {
+                return ['ticket_allocations' => $special];
+            }
             // Try to extract numeric value if format is like "4 SQM"
             if (preg_match('/(\d+)\s*sqm/i', $boothArea, $matches)) {
                 $boothArea = (float) $matches[1];
             } else {
-                // Use default rule for startup booths (middle of smallest range)
-                $boothArea = 6; // Default to middle of 3-8 sqm range
+                // Fallback: use default rule (middle of smallest range)
+                $boothArea = 6;
             }
         }
 
@@ -580,7 +587,6 @@ class TicketAllocationHelper
 
         $boothArea = (float) $boothArea;
 
-        // Find matching rule
         $query = TicketAllocationRule::active()
             ->forEvent($eventId)
             ->forApplicationType($applicationType)
@@ -603,6 +609,97 @@ class TicketAllocationHelper
         return [
             'ticket_allocations' => $rule->ticket_allocations ?? [],
         ];
+    }
+
+    /**
+     * Resolve allocation for special booth types (POD, Booth / POD, Startup Booth, etc.)
+     * Returns [ticket_type_id => count] or empty if not a special type or resolution fails.
+     *
+     * @param string $boothType Raw value (interested_sqm / allocated_sqm)
+     * @param int|null $eventId
+     * @return array
+     */
+    public static function getSpecialBoothTypeAllocation(string $boothType, ?int $eventId = null): array
+    {
+        $config = config('ticket_allocation.special_booth_types', []);
+        $normalized = trim($boothType);
+        if ($normalized === '') {
+            return [];
+        }
+        // Match config key case-insensitively
+        foreach ($config as $key => $counts) {
+            if (strcasecmp(trim((string) $key), $normalized) === 0) {
+                // Explicit ticket_type_ids override
+                if (isset($counts['ticket_type_ids']) && is_array($counts['ticket_type_ids'])) {
+                    $out = [];
+                    foreach ($counts['ticket_type_ids'] as $id => $count) {
+                        if ($count > 0) {
+                            $out[(int) $id] = (int) $count;
+                        }
+                    }
+                    return $out;
+                }
+                // Role-based: exhibitor => 1, standard_pass => 1
+                return self::resolveRoleAllocationToTicketTypeIds($counts, $eventId);
+            }
+        }
+        return [];
+    }
+
+    /**
+     * Resolve role-based allocation (exhibitor, standard_pass) to [ticket_type_id => count].
+     *
+     * @param array $roleCounts e.g. ['exhibitor' => 1, 'standard_pass' => 1]
+     * @param int|null $eventId
+     * @return array
+     */
+    protected static function resolveRoleAllocationToTicketTypeIds(array $roleCounts, ?int $eventId = null): array
+    {
+        $roles = config('ticket_allocation.ticket_type_roles', []);
+        $query = TicketType::where('is_active', true);
+        if ($eventId) {
+            $query->where('event_id', $eventId);
+        }
+        $ticketTypes = $query->get();
+        $result = [];
+
+        foreach ($roleCounts as $role => $count) {
+            if (!is_numeric($count) || (int) $count <= 0) {
+                continue;
+            }
+            $count = (int) $count;
+            $def = $roles[$role] ?? null;
+            if (!$def) {
+                continue;
+            }
+            $nameContains = $def['name_contains'] ?? [];
+            $slugContains = $def['slug_contains'] ?? [];
+            $found = $ticketTypes->first(function ($tt) use ($nameContains, $slugContains) {
+                $name = strtolower($tt->name ?? '');
+                $slug = strtolower($tt->slug ?? '');
+                foreach ($nameContains as $sub) {
+                    if (str_contains($name, strtolower($sub))) {
+                        return true;
+                    }
+                }
+                foreach ($slugContains as $sub) {
+                    if (str_contains($slug, strtolower($sub))) {
+                        return true;
+                    }
+                }
+                return false;
+            });
+            if ($found) {
+                $result[$found->id] = ($result[$found->id] ?? 0) + $count;
+            } else {
+                Log::warning('Ticket allocation: no ticket type found for role', [
+                    'role' => $role,
+                    'event_id' => $eventId,
+                ]);
+            }
+        }
+
+        return $result;
     }
 
     /**
