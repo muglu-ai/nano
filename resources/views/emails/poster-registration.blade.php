@@ -190,6 +190,25 @@
                                     </tr>
                                 </table>
                                 @else
+                                <!-- Attendee List -->
+                                @php
+                                    $attendingAuthors = $authors->filter(function($author) {
+                                        return $author->will_attend;
+                                    });
+                                    $pricePerAttendee = $currency === 'INR' ? 2000 : 25;
+                                @endphp
+
+                                @if($attendingAuthors->count() > 0)
+                                <div style="margin-bottom: 15px; padding-bottom: 15px; border-bottom: 1px solid #dee2e6;">
+                                    <p style="margin: 0 0 10px; font-weight: bold; color: #555555;">Attendees ({{ $attendingAuthors->count() }}):</p>
+                                    @foreach($attendingAuthors as $attendee)
+                                    <div style="margin-bottom: 5px; color: #333333; font-size: 14px;">
+                                        • {{ $attendee->title }} {{ $attendee->first_name }} {{ $attendee->last_name }} - {{ $registration->currency }} {{ number_format($attendeeRate, 2) }}
+                                    </div>
+                                    @endforeach
+                                </div>
+                                @endif
+
                                 <table role="presentation" width="100%" cellpadding="5" cellspacing="0">
                                     <tr>
                                         <td style="width: 40%; font-weight: bold; color: #555555; padding: 5px 0;">Base Amount:</td>
@@ -208,27 +227,6 @@
                                         <td style="color: #333333; padding: 10px 0; font-weight: bold; font-size: 16px;">{{ $registration->currency }} {{ number_format($registration->total_amount, 2) }}</td>
                                     </tr>
                                 </table>
-
-                                <!-- Attendee List -->
-                                @endif
-
-                                <!-- Attendee List -->
-                                @php
-                                    $attendingAuthors = $authors->filter(function($author) {
-                                        return $author->will_attend;
-                                    });
-                                    $attendeeRate = $registration->currency === 'INR' ? 15000 : 250;
-                                @endphp
-
-                                @if($attendingAuthors->count() > 0)
-                                <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #dee2e6;">
-                                    <p style="margin: 0 0 10px; font-weight: bold; color: #555555;">Attendees ({{ $attendingAuthors->count() }}):</p>
-                                    @foreach($attendingAuthors as $attendee)
-                                    <div style="margin-bottom: 5px; color: #333333; font-size: 14px;">
-                                        • {{ $attendee->title }} {{ $attendee->first_name }} {{ $attendee->last_name }} - {{ $registration->currency }} {{ number_format($attendeeRate, 2) }}
-                                    </div>
-                                    @endforeach
-                                </div>
                                 @endif
 
                                 <!-- Payment Link -->
