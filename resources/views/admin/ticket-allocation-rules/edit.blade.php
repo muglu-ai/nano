@@ -48,27 +48,105 @@
                     </div>
                 </div>
 
-                <div class="row">
-                    <div class="col-md-6 mb-3">
-                        <label for="booth_area_min" class="form-label">Minimum Booth Area (sqm) <span class="text-danger">*</span></label>
-                        <input type="number" class="form-control @error('booth_area_min') is-invalid @enderror" 
-                               id="booth_area_min" name="booth_area_min" 
-                               value="{{ old('booth_area_min', $rule->booth_area_min) }}" min="0" required>
-                        @error('booth_area_min')
-                            <div class="invalid-feedback">{{ $message }}</div>
-                        @enderror
-                    </div>
+                @php
+                    $isSpecialType = !empty($rule->booth_type);
+                @endphp
 
-                    <div class="col-md-6 mb-3">
-                        <label for="booth_area_max" class="form-label">Maximum Booth Area (sqm) <span class="text-danger">*</span></label>
-                        <input type="number" class="form-control @error('booth_area_max') is-invalid @enderror" 
-                               id="booth_area_max" name="booth_area_max" 
-                               value="{{ old('booth_area_max', $rule->booth_area_max) }}" min="0" required>
-                        @error('booth_area_max')
+                <div class="mb-3">
+                    <label class="form-label">Booth Type <span class="text-danger">*</span></label>
+                    <div class="form-check mb-2">
+                        <input class="form-check-input" type="radio" name="rule_type" id="rule_type_numeric" value="numeric" {{ !$isSpecialType ? 'checked' : '' }} onchange="toggleBoothTypeFields()">
+                        <label class="form-check-label" for="rule_type_numeric">
+                            Numeric Range (sqm)
+                        </label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="rule_type" id="rule_type_special" value="special" {{ $isSpecialType ? 'checked' : '' }} onchange="toggleBoothTypeFields()">
+                        <label class="form-check-label" for="rule_type_special">
+                            Special Booth Type (POD, Booth / POD, Startup Booth, etc.)
+                        </label>
+                    </div>
+                </div>
+
+                <div id="numeric_range_fields" style="display: {{ $isSpecialType ? 'none' : 'block' }};">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="booth_area_min" class="form-label">Minimum Booth Area (sqm) <span class="text-danger">*</span></label>
+                            <input type="number" class="form-control @error('booth_area_min') is-invalid @enderror" 
+                                   id="booth_area_min" name="booth_area_min" 
+                                   value="{{ old('booth_area_min', $rule->booth_area_min) }}" min="0">
+                            @error('booth_area_min')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label for="booth_area_max" class="form-label">Maximum Booth Area (sqm) <span class="text-danger">*</span></label>
+                            <input type="number" class="form-control @error('booth_area_max') is-invalid @enderror" 
+                                   id="booth_area_max" name="booth_area_max" 
+                                   value="{{ old('booth_area_max', $rule->booth_area_max) }}" min="0">
+                            @error('booth_area_max')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                        </div>
+                    </div>
+                </div>
+
+                <div id="special_booth_type_fields" style="display: {{ $isSpecialType ? 'block' : 'none' }};">
+                    <div class="mb-3">
+                        <label for="booth_type" class="form-label">Special Booth Type <span class="text-danger">*</span></label>
+                        <select name="booth_type" id="booth_type" class="form-select @error('booth_type') is-invalid @enderror">
+                            <option value="">Select or enter custom type</option>
+                            @if(isset($specialBoothTypes))
+                                @foreach($specialBoothTypes as $type)
+                                    <option value="{{ $type }}" {{ old('booth_type', $rule->booth_type) == $type ? 'selected' : '' }}>
+                                        {{ $type }}
+                                    </option>
+                                @endforeach
+                            @endif
+                        </select>
+                        <small class="text-muted">Or enter a custom booth type:</small>
+                        <input type="text" class="form-control mt-2" id="booth_type_custom" 
+                               placeholder="e.g., POD, Booth / POD, Startup Booth" 
+                               value="{{ old('booth_type', $rule->booth_type) }}"
+                               onchange="document.getElementById('booth_type').value = this.value">
+                        @error('booth_type')
                             <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
                     </div>
                 </div>
+
+                <script>
+                function toggleBoothTypeFields() {
+                    const ruleType = document.querySelector('input[name="rule_type"]:checked').value;
+                    const numericFields = document.getElementById('numeric_range_fields');
+                    const specialFields = document.getElementById('special_booth_type_fields');
+                    const boothAreaMin = document.getElementById('booth_area_min');
+                    const boothAreaMax = document.getElementById('booth_area_max');
+                    const boothType = document.getElementById('booth_type');
+
+                    if (ruleType === 'numeric') {
+                        numericFields.style.display = 'block';
+                        specialFields.style.display = 'none';
+                        boothAreaMin.setAttribute('required', 'required');
+                        boothAreaMax.setAttribute('required', 'required');
+                        boothType.removeAttribute('required');
+                        boothType.value = '';
+                    } else {
+                        numericFields.style.display = 'none';
+                        specialFields.style.display = 'block';
+                        boothAreaMin.removeAttribute('required');
+                        boothAreaMax.removeAttribute('required');
+                        boothAreaMin.value = '';
+                        boothAreaMax.value = '';
+                        boothType.setAttribute('required', 'required');
+                    }
+                }
+                // Initialize on page load
+                document.addEventListener('DOMContentLoaded', function() {
+                    toggleBoothTypeFields();
+                });
+                </script>
 
                 <div class="mb-3">
                     <label class="form-label">Ticket Allocations <span class="text-danger">*</span></label>
