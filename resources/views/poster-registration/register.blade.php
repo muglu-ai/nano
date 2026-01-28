@@ -204,7 +204,7 @@
                         <small class="text-muted">Current file: {{ basename($draft->extended_abstract_path) }}</small>
                         @endif
                         <div class="invalid-feedback"></div>
-                        <small class="text-muted d-block mt-2">Max file size: 5MB. Download Extended Abstract Submission Template /Format: <a href="{{ asset('asset/docs/Extended_Abstract_Template.pdf') }}" target="_blank">Click Here</a></small>
+                        <small class="text-muted d-block mt-2">Max file size: 5MB. Download Extended Abstract Submission Template /Format: <a href="{{ asset('uploads/events/Bengaluru_Tech_Summit_2026-Abstract-submission-template.pdf') }}" target="_blank">Click Here</a></small>
                     </div>
                     <div class="col-md-6">
                         <label for="presentation_mode" class="form-label">Preferred Presentation <span class="text-danger">*</span></label>
