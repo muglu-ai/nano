@@ -731,6 +731,8 @@ Route::get('/payment/{id}', [PayPalController::class, 'showPaymentForm'])
 Route::post('/paypal/create', [PayPalController::class, 'createOrder'])->name('paypal.create');
 Route::post('/paypal/create-order', [PayPalController::class, 'createOrder']);
 Route::post('/paypal/capture-order/{orderId}', [PayPalController::class, 'captureOrder']);
+Route::get('/paypal/poster/return/{invoice}', [PayPalController::class, 'handlePosterReturn'])
+    ->name('paypal.poster.return');
 Route::get('/paypal/success', [PayPalController::class, 'success'])->name('paypal.success');
 Route::get('/paypal/cancel', [PayPalController::class, 'cancel'])->name('paypal.cancel');
 Route::get('/paypal/webhook', [PayPalController::class, 'webhook'])->withoutMiddleware([\App\Http\Middleware\VerifyCsrfToken::class]);

@@ -57,6 +57,18 @@ class PayPalController extends Controller
         }
     }
     
+    // Check if this is a poster registration invoice
+    $isPosterRegistration = $invoice->type === 'poster_registration';
+    
+    // For poster registration, check if already paid
+    if ($isPosterRegistration) {
+        if ($invoice->payment_status === 'paid') {
+            $tinNo = $invoice->invoice_no;
+            return redirect()->route('poster.register.success', ['tin_no' => $tinNo])
+                ->with('info', 'Payment already completed');
+        }
+    }
+    
     // For startup-zone, check if already paid and redirect to confirmation
     if ($isStartupZone && $application) {
         if ($invoice->payment_status === 'paid') {
@@ -71,16 +83,30 @@ class PayPalController extends Controller
         }
     }
     
-    // For non-startup-zone invoices, check type
-    if (!$isStartupZone && $invoice->type != 'extra_requirement') {
+    // For non-startup-zone and non-poster invoices, check type
+    if (!$isStartupZone && !$isPosterRegistration && $invoice->type != 'extra_requirement') {
         return redirect()->route('exhibitor.orders')
             ->with('error', 'Invalid invoice type');
     }
 
-    // Fetch billing detail - handle startup zone differently
+    // Fetch billing detail - handle different invoice types
     $billingDetail = null;
     
-    if ($isStartupZone) {
+    if ($isPosterRegistration) {
+        // For poster registration, get billing from poster_authors (lead author)
+        $tinNo = $invoice->invoice_no;
+        $posterRegistration = \App\Models\PosterRegistration::where('tin_no', $tinNo)->first();
+        
+        if ($posterRegistration) {
+            $leadAuthor = \App\Models\PosterAuthor::where('tin_no', $tinNo)
+                ->where('is_lead_author', true)
+                ->first();
+            
+            if ($leadAuthor) {
+                $billingDetail = $this->formatBillingFromPosterAuthor($leadAuthor, $posterRegistration);
+            }
+        }
+    } elseif ($isStartupZone) {
         // For startup zone, get billing from EventContact
         $eventContact = \App\Models\EventContact::where('application_id', $invoice->application_id)->first();
         if ($eventContact) {
@@ -108,6 +134,11 @@ class PayPalController extends Controller
     }
     
     if (!$billingDetail) {
+        if ($isPosterRegistration) {
+            $tinNo = $invoice->invoice_no;
+            return redirect()->route('poster.register.payment', ['tin_no' => $tinNo])
+                ->with('error', 'Billing details not found. Please contact support.');
+        }
         if ($isStartupZone && $application) {
             return redirect()->route('startup-zone.payment', $application->application_id)
                 ->with('error', 'Billing details not found. Please contact support.');
@@ -120,9 +151,9 @@ class PayPalController extends Controller
     $timezone = $this->detectTimezoneForBilling($billingDetail);
 
 
-    // For startup zone, skip surcharge logic
-    if ($isStartupZone) {
-        // Startup zone invoices are already calculated, just use the invoice amount
+    // For startup zone and poster registration, skip surcharge logic
+    if ($isStartupZone || $isPosterRegistration) {
+        // Startup zone and poster registration invoices are already calculated, just use the invoice amount
         // Currency is already set in the invoice
     } elseif($invoice->payment_status == 'unpaid') {
 
@@ -190,7 +221,90 @@ class PayPalController extends Controller
 
     $countries = Country::all(['id', 'name']);
 
-    return view('paypal.payment-form', compact('invoice', 'billingDetail', 'orders', 'countries'));
+    // For poster registration, create PayPal order directly without showing form
+    if ($isPosterRegistration) {
+        // Create PayPal order directly for poster registration
+        $order = $invoice->invoice_no . '_' . time();
+        $order_ID = $order;
+        
+        // Determine amount - for poster registration use total_final_price (already in USD)
+        $amount = $invoice->total_final_price ?? $invoice->amount;
+        $email = $billingDetail->email;
+        $description = 'Poster Registration - ' . ($posterRegistration->abstract_title ?? 'BTS 2026');
+        
+        $purchaseUnit = PurchaseUnitRequestBuilder::init(
+            AmountWithBreakdownBuilder::init('USD', $amount)->build()
+        )
+            ->description($description)
+            ->invoiceId($order_ID)
+            ->build();
+
+        // Add return and cancel URLs for poster registration
+        $returnUrl = route('paypal.poster.return', ['invoice' => $invoice->invoice_no]);
+        $cancelUrl = route('poster.register.payment', ['tin_no' => $posterRegistration->tin_no]);
+        
+        $applicationContext = \PaypalServerSdkLib\Models\Builders\OrderApplicationContextBuilder::init()
+            ->returnUrl($returnUrl)
+            ->cancelUrl($cancelUrl)
+            ->build();
+
+        $orderBody = [
+            'body' => OrderRequestBuilder::init(
+                CheckoutPaymentIntent::CAPTURE,
+                [$purchaseUnit]
+            )
+            ->applicationContext($applicationContext)
+            ->build()
+        ];
+
+        try {
+            $apiResponse = $this->client->getOrdersController()->ordersCreate($orderBody);
+            $paypal_order_id = $apiResponse->getResult()->getId();
+            
+            // Insert into payment_gateway_response
+            $data = [
+                'merchant_id' => null,
+                'payment_id' => $paypal_order_id,
+                'order_id' => $order,
+                'currency' => 'USD',
+                'amount' => $amount,
+                'redirect_url' => null,
+                'cancel_url' => null,
+                'language' => 'EN',
+                'billing_name' => $billingDetail->contact_name,
+                'billing_address' => $billingDetail->address,
+                'billing_city' => $billingDetail->city_id,
+                'billing_state' => $billingDetail->state->name,
+                'billing_zip' => $billingDetail->postal_code,
+                'billing_country' => $billingDetail->country->name,
+                'billing_tel' => $billingDetail->phone,
+                'billing_email' => $billingDetail->email,
+            ];
+            
+            \DB::table('payment_gateway_response')->insert([
+                'merchant_data' => json_encode($data),
+                'order_id' => $data['order_id'],
+                'payment_id' => $data['payment_id'],
+                'amount' => $data['amount'],
+                'status' => 'Pending',
+                'gateway' => 'Paypal',
+                'currency' => 'USD',
+                'email' => $data['billing_email'],
+                'created_at' => now(),
+            ]);
+
+            return response()->json($apiResponse->getResult());
+        } catch (\Exception $e) {
+            Log::error('PayPal order creation failed for poster registration', [
+                'tin_no' => $posterRegistration->tin_no,
+                'error' => $e->getMessage()
+            ]);
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
+    } else {
+        // For other invoice types, show the payment form
+        return view('paypal.payment-form', compact('invoice', 'billingDetail', 'orders', 'countries'));
+    }
 }
 
 /**
@@ -494,7 +608,44 @@ private function formatBillingFromEventContact($eventContact, $applicationId)
     ];
 }
 
+private function formatBillingFromPosterAuthor($leadAuthor, $posterRegistration)
+{
+    // Build contact name from title, first name, last name
+    $contactName = trim(($leadAuthor->title ?? '') . ' ' . ($leadAuthor->first_name ?? '') . ' ' . ($leadAuthor->last_name ?? ''));
 
+    // Get state and country names
+    $stateName = '';
+    if ($leadAuthor->state_id) {
+        $state = State::find($leadAuthor->state_id);
+        $stateName = $state->name ?? '';
+    }
+
+    $countryName = '';
+    if ($leadAuthor->country_id) {
+        $country = Country::find($leadAuthor->country_id);
+        $countryName = $country->name ?? '';
+    }
+
+    return (object) [
+        'billing_company' => $leadAuthor->institution ?? '',
+        'contact_name'    => $contactName,
+        'email'           => $leadAuthor->email ?? '',
+        'phone'           => $leadAuthor->mobile ?? '',
+        'address'         => trim(($leadAuthor->city ?? '') . ', ' . ($stateName ?? '')),
+        'country_id'      => $leadAuthor->country_id ?? null,
+        'state_id'        => $leadAuthor->state_id ?? null,
+        'postal_code'     => $leadAuthor->postal_code ?? '',
+        'state'           => (object)['name' => $stateName],
+        'country'         => (object)[
+            'name'   => $countryName,
+            'states' => optional(Country::with('states')->find($leadAuthor->country_id))->states ?? collect(),
+        ],
+        'gst'             => null,
+        'pan_no'          => null,
+        'city_id'         => null,
+        'city_name'       => $leadAuthor->city ?? '',
+    ];
+}
 
 
     // Step 1: Show Payment Form
@@ -1014,15 +1165,29 @@ private function formatBillingFromEventContact($eventContact, $applicationId)
 
         Log::info('Billing Detail: ' . json_encode($billingDetail));
         
-        // Determine amount - for startup zone use int_amount_value, for others use int_amount_value
-        $amount = $invoice->int_amount_value ?? $invoice->amount;
+        // Determine amount - for poster registration use total_final_price, for startup zone use int_amount_value, for others use int_amount_value
+        if ($isPosterRegistration) {
+            // For poster registration, use the total_final_price directly (already in correct currency USD)
+            $amount = $invoice->total_final_price ?? $invoice->amount;
+        } else {
+            $amount = $invoice->int_amount_value ?? $invoice->amount;
+        }
         $email = $billingDetail->email;
         $company = $billingDetail->billing_company ?? ($application ? $application->company_name : '');
+        
+        $description = 'Payment for ' . $company;
+        if ($isStartupZone) {
+            $description = 'Startup Zone Registration for ' . $company;
+        } elseif ($isPosterRegistration) {
+            $description = 'Poster Registration - ' . ($posterRegistration->abstract_title ?? 'BTS 2026');
+        } else {
+            $description = 'Extra Requirements for ' . $company;
+        }
         
         $purchaseUnit = PurchaseUnitRequestBuilder::init(
             AmountWithBreakdownBuilder::init('USD', $amount)->build()
         )
-            ->description($isStartupZone ? 'Startup Zone Registration for ' . $company : 'Extra Requirements for ' . $company)   // Optional description
+            ->description($description)   // Optional description
             ->invoiceId($order_ID)            // PayPal invoice tracking
             ->build();
 
@@ -1035,7 +1200,7 @@ private function formatBillingFromEventContact($eventContact, $applicationId)
         ];
 
         try {
-            $apiResponse = $this->client->getOrdersController()->createOrder($orderBody);
+            $apiResponse = $this->client->getOrdersController()->ordersCreate($orderBody);
             //get the id from the response
             $order_ID = $apiResponse->getResult()->getId();
             //insert into payment response table
@@ -1044,7 +1209,7 @@ private function formatBillingFromEventContact($eventContact, $applicationId)
                 'payment_id' => $order_ID,
                 'order_id' => $order,
                 'currency' => 'USD',
-                'amount' => $invoice->int_amount_value,
+                'amount' => $amount, // Use the amount variable we calculated above
                 'redirect_url' => null,
                 'cancel_url' => null,
                 'language' => 'EN',
@@ -1128,6 +1293,9 @@ private function formatBillingFromEventContact($eventContact, $applicationId)
             if (!$invoice) {
                 return response()->json(['error' => 'Invoice not found'], 404);
             }
+            
+            // Check if this is a poster registration invoice
+            $isPosterRegistration = $invoice->type === 'poster_registration';
             
             // Check if this is a startup zone invoice
             $isStartupZone = false;
@@ -1270,6 +1438,132 @@ private function formatBillingFromEventContact($eventContact, $applicationId)
                         'message' => 'Payment successful',
                         'redirect' => route('startup-zone.confirmation', $application->application_id)
                     ]);
+                } elseif ($isPosterRegistration) {
+                    // Handle poster registration payment
+                    // Check if payment record already exists
+                    $payment = Payment::where('order_id', $orderData->order_id)
+                        ->where('invoice_id', $invoice->id)
+                        ->first();
+                    
+                    if ($payment) {
+                        // Update existing payment record
+                        $payment->update([
+                            'payment_method' => 'PayPal',
+                            'amount' => $amountPaid,
+                            'amount_paid' => $amountPaid,
+                            'amount_received' => $amountPaid,
+                            'transaction_id' => $apiDecodedResponse['purchase_units'][0]['payments']['captures'][0]['id'] ?? null,
+                            'pg_result' => $pg_status,
+                            'track_id' => $orderId,
+                            'pg_response_json' => json_encode($apiDecodedResponse),
+                            'payment_date' => now(),
+                            'status' => 'successful',
+                        ]);
+                    } else {
+                        // Create new payment record
+                        Payment::create([
+                            'invoice_id' => $invoice->id,
+                            'payment_method' => 'PayPal',
+                            'amount' => $amountPaid,
+                            'amount_paid' => $amountPaid,
+                            'amount_received' => $amountPaid,
+                            'transaction_id' => $apiDecodedResponse['purchase_units'][0]['payments']['captures'][0]['id'] ?? null,
+                            'pg_result' => $pg_status,
+                            'track_id' => $orderId,
+                            'pg_response_json' => json_encode($apiDecodedResponse),
+                            'payment_date' => now(),
+                            'currency' => 'USD',
+                            'status' => 'successful',
+                            'order_id' => $orderData->order_id,
+                        ]);
+                    }
+                    
+                    // Get poster registration from invoice_no
+                    $tinNo = $invoice->invoice_no;
+                    $posterRegistration = \App\Models\PosterRegistration::where('tin_no', $tinNo)->first();
+                    
+                    if ($posterRegistration) {
+                        // Update poster registration payment status
+                        $posterRegistration->update(['payment_status' => 'paid']);
+                        
+                        // Generate and assign PIN number after successful payment
+                        if (empty($posterRegistration->pin_no)) {
+                            do {
+                                $randomNumber = str_pad((string) mt_rand(1, 999999), 6, '0', STR_PAD_LEFT);
+                                $pinNo = 'PIN-BTS-2026-PSTR-' . $randomNumber;
+                            } while (\App\Models\PosterRegistration::where('pin_no', $pinNo)->exists());
+                            
+                            $posterRegistration->update(['pin_no' => $pinNo]);
+                            
+                            // Also update invoice with PIN
+                            $invoice->update(['pin_no' => $pinNo]);
+                            
+                            Log::info('Poster Registration PIN Generated (PayPal)', [
+                                'tin_no' => $posterRegistration->tin_no,
+                                'pin_no' => $pinNo,
+                            ]);
+                        }
+                        
+                        // Send thank you email after payment confirmation
+                        try {
+                            // Refresh registration to ensure we have latest data
+                            $posterRegistration->refresh();
+                            
+                            // Get admin emails from config for BCC
+                            $bccEmails = config('constants.admin_emails.bcc', []);
+                            
+                            Log::info('Poster Registration PayPal Payment: Sending thank you email', [
+                                'tin_no' => $posterRegistration->tin_no,
+                                'pin_no' => $posterRegistration->pin_no,
+                                'email' => $posterRegistration->lead_author_email,
+                                'bcc' => $bccEmails,
+                            ]);
+                            
+                            $mail = \Mail::to($posterRegistration->lead_author_email);
+                            
+                            // Add BCC if configured
+                            if (!empty($bccEmails)) {
+                                $mail->bcc($bccEmails);
+                            }
+                            
+                            $mail->send(new \App\Mail\PosterRegistrationMail($posterRegistration, $invoice, 'payment_thank_you'));
+                            
+                            Log::info('Poster Registration PayPal Payment: Thank you email sent', [
+                                'tin_no' => $posterRegistration->tin_no,
+                                'email' => $posterRegistration->lead_author_email,
+                            ]);
+                        } catch (\Exception $e) {
+                            Log::error('Poster Registration PayPal Payment: Failed to send thank you email', [
+                                'tin_no' => $posterRegistration->tin_no,
+                                'email' => $posterRegistration->lead_author_email,
+                                'error' => $e->getMessage(),
+                            ]);
+                            // Don't fail the payment if email fails
+                        }
+                        
+                        Log::info('Poster Registration PayPal Payment Successful - Redirecting to success', [
+                            'tin_no' => $posterRegistration->tin_no,
+                            'pin_no' => $posterRegistration->pin_no,
+                        ]);
+                        
+                        // Return JSON with redirect URL for poster registration
+                        return response()->json([
+                            'status' => 'success',
+                            'message' => 'Payment successful! Your registration is complete.',
+                            'redirect' => route('poster.register.success', ['tin_no' => $posterRegistration->tin_no])
+                        ]);
+                    }
+                    
+                    Log::warning('Poster Registration not found for PayPal invoice', [
+                        'invoice_no' => $tinNo,
+                        'invoice_id' => $invoice->id,
+                    ]);
+                    
+                    // If poster not found, return generic success
+                    return response()->json([
+                        'status' => 'success',
+                        'message' => 'Payment successful',
+                    ]);
                 } else {
                     // For other invoice types, send extra requirements mail
                     $service = new ExtraRequirementsMailService();
@@ -1379,13 +1673,22 @@ private function formatBillingFromEventContact($eventContact, $applicationId)
                 
                 $invoice = Invoice::where('invoice_no', $invoiceNo)->first();
                 
-                if ($invoice && $invoice->application_id) {
-                    $application = Application::find($invoice->application_id);
+                if ($invoice) {
+                    // Check if this is a poster registration invoice
+                    if ($invoice->type === 'poster_registration') {
+                        $tinNo = $invoice->invoice_no;
+                        return redirect()->route('poster.register.payment', ['tin_no' => $tinNo])
+                            ->with('error', 'Payment was cancelled. Please try again.');
+                    }
                     
                     // Check if this is a startup zone invoice
-                    if ($application && $application->application_type === 'startup-zone') {
-                        return redirect()->route('startup-zone.payment', $application->application_id)
-                            ->with('error', 'Payment was cancelled. Please try again.');
+                    if ($invoice->application_id) {
+                        $application = Application::find($invoice->application_id);
+                        
+                        if ($application && $application->application_type === 'startup-zone') {
+                            return redirect()->route('startup-zone.payment', $application->application_id)
+                                ->with('error', 'Payment was cancelled. Please try again.');
+                        }
                     }
                 }
             }
@@ -1428,5 +1731,64 @@ private function formatBillingFromEventContact($eventContact, $applicationId)
         // Last resort: use microtime
         $microtime = substr(str_replace('.', '', microtime(true)), -6);
         return $prefix . $microtime;
+    }
+    
+    /**
+     * Handle PayPal return for poster registrations
+     * Called when user returns from PayPal after completing payment
+     */
+    public function handlePosterReturn(Request $request, $invoice)
+    {
+        $token = $request->query('token'); // PayPal order ID
+        $payerId = $request->query('PayerID');
+        
+        if (!$token) {
+            Log::error('PayPal return: Missing token parameter', [
+                'invoice' => $invoice,
+                'query' => $request->query()
+            ]);
+            return redirect()->route('poster.register.payment', ['tin_no' => $invoice])
+                ->with('error', 'Invalid PayPal return. Please try again.');
+        }
+        
+        Log::info('PayPal return handler called for poster', [
+            'invoice' => $invoice,
+            'token' => $token,
+            'payer_id' => $payerId
+        ]);
+        
+        // Capture the payment
+        try {
+            $response = $this->captureOrder($token);
+            $responseData = json_decode($response->getContent(), true);
+            
+            if ($responseData['status'] === 'success') {
+                Log::info('PayPal payment captured successfully for poster', [
+                    'invoice' => $invoice,
+                    'token' => $token
+                ]);
+                
+                // Redirect to success page
+                return redirect($responseData['redirect']);
+            } else {
+                Log::error('PayPal capture failed for poster', [
+                    'invoice' => $invoice,
+                    'token' => $token,
+                    'response' => $responseData
+                ]);
+                
+                return redirect()->route('poster.register.payment', ['tin_no' => $invoice])
+                    ->with('error', $responseData['message'] ?? 'Payment capture failed. Please contact support.');
+            }
+        } catch (\Exception $e) {
+            Log::error('PayPal return handler exception for poster', [
+                'invoice' => $invoice,
+                'token' => $token,
+                'error' => $e->getMessage()
+            ]);
+            
+            return redirect()->route('poster.register.payment', ['tin_no' => $invoice])
+                ->with('error', 'An error occurred while processing your payment. Please contact support.');
+        }
     }
 }

@@ -2544,8 +2544,8 @@ class PosterController extends Controller
         $paymentMethod = $request->input('payment_method', $registration->currency === 'INR' ? 'CCAvenue' : 'PayPal');
         
         if ($paymentMethod === 'PayPal' || $registration->currency === 'USD') {
-            // PayPal for USD
-            return redirect()->route('paypal.form', ['id' => $invoice->invoice_no]);
+            // PayPal for USD - show redirect page that will call PayPal API
+            return view('poster-registration.paypal-redirect', ['invoiceNo' => $invoice->invoice_no]);
         } else {
             // CCAvenue for INR (default)
             return redirect()->route('payment.ccavenue', ['id' => $invoice->invoice_no]);
