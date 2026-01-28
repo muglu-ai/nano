@@ -410,13 +410,16 @@ document.addEventListener('DOMContentLoaded', function() {
         authorBlock.className = 'author-block';
         authorBlock.dataset.authorIndex = authorCount;
         
+        const allBlocks = document.querySelectorAll('.author-block');
+        const isFirstAuthor = allBlocks.length === 0;
+        
         authorBlock.innerHTML = `
             <div class="author-block-header">
                 <div>
                     <span class="author-number">Author ${authorCount + 1}</span>
                     <div class="role-badges" id="roleBadges${authorCount}"></div>
                 </div>
-                <button type="button" class="btn btn-danger btn-sm remove-author-btn" onclick="removeAuthor(${authorCount})" ${authorCount === 1 ? 'disabled' : ''}>
+                <button type="button" class="btn btn-danger btn-sm remove-author-btn" onclick="removeAuthor(${authorCount})" ${isFirstAuthor ? 'disabled' : ''}>
                     <i class="fas fa-trash"></i> Remove
                 </button>
             </div>
@@ -615,15 +618,12 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }, 100);
         
-        // Load states for India (default selected country)
-        if (authorCount === 0) {
-            // Find India's country ID from the countriesData
-            const indiaCountry = countriesData.find(country => country.code === 'IN');
-            if (indiaCountry) {
-                setTimeout(() => {
-                    loadStatesForAuthorCountry(indiaCountry.id, 0);
-                }, 100);
-            }
+        // Load states for India (default selected country) for all authors
+        const indiaCountry = countriesData.find(country => country.code === 'IN');
+        if (indiaCountry) {
+            setTimeout(() => {
+                loadStatesForAuthorCountry(indiaCountry.id, authorCount);
+            }, 150);
         }
         
         // Update button state
@@ -638,7 +638,8 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     window.removeAuthor = function(index) {
-        if (authorCount <= 0) {
+        const allBlocks = document.querySelectorAll('.author-block');
+        if (allBlocks.length <= 1) {
             Swal.fire('Cannot Remove', 'At least one author is required.', 'warning');
             return;
         }
@@ -657,9 +658,8 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             
             authorBlock.remove();
-            authorCount--;
-            updateAddAuthorButton();
             renumberAuthors();
+            updateAddAuthorButton();
             updateAttendanceSummary();
         }
     }
@@ -669,13 +669,25 @@ document.addEventListener('DOMContentLoaded', function() {
         let newCount = -1;
         blocks.forEach(block => {
             newCount++;
+            const oldIndex = block.dataset.authorIndex;
             block.dataset.authorIndex = newCount;
             block.querySelector('.author-number').textContent = `Author ${newCount + 1}`;
+            
+            // Update lead author index if needed
+            if (leadAuthorIndex == oldIndex) {
+                leadAuthorIndex = newCount;
+            }
+            
+            // Update presenter index if needed
+            if (presenterIndex == oldIndex) {
+                presenterIndex = newCount;
+            }
             
             // Enable/disable remove button
             const removeBtn = block.querySelector('.remove-author-btn');
             if (removeBtn) {
-                removeBtn.disabled = newCount === 0;
+                removeBtn.disabled = blocks.length === 1;
+                removeBtn.setAttribute('onclick', `removeAuthor(${newCount})`);
             }
         });
         authorCount = newCount;
