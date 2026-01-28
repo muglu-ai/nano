@@ -22,6 +22,8 @@ use App\Http\Controllers\ApiRelayController;
 use App\Mail\InauguralMail;
 use App\Services\EmailService;
 use App\Models\Ticket;
+use App\Models\Ticket\TicketType;
+use App\Helpers\TicketAllocationHelper;
 use NunoMaduro\Collision\Adapters\Phpunit\ConfigureIO;
 use Maatwebsite\Excel\Facades\Excel;
 
@@ -79,33 +81,36 @@ class ExhibitorController extends Controller
             $exhibitionParticipant = \App\Models\ExhibitionParticipant::where('coExhibitor_id', $coExhibitorId)->first();
         }
 
-        // The ticketAllocation field contains a JSON string like {"1": 5, "2": 3, "3": 0}, where keys are ticket IDs and values are counts.
-        // To process it, decode the JSON, then for each ticketId, fetch the Ticket model and add the count to a result array with ticket type and count.
-
+        // Get ticket allocations using TicketAllocationHelper
         $ticketAllocationResult = [];
         if ($exhibitionParticipant && !empty($exhibitionParticipant->ticketAllocation)) {
-            $ticketAllocations = json_decode($exhibitionParticipant->ticketAllocation, true);
-
-            if (is_array($ticketAllocations)) {
-                foreach ($ticketAllocations as $ticketId => $count) {
-                    // Fetch the Ticket model, handle missing ticket gracefully
-                    $ticket = Ticket::find($ticketId);
-                    $ticketType = $ticket ? $ticket->ticket_type : 'Unknown';
-
-                    $ticketAllocationResult[] = [
-                        'ticket_id' => $ticketId,
-                        'ticket_type' => $ticketType,
-                        'count' => $count,
-                        'slug' => Str::slug($ticket->ticket_type, '-'),
-                    ];
-                }
+            $allocations = TicketAllocationHelper::getAllocation($application_id, $exhibitionParticipant->coExhibitor_id ?? null);
+            
+            foreach ($allocations as $ticketTypeId => $data) {
+                $usedCount = TicketAllocationHelper::getAvailableSlots($application_id, $ticketTypeId)['used'] ?? 0;
+                $allocatedCount = $data['count'] ?? 0;
+                $availableCount = max(0, $allocatedCount - $usedCount);
+                
+                $ticketAllocationResult[] = [
+                    'ticket_id' => $ticketTypeId,
+                    'ticket_type' => $data['name'] ?? 'Unknown',
+                    'count' => $allocatedCount,
+                    'allocated' => $allocatedCount,
+                    'used' => $usedCount,
+                    'available' => $availableCount,
+                    'slug' => $data['slug'] ?? Str::slug($data['name'] ?? 'unknown', '-'),
+                ];
             }
         }
 
+        // Calculate counts from ticketAllocation JSON (not from separate columns)
+        $countsData = $exhibitionParticipant 
+            ? TicketAllocationHelper::getCountsFromAllocation($application_id, $exhibitionParticipant->coExhibitor_id ?? null)
+            : ['stall_manning_count' => 0, 'complimentary_delegate_count' => 0];
 
         $count = [
-            'stall_manning_count' => $exhibitionParticipant ? $exhibitionParticipant->stall_manning_count : 0,
-            'complimentary_delegate_count' => $exhibitionParticipant ? $exhibitionParticipant->complimentary_delegate_count : 0,
+            'stall_manning_count' => $countsData['stall_manning_count'] ?? 0,
+            'complimentary_delegate_count' => $countsData['complimentary_delegate_count'] ?? 0,
             'application' => $application_id,
             'ticket_allocation' => $ticketAllocationResult,
             'exhibition_participant_id' => $exhibitionParticipant ? $exhibitionParticipant->id : null,
@@ -204,7 +209,9 @@ class ExhibitorController extends Controller
         if ($type == 'inaugural_passes') {
             $ticketName = 'Inaugural Passes';
             $slug = 'inaugural_passes';
-            $allocated = $count['complimentary_delegate_count'] ?? 0;
+            // Get allocated count from ticketAllocation JSON
+            $countsData = TicketAllocationHelper::getCountsFromAllocation($count['application']);
+            $allocated = $countsData['complimentary_delegate_count'] ?? 0;
             $usedCount = $used['complimentary_delegates'] ?? 0;
 
             $ticketId = $slug;
@@ -288,14 +295,12 @@ class ExhibitorController extends Controller
 
         if ($type == 'complimentary') {
             $slug = 'Exhibitor Passes';
-            $data = DB::table('complimentary_delegates')
-                ->where('exhibition_participant_id', $this->checkCount()['exhibition_participant_id'])
+            $data = ComplimentaryDelegate::where('exhibition_participant_id', $this->checkCount()['exhibition_participant_id'])
                 ->orderBy($sortField, $sortDirection)
                 ->paginate($perPage);
         } elseif ($type == 'stall_manning') {
             $slug = 'Stall Manning';
-            $data = DB::table('stall_manning')
-                ->where('exhibition_participant_id', $this->checkCount()['exhibition_participant_id'])
+            $data = StallManning::where('exhibition_participant_id', $this->checkCount()['exhibition_participant_id'])
                 ->orderBy($sortField, $sortDirection)
                 ->paginate($perPage);
         } else {
@@ -391,168 +396,144 @@ class ExhibitorController extends Controller
     {
 
         try {
-
-            //if the invite_type and if it is other than delegate or exhibitor then get the ticket id from the ticket table
             $this->__Construct();
-            $ticketId = $request->invite_type;
-
-            if (!in_array($ticketId, ['delegate', 'exhibitor'])) {
-                // Assume invite_type is a slug for a custom ticket
-                $ticket = Ticket::find($ticketId);
-                if (!$ticket) {
-                    return response()->json(['error' => 'Invalid ticket type'], 400);
-                }
-                $ticketId = $ticket->ticket_type;
-            }
-
-            Log::info('Ticket Type: ' . $ticketId);
-
 
             // Validate request and return JSON error messages
             $validatedData = $request->validate([
                 'invite_type' => 'required',
                 'email' => [
                     'required',
-                    // 'email',
-                    'unique:complimentary_delegates,email',
-                    'unique:stall_manning,email',
-                    //                    'email',
+                    'email',
                 ],
             ]);
-
-
 
             // Fetch counts
             $count = $this->checkCount();
             $participantId = $count['exhibition_participant_id'];
+            $applicationId = $count['application'];
+
+            if (!$participantId || !$applicationId) {
+                return response()->json(['error' => 'No allocation found for this exhibitor'], 400);
+            }
+
+            $inviteType = $request->invite_type;
+            $ticketTypeId = null;
+
+            // Handle special types (delegate, exhibitor) or ticket_type_id
+            if (!in_array($inviteType, ['delegate', 'exhibitor'])) {
+                // Try to find by ticket_type_id (numeric) or slug
+                if (is_numeric($inviteType)) {
+                    $ticketType = TicketType::find($inviteType);
+                } else {
+                    $ticketType = TicketType::where('slug', $inviteType)->first();
+                }
+                
+                if (!$ticketType) {
+                    return response()->json(['error' => 'Invalid ticket type'], 400);
+                }
+                
+                $ticketTypeId = $ticketType->id;
+                
+                // Validate invitation availability using helper
+                $canInvite = TicketAllocationHelper::canInvite($applicationId, $ticketTypeId, 1);
+                if (!$canInvite['can_invite']) {
+                    return response()->json(['error' => $canInvite['message']], 422);
+                }
+            }
 
 
 
-            if ($request->invite_type == 'delegate') {
-                $countComplimentaryDelegates = DB::table('complimentary_delegates')
-                    ->where('exhibition_participant_id', $participantId)
-                    ->count();
-
-                if ($countComplimentaryDelegates >= $count['complimentary_delegate_count']) {
-                    return response()->json(['error' => 'You have reached the maximum limit of Exhibitor Passes'], 422);
+            if ($inviteType == 'delegate') {
+                // For delegate type, check if there's a specific ticket type allocated
+                // For now, use the first available ticket type or a default
+                // TODO: Configure which ticket type represents "delegate"
+                $ticketAllocations = $count['ticket_allocation'] ?? [];
+                if (empty($ticketAllocations)) {
+                    return response()->json(['error' => 'No ticket allocation found'], 400);
+                }
+                
+                // Use first available ticket type (or configure specific one)
+                $firstTicket = reset($ticketAllocations);
+                $ticketTypeId = $firstTicket['ticket_id'] ?? null;
+                
+                if ($ticketTypeId) {
+                    $canInvite = TicketAllocationHelper::canInvite($applicationId, $ticketTypeId, 1);
+                    if (!$canInvite['can_invite']) {
+                        return response()->json(['error' => $canInvite['message']], 422);
+                    }
                 }
 
                 // Generate token and insert
                 $token = Str::random(length: 32);
-                DB::table('complimentary_delegates')->insert([
+                ComplimentaryDelegate::create([
                     'email' => $request->email,
                     'exhibition_participant_id' => $participantId,
                     'token' => $token,
-                    'created_at' => now(),
-                    'updated_at' => now(),
+                    'ticketType' => $ticketTypeId,
+                    'status' => 'pending',
                 ]);
 
-
-
-                // Find the exhibition_participant_id from the complimentary_delegates or stall_manning table
-                $exhibitionParticipantId = $participantId;
-
-
-
-                // Find the company name from the application table using exhibition_participant_id
-                $companyName = Application::whereHas('exhibitionParticipant', function ($query) use ($exhibitionParticipantId) {
-                    $query->where('id', $exhibitionParticipantId);
-                })->value('company_name');
-                //send an email to the invitee with the token and link as Route::get('/invited/{token}/', [ExhibitorController::class, 'invited'])->name('exhibition.invited');
-
-                Mail::to($request->email)->send(new InviteMail($companyName, $request->invite_type, $token));
-
+                // Find the company name
+                $companyName = Application::find($applicationId)->company_name ?? 'Company';
+                
+                Mail::to($request->email)->send(new InviteMail($companyName, $inviteType, $token));
 
                 return response()->json(['message' => 'Invitation sent successfully!']);
             }
 
-            if ($request->invite_type == 'exhibitor') {
-                Log::info("Invitation mail sent queue 6");
-                $countStallManning = DB::table('stall_manning')
-                    ->where('exhibition_participant_id', $participantId)
-                    ->count();
-
-                if ($countStallManning >= $count['stall_manning_count']) {
-                    return response()->json(['error' => 'You have reached the maximum limit of stall manning'], 422);
+            if ($inviteType == 'exhibitor') {
+                // For exhibitor type (stall manning), check if there's a specific ticket type allocated
+                $ticketAllocations = $count['ticket_allocation'] ?? [];
+                if (empty($ticketAllocations)) {
+                    return response()->json(['error' => 'No ticket allocation found'], 400);
+                }
+                
+                // Use first available ticket type (or configure specific one for stall manning)
+                $firstTicket = reset($ticketAllocations);
+                $ticketTypeId = $firstTicket['ticket_id'] ?? null;
+                
+                if ($ticketTypeId) {
+                    $canInvite = TicketAllocationHelper::canInvite($applicationId, $ticketTypeId, 1);
+                    if (!$canInvite['can_invite']) {
+                        return response()->json(['error' => $canInvite['message']], 422);
+                    }
                 }
 
                 // Generate token and insert
                 $token = Str::random(32);
-                DB::table('stall_manning')->insert([
+                StallManning::create([
                     'email' => $request->email,
                     'exhibition_participant_id' => $participantId,
                     'token' => $token,
-                    'created_at' => now(),
-                    'updated_at' => now(),
+                    'ticketType' => $ticketTypeId,
+                    'status' => 'pending',
                 ]);
 
-                // Find the exhibition_participant_id from the complimentary_delegates or stall_manning table
-                $exhibitionParticipantId = $participantId;
+                // Find the company name
+                $companyName = Application::find($applicationId)->company_name ?? 'Company';
 
-
-                // Find the company name from the application table using exhibition_participant_id
-                $companyName = Application::whereHas('exhibitionParticipant', function ($query) use ($exhibitionParticipantId) {
-                    $query->where('id', $exhibitionParticipantId);
-                })->value('company_name');
-
-                //send an email to the invitee with the token and link as Route::get('/invited/{token}/', [ExhibitorController::class, 'invited'])->name('exhibition.invited');
-                Mail::to($request->email)->queue(new InviteMail($companyName, $request->invite_type, $token));
-
+                Mail::to($request->email)->queue(new InviteMail($companyName, $inviteType, $token));
 
                 return response()->json(['message' => 'Invitation sent successfully!']);
             }
 
 
-            // handle for other than delegate and exhibitor ticket type
-            if ($request->invite_type != 'delegate' && $request->invite_type != 'exhibitor') {
-
-                $ticketAllocation  = $count['ticket_allocation'];
-
-
-                $ticket = collect($ticketAllocation)->firstWhere('ticket_id', $request->invite_type);
-
-                if ($ticket) {
-                    $allocatedCount = $ticket['count'];
-                    $usedCount = DB::table('complimentary_delegates')
-                        ->where('exhibition_participant_id', $participantId)
-                        ->where('ticketType', $ticketId ?? $request->invite_type)
-                        ->count();
-
-                    //
-
-                    Log::info('Ticket Type ' . $request->invite_type . 'Used count: ' . $usedCount . ', Allocated count: ' . $allocatedCount);
-
-                    if ($usedCount >= $allocatedCount) {
-                        // Handle limit reached (e.g., return error)
-                        return response()->json(['error' => 'You have reached the maximum limit for this ticket type'], 422);
-                    }
-                    // Proceed with invite logic
-                } else {
-                    return response()->json(['error' => 'Invalid ticket type'], 400);
-                }
-            
+            // Handle custom ticket types (when ticketTypeId is set)
+            if ($ticketTypeId) {
                 $token = Str::random(length: 32);
-                DB::table('complimentary_delegates')->insert([
+                ComplimentaryDelegate::create([
                     'email' => $request->email,
                     'exhibition_participant_id' => $participantId,
                     'token' => $token,
-                    'ticketType' => $ticketId,
-                    'created_at' => now(),
-                    'updated_at' => now(),
+                    'ticketType' => $ticketTypeId,
+                    'status' => 'pending',
                 ]);
 
-                $companyName = Application::whereHas('exhibitionParticipant', function ($query) use ($participantId) {
-                    $query->where('id', $participantId);
-                })->value('company_name');
+                $companyName = Application::find($applicationId)->company_name ?? 'Company';
 
-
-               
-
-                Mail::to($request->email)->send(new InviteMail($companyName, $request->invite_type, $token));
-
+                Mail::to($request->email)->send(new InviteMail($companyName, $inviteType, $token));
 
                 return response()->json(['message' => 'Invitation sent successfully!']);
-            
             }
 
             return response()->json(['error' => 'Invalid request'], 400);
@@ -562,6 +543,66 @@ class ExhibitorController extends Controller
         } catch (\Exception $e) {
             // Log error and return JSON response
             Log::error('Invite error: ' . $e->getMessage());
+            return response()->json(['error' => 'Something went wrong!'], 500);
+        }
+    }
+
+    /**
+     * Cancel an invitation
+     * 
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function cancelInvitation(Request $request)
+    {
+        try {
+            $validated = $request->validate([
+                'invitation_id' => 'required|integer',
+                'type' => 'required|in:complimentary_delegate,stall_manning',
+            ]);
+
+            $invitationId = $validated['invitation_id'];
+            $type = $validated['type'];
+            $userId = auth()->id();
+
+            // Verify the invitation belongs to the current user's application
+            $count = $this->checkCount();
+            $participantId = $count['exhibition_participant_id'];
+
+            if ($type === 'complimentary_delegate') {
+                $invitation = ComplimentaryDelegate::where('id', $invitationId)
+                    ->where('exhibition_participant_id', $participantId)
+                    ->first();
+            } else {
+                $invitation = StallManning::where('id', $invitationId)
+                    ->where('exhibition_participant_id', $participantId)
+                    ->first();
+            }
+
+            if (!$invitation) {
+                return response()->json(['error' => 'Invitation not found or you do not have permission to cancel it'], 404);
+            }
+
+            if ($invitation->isCancelled()) {
+                return response()->json(['message' => 'Your invitation has been cancelled'], 200);
+            }
+
+            // Cancel using helper
+            $cancelled = TicketAllocationHelper::cancelInvitation($invitationId, $type, $userId);
+
+            if ($cancelled) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Your invitation has been cancelled'
+                ], 200);
+            }
+
+            return response()->json(['error' => 'Failed to cancel invitation'], 500);
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json(['error' => $e->errors()], 422);
+        } catch (\Exception $e) {
+            Log::error('Cancel invitation error: ' . $e->getMessage());
             return response()->json(['error' => 'Something went wrong!'], 500);
         }
     }
@@ -1133,14 +1174,17 @@ class ExhibitorController extends Controller
                             }
                         } else {
                             // It's a custom ticket type - check with ticketType
-                            $ticketId = $this->getTicketId($request->invite_type);
-                            $exists = DB::table('complimentary_delegates')
-                                ->where('exhibition_participant_id', $participantId)
-                                ->where('email', $value)
-                                ->where('ticketType', $ticketId)
-                                ->exists();
-                            if ($exists) {
-                                $fail("The email has already been taken for this ticket type for this exhibitor.");
+                            $ticketTypeId = $this->getTicketTypeId($request->invite_type);
+                            if ($ticketTypeId) {
+                                $exists = DB::table('complimentary_delegates')
+                                    ->where('exhibition_participant_id', $participantId)
+                                    ->where('email', $value)
+                                    ->where('ticketType', $ticketTypeId)
+                                    ->where('status', '!=', 'cancelled') // Don't count cancelled invitations
+                                    ->exists();
+                                if ($exists) {
+                                    $fail("The email has already been taken for this ticket type for this exhibitor.");
+                                }
                             }
                         }
                     },
@@ -1163,33 +1207,60 @@ class ExhibitorController extends Controller
             }
 
             // Determine ticket type/ID for allocations
-            $ticketId = null;
+            $ticketTypeId = null;
+            $applicationId = $count['application'];
+            
             if (!in_array($inviteType, ['delegate', 'exhibitor'])) {
-                $ticket = Ticket::where('id', $inviteType)->first();
-                if (!$ticket) {
+                // Try to find by ticket_type_id (numeric) or slug
+                if (is_numeric($inviteType)) {
+                    $ticketType = TicketType::find($inviteType);
+                } else {
+                    $ticketType = TicketType::where('slug', $inviteType)->first();
+                }
+                
+                if (!$ticketType) {
                     return response()->json(['error' => 'Invalid ticket type'], 400);
                 }
-                $ticketId = $ticket->ticket_type;
+                
+                $ticketTypeId = $ticketType->id;
+                
+                // Validate invitation availability using helper
+                $canInvite = TicketAllocationHelper::canInvite($applicationId, $ticketTypeId, 1);
+                if (!$canInvite['can_invite']) {
+                    return response()->json(['error' => $canInvite['message']], 422);
+                }
             } else {
-                $ticketId = $inviteType;
+                // For delegate/exhibitor, get first available ticket type from allocation
+                $ticketAllocations = $count['ticket_allocation'] ?? [];
+                if (!empty($ticketAllocations)) {
+                    $firstTicket = reset($ticketAllocations);
+                    $ticketTypeId = $firstTicket['ticket_id'] ?? null;
+                    
+                    if ($ticketTypeId) {
+                        $canInvite = TicketAllocationHelper::canInvite($applicationId, $ticketTypeId, 1);
+                        if (!$canInvite['can_invite']) {
+                            return response()->json(['error' => $canInvite['message']], 422);
+                        }
+                    }
+                }
             }
 
             // Use database transaction to prevent race conditions
-            return DB::transaction(function () use ($request, $inviteType, $participantId, $count, $ticketId) {
+            return DB::transaction(function () use ($request, $inviteType, $participantId, $count, $ticketTypeId, $applicationId) {
                 
                 // Re-check email uniqueness right before insert (race condition protection)
-                $emailExists = $this->checkEmailExists($participantId, $request->email, $inviteType, $ticketId);
+                $emailExists = $this->checkEmailExists($participantId, $request->email, $inviteType, $ticketTypeId);
                 if ($emailExists['exists']) {
                     return response()->json(['error' => $emailExists['message']], 422);
                 }
 
                 try {
                     if ($inviteType === 'delegate') {
-                        return $this->addDelegate($request, $participantId, $count);
+                        return $this->addDelegate($request, $participantId, $count, $ticketTypeId);
                     } elseif ($inviteType === 'exhibitor') {
-                        return $this->addExhibitor($request, $participantId, $count, $ticketId);
+                        return $this->addExhibitor($request, $participantId, $count, $ticketTypeId);
                     } else {
-                        return $this->addCustomTicket($request, $participantId, $count, $ticketId);
+                        return $this->addCustomTicket($request, $participantId, $count, $ticketTypeId, $applicationId);
                     }
                 } catch (\Illuminate\Database\QueryException $e) {
                     // Catch database unique constraint violations
@@ -1219,16 +1290,23 @@ class ExhibitorController extends Controller
     }
 
     /**
-     * Get ticket ID from ticket type
+     * Get ticket type ID from invite type (updated to use TicketType)
      */
-    private function getTicketId($inviteType)
+    private function getTicketTypeId($inviteType)
     {
         if (in_array($inviteType, ['delegate', 'delegates', 'exhibitor'])) {
-            return $inviteType === 'delegates' ? 'delegate' : $inviteType;
+            // For delegate/exhibitor, return null - will be determined from allocation
+            return null;
         }
         
-        $ticket = Ticket::where('id', $inviteType)->first();
-        return $ticket ? $ticket->ticket_type : $inviteType;
+        // Try to find by ticket_type_id (numeric) or slug
+        if (is_numeric($inviteType)) {
+            $ticketType = TicketType::find($inviteType);
+        } else {
+            $ticketType = TicketType::where('slug', $inviteType)->first();
+        }
+        
+        return $ticketType ? $ticketType->id : null;
     }
 
     /**
@@ -1236,33 +1314,32 @@ class ExhibitorController extends Controller
      * Note: This check happens within a transaction, providing isolation.
      * Database unique constraints will also catch any duplicates.
      */
-    private function checkEmailExists($participantId, $email, $inviteType, $ticketId = null)
+    private function checkEmailExists($participantId, $email, $inviteType, $ticketTypeId = null)
     {
         if ($inviteType === 'delegate') {
-            $exists = DB::table('complimentary_delegates')
-                // ->where('exhibition_participant_id', $participantId)
-                ->where('email', $email)
+            $exists = ComplimentaryDelegate::where('email', $email)
+                ->where('status', '!=', 'cancelled') // Don't count cancelled invitations
                 ->exists();
             if ($exists) {
                 return ['exists' => true, 'message' => 'The email has already been taken for this exhibitor (delegate).'];
             }
         } elseif ($inviteType === 'exhibitor') {
-            $exists = DB::table('stall_manning')
-                // ->where('exhibition_participant_id', $participantId)
-                ->where('email', $email)
+            $exists = StallManning::where('email', $email)
+                ->where('status', '!=', 'cancelled') // Don't count cancelled invitations
                 ->exists();
             if ($exists) {
                 return ['exists' => true, 'message' => 'The email has already been taken for this exhibitor (stall manning).'];
             }
         } else {
             // Custom ticket type
-            $exists = DB::table('complimentary_delegates')
-                // ->where('exhibition_participant_id', $participantId)
-                ->where('email', $email)
-                // ->where('ticketType', $ticketId)
-                ->exists();
-            if ($exists) {
-                return ['exists' => true, 'message' => 'The email has already been taken for this ticket type for this exhibitor.'];
+            if ($ticketTypeId) {
+                $exists = ComplimentaryDelegate::where('email', $email)
+                    ->where('ticketType', $ticketTypeId)
+                    ->where('status', '!=', 'cancelled') // Don't count cancelled invitations
+                    ->exists();
+                if ($exists) {
+                    return ['exists' => true, 'message' => 'The email has already been taken for this ticket type for this exhibitor.'];
+                }
             }
         }
         
@@ -1272,26 +1349,18 @@ class ExhibitorController extends Controller
     /**
      * Add delegate
      */
-    private function addDelegate($request, $participantId, $count)
+    private function addDelegate($request, $participantId, $count, $ticketTypeId = null)
     {
-        $countComplimentaryDelegates = DB::table('complimentary_delegates')
-            ->where('exhibition_participant_id', $participantId)
-            ->count();
-
-        if ($countComplimentaryDelegates >= $count['complimentary_delegate_count']) {
-            return response()->json(['error' => 'You have reached the maximum limit of Exhibitor Passes'], 422);
-        }
-
         try {
-            DB::table('complimentary_delegates')->insert([
+            ComplimentaryDelegate::create([
                 'email' => $request->email,
                 'exhibition_participant_id' => $participantId,
                 'first_name' => $request->name,
                 'mobile' => $request->phone,
                 'job_title' => $request->jobTitle,
                 'organisation_name' => $request->organisationName ?? null,
-                'created_at' => now(),
-                'updated_at' => now(),
+                'ticketType' => $ticketTypeId,
+                'status' => 'pending',
             ]);
 
             return response()->json(['message' => 'Delegate added successfully!'], 200);
@@ -1304,21 +1373,13 @@ class ExhibitorController extends Controller
     /**
      * Add exhibitor (stall manning)
      */
-    private function addExhibitor($request, $participantId, $count, $ticketId)
+    private function addExhibitor($request, $participantId, $count, $ticketTypeId = null)
     {
-        $countStallManning = DB::table('stall_manning')
-            ->where('exhibition_participant_id', $participantId)
-            ->count();
-
-        if ($countStallManning >= $count['stall_manning_count']) {
-            return response()->json(['error' => 'You have reached the maximum limit of stall manning'], 422);
-        }
-
         try {
             $uniqueId = $this->generateStallManningUniqueId();
             $pinNo = $this->generateCompPinNo();
 
-            DB::table('stall_manning')->insert([
+            StallManning::create([
                 'unique_id' => $uniqueId,
                 'first_name' => $request->name,
                 'mobile' => $request->phone,
@@ -1329,10 +1390,9 @@ class ExhibitorController extends Controller
                 'organisation_name' => $request->organisationName ?? null,
                 'id_no' => $request->idCardNumber ?? null,
                 'id_type' => $request->idCardType ?? null,
-                'created_at' => now(),
-                'updated_at' => now(),
                 'pinNo' => $pinNo,
-                'ticketType' => $ticketId,
+                'ticketType' => $ticketTypeId,
+                'status' => 'pending',
             ]);
 
             $attendee = StallManning::where('unique_id', $uniqueId)->first();
@@ -1362,52 +1422,38 @@ class ExhibitorController extends Controller
     /**
      * Add custom ticket type
      */
-    private function addCustomTicket($request, $participantId, $count, $ticketId)
+    private function addCustomTicket($request, $participantId, $count, $ticketTypeId, $applicationId)
     {
-        $ticketAllocation = $count['ticket_allocation'] ?? [];
-        $ticket = collect($ticketAllocation)->firstWhere('ticket_id', $request->invite_type);
-
-        if (!$ticket) {
+        if (!$ticketTypeId) {
             return response()->json(['error' => 'Invalid ticket type'], 400);
         }
 
-        $allocatedCount = $ticket['count'] ?? 0;
-        $usedCount = DB::table('complimentary_delegates')
-            ->where('exhibition_participant_id', $participantId)
-            ->where('ticketType', $ticketId)
-            ->count();
-
-        if ($usedCount >= $allocatedCount) {
-            return response()->json(['error' => 'You have reached the maximum limit for this ticket type'], 422);
-        }
-
+        // Validation already done in add() method using TicketAllocationHelper::canInvite()
+        // Just proceed with creation
         try {
-            DB::table('complimentary_delegates')->insert([
-                'unique_id' => strtoupper($this->generateUniqueId()),
-                'pinNo' => strtoupper($this->generateCompPinNo()),
-                'ticketType' => $ticketId,
+            $uniqueId = strtoupper($this->generateUniqueId());
+            $pinNo = strtoupper($this->generateCompPinNo());
+
+            $attendee = ComplimentaryDelegate::create([
+                'unique_id' => $uniqueId,
+                'pinNo' => $pinNo,
+                'ticketType' => $ticketTypeId,
                 'email' => $request->email,
                 'exhibition_participant_id' => $participantId,
                 'first_name' => $request->name,
                 'mobile' => $request->phone,
                 'job_title' => $request->jobTitle,
                 'organisation_name' => $request->organisationName ?? null,
-                'created_at' => now(),
-                'updated_at' => now(),
+                'status' => 'pending',
             ]);
 
-            $attendee = DB::table('complimentary_delegates')
-                ->where('email', $request->email)
-                ->where('exhibition_participant_id', $participantId)
-                ->where('ticketType', $ticketId)
-                ->orderByDesc('id')
-                ->first();
-
             if (!$attendee) {
-                throw new \Exception('Failed to retrieve created complimentary delegate record');
+                throw new \Exception('Failed to create complimentary delegate record');
             }
 
-            $data = $this->buildAttendeeDataFromObject($attendee);
+            // Convert to object for buildAttendeeDataFromObject if needed
+            $attendeeObject = (object) $attendee->toArray();
+            $data = $this->buildAttendeeDataFromObject($attendeeObject);
 
             // Uncomment when ready to send emails
             // try {

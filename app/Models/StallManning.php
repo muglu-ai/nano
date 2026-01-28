@@ -25,6 +25,9 @@ class StallManning extends Model
         'organisation_name',
         'ticketType',
         'token',
+        'status',
+        'cancelled_at',
+        'cancelled_by',
         'id_type',
         'id_no',
         'confirmedCategory',
@@ -33,6 +36,11 @@ class StallManning extends Model
         'api_response',
         'api_data',
         'emailSent',
+    ];
+
+    protected $casts = [
+        'status' => 'string',
+        'cancelled_at' => 'datetime',
     ];
 
     protected $appends = ['company_name', 'full_name'];
@@ -91,8 +99,48 @@ class StallManning extends Model
         return trim($this->first_name . ' ' . $this->last_name);
     }
 
+    /**
+     * Get the ticket type for this invitation
+     */
+    public function ticketType()
+    {
+        return $this->belongsTo(\App\Models\Ticket\TicketType::class, 'ticketType', 'id');
+    }
 
-    
+    /**
+     * Get the user who cancelled this invitation
+     */
+    public function cancelledBy()
+    {
+        return $this->belongsTo(User::class, 'cancelled_by');
+    }
+
+    /**
+     * Check if invitation is cancelled
+     */
+    public function isCancelled(): bool
+    {
+        return $this->status === 'cancelled';
+    }
+
+    /**
+     * Cancel the invitation
+     * 
+     * @param int|null $userId User ID who is cancelling
+     * @return bool
+     */
+    public function cancel(?int $userId = null): bool
+    {
+        if ($this->isCancelled()) {
+            return true; // Already cancelled
+        }
+
+        return $this->update([
+            'status' => 'cancelled',
+            'cancelled_at' => now(),
+            'cancelled_by' => $userId,
+        ]);
+    }
 }
 
 class AttendeeLog extends Model

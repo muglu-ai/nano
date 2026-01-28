@@ -25,6 +25,7 @@ use Barryvdh\DomPDF\Facade\Pdf;
 use App\Mail\ExhibitorPaymentConfirmation;
 use Illuminate\Support\Facades\Hash;
 use App\Models\Ticket;
+use App\Helpers\TicketAllocationHelper;
 use App\Mail\UserCredentialsMail;
 
 
@@ -1397,19 +1398,23 @@ class ApplicationController extends Controller
             // Create ticket allocations if provided
             if (!empty($validated['ticket_ids']) && !empty($validated['ticket_counts'])) {
                 $ticketAllocation = [];
-                foreach ($validated['ticket_ids'] as $index => $ticketId) {
+                foreach ($validated['ticket_ids'] as $index => $ticketTypeId) {
                     if (isset($validated['ticket_counts'][$index])) {
-                        $ticketAllocation[$ticketId] = (int) $validated['ticket_counts'][$index];
+                        $ticketAllocation[$ticketTypeId] = (int) $validated['ticket_counts'][$index];
                     }
                 }
 
                 if (!empty($ticketAllocation)) {
-                    \App\Models\ExhibitionParticipant::create([
-                        'application_id' => $application->id,
-                        'ticketAllocation' => json_encode($ticketAllocation),
-                        'stall_manning_count' => 0,
-                        'complimentary_delegate_count' => 0,
-                    ]);
+                    // Use TicketAllocationHelper to allocate
+                    try {
+                        TicketAllocationHelper::allocate($application->id, $ticketAllocation);
+                    } catch (\Exception $e) {
+                        Log::error('Failed to allocate tickets during application creation', [
+                            'application_id' => $application->id,
+                            'error' => $e->getMessage()
+                        ]);
+                        // Don't fail application creation if allocation fails
+                    }
                 }
             }
 

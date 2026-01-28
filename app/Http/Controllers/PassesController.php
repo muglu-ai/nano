@@ -18,6 +18,7 @@ use Illuminate\Support\Facades\Mail;
 use App\Mail\SponsorInvoiceMail;
 use App\Mail\InviteMail;
 use App\Models\ExhibitionParticipant;
+use App\Helpers\TicketAllocationHelper;
 use App\Models\ComplimentaryDelegate;
 use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Support\Collection;
@@ -565,8 +566,12 @@ class PassesController extends Controller
                       ->orWhereHas('exhibitionParticipant', function ($ep) {
                           $ep->where(function ($q) {
                               $q->where(function ($count) {
-                                  $count->where('stall_manning_count', '<=', 0)
-                                        ->where('complimentary_delegate_count', '<=', 0);
+                                  // Check if ticketAllocation is empty or null
+                                  $count->where(function($q) {
+                                      $q->whereNull('ticketAllocation')
+                                        ->orWhere('ticketAllocation', '=', '')
+                                        ->orWhereRaw("JSON_LENGTH(ticketAllocation) = 0");
+                                  });
                               })
                               ->where(function ($ticket) {
                                   $ticket->whereNull('ticketAllocation')
@@ -596,8 +601,12 @@ class PassesController extends Controller
                           ->orWhereHas('exhibitionParticipant', function ($ep) {
                               $ep->where(function ($q) {
                                   $q->where(function ($count) {
-                                      $count->where('stall_manning_count', '<=', 0)
-                                            ->where('complimentary_delegate_count', '<=', 0);
+                                      // Check if ticketAllocation is empty or null
+                                      $count->where(function($q) {
+                                          $q->whereNull('ticketAllocation')
+                                            ->orWhere('ticketAllocation', '=', '')
+                                            ->orWhereRaw("JSON_LENGTH(ticketAllocation) = 0");
+                                      });
                                   })
                                   ->where(function ($ticket) {
                                       $ticket->whereNull('ticketAllocation')
@@ -644,8 +653,7 @@ class PassesController extends Controller
                 
                 $app->needs_allocation = !$app->exhibitionParticipant || 
                     ($app->exhibitionParticipant && 
-                     ($app->exhibitionParticipant->stall_manning_count <= 0 && 
-                      $app->exhibitionParticipant->complimentary_delegate_count <= 0 && 
+                     (empty($app->exhibitionParticipant->ticketAllocation) && 
                       empty($app->exhibitionParticipant->ticketAllocation)));
             }
 
@@ -713,8 +721,10 @@ class PassesController extends Controller
                     $query->whereHas('exhibitionParticipant', function ($ep) {
                         $ep->where(function ($inner) {
                             $inner->where(function ($count) {
-                                $count->where('stall_manning_count', '>', 0)
-                                    ->orWhere('complimentary_delegate_count', '>', 0);
+                                // Check if ticketAllocation has data
+                                $count->whereNotNull('ticketAllocation')
+                                    ->where('ticketAllocation', '!=', '')
+                                    ->whereRaw("JSON_LENGTH(ticketAllocation) > 0");
                             })
                             ->orWhere(function ($ticket) {
                                 $ticket->whereNotNull('ticketAllocation')
@@ -755,8 +765,10 @@ class PassesController extends Controller
                 case 'stall_category':
                     $query->orderBy('stall_category', $sortOrder);
                     break;
-                case 'stall_manning_count':
-                case 'complimentary_delegate_count':
+                case 'ticketAllocation':
+                    // Sort by whether ticketAllocation exists and has data
+                    $query->orderByRaw("CASE WHEN ticketAllocation IS NULL OR ticketAllocation = '' OR JSON_LENGTH(ticketAllocation) = 0 THEN 1 ELSE 0 END");
+                    break;
                 case 'total_passes':
                     // For pass-related sorting, use a simpler approach
                     // We'll sort by company name as fallback for now
@@ -818,24 +830,16 @@ class PassesController extends Controller
             
             foreach ($applicationsData as $app) {
                 if ($app->exhibitionParticipant && $app->exhibitionParticipant->id) {
-                    // Calculate ticket allocations
+                    // Calculate counts from ticketAllocation JSON using helper
                     try {
-                        $tickets = $app->exhibitionParticipant->tickets();
-                        if ($tickets) {
-                            $totalTicketAllocations += collect($tickets)->sum('count');
-                        }
+                        $countsData = TicketAllocationHelper::getCountsFromAllocation($app->id);
+                        $totalTicketAllocations += $countsData['total_allocated'] ?? 0;
+                        $totalStallManning += $countsData['stall_manning_count'] ?? 0;
+                        $totalComplimentaryDelegates += $countsData['complimentary_delegate_count'] ?? 0;
                     } catch (\Exception $e) {
-                        // Handle case where tickets() might fail
-                        Log::warning('Error calculating tickets for application ' . $app->id . ': ' . $e->getMessage());
+                        // Handle case where calculation might fail
+                        Log::warning('Error calculating counts for application ' . $app->id . ': ' . $e->getMessage());
                     }
-                    
-                    // Sum stall manning count (handle null/empty)
-                    $stallManningCount = $app->exhibitionParticipant->stall_manning_count ?? 0;
-                    $totalStallManning += is_numeric($stallManningCount) ? (int)$stallManningCount : 0;
-                    
-                    // Sum complimentary delegate count (handle null/empty)
-                    $complimentaryCount = $app->exhibitionParticipant->complimentary_delegate_count ?? 0;
-                    $totalComplimentaryDelegates += is_numeric($complimentaryCount) ? (int)$complimentaryCount : 0;
                 }
             }
             
@@ -850,23 +854,20 @@ class PassesController extends Controller
             handle the exhibitor passes allocation
             */ 
 
-            // Get all available tickets for the modal (unique ticket types)
-            $availableTickets = \App\Models\Ticket::where('status', 1)
-                ->select('ticket_type')
-                ->distinct()
+            // Get all available ticket types for the modal (using new TicketType model)
+            $availableTickets = \App\Models\Ticket\TicketType::where('is_active', true)
+                ->with(['category', 'subcategory', 'event'])
+                ->orderBy('name')
                 ->get()
-                ->map(function($ticket) {
-                    // Get the first ticket of each type for reference
-                    $firstTicket = \App\Models\Ticket::where('status', 1)
-                        ->where('ticket_type', $ticket->ticket_type)
-                        ->first();
-                    
+                ->map(function($ticketType) {
                     return (object) [
-                        'id' => $firstTicket->id,
-                        'ticket_type' => $ticket->ticket_type,
-                        'nationality' => $firstTicket->nationality,
-                        'early_bird_price' => $firstTicket->early_bird_price,
-                        'normal_price' => $firstTicket->normal_price,
+                        'id' => $ticketType->id,
+                        'ticket_type' => $ticketType->name,
+                        'slug' => $ticketType->slug,
+                        'category' => $ticketType->category->name ?? 'N/A',
+                        'subcategory' => $ticketType->subcategory->name ?? null,
+                        'regular_price' => $ticketType->regular_price ?? 0,
+                        'early_bird_price' => $ticketType->early_bird_price ?? null,
                     ];
                 });
             
@@ -894,46 +895,41 @@ class PassesController extends Controller
         try {
             $request->validate([
                 'application_id' => 'required|integer|exists:applications,id',
-                'stall_manning_count' => 'required|integer|min:0',
-                // complimentary_delegate_count will be derived from ticket_allocations
-                'ticket_allocations' => 'sometimes|array',
+                'ticket_allocations' => 'required|array',
                 'ticket_allocations.*' => 'integer|min:0',
             ]);
 
             $application = Application::with(['exhibitionParticipant'])->findOrFail($request->application_id);
 
-            // Process ticket allocations
+            // Process ticket allocations - filter out zero counts
             $ticketAllocations = [];
             if ($request->has('ticket_allocations')) {
-                foreach ($request->ticket_allocations as $ticketId => $count) {
+                foreach ($request->ticket_allocations as $ticketTypeId => $count) {
                     if ($count > 0) {
-                        $ticketAllocations[$ticketId] = $count;
+                        $ticketAllocations[$ticketTypeId] = $count;
                     }
                 }
             }
 
-            // Derive complimentary delegate count from ticket allocations (sum of counts)
-            $complimentaryCount = array_sum($ticketAllocations);
-
-            // Check if exhibitionParticipant exists, if not create it
-            // Use updateOrCreate to handle both create and update in one call
+            // Use TicketAllocationHelper to allocate
             $wasRecentlyCreated = !ExhibitionParticipant::where('application_id', $application->id)->exists();
             
-            $exhibitionParticipant = ExhibitionParticipant::updateOrCreate(
-                ['application_id' => $application->id],
-                [
-                    'stall_manning_count' => $request->stall_manning_count ?? 0,
-                    'complimentary_delegate_count' => $complimentaryCount ?? 0,
-                    'ticketAllocation' => !empty($ticketAllocations) ? json_encode($ticketAllocations) : null,
-                ]
+            $exhibitionParticipant = TicketAllocationHelper::allocate(
+                $application->id,
+                $ticketAllocations
             );
 
             // Reload the relationship to ensure it's fresh
             $application->load('exhibitionParticipant');
 
-            // Calculate total ticket allocations
-            $totalTicketAllocations = array_sum($ticketAllocations);
-            $totalPasses = $request->stall_manning_count + $complimentaryCount + $totalTicketAllocations;
+            // Get counts from allocation (calculated from JSON)
+            $countsData = TicketAllocationHelper::getCountsFromAllocation($application->id);
+            $totalTicketAllocations = $countsData['total_allocated'] ?? 0;
+            // Get counts from ticketAllocation JSON (calculated by helper)
+            $countsData = TicketAllocationHelper::getCountsFromAllocation($application->id);
+            $stallManningCount = $countsData['stall_manning_count'] ?? 0;
+            $complimentaryCount = $countsData['complimentary_delegate_count'] ?? 0;
+            $totalPasses = $totalTicketAllocations;
 
             // Log the update or creation
             $action = $wasRecentlyCreated ? 'created' : 'updated';
@@ -942,10 +938,10 @@ class PassesController extends Controller
                 'company_name' => $application->company_name,
                 'exhibition_participant_id' => $exhibitionParticipant->id,
                 'action' => $action,
-                'stall_manning_count' => $request->stall_manning_count,
-                'complimentary_delegate_count' => $complimentaryCount,
                 'ticket_allocations' => $ticketAllocations,
                 'total_ticket_allocations' => $totalTicketAllocations,
+                'stall_manning_count' => $stallManningCount,
+                'complimentary_delegate_count' => $complimentaryCount,
                 'total_passes' => $totalPasses,
                 'updated_by' => auth()->id(),
                 'updated_at' => now()
@@ -960,10 +956,10 @@ class PassesController extends Controller
                 'message' => $message,
                 'data' => [
                     'exhibition_participant_id' => $exhibitionParticipant->id,
-                    'stall_manning_count' => $request->stall_manning_count,
-                    'complimentary_delegate_count' => $complimentaryCount,
                     'ticket_allocations' => $ticketAllocations,
                     'total_ticket_allocations' => $totalTicketAllocations,
+                    'stall_manning_count' => $stallManningCount,
+                    'complimentary_delegate_count' => $complimentaryCount,
                     'total_passes' => $totalPasses,
                     'was_created' => $wasRecentlyCreated
                 ]
@@ -1032,41 +1028,51 @@ class PassesController extends Controller
                 $complimentaryDelegateCount = 0;
             }
 
-            // Check if exhibitionParticipant exists, if not create it
-            if (!$application->exhibitionParticipant) {
-                $exhibitionParticipant = new ExhibitionParticipant();
-                $exhibitionParticipant->application_id = $application->id;
-                $exhibitionParticipant->stall_manning_count = $allocatedPasses;
-                $exhibitionParticipant->complimentary_delegate_count = $complimentaryDelegateCount;
-                $exhibitionParticipant->save();
-            } else {
-                // Update existing exhibitionParticipant
-                $application->exhibitionParticipant->stall_manning_count = $allocatedPasses;
-                $application->exhibitionParticipant->complimentary_delegate_count = $complimentaryDelegateCount;
-                $application->exhibitionParticipant->save();
-            }
+            // Use TicketAllocationHelper to auto-allocate based on booth area
+            try {
+                $exhibitionParticipant = TicketAllocationHelper::autoAllocateAfterPayment(
+                    $application->id,
+                    $stallSize,
+                    $application->event_id ?? null,
+                    $application->application_type ?? null
+                );
 
-            // Log the auto-allocation
-            \Log::info('Passes auto-allocated based on stall size', [
-                'application_id' => $application->id,
-                'company_name' => $application->company_name,
-                'stall_size' => $stallSize,
-                'stall_manning_count' => $allocatedPasses,
-                'complimentary_delegate_count' => $complimentaryDelegateCount,
-                'allocated_by' => auth()->id(),
-                'allocated_at' => now()
-            ]);
+                // Get counts from allocation (calculated from JSON)
+                $countsData = TicketAllocationHelper::getCountsFromAllocation($application->id);
+                $stallManningCount = $countsData['stall_manning_count'] ?? 0;
+                $complimentaryCount = $countsData['complimentary_delegate_count'] ?? 0;
+                $totalAllocated = $countsData['total_allocated'] ?? 0;
 
-            return response()->json([
-                'success' => true,
-                'message' => 'Passes auto-allocated successfully for ' . $application->company_name . ' based on ' . $stallSize . ' sqm stall size',
-                'data' => [
+                // Log the auto-allocation
+                \Log::info('Passes auto-allocated based on stall size', [
+                    'application_id' => $application->id,
+                    'company_name' => $application->company_name,
                     'stall_size' => $stallSize,
-                    'stall_manning_count' => $allocatedPasses,
-                    'complimentary_delegate_count' => $complimentaryDelegateCount,
-                    'total_passes' => $allocatedPasses + $complimentaryDelegateCount
-                ]
-            ]);
+                    'stall_manning_count' => $stallManningCount,
+                    'complimentary_delegate_count' => $complimentaryCount,
+                    'total_allocated' => $totalAllocated,
+                    'allocated_by' => auth()->id(),
+                    'allocated_at' => now()
+                ]);
+
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Passes auto-allocated successfully for ' . $application->company_name . ' based on ' . $stallSize . ' sqm stall size',
+                    'data' => [
+                        'stall_size' => $stallSize,
+                        'stall_manning_count' => $stallManningCount,
+                        'complimentary_delegate_count' => $complimentaryCount,
+                        'total_allocated' => $totalAllocated,
+                        'total_passes' => $totalAllocated
+                    ]
+                ]);
+            } catch (\Exception $e) {
+                \Log::error('Failed to auto-allocate using helper', [
+                    'application_id' => $application->id,
+                    'error' => $e->getMessage()
+                ]);
+                throw $e;
+            }
         } catch (\Exception $e) {
             \Log::error('Error auto-allocating passes', [
                 'error' => $e->getMessage(),

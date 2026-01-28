@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\Auth;
 use App\Models\CoExhibitor;
 use App\Models\Payment;
 use App\Models\Ticket;
+use App\Helpers\TicketAllocationHelper;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
@@ -134,78 +135,49 @@ class DashboardController extends Controller
             //get the exhibitor and delegate count from the exhibitionParticipation table where application id is same as the application id
             $exhibitionParticipant = ExhibitionParticipant::where('application_id', $applicationId)->first();
             
-            // get the ticketAllocation value from the exhibitionParticipant table and get the ticket details from the tickets table with id and count from the ticketAllocation value
-            // Handle case when $exhibitionParticipant is null to avoid error when accessing property
-            try {
-                if ($exhibitionParticipant) {
-                    $ticketAllocation = $exhibitionParticipant->ticketAllocation;
-
-                    if ($ticketAllocation) {
-                        $ticketIds = json_decode($ticketAllocation, true);
-                        if (!is_array($ticketIds)) {
-                            throw new \Exception('Invalid ticket allocation format.');
-                        }
-                        $tickets = Ticket::whereIn('id', array_keys($ticketIds))->get();
-                    } else {
-                        $tickets = collect();
-                        $ticketIds = [];
-                    }
-
-                    //make as json with ticket name and count
-                    $ticketDetails = $tickets->map(function ($ticket) use ($ticketIds) {
+            // Get ticket allocation details using helper
+            $ticketDetails = collect();
+            $ticketSummary = [];
+            
+            if ($exhibitionParticipant) {
+                try {
+                    // Get allocation details using helper
+                    $allocationDetails = TicketAllocationHelper::getAllocation($applicationId);
+                    
+                    // Convert to ticketDetails format
+                    $ticketDetails = collect($allocationDetails)->map(function ($data, $ticketTypeId) {
                         return [
-                            'name' => $ticket->ticket_type,
-                            'count' => isset($ticketIds[$ticket->id]) ? $ticketIds[$ticket->id] : 0,
-                            'slug' => Str::slug($ticket->ticket_type, '-'),
+                            'id' => $ticketTypeId,
+                            'name' => $data['name'] ?? 'Unknown',
+                            'count' => $data['count'] ?? 0,
+                            'slug' => $data['slug'] ?? Str::slug($data['name'] ?? 'unknown', '-'),
                         ];
                     });
-                } else {
-                    // If no participant, set empty collection for ticketDetails
+
+                    // Get usage stats for each ticket type
+                    $usageStats = TicketAllocationHelper::getInvitationUsageStats($applicationId);
+                    
+                    foreach ($ticketDetails as $ticket) {
+                        $ticketTypeId = $ticket['id'];
+                        $stats = $usageStats[$ticketTypeId] ?? [];
+                        
+                        $ticketSummary[] = [
+                            'id' => $ticketTypeId,
+                            'name' => $ticket['name'],
+                            'count' => $ticket['count'],
+                            'usedCount' => $stats['used'] ?? 0,
+                            'pendingCount' => $stats['pending'] ?? 0,
+                            'acceptedCount' => $stats['accepted'] ?? 0,
+                            'cancelledCount' => $stats['cancelled'] ?? 0,
+                            'remainingCount' => $stats['available'] ?? $ticket['count'],
+                            'slug' => $ticket['slug'],
+                        ];
+                    }
+                } catch (\Exception $e) {
+                    Log::error('Error getting ticket allocation details in dashboard: ' . $e->getMessage());
                     $ticketDetails = collect();
+                    $ticketSummary = [];
                 }
-            } catch (\Exception $e) {
-                $ticketDetails = collect();
-                // Optionally log the error:
-                Log::error($e->getMessage());
-            }
-
-            // Used count of each category
-            // Handle case when $exhibitionParticipant is null
-            if (!$exhibitionParticipant) {
-                // If no exhibition participant exists, set default values
-                $stallManningCount = 0;
-                $ticketSummary = [];
-            } else {
-                // Get the Stall Manning Count from stall_manning table using same id
-                $stallManningCount = StallManning::where('exhibition_participant_id', $exhibitionParticipant->id)->count();
-                $ticketSummary = [];
-                
-                foreach ($ticketDetails as $ticket) {
-                    $usedCount = DB::table('complimentary_delegates')
-                        ->where('exhibition_participant_id', $exhibitionParticipant->id)
-                        ->where('ticketType', $ticket['name'])
-                        ->count();
-
-                    $remainingCount = $ticket['count'] - $usedCount;
-
-                    $ticketSummary[] = [
-                        'name' => $ticket['name'],
-                        'count' => $ticket['count'],
-                        'usedCount' => $usedCount,
-                        'remainingCount' => $remainingCount,
-                        'slug' => $ticket['slug'],
-                    ];
-                }
-
-                //merge the stall manning count to ticket summmary with ticket type as Exhibitor
-                $stallManningCountValue = $exhibitionParticipant->stall_manning_count ?? 0;
-                $ticketSummary[] = [
-                    'name' => 'Exhibitor',
-                    'count' => $stallManningCountValue,
-                    'usedCount' => $stallManningCount,
-                    'remainingCount' => max(0, $stallManningCountValue - $stallManningCount),
-                    'slug' => 'stall_manning',
-                ];
             }
 
 

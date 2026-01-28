@@ -40,15 +40,60 @@
             function renderTable(users) {
                 tableBody.innerHTML = '';
                 users.forEach(user => {
+                    const status = user.status || 'pending';
+                    const statusBadge = status === 'cancelled' 
+                        ? '<span class="badge bg-danger">Cancelled</span>'
+                        : status === 'accepted'
+                        ? '<span class="badge bg-success">Accepted</span>'
+                        : '<span class="badge bg-warning">Pending</span>';
+                    
+                    const cancelButton = status !== 'cancelled'
+                        ? `<button class="btn btn-sm btn-danger" onclick="cancelInvitation(${user.id}, '${link === 'complimentary' ? 'complimentary_delegate' : 'stall_manning'}')">
+                            <i class="fas fa-times"></i> Cancel
+                           </button>`
+                        : '<span class="text-muted">Your invitation has been cancelled</span>';
+                    
                     const row = `
             <tr>
                 <td class="text-sm font-weight-normal">${user.first_name} ${user.last_name || ''}</td>
                 <td class="text-sm font-weight-normal">${user.email}</td>
                 <td class="text-sm font-weight-normal">${user.job_title || 'N/A'}</td>
+                <td class="text-sm font-weight-normal">${statusBadge}</td>
                 <td class="text-sm font-weight-normal">${new Date(user.created_at).toLocaleDateString()}</td>
-
+                <td class="text-sm font-weight-normal">${cancelButton}</td>
             </tr>`;
                     tableBody.innerHTML += row;
+                });
+            }
+            
+            function cancelInvitation(invitationId, type) {
+                if (!confirm('Are you sure you want to cancel this invitation? This action cannot be undone.')) {
+                    return;
+                }
+                
+                fetch('/exhibitor/invite/cancel', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                    },
+                    body: JSON.stringify({
+                        invitation_id: invitationId,
+                        type: type
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert(data.message || 'Your invitation has been cancelled');
+                        location.reload();
+                    } else {
+                        alert(data.error || 'Failed to cancel invitation');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('An error occurred while cancelling the invitation');
                 });
             }
 
@@ -148,10 +193,13 @@
                     </div>
                     <div class="table-responsive">
                         <table class="table table-flush" id="datatable-basic">
+                            <meta name="csrf-token" content="{{ csrf_token() }}">
                             <thead class="thead-light">
                             <tr>
                                 <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7" data-sort="first_name">Name</th>
                                 <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7" data-sort="email">Email</th>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Status</th>
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Actions</th>
                                 <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7" data-sort="role">Job title</th>
                                 <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7" data-sort="created_at">Mobile No</th>
 {{--                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Status </th>--}}
