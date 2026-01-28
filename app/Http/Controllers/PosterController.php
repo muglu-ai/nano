@@ -2391,6 +2391,46 @@ class PosterController extends Controller
             'poster_registration_token' => $token,
         ]);
         
+        // Send provisional receipt email after registration is submitted
+        try {
+            // Get admin emails from config for BCC
+            $adminEmails = config('constants.admin_emails.to', []);
+            $bccEmails = config('constants.admin_emails.bcc', []);
+            
+            Log::info('Poster Registration: Preparing to send provisional receipt email', [
+                'tin_no' => $tinNo,
+                'email' => $posterRegistration->lead_author_email,
+                'bcc' => $bccEmails,
+                'admin_to' => $adminEmails,
+            ]);
+            
+            $posterMail = new \App\Mail\PosterRegistrationMail($posterRegistration, $invoice, 'provisional_receipt');
+            
+            $mail = Mail::to($posterRegistration->lead_author_email);
+            
+            // Add BCC if configured
+            if (!empty($bccEmails)) {
+                $mail->bcc($bccEmails);
+            }
+            
+            // Send immediately, don't queue
+            $mail->send($posterMail);
+            
+            Log::info('Poster Registration: Provisional receipt email sent successfully', [
+                'tin_no' => $tinNo,
+                'email' => $posterRegistration->lead_author_email,
+                'bcc' => $bccEmails,
+            ]);
+        } catch (\Exception $mailError) {
+            Log::error('Poster Registration: Failed to send provisional receipt email', [
+                'tin_no' => $tinNo,
+                'email' => $posterRegistration->lead_author_email,
+                'error' => $mailError->getMessage(),
+                'trace' => $mailError->getTraceAsString()
+            ]);
+            // Don't fail the registration if email fails
+        }
+        
         // Redirect to payment page
         return redirect()->route('poster.register.showPayment', ['tin_no' => $tinNo]);
     }
@@ -2488,46 +2528,6 @@ class PosterController extends Controller
         if ($invoice->payment_status === 'paid') {
             return redirect()->route('poster.register.success', $tinNo)
                 ->with('info', 'Payment already processed');
-        }
-        
-        // Send provisional receipt email before redirecting to payment gateway
-        try {
-            // Get admin emails from config for BCC
-            $adminEmails = config('constants.admin_emails.to', []);
-            $bccEmails = config('constants.admin_emails.bcc', []);
-            
-            Log::info('Poster Registration: Preparing to send provisional receipt email', [
-                'tin_no' => $tinNo,
-                'email' => $registration->lead_author_email,
-                'bcc' => $bccEmails,
-                'admin_to' => $adminEmails,
-            ]);
-            
-            $posterMail = new \App\Mail\PosterRegistrationMail($registration, $invoice, 'provisional_receipt');
-            
-            $mail = Mail::to($registration->lead_author_email);
-            
-            // Add BCC if configured
-            if (!empty($bccEmails)) {
-                $mail->bcc($bccEmails);
-            }
-            
-            // Send immediately, don't queue
-            $mail->send($posterMail);
-            
-            Log::info('Poster Registration: Provisional receipt email sent successfully', [
-                'tin_no' => $tinNo,
-                'email' => $registration->lead_author_email,
-                'bcc' => $bccEmails,
-            ]);
-        } catch (\Exception $mailError) {
-            Log::error('Poster Registration: Failed to send provisional receipt email', [
-                'tin_no' => $tinNo,
-                'email' => $registration->lead_author_email,
-                'error' => $mailError->getMessage(),
-                'trace' => $mailError->getTraceAsString()
-            ]);
-            // Don't fail the payment flow if email fails
         }
         
         // Redirect to payment gateway based on currency
