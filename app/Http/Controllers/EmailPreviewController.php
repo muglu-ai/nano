@@ -27,7 +27,7 @@ class EmailPreviewController extends Controller
             abort(404, 'User not found');
         }
         $name = $user->name;
-        $setupProfileUrl = config('app.url');
+        $setupProfileUrl = config('constants.APP_URL') . '/login';
         $username = $user->email;
         $password = $user->simplePass;
 

@@ -1766,7 +1766,7 @@ class ExhibitorRegistrationController extends Controller
             
             // Send credentials email
             $contactName = trim(($allData['contact_first_name'] ?? '') . ' ' . ($allData['contact_last_name'] ?? ''));
-            $setupProfileUrl = config('app.url');
+            $setupProfileUrl = config('constants.APP_URL') . '/login';
             try {
                 Mail::to($email)->send(new UserCredentialsMail($contactName, $setupProfileUrl, $email, $password));
                 \Log::info('Exhibitor Registration: Credentials email sent', ['email' => $email]);

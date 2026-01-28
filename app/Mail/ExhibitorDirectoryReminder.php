@@ -22,8 +22,8 @@ class ExhibitorDirectoryReminder extends Mailable implements ShouldQueue
     public function __construct(
         string $loginEmail,
         string $loginPassword,
-        string $loginUrl = 'https://www.bengalurutechsummit.com/portal/public/login',
-        string $forgotUrl = 'https://www.bengalurutechsummit.com/portal/public/forgot-password'
+        string $loginUrl = config('constants.APP_URL') . '/login',
+        string $forgotUrl = config('constants.APP_URL') . '/forgot-password'
     ) {
         $this->loginEmail = $loginEmail;
         $this->loginPassword = $loginPassword;

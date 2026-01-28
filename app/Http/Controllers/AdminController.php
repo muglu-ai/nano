@@ -1519,7 +1519,7 @@ class AdminController extends Controller
         foreach ($applications as $application) {
             $name = $application->user->name;
             //todo: change the url to the new url
-            $setupProfileUrl = config('constants.APP_URL');
+            $setupProfileUrl = config('constants.APP_URL') . '/login';
             $username = $application->user->email;
             $password = $application->user->simplePass;
 
@@ -1734,7 +1734,7 @@ class AdminController extends Controller
             }
 
             $name = $user->name;
-            $setupProfileUrl = config('app.url');
+            $setupProfileUrl = config('constants.APP_URL') . '/login';
             $username = $user->email;
             $password = (!empty($user->simplePass)) ? $user->simplePass : 'Password not available';
 
