@@ -16,10 +16,12 @@ class TicketCategory extends Model
         'name', // Delegate/VIP/Workshop
         'description',
         'sort_order',
+        'is_exhibitor_only',
     ];
 
     protected $casts = [
         'sort_order' => 'integer',
+        'is_exhibitor_only' => 'boolean',
     ];
 
     /**
