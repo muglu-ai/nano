@@ -352,6 +352,7 @@ class AdminTicketConfigController extends Controller
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
+            'is_exhibitor_only' => 'boolean',
             'sort_order' => 'nullable|integer',
         ]);
 
@@ -363,6 +364,7 @@ class AdminTicketConfigController extends Controller
             'event_id' => $eventId,
             'name' => $request->name,
             'description' => $request->description,
+            'is_exhibitor_only' => $request->has('is_exhibitor_only') ? (bool) $request->is_exhibitor_only : false,
             'sort_order' => $request->sort_order ?? 0,
         ]);
 
@@ -378,6 +380,7 @@ class AdminTicketConfigController extends Controller
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
+            'is_exhibitor_only' => 'boolean',
             'sort_order' => 'nullable|integer',
         ]);
 
@@ -389,6 +392,7 @@ class AdminTicketConfigController extends Controller
         $category->update([
             'name' => $request->name,
             'description' => $request->description,
+            'is_exhibitor_only' => $request->has('is_exhibitor_only') ? (bool) $request->is_exhibitor_only : false,
             'sort_order' => $request->sort_order ?? 0,
         ]);
 

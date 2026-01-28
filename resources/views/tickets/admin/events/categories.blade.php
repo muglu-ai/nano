@@ -296,7 +296,7 @@
                 <form action="{{ route('admin.tickets.events.categories.store', $event->id) }}" method="POST">
                     @csrf
                     <div class="row">
-                        <div class="col-md-5">
+                        <div class="col-md-4">
                             <div class="mb-3">
                                 <label class="form-label">Category Name <span class="text-danger">*</span></label>
                                 <input type="text" name="name" class="form-control" 
@@ -307,7 +307,7 @@
                                 @enderror
                             </div>
                         </div>
-                        <div class="col-md-5">
+                        <div class="col-md-4">
                             <div class="mb-3">
                                 <label class="form-label">Description</label>
                                 <input type="text" name="description" class="form-control" 
@@ -318,7 +318,7 @@
                                 @enderror
                             </div>
                         </div>
-                        <div class="col-md-1">
+                        <div class="col-md-2">
                             <div class="mb-3">
                                 <label class="form-label">Sort</label>
                                 <input type="number" name="sort_order" class="form-control" 
@@ -327,6 +327,18 @@
                                 @error('sort_order')
                                     <div class="text-danger">{{ $message }}</div>
                                 @enderror
+                            </div>
+                        </div>
+                        <div class="col-md-1">
+                            <div class="mb-3">
+                                <label class="form-label">Exhibitor Only</label>
+                                <div class="form-check form-switch mt-2">
+                                    <input class="form-check-input" type="checkbox" name="is_exhibitor_only" id="is_exhibitor_only" value="1"
+                                           {{ old('is_exhibitor_only') ? 'checked' : '' }}>
+                                    <label class="form-check-label" for="is_exhibitor_only" style="font-size: 0.85rem;">
+                                        Yes
+                                    </label>
+                                </div>
                             </div>
                         </div>
                         <div class="col-md-1 d-flex align-items-end">
@@ -345,6 +357,7 @@
                         <tr>
                             <th>Name</th>
                             <th>Description</th>
+                            <th>Type</th>
                             <th>Subcategories</th>
                             <th>Sort Order</th>
                             <th class="text-center">Actions</th>
@@ -358,6 +371,13 @@
                                 </td>
                                 <td>
                                     {{ $category->description ?: '-' }}
+                                </td>
+                                <td>
+                                    @if($category->is_exhibitor_only)
+                                        <span class="badge bg-warning text-dark">Exhibitor Only</span>
+                                    @else
+                                        <span class="badge bg-secondary">Standard</span>
+                                    @endif
                                 </td>
                                 <td>
                                     @php
@@ -378,7 +398,7 @@
                                            class="btn-subcategories">
                                             <i class="fas fa-layer-group"></i> Subcategories
                                         </a>
-                                        <button type="button" class="btn-edit" onclick="editCategory({{ $category->id }}, '{{ addslashes($category->name) }}', '{{ addslashes($category->description ?? '') }}', {{ $category->sort_order }})">
+                                        <button type="button" class="btn-edit" onclick="editCategory({{ $category->id }}, '{{ addslashes($category->name) }}', '{{ addslashes($category->description ?? '') }}', {{ $category->sort_order }}, {{ $category->is_exhibitor_only ? 'true' : 'false' }})">
                                             <i class="fas fa-edit"></i> Edit
                                         </button>
                                         <form action="{{ route('admin.tickets.events.categories.delete', [$event->id, $category->id]) }}" 
@@ -399,17 +419,26 @@
                                             @csrf
                                             @method('PUT')
                                             <div class="row g-2">
-                                                <div class="col-md-4">
+                                                <div class="col-md-3">
                                                     <input type="text" name="name" class="form-control form-control-sm" 
                                                            id="edit-name-{{ $category->id }}" required>
                                                 </div>
-                                                <div class="col-md-4">
+                                                <div class="col-md-3">
                                                     <input type="text" name="description" class="form-control form-control-sm" 
                                                            id="edit-description-{{ $category->id }}" placeholder="Description">
                                                 </div>
                                                 <div class="col-md-2">
                                                     <input type="number" name="sort_order" class="form-control form-control-sm" 
                                                            id="edit-sort-{{ $category->id }}" min="0">
+                                                </div>
+                                                <div class="col-md-2">
+                                                    <div class="form-check form-switch">
+                                                        <input class="form-check-input" type="checkbox" name="is_exhibitor_only" 
+                                                               id="edit-exhibitor-only-{{ $category->id }}" value="1">
+                                                        <label class="form-check-label" for="edit-exhibitor-only-{{ $category->id }}" style="font-size: 0.85rem;">
+                                                            Exhibitor Only
+                                                        </label>
+                                                    </div>
                                                 </div>
                                                 <div class="col-md-2">
                                                     <div class="d-flex gap-2">
@@ -429,7 +458,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="5" class="empty-state">
+                                <td colspan="6" class="empty-state">
                                     <i class="fas fa-list"></i>
                                     <h5>No Ticket Categories</h5>
                                     <p>Add ticket categories to organize your ticket types.</p>
@@ -444,7 +473,7 @@
 </div>
 
 <script>
-    function editCategory(id, name, description, sortOrder) {
+    function editCategory(id, name, description, sortOrder, isExhibitorOnly) {
         // Hide all other edit forms
         document.querySelectorAll('.edit-form').forEach(form => {
             form.classList.remove('active');
@@ -458,6 +487,7 @@
         document.getElementById('edit-name-' + id).value = name;
         document.getElementById('edit-description-' + id).value = description;
         document.getElementById('edit-sort-' + id).value = sortOrder;
+        document.getElementById('edit-exhibitor-only-' + id).checked = isExhibitorOnly === true || isExhibitorOnly === 'true' || isExhibitorOnly === 1;
         
         // Scroll to form
         editForm.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
