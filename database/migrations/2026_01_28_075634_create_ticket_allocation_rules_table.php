@@ -18,8 +18,9 @@ return new class extends Migration
             $table->id();
             $table->foreignId('event_id')->nullable()->constrained('events')->onDelete('cascade');
             $table->string('application_type')->nullable(); // 'exhibitor-registration', 'startup-zone', or null for all
-            $table->integer('booth_area_min'); // Minimum booth area (sqm)
-            $table->integer('booth_area_max'); // Maximum booth area (sqm)
+            $table->string('booth_type')->nullable(); // Special booth type (POD, Booth / POD, Startup Booth, etc.) - null for numeric ranges
+            $table->integer('booth_area_min')->nullable(); // Minimum booth area (sqm) - null if using booth_type
+            $table->integer('booth_area_max')->nullable(); // Maximum booth area (sqm) - null if using booth_type
             $table->json('ticket_allocations'); // {"ticket_type_id": count} - CENTRALIZED: All allocations stored here
             $table->integer('sort_order')->default(0);
             $table->boolean('is_active')->default(true);
@@ -27,6 +28,7 @@ return new class extends Migration
             
             $table->index(['event_id', 'application_type', 'is_active'], 'idx_tar_event_app_active');
             $table->index(['booth_area_min', 'booth_area_max'], 'idx_tar_booth_area');
+            $table->index('booth_type', 'idx_tar_booth_type');
         });
     }
 

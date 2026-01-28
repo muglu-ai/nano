@@ -72,8 +72,11 @@ class TicketAllocationRuleController extends Controller
             ->get();
 
         $eventId = $request->get('event_id');
+        
+        // Get predefined special booth types from config
+        $specialBoothTypes = array_keys(config('ticket_allocation.special_booth_types', []));
 
-        return view('admin.ticket-allocation-rules.create', compact('events', 'applicationTypes', 'ticketTypes', 'eventId'));
+        return view('admin.ticket-allocation-rules.create', compact('events', 'applicationTypes', 'ticketTypes', 'eventId', 'specialBoothTypes'));
     }
 
     /**
@@ -81,19 +84,53 @@ class TicketAllocationRuleController extends Controller
      */
     public function store(Request $request)
     {
-        $validator = Validator::make($request->all(), [
+        // Determine if using special booth type or numeric range
+        $useSpecialType = !empty($request->booth_type);
+        
+        $rules = [
             'event_id' => 'nullable|exists:events,id',
             'application_type' => 'nullable|in:exhibitor-registration,startup-zone',
-            'booth_area_min' => 'required|integer|min:0',
-            'booth_area_max' => 'required|integer|min:0|gte:booth_area_min',
             'ticket_allocations' => 'required|array',
             'ticket_allocations.*' => 'required|integer|min:0|exists:ticket_types,id',
             'sort_order' => 'nullable|integer|min:0',
             'is_active' => 'boolean',
-        ]);
+        ];
 
-        // Validate no overlapping ranges for same event/application_type
-        if ($request->event_id || $request->application_type) {
+        if ($useSpecialType) {
+            // For special booth types, booth_type is required, booth_area fields are null
+            $rules['booth_type'] = 'required|string|max:255';
+            $rules['booth_area_min'] = 'nullable|integer|min:0';
+            $rules['booth_area_max'] = 'nullable|integer|min:0';
+        } else {
+            // For numeric ranges, booth_area fields are required, booth_type is null
+            $rules['booth_type'] = 'nullable|string|max:255';
+            $rules['booth_area_min'] = 'required|integer|min:0';
+            $rules['booth_area_max'] = 'required|integer|min:0|gte:booth_area_min';
+        }
+
+        $validator = Validator::make($request->all(), $rules);
+
+        // Validate no duplicate special booth types for same event/application_type
+        if ($useSpecialType) {
+            $duplicate = TicketAllocationRule::where(function($q) use ($request) {
+                if ($request->event_id) {
+                    $q->where('event_id', $request->event_id)->orWhereNull('event_id');
+                }
+                if ($request->application_type) {
+                    $q->where('application_type', $request->application_type)->orWhereNull('application_type');
+                }
+            })
+            ->where('booth_type', $request->booth_type)
+            ->where('is_active', true)
+            ->exists();
+
+            if ($duplicate) {
+                return back()->withErrors(['booth_type' => 'A rule for this special booth type already exists.'])->withInput();
+            }
+        }
+
+        // Validate no overlapping ranges for same event/application_type (only for numeric ranges)
+        if (!$useSpecialType && ($request->event_id || $request->application_type)) {
             $overlapping = TicketAllocationRule::where(function($q) use ($request) {
                 if ($request->event_id) {
                     $q->where('event_id', $request->event_id)->orWhereNull('event_id');
@@ -102,6 +139,7 @@ class TicketAllocationRuleController extends Controller
                     $q->where('application_type', $request->application_type)->orWhereNull('application_type');
                 }
             })
+            ->whereNull('booth_type') // Only check numeric range rules
             ->where(function($q) use ($request) {
                 $q->whereBetween('booth_area_min', [$request->booth_area_min, $request->booth_area_max])
                   ->orWhereBetween('booth_area_max', [$request->booth_area_min, $request->booth_area_max])
@@ -138,8 +176,9 @@ class TicketAllocationRuleController extends Controller
             $rule = TicketAllocationRule::create([
                 'event_id' => $request->event_id ?: null,
                 'application_type' => $request->application_type ?: null,
-                'booth_area_min' => $request->booth_area_min,
-                'booth_area_max' => $request->booth_area_max,
+                'booth_type' => $useSpecialType ? trim($request->booth_type) : null,
+                'booth_area_min' => $useSpecialType ? null : $request->booth_area_min,
+                'booth_area_max' => $useSpecialType ? null : $request->booth_area_max,
                 'ticket_allocations' => $ticketAllocations,
                 'sort_order' => $request->sort_order ?? 0,
                 'is_active' => $request->has('is_active') ? (bool) $request->is_active : true,
@@ -149,7 +188,8 @@ class TicketAllocationRuleController extends Controller
                 'rule_id' => $rule->id,
                 'event_id' => $rule->event_id,
                 'application_type' => $rule->application_type,
-                'booth_area_range' => "{$rule->booth_area_min}-{$rule->booth_area_max}",
+                'booth_type' => $rule->booth_type,
+                'booth_area_range' => $rule->booth_type ? $rule->booth_type : "{$rule->booth_area_min}-{$rule->booth_area_max}",
             ]);
 
             return redirect()->route('admin.ticket-allocation-rules.index')
@@ -189,8 +229,11 @@ class TicketAllocationRuleController extends Controller
             ->with(['category', 'subcategory', 'event'])
             ->orderBy('name')
             ->get();
+        
+        // Get predefined special booth types from config
+        $specialBoothTypes = array_keys(config('ticket_allocation.special_booth_types', []));
 
-        return view('admin.ticket-allocation-rules.edit', compact('rule', 'events', 'applicationTypes', 'ticketTypes'));
+        return view('admin.ticket-allocation-rules.edit', compact('rule', 'events', 'applicationTypes', 'ticketTypes', 'specialBoothTypes'));
     }
 
     /**
@@ -200,19 +243,52 @@ class TicketAllocationRuleController extends Controller
     {
         $rule = TicketAllocationRule::findOrFail($id);
 
-        $validator = Validator::make($request->all(), [
+        // Determine if using special booth type or numeric range
+        $useSpecialType = !empty($request->booth_type);
+        
+        $rules = [
             'event_id' => 'nullable|exists:events,id',
             'application_type' => 'nullable|in:exhibitor-registration,startup-zone',
-            'booth_area_min' => 'required|integer|min:0',
-            'booth_area_max' => 'required|integer|min:0|gte:booth_area_min',
             'ticket_allocations' => 'required|array',
             'ticket_allocations.*' => 'required|integer|min:0|exists:ticket_types,id',
             'sort_order' => 'nullable|integer|min:0',
             'is_active' => 'boolean',
-        ]);
+        ];
 
-        // Validate no overlapping ranges (excluding current rule)
-        if ($request->event_id || $request->application_type) {
+        if ($useSpecialType) {
+            $rules['booth_type'] = 'required|string|max:255';
+            $rules['booth_area_min'] = 'nullable|integer|min:0';
+            $rules['booth_area_max'] = 'nullable|integer|min:0';
+        } else {
+            $rules['booth_type'] = 'nullable|string|max:255';
+            $rules['booth_area_min'] = 'required|integer|min:0';
+            $rules['booth_area_max'] = 'required|integer|min:0|gte:booth_area_min';
+        }
+
+        $validator = Validator::make($request->all(), $rules);
+
+        // Validate no duplicate special booth types (excluding current rule)
+        if ($useSpecialType) {
+            $duplicate = TicketAllocationRule::where('id', '!=', $id)
+                ->where(function($q) use ($request) {
+                    if ($request->event_id) {
+                        $q->where('event_id', $request->event_id)->orWhereNull('event_id');
+                    }
+                    if ($request->application_type) {
+                        $q->where('application_type', $request->application_type)->orWhereNull('application_type');
+                    }
+                })
+                ->where('booth_type', $request->booth_type)
+                ->where('is_active', true)
+                ->exists();
+
+            if ($duplicate) {
+                return back()->withErrors(['booth_type' => 'A rule for this special booth type already exists.'])->withInput();
+            }
+        }
+
+        // Validate no overlapping ranges (excluding current rule, only for numeric ranges)
+        if (!$useSpecialType && ($request->event_id || $request->application_type)) {
             $overlapping = TicketAllocationRule::where('id', '!=', $id)
                 ->where(function($q) use ($request) {
                     if ($request->event_id) {
@@ -222,6 +298,7 @@ class TicketAllocationRuleController extends Controller
                         $q->where('application_type', $request->application_type)->orWhereNull('application_type');
                     }
                 })
+                ->whereNull('booth_type') // Only check numeric range rules
                 ->where(function($q) use ($request) {
                     $q->whereBetween('booth_area_min', [$request->booth_area_min, $request->booth_area_max])
                       ->orWhereBetween('booth_area_max', [$request->booth_area_min, $request->booth_area_max])
@@ -258,8 +335,9 @@ class TicketAllocationRuleController extends Controller
             $rule->update([
                 'event_id' => $request->event_id ?: null,
                 'application_type' => $request->application_type ?: null,
-                'booth_area_min' => $request->booth_area_min,
-                'booth_area_max' => $request->booth_area_max,
+                'booth_type' => $useSpecialType ? trim($request->booth_type) : null,
+                'booth_area_min' => $useSpecialType ? null : $request->booth_area_min,
+                'booth_area_max' => $useSpecialType ? null : $request->booth_area_max,
                 'ticket_allocations' => $ticketAllocations,
                 'sort_order' => $request->sort_order ?? 0,
                 'is_active' => $request->has('is_active') ? (bool) $request->is_active : true,
@@ -269,6 +347,7 @@ class TicketAllocationRuleController extends Controller
                 'rule_id' => $rule->id,
                 'event_id' => $rule->event_id,
                 'application_type' => $rule->application_type,
+                'booth_type' => $rule->booth_type,
             ]);
 
             return redirect()->route('admin.ticket-allocation-rules.index')

@@ -553,6 +553,7 @@ class TicketAllocationHelper
     /**
      * Calculate allocation from booth area using rules
      * Handles numeric sqm and special strings (POD, Booth / POD, Startup Booth, etc.)
+     * Checks database rules first, then falls back to config
      *
      * @param float|string|null $boothArea
      * @param int|null $eventId
@@ -567,11 +568,26 @@ class TicketAllocationHelper
         // Handle string values: special booth types (POD, Booth / POD, Startup Booth) or "4 SQM"
         if (is_string($boothArea)) {
             $trimmed = trim($boothArea);
-            // Special booth types: 1 exhibitor + 1 standard pass
+            
+            // First, check database rules for special booth type
+            $dbRule = TicketAllocationRule::active()
+                ->forEvent($eventId)
+                ->forApplicationType($applicationType)
+                ->where('booth_type', $trimmed)
+                ->orderBy('sort_order')
+                ->orderBy('id')
+                ->first();
+            
+            if ($dbRule && !empty($dbRule->ticket_allocations)) {
+                return ['ticket_allocations' => $dbRule->ticket_allocations];
+            }
+            
+            // If no database rule, check config file
             $special = self::getSpecialBoothTypeAllocation($trimmed, $eventId);
             if (!empty($special)) {
                 return ['ticket_allocations' => $special];
             }
+            
             // Try to extract numeric value if format is like "4 SQM"
             if (preg_match('/(\d+)\s*sqm/i', $boothArea, $matches)) {
                 $boothArea = (float) $matches[1];
@@ -587,9 +603,11 @@ class TicketAllocationHelper
 
         $boothArea = (float) $boothArea;
 
+        // Find matching numeric range rule
         $query = TicketAllocationRule::active()
             ->forEvent($eventId)
             ->forApplicationType($applicationType)
+            ->whereNull('booth_type') // Only numeric range rules
             ->where('booth_area_min', '<=', $boothArea)
             ->where('booth_area_max', '>=', $boothArea)
             ->orderBy('sort_order')

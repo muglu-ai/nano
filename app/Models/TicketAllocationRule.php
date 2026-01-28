@@ -13,6 +13,7 @@ class TicketAllocationRule extends Model
     protected $fillable = [
         'event_id',
         'application_type',
+        'booth_type',
         'booth_area_min',
         'booth_area_max',
         'ticket_allocations',
@@ -41,7 +42,19 @@ class TicketAllocationRule extends Model
      */
     public function matchesBoothArea(float $boothArea): bool
     {
+        // For special booth types, use exact match
+        if ($this->booth_type) {
+            return false; // Special types are matched by string, not numeric
+        }
         return $boothArea >= $this->booth_area_min && $boothArea <= $this->booth_area_max;
+    }
+
+    /**
+     * Check if a special booth type matches this rule
+     */
+    public function matchesBoothType(string $boothType): bool
+    {
+        return $this->booth_type && strcasecmp(trim($this->booth_type), trim($boothType)) === 0;
     }
 
     /**

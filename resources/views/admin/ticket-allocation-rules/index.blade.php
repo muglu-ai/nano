@@ -77,7 +77,7 @@
                                 <th>ID</th>
                                 <th>Event</th>
                                 <th>Application Type</th>
-                                <th>Booth Area Range</th>
+                                <th>Booth Type / Range</th>
                                 <th>Ticket Allocations</th>
                                 <th>Status</th>
                                 <th>Sort Order</th>
@@ -90,7 +90,13 @@
                                     <td>{{ $rule->id }}</td>
                                     <td>{{ $rule->event ? $rule->event->event_name : 'All Events' }}</td>
                                     <td>{{ $rule->application_type ? ucfirst(str_replace('-', ' ', $rule->application_type)) : 'All Types' }}</td>
-                                    <td>{{ $rule->booth_area_min }} - {{ $rule->booth_area_max }} sqm</td>
+                                    <td>
+                                        @if($rule->booth_type)
+                                            <span class="badge bg-info">{{ $rule->booth_type }}</span>
+                                        @else
+                                            {{ $rule->booth_area_min }} - {{ $rule->booth_area_max }} sqm
+                                        @endif
+                                    </td>
                                     <td>
                                         @if($rule->ticket_allocations)
                                             @php
