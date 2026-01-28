@@ -662,6 +662,7 @@ Route::get('/admin/analytics/export', [MisController::class, 'exportUsers'])->na
 Route::get('/import_states', [MisController::class, 'getCountryAndState']);
 Route::post('/get-states', [MisController::class, 'getStates'])->name('get.states');
 Route::post('/get-cities', [MisController::class, 'getCities'])->name('get.cities');
+Route::post('/check-author-email', [PosterController::class, 'checkAuthorEmail'])->name('check.author.email');
 
 Route::get('active-users-analytics2', [NewMisController::class, 'activeUsersAnalytics'])->name('active.users.analytics2')->middleware(Auth::class);
 Route::get('/admin/analytics/export2', [NewMisController::class, 'exportUsers'])->name('admin.analytics.export2')->middleware(Auth::class);

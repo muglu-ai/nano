@@ -956,8 +956,29 @@ document.addEventListener('DOMContentLoaded', function() {
     // Initial call to update attendance summary on page load
     updateAttendanceSummary();
 
+    // Function to check if lead author email is unique
+    async function checkLeadAuthorEmailUniqueness(email) {
+        try {
+            const response = await fetch('{{ route("check.author.email") }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({ email: email })
+            });
+            
+            const data = await response.json();
+            return data.unique === true;
+        } catch (error) {
+            console.error('Error checking email uniqueness:', error);
+            return true; // Allow submission if check fails
+        }
+    }
+
     // Form submission
-    document.getElementById('submitForm').addEventListener('click', function(e) {
+    document.getElementById('submitForm').addEventListener('click', async function(e) {
         e.preventDefault();
         const form = document.getElementById('posterRegistrationForm');
         
@@ -980,6 +1001,18 @@ document.addEventListener('DOMContentLoaded', function() {
         if (leadAuthorIndex === null || leadAuthorIndex === undefined || leadAuthorIndex < 0) {
             Swal.fire('Validation Error', 'Please select exactly one Lead Author.', 'error');
             return;
+        }
+        
+        // Check lead author email uniqueness
+        const leadAuthorEmail = document.getElementById(`author_email_${leadAuthorIndex}`);
+        if (leadAuthorEmail && leadAuthorEmail.value) {
+            const isUnique = await checkLeadAuthorEmailUniqueness(leadAuthorEmail.value);
+            if (!isUnique) {
+                leadAuthorEmail.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                leadAuthorEmail.focus();
+                Swal.fire('Validation Error', 'This email is already registered as a lead author. Please use a different email address.', 'error');
+                return;
+            }
         }
         
         // Check lead author CV upload

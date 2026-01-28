@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Poster;
 use App\Models\PosterDraft;
+use App\Models\PosterAuthor;
 use App\Models\Payment;
 use App\Models\Invoice;
 use App\Services\CcAvenueService;
@@ -872,6 +873,34 @@ class PosterController extends Controller
             'ok' => true,
             'exists' => $exists,
             'message' => $exists ? 'Email is already registered.' : 'Email is available.',
+        ]);
+    }
+
+    /**
+     * Check if lead author email is unique in the authors table
+     */
+    public function checkAuthorEmail(Request $request)
+    {
+        $email = strtolower(trim((string) $request->input('email')));
+
+        if (!$email || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            return response()->json([
+                'unique' => false,
+                'message' => 'Invalid email format.',
+            ], 422);
+        }
+
+        // Check if email exists in PosterAuthor table where is_lead_author = true
+        $exists = \App\Models\PosterAuthor::query()
+            ->where('email', $email)
+            ->where('is_lead_author', true)
+            ->exists();
+
+        return response()->json([
+            'unique' => !$exists,
+            'message' => $exists 
+                ? 'This email is already registered as a lead author.' 
+                : 'Email is available.',
         ]);
     }
 
@@ -1954,6 +1983,25 @@ class PosterController extends Controller
         
         // Now get the validated lead author index
         $leadAuthorIndex = (int) $request->input('lead_author');
+        
+        // Validate lead author email uniqueness
+        $leadAuthorEmail = $request->input("authors.{$leadAuthorIndex}.email");
+        if ($leadAuthorEmail) {
+            $emailExists = \App\Models\PosterAuthor::query()
+                ->where('email', strtolower(trim($leadAuthorEmail)))
+                ->where('is_lead_author', true)
+                ->exists();
+            
+            if ($emailExists) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'This email is already registered as a lead author. Please use a different email address.',
+                    'errors' => [
+                        "authors.{$leadAuthorIndex}.email" => ['This email is already registered as a lead author.']
+                    ]
+                ], 422);
+            }
+        }
         
         $validated = $request->validate([
             'session_id' => 'nullable|string',
