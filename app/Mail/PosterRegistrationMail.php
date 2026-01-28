@@ -64,7 +64,7 @@ class PosterRegistrationMail extends Mailable
             });
         
         // Payment URL
-        $this->paymentUrl = route('poster.register.showPayment', $registration->tin_no);
+        $this->paymentUrl = route('poster.register.payment', $registration->tin_no);
     }
 
     /**

@@ -2254,10 +2254,15 @@ class PosterController extends Controller
         // Update draft with enriched authors for display
         $draft->authors = $authors->toArray();
         
-        // Verify session
+        // Verify session (allow access if token matches or if no session token set)
         $sessionToken = session('poster_registration_token');
-        if ($sessionToken !== $draft->token) {
+        if ($sessionToken && $sessionToken !== $draft->token) {
             abort(403, 'This registration does not belong to your session.');
+        }
+        
+        // Store token in session if not already set
+        if (!$sessionToken) {
+            session(['poster_registration_token' => $draft->token]);
         }
         
         return view('poster-registration.preview', compact('draft', 'authors'));
@@ -2287,7 +2292,7 @@ class PosterController extends Controller
                 'poster_registration_token' => $token,
             ]);
             
-            return redirect()->route('poster.register.showPayment', ['tin_no' => $existingRegistration->tin_no])
+            return redirect()->route('poster.register.payment', ['tin_no' => $existingRegistration->tin_no])
                 ->with('info', 'Registration already submitted. Please proceed with payment.');
         }
         
@@ -2432,7 +2437,7 @@ class PosterController extends Controller
         }
         
         // Redirect to payment page
-        return redirect()->route('poster.register.showPayment', ['tin_no' => $tinNo]);
+        return redirect()->route('poster.register.payment', ['tin_no' => $tinNo]);
     }
     
     /**
