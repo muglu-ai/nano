@@ -240,14 +240,15 @@ class ExhibitorController extends Controller
                 $ticketName = $ticket['ticket_type'];
                 $allocated = $ticket['count'];
                 $ticketId = $ticket['ticket_id'];
+                // complimentary_delegates.ticketType stores ticket_type ID (e.g. 3), not the name
                 $usedCount = DB::table('complimentary_delegates')
                     ->where('exhibition_participant_id', $count['exhibition_participant_id'])
-                    ->where('ticketType', $ticket['ticket_type'])
+                    ->where('ticketType', $ticketId)
                     ->count();
 
                 $data = DB::table('complimentary_delegates')
                     ->where('exhibition_participant_id', $count['exhibition_participant_id'])
-                    ->where('ticketType', $ticket['ticket_type'])
+                    ->where('ticketType', $ticketId)
                     ->orderBy($sortField, $sortDirection)
                     ->paginate($perPage);
                 // If you have a table for custom tickets, fetch data here. Otherwise, show empty or message.
