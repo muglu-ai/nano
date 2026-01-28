@@ -243,17 +243,20 @@ class TicketAllocationHelper
     private static function getUsedCount(int $exhibitionParticipantId, int $ticketTypeId): int
     {
         $count = 0;
+        $notCancelled = function ($q) {
+            $q->whereNull('status')->orWhere('status', '!=', 'cancelled');
+        };
 
-        // Count from complimentary_delegates
+        // Count from complimentary_delegates (exclude cancelled so slot is freed)
         $count += ComplimentaryDelegate::where('exhibition_participant_id', $exhibitionParticipantId)
             ->where('ticketType', $ticketTypeId)
-            ->where('status', '!=', 'cancelled')
+            ->where($notCancelled)
             ->count();
 
-        // Count from stall_manning
+        // Count from stall_manning (exclude cancelled so slot is freed)
         $count += StallManning::where('exhibition_participant_id', $exhibitionParticipantId)
             ->where('ticketType', $ticketTypeId)
-            ->where('status', '!=', 'cancelled')
+            ->where($notCancelled)
             ->count();
 
         return $count;
@@ -570,6 +573,7 @@ class TicketAllocationHelper
             $trimmed = trim($boothArea);
             
             // First, check database rules for special booth type
+            // Rules with event_id/application_type null apply to all events/types (see TicketAllocationRule scopes)
             $dbRule = TicketAllocationRule::active()
                 ->forEvent($eventId)
                 ->forApplicationType($applicationType)
@@ -579,6 +583,12 @@ class TicketAllocationHelper
                 ->first();
             
             if ($dbRule && !empty($dbRule->ticket_allocations)) {
+                Log::info('Ticket allocation: matched DB rule for booth type', [
+                    'booth_type' => $trimmed,
+                    'rule_id' => $dbRule->id,
+                    'event_id' => $eventId,
+                    'application_type' => $applicationType,
+                ]);
                 return ['ticket_allocations' => $dbRule->ticket_allocations];
             }
             

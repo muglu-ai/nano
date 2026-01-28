@@ -66,23 +66,29 @@ class TicketAllocationRule extends Model
     }
 
     /**
-     * Scope to filter by event
+     * Scope to filter by event.
+     * Rules with event_id = null apply to all events; otherwise match the given event_id.
      */
     public function scopeForEvent($query, ?int $eventId)
     {
-        if ($eventId) {
-            return $query->where('event_id', $eventId);
+        if ($eventId !== null) {
+            return $query->where(function ($q) use ($eventId) {
+                $q->where('event_id', $eventId)->orWhereNull('event_id');
+            });
         }
         return $query->whereNull('event_id');
     }
 
     /**
-     * Scope to filter by application type
+     * Scope to filter by application type.
+     * Rules with application_type = null apply to all types; otherwise match the given type.
      */
     public function scopeForApplicationType($query, ?string $applicationType)
     {
-        if ($applicationType) {
-            return $query->where('application_type', $applicationType);
+        if ($applicationType !== null && $applicationType !== '') {
+            return $query->where(function ($q) use ($applicationType) {
+                $q->where('application_type', $applicationType)->orWhereNull('application_type');
+            });
         }
         return $query->whereNull('application_type');
     }

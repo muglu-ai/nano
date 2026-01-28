@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Application;
+use App\Helpers\TicketAllocationHelper;
 use Illuminate\Http\Request;
 use App\Models\ExhibitionParticipant;
 use App\Models\Invoice;
@@ -141,6 +142,11 @@ class ExhibitionController extends Controller
             'raw_response' => $response
         ];
     }
+    /**
+     * Handle exhibitor payment success: allocate tickets from rules (ticketAllocation JSON)
+     * so exhibitor registration matches startup-zone behaviour and does not fill
+     * stall_manning_count / complimentary_delegate_count only.
+     */
     public function handlePaymentSuccess($applicationId)
     {
         $application = Application::where(function ($query) use ($applicationId) {
@@ -148,24 +154,39 @@ class ExhibitionController extends Controller
                 ->orWhere('id', $applicationId);
         })->first();
 
-        Log::info('Application: ' . $application);
+        if (!$application) {
+            Log::warning('handlePaymentSuccess: application not found', ['application_id' => $applicationId]);
+            return response()->json(['error' => 'Application not found'], 404);
+        }
 
-        $stallSize = $application->allocated_sqm;
-
-        $count = $this->calculateStallManningAndComplimentaryDelegateCount($stallSize);
-        $stallManningCount = $count['stallManningCount'];
-        $complimentaryDelegateCount = $count['complimentaryDelegateCount'];
-
-        //add new entries in stall manning and complimentary delegate tables
-        $exhibitionParticipant = ExhibitionParticipant::updateOrCreate(
-            ['application_id' => $application->id],
-            [
-                'stall_manning_count' => $stallManningCount,
-                'complimentary_delegate_count' => $complimentaryDelegateCount
-            ]
+        $boothArea = $application->allocated_sqm ?? $application->interested_sqm ?? null;
+        $exhibitionParticipant = TicketAllocationHelper::autoAllocateAfterPayment(
+            $application->id,
+            $boothArea,
+            $application->event_id ?? null,
+            $application->application_type ?? null
         );
 
-        return response()->json(['stall_manning_count' => $stallManningCount, 'complimentary_delegate_count' => $complimentaryDelegateCount]);
+        if ($exhibitionParticipant && !empty($exhibitionParticipant->ticketAllocation)) {
+            $countsData = TicketAllocationHelper::getCountsFromAllocation($application->id);
+            Log::info('Exhibitor allocation after payment (ticketAllocation)', [
+                'application_id' => $application->id,
+                'exhibition_participant_id' => $exhibitionParticipant->id,
+                'counts' => $countsData,
+            ]);
+            return response()->json([
+                'stall_manning_count' => $countsData['stall_manning_count'] ?? 0,
+                'complimentary_delegate_count' => $countsData['complimentary_delegate_count'] ?? 0,
+                'ticketAllocation' => $exhibitionParticipant->ticketAllocation,
+            ]);
+        }
+
+        // No rules matched: do not create record with old columns only (would set ticketAllocation = null)
+        Log::info('Exhibitor allocation: no rules matched, no participant created', [
+            'application_id' => $application->id,
+            'booth_area' => $boothArea,
+        ]);
+        return response()->json(['stall_manning_count' => 0, 'complimentary_delegate_count' => 0]);
     }
 
 

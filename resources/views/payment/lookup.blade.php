@@ -78,9 +78,11 @@
                         </div>
 
                         <div class="d-flex justify-content-between">
+                        {{--
                             <a href="{{ url('/') }}" class="btn btn-secondary">
                                 Back to Home
                             </a>
+                            --}}
                             <button type="submit" class="btn btn-primary">
                                 Continue to Payment
                             </button>

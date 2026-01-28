@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\ExhibitionController;
 use App\Mail\ExtraRequirementsMail;
+use App\Mail\UserCredentialsMail;
 use App\Models\Application;
 use App\Models\BillingDetail;
 use App\Models\Invoice;
@@ -18,6 +20,7 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Response;
@@ -1560,6 +1563,48 @@ class PaymentGatewayController extends Controller
                             'error' => $e->getMessage()
                         ]);
                         // Don't fail payment if allocation fails
+                    }
+
+                    // Exhibitor allocation (stall manning / complimentary delegate)
+                    try {
+                        (new ExhibitionController())->handlePaymentSuccess($application->id);
+                        Log::info('Exhibitor allocation (handlePaymentSuccess) completed after payment', [
+                            'application_id' => $application->application_id,
+                        ]);
+                    } catch (\Exception $e) {
+                        Log::error('Failed to run exhibitor allocation after payment', [
+                            'application_id' => $application->application_id,
+                            'error' => $e->getMessage()
+                        ]);
+                        // Don't fail payment if allocation fails
+                    }
+
+                    // Send exhibitor portal credentials after payment and allocation
+                    try {
+                        $user = $application->user_id ? User::find($application->user_id) : null;
+                        if ($user) {
+                            $contact = \App\Models\EventContact::where('application_id', $application->id)->first();
+                            $credentialEmail = $contact && $contact->email ? $contact->email : $user->email;
+                            $contactName = $contact ? trim(($contact->first_name ?? '') . ' ' . ($contact->last_name ?? '')) : $application->company_name;
+                            if (empty(trim($contactName ?? ''))) {
+                                $contactName = $application->company_name ?? $user->name;
+                            }
+                            $newPassword = substr(str_shuffle('abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'), 0, 12);
+                            $user->password = Hash::make($newPassword);
+                            $user->save();
+                            $portalUrl = config('app.url');
+                            Mail::to($credentialEmail)->send(new UserCredentialsMail($contactName, $portalUrl, $user->email, $newPassword));
+                            Log::info('Exhibitor portal credentials sent after payment', [
+                                'application_id' => $application->application_id,
+                                'email' => $credentialEmail,
+                            ]);
+                        }
+                    } catch (\Exception $e) {
+                        Log::error('Failed to send exhibitor portal credentials after payment', [
+                            'application_id' => $application->application_id,
+                            'error' => $e->getMessage()
+                        ]);
+                        // Don't fail the payment if credentials email fails
                     }
 
                     // Send thank you email after payment confirmation

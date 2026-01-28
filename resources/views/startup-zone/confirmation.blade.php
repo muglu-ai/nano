@@ -326,9 +326,11 @@
 
             {{-- Action Buttons --}}
             <div class="text-center">
+            {{--
                 <a href="{{ route('startup-zone.register') }}" class="btn btn-secondary">
                     <i class="fas fa-home"></i> Back to Home
                 </a>
+                --}}
                 @if($invoice->payment_status !== 'paid')
                 <a href="{{ route('startup-zone.payment', $application->application_id) }}" class="btn btn-success">
                     <i class="fas fa-credit-card"></i> Make Payment

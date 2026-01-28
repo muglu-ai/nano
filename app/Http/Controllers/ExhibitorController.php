@@ -161,17 +161,23 @@ class ExhibitorController extends Controller
         }
     }
 
-    //get the count of filled complimentary and delegate count from the exhibition_participants table, complimentary_delegates table and complimentary_delegates with the exhibition_participant_id
+    //get the count of filled complimentary and delegate count (excluding cancelled invitations)
     public function usedcount()
     {
         $this->__Construct();
         $count = $this->checkCount();
         $complimentaryDelegates = DB::table('complimentary_delegates')
             ->where('exhibition_participant_id', $count['exhibition_participant_id'])
+            ->where(function ($q) {
+                $q->whereNull('status')->orWhere('status', '!=', 'cancelled');
+            })
             ->count();
 
         $stallManning = DB::table('stall_manning')
             ->where('exhibition_participant_id', $count['exhibition_participant_id'])
+            ->where(function ($q) {
+                $q->whereNull('status')->orWhere('status', '!=', 'cancelled');
+            })
             ->count();
 
         return [
@@ -206,9 +212,9 @@ class ExhibitorController extends Controller
         $used = $this->usedcount();
         $ticketId = null;
 
-        if ($type == 'inaugural_passes') {
-            $ticketName = 'Inaugural Passes';
-            $slug = 'inaugural_passes';
+        if ($type == 'inaugural_passes' || $type == 'complimentary') {
+            $ticketName = $type == 'complimentary' ? 'Complimentary Delegates' : 'Inaugural Passes';
+            $slug = $type == 'complimentary' ? 'complimentary' : 'inaugural_passes';
             // Get allocated count from ticketAllocation JSON
             $countsData = TicketAllocationHelper::getCountsFromAllocation($count['application']);
             $allocated = $countsData['complimentary_delegate_count'] ?? 0;
@@ -240,14 +246,18 @@ class ExhibitorController extends Controller
                 $ticketName = $ticket['ticket_type'];
                 $allocated = $ticket['count'];
                 $ticketId = $ticket['ticket_id'];
+                // complimentary_delegates.ticketType stores ticket_type ID; exclude cancelled so slot is freed
                 $usedCount = DB::table('complimentary_delegates')
                     ->where('exhibition_participant_id', $count['exhibition_participant_id'])
-                    ->where('ticketType', $ticket['ticket_type'])
+                    ->where('ticketType', $ticketId)
+                    ->where(function ($q) {
+                        $q->whereNull('status')->orWhere('status', '!=', 'cancelled');
+                    })
                     ->count();
 
                 $data = DB::table('complimentary_delegates')
                     ->where('exhibition_participant_id', $count['exhibition_participant_id'])
-                    ->where('ticketType', $ticket['ticket_type'])
+                    ->where('ticketType', $ticketId)
                     ->orderBy($sortField, $sortDirection)
                     ->paginate($perPage);
                 // If you have a table for custom tickets, fetch data here. Otherwise, show empty or message.
@@ -324,71 +334,102 @@ class ExhibitorController extends Controller
     {
         $this->__Construct();
 
-
         $validatedData = $request->validate([
             'invite_type' => 'required|in:delegate,exhibitor',
-            'email' => 'required|email|unique:complimentary_delegates|unique:stall_manning',
+            'email' => 'required|email',
         ]);
-        // check the count of complimentary_delegates or stall_manning table from exhibition_participants table
-        //how many of registered delegates or exhibitors are there and it should not exceed the count of complimentary_delegate_count or stall_manning_count
+
         $count = $this->checkCount();
-
-
-        //get the count of complimentary_delegates or stall_manning table from exhibition_participants table and
-        //check how many has same exhibition_participant_id
+        $participantId = $count['exhibition_participant_id'];
 
         //if invite_type is delegate
         if ($request->invite_type == 'delegate') {
+            $existing = DB::table('complimentary_delegates')
+                ->where('exhibition_participant_id', $participantId)
+                ->where('email', $request->email)
+                ->first();
+
+            if ($existing) {
+                if (isset($existing->status) && $existing->status !== 'cancelled') {
+                    return response()->json(['error' => 'This email has already been invited.'], 422);
+                }
+                // Re-invite: reactivate cancelled record with new token
+                $token = Str::random(32);
+                DB::table('complimentary_delegates')->where('id', $existing->id)->update([
+                    'token' => $token,
+                    'status' => 'pending',
+                    'cancelled_at' => null,
+                    'cancelled_by' => null,
+                    'updated_at' => now(),
+                ]);
+                return response()->json(['message' => 'Invitation sent successfully!']);
+            }
+
             $countComplimentaryDelegates = DB::table('complimentary_delegates')
-                ->where('exhibition_participant_id', $count['exhibition_participant_id'])
+                ->where('exhibition_participant_id', $participantId)
+                ->where(function ($q) {
+                    $q->whereNull('status')->orWhere('status', '!=', 'cancelled');
+                })
                 ->count();
 
             if ($countComplimentaryDelegates >= $count['complimentary_delegate_count']) {
-                return redirect()->back()->with('error', 'You have reached the maximum limit of Exhibitor Passes');
-            } else {
-                // insert into complimentary_delegates table with email id and exhibition_participant_id also
-                // generate a unique token through which the invitee can fill out the information
+                return response()->json(['error' => 'You have reached the maximum limit of Exhibitor Passes'], 422);
+            }
+
+            $token = Str::random(32);
+            DB::table('complimentary_delegates')->insert([
+                'email' => $request->email,
+                'exhibition_participant_id' => $participantId,
+                'token' => $token,
+                'status' => 'pending',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+            return response()->json(['message' => 'Invitation sent successfully!']);
+        }
+
+        if ($request->invite_type == 'exhibitor') {
+            $existing = DB::table('stall_manning')
+                ->where('exhibition_participant_id', $participantId)
+                ->where('email', $request->email)
+                ->first();
+
+            if ($existing) {
+                if (isset($existing->status) && $existing->status !== 'cancelled') {
+                    return response()->json(['error' => 'This email has already been invited.'], 422);
+                }
                 $token = Str::random(32);
-                DB::table('complimentary_delegates')->insert([
-                    'email' => $request->email,
-                    'exhibition_participant_id' => $count['exhibition_participant_id'],
+                DB::table('stall_manning')->where('id', $existing->id)->update([
                     'token' => $token,
-                    'created_at' => now(),
+                    'status' => 'pending',
+                    'cancelled_at' => null,
+                    'cancelled_by' => null,
                     'updated_at' => now(),
                 ]);
-
-                // generate a unique token through which the invitee can fill out the information
-                //Mail::to($request->email)->send(new InviteMail($token));
                 return response()->json(['message' => 'Invitation sent successfully!']);
             }
-        }
-        if ($request->invite_type == 'exhibitor') {
+
             $countStallManning = DB::table('stall_manning')
-                ->where('exhibition_participant_id', $count['application'])
+                ->where('exhibition_participant_id', $participantId)
+                ->where(function ($q) {
+                    $q->whereNull('status')->orWhere('status', '!=', 'cancelled');
+                })
                 ->count();
 
             if ($countStallManning >= $count['stall_manning_count']) {
-                return redirect()->back()->with('error', 'You have reached the maximum limit of stall manning');
-            } else {
-                // insert into stall_manning table with email id and exhibition_participant_id also
-                // generate a unique token through which the invitee can fill out the information
-                // insert into stall_manning table with email id and exhibition_participant_id also
-                $token = Str::random(32);
-                DB::table('stall_manning')->insert([
-                    'email' => $request->email,
-                    'exhibition_participant_id' => $count['application'],
-                    'token' => $token,
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ]);
-
-
-
-                // generate a unique token through which the invitee can fill out the information
-                //Mail::to($request->email)->send(new InviteMail($token));
-
-                return response()->json(['message' => 'Invitation sent successfully!']);
+                return response()->json(['error' => 'You have reached the maximum limit of stall manning'], 422);
             }
+
+            $token = Str::random(32);
+            DB::table('stall_manning')->insert([
+                'email' => $request->email,
+                'exhibition_participant_id' => $participantId,
+                'token' => $token,
+                'status' => 'pending',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+            return response()->json(['message' => 'Invitation sent successfully!']);
         }
     }
 
@@ -628,20 +669,17 @@ class ExhibitorController extends Controller
         }
         // Find the exhibition_participant_id from the complimentary_delegates or stall_manning table
         if (!$complimentaryDelegate && !$stallManning) {
-            //return to invited/not-found
-            // redirect('invited/not-found')
             return redirect()->to('/invited/not-found');
-            return response()->json(['error' => 'Invalid token or participant not found'], 404);
         }
+        $record = $complimentaryDelegate ?? $stallManning;
+        $invitationCancelled = isset($record->status) && $record->status === 'cancelled';
         $exhibitionParticipantId = $complimentaryDelegate ? $complimentaryDelegate->exhibition_participant_id : $stallManning->exhibition_participant_id;
         // Find the company name from the application table using exhibition_participant_id
         $companyName = Application::whereHas('exhibitionParticipant', function ($query) use ($exhibitionParticipantId) {
             $query->where('id', $exhibitionParticipantId);
         })->value('company_name');
 
-
-
-        return view('exhibitor.invited', compact('notFound', 'companyName'));
+        return view('exhibitor.invited', compact('notFound', 'companyName', 'invitationCancelled'));
     }
 
     public function invited($token = null)
@@ -665,6 +703,9 @@ class ExhibitorController extends Controller
             return response()->view('exhibitor.invited', ['notFound' => true], 404);
         }
 
+        $record = $complimentaryDelegate ?? $stallManning;
+        $invitationCancelled = isset($record->status) && $record->status === 'cancelled';
+
         // Determine the exhibition_participant_id
         $exhibitionParticipantId = $complimentaryDelegate->exhibition_participant_id ?? $stallManning->exhibition_participant_id;
 
@@ -674,7 +715,7 @@ class ExhibitorController extends Controller
         })->value('company_name');
 
         $notFound = false;
-        return view('exhibitor.invited', compact('companyName', 'notFound', 'token'));
+        return view('exhibitor.invited', compact('companyName', 'notFound', 'token', 'invitationCancelled'));
     }
     public function invited_test($token = null)
     {
@@ -696,6 +737,8 @@ class ExhibitorController extends Controller
         if (!$complimentaryDelegate) {
             return response()->view('exhibitor.invited', ['notFound' => true], 404);
         }
+
+        $invitationCancelled = isset($complimentaryDelegate->status) && $complimentaryDelegate->status === 'cancelled';
 
         // Get the email from the database record
         $inviteeEmail = $complimentaryDelegate->email;
@@ -721,7 +764,7 @@ class ExhibitorController extends Controller
         $countries = Country::all();
 
         $notFound = false;
-        return view('exhibitor.invited_new', compact('companyName', 'notFound', 'token', 'natureOfBusiness', 'productCategories', 'jobFunctions', 'countries', 'inviteeEmail'));
+        return view('exhibitor.invited_new', compact('companyName', 'notFound', 'token', 'natureOfBusiness', 'productCategories', 'jobFunctions', 'countries', 'inviteeEmail', 'invitationCancelled'));
     }
 
     public function inviteeSubmitted(Request $request)
@@ -742,7 +785,7 @@ class ExhibitorController extends Controller
             'fullPhoneNumber' => 'required',
             'jobTitle' => 'required',
         ]);
-        //remove the token from the table and insert the data into the table
+        // Find the record by token
         $complimentaryDelegate = DB::table('complimentary_delegates')
             ->where('token', $request->token)
             ->first();
@@ -751,11 +794,12 @@ class ExhibitorController extends Controller
             ->where('token', $request->token)
             ->first();
 
+        $record = $complimentaryDelegate ?? $stallManning;
+        if ($record && isset($record->status) && $record->status === 'cancelled') {
+            return redirect()->back()->withErrors(['token' => 'This invitation has been cancelled. You can no longer complete registration using this link.'])->withInput();
+        }
+
         $uniqueId = "";
-        // do {
-        //         $randomNumber = rand(3200, 9999);
-        //         $regId = 'EXAT' . $randomNumber;
-        //     } while (DB::table('stall_manning')->where('pinNo', $regId)->exists());
 
         if ($complimentaryDelegate) {
             $uniqueId = $this->generateUniqueId();
@@ -1352,7 +1396,41 @@ class ExhibitorController extends Controller
     private function addDelegate($request, $participantId, $count, $ticketTypeId = null)
     {
         try {
-            ComplimentaryDelegate::create([
+            $query = ComplimentaryDelegate::where('exhibition_participant_id', $participantId)
+                ->where('email', $request->email)
+                ->where('status', 'cancelled');
+
+            if ($ticketTypeId !== null) {
+                $query->where('ticketType', $ticketTypeId);
+            }
+
+            $cancelledRecord = $query->first();
+
+            if ($cancelledRecord) {
+                $cancelledRecord->update([
+                    'first_name' => $request->name,
+                    'mobile' => $request->phone,
+                    'job_title' => $request->jobTitle,
+                    'organisation_name' => $request->organisationName ?? null,
+                    'ticketType' => $ticketTypeId,
+                    'status' => 'accepted',
+                    'cancelled_at' => null,
+                    'cancelled_by' => null,
+                ]);
+                
+                // Send confirmation email
+                $attendee = $cancelledRecord->fresh();
+                $data = $this->buildAttendeeDataFromObject((object) $attendee->toArray());
+                try {
+                    Mail::to($attendee->email)->send(new ExhibitorMail($data));
+                } catch (\Exception $e) {
+                    Log::error('Error sending confirmation email to delegate: ' . $e->getMessage());
+                }
+                
+                return response()->json(['message' => 'Delegate added successfully!'], 200);
+            }
+
+            $delegate = ComplimentaryDelegate::create([
                 'email' => $request->email,
                 'exhibition_participant_id' => $participantId,
                 'first_name' => $request->name,
@@ -1360,8 +1438,16 @@ class ExhibitorController extends Controller
                 'job_title' => $request->jobTitle,
                 'organisation_name' => $request->organisationName ?? null,
                 'ticketType' => $ticketTypeId,
-                'status' => 'pending',
+                'status' => 'accepted',
             ]);
+
+            // Send confirmation email
+            $data = $this->buildAttendeeDataFromObject((object) $delegate->toArray());
+            try {
+                Mail::to($delegate->email)->send(new ExhibitorMail($data));
+            } catch (\Exception $e) {
+                Log::error('Error sending confirmation email to delegate: ' . $e->getMessage());
+            }
 
             return response()->json(['message' => 'Delegate added successfully!'], 200);
         } catch (\Exception $e) {
@@ -1376,10 +1462,46 @@ class ExhibitorController extends Controller
     private function addExhibitor($request, $participantId, $count, $ticketTypeId = null)
     {
         try {
+            $cancelledRecord = StallManning::where('exhibition_participant_id', $participantId)
+                ->where('email', $request->email)
+                ->where('status', 'cancelled')
+                ->first();
+
+            if ($cancelledRecord) {
+                $uniqueId = $this->generateStallManningUniqueId();
+                $pinNo = $this->generateCompPinNo();
+                $cancelledRecord->update([
+                    'unique_id' => $uniqueId,
+                    'first_name' => $request->name,
+                    'mobile' => $request->phone,
+                    'job_title' => $request->jobTitle,
+                    'organisation_name' => $request->organisationName ?? null,
+                    'id_no' => $request->idCardNumber ?? null,
+                    'id_type' => $request->idCardType ?? null,
+                    'pinNo' => $pinNo,
+                    'ticketType' => $ticketTypeId,
+                    'status' => 'accepted',
+                    'cancelled_at' => null,
+                    'cancelled_by' => null,
+                ]);
+                
+                $attendee = $cancelledRecord->fresh();
+                $data = $this->buildAttendeeData($attendee);
+                
+                // Send confirmation email
+                try {
+                    Mail::to($attendee->email)->send(new ExhibitorMail($data));
+                } catch (\Exception $e) {
+                    Log::error('Error sending confirmation email to exhibitor: ' . $e->getMessage());
+                }
+                
+                return response()->json(['message' => 'Exhibitor added successfully!'], 200);
+            }
+
             $uniqueId = $this->generateStallManningUniqueId();
             $pinNo = $this->generateCompPinNo();
 
-            StallManning::create([
+            $attendee = StallManning::create([
                 'unique_id' => $uniqueId,
                 'first_name' => $request->name,
                 'mobile' => $request->phone,
@@ -1392,10 +1514,8 @@ class ExhibitorController extends Controller
                 'id_type' => $request->idCardType ?? null,
                 'pinNo' => $pinNo,
                 'ticketType' => $ticketTypeId,
-                'status' => 'pending',
+                'status' => 'accepted',
             ]);
-
-            $attendee = StallManning::where('unique_id', $uniqueId)->first();
 
             if (!$attendee) {
                 throw new \Exception('Failed to retrieve created stall manning record');
@@ -1403,14 +1523,12 @@ class ExhibitorController extends Controller
 
             $data = $this->buildAttendeeData($attendee);
             
-            // Uncomment when ready to send emails
-            // try {
-            //     Mail::to($attendee->email)
-            //         ->bcc('test.interlinks@gmail.com')
-            //         ->send(new ExhibitorMail($data));
-            // } catch (\Exception $e) {
-            //     Log::error('Error sending ExhibitorMail: ' . $e->getMessage());
-            // }
+            // Send confirmation email
+            try {
+                Mail::to($attendee->email)->send(new ExhibitorMail($data));
+            } catch (\Exception $e) {
+                Log::error('Error sending confirmation email to exhibitor: ' . $e->getMessage());
+            }
 
             return response()->json(['message' => 'Exhibitor delegate added successfully!'], 200);
         } catch (\Exception $e) {
@@ -1444,7 +1562,7 @@ class ExhibitorController extends Controller
                 'mobile' => $request->phone,
                 'job_title' => $request->jobTitle,
                 'organisation_name' => $request->organisationName ?? null,
-                'status' => 'pending',
+                'status' => 'accepted',
             ]);
 
             if (!$attendee) {
@@ -1455,14 +1573,12 @@ class ExhibitorController extends Controller
             $attendeeObject = (object) $attendee->toArray();
             $data = $this->buildAttendeeDataFromObject($attendeeObject);
 
-            // Uncomment when ready to send emails
-            // try {
-            //     Mail::to($attendee->email)
-            //         ->bcc('test.interlinks@gmail.com')
-            //         ->send(new ExhibitorMail($data));
-            // } catch (\Exception $e) {
-            //     Log::error('Error sending ExhibitorMail: ' . $e->getMessage());
-            // }
+            // Send confirmation email
+            try {
+                Mail::to($attendee->email)->send(new ExhibitorMail($data));
+            } catch (\Exception $e) {
+                Log::error('Error sending confirmation email to custom ticket delegate: ' . $e->getMessage());
+            }
 
             return response()->json(['message' => 'Pass Information received successfully!'], 200);
         } catch (\Exception $e) {
@@ -1476,8 +1592,10 @@ class ExhibitorController extends Controller
      */
     private function buildAttendeeData($attendee)
     {
+        $fullName = trim(($attendee->first_name ?? '') . ' ' . (($attendee->middle_name ?? '') ? $attendee->middle_name . ' ' : '') . ($attendee->last_name ?? ''));
         return [
-            'fullName' => trim(($attendee->first_name ?? '') . ' ' . (($attendee->middle_name ?? '') ? $attendee->middle_name . ' ' : '') . ($attendee->last_name ?? '')),
+            'name' => $fullName,
+            'fullName' => $fullName,
             'title' => $attendee->title ?? '',
             'first_name' => $attendee->first_name ?? '',
             'last_name' => $attendee->last_name ?? '',
@@ -1534,8 +1652,10 @@ class ExhibitorController extends Controller
             }
         }
 
+        $fullName = trim(($attendee->first_name ?? '') . ' ' . (($attendee->middle_name ?? '') ? $attendee->middle_name . ' ' : '') . ($attendee->last_name ?? ''));
         return [
-            'fullName' => trim(($attendee->first_name ?? '') . ' ' . (($attendee->middle_name ?? '') ? $attendee->middle_name . ' ' : '') . ($attendee->last_name ?? '')),
+            'name' => $fullName,
+            'fullName' => $fullName,
             'title' => $attendee->title ?? '',
             'first_name' => $attendee->first_name ?? '',
             'last_name' => $attendee->last_name ?? '',

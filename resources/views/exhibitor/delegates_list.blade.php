@@ -7,10 +7,10 @@
             $link = 'complimentary';
         } elseif ($slug == 'Stall Manning') {
             $link = 'stall_manning';
+        } else {
+            // Custom pass types (e.g. Standard Pass) use slug as list type
+            $link = $slug ?? 'complimentary';
         }
-
-        // get the actual
-
     @endphp
 
     <style>
@@ -227,7 +227,14 @@
             //     <button class="btn btn-sm btn-primary" onclick="showConfirmationModal('${user.email}', '${user.first_name}')">Status</button>
             // </td>
             function renderTable(users) {
+                if (!tableBody) return;
                 tableBody.innerHTML = '';
+                if (!users || users.length === 0) {
+                    const theadRow = document.querySelector('#datatable-basic thead tr');
+                    const colCount = theadRow ? theadRow.cells.length : 7;
+                    tableBody.innerHTML = `<tr><td colspan="${colCount}" class="text-center text-muted py-4">No entries found</td></tr>`;
+                    return;
+                }
                 users.forEach(user => {
                     let nameCell;
 
@@ -251,6 +258,20 @@
                         `<a href="/invited/inaugural/${user.token}/" target="_blank" class="invite-link">${user.email || 'N/A'}</a>` :
                         `${user.email || 'N/A'}`;
 
+                    const status = user.status || 'pending';
+                    const statusBadge = status === 'cancelled'
+                        ? '<span class="badge bg-danger">Cancelled</span>'
+                        : status === 'accepted'
+                        ? '<span class="badge bg-success">Accepted</span>'
+                        : '<span class="badge bg-warning">Pending</span>';
+
+                    const cancelType = typeof cancelInviteType !== 'undefined' ? cancelInviteType : 'complimentary_delegate';
+                    const cancelButton = status !== 'cancelled'
+                        ? `<button class="btn btn-sm btn-danger" onclick="cancelInvitation(${user.id}, '${cancelType}')">
+                            <i class="fas fa-times"></i> Cancel
+                           </button>`
+                        : '<span class="text-muted">Your invitation has been cancelled</span>';
+
                     const row = `
             <tr>
                 <td class="text-sm font-weight-normal">${nameCell}</td>
@@ -258,12 +279,15 @@
                 <td class="text-sm font-weight-normal">${user.job_title || 'N/A'}</td>
                 <td class="text-sm font-weight-normal">${user.mobile || 'N/A'}</td>
                 <td class="text-sm font-weight-normal">${user.organisation_name || 'N/A'}</td>
+                <td class="text-sm font-weight-normal">${statusBadge}</td>
+                <td class="text-sm font-weight-normal">${cancelButton}</td>
             </tr>`;
                     tableBody.innerHTML += row;
                 });
             }
 
             function renderPagination(data) {
+                if (!paginationContainer) return;
                 paginationContainer.innerHTML = '';
                 for (let i = 1; i <= data.last_page; i++) {
                     paginationContainer.innerHTML += `
@@ -282,32 +306,90 @@
             }
 
             // Sorting headers
-            document.querySelectorAll('.thead-light th').forEach(header => {
-                header.addEventListener('click', function() {
-                    const field = this.dataset.sort;
-                    if (field) {
-                        sortField = field;
-                        sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
-                        fetchUsers();
-                    }
+            const sortHeaders = document.querySelectorAll('.thead-light th');
+            if (sortHeaders.length) {
+                sortHeaders.forEach(header => {
+                    header.addEventListener('click', function() {
+                        const field = this.dataset.sort;
+                        if (field) {
+                            sortField = field;
+                            sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
+                            fetchUsers();
+                        }
+                    });
                 });
-            });
+            }
 
-            // Per page selector
-            perPageSelector.addEventListener('change', function() {
-                perPage = this.value;
-                fetchUsers();
-            });
+            // Per page selector (only if present)
+            if (perPageSelector) {
+                perPageSelector.addEventListener('change', function() {
+                    perPage = this.value;
+                    fetchUsers();
+                });
+            }
 
             // Initial fetch
             fetchUsers();
         });
+
+        var cancelInviteType = '{{ $slug === "stall_manning" ? "stall_manning" : "complimentary_delegate" }}';
+
+        function cancelInvitation(invitationId, type) {
+            if (!confirm('Are you sure you want to cancel this invitation? This action cannot be undone.')) {
+                return;
+            }
+            var csrfMeta = document.querySelector('meta[name="csrf-token"]');
+            var csrfToken = csrfMeta ? csrfMeta.content : '';
+            fetch("{{ route('exhibition.invite.cancel') }}", {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': csrfToken,
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: JSON.stringify({
+                    invitation_id: invitationId,
+                    type: type
+                })
+            })
+            .then(function(response) {
+                return response.text().then(function(text) {
+                    var data = null;
+                    try {
+                        data = text ? JSON.parse(text) : null;
+                    } catch (e) {
+                        if (response.status === 419) {
+                            alert('Your session may have expired. Please refresh the page and try again.');
+                        } else if (response.status >= 400) {
+                            alert('Server returned an error. Please refresh the page and try again.');
+                        } else {
+                            alert('Unexpected response. Please refresh and try again.');
+                        }
+                        return;
+                    }
+                    if (data && data.success) {
+                        alert(data.message || 'Your invitation has been cancelled');
+                        location.reload();
+                    } else if (data && data.error) {
+                        alert(data.error);
+                    } else if (data) {
+                        alert(data.message || 'Failed to cancel invitation');
+                    }
+                });
+            })
+            .catch(function(error) {
+                console.error('Error:', error);
+                alert('An error occurred while cancelling the invitation.');
+            });
+        }
     </script>
     @php
         $extractedData = collect();
         if (!empty($data) && $data->count() > 0) {
             $extractedData = $data->map(function ($item) {
                 return [
+                    'id' => $item->id,
                     'first_name' => $item->first_name,
                     'last_name' => $item->last_name,
                     'email' => $item->email,
@@ -315,7 +397,8 @@
                     'mobile' => $item->mobile,
                     'organisation_name' => $item->organisation_name,
                     'token' => $item->token,
-                    'unique_id' => $item->unique_id,
+                    'unique_id' => $item->unique_id ?? null,
+                    'status' => $item->status ?? 'pending',
                 ];
             });
         }
@@ -420,6 +503,7 @@
 
                     <div class="table-responsive">
                         <table class="table table-flush" id="datatable-basic">
+                            <meta name="csrf-token" content="{{ csrf_token() }}">
                             <thead class="thead-light">
                                 <tr>
                                     <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7"
@@ -437,6 +521,8 @@
                                     <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7"
                                         data-sort="created_at">Organisation Name
                                     </th>
+                                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Status</th>
+                                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -483,7 +569,24 @@
                                         <td class="text-sm font-weight-normal">{{ $item['mobile'] }}</td>
                                         <td class="text-sm font-weight-normal">
                                             {{ $item['organisation_name'] ?: $companyName }}</td>
-
+                                        <td class="text-sm font-weight-normal">
+                                            @if(($item['status'] ?? '') === 'cancelled')
+                                                <span class="badge bg-danger">Cancelled</span>
+                                            @elseif(($item['status'] ?? '') === 'accepted')
+                                                <span class="badge bg-success">Accepted</span>
+                                            @else
+                                                <span class="badge bg-warning">Pending</span>
+                                            @endif
+                                        </td>
+                                        <td class="text-sm font-weight-normal">
+                                            @if(($item['status'] ?? '') !== 'cancelled')
+                                                <button class="btn btn-sm btn-danger" onclick="cancelInvitation({{ $item['id'] }}, '{{ $slug === "stall_manning" ? "stall_manning" : "complimentary_delegate" }}')">
+                                                    <i class="fas fa-times"></i> Cancel
+                                                </button>
+                                            @else
+                                                <span class="text-muted">Your invitation has been cancelled</span>
+                                            @endif
+                                        </td>
                                     </tr>
                                 @endforeach
                             </tbody>
@@ -744,7 +847,9 @@
             addModal.show();
         }
 
-        document.getElementById('inviteForm').addEventListener('submit', function(event) {
+        var inviteFormEl = document.getElementById('inviteForm');
+        if (inviteFormEl) {
+            inviteFormEl.addEventListener('submit', function(event) {
             event.preventDefault();
 
             const formData = {
@@ -777,6 +882,7 @@
                     Swal.fire('Error', 'Something went wrong! ' + error.message, 'error');
                 });
         });
+        }
     </script>
 
     <script>
