@@ -81,7 +81,7 @@
                     return;
                 }
                 
-                fetch('/exhibitor/invite/cancel', {
+                fetch("{{ route('exhibition.invite.cancel') }}", {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',

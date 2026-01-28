@@ -340,7 +340,7 @@
             }
             var csrfMeta = document.querySelector('meta[name="csrf-token"]');
             var csrfToken = csrfMeta ? csrfMeta.content : '';
-            fetch('/invite/cancel', {
+            fetch("{{ route('exhibition.invite.cancel') }}", {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
