@@ -1060,8 +1060,14 @@ class PaymentGatewayController extends Controller
             // This helps us redirect correctly even if invoice is not found
             $isStartupZone = false;
             $isExhibitorRegistration = false;
+            $isPosterRegistration = false;
             $application = null;
             $applicationId = $invoice ? $invoice->application_id : null;
+
+            // Check if this is a poster registration invoice
+            if ($invoice && $invoice->type === 'poster_registration') {
+                $isPosterRegistration = true;
+            }
 
             if ($invoice && $invoice->application_id) {
                 $application = Application::find($invoice->application_id);
@@ -1085,6 +1091,126 @@ class PaymentGatewayController extends Controller
                     }
                 }
             }  
+
+            // Handle poster registration payment (when invoice exists)
+            if ($isPosterRegistration && $invoice && $responseArray['order_status'] == 'Success') {
+                // Update invoice
+                $invoice->update([
+                    'payment_status' => 'paid',
+                    'amount_paid' => (float) $responseArray['mer_amount'],
+                    'pending_amount' => 0,
+                    'updated_at' => now(),
+                ]);
+                
+                // Find or create payment record
+                $payment = Payment::where('order_id', $responseArray['order_id'])
+                    ->where('invoice_id', $invoice->id)
+                    ->first();
+                
+                if ($payment) {
+                    $payment->update([
+                        'status' => 'successful',
+                        'amount_paid' => (float) $responseArray['mer_amount'],
+                        'amount_received' => (float) $responseArray['mer_amount'],
+                        'transaction_id' => $responseArray['tracking_id'] ?? null,
+                        'pg_result' => 'Success',
+                        'payment_method' => $responseArray['payment_mode'] ?? 'CCAvenue',
+                        'payment_date' => $trans_date ?? now(),
+                        'pg_response_json' => json_encode($responseArray),
+                    ]);
+                } else {
+                    Payment::create([
+                        'invoice_id' => $invoice->id,
+                        'payment_method' => $responseArray['payment_mode'] ?? 'CCAvenue',
+                        'amount' => (float) $responseArray['mer_amount'],
+                        'amount_paid' => (float) $responseArray['mer_amount'],
+                        'amount_received' => (float) $responseArray['mer_amount'],
+                        'transaction_id' => $responseArray['tracking_id'] ?? null,
+                        'status' => 'successful',
+                        'order_id' => $responseArray['order_id'],
+                        'currency' => $invoice->currency ?? 'INR',
+                        'payment_date' => $trans_date ?? now(),
+                        'pg_result' => 'Success',
+                        'pg_response_json' => json_encode($responseArray),
+                    ]);
+                }
+                
+                // Get poster registration from invoice_no
+                $tinNo = $invoice->invoice_no;
+                $posterRegistration = \App\Models\PosterRegistration::where('tin_no', $tinNo)->first();
+                
+                if ($posterRegistration) {
+                    // Update poster registration payment status
+                    $posterRegistration->update(['payment_status' => 'paid']);
+                    
+                    // Generate and assign PIN number after successful payment
+                    if (empty($posterRegistration->pin_no)) {
+                        do {
+                            $randomNumber = str_pad((string) mt_rand(1, 999999), 6, '0', STR_PAD_LEFT);
+                            $pinNo = 'PIN-BTS-2026-PSTR-' . $randomNumber;
+                        } while (\App\Models\PosterRegistration::where('pin_no', $pinNo)->exists());
+                        
+                        $posterRegistration->update(['pin_no' => $pinNo]);
+                        
+                        Log::info('Poster Registration PIN Generated', [
+                            'tin_no' => $posterRegistration->tin_no,
+                            'pin_no' => $pinNo,
+                        ]);
+                    }
+                    
+                    // Send thank you email after payment confirmation
+                    try {
+                        // Refresh registration to ensure we have latest data
+                        $posterRegistration->refresh();
+                        
+                        // Get admin emails from config for BCC
+                        $bccEmails = config('constants.admin_emails.bcc', []);
+                        
+                        Log::info('New Poster Registration Payment: Sending thank you email', [
+                            'tin_no' => $posterRegistration->tin_no,
+                            'pin_no' => $posterRegistration->pin_no,
+                            'email' => $posterRegistration->lead_author_email,
+                            'bcc' => $bccEmails,
+                        ]);
+                        
+                        $mail = \Mail::to($posterRegistration->lead_author_email);
+                        
+                        // Add BCC if configured
+                        if (!empty($bccEmails)) {
+                            $mail->bcc($bccEmails);
+                        }
+                        
+                        $mail->send(new \App\Mail\PosterRegistrationMail($posterRegistration, $invoice, 'payment_thank_you'));
+                        
+                        Log::info('New Poster Registration Payment: Thank you email sent', [
+                            'tin_no' => $posterRegistration->tin_no,
+                            'email' => $posterRegistration->lead_author_email,
+                        ]);
+                    } catch (\Exception $e) {
+                        Log::error('New Poster Registration Payment: Failed to send thank you email', [
+                            'tin_no' => $posterRegistration->tin_no,
+                            'email' => $posterRegistration->lead_author_email,
+                            'error' => $e->getMessage(),
+                        ]);
+                        // Don't fail the payment if email fails
+                    }
+                    
+                    Log::info('Poster Registration Payment Successful - Redirecting to success', [
+                        'tin_no' => $posterRegistration->tin_no,
+                        'pin_no' => $posterRegistration->pin_no,
+                    ]);
+                    
+                    // Redirect to poster success page
+                    return redirect()
+                        ->route('poster.register.success', ['tin_no' => $posterRegistration->tin_no])
+                        ->with('success', 'Payment successful! Your registration is complete.');
+                }
+                
+                Log::warning('Poster Registration not found for invoice', [
+                    'invoice_no' => $tinNo,
+                    'invoice_id' => $invoice->id,
+                ]);
+            }
 
             // If invoice not found, check if it's a poster payment
             if (!$invoice) {
@@ -1597,7 +1723,8 @@ class PaymentGatewayController extends Controller
             // check the application_id from the invoice and theen from the application use user_id to authenticate the user
             // Only authenticate for non-startup-zone invoices
             // IMPORTANT: If it's startup zone, we should have already returned above
-            if (!$isStartupZone && $invoice) {
+            // IMPORTANT: Skip this for poster registrations - they should have already returned above
+            if (!$isStartupZone && $invoice && $invoice->type !== 'poster_registration') {
                 $userId = null;
                 $applicationId = null;
                 
