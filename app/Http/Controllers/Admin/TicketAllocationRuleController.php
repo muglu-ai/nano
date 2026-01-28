@@ -94,8 +94,22 @@ class TicketAllocationRuleController extends Controller
         $rules = [
             'event_id' => 'nullable|exists:events,id',
             'application_type' => 'nullable|in:exhibitor-registration,startup-zone',
-            'ticket_allocations' => 'required|array',
-            'ticket_allocations.*' => 'required|integer|min:0|exists:ticket_types,id',
+            'ticket_allocations' => [
+                'required',
+                'array',
+                function ($attribute, $value, $fail) {
+                    if (!is_array($value)) {
+                        return;
+                    }
+                    $ticketTypeIds = array_keys($value);
+                    $validIds = TicketType::whereIn('id', $ticketTypeIds)->pluck('id')->toArray();
+                    $invalidIds = array_diff($ticketTypeIds, $validIds);
+                    if (!empty($invalidIds)) {
+                        $fail('The selected ticket type(s) ' . implode(', ', $invalidIds) . ' are invalid.');
+                    }
+                },
+            ],
+            'ticket_allocations.*' => 'nullable|integer|min:0',
             'sort_order' => 'nullable|integer|min:0',
             'is_active' => 'boolean',
         ];
@@ -258,8 +272,22 @@ class TicketAllocationRuleController extends Controller
         $rules = [
             'event_id' => 'nullable|exists:events,id',
             'application_type' => 'nullable|in:exhibitor-registration,startup-zone',
-            'ticket_allocations' => 'required|array',
-            'ticket_allocations.*' => 'required|integer|min:0|exists:ticket_types,id',
+            'ticket_allocations' => [
+                'required',
+                'array',
+                function ($attribute, $value, $fail) {
+                    if (!is_array($value)) {
+                        return;
+                    }
+                    $ticketTypeIds = array_keys($value);
+                    $validIds = TicketType::whereIn('id', $ticketTypeIds)->pluck('id')->toArray();
+                    $invalidIds = array_diff($ticketTypeIds, $validIds);
+                    if (!empty($invalidIds)) {
+                        $fail('The selected ticket type(s) ' . implode(', ', $invalidIds) . ' are invalid.');
+                    }
+                },
+            ],
+            'ticket_allocations.*' => 'nullable|integer|min:0',
             'sort_order' => 'nullable|integer|min:0',
             'is_active' => 'boolean',
         ];

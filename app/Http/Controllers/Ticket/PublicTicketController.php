@@ -33,6 +33,7 @@ class PublicTicketController extends Controller
         }
         
         // Load ticket types with relationships - exclude exhibitor-only ticket types
+        // (by category flag OR by name/slug containing "exhibitor")
         $ticketTypes = TicketType::where('event_id', $event->id)
             ->where('is_active', true)
             ->with(['category' => function($query) {
@@ -45,17 +46,24 @@ class PublicTicketController extends Controller
                             ->orWhereNull('is_exhibitor_only');
                       });
             })
+            ->where(function($query) {
+                $query->whereRaw('LOWER(name) NOT LIKE ?', ['%exhibitor%'])
+                      ->whereRaw('LOWER(COALESCE(slug, "")) NOT LIKE ?', ['%exhibitor%']);
+            })
             ->orderBy('sort_order')
             ->get();
         
-        // Group by category - exclude exhibitor-only categories
+        // Group by category - exclude exhibitor-only categories and categories that only have exhibitor-type tickets
         $categories = TicketCategory::where('event_id', $event->id)
             ->where(function($query) {
                 $query->where('is_exhibitor_only', false)
                       ->orWhereNull('is_exhibitor_only');
             })
+            ->whereRaw('LOWER(COALESCE(name, "")) NOT LIKE ?', ['%exhibitor%'])
             ->with(['ticketTypes' => function($query) {
                 $query->where('is_active', true)
+                      ->whereRaw('LOWER(name) NOT LIKE ?', ['%exhibitor%'])
+                      ->whereRaw('LOWER(COALESCE(slug, "")) NOT LIKE ?', ['%exhibitor%'])
                       ->with(['subcategory', 'eventDays', 'inventory'])
                       ->orderBy('sort_order');
             }])
@@ -99,7 +107,7 @@ class PublicTicketController extends Controller
                     $ticketTypeIdOrSlug = $registrationData['ticket_type_id'];
                     
                     // Try to find ticket type to get slug if it's an ID
-                    // Exclude exhibitor-only ticket types
+                    // Exclude exhibitor-only ticket types (by category or name/slug)
                     $tempTicketType = \App\Models\Ticket\TicketType::where('event_id', $event->id)
                         ->where(function($query) use ($ticketTypeIdOrSlug) {
                             $query->where('slug', $ticketTypeIdOrSlug)
@@ -112,12 +120,15 @@ class PublicTicketController extends Controller
                                         ->orWhereNull('is_exhibitor_only');
                                   });
                         })
+                        ->whereRaw('LOWER(name) NOT LIKE ?', ['%exhibitor%'])
+                        ->whereRaw('LOWER(COALESCE(slug, "")) NOT LIKE ?', ['%exhibitor%'])
                         ->first();
                     
                     if ($tempTicketType) {
                         $selectedTicketParam = $tempTicketType->slug;
                     } else {
-                        $selectedTicketParam = $ticketTypeIdOrSlug; // Fallback to original value
+                        // Exhibitor pass from session not allowed on public form - clear so user picks a valid type
+                        $selectedTicketParam = null;
                     }
                 }
                 
@@ -143,7 +154,7 @@ class PublicTicketController extends Controller
             }
         }
         
-        // Load ticket types - exclude exhibitor-only ticket types
+        // Load ticket types - exclude exhibitor-only (by category flag or name/slug)
         $ticketTypes = TicketType::where('event_id', $event->id)
             ->where('is_active', true)
             ->with(['category' => function($query) {
@@ -155,6 +166,10 @@ class PublicTicketController extends Controller
                           $q->where('is_exhibitor_only', false)
                             ->orWhereNull('is_exhibitor_only');
                       });
+            })
+            ->where(function($query) {
+                $query->whereRaw('LOWER(name) NOT LIKE ?', ['%exhibitor%'])
+                      ->whereRaw('LOWER(COALESCE(slug, "")) NOT LIKE ?', ['%exhibitor%']);
             })
             ->orderBy('sort_order')
             ->get();
@@ -495,8 +510,7 @@ class PublicTicketController extends Controller
             ]);
         }
 
-        // Verify ticket type belongs to this event (can be slug or ID)
-        // Also ensure it's not an exhibitor-only ticket type
+        // Verify ticket type belongs to this event and is not exhibitor-only
         $ticketType = TicketType::where('event_id', $event->id)
             ->where(function($query) use ($validated) {
                 $query->where('slug', $validated['ticket_type_id'])
@@ -510,6 +524,8 @@ class PublicTicketController extends Controller
                             ->orWhereNull('is_exhibitor_only');
                       });
             })
+            ->whereRaw('LOWER(name) NOT LIKE ?', ['%exhibitor%'])
+            ->whereRaw('LOWER(COALESCE(slug, "")) NOT LIKE ?', ['%exhibitor%'])
             ->firstOrFail();
         
         // Store ticket type ID (not slug) in validated data for consistency
@@ -905,8 +921,7 @@ class PublicTicketController extends Controller
                 'ticket_type_id' => [
                     'required',
                     function ($attribute, $value, $fail) use ($event) {
-                        // Check if ticket type exists by slug or ID, and belongs to this event
-                        // Also ensure it's not an exhibitor-only ticket type
+                        // Check if ticket type exists and is not exhibitor-only (by category or name/slug)
                         $ticketType = TicketType::where('event_id', $event->id)
                             ->where(function($query) use ($value) {
                                 $query->where('slug', $value)
@@ -920,6 +935,8 @@ class PublicTicketController extends Controller
                                             ->orWhereNull('is_exhibitor_only');
                                       });
                             })
+                            ->whereRaw('LOWER(name) NOT LIKE ?', ['%exhibitor%'])
+                            ->whereRaw('LOWER(COALESCE(slug, "")) NOT LIKE ?', ['%exhibitor%'])
                             ->first();
                         
                         if (!$ticketType) {
@@ -943,8 +960,7 @@ class PublicTicketController extends Controller
             // Get registration data from session or request
             $registrationData = session('ticket_registration_data', []);
             
-            // Get ticket type to calculate base amount (can be slug or ID)
-            // Exclude exhibitor-only ticket types
+            // Get ticket type (exclude exhibitor-only by category or name/slug)
             $ticketType = TicketType::where('event_id', $event->id)
                 ->where(function($query) use ($request) {
                     $query->where('slug', $request->ticket_type_id)
@@ -958,6 +974,8 @@ class PublicTicketController extends Controller
                                 ->orWhereNull('is_exhibitor_only');
                           });
                 })
+                ->whereRaw('LOWER(name) NOT LIKE ?', ['%exhibitor%'])
+                ->whereRaw('LOWER(COALESCE(slug, "")) NOT LIKE ?', ['%exhibitor%'])
                 ->first();
                 
             if (!$ticketType) {
