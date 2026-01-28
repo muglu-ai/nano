@@ -13,7 +13,7 @@
         background: #f8f9fa;
         border-radius: 10px;
         padding: 1rem;
-        margin-bottom: 2rem;
+        margin-bottom: 1rem;
         border: 1px solid #e0e0e0;
     }
     .form-container {padding: 0 !important;}
@@ -471,15 +471,10 @@ document.addEventListener('DOMContentLoaded', function() {
                     <input type="hidden" name="authors[${authorCount}][phone_country_code]" id="author_mobile_country_code_${authorCount}" value="+91">
                     <div class="invalid-feedback"></div>
                 </div>
-                <div class="col-md-6 cv-upload-section" id="cv_upload_section_${authorCount}" style="display: ${authorCount === 0 ? 'block' : 'none'};">
-                    <label for="author_cv_${authorCount}" class="form-label">Upload CV (PDF only) <span class="text-danger">*</span></label>
-                    <input type="file" class="form-control cv-upload-input" id="author_cv_${authorCount}" name="authors[${authorCount}][cv]" accept=".pdf" ${authorCount === 0 ? 'required' : ''}>
-                    <div class="invalid-feedback"></div>
-                    <small class="text-muted">Required for Lead Author. Max file size: 5MB.</small>
-                </div>
+               
             </div>
              <div class="form-section">
-            <div class="row mb-3">
+            <div class="row ">
                 <div class="col-md-4">
                     <label class="form-label">is this the Lead Author? <span class="text-danger">*</span></label>
                     <div class="d-flex gap-3">
@@ -523,6 +518,15 @@ document.addEventListener('DOMContentLoaded', function() {
             </div>
         </div>
             
+            </div>
+
+            <div class="row mb-3">
+                <div class="col-md-6 cv-upload-section" id="cv_upload_section_${authorCount}" style="display: ${authorCount === 0 ? 'block' : 'none'};">
+                    <label for="author_cv_${authorCount}" class="form-label">Upload CV (PDF only) <span class="text-danger">*</span></label>
+                    <input type="file" class="form-control cv-upload-input" id="author_cv_${authorCount}" name="authors[${authorCount}][cv]" accept=".pdf" ${authorCount === 0 ? 'required' : ''}>
+                    <div class="invalid-feedback"></div>
+                    <small class="text-muted">Required for Lead Author. Max file size: 5MB.</small>
+                </div>
             </div>
             <div class="row mb-3">
                 <div class="col-md-6">
