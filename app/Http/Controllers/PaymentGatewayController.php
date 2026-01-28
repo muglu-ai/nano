@@ -1559,14 +1559,19 @@ class PaymentGatewayController extends Controller
                         ->with('success', 'Payment successful!')
                         ->with('payment_response', $responseArray);
                 } else {
-                    // For other invoice types, send extra requirements mail
-                    $service = new ExtraRequirementsMailService();
-                    $data = $service->prepareMailData($order_id);
-                    $email = $data['billingEmail'];
+                    // For other invoice types (excluding poster registrations), send extra requirements mail
+                    // Check if it's NOT a poster registration before sending extra requirements mail
+                    $isPosterInvoice = $invoice && ($invoice->type === 'poster_registration' || $invoice->poster_reg_id);
+                    
+                    if (!$isPosterInvoice && $invoice && $invoice->application_id) {
+                        $service = new ExtraRequirementsMailService();
+                        $data = $service->prepareMailData($order_id);
+                        $email = $data['billingEmail'];
 
-                    Mail::to($email)
-                        ->bcc(['test.interlinks@gmail.com'])
-                        ->send(new ExtraRequirementsMail($data));
+                        Mail::to($email)
+                            ->bcc(['test.interlinks@gmail.com'])
+                            ->send(new ExtraRequirementsMail($data));
+                    }
                 }
             }
 
