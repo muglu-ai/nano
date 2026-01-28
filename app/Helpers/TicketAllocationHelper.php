@@ -570,6 +570,7 @@ class TicketAllocationHelper
             $trimmed = trim($boothArea);
             
             // First, check database rules for special booth type
+            // Rules with event_id/application_type null apply to all events/types (see TicketAllocationRule scopes)
             $dbRule = TicketAllocationRule::active()
                 ->forEvent($eventId)
                 ->forApplicationType($applicationType)
@@ -579,6 +580,12 @@ class TicketAllocationHelper
                 ->first();
             
             if ($dbRule && !empty($dbRule->ticket_allocations)) {
+                Log::info('Ticket allocation: matched DB rule for booth type', [
+                    'booth_type' => $trimmed,
+                    'rule_id' => $dbRule->id,
+                    'event_id' => $eventId,
+                    'application_type' => $applicationType,
+                ]);
                 return ['ticket_allocations' => $dbRule->ticket_allocations];
             }
             
