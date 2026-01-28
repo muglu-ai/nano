@@ -359,6 +359,12 @@
                                 </a>
                             </li>
                             <li class="nav-item">
+                                <a href="{{ route('admin.ticket-allocation-rules.index') }}" class="nav-link text-dark">
+                                    <span class="sidenav-mini-icon"> R </span>
+                                    <span class="sidenav-normal ms-1 ps-1 text-dark">Ticket Allocation Rules</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
                                 <a class="nav-link text-dark" href="{{ route('exhibitor.directory.list') }}">
                                     <span class="sidenav-mini-icon"> D </span>
                                     <span class="sidenav-normal ms-1 ps-1 text-dark">Exhibitor Directory</span>
