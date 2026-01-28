@@ -206,9 +206,9 @@ class ExhibitorController extends Controller
         $used = $this->usedcount();
         $ticketId = null;
 
-        if ($type == 'inaugural_passes') {
-            $ticketName = 'Inaugural Passes';
-            $slug = 'inaugural_passes';
+        if ($type == 'inaugural_passes' || $type == 'complimentary') {
+            $ticketName = $type == 'complimentary' ? 'Complimentary Delegates' : 'Inaugural Passes';
+            $slug = $type == 'complimentary' ? 'complimentary' : 'inaugural_passes';
             // Get allocated count from ticketAllocation JSON
             $countsData = TicketAllocationHelper::getCountsFromAllocation($count['application']);
             $allocated = $countsData['complimentary_delegate_count'] ?? 0;
@@ -364,7 +364,7 @@ class ExhibitorController extends Controller
         }
         if ($request->invite_type == 'exhibitor') {
             $countStallManning = DB::table('stall_manning')
-                ->where('exhibition_participant_id', $count['application'])
+                ->where('exhibition_participant_id', $count['exhibition_participant_id'])
                 ->count();
 
             if ($countStallManning >= $count['stall_manning_count']) {
@@ -372,11 +372,10 @@ class ExhibitorController extends Controller
             } else {
                 // insert into stall_manning table with email id and exhibition_participant_id also
                 // generate a unique token through which the invitee can fill out the information
-                // insert into stall_manning table with email id and exhibition_participant_id also
                 $token = Str::random(32);
                 DB::table('stall_manning')->insert([
                     'email' => $request->email,
-                    'exhibition_participant_id' => $count['application'],
+                    'exhibition_participant_id' => $count['exhibition_participant_id'],
                     'token' => $token,
                     'created_at' => now(),
                     'updated_at' => now(),

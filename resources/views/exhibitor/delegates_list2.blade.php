@@ -26,12 +26,17 @@
                     const response = await fetch(`/exhibitor/list/${link}?page=${page}&sort=${sortField}&direction=${sortDirection}&per_page=${perPage}`, {
                         headers: { 'Accept': 'application/json' }
                     });
-                    if (!response.ok) throw new Error('Failed to fetch users');
                     const data = await response.json();
-                    renderTable(data.data);
+                    if (!response.ok) {
+                        renderTable([]);
+                        console.error('Failed to fetch users:', data.error || response.statusText);
+                        return;
+                    }
+                    renderTable(data.data || []);
                     renderPagination(data);
                 } catch (error) {
                     console.error('Error fetching users:', error);
+                    renderTable([]);
                 }
             }
             // <td class="text-sm font-weight-normal">
@@ -39,6 +44,11 @@
             // </td>
             function renderTable(users) {
                 tableBody.innerHTML = '';
+                if (!users || users.length === 0) {
+                    const colCount = 6;
+                    tableBody.innerHTML = `<tr><td colspan="${colCount}" class="text-center text-muted py-4">No entries found</td></tr>`;
+                    return;
+                }
                 users.forEach(user => {
                     const status = user.status || 'pending';
                     const statusBadge = status === 'cancelled' 
