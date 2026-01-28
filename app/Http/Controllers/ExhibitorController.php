@@ -1413,14 +1413,24 @@ class ExhibitorController extends Controller
                     'job_title' => $request->jobTitle,
                     'organisation_name' => $request->organisationName ?? null,
                     'ticketType' => $ticketTypeId,
-                    'status' => 'pending',
+                    'status' => 'accepted',
                     'cancelled_at' => null,
                     'cancelled_by' => null,
                 ]);
+                
+                // Send confirmation email
+                $attendee = $cancelledRecord->fresh();
+                $data = $this->buildAttendeeDataFromObject((object) $attendee->toArray());
+                try {
+                    Mail::to($attendee->email)->send(new ExhibitorMail($data));
+                } catch (\Exception $e) {
+                    Log::error('Error sending confirmation email to delegate: ' . $e->getMessage());
+                }
+                
                 return response()->json(['message' => 'Delegate added successfully!'], 200);
             }
 
-            ComplimentaryDelegate::create([
+            $delegate = ComplimentaryDelegate::create([
                 'email' => $request->email,
                 'exhibition_participant_id' => $participantId,
                 'first_name' => $request->name,
@@ -1428,8 +1438,16 @@ class ExhibitorController extends Controller
                 'job_title' => $request->jobTitle,
                 'organisation_name' => $request->organisationName ?? null,
                 'ticketType' => $ticketTypeId,
-                'status' => 'pending',
+                'status' => 'accepted',
             ]);
+
+            // Send confirmation email
+            $data = $this->buildAttendeeDataFromObject((object) $delegate->toArray());
+            try {
+                Mail::to($delegate->email)->send(new ExhibitorMail($data));
+            } catch (\Exception $e) {
+                Log::error('Error sending confirmation email to delegate: ' . $e->getMessage());
+            }
 
             return response()->json(['message' => 'Delegate added successfully!'], 200);
         } catch (\Exception $e) {
@@ -1462,17 +1480,28 @@ class ExhibitorController extends Controller
                     'id_type' => $request->idCardType ?? null,
                     'pinNo' => $pinNo,
                     'ticketType' => $ticketTypeId,
-                    'status' => 'pending',
+                    'status' => 'accepted',
                     'cancelled_at' => null,
                     'cancelled_by' => null,
                 ]);
+                
+                $attendee = $cancelledRecord->fresh();
+                $data = $this->buildAttendeeData($attendee);
+                
+                // Send confirmation email
+                try {
+                    Mail::to($attendee->email)->send(new ExhibitorMail($data));
+                } catch (\Exception $e) {
+                    Log::error('Error sending confirmation email to exhibitor: ' . $e->getMessage());
+                }
+                
                 return response()->json(['message' => 'Exhibitor added successfully!'], 200);
             }
 
             $uniqueId = $this->generateStallManningUniqueId();
             $pinNo = $this->generateCompPinNo();
 
-            StallManning::create([
+            $attendee = StallManning::create([
                 'unique_id' => $uniqueId,
                 'first_name' => $request->name,
                 'mobile' => $request->phone,
@@ -1485,10 +1514,8 @@ class ExhibitorController extends Controller
                 'id_type' => $request->idCardType ?? null,
                 'pinNo' => $pinNo,
                 'ticketType' => $ticketTypeId,
-                'status' => 'pending',
+                'status' => 'accepted',
             ]);
-
-            $attendee = StallManning::where('unique_id', $uniqueId)->first();
 
             if (!$attendee) {
                 throw new \Exception('Failed to retrieve created stall manning record');
@@ -1496,14 +1523,12 @@ class ExhibitorController extends Controller
 
             $data = $this->buildAttendeeData($attendee);
             
-            // Uncomment when ready to send emails
-            // try {
-            //     Mail::to($attendee->email)
-            //         ->bcc('test.interlinks@gmail.com')
-            //         ->send(new ExhibitorMail($data));
-            // } catch (\Exception $e) {
-            //     Log::error('Error sending ExhibitorMail: ' . $e->getMessage());
-            // }
+            // Send confirmation email
+            try {
+                Mail::to($attendee->email)->send(new ExhibitorMail($data));
+            } catch (\Exception $e) {
+                Log::error('Error sending confirmation email to exhibitor: ' . $e->getMessage());
+            }
 
             return response()->json(['message' => 'Exhibitor delegate added successfully!'], 200);
         } catch (\Exception $e) {
@@ -1537,7 +1562,7 @@ class ExhibitorController extends Controller
                 'mobile' => $request->phone,
                 'job_title' => $request->jobTitle,
                 'organisation_name' => $request->organisationName ?? null,
-                'status' => 'pending',
+                'status' => 'accepted',
             ]);
 
             if (!$attendee) {
@@ -1548,14 +1573,12 @@ class ExhibitorController extends Controller
             $attendeeObject = (object) $attendee->toArray();
             $data = $this->buildAttendeeDataFromObject($attendeeObject);
 
-            // Uncomment when ready to send emails
-            // try {
-            //     Mail::to($attendee->email)
-            //         ->bcc('test.interlinks@gmail.com')
-            //         ->send(new ExhibitorMail($data));
-            // } catch (\Exception $e) {
-            //     Log::error('Error sending ExhibitorMail: ' . $e->getMessage());
-            // }
+            // Send confirmation email
+            try {
+                Mail::to($attendee->email)->send(new ExhibitorMail($data));
+            } catch (\Exception $e) {
+                Log::error('Error sending confirmation email to custom ticket delegate: ' . $e->getMessage());
+            }
 
             return response()->json(['message' => 'Pass Information received successfully!'], 200);
         } catch (\Exception $e) {
@@ -1569,8 +1592,10 @@ class ExhibitorController extends Controller
      */
     private function buildAttendeeData($attendee)
     {
+        $fullName = trim(($attendee->first_name ?? '') . ' ' . (($attendee->middle_name ?? '') ? $attendee->middle_name . ' ' : '') . ($attendee->last_name ?? ''));
         return [
-            'fullName' => trim(($attendee->first_name ?? '') . ' ' . (($attendee->middle_name ?? '') ? $attendee->middle_name . ' ' : '') . ($attendee->last_name ?? '')),
+            'name' => $fullName,
+            'fullName' => $fullName,
             'title' => $attendee->title ?? '',
             'first_name' => $attendee->first_name ?? '',
             'last_name' => $attendee->last_name ?? '',
@@ -1627,8 +1652,10 @@ class ExhibitorController extends Controller
             }
         }
 
+        $fullName = trim(($attendee->first_name ?? '') . ' ' . (($attendee->middle_name ?? '') ? $attendee->middle_name . ' ' : '') . ($attendee->last_name ?? ''));
         return [
-            'fullName' => trim(($attendee->first_name ?? '') . ' ' . (($attendee->middle_name ?? '') ? $attendee->middle_name . ' ' : '') . ($attendee->last_name ?? '')),
+            'name' => $fullName,
+            'fullName' => $fullName,
             'title' => $attendee->title ?? '',
             'first_name' => $attendee->first_name ?? '',
             'last_name' => $attendee->last_name ?? '',
