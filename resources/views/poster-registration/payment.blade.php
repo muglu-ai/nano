@@ -334,9 +334,9 @@
                     $currencySymbol = $currency === 'INR' ? '₹' : '$';
                     $pricePerAttendee = $currency === 'INR' ? 2000 : 25;
                     $gstRate = config('constants.GST_RATE', 18);
-                    $processingRate = $currency === 'INR' 
+                    $processingRate = $invoice->processing_chargesRate ?? ($currency === 'INR' 
                         ? config('constants.IND_PROCESSING_CHARGE', 3) 
-                        : config('constants.INT_PROCESSING_CHARGE', 9);
+                        : config('constants.INT_PROCESSING_CHARGE', 9));
                     
                     // Recalculate amounts (in case old data has incorrect calculations)
                     $baseAmount = $poster->base_amount;
@@ -361,20 +361,20 @@
                 <table class="price-table">
                     <tr>
                         <td class="label-cell">Base Amount</td>
-                        <td class="value-cell">{{ $currencySymbol }} {{ number_format($poster->base_amount, 2) }}</td>
+                        <td class="value-cell">{{ $currencySymbol }} {{ number_format($invoice->price ?? $poster->base_amount, 2) }}</td>
                     </tr>
                     <tr>
                         <td class="label-cell">GST ({{ $gstRate }}%)</td>
-                        <td class="value-cell">{{ $currencySymbol }} {{ number_format($poster->gst_amount, 2) }}</td>
+                        <td class="value-cell">{{ $currencySymbol }} {{ number_format($invoice->gst ?? $poster->gst_amount, 2) }}</td>
                     </tr>
                     <tr>
                         <td class="label-cell">Processing Charges ({{ $processingRate }}%)</td>
-                        <td class="value-cell">{{ $currencySymbol }} {{ number_format($poster->processing_fee, 2) }}</td>
+                        <td class="value-cell">{{ $currencySymbol }} {{ number_format($invoice->processing_charges ?? $poster->processing_fee, 2) }}</td>
                     </tr>
                     
                     <tr class="total-row">
                         <td>Total Amount Payable</td>
-                        <td>{{ $currencySymbol }} {{ number_format($poster->total_amount, 2) }}</td>
+                        <td>{{ $currencySymbol }} {{ number_format($invoice->total_final_price ?? $poster->total_amount, 2) }}</td>
                     </tr>
                 </table>
             </div>

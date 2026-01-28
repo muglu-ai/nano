@@ -1152,6 +1152,9 @@ class PaymentGatewayController extends Controller
                         
                         $posterRegistration->update(['pin_no' => $pinNo]);
                         
+                        // Also update invoice with PIN
+                        $invoice->update(['pin_no' => $pinNo]);
+                        
                         Log::info('Poster Registration PIN Generated', [
                             'tin_no' => $posterRegistration->tin_no,
                             'pin_no' => $pinNo,

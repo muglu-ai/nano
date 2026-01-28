@@ -2370,6 +2370,10 @@ class PosterController extends Controller
         }
         
         // Create invoice for payment processing
+        $processingRate = $draft->currency === 'INR' 
+            ? config('constants.IND_PROCESSING_CHARGE', 3) 
+            : config('constants.INT_PROCESSING_CHARGE', 9);
+        
         $invoice = \App\Models\Invoice::create([
             'type' => 'poster_registration',
             'invoice_no' => $tinNo,
@@ -2380,6 +2384,7 @@ class PosterController extends Controller
             'price' => (float) $draft->base_amount,
             'gst' => (float) $draft->gst_amount,
             'processing_charges' => (float) $draft->processing_fee,
+            'processing_chargesRate' => $processingRate,
             'total_final_price' => (float) $draft->total_amount,
             'amount_paid' => 0,
             'pending_amount' => (float) $draft->total_amount,

@@ -48,7 +48,7 @@
         }
         .btn-pay-now {
             display: inline-block;
-            background: #28a745;
+            background: goldenrod;
             color: #ffffff !important;
             padding: 14px 35px;
             text-decoration: none;
