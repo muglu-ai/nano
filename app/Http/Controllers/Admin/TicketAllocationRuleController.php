@@ -66,12 +66,16 @@ class TicketAllocationRuleController extends Controller
     {
         $events = Events::orderBy('event_year', 'desc')->get();
         $applicationTypes = ['exhibitor-registration', 'startup-zone'];
+        
+        // Get ALL active ticket types from ALL events (no filtering)
+        $eventId = $request->get('event_id');
         $ticketTypes = TicketType::where('is_active', true)
-            ->with(['category', 'subcategory', 'event'])
+            ->with(['category' => function($query) {
+                $query->select('id', 'name', 'is_exhibitor_only');
+            }, 'subcategory', 'event'])
+            ->orderBy('event_id')
             ->orderBy('name')
             ->get();
-
-        $eventId = $request->get('event_id');
         
         // Get predefined special booth types from config
         $specialBoothTypes = array_keys(config('ticket_allocation.special_booth_types', []));
@@ -225,8 +229,13 @@ class TicketAllocationRuleController extends Controller
         $rule = TicketAllocationRule::findOrFail($id);
         $events = Events::orderBy('event_year', 'desc')->get();
         $applicationTypes = ['exhibitor-registration', 'startup-zone'];
+        
+        // Get ALL active ticket types from ALL events (no filtering)
         $ticketTypes = TicketType::where('is_active', true)
-            ->with(['category', 'subcategory', 'event'])
+            ->with(['category' => function($query) {
+                $query->select('id', 'name', 'is_exhibitor_only');
+            }, 'subcategory', 'event'])
+            ->orderBy('event_id')
             ->orderBy('name')
             ->get();
         
