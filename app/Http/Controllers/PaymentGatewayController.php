@@ -1559,14 +1559,19 @@ class PaymentGatewayController extends Controller
                         ->with('success', 'Payment successful!')
                         ->with('payment_response', $responseArray);
                 } else {
-                    // For other invoice types, send extra requirements mail
-                    $service = new ExtraRequirementsMailService();
-                    $data = $service->prepareMailData($order_id);
-                    $email = $data['billingEmail'];
+                    // For other invoice types (excluding poster registrations), send extra requirements mail
+                    // Check if it's NOT a poster registration before sending extra requirements mail
+                    $isPosterInvoice = $invoice && ($invoice->type === 'poster_registration' || $invoice->poster_reg_id);
+                    
+                    if (!$isPosterInvoice && $invoice && $invoice->application_id) {
+                        $service = new ExtraRequirementsMailService();
+                        $data = $service->prepareMailData($order_id);
+                        $email = $data['billingEmail'];
 
-                    Mail::to($email)
-                        ->bcc(['test.interlinks@gmail.com'])
-                        ->send(new ExtraRequirementsMail($data));
+                        Mail::to($email)
+                            ->bcc(['test.interlinks@gmail.com'])
+                            ->send(new ExtraRequirementsMail($data));
+                    }
                 }
             }
 
@@ -1574,6 +1579,9 @@ class PaymentGatewayController extends Controller
             // Only authenticate for non-startup-zone invoices
             // IMPORTANT: If it's startup zone, we should have already returned above
             if (!$isStartupZone && $invoice) {
+                $userId = null;
+                $applicationId = null;
+                
                 // check if the invoices doesn't have co_exhibitorID
                 if ($invoice->co_exhibitorID) {
                     // If co_exhibitor_id is present, authenticate as co-exhibitor user only
@@ -1598,9 +1606,10 @@ class PaymentGatewayController extends Controller
                         }
                         Auth::loginUsingId($userId);
                     }
-                    Log::info('Application ID: ' . $applicationId);
-                    Log::info('Application User ID: ' . $userId);
                 }
+                
+                Log::info('Application ID: ' . ($applicationId ?? 'N/A'));
+                Log::info('Application User ID: ' . ($userId ?? 'N/A'));
 
                 // put in session that paymeent is successful
                 session(['payment_success' => true, 'invoice_no' => $order_id, 'payment_message' => 'Payment is successful.']);

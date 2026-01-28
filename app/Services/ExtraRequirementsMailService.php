@@ -190,6 +190,24 @@ class ExtraRequirementsMailService
 
         $apps = Application::where('id', $invoice->application_id);
         $application = $apps->first();
+        
+        // Safety check: If application not found, return early with minimal data
+        if (!$application) {
+            \Log::warning('ExtraRequirementsMailService: Application not found', [
+                'invoice_id' => $invoice->id,
+                'application_id' => $invoice->application_id,
+                'invoice_type' => $invoice->type,
+            ]);
+            
+            return [
+                'billingCompany' => 'N/A',
+                'billingEmail' => 'support@example.com',
+                'billingContactName' => 'N/A',
+                'subject' => 'Payment Confirmation',
+                'invoiceNo' => $invoice->invoice_no ?? 'N/A',
+            ];
+        }
+        
         $exhibitor_name = $application->company_name;
 
         if (!empty($invoice->co_exhibitorID)) {
