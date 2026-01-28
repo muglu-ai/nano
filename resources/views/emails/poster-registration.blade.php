@@ -335,6 +335,22 @@
                         <td class="value" style="color: #28a745; font-weight: 700;">PAID</td>
                     </tr>
                     <tr>
+                        <td class="label">Base Amount:</td>
+                        <td class="value">{{ $currencySymbol }}{{ number_format($invoice->price, $priceFormat) }}</td>
+                    </tr>
+                    <tr>
+                        <td class="label">GST Amount:</td>
+                        <td class="value">{{ $currencySymbol }}{{ number_format($invoice->gst_amount , $priceFormat) }}</td>
+                    </tr>
+                    <tr>
+                        <td class="label">Processing Fee:</td>
+                        <td class="value">{{ $currencySymbol }}{{ number_format($invoice->processing_fee, $priceFormat) }}</td>
+                    </tr>
+                    <tr class="total-row">
+                        <td>Total Amount:</td>
+                        <td style="text-align: right;">{{ $currencySymbol }}{{ number_format($invoice->total_amount, $priceFormat) }}</td>
+                    </tr>
+                    <tr>
                         <td class="label">Amount Paid:</td>
                         <td class="value" style="font-weight: 700;">{{ $currencySymbol }}{{ number_format($invoice->amount_paid, $priceFormat) }}</td>
                     </tr>

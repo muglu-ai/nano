@@ -129,38 +129,14 @@
     }
 @endphp
 <div class="success-container">
-    {{-- Success Header --}}
-    <div class="success-card">
-        <div class="success-icon">
-            <i class="fas fa-check-circle"></i>
-        </div>
-        <h1 class="mb-3">Registration Successful!</h1>
-        <p class="lead mb-4">Thank you for registering your poster presentation at<br>{{ config('constants.EVENT_NAME') }} {{ config('constants.EVENT_YEAR') }}</p>
-        
-        <div class="tin-number">
-            TIN: {{ $poster->tin_no ?? 'N/A' }}
-        </div>
-        
-        <p class="mt-4 mb-0">
-            @if(isset($invoice) && $invoice->payment_status === 'paid')
-                <span class="badge bg-light text-success" style="font-size: 1.1rem; padding: 0.5rem 1.5rem;">
-                    <i class="fas fa-check"></i> Payment Completed
-                </span>
-            @else
-                <span class="badge bg-light text-warning" style="font-size: 1.1rem; padding: 0.5rem 1.5rem;">
-                    <i class="fas fa-clock"></i> Payment Pending
-                </span>
-            @endif
-        </p>
-    </div>
-
+   
     {{-- Important Information --}}
     <div class="alert alert-info mb-4">
         <h5><i class="fas fa-info-circle"></i> Important Information</h5>
         <ul class="mb-0">
             <li>A confirmation email has been sent to your registered email address.</li>
             <li>Please keep your TIN number safe for future reference.</li>
-            <li>You will receive further instructions about poster submission guidelines via email.</li>
+          
         </ul>
     </div>
 
@@ -219,7 +195,97 @@
     </div>
 
     {{-- Lead Author Information --}}
-    @if(isset($poster->authors) && is_array($poster->authors))
+    @if(isset($authors) && $authors->count() > 0)
+        @php
+            $leadAuthor = $authors->firstWhere('is_lead_author', true);
+            $attendingAuthors = $authors->where('will_attend', true);
+        @endphp
+        
+        @if($leadAuthor)
+        <div class="info-section">
+            <h4 class="section-title">
+                <i class="fas fa-user"></i>
+                Lead Author
+            </h4>
+            
+            <div class="info-row">
+                <div class="info-label">Name</div>
+                <div class="info-value"><strong>{{ $leadAuthor->title ?? '' }} {{ $leadAuthor->first_name ?? '' }} {{ $leadAuthor->last_name ?? '' }}</strong></div>
+            </div>
+            
+            <div class="info-row">
+                <div class="info-label">Designation</div>
+                <div class="info-value">{{ $leadAuthor->designation ?? 'N/A' }}</div>
+            </div>
+            
+            <div class="info-row">
+                <div class="info-label">Email</div>
+                <div class="info-value">{{ $leadAuthor->email ?? 'N/A' }}</div>
+            </div>
+            
+            <div class="info-row">
+                <div class="info-label">Mobile</div>
+                <div class="info-value">{{ $leadAuthor->mobile ?? 'N/A' }}</div>
+            </div>
+            
+            <div class="info-row">
+                <div class="info-label">Institution</div>
+                <div class="info-value">{{ $leadAuthor->institution ?? 'N/A' }}</div>
+            </div>
+        </div>
+        @endif
+        
+        {{-- All Authors --}}
+        @if($authors->count() > 1)
+        <div class="info-section">
+            <h4 class="section-title">
+                <i class="fas fa-users"></i>
+                All Authors ({{ $authors->count() }})
+            </h4>
+            
+            @foreach($authors as $index => $author)
+            <div class="info-row">
+                <div class="info-label">Author {{ $index + 1 }}</div>
+                <div class="info-value">
+                    <strong>{{ $author->title ?? '' }} {{ $author->first_name ?? '' }} {{ $author->last_name ?? '' }}</strong>
+                    @if($author->is_lead_author)
+                        <span class="badge bg-primary">Lead Author</span>
+                    @endif
+                    @if($author->is_presenter)
+                        <span class="badge bg-info">Presenter</span>
+                    @endif
+                    <br>
+                    <small class="text-muted">{{ $author->email ?? 'N/A' }}</small>
+                    @if($author->institution)
+                        <br><small class="text-muted">{{ $author->institution }}</small>
+                    @endif
+                </div>
+            </div>
+            @endforeach
+        </div>
+        @endif
+        
+        {{-- Attendees --}}
+        @if($attendingAuthors->count() > 0)
+        <div class="info-section">
+            <h4 class="section-title">
+                <i class="fas fa-user-check"></i>
+                Attendees ({{ $attendingAuthors->count() }})
+            </h4>
+            
+            @foreach($attendingAuthors as $index => $attendee)
+            <div class="info-row">
+                <div class="info-label">Attendee {{ $loop->iteration }}</div>
+                <div class="info-value">
+                    <strong>{{ $attendee->title ?? '' }} {{ $attendee->first_name ?? '' }} {{ $attendee->last_name ?? '' }}</strong>
+                    <br>
+                    <small class="text-muted">{{ $attendee->email ?? 'N/A' }}</small>
+                </div>
+            </div>
+            @endforeach
+        </div>
+        @endif
+    @elseif(isset($poster->authors) && is_array($poster->authors))
         @php
             $leadAuthor = collect($poster->authors)->firstWhere('is_lead', true);
         @endphp
@@ -266,17 +332,49 @@
             <div class="info-label">Invoice Number</div>
             <div class="info-value">{{ $invoice->invoice_no ?? 'N/A' }}</div>
         </div>
-        
+
+        <div class="info-row">
+            <div class="info-label">Invoice Date</div>
+            <div class="info-value">{{ $invoice->created_at ? $invoice->created_at->format('d M Y, h:i A') : 'N/A' }}</div>
+        </div>
+
+        <div class="info-row">
+            <div class="info-label">Base Amount</div>
+            <div class="info-value">
+                {{ $poster->currency === 'USD' ? '$' : '₹' }} 
+                {{ number_format($invoice->price ?? 0, 2) }}
+            </div>
+        </div>
+        <div class="info-row">
+            <div class="info-label">GST ({{ config('constants.GST_RATE', 18) }}%)</div>
+            <div class="info-value">
+                {{ $poster->currency === 'USD' ? '$' : '₹' }} 
+                {{ number_format($invoice->gst ?? 0, 2) }}
+            </div>
+        </div>
+        <div class="info-row">
+            <div class="info-label">Processing Charges ({{ $invoice->processing_chargesRate ?? 0 }}%)</div>
+            <div class="info-value">
+                {{ $poster->currency === 'USD' ? '$' : '₹' }} 
+                {{ number_format($invoice->processing_charges ?? 0, 2) }}
+            </div>
+        </div>
         <div class="info-row">
             <div class="info-label">Amount</div>
             <div class="info-value">
                 <strong>
                     {{ $poster->currency === 'USD' ? '$' : '₹' }} 
-                    {{ number_format($invoice->final_amount ?? 0, 2) }}
+                    {{ number_format($invoice->total_final_price ?? 0, 2) }}
                 </strong>
             </div>
         </div>
-        
+        <div class="info-row">
+            <div class="info-label">Amount Paid</div>
+            <div class="info-value">
+                {{ $poster->currency === 'USD' ? '$' : '₹' }} 
+                {{ number_format($invoice->amount_paid ?? 0, 2) }}
+            </div>
+        </div>
         <div class="info-row">
             <div class="info-label">Payment Status</div>
             <div class="info-value">
@@ -302,7 +400,7 @@
     {{-- Action Buttons --}}
     <div class="action-buttons">
         @if(isset($invoice) && $invoice->payment_status !== 'paid')
-        <a href="{{ route('poster.payment', ['tin_no' => $poster->tin_no]) }}" 
+        <a href="{{ route('poster.register.payment', ['tin_no' => $poster->tin_no]) }}" 
            class="btn btn-download">
             <i class="fas fa-credit-card"></i> Complete Payment
         </a>
@@ -311,23 +409,9 @@
         <button onclick="window.print()" class="btn btn-download">
             <i class="fas fa-print"></i> Print Confirmation
         </button>
-        
-        <a href="{{ url('/') }}" class="btn btn-outline-primary" style="padding: 0.75rem 2rem; border-radius: 8px; font-weight: 600;">
-            <i class="fas fa-home"></i> Go to Home
-        </a>
     </div>
 
-    {{-- Next Steps --}}
-    <div class="alert alert-success mt-4">
-        <h5><i class="fas fa-clipboard-list"></i> Next Steps</h5>
-        <ol class="mb-0">
-            <li>Check your email for the registration confirmation.</li>
-            <li>Complete the payment if not done already.</li>
-            <li>Wait for poster submission guidelines via email.</li>
-            <li>Prepare your poster according to the provided specifications.</li>
-            <li>Submit your poster before the deadline.</li>
-        </ol>
-    </div>
+   
 </div>
 
 @push('scripts')
