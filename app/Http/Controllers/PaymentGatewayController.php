@@ -1240,12 +1240,30 @@ class PaymentGatewayController extends Controller
                                 ]);
                             }
                             
-                            // Update poster registration payment status
+                            // Update poster registration payment status and generate PIN
                             $newPosterRegistration->update(['payment_status' => 'paid']);
+                            
+                            // Generate and assign PIN number after successful payment
+                            if (empty($newPosterRegistration->pin_no)) {
+                                do {
+                                    $randomNumber = str_pad((string) mt_rand(1, 999999), 6, '0', STR_PAD_LEFT);
+                                    $pinNo = 'PIN-BTS-2026-PSTR-' . $randomNumber;
+                                } while (\App\Models\PosterRegistration::where('pin_no', $pinNo)->exists());
+                                
+                                $newPosterRegistration->pin_no = $pinNo;
+                                $newPosterRegistration->save();
+                                
+                                Log::info('Poster Registration PIN Generated', [
+                                    'poster_registration_id' => $newPosterRegistration->id,
+                                    'tin_no' => $newPosterRegistration->tin_no,
+                                    'pin_no' => $pinNo,
+                                ]);
+                            }
                             
                             Log::info('New Poster Registration CCAvenue Payment Success', [
                                 'poster_registration_id' => $newPosterRegistration->id,
                                 'tin_no' => $newPosterRegistration->tin_no,
+                                'pin_no' => $newPosterRegistration->pin_no,
                                 'invoice_id' => $invoice->id,
                                 'amount' => $responseArray['mer_amount'],
                                 'transaction_id' => $responseArray['tracking_id'] ?? null,
@@ -1261,6 +1279,7 @@ class PaymentGatewayController extends Controller
                                 
                                 Log::info('New Poster Registration Payment: Sending thank you email', [
                                     'tin_no' => $newPosterRegistration->tin_no,
+                                    'pin_no' => $newPosterRegistration->pin_no,
                                     'email' => $newPosterRegistration->lead_author_email,
                                     'bcc' => $bccEmails,
                                 ]);
