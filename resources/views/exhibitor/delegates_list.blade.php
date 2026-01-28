@@ -338,29 +338,49 @@
             if (!confirm('Are you sure you want to cancel this invitation? This action cannot be undone.')) {
                 return;
             }
+            var csrfMeta = document.querySelector('meta[name="csrf-token"]');
+            var csrfToken = csrfMeta ? csrfMeta.content : '';
             fetch('/invite/cancel', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': csrfToken,
+                    'X-Requested-With': 'XMLHttpRequest'
                 },
                 body: JSON.stringify({
                     invitation_id: invitationId,
                     type: type
                 })
             })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    alert(data.message || 'Your invitation has been cancelled');
-                    location.reload();
-                } else {
-                    alert(data.error || 'Failed to cancel invitation');
-                }
+            .then(function(response) {
+                return response.text().then(function(text) {
+                    var data = null;
+                    try {
+                        data = text ? JSON.parse(text) : null;
+                    } catch (e) {
+                        if (response.status === 419) {
+                            alert('Your session may have expired. Please refresh the page and try again.');
+                        } else if (response.status >= 400) {
+                            alert('Server returned an error. Please refresh the page and try again.');
+                        } else {
+                            alert('Unexpected response. Please refresh and try again.');
+                        }
+                        return;
+                    }
+                    if (data && data.success) {
+                        alert(data.message || 'Your invitation has been cancelled');
+                        location.reload();
+                    } else if (data && data.error) {
+                        alert(data.error);
+                    } else if (data) {
+                        alert(data.message || 'Failed to cancel invitation');
+                    }
+                });
             })
-            .catch(error => {
+            .catch(function(error) {
                 console.error('Error:', error);
-                alert('An error occurred while cancelling the invitation');
+                alert('An error occurred while cancelling the invitation.');
             });
         }
     </script>
