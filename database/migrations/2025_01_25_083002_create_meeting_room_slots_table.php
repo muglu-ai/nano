@@ -14,7 +14,7 @@ return new class extends Migration
         if (!Schema::hasTable('meeting_room_slots')) {
             Schema::create('meeting_room_slots', function (Blueprint $table) {
             $table->integerIncrements('id'); // int NOT NULL AUTO_INCREMENT in SQL
-            $table->integer('room_type_id')->nullable(); // int DEFAULT NULL in SQL
+            $table->unsignedInteger('room_type_id')->nullable(); // match meeting_room_types.id (integerIncrements = unsigned)
             $table->string('slot_name', 50)->nullable();
             $table->time('start_time')->nullable();
             $table->time('end_time')->nullable();

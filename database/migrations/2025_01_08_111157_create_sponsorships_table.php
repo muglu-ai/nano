@@ -20,7 +20,8 @@ return new class extends Migration
                 $table->decimal('price', 10, 2);
                 $table->enum('status', ['initiated', 'submitted', 'pending', 'approved', 'rejected']);
                 $table->unsignedBigInteger('invoice_id')->nullable(); // Foreign key will be added after invoices table exists
-                $table->foreignId('sponsorship_item_id')->constrained('sponsor_items')->onDelete('cascade')->onUpdate('cascade');
+                // FK added in 2025_01_17_060904_sponsor_item (sponsor_items table created there)
+                $table->unsignedBigInteger('sponsorship_item_id');
                 $table->integer('sponsorship_item_count');
                 $table->foreignId('application_id')->constrained('applications')->onDelete('cascade')->onUpdate('cascade');
                 $table->timestamp('submitted_date')->nullable();

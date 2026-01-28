@@ -11,7 +11,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('exhibitors_info', function (Blueprint $table) {
+        if (!Schema::hasTable('exhibitors_info')) {
+            Schema::create('exhibitors_info', function (Blueprint $table) {
             $table->id();
             $table->integer('api_status')->nullable();
             $table->foreignId('application_id')->constrained('applications')->onDelete('cascade');
@@ -43,7 +44,8 @@ return new class extends Migration
 
             // Indexes
             $table->index('application_id');
-        });
+            });
+        }
     }
 
     /**

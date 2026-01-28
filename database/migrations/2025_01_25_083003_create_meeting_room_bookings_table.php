@@ -17,8 +17,8 @@ return new class extends Migration
             $table->string('booking_id')->default('0');
             $table->unsignedBigInteger('application_id')->nullable();
             $table->unsignedBigInteger('user_id')->nullable();
-            $table->integer('room_type_id')->nullable(); // int DEFAULT NULL in SQL
-            $table->integer('slot_id')->nullable(); // int DEFAULT NULL in SQL
+            $table->unsignedInteger('room_type_id')->nullable(); // match meeting_room_types.id
+            $table->unsignedInteger('slot_id')->nullable(); // match meeting_room_slots.id
             $table->date('booking_date')->nullable();
             $table->boolean('is_member')->nullable();
             $table->decimal('final_price', 10, 2)->nullable();
