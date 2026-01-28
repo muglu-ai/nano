@@ -598,9 +598,11 @@ class TicketAllocationHelper
                 return ['ticket_allocations' => $special];
             }
             
-            // Try to extract numeric value if format is like "4 SQM"
+            // Try to extract numeric value: "48", "48 SQM", "4 SQM" etc.
             if (preg_match('/(\d+)\s*sqm/i', $boothArea, $matches)) {
                 $boothArea = (float) $matches[1];
+            } elseif (is_numeric($trimmed)) {
+                $boothArea = (float) $trimmed;
             } else {
                 // Fallback: use default rule (middle of smallest range)
                 $boothArea = 6;

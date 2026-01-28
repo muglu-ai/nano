@@ -413,7 +413,7 @@
                                 </table>
                                 @endif
 
-                                
+
 
                                 @if($invoice->total_final_price)
                                 <table role="presentation" width="100%" cellpadding="5" cellspacing="0" style="margin-bottom: 15px; border-top: 2px solid #1a237e; padding-top: 10px;">
@@ -535,7 +535,7 @@
                                             </tr>
                                             @endif
                                             
-                                            @if(!empty({{ config('constants.EVENT_WEBSITE') }}))
+                                            @if(!empty(config('constants.EVENT_WEBSITE')))
                                             <tr>
                                                 <td style="width: 80px; font-weight: bold; color: #333333; padding: 3px 0; vertical-align: top;">Website:</td>
                                                 <td style="color: #555555; padding: 3px 0;"><a href="{{ config('constants.EVENT_WEBSITE') }}" target="_blank" style="color: #1a237e; text-decoration: none;">{{ $organizer['website'] }}</a></td>
