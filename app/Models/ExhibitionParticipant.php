@@ -44,8 +44,21 @@ class ExhibitionParticipant extends Model
         $tickets = [];
         $allocations = $this->ticketAllocation ?? [];
         
+        // Handle both JSON string and array formats
+        if (is_string($allocations)) {
+            $allocations = json_decode($allocations, true) ?? [];
+        }
+        
+        if (!is_array($allocations) || empty($allocations)) {
+            return $tickets;
+        }
+        
         foreach ($allocations as $ticketTypeId => $count) {
-            if ($count > 0) {
+            // Convert string keys to integers (JSON keys are always strings)
+            $ticketTypeId = (int) $ticketTypeId;
+            $count = (int) $count;
+            
+            if ($count > 0 && $ticketTypeId > 0) {
                 $ticketType = TicketType::find($ticketTypeId);
                 if ($ticketType) {
                     $tickets[] = [
@@ -54,6 +67,13 @@ class ExhibitionParticipant extends Model
                         'slug' => $ticketType->slug,
                         'count' => $count,
                     ];
+                } else {
+                    // Log missing ticket type for debugging
+                    \Log::warning('Ticket type not found in ExhibitionParticipant::tickets()', [
+                        'ticket_type_id' => $ticketTypeId,
+                        'exhibition_participant_id' => $this->id,
+                        'application_id' => $this->application_id,
+                    ]);
                 }
             }
         }
