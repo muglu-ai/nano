@@ -12,10 +12,12 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('ticket_orders', function (Blueprint $table) {
-            $table->string('secure_token', 64)->unique()->nullable()->after('order_no');
-            $table->index('secure_token');
+            if (!Schema::hasColumn('ticket_orders', 'secure_token')) {
+                $table->string('secure_token', 64)->unique()->nullable()->after('order_no');
+                $table->index('secure_token');
+            }
         });
-        
+
         // Generate tokens for existing orders
         $orders = \App\Models\Ticket\TicketOrder::whereNull('secure_token')->get();
         foreach ($orders as $order) {

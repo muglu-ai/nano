@@ -10,7 +10,9 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('event_configurations', function (Blueprint $table) {
-            $table->json('booth_sizes')->nullable()->after('gst_rate');
+            if (!Schema::hasColumn('event_configurations', 'booth_sizes')) {
+                $table->json('booth_sizes')->nullable()->after('gst_rate');
+            }
         });
 
         // Set default booth sizes for existing records

@@ -173,6 +173,11 @@ class PublicTicketController extends Controller
             })
             ->orderBy('sort_order')
             ->get();
+
+        // Filter by nationality when set: only show ticket types available for Indian or International
+        if (!empty($selectedNationality) && in_array($selectedNationality, ['national', 'international'])) {
+            $ticketTypes = $ticketTypes->filter(fn ($tt) => $tt->isAvailableFor($selectedNationality))->values();
+        }
         
         // Load registration categories
         $registrationCategories = TicketRegistrationCategory::where('event_id', $event->id)
@@ -290,9 +295,9 @@ class PublicTicketController extends Controller
             'registration_category_id' => 'nullable|exists:ticket_registration_categories,id',
             'ticket_type_id' => [
                 'required',
-                function ($attribute, $value, $fail) use ($event) {
+                function ($attribute, $value, $fail) use ($event, $request) {
                     // Check if ticket type exists by slug or ID, and belongs to this event
-                    // Also ensure it's not an exhibitor-only ticket type
+                    // Also ensure it's not an exhibitor-only ticket type and is available for chosen nationality
                     $ticketType = TicketType::where('event_id', $event->id)
                         ->where(function($query) use ($value) {
                             $query->where('slug', $value)
@@ -307,6 +312,12 @@ class PublicTicketController extends Controller
                     
                     if (!$ticketType) {
                         $fail('The selected ticket type is invalid or not available for public registration.');
+                        return;
+                    }
+                    $nationality = $request->input('nationality');
+                    $nationalityForCheck = in_array($nationality, ['Indian', 'national']) ? 'national' : (in_array($nationality, ['International', 'international']) ? 'international' : null);
+                    if ($nationalityForCheck && !$ticketType->isAvailableFor($nationalityForCheck)) {
+                        $fail('This ticket type is not available for your selected nationality (Indian / International).');
                     }
                 },
             ],

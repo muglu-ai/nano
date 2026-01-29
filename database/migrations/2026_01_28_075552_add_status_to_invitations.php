@@ -12,20 +12,42 @@ return new class extends Migration
     public function up(): void
     {
         // Add status and cancellation fields to complimentary_delegates
-        Schema::table('complimentary_delegates', function (Blueprint $table) {
-            $table->enum('status', ['pending', 'accepted', 'cancelled'])->default('pending')->after('token');
-            $table->timestamp('cancelled_at')->nullable()->after('status');
-            $table->foreignId('cancelled_by')->nullable()->constrained('users')->onDelete('set null')->after('cancelled_at');
-            $table->index('status');
-        });
+        if (Schema::hasTable('complimentary_delegates')) {
+            Schema::table('complimentary_delegates', function (Blueprint $table) {
+                if (!Schema::hasColumn('complimentary_delegates', 'status')) {
+                    $table->enum('status', ['pending', 'accepted', 'cancelled'])->default('pending')->after('token');
+                }
+                if (!Schema::hasColumn('complimentary_delegates', 'cancelled_at')) {
+                    $table->timestamp('cancelled_at')->nullable()->after('status');
+                }
+                if (!Schema::hasColumn('complimentary_delegates', 'cancelled_by')) {
+                    $table->foreignId('cancelled_by')->nullable()->constrained('users')->onDelete('set null')->after('cancelled_at');
+                }
+                try {
+                    $table->index('status');
+                } catch (\Exception $e) {
+                }
+            });
+        }
 
         // Add status and cancellation fields to stall_manning
-        Schema::table('stall_manning', function (Blueprint $table) {
-            $table->enum('status', ['pending', 'accepted', 'cancelled'])->default('pending')->after('token');
-            $table->timestamp('cancelled_at')->nullable()->after('status');
-            $table->foreignId('cancelled_by')->nullable()->constrained('users')->onDelete('set null')->after('cancelled_at');
-            $table->index('status');
-        });
+        if (Schema::hasTable('stall_manning')) {
+            Schema::table('stall_manning', function (Blueprint $table) {
+                if (!Schema::hasColumn('stall_manning', 'status')) {
+                    $table->enum('status', ['pending', 'accepted', 'cancelled'])->default('pending')->after('token');
+                }
+                if (!Schema::hasColumn('stall_manning', 'cancelled_at')) {
+                    $table->timestamp('cancelled_at')->nullable()->after('status');
+                }
+                if (!Schema::hasColumn('stall_manning', 'cancelled_by')) {
+                    $table->foreignId('cancelled_by')->nullable()->constrained('users')->onDelete('set null')->after('cancelled_at');
+                }
+                try {
+                    $table->index('status');
+                } catch (\Exception $e) {
+                }
+            });
+        }
     }
 
     /**

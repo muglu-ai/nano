@@ -41,12 +41,18 @@
                     @endforeach
                 @endif
             </select>
+            <small class="text-muted">Pricing is set per ticket type; category/subcategory determine how this type is grouped and can be used for rules.</small>
             @error('subcategory_id')
                 <div class="text-danger">{{ $message }}</div>
             @enderror
         </div>
     </div>
 </div>
+@php
+    $subcategoriesByCategory = $categories->keyBy('id')->map(function ($c) {
+        return $c->subcategories->map(fn ($s) => ['id' => $s->id, 'name' => $s->name])->values()->toArray();
+    })->toArray();
+@endphp
 
 <div class="row">
     <div class="col-md-12">
@@ -56,6 +62,23 @@
                    value="{{ $isEdit ? $ticketType->name : old('name') }}" 
                    placeholder="e.g., Full Conference Pass" required>
             @error('name')
+                <div class="text-danger">{{ $message }}</div>
+            @enderror
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="form-group mb-3">
+            <label class="form-label">Available for</label>
+            <select name="available_for" class="form-select" id="available_for">
+                <option value="both" {{ ($isEdit ? ($ticketType->available_for ?? 'both') : old('available_for', 'both')) === 'both' ? 'selected' : '' }}>Both (Indian & International)</option>
+                <option value="indian_only" {{ ($isEdit ? ($ticketType->available_for ?? '') : old('available_for')) === 'indian_only' ? 'selected' : '' }}>Indian only</option>
+                <option value="international_only" {{ ($isEdit ? ($ticketType->available_for ?? '') : old('available_for')) === 'international_only' ? 'selected' : '' }}>International only</option>
+            </select>
+            <small class="text-muted">Restrict who can purchase this ticket (e.g. Indian-only or International-only)</small>
+            @error('available_for')
                 <div class="text-danger">{{ $message }}</div>
             @enderror
         </div>
@@ -386,19 +409,40 @@ function toggleDaySelectionConfig() {
     }
 }
 
-// Load subcategories when category changes
-document.getElementById('category_id')?.addEventListener('change', function() {
-    const categoryId = this.value;
+// Subcategories per category (from server)
+window.categoriesWithSubcategories = @json($subcategoriesByCategory);
+
+function populateSubcategories(categoryId, selectedSubcategoryId) {
     const subcategorySelect = document.getElementById('subcategory_id');
-    
-    // Clear existing options except "None"
     subcategorySelect.innerHTML = '<option value="">None</option>';
-    
-    if (categoryId) {
-        // Fetch subcategories via AJAX or reload page
-        // For now, we'll need to handle this in the controller or use AJAX
-        // This is a simplified version - you may want to implement AJAX loading
+    if (!categoryId) return;
+    const list = window.categoriesWithSubcategories[categoryId];
+    if (list && list.length) {
+        list.forEach(function (s) {
+            const opt = document.createElement('option');
+            opt.value = s.id;
+            opt.textContent = s.name;
+            if (selectedSubcategoryId && String(s.id) === String(selectedSubcategoryId)) {
+                opt.selected = true;
+            }
+            subcategorySelect.appendChild(opt);
+        });
     }
+}
+
+document.getElementById('category_id')?.addEventListener('change', function () {
+    const categoryId = this.value;
+    populateSubcategories(categoryId, null);
 });
+
+// On page load, ensure subcategories are populated for the currently selected category (e.g. after validation error)
+(function () {
+    const categorySelect = document.getElementById('category_id');
+    const subcategorySelect = document.getElementById('subcategory_id');
+    if (categorySelect && subcategorySelect && categorySelect.value) {
+        const selectedSub = subcategorySelect.value;
+        populateSubcategories(categorySelect.value, selectedSub || null);
+    }
+})();
 </script>
 

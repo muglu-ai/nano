@@ -12,8 +12,10 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('ticket_types', function (Blueprint $table) {
-            // Make regular_price nullable since we're using national/international pricing
-            $table->decimal('regular_price', 10, 2)->nullable()->change();
+            if (Schema::hasColumn('ticket_types', 'regular_price')) {
+                // Make regular_price nullable since we're using national/international pricing
+                $table->decimal('regular_price', 10, 2)->nullable()->change();
+            }
         });
     }
 

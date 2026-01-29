@@ -12,11 +12,19 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('ticket_types', function (Blueprint $table) {
-            // Add national and international pricing columns
-            $table->decimal('early_bird_price_national', 10, 2)->nullable()->after('early_bird_price');
-            $table->decimal('early_bird_price_international', 10, 2)->nullable()->after('early_bird_price_national');
-            $table->decimal('regular_price_national', 10, 2)->nullable()->after('regular_price');
-            $table->decimal('regular_price_international', 10, 2)->nullable()->after('regular_price_national');
+            // Add national and international pricing columns (skip if already exist)
+            if (!Schema::hasColumn('ticket_types', 'early_bird_price_national')) {
+                $table->decimal('early_bird_price_national', 10, 2)->nullable()->after('early_bird_price');
+            }
+            if (!Schema::hasColumn('ticket_types', 'early_bird_price_international')) {
+                $table->decimal('early_bird_price_international', 10, 2)->nullable()->after('early_bird_price_national');
+            }
+            if (!Schema::hasColumn('ticket_types', 'regular_price_national')) {
+                $table->decimal('regular_price_national', 10, 2)->nullable()->after('regular_price');
+            }
+            if (!Schema::hasColumn('ticket_types', 'regular_price_international')) {
+                $table->decimal('regular_price_international', 10, 2)->nullable()->after('regular_price_national');
+            }
         });
     }
 

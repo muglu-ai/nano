@@ -12,7 +12,9 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('applications', function (Blueprint $table) {
-            $table->boolean('tan_compliance')->default(false)->after('gst_compliance');
+            if (!Schema::hasColumn('applications', 'tan_compliance')) {
+                $table->boolean('tan_compliance')->default(false)->after('gst_compliance');
+            }
         });
     }
 

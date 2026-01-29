@@ -8,14 +8,12 @@ return new class extends Migration
 {
     /**
      * Run the migrations.
+     * available_for: both = Indian & International; indian_only = Indian only; international_only = International only
      */
     public function up(): void
     {
         Schema::table('ticket_types', function (Blueprint $table) {
-            if (!Schema::hasColumn('ticket_types', 'enable_day_selection')) {
-                $table->boolean('enable_day_selection')->default(false)->after('all_days_access')
-                    ->comment('When enabled, users can select which day(s) they want to attend');
-            }
+            $table->string('available_for', 32)->default('both')->after('is_active');
         });
     }
 
@@ -25,7 +23,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('ticket_types', function (Blueprint $table) {
-            $table->dropColumn('enable_day_selection');
+            $table->dropColumn('available_for');
         });
     }
 };

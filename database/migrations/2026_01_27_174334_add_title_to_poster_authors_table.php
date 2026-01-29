@@ -12,7 +12,9 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('poster_authors', function (Blueprint $table) {
-            $table->string('title', 10)->nullable()->after('author_index');
+            if (!Schema::hasColumn('poster_authors', 'title')) {
+                $table->string('title', 10)->nullable()->after('author_index');
+            }
         });
     }
 

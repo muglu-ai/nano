@@ -12,15 +12,17 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('ticket_allocation_rules', function (Blueprint $table) {
-            // Add booth_type for special booth types (POD, Booth / POD, Startup Booth, etc.)
-            $table->string('booth_type')->nullable()->after('application_type');
-            
+            if (!Schema::hasColumn('ticket_allocation_rules', 'booth_type')) {
+                $table->string('booth_type')->nullable()->after('application_type');
+                $table->index('booth_type', 'idx_tar_booth_type');
+            }
             // Make booth_area_min and booth_area_max nullable (required only for numeric ranges)
-            $table->integer('booth_area_min')->nullable()->change();
-            $table->integer('booth_area_max')->nullable()->change();
-            
-            // Add index for booth_type lookups
-            $table->index('booth_type', 'idx_tar_booth_type');
+            if (Schema::hasColumn('ticket_allocation_rules', 'booth_area_min')) {
+                $table->integer('booth_area_min')->nullable()->change();
+            }
+            if (Schema::hasColumn('ticket_allocation_rules', 'booth_area_max')) {
+                $table->integer('booth_area_max')->nullable()->change();
+            }
         });
     }
 

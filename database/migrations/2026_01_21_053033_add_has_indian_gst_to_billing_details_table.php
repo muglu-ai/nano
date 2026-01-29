@@ -12,7 +12,9 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('billing_details', function (Blueprint $table) {
-            $table->string('has_indian_gst', 10)->nullable()->after('gst_id');
+            if (!Schema::hasColumn('billing_details', 'has_indian_gst')) {
+                $table->string('has_indian_gst', 10)->nullable()->after('gst_id');
+            }
         });
     }
 

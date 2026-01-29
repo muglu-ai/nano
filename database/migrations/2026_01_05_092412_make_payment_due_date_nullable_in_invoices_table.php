@@ -12,7 +12,9 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('invoices', function (Blueprint $table) {
-            $table->date('payment_due_date')->nullable()->default(null)->change();
+            if (Schema::hasColumn('invoices', 'payment_due_date')) {
+                $table->date('payment_due_date')->nullable()->default(null)->change();
+            }
         });
     }
 

@@ -13,13 +13,15 @@ return new class extends Migration
     {
         if (Schema::hasTable('ticket_orders')) {
             Schema::table('ticket_orders', function (Blueprint $table) {
-                // Add payment_status enum field
-                $table->enum('payment_status', ['pending', 'paid', 'complimentary', 'cancelled', 'refunded'])
-                    ->default('pending')
-                    ->after('status');
-                
-                // Add index for better query performance
-                $table->index('payment_status');
+                if (!Schema::hasColumn('ticket_orders', 'payment_status')) {
+                    // Add payment_status enum field
+                    $table->enum('payment_status', ['pending', 'paid', 'complimentary', 'cancelled', 'refunded'])
+                        ->default('pending')
+                        ->after('status');
+
+                    // Add index for better query performance
+                    $table->index('payment_status');
+                }
             });
         }
     }

@@ -34,6 +34,7 @@ class TicketType extends Model
         'sale_start_at',
         'sale_end_at',
         'is_active',
+        'available_for', // 'both' | 'indian_only' | 'international_only'
         'all_days_access', // If true, ticket grants access to all event days
         'enable_day_selection', // When enabled, users can select which day(s) they want to attend
         'sort_order',
@@ -111,6 +112,27 @@ class TicketType extends Model
     public function earlyBirdReminders(): HasMany
     {
         return $this->hasMany(TicketEarlyBirdReminder::class, 'ticket_type_id');
+    }
+
+    /**
+     * Check if this ticket type is available for the given audience (national = Indian, international = International)
+     *
+     * @param string $nationality 'national' or 'international'
+     * @return bool
+     */
+    public function isAvailableFor(string $nationality): bool
+    {
+        $for = $this->available_for ?? 'both';
+        if ($for === 'both') {
+            return true;
+        }
+        if ($for === 'indian_only') {
+            return $nationality === 'national';
+        }
+        if ($for === 'international_only') {
+            return $nationality === 'international';
+        }
+        return true;
     }
 
     /**

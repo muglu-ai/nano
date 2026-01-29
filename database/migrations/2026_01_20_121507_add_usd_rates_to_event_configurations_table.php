@@ -14,8 +14,12 @@ return new class extends Migration
     {
         Schema::table('event_configurations', function (Blueprint $table) {
             // Add USD rates for booth pricing
-            $table->decimal('shell_scheme_rate_usd', 10, 2)->nullable()->after('shell_scheme_rate');
-            $table->decimal('raw_space_rate_usd', 10, 2)->nullable()->after('raw_space_rate');
+            if (!Schema::hasColumn('event_configurations', 'shell_scheme_rate_usd')) {
+                $table->decimal('shell_scheme_rate_usd', 10, 2)->nullable()->after('shell_scheme_rate');
+            }
+            if (!Schema::hasColumn('event_configurations', 'raw_space_rate_usd')) {
+                $table->decimal('raw_space_rate_usd', 10, 2)->nullable()->after('raw_space_rate');
+            }
         });
 
         // Set default values for existing records

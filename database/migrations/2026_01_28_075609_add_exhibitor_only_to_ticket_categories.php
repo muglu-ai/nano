@@ -12,8 +12,10 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('ticket_categories', function (Blueprint $table) {
-            $table->boolean('is_exhibitor_only')->default(false)->after('description');
-            $table->index('is_exhibitor_only');
+            if (!Schema::hasColumn('ticket_categories', 'is_exhibitor_only')) {
+                $table->boolean('is_exhibitor_only')->default(false)->after('description');
+                $table->index('is_exhibitor_only');
+            }
         });
     }
 

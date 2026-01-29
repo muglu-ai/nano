@@ -12,8 +12,12 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('poster_registration_demos', function (Blueprint $table) {
-            $table->string('lead_auth_cv_path')->nullable()->after('extended_abstract_original_name');
-            $table->string('lead_auth_cv_original_name')->nullable()->after('lead_auth_cv_path');
+            if (!Schema::hasColumn('poster_registration_demos', 'lead_auth_cv_path')) {
+                $table->string('lead_auth_cv_path')->nullable()->after('extended_abstract_original_name');
+            }
+            if (!Schema::hasColumn('poster_registration_demos', 'lead_auth_cv_original_name')) {
+                $table->string('lead_auth_cv_original_name')->nullable()->after('lead_auth_cv_path');
+            }
         });
     }
 

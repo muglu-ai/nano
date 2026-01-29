@@ -530,6 +530,7 @@ class AdminTicketConfigController extends Controller
             'subcategory_id' => 'nullable|exists:ticket_subcategories,id',
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
+            'available_for' => 'nullable|in:both,indian_only,international_only',
             'early_bird_price_national' => 'nullable|numeric|min:0',
             'early_bird_price_international' => 'nullable|numeric|min:0',
             'regular_price_national' => 'required|numeric|min:0',
@@ -559,6 +560,7 @@ class AdminTicketConfigController extends Controller
                 'subcategory_id' => $request->subcategory_id,
                 'name' => $request->name,
                 'description' => $request->description,
+                'available_for' => $request->input('available_for', 'both'),
                 'early_bird_price' => $request->early_bird_price_national, // Fallback for backward compatibility
                 'early_bird_price_national' => $request->early_bird_price_national,
                 'early_bird_price_international' => $request->early_bird_price_international,
@@ -626,6 +628,7 @@ class AdminTicketConfigController extends Controller
             'subcategory_id' => 'nullable|exists:ticket_subcategories,id',
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
+            'available_for' => 'nullable|in:both,indian_only,international_only',
             'early_bird_price_national' => 'nullable|numeric|min:0',
             'early_bird_price_international' => 'nullable|numeric|min:0',
             'regular_price_national' => 'required|numeric|min:0',
@@ -655,6 +658,7 @@ class AdminTicketConfigController extends Controller
             'subcategory_id' => $request->subcategory_id,
             'name' => $request->name,
             'description' => $request->description,
+            'available_for' => $request->input('available_for', 'both'),
             'early_bird_price' => $request->early_bird_price_national, // Fallback for backward compatibility
             'early_bird_price_national' => $request->early_bird_price_national,
             'early_bird_price_international' => $request->early_bird_price_international,

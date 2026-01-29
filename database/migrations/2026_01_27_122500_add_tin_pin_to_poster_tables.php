@@ -13,12 +13,16 @@ return new class extends Migration
     {
         // Add tin_no to poster_registration_demos table
         Schema::table('poster_registration_demos', function (Blueprint $table) {
-            $table->string('tin_no')->unique()->nullable()->after('token');
+            if (!Schema::hasColumn('poster_registration_demos', 'tin_no')) {
+                $table->string('tin_no')->unique()->nullable()->after('token');
+            }
         });
-        
+
         // Add pin_no to poster_registrations table (set after payment)
         Schema::table('poster_registrations', function (Blueprint $table) {
-            $table->string('pin_no')->unique()->nullable()->after('tin_no');
+            if (!Schema::hasColumn('poster_registrations', 'pin_no')) {
+                $table->string('pin_no')->unique()->nullable()->after('tin_no');
+            }
         });
     }
 

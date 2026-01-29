@@ -14,23 +14,37 @@ return new class extends Migration
     {
         Schema::table('event_configurations', function (Blueprint $table) {
             // Early bird cutoff date
-            $table->date('startup_zone_early_bird_cutoff_date')->nullable()->after('gst_rate');
-            
+            if (!Schema::hasColumn('event_configurations', 'startup_zone_early_bird_cutoff_date')) {
+                $table->date('startup_zone_early_bird_cutoff_date')->nullable()->after('gst_rate');
+            }
             // Regular prices (INR)
-            $table->decimal('startup_zone_regular_price_inr', 10, 2)->nullable()->after('startup_zone_early_bird_cutoff_date');
-            $table->decimal('startup_zone_regular_price_with_tv_inr', 10, 2)->nullable()->after('startup_zone_regular_price_inr');
-            
+            if (!Schema::hasColumn('event_configurations', 'startup_zone_regular_price_inr')) {
+                $table->decimal('startup_zone_regular_price_inr', 10, 2)->nullable()->after('startup_zone_early_bird_cutoff_date');
+            }
+            if (!Schema::hasColumn('event_configurations', 'startup_zone_regular_price_with_tv_inr')) {
+                $table->decimal('startup_zone_regular_price_with_tv_inr', 10, 2)->nullable()->after('startup_zone_regular_price_inr');
+            }
             // Early bird prices (INR)
-            $table->decimal('startup_zone_early_bird_price_inr', 10, 2)->nullable()->after('startup_zone_regular_price_with_tv_inr');
-            $table->decimal('startup_zone_early_bird_price_with_tv_inr', 10, 2)->nullable()->after('startup_zone_early_bird_price_inr');
-            
+            if (!Schema::hasColumn('event_configurations', 'startup_zone_early_bird_price_inr')) {
+                $table->decimal('startup_zone_early_bird_price_inr', 10, 2)->nullable()->after('startup_zone_regular_price_with_tv_inr');
+            }
+            if (!Schema::hasColumn('event_configurations', 'startup_zone_early_bird_price_with_tv_inr')) {
+                $table->decimal('startup_zone_early_bird_price_with_tv_inr', 10, 2)->nullable()->after('startup_zone_early_bird_price_inr');
+            }
             // Regular prices (USD)
-            $table->decimal('startup_zone_regular_price_usd', 10, 2)->nullable()->after('startup_zone_early_bird_price_with_tv_inr');
-            $table->decimal('startup_zone_regular_price_with_tv_usd', 10, 2)->nullable()->after('startup_zone_regular_price_usd');
-            
+            if (!Schema::hasColumn('event_configurations', 'startup_zone_regular_price_usd')) {
+                $table->decimal('startup_zone_regular_price_usd', 10, 2)->nullable()->after('startup_zone_early_bird_price_with_tv_inr');
+            }
+            if (!Schema::hasColumn('event_configurations', 'startup_zone_regular_price_with_tv_usd')) {
+                $table->decimal('startup_zone_regular_price_with_tv_usd', 10, 2)->nullable()->after('startup_zone_regular_price_usd');
+            }
             // Early bird prices (USD)
-            $table->decimal('startup_zone_early_bird_price_usd', 10, 2)->nullable()->after('startup_zone_regular_price_with_tv_usd');
-            $table->decimal('startup_zone_early_bird_price_with_tv_usd', 10, 2)->nullable()->after('startup_zone_early_bird_price_usd');
+            if (!Schema::hasColumn('event_configurations', 'startup_zone_early_bird_price_usd')) {
+                $table->decimal('startup_zone_early_bird_price_usd', 10, 2)->nullable()->after('startup_zone_regular_price_with_tv_usd');
+            }
+            if (!Schema::hasColumn('event_configurations', 'startup_zone_early_bird_price_with_tv_usd')) {
+                $table->decimal('startup_zone_early_bird_price_with_tv_usd', 10, 2)->nullable()->after('startup_zone_early_bird_price_usd');
+            }
         });
 
         // Set default values for existing records
