@@ -182,7 +182,7 @@ class PublicTicketController extends Controller
         // Build Category → Subcategory → Ticket Type map so pricing is driven by subcategory (admin defines one ticket type per category+subcategory with its price)
         $categoriesForForm = $ticketTypes->pluck('category')->filter()->unique('id')->values()->sortBy('sort_order');
         $categorySubcategoryTicketMap = []; // key "categoryId_subcategoryId" => ticket type data for JS
-        $subcategoryOptionsByCategory = []; // category_id => [ { id, name, ticket_type_slug } ] for dropdowns
+        $subcategoryOptionsByCategory = []; // category_id => [ optKey => { id, name, ticket_type_slug } ] for dropdowns
         foreach ($ticketTypes->sortBy('sort_order') as $tt) {
             if (!$tt->category_id) {
                 continue;
@@ -217,6 +217,26 @@ class PublicTicketController extends Controller
                     'ticket_type_slug' => $tt->slug,
                     'ticket_type_id' => $tt->id,
                 ];
+            }
+        }
+        // Include ALL subcategories defined under each category (from admin), not only those with a ticket type
+        foreach ($categoriesForForm as $cat) {
+            if (!isset($subcategoryOptionsByCategory[$cat->id])) {
+                $subcategoryOptionsByCategory[$cat->id] = [];
+            }
+            $subs = $cat->subcategories ?? collect();
+            foreach ($subs as $sub) {
+                $optKey = (string) $sub->id;
+                if (!isset($subcategoryOptionsByCategory[$cat->id][$optKey])) {
+                    $mapKey = $cat->id . '_' . $sub->id;
+                    $ticketData = $categorySubcategoryTicketMap[$mapKey] ?? null;
+                    $subcategoryOptionsByCategory[$cat->id][$optKey] = [
+                        'id' => $sub->id,
+                        'name' => $sub->name,
+                        'ticket_type_slug' => $ticketData['slug'] ?? '',
+                        'ticket_type_id' => $ticketData['ticketTypeId'] ?? null,
+                    ];
+                }
             }
         }
         

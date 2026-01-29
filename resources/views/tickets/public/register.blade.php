@@ -334,8 +334,8 @@
                     }
                 @endphp
                 <div class="row g-3">
-                    @if(isset($isTicketTypeLocked) && $isTicketTypeLocked)
-                        {{-- Locked ticket from URL: show readonly Ticket Type --}}
+                    @if(isset($isTicketTypeLocked) && $isTicketTypeLocked && !$useCategorySubcategoryFlow)
+                        {{-- Locked ticket from URL when no Category/Subcategory flow: show readonly Ticket Type --}}
                         <div class="col-md-6">
                             <label class="form-label required-field">Ticket Type</label>
                             <input type="hidden" name="ticket_type_id" value="{{ $selectedTicketType->slug }}" id="hidden_ticket_type_id" data-ticket-type-id="{{ $selectedTicketType->id }}">
@@ -1299,6 +1299,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const hiddenTicketTypeId = document.getElementById('hidden_ticket_type_id');
     const hiddenSubcategoryId = document.getElementById('hidden_subcategory_id');
     function applyResolvedTicketType(ticketSlug) {
+        var noTicketMsg = document.getElementById('subcategory_no_ticket_msg');
+        if (noTicketMsg) noTicketMsg.style.display = 'none';
         if (!ticketSlug || !window.TICKET_CATEGORY_SUBCATEGORY_MAP) return;
         const key = Object.keys(window.TICKET_CATEGORY_SUBCATEGORY_MAP).find(function(k) {
             return window.TICKET_CATEGORY_SUBCATEGORY_MAP[k].slug === ticketSlug;
@@ -1313,6 +1315,8 @@ document.addEventListener('DOMContentLoaded', function() {
         updateBaseAmount();
     }
     function onCategorySubcategoryChange() {
+        var noTicketMsg = document.getElementById('subcategory_no_ticket_msg');
+        if (noTicketMsg) noTicketMsg.style.display = 'none';
         const form = document.getElementById('registrationForm');
         if (form && form.dataset.resolvedTicketType) delete form.dataset.resolvedTicketType;
         if (hiddenTicketTypeId) hiddenTicketTypeId.value = '';
@@ -1345,13 +1349,25 @@ document.addEventListener('DOMContentLoaded', function() {
                 onCategorySubcategoryChange();
                 return;
             }
-            const ticketSlug = selected.dataset.ticketTypeSlug || '';
+            const ticketSlug = (selected.dataset.ticketTypeSlug || '').trim();
             if (hiddenSubcategoryId) {
                 const sid = selected.dataset.subcategoryId;
                 hiddenSubcategoryId.value = sid !== undefined && sid !== '' ? sid : '';
             }
-            if (ticketSlug) applyResolvedTicketType(ticketSlug);
-            else onCategorySubcategoryChange();
+            if (ticketSlug) {
+                applyResolvedTicketType(ticketSlug);
+            } else {
+                onCategorySubcategoryChange();
+                var msg = document.getElementById('subcategory_no_ticket_msg');
+                if (!msg) {
+                    msg = document.createElement('small');
+                    msg.id = 'subcategory_no_ticket_msg';
+                    msg.className = 'text-warning d-block mt-1';
+                    subcategorySelectEl.parentNode.appendChild(msg);
+                }
+                msg.textContent = 'No ticket type configured for this subcategory. Please select another or contact the organizer.';
+                msg.style.display = 'block';
+            }
         });
         if (hiddenTicketTypeId && hiddenTicketTypeId.value) {
             applyResolvedTicketType(hiddenTicketTypeId.value);
