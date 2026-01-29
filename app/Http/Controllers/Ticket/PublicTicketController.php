@@ -228,6 +228,15 @@ class PublicTicketController extends Controller
             // Get the default ticket type for this category (the one with subcategory_id = null)
             $defaultTicketForCategory = $categorySubcategoryTicketMap[$cat->id . '_null'] ?? null;
             
+            // Get any ticket type for this category as ultimate fallback
+            $anyTicketForCategory = null;
+            foreach ($categorySubcategoryTicketMap as $key => $data) {
+                if (str_starts_with($key, $cat->id . '_')) {
+                    $anyTicketForCategory = $data;
+                    break;
+                }
+            }
+            
             $subs = $cat->subcategories ?? collect();
             foreach ($subs as $sub) {
                 $optKey = (string) $sub->id;
@@ -235,12 +244,20 @@ class PublicTicketController extends Controller
                     $mapKey = $cat->id . '_' . $sub->id;
                     $ticketData = $categorySubcategoryTicketMap[$mapKey] ?? null;
                     
-                    // Fallback 1: try to find a ticket type for this category that matches subcategory by name
+                    // Fallback 1: try to find a ticket type for this category that matches subcategory by name (exact match first)
                     if (!$ticketData) {
                         foreach ($ticketTypes as $tt) {
-                            if ($tt->category_id == $cat->id && stripos($tt->name, $sub->name) !== false) {
-                                $ticketData = $categorySubcategoryTicketMap[$tt->category_id . '_' . ($tt->subcategory_id ?? 'null')] ?? null;
-                                break;
+                            if ($tt->category_id == $cat->id) {
+                                // Try exact name match first
+                                if (strcasecmp($tt->name, $sub->name) === 0) {
+                                    $ticketData = $categorySubcategoryTicketMap[$tt->category_id . '_' . ($tt->subcategory_id ?? 'null')] ?? null;
+                                    break;
+                                }
+                                // Then try partial match (subcategory name contained in ticket type name)
+                                if (stripos($tt->name, $sub->name) !== false) {
+                                    $ticketData = $categorySubcategoryTicketMap[$tt->category_id . '_' . ($tt->subcategory_id ?? 'null')] ?? null;
+                                    // Don't break, keep looking for exact match
+                                }
                             }
                         }
                     }
@@ -248,6 +265,11 @@ class PublicTicketController extends Controller
                     // Fallback 2: use the default (no subcategory) ticket type for this category
                     if (!$ticketData && $defaultTicketForCategory) {
                         $ticketData = $defaultTicketForCategory;
+                    }
+                    
+                    // Fallback 3: use any ticket type from this category
+                    if (!$ticketData && $anyTicketForCategory) {
+                        $ticketData = $anyTicketForCategory;
                     }
                     
                     $subcategoryOptionsByCategory[$cat->id][$optKey] = [

@@ -1307,26 +1307,56 @@ document.addEventListener('DOMContentLoaded', function() {
     function applyResolvedTicketType(ticketSlug) {
         var noTicketMsg = document.getElementById('subcategory_no_ticket_msg');
         if (noTicketMsg) noTicketMsg.style.display = 'none';
-        if (!ticketSlug || !window.TICKET_CATEGORY_SUBCATEGORY_MAP) {
-            console.warn('applyResolvedTicketType: No slug or map', ticketSlug, window.TICKET_CATEGORY_SUBCATEGORY_MAP);
-            return;
+        
+        if (!ticketSlug) {
+            console.warn('applyResolvedTicketType: No slug provided');
+            return false;
         }
-        const key = Object.keys(window.TICKET_CATEGORY_SUBCATEGORY_MAP).find(function(k) {
-            return window.TICKET_CATEGORY_SUBCATEGORY_MAP[k].slug === ticketSlug;
-        });
+        
+        if (!window.TICKET_CATEGORY_SUBCATEGORY_MAP || Object.keys(window.TICKET_CATEGORY_SUBCATEGORY_MAP).length === 0) {
+            console.warn('applyResolvedTicketType: No ticket map available');
+            return false;
+        }
+        
+        // Find the ticket by slug
+        const mapKeys = Object.keys(window.TICKET_CATEGORY_SUBCATEGORY_MAP);
+        let key = null;
+        let ticket = null;
+        
+        for (let i = 0; i < mapKeys.length; i++) {
+            const k = mapKeys[i];
+            if (window.TICKET_CATEGORY_SUBCATEGORY_MAP[k].slug === ticketSlug) {
+                key = k;
+                ticket = window.TICKET_CATEGORY_SUBCATEGORY_MAP[k];
+                break;
+            }
+        }
+        
         console.log('applyResolvedTicketType: Looking for slug', ticketSlug, 'found key:', key);
-        if (!key) {
-            console.warn('applyResolvedTicketType: Ticket not found in map. Available:', Object.keys(window.TICKET_CATEGORY_SUBCATEGORY_MAP).map(k => window.TICKET_CATEGORY_SUBCATEGORY_MAP[k].slug));
-            return;
+        
+        if (!key || !ticket) {
+            console.warn('applyResolvedTicketType: Ticket not found in map. Available slugs:', mapKeys.map(k => window.TICKET_CATEGORY_SUBCATEGORY_MAP[k].slug));
+            return false;
         }
-        const ticket = window.TICKET_CATEGORY_SUBCATEGORY_MAP[key];
+        
         console.log('applyResolvedTicketType: Found ticket', ticket);
+        
+        // Apply the resolved ticket type to the form
         const form = document.getElementById('registrationForm');
-        if (form) form.dataset.resolvedTicketType = JSON.stringify(ticket);
-        if (hiddenTicketTypeId) hiddenTicketTypeId.value = ticketSlug;
+        if (form) {
+            form.dataset.resolvedTicketType = JSON.stringify(ticket);
+        }
+        
+        if (hiddenTicketTypeId) {
+            hiddenTicketTypeId.value = ticketSlug;
+        }
+        
+        // Update all dependent UI elements
         updateDayAccessInfo();
         updateDaySelection();
         updateBaseAmount();
+        
+        return true;
     }
     function onCategorySubcategoryChange() {
         var noTicketMsg = document.getElementById('subcategory_no_ticket_msg');
@@ -1360,30 +1390,57 @@ document.addEventListener('DOMContentLoaded', function() {
         subcategorySelectEl.addEventListener('change', function() {
             const selected = this.options[this.selectedIndex];
             console.log('Subcategory changed:', selected?.value, 'ticketTypeSlug:', selected?.dataset?.ticketTypeSlug);
+            
+            // Hide any previous error message
+            var msg = document.getElementById('subcategory_no_ticket_msg');
+            if (msg) msg.style.display = 'none';
+            
             if (!selected || !selected.value) {
                 onCategorySubcategoryChange();
                 return;
             }
+            
             const ticketSlug = (selected.dataset.ticketTypeSlug || '').trim();
             if (hiddenSubcategoryId) {
                 const sid = selected.dataset.subcategoryId;
                 hiddenSubcategoryId.value = sid !== undefined && sid !== '' ? sid : '';
             }
+            
             if (ticketSlug) {
                 console.log('Applying ticket slug:', ticketSlug);
                 applyResolvedTicketType(ticketSlug);
             } else {
-                console.warn('No ticket slug found for subcategory:', selected.value, selected.textContent);
-                onCategorySubcategoryChange();
-                var msg = document.getElementById('subcategory_no_ticket_msg');
-                if (!msg) {
-                    msg = document.createElement('small');
-                    msg.id = 'subcategory_no_ticket_msg';
-                    msg.className = 'text-warning d-block mt-1';
-                    subcategorySelectEl.parentNode.appendChild(msg);
+                // No direct ticket slug - try to find any ticket type for this category
+                const categoryId = categorySelect?.value;
+                let foundSlug = null;
+                
+                if (categoryId && window.TICKET_CATEGORY_SUBCATEGORY_MAP) {
+                    // Look for any ticket type in this category
+                    const mapKeys = Object.keys(window.TICKET_CATEGORY_SUBCATEGORY_MAP);
+                    for (let i = 0; i < mapKeys.length; i++) {
+                        const key = mapKeys[i];
+                        if (key.startsWith(categoryId + '_')) {
+                            foundSlug = window.TICKET_CATEGORY_SUBCATEGORY_MAP[key].slug;
+                            console.log('Found fallback ticket slug for category:', foundSlug);
+                            break;
+                        }
+                    }
                 }
-                msg.textContent = 'No ticket type configured for this subcategory. Please select another or contact the organizer.';
-                msg.style.display = 'block';
+                
+                if (foundSlug) {
+                    applyResolvedTicketType(foundSlug);
+                } else {
+                    console.warn('No ticket slug found for subcategory:', selected.value, selected.textContent);
+                    onCategorySubcategoryChange();
+                    if (!msg) {
+                        msg = document.createElement('small');
+                        msg.id = 'subcategory_no_ticket_msg';
+                        msg.className = 'text-warning d-block mt-1';
+                        subcategorySelectEl.parentNode.appendChild(msg);
+                    }
+                    msg.textContent = 'No ticket type configured for this subcategory. Please select another or contact the organizer.';
+                    msg.style.display = 'block';
+                }
             }
         });
         if (hiddenTicketTypeId && hiddenTicketTypeId.value) {
