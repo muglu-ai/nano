@@ -96,8 +96,8 @@
         display: none !important;
     }
     
-    /* Hide dropdown chevrons/arrows when minimized */
-    #sidenav-main.sidenav-minimized .nav-link::after {
+    /* Hide dropdown chevrons/arrows when minimized (only for collapse toggles) */
+    #sidenav-main.sidenav-minimized .nav-link[data-bs-toggle="collapse"]::after {
         display: none !important;
     }
     
@@ -120,6 +120,7 @@
         padding: 0.65rem 0 !important;
         display: flex !important;
         align-items: center !important;
+        position: relative;
     }
     
     #sidenav-main.sidenav-minimized .nav-link i,
@@ -132,12 +133,8 @@
         display: none !important;
     }
     
-    #sidenav-main.sidenav-minimized .nav-link {
-        position: relative;
-    }
-    
     /* Tooltip for minimized sidebar */
-    #sidenav-main.sidenav-minimized .nav-link[data-tooltip]:hover::after {
+    #sidenav-main.sidenav-minimized .nav-link[data-tooltip]::before {
         content: attr(data-tooltip);
         position: absolute;
         left: 100%;
@@ -152,6 +149,15 @@
         margin-left: 10px;
         font-size: 0.875rem;
         box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.2s ease, visibility 0.2s ease;
+        pointer-events: none;
+    }
+    
+    #sidenav-main.sidenav-minimized .nav-link[data-tooltip]:hover::before {
+        opacity: 1;
+        visibility: visible;
     }
     
     #sidenav-main.sidenav-minimized .logo-text {
