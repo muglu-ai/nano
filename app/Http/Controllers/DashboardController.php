@@ -14,6 +14,7 @@ use App\Models\CoExhibitor;
 use App\Models\Payment;
 use App\Models\Ticket;
 use App\Helpers\TicketAllocationHelper;
+use App\Helpers\EventAnalyticsHelper;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
@@ -516,5 +517,15 @@ class DashboardController extends Controller
         //dd($data);
 
         return view('dashboard.participant-details', compact('data', 'slug'));
+    }
+
+    public function eventAnalytics()
+    {
+        $this->__construct();
+        
+        $analytics = EventAnalyticsHelper::getEventAnalytics();
+       
+        
+        return view('dashboard.admin_new1', compact('analytics'));
     }
 }

@@ -1027,6 +1027,7 @@ Route::middleware(['auth', Auth::class])->group(function () {
 });
 Route::middleware(['auth', Auth::class])->group(function () {
     Route::get('/admin/dashboard', [DashboardController::class, 'exhibitorDashboard_new'])->name('dashboard.admin');
+    Route::get('/admin/event-analytics', [DashboardController::class, 'eventAnalytics'])->name('admin.event.analytics');
     Route::get('/admin/feedback', [AdminFeedbackController::class, 'index'])->name('admin.feedback.index');
 });
 
