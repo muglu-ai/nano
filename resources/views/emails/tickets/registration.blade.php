@@ -309,7 +309,7 @@
                  <td style="padding: 10px 15px; text-align: right; font-size: 13px; color: #666666;">
                     @if($order->status !== 'paid')
             <div style="text-align: center; margin: 7px 0;">
-                <a href="{{ route('tickets.payment.by-tin', ['eventSlug' => $event->slug ?? $event->id, 'tin' => $order->order_no]) }}" class="btn-pay-now">
+                <a href="{{ route('tickets.payment.by-tin', ['eventSlug' => $event->slug ?? $event->id, 'tin' => $order->order_no]) }}" style="display: inline-block; background: #DAA520; color: #ffffff; padding: 14px 35px; text-decoration: none; border-radius: 5px; font-weight: 700; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px;">
                     💳 Pay Now - {{ $currencySymbol }}{{ number_format($order->total, $priceFormat) }}
                 </a>
             </div>
@@ -645,7 +645,7 @@
             <!-- Pay Now Button -->
             @if($order->status !== 'paid')
             <div style="text-align: center; margin: 7px 0;">
-                <a href="{{ route('tickets.payment.by-tin', ['eventSlug' => $event->slug ?? $event->id, 'tin' => $order->order_no]) }}" class="btn-pay-now">
+                <a href="{{ route('tickets.payment.by-tin', ['eventSlug' => $event->slug ?? $event->id, 'tin' => $order->order_no]) }}" style="display: inline-block; background: #DAA520; color: #ffffff; padding: 14px 35px; text-decoration: none; border-radius: 5px; font-weight: 700; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px;">
                     💳 Pay Now - {{ $currencySymbol }}{{ number_format($order->total, $priceFormat) }}
                 </a>
             </div>

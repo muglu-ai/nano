@@ -210,6 +210,15 @@ Route::middleware(['auth', Auth::class])->prefix('admin/tickets')->name('admin.t
     Route::get('/registration/list', [\App\Http\Controllers\Ticket\AdminTicketController::class, 'registrationList'])->name('registration.list');
 });
 
+// Admin Poster Registration Routes
+Route::middleware(['auth', Auth::class])->prefix('admin/posters')->name('admin.posters.')->group(function () {
+    Route::get('/analytics', [\App\Http\Controllers\AdminPosterController::class, 'analytics'])->name('analytics');
+    Route::get('/list', [\App\Http\Controllers\AdminPosterController::class, 'list'])->name('list');
+    Route::get('/export', [\App\Http\Controllers\AdminPosterController::class, 'export'])->name('export');
+    Route::get('/{id}', [\App\Http\Controllers\AdminPosterController::class, 'show'])->name('show');
+    Route::post('/{id}/resend-email', [\App\Http\Controllers\AdminPosterController::class, 'resendEmail'])->name('resend-email');
+});
+
 Route::get('send-exhibitor-chkdin2', [AdminController::  class, 'sendAllData'])->name('send.exhibitor.chkdin')->middleware(Auth::class);
 Route::get('get-users', [AdminController::class, 'getUsers'])->name('getUsers')->middleware(Auth::class);
 Route::get('get-users2', [AdminController::class, 'getUsers'])->name('getUsers2')->middleware(Auth::class);
