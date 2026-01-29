@@ -3101,24 +3101,31 @@ document.addEventListener('DOMContentLoaded', function() {
         submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Processing...';
 
         @if(config('constants.RECAPTCHA_ENABLED', false))
-        grecaptcha.enterprise.ready(function() {
-            grecaptcha.enterprise.execute('{{ config("services.recaptcha.site_key") }}', {action: 'submit'})
-                .then(function(token) {
-                    document.getElementById('g-recaptcha-response').value = token;
-                    registrationForm.submit();
-                })
-                .catch(function(error) {
-                    console.error('reCAPTCHA error:', error);
-                    submitBtn.disabled = false;
-                    submitBtn.innerHTML = '<i class="fas fa-arrow-right me-2"></i>Continue';
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Error',
-                        text: 'Please try again. If the problem persists, please refresh the page.',
-                        confirmButtonColor: 'var(--primary-color)'
+        // Check if grecaptcha is available (may fail to load due to ad blockers, network issues, etc.)
+        if (typeof grecaptcha !== 'undefined' && grecaptcha.enterprise) {
+            grecaptcha.enterprise.ready(function() {
+                grecaptcha.enterprise.execute('{{ config("services.recaptcha.site_key") }}', {action: 'submit'})
+                    .then(function(token) {
+                        document.getElementById('g-recaptcha-response').value = token;
+                        registrationForm.submit();
+                    })
+                    .catch(function(error) {
+                        console.error('reCAPTCHA error:', error);
+                        submitBtn.disabled = false;
+                        submitBtn.innerHTML = '<i class="fas fa-arrow-right me-2"></i>Continue';
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error',
+                            text: 'Please try again. If the problem persists, please refresh the page.',
+                            confirmButtonColor: 'var(--primary-color)'
+                        });
                     });
-                });
-        });
+            });
+        } else {
+            // reCAPTCHA script failed to load, submit without it
+            console.warn('reCAPTCHA not available, submitting form without verification');
+            registrationForm.submit();
+        }
         @else
         registrationForm.submit();
         @endif
