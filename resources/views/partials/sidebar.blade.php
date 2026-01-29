@@ -530,6 +530,31 @@
                     </div>
                 </li>
 
+                <!-- Poster Registrations -->
+                <li class="nav-item">
+                    <a data-bs-toggle="collapse" href="#posterRegistrations" class="nav-link text-dark"
+                       aria-controls="posterRegistrations" role="button" aria-expanded="false" data-tooltip="Poster Registration">
+                        <i class="fa-solid fa-image"></i>
+                        <span class="nav-link-text ms-1 ps-1 text-dark">Poster Registration</span>
+                    </a>
+                    <div class="collapse" id="posterRegistrations">
+                        <ul class="nav">
+                            <li class="nav-item">
+                                <a class="nav-link text-dark" href="{{ route('admin.posters.analytics') }}">
+                                    <span class="sidenav-mini-icon"> A </span>
+                                    <span class="sidenav-normal ms-1 ps-1 text-dark">Analytics</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link text-dark" href="{{ route('admin.posters.list') }}">
+                                    <span class="sidenav-mini-icon"> L </span>
+                                    <span class="sidenav-normal ms-1 ps-1 text-dark">Registration List</span>
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </li>
+
             @endif
             @if($subRole == 'extra_requirements')
 

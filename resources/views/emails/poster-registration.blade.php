@@ -193,7 +193,7 @@
                 <td style="padding: 10px 15px; text-align: right; font-size: 13px; color: #666666;">
                     @if(!$isThankYouEmail)
                     <div style="text-align: center; margin: 7px 0;">
-                        <a href="{{ $paymentUrl }}" class="btn-pay-now">
+                        <a href="{{ $paymentUrl }}" style="display: inline-block; background: #DAA520; color: #ffffff; padding: 14px 35px; text-decoration: none; border-radius: 5px; font-weight: 700; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px;">
                             💳 Pay Now - {{ $currencySymbol }}{{ number_format($registration->total_amount, $priceFormat) }}
                         </a>
                     </div>
