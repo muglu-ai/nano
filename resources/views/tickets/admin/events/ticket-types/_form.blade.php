@@ -111,7 +111,7 @@
             <i class="fas fa-clock"></i> Early Bird Pricing
         </h6>
         <div class="row">
-            <div class="col-md-6">
+            <div class="col-md-6 national-price-field">
                 <div class="form-group mb-3">
                     <label class="form-label">
                         <i class="fas fa-flag"></i> National Price (INR)
@@ -126,7 +126,7 @@
                 </div>
             </div>
 
-            <div class="col-md-6">
+            <div class="col-md-6 international-price-field">
                 <div class="form-group mb-3">
                     <label class="form-label">
                         <i class="fas fa-globe"></i> International Price (USD)
@@ -149,12 +149,12 @@
             <i class="fas fa-calendar-alt"></i> Regular Pricing
         </h6>
         <div class="row">
-            <div class="col-md-6">
+            <div class="col-md-6 national-price-field">
                 <div class="form-group mb-3">
                     <label class="form-label">
-                        <i class="fas fa-flag"></i> National Price (INR) <span class="text-danger">*</span>
+                        <i class="fas fa-flag"></i> National Price (INR) <span class="text-danger national-required-star">*</span>
                     </label>
-                    <input type="number" name="regular_price_national" class="form-control" 
+                    <input type="number" name="regular_price_national" class="form-control national-price-input" 
                            value="{{ $isEdit ? $ticketType->regular_price_national : old('regular_price_national') }}" 
                            step="0.01" min="0" required placeholder="0.00">
                     <small class="text-muted">Regular price for Indian nationals</small>
@@ -164,12 +164,12 @@
                 </div>
             </div>
 
-            <div class="col-md-6">
+            <div class="col-md-6 international-price-field">
                 <div class="form-group mb-3">
                     <label class="form-label">
-                        <i class="fas fa-globe"></i> International Price (USD) <span class="text-danger">*</span>
+                        <i class="fas fa-globe"></i> International Price (USD) <span class="text-danger international-required-star">*</span>
                     </label>
-                    <input type="number" name="regular_price_international" class="form-control" 
+                    <input type="number" name="regular_price_international" class="form-control international-price-input" 
                            value="{{ $isEdit ? $ticketType->regular_price_international : old('regular_price_international') }}" 
                            step="0.01" min="0" required placeholder="0.00">
                     <small class="text-muted">Regular price for international users</small>
@@ -205,7 +205,7 @@
             Set per-day pricing if users can select individual days. Price will be calculated per selected day.
         </p>
         <div class="row">
-            <div class="col-md-6">
+            <div class="col-md-6 national-price-field">
                 <div class="form-group mb-3">
                     <label class="form-label">
                         <i class="fas fa-flag"></i> Per-Day National Price (INR)
@@ -220,7 +220,7 @@
                 </div>
             </div>
 
-            <div class="col-md-6">
+            <div class="col-md-6 international-price-field">
                 <div class="form-group mb-3">
                     <label class="form-label">
                         <i class="fas fa-globe"></i> Per-Day International Price (USD)
@@ -408,6 +408,51 @@ function toggleDaySelectionConfig() {
         daySelectionDisabledInfo.style.display = 'block';
     }
 }
+
+// Toggle price fields based on "Available for" selection
+function togglePriceFields() {
+    const availableFor = document.getElementById('available_for').value;
+    const nationalFields = document.querySelectorAll('.national-price-field');
+    const internationalFields = document.querySelectorAll('.international-price-field');
+    const nationalInputs = document.querySelectorAll('.national-price-input');
+    const internationalInputs = document.querySelectorAll('.international-price-input');
+    const nationalStars = document.querySelectorAll('.national-required-star');
+    const internationalStars = document.querySelectorAll('.international-required-star');
+    
+    if (availableFor === 'indian_only') {
+        // Show national, hide international
+        nationalFields.forEach(el => el.style.display = 'block');
+        internationalFields.forEach(el => el.style.display = 'none');
+        nationalInputs.forEach(el => el.required = true);
+        internationalInputs.forEach(el => el.required = false);
+        nationalStars.forEach(el => el.style.display = 'inline');
+        internationalStars.forEach(el => el.style.display = 'none');
+    } else if (availableFor === 'international_only') {
+        // Show international, hide national
+        nationalFields.forEach(el => el.style.display = 'none');
+        internationalFields.forEach(el => el.style.display = 'block');
+        nationalInputs.forEach(el => el.required = false);
+        internationalInputs.forEach(el => el.required = true);
+        nationalStars.forEach(el => el.style.display = 'none');
+        internationalStars.forEach(el => el.style.display = 'inline');
+    } else {
+        // Show both
+        nationalFields.forEach(el => el.style.display = 'block');
+        internationalFields.forEach(el => el.style.display = 'block');
+        nationalInputs.forEach(el => el.required = true);
+        internationalInputs.forEach(el => el.required = true);
+        nationalStars.forEach(el => el.style.display = 'inline');
+        internationalStars.forEach(el => el.style.display = 'inline');
+    }
+}
+
+// Listen to "Available for" dropdown change
+document.getElementById('available_for')?.addEventListener('change', togglePriceFields);
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', function() {
+    togglePriceFields();
+});
 
 // Subcategories per category (from server)
 window.categoriesWithSubcategories = @json($subcategoriesByCategory);

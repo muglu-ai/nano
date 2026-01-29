@@ -525,7 +525,10 @@ class AdminTicketConfigController extends Controller
      */
     public function storeTicketType(Request $request, $eventId)
     {
-        $validator = Validator::make($request->all(), [
+        $availableFor = $request->input('available_for', 'both');
+        
+        // Build conditional validation rules based on available_for
+        $rules = [
             'category_id' => 'required|exists:ticket_categories,id',
             'subcategory_id' => 'nullable|exists:ticket_subcategories,id',
             'name' => 'required|string|max:255',
@@ -533,8 +536,6 @@ class AdminTicketConfigController extends Controller
             'available_for' => 'nullable|in:both,indian_only,international_only',
             'early_bird_price_national' => 'nullable|numeric|min:0',
             'early_bird_price_international' => 'nullable|numeric|min:0',
-            'regular_price_national' => 'required|numeric|min:0',
-            'regular_price_international' => 'required|numeric|min:0',
             'per_day_price_national' => 'nullable|numeric|min:0',
             'per_day_price_international' => 'nullable|numeric|min:0',
             'early_bird_end_date' => 'nullable|date|after_or_equal:today',
@@ -547,7 +548,21 @@ class AdminTicketConfigController extends Controller
             'sort_order' => 'nullable|integer',
             'event_day_ids' => 'nullable|array',
             'event_day_ids.*' => 'exists:event_days,id',
-        ]);
+        ];
+        
+        // Conditionally require national/international prices based on availability
+        if ($availableFor === 'indian_only') {
+            $rules['regular_price_national'] = 'required|numeric|min:0';
+            $rules['regular_price_international'] = 'nullable|numeric|min:0';
+        } elseif ($availableFor === 'international_only') {
+            $rules['regular_price_national'] = 'nullable|numeric|min:0';
+            $rules['regular_price_international'] = 'required|numeric|min:0';
+        } else {
+            $rules['regular_price_national'] = 'required|numeric|min:0';
+            $rules['regular_price_international'] = 'required|numeric|min:0';
+        }
+        
+        $validator = Validator::make($request->all(), $rules);
 
         if ($validator->fails()) {
             return back()->withErrors($validator)->withInput();
@@ -623,7 +638,10 @@ class AdminTicketConfigController extends Controller
      */
     public function updateTicketType(Request $request, $eventId, $ticketTypeId)
     {
-        $validator = Validator::make($request->all(), [
+        $availableFor = $request->input('available_for', 'both');
+        
+        // Build conditional validation rules based on available_for
+        $rules = [
             'category_id' => 'required|exists:ticket_categories,id',
             'subcategory_id' => 'nullable|exists:ticket_subcategories,id',
             'name' => 'required|string|max:255',
@@ -631,8 +649,6 @@ class AdminTicketConfigController extends Controller
             'available_for' => 'nullable|in:both,indian_only,international_only',
             'early_bird_price_national' => 'nullable|numeric|min:0',
             'early_bird_price_international' => 'nullable|numeric|min:0',
-            'regular_price_national' => 'required|numeric|min:0',
-            'regular_price_international' => 'required|numeric|min:0',
             'per_day_price_national' => 'nullable|numeric|min:0',
             'per_day_price_international' => 'nullable|numeric|min:0',
             'early_bird_end_date' => 'nullable|date',
@@ -645,7 +661,21 @@ class AdminTicketConfigController extends Controller
             'sort_order' => 'nullable|integer',
             'event_day_ids' => 'nullable|array',
             'event_day_ids.*' => 'exists:event_days,id',
-        ]);
+        ];
+        
+        // Conditionally require national/international prices based on availability
+        if ($availableFor === 'indian_only') {
+            $rules['regular_price_national'] = 'required|numeric|min:0';
+            $rules['regular_price_international'] = 'nullable|numeric|min:0';
+        } elseif ($availableFor === 'international_only') {
+            $rules['regular_price_national'] = 'nullable|numeric|min:0';
+            $rules['regular_price_international'] = 'required|numeric|min:0';
+        } else {
+            $rules['regular_price_national'] = 'required|numeric|min:0';
+            $rules['regular_price_international'] = 'required|numeric|min:0';
+        }
+        
+        $validator = Validator::make($request->all(), $rules);
 
         if ($validator->fails()) {
             return back()->withErrors($validator)->withInput();
