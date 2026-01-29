@@ -451,7 +451,7 @@
                 
 
                 <div class="row">
-                    <div class="col-md-6 mb-3">
+                    <div class="col-md-6 mb-3 mt-2">
                         <label class="form-label required-field">Number of Delegates</label>
                         <input type="number" name="delegate_count" class="form-control" 
                                value="{{ old('delegate_count', 1) }}" 
@@ -464,7 +464,7 @@
                         @enderror
                     </div>
 
-                    <div class="col-md-6 mb-3">
+                    <div class="col-md-6 mb-3 mt-2">
                         <label class="form-label required-field">Registration Type</label>
                         <select name="registration_type" class="form-select" id="registration_type" required>
                             <option value="">Select Registration Type</option>
@@ -594,7 +594,7 @@
                 </div>
 
                 <div class="row">
-                    <div class="col-md-6">
+                    <div class="col-md-6 mt-2">
                         <label class="form-label required-field">Country</label>
                         <select name="company_country" class="form-select" id="company_country" required>
                             <option value="">-- Select Country --</option>
@@ -622,7 +622,7 @@
                         @enderror
                     </div>
 
-                    <div class="col-md-6">
+                    <div class="col-md-6 mt-2">
                         <label class="form-label required-field">State</label>
                         <select name="company_state" class="form-select" id="company_state" required>
                             <option value="">-- Select State --</option>
@@ -637,7 +637,7 @@
                 </div>
 
                 <div class="row">
-                    <div class="col-md-6">
+                    <div class="col-md-6 mt-2">
                         <label class="form-label required-field">City</label>
                         <input type="text" name="company_city" class="form-control" 
                                value="{{ old('company_city') }}" 
@@ -647,7 +647,7 @@
                         @enderror
                     </div>
 
-                    <div class="col-md-6">
+                    <div class="col-md-6 mt-2">
                         <label class="form-label required-field">Postal Code</label>
                         <input type="text" name="postal_code" class="form-control" 
                                value="{{ old('postal_code') }}" 
@@ -659,7 +659,7 @@
                 </div>
 
                 <div class="row">
-                    <div class="col-md-6">
+                    <div class="col-md-6 mt-2">
                         <label class="form-label required-field">Phone Number</label>
                         <input type="tel" name="phone" class="form-control" id="company_phone" 
                                value="{{ old('phone') ? preg_replace('/\s+/', '', old('phone')) : '' }}" 
@@ -673,7 +673,7 @@
                         @enderror
                     </div>
 
-                    <div class="col-md-6">
+                    <div class="col-md-6 mt-2">
                         <label class="form-label required-field">Email</label>
                         <input type="email" name="email" class="form-control" 
                                value="{{ old('email') }}" 
