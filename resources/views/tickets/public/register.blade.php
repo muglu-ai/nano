@@ -872,10 +872,18 @@
 @if(isset($categoriesForForm) && $categoriesForForm->isNotEmpty())
 window.TICKET_CATEGORY_SUBCATEGORY_MAP = @json($categorySubcategoryTicketMap ?? []);
 window.TICKET_SUBCATEGORY_OPTIONS = @json($subcategoryOptionsByCategory ?? []);
-console.log('Ticket data loaded:', {map: window.TICKET_CATEGORY_SUBCATEGORY_MAP, options: window.TICKET_SUBCATEGORY_OPTIONS});
+console.log('Ticket data loaded:', {
+    map: window.TICKET_CATEGORY_SUBCATEGORY_MAP, 
+    options: window.TICKET_SUBCATEGORY_OPTIONS,
+    mapKeys: Object.keys(window.TICKET_CATEGORY_SUBCATEGORY_MAP),
+    optionCategories: Object.keys(window.TICKET_SUBCATEGORY_OPTIONS)
+});
+// Debug: Log all available slugs
+console.log('Available ticket slugs:', Object.values(window.TICKET_CATEGORY_SUBCATEGORY_MAP).map(t => ({slug: t.slug, name: t.name, ticketTypeId: t.ticketTypeId})));
 @else
 window.TICKET_CATEGORY_SUBCATEGORY_MAP = {};
 window.TICKET_SUBCATEGORY_OPTIONS = {};
+console.warn('No category/subcategory data loaded - using empty maps');
 @endif
 document.addEventListener('DOMContentLoaded', function() {
     // Registration Type Handler
@@ -1371,12 +1379,30 @@ document.addEventListener('DOMContentLoaded', function() {
     if (categorySelect && subcategorySelectEl) {
         categorySelect.addEventListener('change', function() {
             const cid = this.value;
+            console.log('Category changed to:', cid);
             subcategorySelectEl.innerHTML = '<option value="">Select Subcategory</option>';
             if (hiddenTicketTypeId) hiddenTicketTypeId.value = '';
             if (hiddenSubcategoryId) hiddenSubcategoryId.value = '';
             onCategorySubcategoryChange();
-            if (!cid || !window.TICKET_SUBCATEGORY_OPTIONS || !window.TICKET_SUBCATEGORY_OPTIONS[cid]) return;
+            
+            if (!cid) {
+                console.log('No category selected');
+                return;
+            }
+            
+            if (!window.TICKET_SUBCATEGORY_OPTIONS) {
+                console.warn('TICKET_SUBCATEGORY_OPTIONS not defined');
+                return;
+            }
+            
+            if (!window.TICKET_SUBCATEGORY_OPTIONS[cid]) {
+                console.warn('No subcategory options for category:', cid, 'Available categories:', Object.keys(window.TICKET_SUBCATEGORY_OPTIONS));
+                return;
+            }
+            
             const opts = window.TICKET_SUBCATEGORY_OPTIONS[cid];
+            console.log('Subcategory options for category', cid + ':', opts);
+            
             Object.keys(opts).forEach(function(optKey) {
                 const opt = opts[optKey];
                 const option = document.createElement('option');
@@ -1384,6 +1410,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 option.textContent = opt.name;
                 option.dataset.ticketTypeSlug = opt.ticket_type_slug || '';
                 option.dataset.subcategoryId = opt.id !== null && opt.id !== undefined ? opt.id : '';
+                console.log('Added subcategory option:', {
+                    key: optKey,
+                    name: opt.name,
+                    ticketTypeSlug: opt.ticket_type_slug || '(empty)',
+                    subcategoryId: opt.id
+                });
                 subcategorySelectEl.appendChild(option);
             });
         });
