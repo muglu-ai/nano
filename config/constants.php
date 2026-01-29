@@ -66,7 +66,7 @@ const TICKET_REGISTRATION_LINK = 'https://bengaluruindianano.in/conference.php#d
 
 //define("DEFAULT_REGISTRATION_LINK", route('register.form'));
 const DEFAULT_REGISTRATION_LINK = null;
-const PAYPAL_MODE = "live";
+const PAYPAL_MODE = "test";
 const PAYPAL_CLIENT_ID = "Acv2dOnqohq3Ty2yKnWFaHsjWEEo9jF6KlzXDoNfgFcG7ZZ8z1wBc2CRy2JRfz28HYPKE-zC3rw6Jag3";
 const PAYPAL_SECRET = "EErD4CPPTPWzpUFSU4mNlZrLgF_ZlradgkfFLrk9B875BooSGI7_ElX1uiMvYC7MPXKPsDk3Q8_GtgqE";
 const PAYPAL_SANDBOX_CLIENT_ID = "AdBqjyTeEI9u0lPQpVnXsJsc5YYVzKYNGcWz3DWVSY8N8j9Yugu8x6_XYr0h9ITzmP-G_kZ1TSVyZzEp";
