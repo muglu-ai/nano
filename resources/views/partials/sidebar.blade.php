@@ -483,7 +483,7 @@
                     <a data-bs-toggle="collapse" href="#ticketRegistrations" class="nav-link text-dark"
                        aria-controls="ticketRegistrations" role="button" aria-expanded="false">
                         <i class="fa-solid fa-clipboard-list me-2"></i>
-                        <span class="nav-link-text ms-1 ps-1 text-dark">Registration</span>
+                        <span class="nav-link-text ms-1 ps-1 text-dark">DelegateRegistration</span>
                     </a>
                     <div class="collapse" id="ticketRegistrations">
                         <ul class="nav">
@@ -545,13 +545,14 @@
 
 
             {{-- add feedback analytics --}}
+            {{--
             <li class="nav-item">
                 <a href="{{ route('admin.feedback.index') }}" class="nav-link text-dark">
                     <i class="fa-solid fa-chart-line"></i>
                     <span class="nav-link-text ms-1 ps-1 text-dark">Feedback Analytics</span>
                 </a>
             </li>
-            
+            --}}
             {{-- ELEVATE Registrations --}}
             <li class="nav-item">
                 <a href="{{ route('admin.elevate-registrations.index') }}" class="nav-link text-dark" data-tooltip="ELEVATE Registrations">
@@ -583,12 +584,14 @@
 
                         </ul>
                     </div>
+                    {{--
                 <li class="nav-item">
                     <a class="nav-link text-dark" href="{{ route('registration.count') }}">
                         <i class="fa-solid fa-table"></i>
                         <span class="nav-link-text ms-1 ps-1 text-dark">Registration Matrix</span>
                     </a>
                 </li>
+                --}}
 
                 </li>
                 <li class="nav-item">
