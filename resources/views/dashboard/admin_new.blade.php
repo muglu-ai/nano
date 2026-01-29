@@ -268,6 +268,7 @@
                                         <p class="text-m mb-0 text-capitalize font-weight-black font-weight-bold">
                                             Total Initiated</p>
                                         <h4 class="mb-0 mt-1">{{ ($analytics['exhibitor-registration']['initiated'] ?? 0) + ($analytics['startupZone']['initiated'] ?? 0) }}</h4>
+                                        <label class="text-muted d-block mt-1">Exhibitor: {{ $analytics['exhibitor-registration']['initiated'] ?? 0 }} | Startup: {{ $analytics['startupZone']['initiated'] ?? 0 }}</label>
                                     </div>
                                     <div
                                             class="icon icon-md icon-shape bg-gradient-dark shadow-dark shadow text-center border-radius-lg">
@@ -292,6 +293,7 @@
                                         <p class="text-m mb-0 text-capitalize font-weight-black font-weight-bold">Total
                                             Submitted</p>
                                         <h4 class="mb-0 mt-1">{{ ($analytics['exhibitor-registration']['submitted'] ?? 0) + ($analytics['startupZone']['submitted'] ?? 0) }}</h4>
+                                        <label class="text-muted d-block mt-1">Exhibitor: {{ $analytics['exhibitor-registration']['submitted'] ?? 0 }} | Startup: {{ $analytics['startupZone']['submitted'] ?? 0 }}</label>
                                     </div>
                                     <div
                                             class="icon icon-md icon-shape bg-gradient-dark shadow-dark shadow text-center border-radius-lg">
@@ -316,6 +318,7 @@
                                         <p class="text-m mb-0 text-capitalize font-weight-black font-weight-bold">Total
                                             Approved Application</p>
                                         <h4 class="mb-0 mt-1">{{ ($analytics['exhibitor-registration']['approved'] ?? 0) + ($analytics['startupZone']['approved'] ?? 0) }}</h4>
+                                        <label class="text-muted d-block mt-1">Exhibitor: {{ $analytics['exhibitor-registration']['approved'] ?? 0 }} | Startup: {{ $analytics['startupZone']['approved'] ?? 0 }}</label>
                                     </div>
                                     <div
                                             class="icon icon-md icon-shape bg-gradient-dark shadow-dark shadow text-center border-radius-lg">
@@ -339,6 +342,7 @@
                                     <div>
                                         <p class="text-m mb-0 text-capitalize font-weight-black font-weight-bold">Not Paid</p>
                                         <h4 class="mb-0 mt-1">{{ ($analytics['exhibitor-registration']['unpaid'] ?? 0) + ($analytics['startupZone']['unpaid'] ?? 0) }}</h4>
+                                        <label class="text-muted d-block mt-1">Exhibitor: {{ $analytics['exhibitor-registration']['unpaid'] ?? 0 }} | Startup: {{ $analytics['startupZone']['unpaid'] ?? 0 }}</label>
                                     </div>
                                     <div
                                             class="icon icon-md icon-shape bg-gradient-dark shadow-dark shadow text-center border-radius-lg">
@@ -362,6 +366,7 @@
                                     <div>
                                         <p class="text-m mb-0 text-capitalize font-weight-black font-weight-bold">Paid</p>
                                         <h4 class="mb-0 mt-1">{{ ($analytics['exhibitor-registration']['paid'] ?? 0) + ($analytics['startupZone']['paid'] ?? 0) }}</h4>
+                                        <label class="text-muted d-block mt-1">Exhibitor: {{ $analytics['exhibitor-registration']['paid'] ?? 0 }} | Startup: {{ $analytics['startupZone']['paid'] ?? 0 }}</label>
                                     </div>
                                     <div
                                             class="icon icon-md icon-shape bg-gradient-dark shadow-dark shadow text-center border-radius-lg">
