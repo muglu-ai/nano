@@ -870,6 +870,7 @@
 @if(isset($categoriesForForm) && $categoriesForForm->isNotEmpty())
 window.TICKET_CATEGORY_SUBCATEGORY_MAP = @json($categorySubcategoryTicketMap ?? []);
 window.TICKET_SUBCATEGORY_OPTIONS = @json($subcategoryOptionsByCategory ?? []);
+console.log('Ticket data loaded:', {map: window.TICKET_CATEGORY_SUBCATEGORY_MAP, options: window.TICKET_SUBCATEGORY_OPTIONS});
 @else
 window.TICKET_CATEGORY_SUBCATEGORY_MAP = {};
 window.TICKET_SUBCATEGORY_OPTIONS = {};
@@ -1076,6 +1077,9 @@ document.addEventListener('DOMContentLoaded', function() {
     const selectedEventDaySelect = document.getElementById('selected_event_day');
     const dayAccessInfo = document.getElementById('day_access_info');
     const dayAccessBadges = document.getElementById('day_access_badges');
+    
+    // Nationality select (needed early for updateBaseAmount)
+    const nationalitySelect = document.getElementById('nationality') || document.querySelector('select[name="nationality"]');
     
     // Helper function to get ticket type data (from resolved category+subcategory, select option, or locked input)
     function getTicketTypeData() {
@@ -1301,12 +1305,20 @@ document.addEventListener('DOMContentLoaded', function() {
     function applyResolvedTicketType(ticketSlug) {
         var noTicketMsg = document.getElementById('subcategory_no_ticket_msg');
         if (noTicketMsg) noTicketMsg.style.display = 'none';
-        if (!ticketSlug || !window.TICKET_CATEGORY_SUBCATEGORY_MAP) return;
+        if (!ticketSlug || !window.TICKET_CATEGORY_SUBCATEGORY_MAP) {
+            console.warn('applyResolvedTicketType: No slug or map', ticketSlug, window.TICKET_CATEGORY_SUBCATEGORY_MAP);
+            return;
+        }
         const key = Object.keys(window.TICKET_CATEGORY_SUBCATEGORY_MAP).find(function(k) {
             return window.TICKET_CATEGORY_SUBCATEGORY_MAP[k].slug === ticketSlug;
         });
-        if (!key) return;
+        console.log('applyResolvedTicketType: Looking for slug', ticketSlug, 'found key:', key);
+        if (!key) {
+            console.warn('applyResolvedTicketType: Ticket not found in map. Available:', Object.keys(window.TICKET_CATEGORY_SUBCATEGORY_MAP).map(k => window.TICKET_CATEGORY_SUBCATEGORY_MAP[k].slug));
+            return;
+        }
         const ticket = window.TICKET_CATEGORY_SUBCATEGORY_MAP[key];
+        console.log('applyResolvedTicketType: Found ticket', ticket);
         const form = document.getElementById('registrationForm');
         if (form) form.dataset.resolvedTicketType = JSON.stringify(ticket);
         if (hiddenTicketTypeId) hiddenTicketTypeId.value = ticketSlug;
@@ -1345,6 +1357,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
         subcategorySelectEl.addEventListener('change', function() {
             const selected = this.options[this.selectedIndex];
+            console.log('Subcategory changed:', selected?.value, 'ticketTypeSlug:', selected?.dataset?.ticketTypeSlug);
             if (!selected || !selected.value) {
                 onCategorySubcategoryChange();
                 return;
@@ -1355,8 +1368,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 hiddenSubcategoryId.value = sid !== undefined && sid !== '' ? sid : '';
             }
             if (ticketSlug) {
+                console.log('Applying ticket slug:', ticketSlug);
                 applyResolvedTicketType(ticketSlug);
             } else {
+                console.warn('No ticket slug found for subcategory:', selected.value, selected.textContent);
                 onCategorySubcategoryChange();
                 var msg = document.getElementById('subcategory_no_ticket_msg');
                 if (!msg) {
@@ -2098,7 +2113,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const gstLoading = document.getElementById('gst_loading');
     
     // Update ticket type prices when nationality changes
-    const nationalitySelect = document.getElementById('nationality') || document.querySelector('select[name="nationality"]');
     const ticketTypeSelectForPrice = document.getElementById('ticket_type_select');
     
     if (nationalitySelect && ticketTypeSelectForPrice) {
@@ -2152,6 +2166,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Get ticket type data
         const ticketTypeData = getTicketTypeData();
+        console.log('updateBaseAmount: ticketTypeData', ticketTypeData, 'nationality:', nationality);
         if (!ticketTypeData) {
             baseAmountDisplay.textContent = '--';
             baseAmountBreakdown.textContent = '';

@@ -220,16 +220,36 @@ class PublicTicketController extends Controller
             }
         }
         // Include ALL subcategories defined under each category (from admin), not only those with a ticket type
+        // Also try to match ticket types by subcategory name if subcategory_id wasn't set on the ticket type
         foreach ($categoriesForForm as $cat) {
             if (!isset($subcategoryOptionsByCategory[$cat->id])) {
                 $subcategoryOptionsByCategory[$cat->id] = [];
             }
+            // Get the default ticket type for this category (the one with subcategory_id = null)
+            $defaultTicketForCategory = $categorySubcategoryTicketMap[$cat->id . '_null'] ?? null;
+            
             $subs = $cat->subcategories ?? collect();
             foreach ($subs as $sub) {
                 $optKey = (string) $sub->id;
                 if (!isset($subcategoryOptionsByCategory[$cat->id][$optKey])) {
                     $mapKey = $cat->id . '_' . $sub->id;
                     $ticketData = $categorySubcategoryTicketMap[$mapKey] ?? null;
+                    
+                    // Fallback 1: try to find a ticket type for this category that matches subcategory by name
+                    if (!$ticketData) {
+                        foreach ($ticketTypes as $tt) {
+                            if ($tt->category_id == $cat->id && stripos($tt->name, $sub->name) !== false) {
+                                $ticketData = $categorySubcategoryTicketMap[$tt->category_id . '_' . ($tt->subcategory_id ?? 'null')] ?? null;
+                                break;
+                            }
+                        }
+                    }
+                    
+                    // Fallback 2: use the default (no subcategory) ticket type for this category
+                    if (!$ticketData && $defaultTicketForCategory) {
+                        $ticketData = $defaultTicketForCategory;
+                    }
+                    
                     $subcategoryOptionsByCategory[$cat->id][$optKey] = [
                         'id' => $sub->id,
                         'name' => $sub->name,
