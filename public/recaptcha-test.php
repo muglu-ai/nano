@@ -193,7 +193,7 @@ RECAPTCHA_SECRET_KEY=your_secret_key_here</pre>
     </div>
 
     <?php if (!empty($siteKey)): ?>
-    <script src="https://www.google.com/recaptcha/api.js?render=<?= htmlspecialchars($siteKey) ?>"></script>
+    <script src="https://www.google.com/recaptcha/enterprise.js?render=<?= htmlspecialchars($siteKey) ?>"></script>
     <script>
         const statusEl = document.getElementById('script-status');
         const submitBtn = document.getElementById('submit-btn');
@@ -203,9 +203,9 @@ RECAPTCHA_SECRET_KEY=your_secret_key_here</pre>
         let checkCount = 0;
         const checkRecaptcha = setInterval(function() {
             checkCount++;
-            if (typeof grecaptcha !== 'undefined') {
+            if (typeof grecaptcha !== 'undefined' && typeof grecaptcha.enterprise !== 'undefined') {
                 clearInterval(checkRecaptcha);
-                statusEl.innerHTML = '<span class="badge badge-success">✓ Loaded Successfully</span>';
+                statusEl.innerHTML = '<span class="badge badge-success">✓ Loaded Successfully (Enterprise)</span>';
                 submitBtn.disabled = false;
                 submitBtn.textContent = 'Test reCAPTCHA Verification';
             } else if (checkCount > 50) {
@@ -220,13 +220,13 @@ RECAPTCHA_SECRET_KEY=your_secret_key_here</pre>
             submitBtn.disabled = true;
             submitBtn.textContent = 'Verifying...';
             
-            if (typeof grecaptcha === 'undefined') {
-                alert('reCAPTCHA not loaded!');
+            if (typeof grecaptcha === 'undefined' || typeof grecaptcha.enterprise === 'undefined') {
+                alert('reCAPTCHA Enterprise not loaded!');
                 return;
             }
             
-            grecaptcha.ready(function() {
-                grecaptcha.execute('<?= htmlspecialchars($siteKey) ?>', {action: 'test'})
+            grecaptcha.enterprise.ready(function() {
+                grecaptcha.enterprise.execute('<?= htmlspecialchars($siteKey) ?>', {action: 'test'})
                     .then(function(token) {
                         document.getElementById('g-recaptcha-response').value = token;
                         form.submit();
