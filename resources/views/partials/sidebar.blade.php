@@ -84,8 +84,8 @@
     
     /* Sidebar minimized state */
     #sidenav-main.sidenav-minimized {
-        width: 80px !important;
-        min-width: 80px !important;
+        width: 62px !important;
+        min-width: 62px !important;
     }
     
     #sidenav-main.sidenav-minimized .nav-link-text,
@@ -93,6 +93,17 @@
     #sidenav-main.sidenav-minimized .text-truncate:not(.logo-text),
     #sidenav-main.sidenav-minimized .nav-link span:not(.sidenav-mini-icon):not(.icon-only),
     #sidenav-main.sidenav-minimized .nav-link .sidenav-toggler-inner {
+        display: none !important;
+    }
+    
+    /* Hide dropdown chevrons/arrows when minimized */
+    #sidenav-main.sidenav-minimized .nav-link::after {
+        display: none !important;
+    }
+    
+    /* Hide collapse submenus when minimized */
+    #sidenav-main.sidenav-minimized .collapse,
+    #sidenav-main.sidenav-minimized .collapsing {
         display: none !important;
     }
     
@@ -106,13 +117,15 @@
     
     #sidenav-main.sidenav-minimized .nav-link {
         justify-content: center !important;
-        padding: 0.75rem 0.5rem !important;
+        padding: 0.65rem 0 !important;
+        display: flex !important;
+        align-items: center !important;
     }
     
     #sidenav-main.sidenav-minimized .nav-link i,
     #sidenav-main.sidenav-minimized .nav-link svg {
         margin: 0 !important;
-        font-size: 1.2rem;
+        font-size: 1.1rem;
     }
     
     #sidenav-main.sidenav-minimized .logo-container {
@@ -143,6 +156,16 @@
     
     #sidenav-main.sidenav-minimized .logo-text {
         display: none;
+    }
+    
+    /* Hide user name section when minimized */
+    #sidenav-main.sidenav-minimized .nav-item.mb-2.mt-0 {
+        display: none !important;
+    }
+    
+    /* Consistent nav item spacing when minimized */
+    #sidenav-main.sidenav-minimized .nav-item {
+        margin-bottom: 0.25rem !important;
     }
     
     .logo-container {
@@ -212,7 +235,7 @@
                 </li>
                 <li class="nav-item">
                     <a data-bs-toggle="collapse" href="#extraRequirements" class="nav-link text-dark"
-                       aria-controls="extraRequirements" role="button" aria-expanded="false">
+                       aria-controls="extraRequirements" role="button" aria-expanded="false" data-tooltip="Extra Requirements">
                         <i class="fa-solid fa-list"></i>
                         <span class="nav-link-text ms-1 ps-1 text-dark">Extra Requirements</span>
                     </a>
@@ -248,7 +271,7 @@
                 @if(!in_array('invoice.list', $hiddenRoutes))
                 <li class="nav-item">
                     <a data-bs-toggle="collapse" href="#invoices" class="nav-link text-dark "
-                       aria-controls="pagesExamples" role="button" aria-expanded="false">
+                       aria-controls="pagesExamples" role="button" aria-expanded="false" data-tooltip="Invoices">
                         <i class="fa-solid fa-file-invoice"></i>
                         <span class="nav-link-text ms-1 ps-1 text-dark ">Invoices</span>
                     </a>
@@ -268,9 +291,8 @@
                 @if(!in_array('sponsorship.lists', $hiddenRoutes))
                 <li class="nav-item">
                     <a data-bs-toggle="collapse" href="#sponsorship" class="nav-link text-dark "
-                       aria-controls="pagesExamples" role="button" aria-expanded="false">
-                        <i
-                                class="material-symbols-rounded opacity-5 {% if page.brand == 'RTL' %}ms-2{% else %} me-2{% endif %}">s</i>
+                       aria-controls="pagesExamples" role="button" aria-expanded="false" data-tooltip="Sponsors">
+                        <i class="fa-solid fa-handshake"></i>
                         <span class="nav-link-text ms-1 ps-1 text-dark ">Sponsors</span>
                     </a>
                     <div class="collapse " id="sponsorship">
@@ -313,8 +335,8 @@
 
                 <li class="nav-item">
                     <a data-bs-toggle="collapse" href="#exhibitors" class="nav-link text-dark "
-                       aria-controls="pagesExamples" role="button" aria-expanded="false">
-                        <i class="fa-solid fa-store me-2"></i>
+                       aria-controls="pagesExamples" role="button" aria-expanded="false" data-tooltip="Exhibitors">
+                        <i class="fa-solid fa-store"></i>
                         <span class="nav-link-text ms-1 ps-1 text-dark ">Exhibitors</span>
                     </a>
                     <div class="collapse " id="exhibitors">
@@ -376,9 +398,8 @@
                 @if(!in_array('invoice.list', $hiddenRoutes))
                 <li class="nav-item">
                     <a href="{{ route('co_exhibitors') }}" class="nav-link text-dark " aria-controls="pagesExamples"
-                       role="button" aria-expanded="false">
-                        <i
-                                class="material-symbols-rounded opacity-5 {% if page.brand == 'RTL' %}ms-2{% else %} me-2{% endif %}">C</i>
+                       role="button" aria-expanded="false" data-tooltip="Co-Exhibitors">
+                        <i class="fa-solid fa-users"></i>
                         <span class="nav-link-text ms-1 ps-1 text-dark ">Co - Exhibitors</span>
                     </a>
                 </li>
@@ -386,8 +407,8 @@
 
                 <li class="nav-item">
                     <a data-bs-toggle="collapse" href="#startupZone" class="nav-link text-dark "
-                       aria-controls="pagesExamples" role="button" aria-expanded="false">
-                        <i class="fa-solid fa-rocket me-2"></i>
+                       aria-controls="pagesExamples" role="button" aria-expanded="false" data-tooltip="Startup Zone">
+                        <i class="fa-solid fa-rocket"></i>
                         <span class="nav-link-text ms-1 ps-1 text-dark ">Startup Zone</span>
                     </a>
                     <div class="collapse " id="startupZone">
@@ -429,7 +450,7 @@
                 @if(!in_array('admin.stall-manning', $hiddenRoutes))
 
                 <li class="nav-item">
-                    <a href="{{ route('admin.stall-manning') }}" class="nav-link text-dark">
+                    <a href="{{ route('admin.stall-manning') }}" class="nav-link text-dark" data-tooltip="Exhibitors Registration">
                         <i class="fa-solid fa-passport"></i>
                         <span class="nav-link-text ms-1 ps-1 text-dark">Exhibitors Registration</span>
                     </a>
@@ -437,7 +458,7 @@
                 @endif
 
                 <li class="nav-item">
-                    <a href="{{ route('admin.complimentary.delegate') }}" class="nav-link text-dark">
+                    <a href="{{ route('admin.complimentary.delegate') }}" class="nav-link text-dark" data-tooltip="Complimentary Exhibitors">
                         <i class="fa-solid fa-ticket"></i>
                         <span class="nav-link-text ms-1 ps-1 text-dark">Complimentary Exhibitors Registration</span>
                     </a>
@@ -446,7 +467,7 @@
                 @if(!in_array('visitor.analytics', $hiddenRoutes))
                 <li class="nav-item">
                     <a data-bs-toggle="collapse" href="#visitors" class="nav-link text-dark"
-                       aria-controls="visitors" role="button" aria-expanded="false">
+                       aria-controls="visitors" role="button" aria-expanded="false" data-tooltip="Visitors">
                         <i class="fa-solid fa-user-group"></i>
                         <span class="nav-link-text ms-1 ps-1 text-dark">Visitors</span>
                     </a>
@@ -472,7 +493,7 @@
                 @endif
 
                 <li class="nav-item">
-                    <a class="nav-link text-dark" href="{{ route('registration.count') }}">
+                    <a class="nav-link text-dark" href="{{ route('registration.count') }}" data-tooltip="Registration Matrix">
                         <i class="fa-solid fa-table"></i>
                         <span class="nav-link-text ms-1 ps-1 text-dark">Registration Matrix</span>
                     </a>
@@ -481,8 +502,8 @@
                 <!-- Ticket Registrations -->
                 <li class="nav-item">
                     <a data-bs-toggle="collapse" href="#ticketRegistrations" class="nav-link text-dark"
-                       aria-controls="ticketRegistrations" role="button" aria-expanded="false">
-                        <i class="fa-solid fa-clipboard-list me-2"></i>
+                       aria-controls="ticketRegistrations" role="button" aria-expanded="false" data-tooltip="Delegate Registration">
+                        <i class="fa-solid fa-clipboard-list"></i>
                         <span class="nav-link-text ms-1 ps-1 text-dark" style="white-space: normal; word-break: break-word; max-width: 160px;">Delegate Registration</span>
                     </a>
                     <div class="collapse" id="ticketRegistrations">
@@ -507,12 +528,12 @@
             @if($subRole == 'extra_requirements')
 
                 <li class="nav-item">
-                    <a data-bs-toggle="collapse" href="#extraRequirements" class="nav-link text-dark"
-                       aria-controls="extraRequirements" role="button" aria-expanded="false">
+                    <a data-bs-toggle="collapse" href="#extraRequirementsSubRole" class="nav-link text-dark"
+                       aria-controls="extraRequirementsSubRole" role="button" aria-expanded="false" data-tooltip="Extra Requirements">
                         <i class="fa-solid fa-list"></i>
                         <span class="nav-link-text ms-1 ps-1 text-dark">Extra Requirements</span>
                     </a>
-                    <div class="collapse" id="extraRequirements">
+                    <div class="collapse" id="extraRequirementsSubRole">
                         <ul class="nav">
                             <li class="nav-item">
                                 <a class="nav-link text-dark" href="{{ route('extra_requirements.admin.show') }}">
@@ -562,12 +583,12 @@
             </li>
             @if ($subRole === 'visitor')
                 <li class="nav-item">
-                    <a data-bs-toggle="collapse" href="#visitors" class="nav-link text-dark"
-                       aria-controls="visitors" role="button" aria-expanded="false">
+                    <a data-bs-toggle="collapse" href="#visitorsSubRole" class="nav-link text-dark"
+                       aria-controls="visitorsSubRole" role="button" aria-expanded="false" data-tooltip="Visitors">
                         <i class="fa-solid fa-user-group"></i>
                         <span class="nav-link-text ms-1 ps-1 text-dark">Visitors</span>
                     </a>
-                    <div class="collapse" id="visitors">
+                    <div class="collapse" id="visitorsSubRole">
                         <ul class="nav">
                             <li class="nav-item">
                                 <a class="nav-link text-dark" href="{{ route('registration.analytics') }}">
@@ -595,7 +616,7 @@
 
                 </li>
                 <li class="nav-item">
-                    <a href="{{ route('exhibitor.list') }}" class="nav-link text-dark">
+                    <a href="{{ route('exhibitor.list') }}" class="nav-link text-dark" data-tooltip="Exhibitor Inaugural Passes">
                         <i class="fa-solid fa-ticket"></i>
                         <span class="nav-link-text ms-1 ps-1 text-dark">Exhibitor Inaugural Passes</span>
                     </a>
@@ -610,7 +631,8 @@
                 <form method="POST" action="{{ route('logout') }}">
                     @csrf
                     <button type="submit" class="waves-effect waves-grey nav-link text-dark"
-                            style="display: inline-flex; align-items: center; gap: 5px; background: none; border: none; cursor: pointer;">
+                            style="display: inline-flex; align-items: center; gap: 5px; background: none; border: none; cursor: pointer;"
+                            data-tooltip="Sign out">
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
                              class="bi bi-box-arrow-right" viewBox="0 0 16 16">
                             <path fill-rule="evenodd"
