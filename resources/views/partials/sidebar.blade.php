@@ -101,9 +101,9 @@
         display: none !important;
     }
     
-    /* Hide collapse submenus when minimized */
-    #sidenav-main.sidenav-minimized .collapse,
-    #sidenav-main.sidenav-minimized .collapsing {
+    /* Hide collapse submenus when minimized (but not the main navbar-collapse) */
+    #sidenav-main.sidenav-minimized .nav-item > .collapse,
+    #sidenav-main.sidenav-minimized .nav-item > .collapsing {
         display: none !important;
     }
     
