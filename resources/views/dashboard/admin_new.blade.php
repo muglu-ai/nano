@@ -243,7 +243,8 @@
                                     <div>
                                         <p class="text-m mb-0 text-capitalize font-weight-black font-weight-bold">Total
                                             Application</p>
-                                        <h4 class="mb-0 mt-1">{{ $analytics['startupZone']['total'] ?? 0 }}</h4>
+                                        <h4 class="mb-0 mt-1">{{ ($analytics['exhibitor-registration']['total'] ?? 0) + ($analytics['startupZone']['total'] ?? 0) }}</h4>
+                                        <small class="text-muted d-block mt-1">Exhibitor: {{ $analytics['exhibitor-registration']['total'] ?? 0 }} | Startup: {{ $analytics['startupZone']['total'] ?? 0 }}</small>
                                     </div>
                                     <div
                                             class="icon icon-md icon-shape bg-gradient-dark shadow-dark shadow text-center border-radius-lg">
@@ -266,7 +267,7 @@
                                     <div>
                                         <p class="text-m mb-0 text-capitalize font-weight-black font-weight-bold">
                                             Total Initiated</p>
-                                        <h4 class="mb-0 mt-1">{{ $analytics['startupZone']['initiated'] ?? 0 }}</h4>
+                                        <h4 class="mb-0 mt-1">{{ ($analytics['exhibitor-registration']['initiated'] ?? 0) + ($analytics['startupZone']['initiated'] ?? 0) }}</h4>
                                     </div>
                                     <div
                                             class="icon icon-md icon-shape bg-gradient-dark shadow-dark shadow text-center border-radius-lg">
@@ -290,7 +291,7 @@
                                     <div>
                                         <p class="text-m mb-0 text-capitalize font-weight-black font-weight-bold">Total
                                             Submitted</p>
-                                        <h4 class="mb-0 mt-1">{{ $analytics['startupZone']['submitted'] ?? 0 }}</h4>
+                                        <h4 class="mb-0 mt-1">{{ ($analytics['exhibitor-registration']['submitted'] ?? 0) + ($analytics['startupZone']['submitted'] ?? 0) }}</h4>
                                     </div>
                                     <div
                                             class="icon icon-md icon-shape bg-gradient-dark shadow-dark shadow text-center border-radius-lg">
@@ -314,7 +315,7 @@
                                     <div>
                                         <p class="text-m mb-0 text-capitalize font-weight-black font-weight-bold">Total
                                             Approved Application</p>
-                                        <h4 class="mb-0 mt-1">{{ $analytics['startupZone']['approved'] ?? 0 }}</h4>
+                                        <h4 class="mb-0 mt-1">{{ ($analytics['exhibitor-registration']['approved'] ?? 0) + ($analytics['startupZone']['approved'] ?? 0) }}</h4>
                                     </div>
                                     <div
                                             class="icon icon-md icon-shape bg-gradient-dark shadow-dark shadow text-center border-radius-lg">
@@ -337,7 +338,7 @@
                                 <div class="d-flex justify-content-between">
                                     <div>
                                         <p class="text-m mb-0 text-capitalize font-weight-black font-weight-bold">Not Paid</p>
-                                        <h4 class="mb-0 mt-1">{{ $analytics['startupZone']['notPaid'] ?? 0 }}</h4>
+                                        <h4 class="mb-0 mt-1">{{ ($analytics['exhibitor-registration']['unpaid'] ?? 0) + ($analytics['startupZone']['unpaid'] ?? 0) }}</h4>
                                     </div>
                                     <div
                                             class="icon icon-md icon-shape bg-gradient-dark shadow-dark shadow text-center border-radius-lg">
@@ -360,7 +361,7 @@
                                 <div class="d-flex justify-content-between">
                                     <div>
                                         <p class="text-m mb-0 text-capitalize font-weight-black font-weight-bold">Paid</p>
-                                        <h4 class="mb-0 mt-1">{{ $analytics['startupZone']['paid'] ?? 0 }}</h4>
+                                        <h4 class="mb-0 mt-1">{{ ($analytics['exhibitor-registration']['paid'] ?? 0) + ($analytics['startupZone']['paid'] ?? 0) }}</h4>
                                     </div>
                                     <div
                                             class="icon icon-md icon-shape bg-gradient-dark shadow-dark shadow text-center border-radius-lg">
