@@ -380,7 +380,9 @@
                                     @endforeach
                                 @endif
                             </select>
+                            {{--
                             <small class="text-muted d-block mt-1">Price is based on your subcategory selection</small>
+                            --}}
                         </div>
                         <input type="hidden" name="ticket_type_id" id="hidden_ticket_type_id" value="{{ $preselectCategoryId && $preselectSubcategoryKey ? ($categorySubcategoryTicketMap[$preselectCategoryId . '_' . $preselectSubcategoryKey]['slug'] ?? '') : '' }}">
                         <input type="hidden" name="subcategory_id" id="hidden_subcategory_id" value="{{ old('subcategory_id') }}">
