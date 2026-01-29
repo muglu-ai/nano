@@ -1,0 +1,102 @@
+.form-header{
+    background: linear-gradient(90deg, #9F3694 0%, #5962B0 100% ) !important;
+}
+
+.form-container {padding: 0 !important;}
+
+.form-container {
+    background-color: #fff !important;
+    border-radius: 6px !important;
+}
+.step-item.active .step-number {
+    border-color: #c81980 !important;
+    color: white !important;
+    background: linear-gradient(180deg, #D2175D 14.61%, #7B2FEB 373.21%) !important;
+}
+.step-number {
+    border: 3px solid #7B2FEB !important;    
+}
+.step-label {
+    color: #121212 !important;
+}
+.step-item.active .step-label {
+    color: #D9237D !important;
+}
+.progress-bar-custom {
+	height: 17px !important;
+}
+.progress-fill {
+    background: linear-gradient(90deg, #9F3694 0%, #5962B0 100%) !important;
+}
+h5.border-bottom {
+    color: #000000 !important;
+}
+h5.border-bottom i {
+    background: -webkit-linear-gradient(#9F3694, #5962B0);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent !important;
+}
+.btn-primary , .btn-outline-primary {
+    background: linear-gradient(to right, #4D2FB2, #0E21A0) !important;
+    color: #fff !important;
+}
+
+
+.step-connector {
+    background: #7054A7 !important;    
+}
+.step-number {
+    border: 3px solid #7B2FEB !important;
+}
+.step-label {
+    color: #121212 !important;
+}
+.step-item.active .step-number {
+    background: linear-gradient(180deg, #D2175D 14.61%, #7B2FEB 373.21%) !important;
+    border-color: #c81980 !important;    
+}
+.step-item.active .step-label {
+    color: #D9237D !important;
+}
+
+.section-title i {
+    background: -webkit-linear-gradient(#9F3694, #5962B0) !important;
+    -webkit-background-clip: text !important;
+    -webkit-text-fill-color: transparent !important;
+}
+.step-item.completed ~ .step-connector, .step-item.active ~ .step-connector {
+    background: #7054A7 !important;
+}
+.price-table .total-row td {
+    background: linear-gradient(to right, #4D2FB2, #0E21A0) !important;
+}
+.section-title {
+    border-color: #4D2FB2 !important;
+}
+
+.step-item.completed ~ .step-connector, .step-item.active ~ .step-connector {
+    background: #7054A7 !important;
+}
+.step-number {
+    /* background: #fff !important; */
+    border: 3px solid #7B2FEB !important;
+}
+.step-item.active .step-number {
+    background: linear-gradient(180deg, #D2175D 14.61%, #7B2FEB 373.21%) !important;
+    border-color: #c81980 !important;
+}
+.section-title {
+	border-bottom: 2px solid var(--primary-color) !important;
+}
+.section-title i {
+    background: -webkit-linear-gradient(#9F3694, #5962B0) !important; 
+    -webkit-background-clip: text !important;
+    -webkit-text-fill-color: transparent !important ;
+}
+
+
+
+
+
+
+
