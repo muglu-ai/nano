@@ -483,7 +483,7 @@
                     <a data-bs-toggle="collapse" href="#ticketRegistrations" class="nav-link text-dark"
                        aria-controls="ticketRegistrations" role="button" aria-expanded="false">
                         <i class="fa-solid fa-clipboard-list me-2"></i>
-                        <span class="nav-link-text ms-1 ps-1 text-dark">DelegateRegistration</span>
+                        <span class="nav-link-text ms-1 ps-1 text-dark" style="white-space: normal; word-break: break-word; max-width: 160px;">Delegate Registration</span>
                     </a>
                     <div class="collapse" id="ticketRegistrations">
                         <ul class="nav">
