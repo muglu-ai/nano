@@ -41,7 +41,7 @@
                     @endforeach
                 @endif
             </select>
-            <small class="text-muted">Pricing is set per ticket type; category/subcategory determine how this type is grouped and can be used for rules.</small>
+            <small class="text-muted">On public registration, users pick Category then Subcategory; pricing is driven by the ticket type that matches this category+subcategory. Create one ticket type per (Category, Subcategory) combination with its price.</small>
             @error('subcategory_id')
                 <div class="text-danger">{{ $message }}</div>
             @enderror

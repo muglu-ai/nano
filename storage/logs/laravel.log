@@ -488,3 +488,11 @@
 [stacktrace]
 #0 {main}
 "} 
+[2026-01-29 12:32:11] local.ERROR: Cannot redeclare class App\Models\AttendeeLog (previously declared in /Users/apple/Manish/SCI/nano/app/Models/AttendeeLog.php:7) {"exception":"[object] (Symfony\\Component\\ErrorHandler\\Error\\FatalError(code: 0): Cannot redeclare class App\\Models\\AttendeeLog (previously declared in /Users/apple/Manish/SCI/nano/app/Models/AttendeeLog.php:7) at /Users/apple/Manish/SCI/nano/app/Models/StallManning.php:146)
+[stacktrace]
+#0 {main}
+"} 
+[2026-01-29 12:34:50] local.ERROR: Cannot redeclare class App\Models\AttendeeLog (previously declared in /Users/apple/Manish/SCI/nano/app/Models/AttendeeLog.php:7) {"exception":"[object] (Symfony\\Component\\ErrorHandler\\Error\\FatalError(code: 0): Cannot redeclare class App\\Models\\AttendeeLog (previously declared in /Users/apple/Manish/SCI/nano/app/Models/AttendeeLog.php:7) at /Users/apple/Manish/SCI/nano/app/Models/StallManning.php:146)
+[stacktrace]
+#0 {main}
+"} 

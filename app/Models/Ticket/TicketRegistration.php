@@ -24,6 +24,7 @@ class TicketRegistration extends Model
         'industry_sector',
         'organisation_type',
         'registration_category_id',
+        'subcategory_id', // User-selected subcategory (e.g. Students under Standard)
         'gst_required',
         'gstin',
         'gst_legal_name',

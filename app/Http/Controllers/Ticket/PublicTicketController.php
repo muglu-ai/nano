@@ -154,11 +154,11 @@ class PublicTicketController extends Controller
             }
         }
         
-        // Load ticket types - exclude exhibitor-only (by category flag or name/slug)
+        // Load ticket types - exclude exhibitor-only (by category flag or name/slug); load category.subcategories for subcategory dropdown
         $ticketTypes = TicketType::where('event_id', $event->id)
             ->where('is_active', true)
             ->with(['category' => function($query) {
-                $query->select('id', 'name', 'is_exhibitor_only');
+                $query->with('subcategories')->select('id', 'name', 'is_exhibitor_only');
             }, 'subcategory', 'eventDays', 'inventory'])
             ->where(function($query) {
                 $query->whereDoesntHave('category')
@@ -177,6 +177,47 @@ class PublicTicketController extends Controller
         // Filter by nationality when set: only show ticket types available for Indian or International
         if (!empty($selectedNationality) && in_array($selectedNationality, ['national', 'international'])) {
             $ticketTypes = $ticketTypes->filter(fn ($tt) => $tt->isAvailableFor($selectedNationality))->values();
+        }
+
+        // Build Category → Subcategory → Ticket Type map so pricing is driven by subcategory (admin defines one ticket type per category+subcategory with its price)
+        $categoriesForForm = $ticketTypes->pluck('category')->filter()->unique('id')->values()->sortBy('sort_order');
+        $categorySubcategoryTicketMap = []; // key "categoryId_subcategoryId" => ticket type data for JS
+        $subcategoryOptionsByCategory = []; // category_id => [ { id, name, ticket_type_slug } ] for dropdowns
+        foreach ($ticketTypes->sortBy('sort_order') as $tt) {
+            if (!$tt->category_id) {
+                continue;
+            }
+            $subId = $tt->subcategory_id;
+            $mapKey = $tt->category_id . '_' . ($subId ?? 'null');
+            if (!isset($categorySubcategoryTicketMap[$mapKey])) {
+                $categorySubcategoryTicketMap[$mapKey] = [
+                    'ticketTypeId' => $tt->id,
+                    'slug' => $tt->slug,
+                    'name' => $tt->name,
+                    'priceNational' => (float) $tt->getCurrentPrice('national'),
+                    'priceInternational' => (float) $tt->getCurrentPrice('international'),
+                    'perDayPriceNational' => $tt->getPerDayPrice('national') ? (float) $tt->getPerDayPrice('national') : null,
+                    'perDayPriceInternational' => $tt->getPerDayPrice('international') ? (float) $tt->getPerDayPrice('international') : null,
+                    'hasPerDayPricing' => $tt->hasPerDayPricing(),
+                    'enableDaySelection' => (bool) $tt->enable_day_selection,
+                    'allDaysAccess' => (bool) $tt->all_days_access,
+                    'includeAllDaysOption' => (bool) ($tt->include_all_days_option ?? false),
+                    'availableDays' => $tt->getAllAccessibleDays()->map(fn ($d) => ['id' => $d->id, 'label' => $d->label, 'date' => $d->date->format('M d, Y')])->values()->toArray(),
+                ];
+            }
+            $cid = $tt->category_id;
+            if (!isset($subcategoryOptionsByCategory[$cid])) {
+                $subcategoryOptionsByCategory[$cid] = [];
+            }
+            $optKey = $subId ?? 'null';
+            if (!isset($subcategoryOptionsByCategory[$cid][$optKey])) {
+                $subcategoryOptionsByCategory[$cid][$optKey] = [
+                    'id' => $subId,
+                    'name' => $subId ? ($tt->subcategory->name ?? '') : 'General',
+                    'ticket_type_slug' => $tt->slug,
+                    'ticket_type_id' => $tt->id,
+                ];
+            }
         }
         
         // Load registration categories
@@ -262,6 +303,9 @@ class PublicTicketController extends Controller
             'event', 
             'config', 
             'ticketTypes', 
+            'categoriesForForm',
+            'categorySubcategoryTicketMap',
+            'subcategoryOptionsByCategory',
             'registrationCategories', 
             'eventDays', 
             'selectedTicketType',
@@ -322,6 +366,7 @@ class PublicTicketController extends Controller
                 },
             ],
             'delegate_count' => 'required|integer|min:1|max:100',
+            'subcategory_id' => 'nullable|exists:ticket_subcategories,id',
             'nationality' => 'required|in:national,international,Indian,International',
             'registration_type' => 'required|in:Individual,Organisation',
             'organisation_name' => [
@@ -541,6 +586,18 @@ class PublicTicketController extends Controller
         
         // Store ticket type ID (not slug) in validated data for consistency
         $validated['ticket_type_id'] = $ticketType->id;
+
+        // Validate subcategory belongs to this ticket type's category when provided
+        if (!empty($validated['subcategory_id'])) {
+            $subBelongsToCategory = \App\Models\Ticket\TicketSubcategory::where('id', $validated['subcategory_id'])
+                ->where('category_id', $ticketType->category_id)
+                ->exists();
+            if (!$subBelongsToCategory) {
+                return redirect()->back()
+                    ->withInput()
+                    ->withErrors(['subcategory_id' => 'The selected subcategory is not valid for this ticket type.']);
+            }
+        }
         
         // Handle selected event day - only required if day selection is enabled
         $selectedEventDayId = $request->input('selected_event_day_id');

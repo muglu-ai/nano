@@ -239,6 +239,7 @@ class TicketPaymentController extends Controller
                 'industry_sector' => $registrationData['industry_sector'],
                 'organisation_type' => $registrationData['organisation_type'] ?? null,
                 'registration_category_id' => $registrationData['registration_category_id'],
+                'subcategory_id' => $registrationData['subcategory_id'] ?? null,
                 'gst_required' => $registrationData['gst_required'] == '1',
                 'gstin' => $registrationData['gstin'] ?? null,
                 'gst_legal_name' => $registrationData['gst_legal_name'] ?? null,

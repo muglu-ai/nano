@@ -106,12 +106,13 @@ class TicketIssuanceService
                         continue;
                     }
 
-                    // Create or update TicketDelegateAssignment
+                    // Create or update TicketDelegateAssignment (use registration's subcategory if set, else ticket type's)
+                    $subcategoryId = $registration->subcategory_id ?? $ticketType->subcategory_id ?? null;
                     $assignment = TicketDelegateAssignment::updateOrCreate(
                         ['delegate_id' => $delegate->id],
                         [
                             'ticket_type_id' => $ticketType->id,
-                            'subcategory_id' => $ticketType->subcategory_id ?? null,
+                            'subcategory_id' => $subcategoryId,
                             'day_access_snapshot_json' => $dayAccessSnapshot,
                             'price_snapshot' => $priceSnapshot,
                             'pricing_type_snapshot' => $pricingTypeSnapshot,

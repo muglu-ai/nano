@@ -303,7 +303,7 @@
             </div>
         @endif
 
-        <form action="{{ route('tickets.store', $event->slug ?? $event->id) }}" method="POST" id="registrationForm">
+        <form action="{{ route('tickets.store', $event->slug ?? $event->id) }}" method="POST" id="registrationForm" data-allow-subcategory="{{ ($config->allow_subcategory ?? true) ? '1' : '0' }}">
             @csrf
 
             <!-- Registration Information Section -->
@@ -313,23 +313,40 @@
                     Registration Information
                 </h4>
 
+                @php
+                    $useCategorySubcategoryFlow = isset($categoriesForForm) && $categoriesForForm->isNotEmpty();
+                    $oldTicketSlug = old('ticket_type_id');
+                    $preselectCategoryId = null;
+                    $preselectSubcategoryKey = null;
+                    if ($oldTicketSlug && $useCategorySubcategoryFlow) {
+                        foreach ($categorySubcategoryTicketMap ?? [] as $mapKey => $ticket) {
+                            if (($ticket['slug'] ?? '') === $oldTicketSlug) {
+                                $parts = explode('_', $mapKey, 2);
+                                $preselectCategoryId = $parts[0] ?? null;
+                                $preselectSubcategoryKey = $parts[1] ?? 'null';
+                                break;
+                            }
+                        }
+                    }
+                    if (!$preselectCategoryId && isset($selectedTicketType) && $selectedTicketType && $useCategorySubcategoryFlow) {
+                        $preselectCategoryId = $selectedTicketType->category_id;
+                        $preselectSubcategoryKey = $selectedTicketType->subcategory_id ?? 'null';
+                    }
+                @endphp
                 <div class="row g-3">
-                    <div class="col-md-6">
-                        <label class="form-label required-field">Ticket Type</label>
-                        @if(isset($isTicketTypeLocked) && $isTicketTypeLocked)
-                            {{-- Hidden field to submit the value (slug for form submission) --}}
+                    @if(isset($isTicketTypeLocked) && $isTicketTypeLocked)
+                        {{-- Locked ticket from URL: show readonly Ticket Type --}}
+                        <div class="col-md-6">
+                            <label class="form-label required-field">Ticket Type</label>
                             <input type="hidden" name="ticket_type_id" value="{{ $selectedTicketType->slug }}" id="hidden_ticket_type_id" data-ticket-type-id="{{ $selectedTicketType->id }}">
-                            {{-- Display field (readonly) with data attributes for day selection --}}
                             @php
                                 $nationalityForPrice = $selectedNationality ?? 'national';
                                 $price = $selectedTicketType->getCurrentPrice($nationalityForPrice);
                                 $currency = ($nationalityForPrice === 'international') ? '$' : '₹';
                                 $priceFormat = ($nationalityForPrice === 'international') ? number_format($price, 2) : number_format($price, 0);
                             @endphp
-                            <input type="text" class="form-control" 
-                                   id="locked_ticket_type"
-                                   value="{{ $selectedTicketType->name }} - {{ $currency }}{{ $priceFormat }}" 
-                                   readonly 
+                            <input type="text" class="form-control" id="locked_ticket_type"
+                                   value="{{ $selectedTicketType->name }} - {{ $currency }}{{ $priceFormat }}" readonly
                                    style="background-color: #e9ecef; cursor: not-allowed;"
                                    data-ticket-type-id="{{ $selectedTicketType->id }}"
                                    data-price-national="{{ $selectedTicketType->getCurrentPrice('national') }}"
@@ -340,8 +357,37 @@
                                    data-enable-day-selection="{{ $selectedTicketType->enable_day_selection ? '1' : '0' }}"
                                    data-all-days-access="{{ $selectedTicketType->all_days_access ? '1' : '0' }}"
                                    data-include-all-days-option="{{ $selectedTicketType->include_all_days_option ? '1' : '0' }}"
-                                   data-available-days="{{ json_encode($selectedTicketType->getAllAccessibleDays()->map(function($day) { return ['id' => $day->id, 'label' => $day->label, 'date' => $day->date->format('M d, Y')]; })) }}">
-                        @else
+                                   data-available-days="{{ json_encode($selectedTicketType->getAllAccessibleDays()->map(fn($day) => ['id' => $day->id, 'label' => $day->label, 'date' => $day->date->format('M d, Y')])) }}">
+                        </div>
+                    @elseif($useCategorySubcategoryFlow)
+                        {{-- Category → Subcategory: pricing is driven by subcategory (admin defines one ticket type per category+subcategory with its price) --}}
+                        <div class="col-md-6">
+                            <label class="form-label required-field">Category</label>
+                            <select class="form-select" id="category_select" required>
+                                <option value="">Select Category</option>
+                                @foreach($categoriesForForm as $cat)
+                                    <option value="{{ $cat->id }}" {{ $preselectCategoryId == $cat->id ? 'selected' : '' }}>{{ $cat->name }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label required-field">Subcategory</label>
+                            <select class="form-select" id="subcategory_select" required>
+                                <option value="">Select Subcategory</option>
+                                @if($preselectCategoryId && isset($subcategoryOptionsByCategory[$preselectCategoryId]))
+                                    @foreach($subcategoryOptionsByCategory[$preselectCategoryId] as $optKey => $opt)
+                                        <option value="{{ $optKey }}" data-ticket-type-slug="{{ $opt['ticket_type_slug'] ?? '' }}" data-subcategory-id="{{ $opt['id'] ?? '' }}" {{ $preselectSubcategoryKey == $optKey ? 'selected' : '' }}>{{ $opt['name'] }}</option>
+                                    @endforeach
+                                @endif
+                            </select>
+                            <small class="text-muted d-block mt-1">Price is based on your subcategory selection</small>
+                        </div>
+                        <input type="hidden" name="ticket_type_id" id="hidden_ticket_type_id" value="{{ $preselectCategoryId && $preselectSubcategoryKey ? ($categorySubcategoryTicketMap[$preselectCategoryId . '_' . $preselectSubcategoryKey]['slug'] ?? '') : '' }}">
+                        <input type="hidden" name="subcategory_id" id="hidden_subcategory_id" value="{{ old('subcategory_id') }}">
+                    @else
+                        {{-- Fallback: single Ticket Type dropdown when no category map --}}
+                        <div class="col-md-6">
+                            <label class="form-label required-field">Ticket Type</label>
                             <select name="ticket_type_id" class="form-select" id="ticket_type_select" required>
                                 <option value="">Select Ticket Type</option>
                                 @foreach($ticketTypes as $ticketType)
@@ -353,8 +399,7 @@
                                         $priceFormat = ($nationalityForPrice === 'international') ? number_format($price, 2) : number_format($price, 0);
                                         $priceLabel = $perDayPrice ? '/day' : '';
                                     @endphp
-                                    <option value="{{ $ticketType->slug }}" 
-                                            data-ticket-type-id="{{ $ticketType->id }}"
+                                    <option value="{{ $ticketType->slug }}" data-ticket-type-id="{{ $ticketType->id }}"
                                             data-price-national="{{ $ticketType->getCurrentPrice('national') }}"
                                             data-price-international="{{ $ticketType->getCurrentPrice('international') }}"
                                             data-per-day-price-national="{{ $ticketType->getPerDayPrice('national') ?? '' }}"
@@ -363,31 +408,42 @@
                                             data-enable-day-selection="{{ $ticketType->enable_day_selection ? '1' : '0' }}"
                                             data-all-days-access="{{ $ticketType->all_days_access ? '1' : '0' }}"
                                             data-include-all-days-option="{{ $ticketType->include_all_days_option ? '1' : '0' }}"
-                                            data-available-days="{{ json_encode($ticketType->getAllAccessibleDays()->map(function($day) { return ['id' => $day->id, 'label' => $day->label, 'date' => $day->date->format('M d, Y')]; })) }}"
+                                            data-available-days="{{ json_encode($ticketType->getAllAccessibleDays()->map(fn($day) => ['id' => $day->id, 'label' => $day->label, 'date' => $day->date->format('M d, Y')])) }}"
                                             {{ (old('ticket_type_id') == $ticketType->slug || (isset($selectedTicketType) && $selectedTicketType && $selectedTicketType->id == $ticketType->id)) ? 'selected' : '' }}>
                                         {{ $ticketType->name }} - {{ $currency }}{{ $priceFormat }}{{ $priceLabel }}
                                     </option>
                                 @endforeach
                             </select>
                             <div class="invalid-feedback"></div>
-                        @endif
-                        @error('ticket_type_id')
-                            <div class="text-danger">{{ $message }}</div>
-                        @enderror
-                    </div>
+                        </div>
+                    @endif
+                    @error('ticket_type_id')
+                        <div class="col-12"><div class="text-danger">{{ $message }}</div></div>
+                    @enderror
 
                     {{-- Day Selection Dropdown - shown when ticket has per-day pricing --}}
                     <div id="day_selection_row" class="col-md-6 mb-3" style="display: none;">
                         <label class="form-label required-field">Select Event Day</label>
-                        <select name="selected_event_day_id" class="form-select" id="selected_event_day">
-                            
-                        </select>
+                        <select name="selected_event_day_id" class="form-select" id="selected_event_day"></select>
                         <div class="invalid-feedback"></div>
                         <small class="text-muted d-block mt-1">Choose which day you want to attend</small>
                         @error('selected_event_day_id')
                             <div class="text-danger">{{ $message }}</div>
                         @enderror
                     </div>
+
+                    @if(!$useCategorySubcategoryFlow && !(isset($isTicketTypeLocked) && $isTicketTypeLocked))
+                    {{-- Subcategory (optional) when using single Ticket Type dropdown --}}
+                    <div id="subcategory_row" class="col-md-6 mb-3" style="display: none;">
+                        <label class="form-label">Subcategory</label>
+                        <select name="subcategory_id" class="form-select" id="subcategory_id">
+                            <option value="">None</option>
+                        </select>
+                        @error('subcategory_id')
+                            <div class="text-danger">{{ $message }}</div>
+                        @enderror
+                    </div>
+                    @endif
                 </div>
 
                 
@@ -811,6 +867,13 @@
 @endif
 
 <script>
+@if(isset($categoriesForForm) && $categoriesForForm->isNotEmpty())
+window.TICKET_CATEGORY_SUBCATEGORY_MAP = @json($categorySubcategoryTicketMap ?? []);
+window.TICKET_SUBCATEGORY_OPTIONS = @json($subcategoryOptionsByCategory ?? []);
+@else
+window.TICKET_CATEGORY_SUBCATEGORY_MAP = {};
+window.TICKET_SUBCATEGORY_OPTIONS = {};
+@endif
 document.addEventListener('DOMContentLoaded', function() {
     // Registration Type Handler
     const registrationTypeSelect = document.getElementById('registration_type');
@@ -1014,8 +1077,26 @@ document.addEventListener('DOMContentLoaded', function() {
     const dayAccessInfo = document.getElementById('day_access_info');
     const dayAccessBadges = document.getElementById('day_access_badges');
     
-    // Helper function to get ticket type data (from select option or locked input)
+    // Helper function to get ticket type data (from resolved category+subcategory, select option, or locked input)
     function getTicketTypeData() {
+        const form = document.getElementById('registrationForm');
+        if (form && form.dataset.resolvedTicketType) {
+            try {
+                const o = JSON.parse(form.dataset.resolvedTicketType);
+                return {
+                    ticketTypeId: o.ticketTypeId,
+                    priceNational: String(o.priceNational ?? ''),
+                    priceInternational: String(o.priceInternational ?? ''),
+                    perDayPriceNational: o.perDayPriceNational != null ? String(o.perDayPriceNational) : '',
+                    perDayPriceInternational: o.perDayPriceInternational != null ? String(o.perDayPriceInternational) : '',
+                    hasPerDayPricing: o.hasPerDayPricing ? '1' : '0',
+                    enableDaySelection: o.enableDaySelection ? '1' : '0',
+                    allDaysAccess: o.allDaysAccess ? '1' : '0',
+                    includeAllDaysOption: o.includeAllDaysOption ? '1' : '0',
+                    availableDays: typeof o.availableDays === 'string' ? o.availableDays : JSON.stringify(o.availableDays || [])
+                };
+            } catch (e) { }
+        }
         if (ticketTypeSelect) {
             const selectedOption = ticketTypeSelect.options[ticketTypeSelect.selectedIndex];
             if (!selectedOption || !selectedOption.value) return null;
@@ -1173,19 +1254,125 @@ document.addEventListener('DOMContentLoaded', function() {
             selectedEventDaySelect.removeAttribute('required');
         }
     }
+
+    // Subcategory row: show and populate when selected ticket type's category has subcategories
+    const subcategoryRow = document.getElementById('subcategory_row');
+    const subcategorySelect = document.getElementById('subcategory_id');
+    function updateSubcategoryRow() {
+        if (!subcategoryRow || !subcategorySelect) return;
+        const form = document.getElementById('registrationForm');
+        const allowSubcategory = form && form.dataset.allowSubcategory === '1';
+        if (!allowSubcategory) {
+            subcategoryRow.style.display = 'none';
+            return;
+        }
+        const data = getTicketTypeData();
+        if (!data || !data.subcategories) {
+            subcategoryRow.style.display = 'none';
+            subcategorySelect.innerHTML = '<option value="">None</option>';
+            return;
+        }
+        try {
+            const subcategories = JSON.parse(data.subcategories);
+            if (!Array.isArray(subcategories) || subcategories.length === 0) {
+                subcategoryRow.style.display = 'none';
+                subcategorySelect.innerHTML = '<option value="">None</option>';
+                return;
+            }
+            subcategorySelect.innerHTML = '<option value="">None</option>';
+            subcategories.forEach(function(s) {
+                const opt = document.createElement('option');
+                opt.value = s.id;
+                opt.textContent = s.name;
+                subcategorySelect.appendChild(opt);
+            });
+            subcategoryRow.style.display = 'block';
+        } catch (e) {
+            subcategoryRow.style.display = 'none';
+            subcategorySelect.innerHTML = '<option value="">None</option>';
+        }
+    }
     
+    // Category → Subcategory flow: resolve ticket type and price from map
+    const categorySelect = document.getElementById('category_select');
+    const subcategorySelectEl = document.getElementById('subcategory_select');
+    const hiddenTicketTypeId = document.getElementById('hidden_ticket_type_id');
+    const hiddenSubcategoryId = document.getElementById('hidden_subcategory_id');
+    function applyResolvedTicketType(ticketSlug) {
+        if (!ticketSlug || !window.TICKET_CATEGORY_SUBCATEGORY_MAP) return;
+        const key = Object.keys(window.TICKET_CATEGORY_SUBCATEGORY_MAP).find(function(k) {
+            return window.TICKET_CATEGORY_SUBCATEGORY_MAP[k].slug === ticketSlug;
+        });
+        if (!key) return;
+        const ticket = window.TICKET_CATEGORY_SUBCATEGORY_MAP[key];
+        const form = document.getElementById('registrationForm');
+        if (form) form.dataset.resolvedTicketType = JSON.stringify(ticket);
+        if (hiddenTicketTypeId) hiddenTicketTypeId.value = ticketSlug;
+        updateDayAccessInfo();
+        updateDaySelection();
+        updateBaseAmount();
+    }
+    function onCategorySubcategoryChange() {
+        const form = document.getElementById('registrationForm');
+        if (form && form.dataset.resolvedTicketType) delete form.dataset.resolvedTicketType;
+        if (hiddenTicketTypeId) hiddenTicketTypeId.value = '';
+        if (hiddenSubcategoryId) hiddenSubcategoryId.value = '';
+        daySelectionRow && (daySelectionRow.style.display = 'none');
+        updateBaseAmount();
+    }
+    if (categorySelect && subcategorySelectEl) {
+        categorySelect.addEventListener('change', function() {
+            const cid = this.value;
+            subcategorySelectEl.innerHTML = '<option value="">Select Subcategory</option>';
+            if (hiddenTicketTypeId) hiddenTicketTypeId.value = '';
+            if (hiddenSubcategoryId) hiddenSubcategoryId.value = '';
+            onCategorySubcategoryChange();
+            if (!cid || !window.TICKET_SUBCATEGORY_OPTIONS || !window.TICKET_SUBCATEGORY_OPTIONS[cid]) return;
+            const opts = window.TICKET_SUBCATEGORY_OPTIONS[cid];
+            Object.keys(opts).forEach(function(optKey) {
+                const opt = opts[optKey];
+                const option = document.createElement('option');
+                option.value = optKey;
+                option.textContent = opt.name;
+                option.dataset.ticketTypeSlug = opt.ticket_type_slug || '';
+                option.dataset.subcategoryId = opt.id !== null && opt.id !== undefined ? opt.id : '';
+                subcategorySelectEl.appendChild(option);
+            });
+        });
+        subcategorySelectEl.addEventListener('change', function() {
+            const selected = this.options[this.selectedIndex];
+            if (!selected || !selected.value) {
+                onCategorySubcategoryChange();
+                return;
+            }
+            const ticketSlug = selected.dataset.ticketTypeSlug || '';
+            if (hiddenSubcategoryId) {
+                const sid = selected.dataset.subcategoryId;
+                hiddenSubcategoryId.value = sid !== undefined && sid !== '' ? sid : '';
+            }
+            if (ticketSlug) applyResolvedTicketType(ticketSlug);
+            else onCategorySubcategoryChange();
+        });
+        if (hiddenTicketTypeId && hiddenTicketTypeId.value) {
+            applyResolvedTicketType(hiddenTicketTypeId.value);
+            var sel = subcategorySelectEl.options[subcategorySelectEl.selectedIndex];
+            if (hiddenSubcategoryId && sel && sel.dataset.subcategoryId !== undefined)
+                hiddenSubcategoryId.value = sel.dataset.subcategoryId || '';
+        }
+    }
+
     // Initialize day selection and day access info on page load
     if (ticketTypeSelect) {
         ticketTypeSelect.addEventListener('change', function() {
             updateDayAccessInfo();
             updateDaySelection();
+            updateSubcategoryRow();
             updateBaseAmount();
         });
-        // Trigger on load in case ticket type is pre-selected
         updateDayAccessInfo();
         updateDaySelection();
+        updateSubcategoryRow();
     } else if (lockedTicketType) {
-        // If ticket type is locked (from URL params), still initialize day selection
         updateDayAccessInfo();
         updateDaySelection();
     }
