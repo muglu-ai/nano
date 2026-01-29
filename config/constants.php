@@ -1,23 +1,23 @@
 <?php
 
-const MAIL_FROM_NAME = 'Bengaluru Tech Summit 2026';
-const APP_NAME = 'Bengaluru Tech Summit 2026';
-const APP_NAME_SHORT = 'BTS 2026';
-const EVENT_NAME = 'Bengaluru Tech Summit';
+const MAIL_FROM_NAME = 'Bengaluru India Nano 2026';
+const APP_NAME = 'Bengaluru India Nano 2026';
+const APP_NAME_SHORT = 'NANO 2026';
+const EVENT_NAME = 'Bengaluru India Nano';
 const EVENT_YEAR = '2026';
-const SHORT_NAME = 'BTS';
+const SHORT_NAME = 'NANO';
 
 // TIN number prefix: event short name (SHORT_NAME), year, EXH, then 6-digit random number will be appended in code.
 const TIN_NO_PREFIX = SHORT_NAME . '-' . EVENT_YEAR . '-EXH-';
 
 const PIN_NO_PREFIX = 'PRN-' . SHORT_NAME . '-' . EVENT_YEAR . '-EXHP-';
-const EVENT_WEBSITE = 'https://www.bengalurutechsummit.com';
+const EVENT_WEBSITE = 'https://bengaluruindianano.in';
 //event dates
-const EVENT_DATE_START = '19-11-2026';
-const EVENT_DATE_END = '21-11-2026';
-const EVENT_VENUE = 'Bengaluru International Exhibition Centre (BIEC), Bengaluru, India';
+const EVENT_DATE_START = '03-08-2026';
+const EVENT_DATE_END = '05-08-2026';
+const EVENT_VENUE = 'The LaLiT Ashok, Bengaluru, India';
 
-const APP_URL = 'https://bengalurutechsummit.com/bts-2026/public';
+const APP_URL = 'https://bengaluruindianano.in/nano/public';
 const SHELL_SCHEME_RATE = 14000; // per sqm
 const SHELL_SCHEME_RATE_USD = 175; // per sqm
 const RAW_SPACE_RATE = 13000; // per sqm
@@ -28,41 +28,41 @@ const GST_RATE = 18; // GST rate for India
 const IGST_RATE = 18; // IGST rate for India
 const CGST_RATE = 9; // CGST rate for India
 const SGST_RATE = 9; // SGST rate for India
-const SOC_LINKEDIN = 'https://in.linkedin.com/company/bengaluru-tech-summit';
-const SOC_TWITTER = 'https://twitter.com/blrtechsummit';
-const SOC_FACEBOOK = 'https://www.facebook.com/BengaluruTechSummit';
-const SOC_INSTAGRAM = 'https://www.instagram.com/blrtechsummit/';
-const SOC_YOUTUBE = 'https://www.youtube.com/@bengalurutechsummit/streams';
+const SOC_LINKEDIN = 'https://www.linkedin.com/showcase/bangalore-india-nano';
+const SOC_TWITTER = 'https://twitter.com/BloreIndiaNano';
+const SOC_FACEBOOK = 'https://www.facebook.com/BengaluruIndiaNano';
+const SOC_INSTAGRAM = 'https://www.instagram.com';
+const SOC_YOUTUBE = 'https://www.youtube.com/@bengaluruindianano9916';
 const ORGANIZER_NAME = 'MM Activ Sci-Tech Communications PVT LTD';
 define('ORGANIZER_ADDRESS', !empty($_ENV['ORGANIZER_ADDRESS'])
     ? $_ENV['ORGANIZER_ADDRESS']
     : 'No.11/3, NITON, Block C, 2nd Floor, Palace Road, <br>Bengaluru - 560001, Karnataka, India');
-const FAVICON_APPLE = 'https://www.bengalurutechsummit.com/apple-touch-icon.png';
-const FAVICON = 'https://www.bengalurutechsummit.com/favicon-32x32.png';
-const FAVICON_16 = 'https://www.bengalurutechsummit.com/favicon-16x16.png';
+const FAVICON_APPLE = 'https://www.bengaluruindianano.in/assets/img/apple-touch-icon.png';
+const FAVICON = 'https://www.bengaluruindianano.in/assets/img/favicon.png';
+const FAVICON_16 = 'https://www.bengaluruindianano.in/assets/img/favicon.png';
 const ORGANIZER_PHONE = '+91-8069328400';
-const ORGANIZER_EMAIL = 'enquiry@bengalurutechsummit.com';
+const ORGANIZER_EMAIL = 'enquiry@bengaluruindianano.in';
 const ORGANIZER_WEBSITE = 'https://mmactiv.in/';
 const ORGANIZER_LOGO = 'https://www.mmactiv.in/images/mma.jpg';
-const EVENT_LOGO = 'https://bengalurutechsummit.com/web/it_forms/images/logo2026.png';
-const EVENT_FAVICON = 'https://www.bengalurutechsummit.com/favicon-16x16.png';
+const EVENT_LOGO = 'https://bengaluruindianano.in/assets/img/BIN-2026-Logo.png';
+const EVENT_FAVICON = 'https://www.bengaluruindianano.in/assets/img/favicon.png';
 
 const EXTRA_REQUIREMENTS_ACTIVE = false; //true or false
 
 const SEND_CREDENTIALS_ON_REGISTRATION = false; // Set to true to send credentials email immediately on registration, false to disable
 const SEND_CREDENTIALS_AFTER_PAYMENT = false; // Set to true to send credentials email after payment is successful, false to disable
 
-const LATE_REGISTRATION_DEADLINE = '2026-11-19'; // last
+const LATE_REGISTRATION_DEADLINE = '2026-08-05'; // last
 
 //custom registration link for exhibitors
-const EXHIBITOR_REGISTRATION_LINK = 'https://www.bengalurutechsummit.com/web/it_forms/enquiry.php';
+const EXHIBITOR_REGISTRATION_LINK = 'https://www.bengaluruindianano.in/nano_forms/enquiry.php';
 
-const GUIDE_LINK = 'https://bengalurutechsummit.com/pdf/BTS-Exhibitor-Portal-Guide.pdf';
+const GUIDE_LINK = 'https://bengaluruindianano.in/pdf/BTS-Exhibitor-Portal-Guide.pdf';
 
 const GST_API_URL = 'https://my.gstzen.in/api/gstin-validator/';
 const GST_API_KEY = '5479841c-b3ff-42ba-90bf-cb9866f52321';
 
-const TICKET_REGISTRATION_LINK = 'https://bengalurutechsummit.com/conference.php#delegate-tariff';
+const TICKET_REGISTRATION_LINK = 'https://bengaluruindianano.in/conference.php#delegate-tariff';
 
 //define("DEFAULT_REGISTRATION_LINK", route('register.form'));
 const DEFAULT_REGISTRATION_LINK = null;
@@ -71,7 +71,7 @@ const PAYPAL_CLIENT_ID = "Acv2dOnqohq3Ty2yKnWFaHsjWEEo9jF6KlzXDoNfgFcG7ZZ8z1wBc2
 const PAYPAL_SECRET = "EErD4CPPTPWzpUFSU4mNlZrLgF_ZlradgkfFLrk9B875BooSGI7_ElX1uiMvYC7MPXKPsDk3Q8_GtgqE";
 const PAYPAL_SANDBOX_CLIENT_ID = "AdBqjyTeEI9u0lPQpVnXsJsc5YYVzKYNGcWz3DWVSY8N8j9Yugu8x6_XYr0h9ITzmP-G_kZ1TSVyZzEp";
 const PAYPAL_SANDBOX_SECRET = "EKsqobP6xNcMNyPNQIS-XBCS0KMak5Wym_AehrFtHSnLvrNWPRXUJtCeTrEnunrSUCti3lKqV3zN-ERf";
-const EMAILER_HEADER_LOGO = APP_URL . "/mails/emailer-header.png";
+const EMAILER_HEADER_LOGO = APP_URL . "/mails/emailer-header-NanoReplaceRequire.png";
 return [
     'EMAILER_HEADER_LOGO' => EMAILER_HEADER_LOGO,
     'TICKET_REGISTRATION_LINK' => TICKET_REGISTRATION_LINK,
@@ -112,7 +112,7 @@ return [
         'youtube' => SOC_YOUTUBE,
     ],
     'EVENT_FAVICON' => EVENT_FAVICON,
-    'TERMS_URL' => 'https://www.bengalurutechsummit.com/privacy-policy.php',
+    'TERMS_URL' => 'https://bengaluruindianano.in/privacy-policy.php',
     //Database connection
     'DB_HOST' => 'localhost',
     'DB_PORT' => '3306',
@@ -318,7 +318,7 @@ return [
 
     // Admin Emails to receive notifications
     'admin_emails' => [
-        'to' => ['enquiry@bengalurutechsummit.com'],  // Primary recipient
+        'to' => ['enquiry@bengaluruindianano.in'],  // Primary recipient
         'bcc' => [    // BCC recipients
             'test.interlinks@gmail.com',
             'manish.sharma@interlinks.in'
@@ -344,7 +344,7 @@ return [
     //visitor registration unique id
 
     'visitor_registration_unique_id' => [
-        'prefix' => 'BTS25VI_',
+        'prefix' => 'NANO26VI_',
         'length' => 6,
     ],
     'db_connection2' => [
