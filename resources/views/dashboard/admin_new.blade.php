@@ -160,11 +160,8 @@
                                     </div>
                                 </div>
                             </div>
-
-                        @endif
                     </div>
                 </div>
-                @if($hide == false)
                     <div class="col-md-6">
                         <div class="row mb-3">
                             <div class="col-xl-6 col-sm-6 mb-xl-0 mb-4 mt-2">
@@ -223,7 +220,6 @@
                             </div>
                         </div>
                     </div>
-                @endif
             @endif
 
                 <div class="ms-3 mt-2">
