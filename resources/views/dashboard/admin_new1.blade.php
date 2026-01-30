@@ -19,7 +19,7 @@
 				<tr><td>Total <b>Paid</b> delegates</td><td>{{ $analytics['total_paid'] }}</td></tr>
 			
 				<tr><td>Total <b>Visitor Pass</b> Registrations</td><td>{{ $analytics['total_visitor_pass'] }}</td></tr>
-				<tr><td>Total Number of Enquiries</td><td>{{ $analytics['total_enquiries'] }}</td></tr>
+				<tr><td>Total Number of Enquiries</td><td><a href="{{ route('enquiries.index') }}">{{ $analytics['total_enquiries'] }}</a></td></tr>
 			</tbody>
 		</table>
 	</div>
