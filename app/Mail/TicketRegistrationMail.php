@@ -31,6 +31,8 @@ class TicketRegistrationMail extends Mailable
 
     /**
      * Get the message envelope.
+     * Note: Individual emails are sent to each delegate separately from the controller.
+     * No CC or reply-to is used to ensure clean email delivery.
      */
     public function envelope(): Envelope
     {
@@ -44,51 +46,9 @@ class TicketRegistrationMail extends Mailable
             ? "Thank You for Registration at {$eventName} {$eventYear}"
             : "Thank you for Submitting Information on {$eventName} {$eventYear}. Please complete the payment using following pay now link / button";
         
-        // Get delegate emails for CC (excluding the primary contact email)
-        $ccEmails = $this->getDelegateEmails();
-        
         return new Envelope(
             subject: $subject,
-            cc: $ccEmails,
         );
-    }
-    
-    /**
-     * Get all delegate emails for CC, excluding the primary contact email
-     * 
-     * @return array<Address>
-     */
-    private function getDelegateEmails(): array
-    {
-        $ccEmails = [];
-        $primaryEmail = strtolower($this->order->registration->contact->email ?? '');
-        
-        // Load delegates if not already loaded
-        if (!$this->order->registration->relationLoaded('delegates')) {
-            $this->order->registration->load('delegates');
-        }
-        
-        $delegates = $this->order->registration->delegates ?? collect();
-        
-        foreach ($delegates as $delegate) {
-            $delegateEmail = strtolower(trim($delegate->email ?? ''));
-            
-            // Skip if email is empty or same as primary contact
-            if (empty($delegateEmail) || $delegateEmail === $primaryEmail) {
-                continue;
-            }
-            
-            // Skip duplicate emails
-            $existingEmails = array_map(fn($addr) => strtolower($addr->address), $ccEmails);
-            if (in_array($delegateEmail, $existingEmails)) {
-                continue;
-            }
-            
-            $delegateName = trim(($delegate->first_name ?? '') . ' ' . ($delegate->last_name ?? ''));
-            $ccEmails[] = new Address($delegateEmail, $delegateName);
-        }
-        
-        return $ccEmails;
     }
 
     /**
