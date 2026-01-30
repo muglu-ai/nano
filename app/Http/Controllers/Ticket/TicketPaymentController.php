@@ -223,6 +223,9 @@ class TicketPaymentController extends Controller
             $contactName = $registrationData['contact_name'] ?? ($registrationData['delegates'][0]['first_name'] . ' ' . ($registrationData['delegates'][0]['last_name'] ?? ''));
             $contactPhone = $registrationData['contact_phone'] ?? ($registrationData['delegates'][0]['phone'] ?? null);
             
+            // Format phone number consistently
+            $contactPhone = $this->formatPhoneNumber($contactPhone);
+            
             if ($contactEmail) {
                 $contact = TicketContact::firstOrCreate(
                     ['email' => $contactEmail],
@@ -981,14 +984,36 @@ class TicketPaymentController extends Controller
         // Remove all spaces
         $phone = str_replace(' ', '', trim($phone));
         
-        // If already in format +CC-NUMBER, return as-is
+        // If already in format +CC-NUMBER, validate and return
         if (preg_match('/^(\+\d{1,3})-(\d+)$/', $phone, $matches)) {
+            $countryCode = $matches[1];
+            $number = $matches[2];
+            
+            // Validate phone number has at least 7 digits (minimum for most countries)
+            if (strlen($number) < 7) {
+                Log::warning('Phone number too short', [
+                    'phone' => $phone,
+                    'number_length' => strlen($number),
+                ]);
+            }
+            
             return $phone; // Already formatted correctly
         }
         
         // If phone starts with + but no dash, add dash after country code
         if (preg_match('/^(\+\d{1,3})(\d+)$/', $phone, $matches)) {
-            return $matches[1] . '-' . $matches[2];
+            $countryCode = $matches[1];
+            $number = $matches[2];
+            
+            // Validate phone number has at least 7 digits
+            if (strlen($number) < 7) {
+                Log::warning('Phone number too short', [
+                    'phone' => $phone,
+                    'number_length' => strlen($number),
+                ]);
+            }
+            
+            return $countryCode . '-' . $number;
         }
         
         return $phone;

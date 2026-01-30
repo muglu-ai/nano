@@ -608,6 +608,8 @@
                                placeholder="Enter phone number" 
                                pattern="[0-9]*"
                                inputmode="numeric"
+                               maxlength="15"
+                               minlength="7"
                                required>
                         <input type="hidden" name="phone_country_code" id="company_phone_country_code" value="{{ old('phone_country_code', '+91') }}">
                         @error('phone')
@@ -770,7 +772,9 @@
                                    placeholder="Enter mobile number" 
                                    id="contact_phone"
                                    pattern="[0-9]*"
-                                   inputmode="numeric">
+                                   inputmode="numeric"
+                                   maxlength="15"
+                                   minlength="7">
                             <input type="hidden" name="contact_phone_country_code" id="contact_phone_country_code" value="{{ old('contact_phone_country_code', '+91') }}">
                             @error('contact_phone')
                                 <div class="text-danger" style="font-size: 0.875rem; margin-top: 0.25rem;">{{ $message }}</div>
@@ -1262,6 +1266,8 @@ document.addEventListener('DOMContentLoaded', function() {
                                placeholder="Enter mobile number" 
                                pattern="[0-9]*"
                                inputmode="numeric"
+                               maxlength="15"
+                               minlength="7"
                                required>
                         <input type="hidden" name="delegates[${i}][phone_country_code]" id="delegate_phone_country_code_${i}" value="${(() => {
                             let phone = delegateData.phone || '';
@@ -2759,7 +2765,7 @@ document.addEventListener('DOMContentLoaded', function() {
             
             if (itiInstance) {
                 try {
-                    // Get the full number from intl-tel-input
+                    // Get the full number from intl-tel-input in E.164 format
                     const fullNumber = itiInstance.getNumber();
                     if (fullNumber) {
                         // Extract country code and phone number
@@ -2767,19 +2773,19 @@ document.addEventListener('DOMContentLoaded', function() {
                         const dialCode = '+' + countryData.dialCode;
                         countryCode = dialCode;
                         
-                        // Get national number (without country code)
-                        try {
-                            const nationalNumber = itiInstance.getNumber(itiInstance.getSelectedCountryData().iso2);
-                            if (nationalNumber) {
-                                phoneNumber = nationalNumber.replace(/\s/g, '').replace(/[^\d]/g, '');
-                            } else {
-                                // Fallback: remove country code from full number
-                                phoneNumber = fullNumber.replace(dialCode, '').replace(/\s/g, '').replace(/[^\d]/g, '');
-                            }
-                        } catch(e) {
-                            // Fallback: remove country code from full number
-                            phoneNumber = fullNumber.replace(dialCode, '').replace(/\s/g, '').replace(/[^\d]/g, '');
+                        // Get national number by removing country code from full number
+                        // The fullNumber is in E.164 format like +918619276031
+                        let nationalNumber = fullNumber;
+                        
+                        // Remove the dial code from the beginning (handle both +91 and 91 formats)
+                        if (nationalNumber.startsWith(dialCode)) {
+                            nationalNumber = nationalNumber.substring(dialCode.length);
+                        } else if (nationalNumber.startsWith('+') && nationalNumber.substring(1).startsWith(countryData.dialCode)) {
+                            nationalNumber = nationalNumber.substring(1 + countryData.dialCode.length);
                         }
+                        
+                        // Clean the national number - keep only digits
+                        phoneNumber = nationalNumber.replace(/\s/g, '').replace(/[^\d]/g, '');
                     }
                 } catch(err) {
                     // Fallback to using input value
