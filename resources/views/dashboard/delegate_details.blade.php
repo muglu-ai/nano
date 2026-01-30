@@ -171,26 +171,13 @@
                                     <td></td>
                                 </tr>
                                 @endif
-                                <!-- Total Amount Row -->
-                                <tr>
-                                    <td class="text-muted">Total Amount</td>
-                                    <td colspan="3">
-                                        <span class="fs-4 fw-bold text-white px-4 py-2" style="background:#e91e63; border-radius:6px; display:inline-block;">₹{{ number_format($registration->total_amount ?? 0, 0) }}</span>
-                                    </td>
-                                </tr>
-                                @if(isset($registration->membership_discount) && $registration->membership_discount > 0)
-                                <tr style="background:#f1f1f1;">
-                                    <td class="text-muted">Membership Discount</td>
-                                    <td class="fw-bold text-success">₹{{ number_format($registration->membership_discount, 2) }}</td>
-                                    <td class="text-muted">Group Discount</td>
-                                    <td class="fw-bold text-success">₹{{ number_format($registration->group_discount ?? 0, 2) }}</td>
-                                </tr>
-                                @endif
-                                @if(isset($registration->group_discount_amount) && $registration->group_discount_amount > 0)
+
+                                {{-- Discount Amount --}}
+                                 @if(isset($registration->group_discount_amount) && $registration->group_discount_amount > 0)
                                 <tr style="background:#f1f1f1;">
                                     
                                     <td class="text-muted">Group Discount</td>
-                                    <td class="fw-bold text-success">₹{{ number_format($registration->group_discount, 2) }}</td>
+                                    <td class="fw-bold text-success">₹{{ number_format($registration->group_discount_amount, 2) }}</td>
                                 </tr>
                                 @endif
                                 @if(isset($registration->discount_amount) && $registration->discount_amount > 0)
@@ -201,6 +188,15 @@
                                     <td></td>
                                 </tr>
                                 @endif
+                                <!-- Total Amount Row -->
+                                <tr>
+                                    <td class="text-muted">Total Amount</td>
+                                    <td colspan="3">
+                                        <span class="fs-4 fw-bold text-white px-4 py-2" style="background:#e91e63; border-radius:6px; display:inline-block;">₹{{ number_format($registration->total_amount ?? 0, 0) }}</span>
+                                    </td>
+                                </tr>
+                              
+                               
                             </tbody>
                         </table>
                     </div>
