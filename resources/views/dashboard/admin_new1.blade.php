@@ -9,7 +9,9 @@
 		<table class="table table-bordered mb-0">
 			<tbody>
 				<tr><td>Total EventDelegates</td><td>{{ $analytics['total_event_delegates'] }}</td></tr>
-				<tr><td>Total Normal <b>Registered</b> Delegates</td><td>{{ $analytics['total_normal_registered'] }}</td></tr>
+				@foreach($analytics['total_normal_registered'] as $categoryName => $count)
+					<tr><td>Total {{ $categoryName }} Registration</td><td>{{ $count }}</td></tr>
+				@endforeach
 				<tr><td>Total Sponsors <b>Registered</b> Delegates</td><td>{{ $analytics['total_sponsors_registered'] }}</td></tr>
 				<tr><td>Total Exihibitor <b>Registered</b> Delegates</td><td>{{ $analytics['total_exhibitor_registered'] }}</td></tr>
 				<tr><td>Total Speaker <b>Registered</b> Delegates</td><td>{{ $analytics['total_speaker_registered'] }}</td></tr>

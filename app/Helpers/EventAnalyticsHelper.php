@@ -29,7 +29,8 @@ class EventAnalyticsHelper
     private static function getTotalEventDelegates()
     {
         // Total delegates across all types - sum of all delegate categories
-        $normalDelegates = self::getTotalNormalRegistered();
+        $normalDelegatesArray = self::getTotalNormalRegistered();
+        $normalDelegatesTotal = array_sum($normalDelegatesArray);
         $sponsorDelegates = self::getTotalSponsorsRegistered();
         $exhibitorDelegates = self::getTotalExhibitorRegistered();
         $speakerDelegates = self::getTotalSpeakerRegistered();
@@ -37,14 +38,37 @@ class EventAnalyticsHelper
         $complimentaryDelegates = self::getTotalComplimentary();
         $visitorPassDelegates = self::getTotalVisitorPass();
         
-        return $normalDelegates + $sponsorDelegates + $exhibitorDelegates + 
+        return $normalDelegatesTotal + $sponsorDelegates + $exhibitorDelegates + 
                $speakerDelegates + $inviteeDelegates + $complimentaryDelegates + 
                $visitorPassDelegates;
     }
 
     private static function getTotalNormalRegistered()
     {
-        return DB::table('ticket_delegates')->count();
+        // Get registration categories and count delegates for each category
+        $results = [];
+        
+        // Get all registration categories with their delegate counts
+        $categories = DB::table('ticket_registration_categories as trc')
+            ->leftJoin('ticket_registrations as tr', 'trc.id', '=', 'tr.registration_category_id')
+            ->leftJoin('ticket_delegates as td', 'tr.id', '=', 'td.registration_id')
+            ->where('trc.is_active', 1)
+            ->select('trc.name', DB::raw('COUNT(td.id) as delegate_count'))
+            ->groupBy('trc.id', 'trc.name')
+            ->orderBy('trc.sort_order')
+            ->get();
+            
+        foreach ($categories as $category) {
+            $results[$category->name] = $category->delegate_count;
+        }
+        
+        // If no categories found, return default
+        if (empty($results)) {
+            $totalDelegates = DB::table('ticket_delegates')->count();
+            $results = ['Total Delegate Registration' => $totalDelegates];
+        }
+        
+        return $results;
     }
 
     private static function getTotalSponsorsRegistered()
