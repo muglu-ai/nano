@@ -45,7 +45,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         ]);
         
         // Send credentials email
-        $setupProfileUrl = config('app.url') . '';
+        $setupProfileUrl = config('app.url') . '/login';
         $eventName = config('constants.EVENT_NAME') ?? 'BTS 2025';
         
         $emailHtml = "
