@@ -609,7 +609,6 @@
                                pattern="[0-9]*"
                                inputmode="numeric"
                                maxlength="15"
-                               minlength="7"
                                required>
                         <input type="hidden" name="phone_country_code" id="company_phone_country_code" value="{{ old('phone_country_code', '+91') }}">
                         @error('phone')
@@ -773,8 +772,7 @@
                                    id="contact_phone"
                                    pattern="[0-9]*"
                                    inputmode="numeric"
-                                   maxlength="15"
-                                   minlength="7">
+                                   maxlength="15">
                             <input type="hidden" name="contact_phone_country_code" id="contact_phone_country_code" value="{{ old('contact_phone_country_code', '+91') }}">
                             @error('contact_phone')
                                 <div class="text-danger" style="font-size: 0.875rem; margin-top: 0.25rem;">{{ $message }}</div>
@@ -1267,7 +1265,6 @@ document.addEventListener('DOMContentLoaded', function() {
                                pattern="[0-9]*"
                                inputmode="numeric"
                                maxlength="15"
-                               minlength="7"
                                required>
                         <input type="hidden" name="delegates[${i}][phone_country_code]" id="delegate_phone_country_code_${i}" value="${(() => {
                             let phone = delegateData.phone || '';
@@ -2793,12 +2790,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             }
             
-            // Return merged format: +CC-NUMBER
-            if (phoneNumber) {
+            // Return merged format: +CC-NUMBER only if we have a valid phone number
+            // Phone number must have at least 7 digits to be valid
+            if (phoneNumber && phoneNumber.length >= 7) {
                 return countryCode + '-' + phoneNumber;
-            } else if (countryCode) {
-                return countryCode;
             }
+            // Return empty if no valid phone number (so nullable validation passes)
             return '';
         }
         
@@ -2853,6 +2850,20 @@ document.addEventListener('DOMContentLoaded', function() {
             return false; // Stop submission
         }
         
+        // STEP 2.5: Clear contact fields if GST is not required (so they don't get validated)
+        const gstRequiredSelect = document.getElementById('gst_required');
+        const isGstRequired = gstRequiredSelect && gstRequiredSelect.value === '1';
+        
+        if (!isGstRequired) {
+            // Clear contact fields so they don't get submitted with partial/invalid values
+            if (contactPhoneInput) contactPhoneInput.value = '';
+            if (contactPhoneCountryCodeInput) contactPhoneCountryCodeInput.value = '';
+            const contactNameInput = document.getElementById('contact_name');
+            const contactEmailInput = document.getElementById('contact_email');
+            if (contactNameInput) contactNameInput.value = '';
+            if (contactEmailInput) contactEmailInput.value = '';
+        }
+        
         // STEP 3: If validation passes, merge phone numbers with country code BEFORE submission
         // Now merge phone numbers (after validation passes)
         if (companyPhoneInput && companyPhoneCountryCodeInput) {
@@ -2862,7 +2873,8 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
         
-        if (contactPhoneInput && contactPhoneCountryCodeInput) {
+        // Only merge contact phone if GST is required
+        if (isGstRequired && contactPhoneInput && contactPhoneCountryCodeInput) {
             const mergedPhone = getMergedPhoneNumber(contactPhoneInput, contactPhoneCountryCodeInput);
             if (mergedPhone) {
                 contactPhoneInput.value = mergedPhone;

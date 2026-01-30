@@ -1936,13 +1936,33 @@ class RegistrationPaymentController extends Controller
                     ]);
                 }
 
-                // Send payment acknowledgement email (payment successful)
-                // Note: Email is sent to user only. Admin notifications should be handled separately if needed.
+                // Send payment acknowledgement email to contact and all delegates
                 try {
                     $contactEmail = $order->registration->contact->email ?? null;
+                    $sentEmails = []; // Track sent emails to avoid duplicates
+                    
+                    // Send to primary contact
                     if ($contactEmail) {
-                        // Send email to user only (removed BCC to admin - admin notifications should be separate)
                         Mail::to($contactEmail)->send(new TicketRegistrationMail($order, $event, true));
+                        $sentEmails[] = strtolower($contactEmail);
+                    }
+                    
+                    // Send individual emails to each delegate
+                    $delegates = $order->registration->delegates ?? collect();
+                    foreach ($delegates as $delegate) {
+                        $delegateEmail = strtolower(trim($delegate->email ?? ''));
+                        if (!empty($delegateEmail) && !in_array($delegateEmail, $sentEmails)) {
+                            try {
+                                Mail::to($delegateEmail)->send(new TicketRegistrationMail($order, $event, true));
+                                $sentEmails[] = $delegateEmail;
+                            } catch (\Exception $e) {
+                                Log::warning('Failed to send payment email to delegate', [
+                                    'delegate_email' => $delegateEmail,
+                                    'order_id' => $order->id,
+                                    'error' => $e->getMessage(),
+                                ]);
+                            }
+                        }
                     }
                 } catch (\Exception $e) {
                     Log::error('Failed to send ticket payment acknowledgement email', [
@@ -2276,13 +2296,33 @@ class RegistrationPaymentController extends Controller
                     // Don't fail the payment if ticket issuance fails - tickets can be issued manually
                 }
 
-                // Send payment acknowledgement email (payment successful)
-                // Note: Email is sent to user only. Admin notifications should be handled separately if needed.
+                // Send payment acknowledgement email to contact and all delegates
                 try {
                     $contactEmail = $order->registration->contact->email ?? null;
+                    $sentEmails = []; // Track sent emails to avoid duplicates
+                    
+                    // Send to primary contact
                     if ($contactEmail) {
-                        // Send email to user only (removed BCC to admin - admin notifications should be separate)
                         Mail::to($contactEmail)->send(new TicketRegistrationMail($order, $event, true));
+                        $sentEmails[] = strtolower($contactEmail);
+                    }
+                    
+                    // Send individual emails to each delegate
+                    $delegates = $order->registration->delegates ?? collect();
+                    foreach ($delegates as $delegate) {
+                        $delegateEmail = strtolower(trim($delegate->email ?? ''));
+                        if (!empty($delegateEmail) && !in_array($delegateEmail, $sentEmails)) {
+                            try {
+                                Mail::to($delegateEmail)->send(new TicketRegistrationMail($order, $event, true));
+                                $sentEmails[] = $delegateEmail;
+                            } catch (\Exception $e) {
+                                Log::warning('Failed to send payment email to delegate', [
+                                    'delegate_email' => $delegateEmail,
+                                    'order_id' => $order->id,
+                                    'error' => $e->getMessage(),
+                                ]);
+                            }
+                        }
                     }
                 } catch (\Exception $e) {
                     Log::error('Failed to send ticket payment acknowledgement email', [
