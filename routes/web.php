@@ -1135,6 +1135,7 @@ Route::get('/send-invite-mail-custom', function () {
 // Admin Enquiry Management Routes
 Route::middleware(['auth', Auth::class])->prefix('admin/enquiries')->name('enquiries.')->group(function () {
     Route::get('/', [EnquiryController::class, 'index'])->name('index');
+    Route::get('/export', [EnquiryController::class, 'export'])->name('export');
     Route::get('/{id}', [EnquiryController::class, 'show'])->name('show');
     Route::put('/{id}/status', [EnquiryController::class, 'updateStatus'])->name('status');
     Route::put('/{id}/assign', [EnquiryController::class, 'assign'])->name('assign');
