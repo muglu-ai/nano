@@ -96,6 +96,67 @@ class EnquiryController extends Controller
     }
 
     /**
+     * Export enquiries to Excel/CSV format.
+     */
+    public function export(Request $request)
+    {
+        $query = Enquiry::with(['interests', 'event', 'assignedTo']);
+
+        // Apply same filters as index method
+        $search = $request->get('search', '');
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->where('full_name', 'like', "%{$search}%")
+                  ->orWhere('email', 'like', "%{$search}%")
+                  ->orWhere('organisation', 'like', "%{$search}%")
+                  ->orWhere('phone_number', 'like', "%{$search}%")
+                  ->orWhere('city', 'like', "%{$search}%")
+                  ->orWhere('country', 'like', "%{$search}%")
+                  ->orWhere('comments', 'like', "%{$search}%");
+            });
+        }
+
+        $enquiries = $query->get();
+
+        // Generate CSV
+        $filename = 'enquiries_' . date('Y-m-d_H-i-s') . '.csv';
+        $headers = [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+        ];
+
+        $callback = function() use ($enquiries) {
+            $file = fopen('php://output', 'w');
+            fputcsv($file, ['Name', 'Email', 'Phone','Designation','Organisation','Sector', 'City','State', 'Country', 'Source', 'Enquiry Types', 'Comments', 'Created At']);
+
+            foreach ($enquiries as $enquiry) {
+                $interestTypes = $enquiry->interests && $enquiry->interests->isNotEmpty() 
+                    ? strtoupper($enquiry->interests->pluck('interest_type')->implode(', '))
+                    : 'N/A';
+
+                fputcsv($file, [
+                    $enquiry->full_name,
+                    $enquiry->email,
+                    $enquiry->phone_country_code . '-' . $enquiry->phone_number,
+                    $enquiry->designation,
+                    $enquiry->organisation,
+                    $enquiry->sector,
+                    $enquiry->city,
+                    ucfirst($enquiry->state),
+                    $enquiry->country,
+                    $enquiry->referral_source,
+                    $interestTypes,
+                    $enquiry->comments,
+                    $enquiry->created_at->format('Y-m-d H:i:s')
+                ]);
+            }
+            fclose($file);
+        };
+
+        return response()->stream($callback, 200, $headers);
+    }
+
+    /**
      * Show the specified enquiry.
      */
     public function show($id)
