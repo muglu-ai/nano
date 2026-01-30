@@ -15,8 +15,8 @@
                     <tr>
                         <td style="padding: 30px 30px 20px; background-color: #ffffff; border-radius: 8px 8px 0 0; border-bottom: 2px solid #1a237e;">
                             <div style="text-align: left; margin-bottom: 20px;">
-                                @if(config('constants.event_logo'))
-                                <img src="{{ config('constants.event_logo') }}" alt="{{ config('constants.EVENT_NAME') }}" style="max-width: 200px; height: auto; display: block;">
+                                @if(config('constants.EMAILER_HEADER_LOGO'))
+                                <img src="{{ config('constants.EMAILER_HEADER_LOGO') }}" alt="{{ config('constants.EVENT_NAME') }}" style="max-width: 200px; height: auto; display: block;">
                                 @endif
                             </div>
                             

@@ -20,7 +20,7 @@
                             <table cellpadding="0" cellspacing="0" border="0" style="margin: 0 auto;">
                                 <tr>
                                     <div style="width: 25%; display: flex; justify-content: center; align-items: center;">
-                                        <img src="{{ config('constants.event_logo') }}" alt="{{ config('constants.event_logo') }}">
+                                        <img src="{{ config('constants.EMAILER_HEADER_LOGO') }}" alt="{{ config('constants.EMAILER_HEADER_LOGO') }}">
                                     </div>
                                 </tr>
                             </table>
