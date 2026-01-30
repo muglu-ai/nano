@@ -221,12 +221,27 @@ class PublicTicketController extends Controller
         }
         // Include ALL subcategories defined under each category (from admin), not only those with a ticket type
         // Also try to match ticket types by subcategory name if subcategory_id wasn't set on the ticket type
+        // NOTE: We need to also load ALL ticket types (not filtered by nationality) to check availability
+        $allTicketTypesForAvailabilityCheck = TicketType::where('event_id', $event->id)
+            ->where('is_active', true)
+            ->with(['category', 'subcategory'])
+            ->get();
+            
         foreach ($categoriesForForm as $cat) {
             if (!isset($subcategoryOptionsByCategory[$cat->id])) {
                 $subcategoryOptionsByCategory[$cat->id] = [];
             }
             // Get the default ticket type for this category (the one with subcategory_id = null)
             $defaultTicketForCategory = $categorySubcategoryTicketMap[$cat->id . '_null'] ?? null;
+            
+            // Get any ticket type for this category as ultimate fallback
+            $anyTicketForCategory = null;
+            foreach ($categorySubcategoryTicketMap as $key => $data) {
+                if (str_starts_with($key, $cat->id . '_')) {
+                    $anyTicketForCategory = $data;
+                    break;
+                }
+            }
             
             $subs = $cat->subcategories ?? collect();
             foreach ($subs as $sub) {
@@ -235,19 +250,115 @@ class PublicTicketController extends Controller
                     $mapKey = $cat->id . '_' . $sub->id;
                     $ticketData = $categorySubcategoryTicketMap[$mapKey] ?? null;
                     
-                    // Fallback 1: try to find a ticket type for this category that matches subcategory by name
+                    // Fallback 1: try to find a ticket type that has a subcategory with matching name
                     if (!$ticketData) {
                         foreach ($ticketTypes as $tt) {
-                            if ($tt->category_id == $cat->id && stripos($tt->name, $sub->name) !== false) {
-                                $ticketData = $categorySubcategoryTicketMap[$tt->category_id . '_' . ($tt->subcategory_id ?? 'null')] ?? null;
-                                break;
+                            if ($tt->category_id == $cat->id) {
+                                // Check if ticket type's own subcategory name matches
+                                $ttSubcategoryName = $tt->subcategory->name ?? null;
+                                if ($ttSubcategoryName && strcasecmp($ttSubcategoryName, $sub->name) === 0) {
+                                    $ticketData = $categorySubcategoryTicketMap[$tt->category_id . '_' . ($tt->subcategory_id ?? 'null')] ?? null;
+                                    if ($ticketData) break;
+                                }
                             }
                         }
                     }
                     
-                    // Fallback 2: use the default (no subcategory) ticket type for this category
+                    // Fallback 2: try to find a ticket type with name matching subcategory name
+                    if (!$ticketData) {
+                        $partialMatch = null;
+                        foreach ($ticketTypes as $tt) {
+                            if ($tt->category_id == $cat->id) {
+                                // Exact name match (ticket type name = subcategory name)
+                                if (strcasecmp($tt->name, $sub->name) === 0) {
+                                    $ticketData = $categorySubcategoryTicketMap[$tt->category_id . '_' . ($tt->subcategory_id ?? 'null')] ?? null;
+                                    if ($ticketData) break;
+                                }
+                                // Partial match (subcategory name contained in ticket type name)
+                                if (!$partialMatch && stripos($tt->name, $sub->name) !== false) {
+                                    $partialMatch = $categorySubcategoryTicketMap[$tt->category_id . '_' . ($tt->subcategory_id ?? 'null')] ?? null;
+                                }
+                            }
+                        }
+                        // Use partial match if no exact match found
+                        if (!$ticketData && $partialMatch) {
+                            $ticketData = $partialMatch;
+                        }
+                    }
+                    
+                    // Fallback 3: use the default (no subcategory) ticket type for this category
                     if (!$ticketData && $defaultTicketForCategory) {
                         $ticketData = $defaultTicketForCategory;
+                    }
+                    
+                    // Fallback 4: use any ticket type from this category
+                    if (!$ticketData && $anyTicketForCategory) {
+                        $ticketData = $anyTicketForCategory;
+                    }
+                    
+                    // If still no ticket data found, check if there's a ticket type for this subcategory 
+                    // that's not available for the current nationality (to show appropriate message)
+                    $unavailableForNationality = false;
+                    if (!$ticketData && !empty($selectedNationality)) {
+                        // Check in ALL ticket types (not just filtered ones)
+                        foreach ($allTicketTypesForAvailabilityCheck as $tt) {
+                            if ($tt->category_id == $cat->id) {
+                                $ttSubcategoryName = $tt->subcategory->name ?? null;
+                                $ttSubcategoryId = $tt->subcategory_id;
+                                
+                                // Check if this ticket type matches the subcategory
+                                $matchesSubcategory = ($ttSubcategoryId == $sub->id) || 
+                                    ($ttSubcategoryName && strcasecmp($ttSubcategoryName, $sub->name) === 0) ||
+                                    (strcasecmp($tt->name, $sub->name) === 0);
+                                    
+                                if ($matchesSubcategory) {
+                                    // Found a ticket type for this subcategory, but it's not available for current nationality
+                                    if (!$tt->isAvailableFor($selectedNationality)) {
+                                        $unavailableForNationality = true;
+                                        \Log::info("Subcategory '{$sub->name}' has ticket type but not available for {$selectedNationality}", [
+                                            'subcategory_id' => $sub->id,
+                                            'ticket_type_id' => $tt->id,
+                                            'available_for' => $tt->available_for,
+                                        ]);
+                                    }
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                    
+                    // Skip this subcategory if it has a ticket type that's not available for the current nationality
+                    if ($unavailableForNationality) {
+                        continue; // Don't add to dropdown
+                    }
+                    
+                    // Fallback 5: Look for a ticket type with matching name across ALL categories (last resort)
+                    if (!$ticketData) {
+                        foreach ($ticketTypes as $tt) {
+                            // Match by subcategory name
+                            $ttSubcategoryName = $tt->subcategory->name ?? null;
+                            if ($ttSubcategoryName && strcasecmp($ttSubcategoryName, $sub->name) === 0) {
+                                $ticketData = $categorySubcategoryTicketMap[$tt->category_id . '_' . ($tt->subcategory_id ?? 'null')] ?? null;
+                                if ($ticketData) {
+                                    \Log::info("Fallback 5: Using ticket from different category for subcategory '{$sub->name}'", [
+                                        'subcategory_id' => $sub->id,
+                                        'ticket_type_id' => $ticketData['ticketTypeId'] ?? null,
+                                    ]);
+                                    break;
+                                }
+                            }
+                            // Match by ticket type name
+                            if (!$ticketData && strcasecmp($tt->name, $sub->name) === 0) {
+                                $ticketData = $categorySubcategoryTicketMap[$tt->category_id . '_' . ($tt->subcategory_id ?? 'null')] ?? null;
+                                if ($ticketData) {
+                                    \Log::info("Fallback 5: Using ticket with matching name for subcategory '{$sub->name}'", [
+                                        'subcategory_id' => $sub->id,
+                                        'ticket_type_id' => $ticketData['ticketTypeId'] ?? null,
+                                    ]);
+                                    break;
+                                }
+                            }
+                        }
                     }
                     
                     $subcategoryOptionsByCategory[$cat->id][$optKey] = [
@@ -256,6 +367,16 @@ class PublicTicketController extends Controller
                         'ticket_type_slug' => $ticketData['slug'] ?? '',
                         'ticket_type_id' => $ticketData['ticketTypeId'] ?? null,
                     ];
+                    
+                    // Log if still no ticket data found
+                    if (empty($ticketData)) {
+                        \Log::warning("No ticket type found for subcategory", [
+                            'category_id' => $cat->id,
+                            'category_name' => $cat->name ?? 'N/A',
+                            'subcategory_id' => $sub->id,
+                            'subcategory_name' => $sub->name,
+                        ]);
+                    }
                 }
             }
         }

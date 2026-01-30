@@ -265,6 +265,8 @@
                         @endforeach
                     </td>
                 </tr>
+                {{-- Day Access row hidden for nano registration --}}
+                @if(isset($showDayAccess) && $showDayAccess)
                 <tr>
                     <td class="label-cell">Day Access</td>
                     <td class="value-cell">
@@ -289,6 +291,7 @@
                     @endforeach
                     </td>
                 </tr>
+                @endif
                 <tr>
                     <td class="label-cell">Number of Delegates</td>
                     <td class="value-cell">{{ $order->items->sum('quantity') }}</td>
@@ -429,7 +432,12 @@
         <!-- Delegates Information -->
         @if($order->registration->delegates->count() > 0)
         @php 
-            $ticketTypeName = $order->items->first()->ticketType->name ?? 'N/A';
+            $ticketType = $order->items->first()->ticketType ?? null;
+            $ticketTypeName = $ticketType->name ?? 'N/A';
+            $categoryName = $ticketType->category->name ?? null;
+            $subcategoryName = $ticketType->subcategory->name ?? null;
+            $hasCategory = !empty($categoryName);
+            $hasSubcategory = !empty($subcategoryName);
             $hasLinkedIn = $order->registration->delegates->contains(function($delegate) {
                 return !empty($delegate->linkedin_profile);
             });
@@ -442,13 +450,19 @@
             <table class="delegates-table">
                 <thead>
                     <tr>
-                        <th style="width: {{ $hasLinkedIn ? '4%' : '5%' }};">#</th>
-                        <th style="width: {{ $hasLinkedIn ? '24%' : '30%' }};">Delegate Name</th>
-                        <th style="width: {{ $hasLinkedIn ? '24%' : '30%' }};">Email</th>
-                        <th style="width: {{ $hasLinkedIn ? '12%' : '15%' }};">Phone</th>
-                        <th style="width: {{ $hasLinkedIn ? '20%' : '20%' }};">Ticket Type</th>
+                        <th style="width: 4%;">#</th>
+                        <th style="width: {{ $hasLinkedIn ? '18%' : '22%' }};">Delegate Name</th>
+                        <th style="width: {{ $hasLinkedIn ? '18%' : '22%' }};">Email</th>
+                        <th style="width: 10%;">Phone</th>
+                        @if($hasCategory)
+                        <th style="width: 12%;">Category</th>
+                        @endif
+                        @if($hasSubcategory)
+                        <th style="width: 12%;">Subcategory</th>
+                        @endif
+                        <th style="width: {{ ($hasCategory || $hasSubcategory) ? '12%' : '15%' }};">Ticket Type</th>
                         @if($hasLinkedIn)
-                        <th style="width: 16%;">LinkedIn Profile</th>
+                        <th style="width: 10%;">LinkedIn</th>
                         @endif
                     </tr>
                 </thead>
@@ -459,12 +473,18 @@
                         <td><strong>{{ $delegate->salutation }} {{ $delegate->first_name }} {{ $delegate->last_name }}</strong></td>
                         <td>{{ $delegate->email }}</td>
                         <td>{{ $delegate->phone ?? '-' }}</td>
+                        @if($hasCategory)
+                        <td>{{ $categoryName }}</td>
+                        @endif
+                        @if($hasSubcategory)
+                        <td>{{ $subcategoryName }}</td>
+                        @endif
                         <td>{{ $ticketTypeName }}</td>
                         @if($hasLinkedIn)
                         <td>
                             @if(!empty($delegate->linkedin_profile))
                                 <a href="{{ $delegate->linkedin_profile }}" target="_blank" rel="noopener noreferrer" style="color: #0077b5; text-decoration: none;">
-                                    <i class="fab fa-linkedin me-1"></i>View Profile
+                                    <i class="fab fa-linkedin me-1"></i>View
                                 </a>
                             @else
                                 <span class="text-muted">-</span>
