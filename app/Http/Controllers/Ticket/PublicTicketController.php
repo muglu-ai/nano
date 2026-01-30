@@ -354,7 +354,7 @@ class PublicTicketController extends Controller
             'company_state' => 'nullable|string|max:255',
             'company_city' => 'nullable|string|max:255',
             'postal_code' => 'nullable|string|max:20',
-            'phone' => 'required|string|min:8|max:20',
+            'phone' => 'required|string|min:7|max:15',
             'email' => 'nullable|email|max:255',
             'gst_required' => 'required|in:0,1',
             'gstin' => 'nullable|string|max:15|regex:/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/',
@@ -363,12 +363,12 @@ class PublicTicketController extends Controller
             'gst_state' => 'nullable|string|max:255',
             'contact_name' => 'nullable|string|max:255',
             'contact_email' => 'nullable|email|max:255',
-            'contact_phone' => 'nullable|string|max:20',
+            'contact_phone' => 'nullable|string|min:7|max:15',
             'delegates' => 'required|array|min:1',
             'delegates.*.first_name' => 'required|string|max:255',
             'delegates.*.last_name' => 'required|string|max:255',
             'delegates.*.email' => 'required|email|max:255',
-            'delegates.*.phone' => 'nullable|string|min:8|max:20',
+            'delegates.*.phone' => 'required|string|min:7|max:15',
             'delegates.*.salutation' => 'nullable|string|max:10',
             'delegates.*.job_title' => 'nullable|string|max:255',
             'delegates.*.linkedin_profile' => 'nullable|url|max:500',
@@ -498,7 +498,7 @@ class PublicTicketController extends Controller
                 'gst_state' => 'required|string|max:255',
                 'contact_name' => 'required|string|max:255',
                 'contact_email' => 'required|email|max:255',
-                'contact_phone' => 'required|string|max:20',
+                'contact_phone' => 'required|string|min:7|max:15',
             ], [
                 'gstin.required' => 'GSTIN is required when GST is applicable.',
                 'gst_legal_name.required' => 'GST legal name is required.',
@@ -1212,14 +1212,36 @@ class PublicTicketController extends Controller
         // Remove all spaces
         $phone = str_replace(' ', '', trim($phone));
         
-        // If already in format +CC-NUMBER, return as-is
+        // If already in format +CC-NUMBER, validate and return
         if (preg_match('/^(\+\d{1,3})-(\d+)$/', $phone, $matches)) {
+            $countryCode = $matches[1];
+            $number = $matches[2];
+            
+            // Validate phone number has at least 7 digits (minimum for most countries)
+            if (strlen($number) < 7) {
+                \Log::warning('Phone number too short', [
+                    'phone' => $phone,
+                    'number_length' => strlen($number),
+                ]);
+            }
+            
             return $phone; // Already formatted correctly
         }
         
         // If phone starts with + but no dash, add dash after country code
         if (preg_match('/^(\+\d{1,3})(\d+)$/', $phone, $matches)) {
-            return $matches[1] . '-' . $matches[2];
+            $countryCode = $matches[1];
+            $number = $matches[2];
+            
+            // Validate phone number has at least 7 digits
+            if (strlen($number) < 7) {
+                \Log::warning('Phone number too short', [
+                    'phone' => $phone,
+                    'number_length' => strlen($number),
+                ]);
+            }
+            
+            return $countryCode . '-' . $number;
         }
         
         return $phone;
