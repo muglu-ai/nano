@@ -218,10 +218,21 @@ class TicketPaymentController extends Controller
             // Check if complimentary (100% discount)
             $isComplimentary = $total <= 0;
 
-            // Create or get contact (use first delegate email if contact email not provided)
-            $contactEmail = $registrationData['contact_email'] ?? ($registrationData['delegates'][0]['email'] ?? null);
-            $contactName = $registrationData['contact_name'] ?? ($registrationData['delegates'][0]['first_name'] . ' ' . ($registrationData['delegates'][0]['last_name'] ?? ''));
-            $contactPhone = $registrationData['contact_phone'] ?? ($registrationData['delegates'][0]['phone'] ?? null);
+            // Create or get contact (use first delegate if contact details not provided)
+            // Use empty() check instead of ?? to handle both null and empty strings
+            $firstDelegate = $registrationData['delegates'][0] ?? null;
+            
+            $contactEmail = !empty($registrationData['contact_email']) 
+                ? $registrationData['contact_email'] 
+                : ($firstDelegate['email'] ?? null);
+            
+            $contactName = !empty($registrationData['contact_name']) 
+                ? $registrationData['contact_name'] 
+                : (($firstDelegate['first_name'] ?? '') . ' ' . ($firstDelegate['last_name'] ?? ''));
+            
+            $contactPhone = !empty($registrationData['contact_phone']) 
+                ? $registrationData['contact_phone'] 
+                : ($firstDelegate['phone'] ?? null);
             
             // Format phone number consistently
             $contactPhone = $this->formatPhoneNumber($contactPhone);
@@ -230,24 +241,13 @@ class TicketPaymentController extends Controller
                 $contact = TicketContact::firstOrCreate(
                     ['email' => $contactEmail],
                     [
-                        'name' => $contactName,
+                        'name' => trim($contactName),
                         'phone' => $contactPhone,
                     ]
                 );
             } else {
-                // Fallback: use first delegate
-                $firstDelegate = $registrationData['delegates'][0] ?? null;
-                if ($firstDelegate) {
-                    $contact = TicketContact::firstOrCreate(
-                        ['email' => $firstDelegate['email']],
-                        [
-                            'name' => $firstDelegate['first_name'] . ' ' . ($firstDelegate['last_name'] ?? ''),
-                            'phone' => $this->formatPhoneNumber($firstDelegate['phone'] ?? null),
-                        ]
-                    );
-                } else {
-                    throw new \Exception('Unable to create contact: No contact email or delegate email provided.');
-                }
+                // No contact email available - this shouldn't happen since we fallback to first delegate above
+                throw new \Exception('Unable to create contact: No contact email or delegate email provided.');
             }
 
             // Create registration
