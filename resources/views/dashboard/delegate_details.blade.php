@@ -25,88 +25,93 @@
                     <h6 class="mb-0"><i class="fas fa-info-circle me-2 text-primary"></i>Basic Information</h6>
                 </div>
                 <div class="card-body">
-                    <div class="row g-3">
-                        <div class="col-12">
-                            <div class="p-3 bg-light rounded">
-                                <div class="row">
-                                    <div class="col-4 text-muted small">Industry Sector:</div>
-                                    <div class="col-8 fw-bold">{{ $registration->industry_sector ?? 'N/A' }}</div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-12">
-                            <div class="p-3 border rounded">
-                                <div class="row">
-                                    <div class="col-4 text-muted small">TIN Number:</div>
-                                    <div class="col-8">
-                                        <span class="badge bg-info text-dark">{{ $registration->tin_number ?? 'N/A' }}</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-6">
-                            <div class="text-muted small">Registration Type</div>
-                            <div class="fw-semibold">{{ $registration->registration_type ?? 'N/A' }}</div>
-                        </div>
-                        <div class="col-6">
-                            <div class="text-muted small">Registration Category</div>
-                            <div class="fw-semibold">
-                                <span class="badge bg-secondary">{{ $registration->registration_category ?? 'N/A' }}</span>
-                            </div>
-                        </div>
-                        <div class="col-6">
-                            <div class="text-muted small">Total Delegates</div>
-                            <div class="fw-bold text-primary fs-5">{{ $delegates->count() }}</div>
-                        </div>
-                        <div class="col-6">
-                            <div class="text-muted small">GST Number</div>
-                            <div class="fw-semibold">{{ $registration->gstin ?? 'N/A' }}</div>
-                        </div>
-                        <div class="col-12">
-                            <div class="text-muted small">Organisation Name</div>
-                            <div class="fw-bold">{{ $registration->company_name ?? 'N/A' }}</div>
-                        </div>
+                    <div class="table-responsive">
+                        <table class="table">
+                            <tbody>
+                                <tr style="background-color: #f8f9fa;">
+                                    <td class="text-muted" style="width: 25%;">Industry Sector:</td>
+                                    <td class="fw-bold" style="width: 25%;">{{ $registration->industry_sector ?? 'N/A' }}</td>
+                                    
+                                </tr>
+                                <tr >
+                                    <td class="text-muted">Organisation Type:</td>
+                                    <td class="fw-bold">{{ $registration->organisation_type ?? 'N/A' }}</td>
+                                </tr>
+                                <tr style="background-color: #f8f9fa;">
+                                    <td class="text-muted">TIN Number:</td>
+                                    <td colspan="3">
+                                        <span class="badge bg-primary fs-6 px-3 py-2">{{ $registration->tin_number ?? 'N/A' }}</span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="text-muted">Registration Type</td>
+                                    <td class="fw-semibold">{{ $registration->registration_type ?? 'N/A' }}</td>
+                                   
+                                </tr>
+                                <tr style="background-color: #f8f9fa;">
+                                    <td class="text-muted">Registration Category</td>
+                                    <td class="fw-bold">{{ $registration->registration_category ?? 'N/A' }}</td>
+                                </tr>
+                                <tr>
+                                    <td class="text-muted">Total Delegates</td>
+                                    <td class="fw-bold text-danger fs-5">{{ $delegates->count() }}</td>
+                                    
+                                </tr>
+                                <tr>
+                                    <td class="text-muted">Organisation Name</td>
+                                    <td class="fw-bold" colspan="3">{{ $registration->company_name ?? 'N/A' }}</td>
+                                </tr>
+                                <tr style="background-color: #f8f9fa;">
+                                    <td class="text-muted">GST Number</td>
+                                    <td class="fw-bold">{{ $registration->gst_number ?? 'N/A' }}</td>
+                                </tr>
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Contact Information -->
+        <!-- Contact Details Table -->
         <div class="col-lg-6 mb-4">
             <div class="card shadow-sm h-100">
                 <div class="card-header bg-light">
-                    <h6 class="mb-0"><i class="fas fa-address-book me-2 text-success"></i>Contact Information</h6>
+                    <h6 class="mb-0"><i class="fas fa-address-book me-2 text-success"></i>Contact Details</h6>
                 </div>
                 <div class="card-body">
-                    <div class="row g-3">
-                        <div class="col-12">
-                            <div class="text-muted small">Address</div>
-                            <div class="fw-semibold">{{ $registration->company_address ?? 'N/A' }}</div>
-                        </div>
-                        <div class="col-6">
-                            <div class="text-muted small">City</div>
-                            <div class="fw-semibold">{{ $registration->company_city ?? 'N/A' }}</div>
-                        </div>
-                        <div class="col-6">
-                            <div class="text-muted small">State</div>
-                            <div class="fw-semibold">{{ $registration->company_state ?? 'N/A' }}</div>
-                        </div>
-                        <div class="col-6">
-                            <div class="text-muted small">Country</div>
-                            <div class="fw-semibold">{{ $registration->company_country ?? 'N/A' }}</div>
-                        </div>
-                        <div class="col-6">
-                            <div class="text-muted small">Zip Code</div>
-                            <div class="fw-semibold">{{ $registration->postal_code ?? 'N/A' }}</div>
-                        </div>
-                        <div class="col-6">
-                            <div class="text-muted small"><i class="fas fa-phone me-1 text-primary"></i>Phone</div>
-                            <div class="fw-semibold">{{ $registration->company_phone ?? 'N/A' }}</div>
-                        </div>
-                        <div class="col-6">
-                            <div class="text-muted small"><i class="fas fa-fax me-1 text-secondary"></i>Fax</div>
-                            <div class="fw-semibold">N/A</div>
-                        </div>
+                    <div class="table-responsive">
+                        <table class="table">
+                            <tbody>
+                                <tr style="background-color: #f8f9fa;">
+                                    <td class="text-muted" style="width: 25%;">Address:</td>
+                                    <td class="fw-bold" style="width: 75%;">{{ $registration->company_address ?? 'N/A' }}</td>
+                                </tr>
+                                <tr>
+                                    <td class="text-muted">City:</td>
+                                    <td class="fw-bold">{{ $registration->company_city ?? 'N/A' }}</td>
+                                </tr>
+                                <tr style="background-color: #f8f9fa;">
+                                    <td class="text-muted">State:</td>
+                                    <td class="fw-bold">{{ $registration->company_state ?? 'N/A' }}</td>
+                                </tr>
+                                <tr>
+                                    <td class="text-muted">Country:</td>
+                                    <td class="fw-bold">{{ $registration->company_country ?? 'N/A' }}</td>
+                                </tr>
+                                <tr style="background-color: #f8f9fa;">
+                                    <td class="text-muted">Zip Code:</td>
+                                    <td class="fw-bold">{{ $registration->postal_code ?? 'N/A' }}</td>
+                                </tr>
+                                <tr>
+                                    <td class="text-muted">Phone:</td>
+                                    <td class="fw-bold">{{ $registration->company_phone ?? 'N/A' }}</td>
+                                </tr>
+                                {{-- <tr style="background-color: #f8f9fa;">
+                                    <td class="text-muted">Fax:</td>
+                                    <td class="fw-bold">N/A</td>
+                                </tr> --}}
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>
@@ -121,94 +126,68 @@
                     <h6 class="mb-0"><i class="fas fa-credit-card me-2 text-warning"></i>Payment Information</h6>
                 </div>
                 <div class="card-body">
-                    <div class="row g-3">
-                        <div class="col-md-3">
-                            <div class="text-center p-3 border rounded">
-                                <div class="text-muted small">Payment Status</div>
-                                <div class="mt-2">
-                                    <span class="badge fs-6 px-3 py-2 {{ $registration->payment_status == 'Paid' ? 'bg-success' : 'bg-warning text-dark' }}">
-                                        <i class="fas {{ $registration->payment_status == 'Paid' ? 'fa-check-circle' : 'fa-exclamation-triangle' }} me-1"></i>
-                                        {{ $registration->payment_status ?? 'Not Paid' }}
-                                    </span>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="text-center p-3 border rounded">
-                                <div class="text-muted small">Payment Mode</div>
-                                <div class="fw-semibold mt-2">{{ $registration->payment_method ?? 'Not Specified' }}</div>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="row g-2">
-                                <div class="col-6">
-                                    <div class="p-2 bg-light rounded text-center">
-                                        <div class="small text-muted">Selection Amount</div>
-                                        <div class="fw-bold text-primary">₹{{ number_format($registration->total_amount ?? 0, 0) }}</div>
-                                    </div>
-                                </div>
-                                <div class="col-6">
-                                    <div class="p-2 bg-light rounded text-center">
-                                        <div class="small text-muted">Tax (18%)</div>
-                                        <div class="fw-bold text-success">₹{{ number_format(($registration->total_amount ?? 0) * 0.18, 0) }}</div>
-                                    </div>
-                                </div>
-                                <div class="col-12">
-                                    <div class="p-3 bg-primary text-white rounded text-center">
-                                        <div class="small opacity-75">Total Amount</div>
-                                        <div class="fs-4 fw-bold">₹{{ number_format($registration->total_amount ?? 0, 0) }}</div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Discounts Section -->
-                    <div class="row mt-3">
-                        <div class="col-12">
-                            <div class="border rounded p-3 bg-light">
-                                <div class="small text-muted mb-2">Discount Details</div>
-                                <div class="row text-center">
-                                    <div class="col-4">
-                                        <div class="small text-muted">Membership Discount</div>
-                                        <div class="fw-semibold text-success">₹0</div>
-                                    </div>
-                                    <div class="col-4">
-                                        <div class="small text-muted">Group Discount</div>
-                                        <div class="fw-semibold text-success">₹0</div>
-                                    </div>
-                                    <div class="col-4">
-                                        <div class="small text-muted">Admin Discount</div>
-                                        <div class="fw-semibold text-success">₹0</div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+                    <div class="table-responsive">
+                        <table class="table table-bordered align-middle mb-0">
+                            <tbody>
+                                <tr>
+                                    <td class="text-muted" style="width: 20%;">Payment Status</td>
+                                    <td style="width: 30%;">
+                                        <span class="badge fs-6 px-3 py-2 {{ $registration->payment_status == 'Paid' ? 'bg-success' : 'bg-warning text-dark' }}">
+                                            <i class="fas {{ $registration->payment_status == 'Paid' ? 'fa-check-circle' : 'fa-exclamation-triangle' }} me-1"></i>
+                                            {{ $registration->payment_status ?? 'Not Paid' }}
+                                        </span>
+                                    </td>
+                                    <td class="text-muted" style="width: 20%;">Payment Mode</td>
+                                    <td style="width: 30%;">{{ $registration->payment_method ?? 'Not Specified' }}</td>
+                                </tr>
+                                <tr>
+                                    <td class="text-muted">Selection Amount</td>
+                                    <td class="fw-bold text-primary">₹{{ number_format($registration->total_amount ?? 0, 0) }}</td>
+                                    @if((isset($registration->igst_total) && $registration->igst_total > 0))
+                                        <td class="text-muted">IGST ({{ $registration->igst_rate ?? 0 }}%)</td>
+                                        <td class="fw-bold text-success">₹{{ number_format($registration->igst_total, 2) }}</td>
+                                    @elseif((isset($registration->cgst_total) && $registration->cgst_total > 0) && (isset($registration->sgst_total) && $registration->sgst_total > 0))
+                                        <td class="text-muted">CGST ({{ $registration->cgst_rate ?? 0 }}%)</td>
+                                        <td class="fw-bold text-success">₹{{ number_format($registration->cgst_total, 2) }}</td>
+                                    @else
+                                        <td class="text-muted">Tax</td>
+                                        <td class="fw-bold text-success">₹0</td>
+                                    @endif
+                                </tr>
+                                @if((isset($registration->cgst_total) && $registration->cgst_total > 0) && (isset($registration->sgst_total) && $registration->sgst_total > 0))
+                                <tr>
+                                    <td class="text-muted">SGST ({{ $registration->sgst_rate ?? 0 }}%)</td>
+                                    <td class="fw-bold text-success">₹{{ number_format($registration->sgst_total, 2) }}</td>
+                                    <td></td>
+                                    <td></td>
+                                </tr>
+                                @endif
+                                <tr>
+                                    <td class="text-muted">Total Amount</td>
+                                    <td colspan="3">
+                                        <span class="fs-4 fw-bold text-white px-4 py-2" style="background:#e91e63; border-radius:6px; display:inline-block;">₹{{ number_format($registration->total_amount ?? 0, 0) }}</span>
+                                    </td>
+                                </tr>
+                                <tr style="background:#f1f1f1;">
+                                    <td class="text-muted">Membership Discount</td>
+                                    <td class="fw-bold text-success">₹0</td>
+                                    <td class="text-muted">Group Discount</td>
+                                    <td class="fw-bold text-success">₹0</td>
+                                </tr>
+                                <tr style="background:#f1f1f1;">
+                                    <td class="text-muted">Admin Discount</td>
+                                    <td class="fw-bold text-success">₹0</td>
+                                    <td></td>
+                                    <td></td>
+                                </tr>
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Receipt Actions -->
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="card shadow-sm">
-                <div class="card-body text-center">
-                    <div class="mb-3">
-                        <i class="fas fa-receipt text-primary fs-1"></i>
-                    </div>
-                    <h6 class="text-muted">Need to resend receipt?</h6>
-                    <button class="btn btn-primary btn-lg">
-                        <i class="fas fa-paper-plane me-2"></i>Resend Receipt
-                    </button>
-                    <div class="mt-2">
-                        <small class="text-muted">Receipt will be sent to registered email address</small>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
 
     <!-- Delegates Information -->
     @if($delegates->count() > 0)
@@ -221,6 +200,9 @@
                             <i class="fas fa-user-friends me-2 text-info"></i>
                             Delegate Details ({{ $delegates->count() }} {{ $delegates->count() == 1 ? 'Delegate' : 'Delegates' }})
                         </h6>
+                        {{-- <button class="btn btn-primary btn-lg">
+                            <i class="fas fa-paper-plane me-2"></i>Resend Receipt
+                         </button> --}}
                         <span class="badge bg-info">Total: {{ $delegates->count() }}</span>
                     </div>
                 </div>
@@ -235,7 +217,7 @@
                                     <th><i class="fas fa-envelope me-1"></i>Email Address</th>
                                     <th><i class="fas fa-tag me-1"></i>Category</th>
                                     <th><i class="fas fa-phone me-1"></i>Mobile No.</th>
-                                    <th><i class="fas fa-rupee-sign me-1"></i>Amount</th>
+                                    <th>Amount</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -243,14 +225,12 @@
                                 <tr>
                                     <td>
                                         <div class="d-flex align-items-center">
-                                            <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px; font-size: 14px; font-weight: bold;">
-                                                {{ strtoupper(substr($delegate->first_name ?? 'D', 0, 1)) }}
-                                            </div>
+                                           
                                             <div>
                                                 <div class="fw-bold">
                                                     {{ trim(($delegate->salutation ?? '') . ' ' . ($delegate->first_name ?? '') . ' ' . ($delegate->last_name ?? '')) ?: 'N/A' }}
                                                 </div>
-                                                <small class="text-muted">Delegate #{{ $index + 1 }}</small>
+                                               
                                             </div>
                                         </div>
                                     </td>
@@ -270,12 +250,14 @@
                                         @endif
                                     </td>
                                     <td>
-                                        <span class="badge bg-success">Full Delegate</span>
+                                        <span class="badge bg-success">
+                                            {{ $delegate->registration_category ?? 'N/A' }}
+                                        </span>
                                     </td>
                                     <td>
                                         @if($delegate->phone)
                                             <a href="tel:{{ $delegate->phone }}" class="text-decoration-none">
-                                                <i class="fas fa-phone text-success me-1"></i>{{ $delegate->phone }}
+                                            {{ $delegate->phone }}
                                             </a>
                                         @else
                                             <span class="text-muted">N/A</span>
@@ -296,7 +278,7 @@
                     <small class="text-muted">
                         <i class="fas fa-info-circle me-1"></i>
                         Total Amount: ₹{{ number_format($registration->total_amount ?? 0, 0) }} 
-                        | Average per delegate: ₹{{ number_format(($registration->total_amount ?? 0) / $delegates->count(), 0) }}
+                       
                     </small>
                 </div>
             </div>

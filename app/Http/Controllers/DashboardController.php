@@ -577,7 +577,7 @@ class DashboardController extends Controller
     {
         $this->__construct();
         
-        // Get detailed registration and delegate information
+        // Get detailed registration and delegate information, including tax fields from ticket_orders
         $registration = DB::table('ticket_registrations as tr')
             ->join('ticket_registration_categories as trc', 'tr.registration_category_id', '=', 'trc.id')
             ->leftJoin('ticket_orders as to', 'tr.id', '=', 'to.registration_id')
@@ -594,7 +594,14 @@ class DashboardController extends Controller
                 DB::raw('(SELECT payment_method FROM payments WHERE invoice_id = inv.id AND status = "successful" LIMIT 1) as payment_method'),
                 DB::raw('(SELECT CASE WHEN COUNT(*) > 0 THEN "Paid" ELSE "Not Paid" END FROM payments WHERE invoice_id = inv.id AND status = "successful") as payment_status'),
                 DB::raw('(SELECT total_final_price FROM invoices WHERE registration_id = tr.id LIMIT 1) as total_amount'),
-                DB::raw('(SELECT id FROM invoices WHERE registration_id = tr.id LIMIT 1) as invoice_id')
+                DB::raw('(SELECT id FROM invoices WHERE registration_id = tr.id LIMIT 1) as invoice_id'),
+                // Correct tax fields from ticket_orders
+                'to.igst_total',
+                'to.igst_rate',
+                'to.cgst_total',
+                'to.cgst_rate',
+                'to.sgst_total',
+                'to.sgst_rate'
             )
             ->first();
             
@@ -602,11 +609,14 @@ class DashboardController extends Controller
             return redirect()->back()->with('error', 'Registration not found.');
         }
         
-        // Get all delegates for this registration
-        $delegates = DB::table('ticket_delegates')
-            ->where('registration_id', $registrationId)
+        // Get all delegates for this registration, including their registration category
+        $delegates = DB::table('ticket_delegates as td')
+            ->join('ticket_registrations as tr', 'td.registration_id', '=', 'tr.id')
+            ->join('ticket_registration_categories as trc', 'tr.registration_category_id', '=', 'trc.id')
+            ->where('td.registration_id', $registrationId)
+            ->select('td.*', 'trc.name as registration_category')
             ->get();
-            
+        
         return view('dashboard.delegate_details', compact('registration', 'delegates'));
     }
 }
