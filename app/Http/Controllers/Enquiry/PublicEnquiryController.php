@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Validator;
+use App\Services\MetroLeadsService;
 
 class PublicEnquiryController extends Controller
 {
@@ -180,6 +181,18 @@ class PublicEnquiryController extends Controller
             } catch (\Exception $e) {
                 // Log but don't fail the submission
                 Log::error('Email sending failed but enquiry was saved', [
+                    'enquiry_id' => $enquiry->id,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+
+            // Send to MetroLeads API (non-blocking - don't fail if API call fails)
+            try {
+                $metroLeadsService = app(MetroLeadsService::class);
+                $metroLeadsService->sendEnquiry($enquiry);
+            } catch (\Exception $e) {
+                // Log but don't fail the submission
+                Log::error('MetroLeads API call failed but enquiry was saved', [
                     'enquiry_id' => $enquiry->id,
                     'error' => $e->getMessage(),
                 ]);

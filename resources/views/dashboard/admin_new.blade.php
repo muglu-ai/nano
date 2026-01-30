@@ -336,6 +336,40 @@
                         </div>
                     </div>
                 </div>
+
+                <div class="ms-3 mt-3">
+                    <p class="font-weight-bolder">
+                        Enquiries
+                    </p>
+                </div>
+
+                <div class="row mb-3">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-body p-3">
+                                <div class="table-responsive">
+                                    <table class="table table-bordered table-hover align-middle mb-0">
+                                        <thead class="bg-light">
+                                            <tr>
+                                                <th class="text-uppercase text-secondary text-sm font-weight-bolder text-center">Total Enquiries</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td class="text-center">
+                                                    <a href="{{ route('enquiries.index') }}" class="text-primary font-weight-bold h5 mb-0">
+                                                        {{ $analytics['enquiries']['total'] ?? 0 }}
+                                                    </a>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <hr class="dark horizontal my-0">
 
                 {{-- <hr class="dark horizontal my-0"> --}}

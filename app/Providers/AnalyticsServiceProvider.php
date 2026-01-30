@@ -8,6 +8,7 @@ use App\Models\Application;
 use App\Models\CoExhibitor;
 use App\Models\User;
 use App\Models\Invoice;
+use App\Models\Enquiry;
 use Illuminate\Support\Facades\DB;
 
 
@@ -123,6 +124,10 @@ class AnalyticsServiceProvider extends ServiceProvider
                     ->where('submission_status', 'approved')
                     ->where('id', '!=', 240)
                     ->sum('allocated_sqm'),
+                // Enquiry statistics
+                'enquiries' => [
+                    'total' => Enquiry::count(),
+                ],
                 //                'invoices' => Invoice::select('type', \DB::raw('count(*) as count'))
                 //                    ->pluck('count', 'type')
                 //                    ->toArray(),

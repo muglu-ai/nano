@@ -51,4 +51,9 @@ return [
         'api_key'     => env('RECAPTCHA_API_KEY'),
     ],
 
+    'metroleads' => [
+        'endpoint' => env('METROLEADS_API_ENDPOINT', 'https://edge.metroleads.com/callbacks/forms/MMactiv/companies/f6e80d20-4454-49f7-b334-4f8aca8634f3'),
+        'enabled' => env('METROLEADS_API_ENABLED', true),
+    ],
+
 ];
