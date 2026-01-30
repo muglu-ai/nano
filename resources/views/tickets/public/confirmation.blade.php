@@ -297,6 +297,20 @@
                     <td class="label-cell">Currency</td>
                     <td class="value-cell">{{ $isInternational ? 'USD ($)' : 'INR (₹)' }}</td>
                 </tr>
+                @if($order->group_discount_applied && $order->group_discount_amount > 0)
+                <tr style="background-color: #e7f3ff;">
+                    <td class="label-cell" style="color: #004085;">
+                        <i class="fas fa-users me-1"></i>
+                        Group Discount
+                    </td>
+                    <td class="value-cell" style="color: #004085;">
+                        <strong>-{{ $currencySymbol }}{{ number_format($order->group_discount_amount, $priceFormat) }}</strong>
+                        <small class="d-block" style="font-weight: normal; font-size: 0.75rem;">
+                            ({{ number_format($order->group_discount_rate, 0) }}% off for {{ $order->items->sum('quantity') }}+ delegates)
+                        </small>
+                    </td>
+                </tr>
+                @endif
                 @if($order->discount_amount > 0 && $order->promoCode)
                 <tr style="background-color: #d4edda;">
                     <td class="label-cell" style="color: #155724;">
@@ -377,6 +391,7 @@
         </div>
 
         <!-- Contact Information -->
+        {--
         <div class="preview-section">
             <h4 class="section-title">
                 <i class="fas fa-user"></i>
@@ -397,7 +412,7 @@
                 </tr>
             </table>
         </div>
-
+--}}
         <!-- GST Information -->
             @if($order->registration->gst_required)
         <div class="preview-section">

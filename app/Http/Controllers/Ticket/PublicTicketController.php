@@ -706,7 +706,22 @@ class PublicTicketController extends Controller
         }
         $subtotal = round($unitPrice * $quantity);
         
-        // Apply promocode discount FIRST (before GST calculation)
+        // Apply Group Discount FIRST (if delegate count > 3, apply 10% discount)
+        $groupDiscountApplied = false;
+        $groupDiscountRate = 0;
+        $groupDiscountAmount = 0;
+        $groupDiscountMinDelegates = config('constants.GROUP_DISCOUNT_MIN_DELEGATES', 4); // Minimum 4 delegates required for group discount
+        
+        if ($quantity >= $groupDiscountMinDelegates) {
+            $groupDiscountApplied = true;
+            $groupDiscountRate = config('constants.GROUP_DISCOUNT_RATE', 10); // Default 10%
+            $groupDiscountAmount = round(($subtotal * $groupDiscountRate) / 100);
+        }
+        
+        // Subtotal after group discount
+        $subtotalAfterGroupDiscount = round($subtotal - $groupDiscountAmount);
+        
+        // Apply promocode discount SECOND (on amount after group discount)
         $discountAmount = 0;
         $promocodeData = session('ticket_promocode');
         $promocodeCode = null;
@@ -722,14 +737,14 @@ class PublicTicketController extends Controller
                     'registration_category_id' => $registrationData['registration_category_id'] ?? null,
                     'selected_event_day_id' => ($selectedEventDayId === 'all' || $selectedAllDays) ? null : $selectedEventDayId,
                     'delegate_count' => $quantity,
-                    'base_amount' => $subtotal,
+                    'base_amount' => $subtotalAfterGroupDiscount, // Use amount after group discount
                 ];
                 
                 $validationResult = $promoCodeService->validatePromoCode($promoCode->code, $event->id, $validationData);
                 
                 if ($validationResult['valid']) {
-                    // Calculate discount on base amount only
-                    $discountAmount = $promoCodeService->calculateDiscount($promoCode, $subtotal);
+                    // Calculate discount on amount after group discount
+                    $discountAmount = $promoCodeService->calculateDiscount($promoCode, $subtotalAfterGroupDiscount);
                     $promocodeCode = $promoCode->code;
                     $promocodeDiscountPercentage = $promoCode->type === 'percentage' ? $promoCode->value : null;
                 } else {
@@ -739,8 +754,8 @@ class PublicTicketController extends Controller
             }
         }
         
-        // Calculate subtotal after discount (GST will be calculated on this)
-        $subtotalAfterDiscount = round($subtotal - $discountAmount);
+        // Calculate subtotal after all discounts (GST will be calculated on this)
+        $subtotalAfterDiscount = round($subtotalAfterGroupDiscount - $discountAmount);
         
         // Determine GST type and calculate GST on discounted amount
         $gstService = new TicketGstCalculationService();
@@ -798,6 +813,10 @@ class PublicTicketController extends Controller
             'quantity',
             'unitPrice',
             'subtotal',
+            'groupDiscountApplied',
+            'groupDiscountRate',
+            'groupDiscountAmount',
+            'groupDiscountMinDelegates',
             'gstType',
             'cgstRate',
             'cgstAmount',

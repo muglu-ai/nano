@@ -608,6 +608,21 @@
                     <td class="label-cell">Ticket Price ({{ $item->quantity }} × {{ $currencySymbol }}{{ number_format($item->unit_price, $priceFormat) }})</td>
                     <td class="value-cell">{{ $currencySymbol }}{{ number_format($item->subtotal, $priceFormat) }}</td>
                 </tr>
+                @if($order->group_discount_applied && $order->group_discount_amount > 0)
+                <tr style="background-color: #e7f3ff;">
+                    <td class="label-cell" style="color: #004085;">
+                        <i class="fas fa-users me-1"></i>
+                        Group Discount
+                        <small class="d-block" style="font-weight: normal; font-size: 0.75rem;">({{ number_format($order->group_discount_rate, 0) }}% off for {{ $item->quantity }}+ delegates)</small>
+                    </td>
+                    <td class="value-cell" style="color: #004085; font-weight: 600;">
+                        -{{ $currencySymbol }}{{ number_format($order->group_discount_amount, $priceFormat) }}
+                    </td>
+                </tr>
+                @php $subtotalAfterGroupDiscount = $item->subtotal - $order->group_discount_amount; @endphp
+                @else
+                @php $subtotalAfterGroupDiscount = $item->subtotal; @endphp
+                @endif
                 @if($order->discount_amount > 0 && $order->promoCode)
                 <tr style="background-color: #d4edda;">
                     <td class="label-cell" style="color: #155724;">
@@ -622,9 +637,16 @@
                     </td>
                 </tr>
                 <tr>
-                    <td class="label-cell">Price After Discount</td>
+                    <td class="label-cell">Price After Discounts</td>
                     <td class="value-cell" style="font-weight: 600;">
-                        {{ $currencySymbol }}{{ number_format($item->subtotal - $order->discount_amount, $priceFormat) }}
+                        {{ $currencySymbol }}{{ number_format($subtotalAfterGroupDiscount - $order->discount_amount, $priceFormat) }}
+                    </td>
+                </tr>
+                @elseif($order->group_discount_applied && $order->group_discount_amount > 0)
+                <tr>
+                    <td class="label-cell">Price After Group Discount</td>
+                    <td class="value-cell" style="font-weight: 600;">
+                        {{ $currencySymbol }}{{ number_format($subtotalAfterGroupDiscount, $priceFormat) }}
                     </td>
                 </tr>
                 @endif
