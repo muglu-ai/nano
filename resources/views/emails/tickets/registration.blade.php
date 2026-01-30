@@ -39,7 +39,7 @@
                 <td style="padding: 5px 10px; text-align: right; font-size: 10px; color: #666666;">
                     @if($order->status !== 'paid')
                     <div style="text-align: center; margin: 7px 0;">
-                        <a href="{{ route('tickets.payment.by-tin', ['eventSlug' => $event->slug ?? $event->id, 'tin' => $order->order_no]) }}" style="display: inline-block; background: #DAA520; color: #ffffff; padding: 10px; text-decoration: none; border-radius: 5px; font-weight: 700; font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px;">
+                        <a href="{{ route('tickets.payment.lookup', ['eventSlug' => $event->slug ?? $event->id, 'tin' => $order->order_no]) }}" style="display: inline-block; background: #DAA520; color: #ffffff; padding: 10px; text-decoration: none; border-radius: 5px; font-weight: 700; font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px;">
                             💳 Pay Now - {{ $currencySymbol }}{{ number_format($order->total, $priceFormat) }}
                         </a>
                     </div>
@@ -331,7 +331,7 @@
             <!-- Pay Now Button -->
             @if($order->status !== 'paid')
             <div style="text-align: center; margin: 20px 0;">
-                <a href="{{ route('tickets.payment.by-tin', ['eventSlug' => $event->slug ?? $event->id, 'tin' => $order->order_no]) }}" style="display: inline-block; background: #DAA520; color: #ffffff; padding: 14px 35px; text-decoration: none; border-radius: 5px; font-weight: 700; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px;">
+                <a href="{{ route('tickets.payment.lookup', ['eventSlug' => $event->slug ?? $event->id, 'tin' => $order->order_no]) }}" style="display: inline-block; background: #DAA520; color: #ffffff; padding: 14px 35px; text-decoration: none; border-radius: 5px; font-weight: 700; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px;">
                     💳 Pay Now - {{ $currencySymbol }}{{ number_format($order->total, $priceFormat) }}
                 </a>
             </div>

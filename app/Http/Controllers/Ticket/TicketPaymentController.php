@@ -200,7 +200,7 @@ class TicketPaymentController extends Controller
             // Create or get contact (use first delegate email if contact email not provided)
             $contactEmail = $registrationData['contact_email'] ?? ($registrationData['delegates'][0]['email'] ?? null);
             $contactName = $registrationData['contact_name'] ?? ($registrationData['delegates'][0]['first_name'] . ' ' . ($registrationData['delegates'][0]['last_name'] ?? ''));
-            $contactPhone = $this->formatPhoneNumber($registrationData['contact_phone'] ?? ($registrationData['delegates'][0]['phone'] ?? null));
+            $contactPhone = $registrationData['contact_phone'] ?? ($registrationData['delegates'][0]['phone'] ?? null);
             
             if ($contactEmail) {
                 $contact = TicketContact::firstOrCreate(
