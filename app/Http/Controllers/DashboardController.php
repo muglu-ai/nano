@@ -604,13 +604,18 @@ class DashboardController extends Controller
                 DB::raw('(SELECT CASE WHEN COUNT(*) > 0 THEN "Paid" ELSE "Not Paid" END FROM payments WHERE invoice_id = inv.id AND status = "successful") as payment_status'),
                 DB::raw('(SELECT total_final_price FROM invoices WHERE registration_id = tr.id LIMIT 1) as total_amount'),
                 DB::raw('(SELECT id FROM invoices WHERE registration_id = tr.id LIMIT 1) as invoice_id'),
+                'to.subtotal',
                 // Correct tax fields from ticket_orders
                 'to.igst_total',
                 'to.igst_rate',
                 'to.cgst_total',
                 'to.cgst_rate',
                 'to.sgst_total',
-                'to.sgst_rate'
+                'to.sgst_rate',
+                // Discount fields from ticket_orders
+                'to.processing_charge_total',
+                'to.discount_amount',
+                'to.group_discount_amount'
             )
             ->first();
             
