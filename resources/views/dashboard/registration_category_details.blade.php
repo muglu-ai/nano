@@ -113,8 +113,28 @@
     </div>
     @if($filteredDelegates->count() > 0)
     <div class="card-footer bg-light">
-        <small class="text-muted">Total Records: {{ $filteredDelegates->count() }}</small>
+        <div class="d-flex justify-content-between align-items-center flex-column flex-md-row">
+            <div class="mb-2 mb-md-0">
+                @if($filteredDelegates instanceof \Illuminate\Pagination\LengthAwarePaginator)
+                    <small class="text-muted">
+                        <i class="fas fa-info-circle me-1"></i>
+                        Showing {{ $filteredDelegates->firstItem() ?? 0 }} to {{ $filteredDelegates->lastItem() ?? 0 }} of {{ $filteredDelegates->total() }} results
+                    </small>
+                @else
+                    <small class="text-muted">
+                        <i class="fas fa-info-circle me-1"></i>
+                        Showing {{ $filteredDelegates->count() }} of {{ $delegates->count() }} results
+                    </small>
+                @endif
+            </div>
+            <div>
+                @if($filteredDelegates instanceof \Illuminate\Pagination\LengthAwarePaginator)
+                    {{ $filteredDelegates->appends(request()->query())->links() }}
+                @endif
+            </div>
+        </div>
     </div>
     @endif
+    
 </div>
 @endsection
