@@ -142,7 +142,7 @@
                                 </tr>
                                 <tr>
                                     <td class="text-muted">Selection Amount</td>
-                                    <td class="fw-bold text-primary">₹{{ number_format($registration->total_amount ?? 0, 0) }}</td>
+                                    <td class="fw-bold text-primary">₹{{ number_format($registration->subtotal ?? 0, 0) }}</td>
                                     @if((isset($registration->igst_total) && $registration->igst_total > 0))
                                         <td class="text-muted">IGST ({{ $registration->igst_rate ?? 0 }}%)</td>
                                         <td class="fw-bold text-success">₹{{ number_format($registration->igst_total, 2) }}</td>
@@ -162,24 +162,45 @@
                                     <td></td>
                                 </tr>
                                 @endif
+                                {{-- processing charge --}}
+                                @if(isset($registration->processing_charge_total) && $registration->processing_charge_total > 0)
+                                <tr>
+                                    <td class="text-muted">Processing Charge</td>
+                                    <td class="fw-bold text-success">₹{{ number_format($registration->processing_charge_total, 2) }}</td>
+                                    <td></td>
+                                    <td></td>
+                                </tr>
+                                @endif
+                                <!-- Total Amount Row -->
                                 <tr>
                                     <td class="text-muted">Total Amount</td>
                                     <td colspan="3">
                                         <span class="fs-4 fw-bold text-white px-4 py-2" style="background:#e91e63; border-radius:6px; display:inline-block;">₹{{ number_format($registration->total_amount ?? 0, 0) }}</span>
                                     </td>
                                 </tr>
+                                @if(isset($registration->membership_discount) && $registration->membership_discount > 0)
                                 <tr style="background:#f1f1f1;">
                                     <td class="text-muted">Membership Discount</td>
-                                    <td class="fw-bold text-success">₹0</td>
+                                    <td class="fw-bold text-success">₹{{ number_format($registration->membership_discount, 2) }}</td>
                                     <td class="text-muted">Group Discount</td>
-                                    <td class="fw-bold text-success">₹0</td>
+                                    <td class="fw-bold text-success">₹{{ number_format($registration->group_discount ?? 0, 2) }}</td>
                                 </tr>
+                                @endif
+                                @if(isset($registration->group_discount_amount) && $registration->group_discount_amount > 0)
                                 <tr style="background:#f1f1f1;">
-                                    <td class="text-muted">Admin Discount</td>
-                                    <td class="fw-bold text-success">₹0</td>
+                                    
+                                    <td class="text-muted">Group Discount</td>
+                                    <td class="fw-bold text-success">₹{{ number_format($registration->group_discount, 2) }}</td>
+                                </tr>
+                                @endif
+                                @if(isset($registration->discount_amount) && $registration->discount_amount > 0)
+                                <tr style="background:#f1f1f1;">
+                                    <td class="text-muted">Promocode Discount</td>
+                                    <td class="fw-bold text-success">₹{{ number_format($registration->discount_amount, 2) }}</td>
                                     <td></td>
                                     <td></td>
                                 </tr>
+                                @endif
                             </tbody>
                         </table>
                     </div>
