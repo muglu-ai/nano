@@ -391,8 +391,8 @@
         </div>
 
         <!-- Contact Information -->
-        {--
-        <div class="preview-section">
+       
+         {{-- <div class="preview-section">
             <h4 class="section-title">
                 <i class="fas fa-user"></i>
                 Contact Information
@@ -411,8 +411,7 @@
                     <td class="value-cell">{{ $order->registration->contact->phone }}</td>
                 </tr>
             </table>
-        </div>
---}}
+        </div> --}}
         <!-- GST Information -->
             @if($order->registration->gst_required)
         <div class="preview-section">
