@@ -2158,6 +2158,23 @@ class StartupZoneController extends Controller
                         'application_id' => $application->application_id,
                         'email' => $contactEmail
                     ]);
+                    
+                    // Send individual emails to configured admin list for startup registrations
+                    $adminEmails = config('constants.registration_emails.startup', []);
+                    foreach ($adminEmails as $adminEmail) {
+                        $adminEmail = strtolower(trim($adminEmail));
+                        if (!empty($adminEmail) && strtolower($adminEmail) !== strtolower($contactEmail)) {
+                            try {
+                                Mail::to($adminEmail)->send(new StartupZoneMail($application, 'approval', $invoice, $contact));
+                            } catch (\Exception $e) {
+                                \Log::warning('Failed to send startup complimentary email to admin', [
+                                    'admin_email' => $adminEmail,
+                                    'application_id' => $application->application_id,
+                                    'error' => $e->getMessage(),
+                                ]);
+                            }
+                        }
+                    }
                 } catch (\Exception $e) {
                     \Log::error('Failed to send complimentary registration email', [
                         'application_id' => $application->application_id,
@@ -2484,7 +2501,25 @@ class StartupZoneController extends Controller
                         'currency' => $invoice->currency,
                     ];
                     
+                    // Send to user
                     Mail::to($contactEmail)->send(new \App\Mail\StartupZoneMail($application, 'payment_thank_you', $invoice, $contact, $paymentDetails));
+                    
+                    // Send individual emails to configured admin list for startup registrations
+                    $adminEmails = config('constants.registration_emails.startup', []);
+                    foreach ($adminEmails as $adminEmail) {
+                        $adminEmail = strtolower(trim($adminEmail));
+                        if (!empty($adminEmail) && strtolower($adminEmail) !== strtolower($contactEmail)) {
+                            try {
+                                Mail::to($adminEmail)->send(new \App\Mail\StartupZoneMail($application, 'payment_thank_you', $invoice, $contact, $paymentDetails));
+                            } catch (\Exception $e) {
+                                \Log::warning('Failed to send startup payment email to admin', [
+                                    'admin_email' => $adminEmail,
+                                    'application_id' => $application->application_id,
+                                    'error' => $e->getMessage(),
+                                ]);
+                            }
+                        }
+                    }
                 }
             } catch (\Exception $e) {
                 \Log::error('Failed to send payment thank you email', [

@@ -1613,6 +1613,7 @@ class PaymentGatewayController extends Controller
                         $application->load(['country', 'state', 'eventContact']);
                         
                         $userEmail = $contact && $contact->email ? $contact->email : $application->company_email;
+                        $sentEmails = [];
                         
                         if ($userEmail) {
                             $paymentDetails = [
@@ -1623,6 +1624,26 @@ class PaymentGatewayController extends Controller
                             ];
                             
                             Mail::to($userEmail)->send(new \App\Mail\ExhibitorRegistrationMail($application, $invoice, $contact));
+                            $sentEmails[] = strtolower($userEmail);
+                        }
+                        
+                        // Send individual emails to configured admin list for exhibitor registrations
+                        $exhibitorAdminEmails = config('constants.registration_emails.exhibitor', []);
+                        foreach ($exhibitorAdminEmails as $adminEmail) {
+                            $adminEmail = strtolower(trim($adminEmail));
+                            if (!empty($adminEmail) && !in_array($adminEmail, $sentEmails)) {
+                                try {
+                                    Mail::to($adminEmail)->send(new \App\Mail\ExhibitorRegistrationMail($application, $invoice, $contact));
+                                    $sentEmails[] = $adminEmail;
+                                    Log::info('Exhibitor payment email sent to admin', ['admin_email' => $adminEmail]);
+                                } catch (\Exception $e) {
+                                    Log::warning('Failed to send exhibitor payment email to admin', [
+                                        'admin_email' => $adminEmail,
+                                        'application_id' => $application->application_id,
+                                        'error' => $e->getMessage(),
+                                    ]);
+                                }
+                            }
                         }
                     } catch (\Exception $e) {
                         Log::error('Failed to send exhibitor registration payment thank you email', [
@@ -1725,6 +1746,7 @@ class PaymentGatewayController extends Controller
                         $application->load(['country', 'state', 'eventContact']);
                         
                         $userEmail = $contact && $contact->email ? $contact->email : $application->company_email;
+                        $sentEmails = [];
                         
                         if ($userEmail) {
                             $paymentDetails = [
@@ -1735,6 +1757,26 @@ class PaymentGatewayController extends Controller
                             ];
                             
                             Mail::to($userEmail)->send(new \App\Mail\StartupZoneMail($application, 'payment_thank_you', $invoice, $contact, $paymentDetails));
+                            $sentEmails[] = strtolower($userEmail);
+                            
+                            // Send individual emails to configured admin list for startup registrations
+                            $startupAdminEmails = config('constants.registration_emails.startup', []);
+                            foreach ($startupAdminEmails as $adminEmail) {
+                                $adminEmail = strtolower(trim($adminEmail));
+                                if (!empty($adminEmail) && !in_array($adminEmail, $sentEmails)) {
+                                    try {
+                                        Mail::to($adminEmail)->send(new \App\Mail\StartupZoneMail($application, 'payment_thank_you', $invoice, $contact, $paymentDetails));
+                                        $sentEmails[] = $adminEmail;
+                                        Log::info('Startup payment email sent to admin', ['admin_email' => $adminEmail]);
+                                    } catch (\Exception $e) {
+                                        Log::warning('Failed to send startup payment email to admin', [
+                                            'admin_email' => $adminEmail,
+                                            'application_id' => $application->application_id,
+                                            'error' => $e->getMessage(),
+                                        ]);
+                                    }
+                                }
+                            }
                         }
                     } catch (\Exception $e) {
                         Log::error('Failed to send payment thank you email', [

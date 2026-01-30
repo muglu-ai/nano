@@ -486,6 +486,8 @@ class TicketPaymentController extends Controller
                         }
                     }
                 }
+                
+                // NOTE: Admin emails for delegate registrations are sent only after payment success
             } catch (\Exception $e) {
                 Log::error('Failed to send ticket registration email', [
                     'order_id' => $order->id,
@@ -695,6 +697,24 @@ class TicketPaymentController extends Controller
                                 } catch (\Exception $e) {
                                     Log::warning('Failed to send payment email to delegate', [
                                         'delegate_email' => $delegateEmail,
+                                        'order_id' => $order->id,
+                                        'error' => $e->getMessage(),
+                                    ]);
+                                }
+                            }
+                        }
+                        
+                        // Send individual emails to configured admin list for delegate registrations
+                        $adminEmails = config('constants.registration_emails.delegate', []);
+                        foreach ($adminEmails as $adminEmail) {
+                            $adminEmail = strtolower(trim($adminEmail));
+                            if (!empty($adminEmail) && !in_array($adminEmail, $sentEmails)) {
+                                try {
+                                    Mail::to($adminEmail)->send(new TicketRegistrationMail($order, $event, true));
+                                    $sentEmails[] = $adminEmail;
+                                } catch (\Exception $e) {
+                                    Log::warning('Failed to send payment email to admin', [
+                                        'admin_email' => $adminEmail,
                                         'order_id' => $order->id,
                                         'error' => $e->getMessage(),
                                     ]);

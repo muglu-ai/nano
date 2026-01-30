@@ -349,6 +349,40 @@ return [
         'prefix' => 'BTS25VI_',
         'length' => 6,
     ],
+    // Registration-specific admin email recipients (emails sent individually to each)
+    'registration_emails' => [
+        // Startup Zone registration emails
+        'startup' => [
+            'test.interlinks@gmail.com',
+            'chandrachood.as@mmactiv.com',
+
+            // Add more emails as needed
+        ],
+        // Exhibitor registration emails  
+        'exhibitor' => [
+            'test.interlinks@gmail.com',
+            'ambika.kiran@mmactiv.com',
+            'gurunath.angadi@mmactiv.com',
+            // Add more emails as needed
+        ],
+        // Delegate/Ticket registration emails
+        'delegate' => [
+            'test.interlinks@gmail.com',
+            'accounts@mmactiv.com',
+            'bhavya.n@mmactiv.com',
+            'vani.faustina@mmactiv.com',
+
+            // Add more emails as needed
+        ],
+        // Poster registration emails
+        'poster' => [
+            'test.interlinks@gmail.com',
+            'prabha.j@mmactiv.com',
+
+            // Add more emails as needed
+        ],
+    ],
+    
     'db_connection2' => [
         'DB_HOST' => env('DB_HOST1', '95.216.2.164'),
         'DB_PORT' => env('DB_PORT1', '3306'),
