@@ -1037,6 +1037,8 @@ Route::middleware(['auth', Auth::class])->group(function () {
 Route::middleware(['auth', Auth::class])->group(function () {
     Route::get('/admin/dashboard', [DashboardController::class, 'exhibitorDashboard_new'])->name('dashboard.admin');
     Route::get('/admin/event-analytics', [DashboardController::class, 'eventAnalytics'])->name('admin.event.analytics');
+    Route::get('/admin/registration-category/{category}', [DashboardController::class, 'registrationCategoryDetails'])->name('admin.registration.category.details');
+    Route::get('/admin/delegate-details/{registrationId}', [DashboardController::class, 'delegateDetails'])->name('admin.delegate.details');
     Route::get('/admin/feedback', [AdminFeedbackController::class, 'index'])->name('admin.feedback.index');
 });
 

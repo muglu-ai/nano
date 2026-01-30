@@ -50,20 +50,24 @@ class EventAnalyticsHelper
         
         // Get all registration categories with their delegate counts
         $categories = DB::table('ticket_registration_categories as trc')
-            ->leftJoin('ticket_registrations as tr', 'trc.id', '=', 'tr.registration_category_id')
-            ->leftJoin('ticket_delegates as td', 'tr.id', '=', 'td.registration_id')
+            ->leftJoin('ticket_registrations as tr', function($join) {
+                $join->on('trc.id', '=', 'tr.registration_category_id');
+            })
+            ->leftJoin('ticket_delegates as td', function($join) {
+                $join->on('tr.id', '=', 'td.registration_id');
+            })
             ->where('trc.is_active', 1)
-            ->select('trc.name', DB::raw('COUNT(td.id) as delegate_count'))
-            ->groupBy('trc.id', 'trc.name')
+            ->select('trc.name', DB::raw('COUNT(DISTINCT td.id) as delegate_count'))
+            ->groupBy('trc.id', 'trc.name', 'trc.sort_order')
             ->orderBy('trc.sort_order')
             ->get();
             
         foreach ($categories as $category) {
-            $results[$category->name] = $category->delegate_count;
+            $results[$category->name] = (int)$category->delegate_count;
         }
         
-        // If no categories found, return default
-        if (empty($results)) {
+        // If no categories found or all counts are 0, show basic count
+        if (empty($results) || array_sum($results) == 0) {
             $totalDelegates = DB::table('ticket_delegates')->count();
             $results = ['Total Delegate Registration' => $totalDelegates];
         }

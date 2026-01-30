@@ -10,7 +10,7 @@
 			<tbody>
 				<tr><td>Total EventDelegates</td><td>{{ $analytics['total_event_delegates'] }}</td></tr>
 				@foreach($analytics['total_normal_registered'] as $categoryName => $count)
-					<tr><td>Total {{ $categoryName }} Registration</td><td>{{ $count }}</td></tr>
+				<tr><td>Total {{ $categoryName }} Registration</td><td> <a href="{{ route('admin.registration.category.details', ['category' => $categoryName]) }}">{{ $count }}</a></td></tr>
 				@endforeach
 				<tr><td>Total Sponsors <b>Registered</b> Delegates</td><td>{{ $analytics['total_sponsors_registered'] }}</td></tr>
 				<tr><td>Total Exihibitor <b>Registered</b> Delegates</td><td>{{ $analytics['total_exhibitor_registered'] }}</td></tr>
