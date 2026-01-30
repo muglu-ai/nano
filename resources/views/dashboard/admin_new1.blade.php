@@ -9,6 +9,14 @@
 		<table class="table table-bordered mb-0">
 			<tbody>
 				<tr><td>Total EventDelegates</td><td>{{ $analytics['total_event_delegates'] }}</td></tr>
+				<tr>
+					<td>Total Registrations</td>
+					<td>
+						<a href="{{ route('admin.registration.category.details', ['category' => 'all']) }}">
+							{{ $analytics['total_registrations'] ?? 0 }}
+						</a>
+					</td>
+				</tr>
 				@foreach($analytics['total_normal_registered'] as $categoryName => $count)
 				<tr><td>Total {{ $categoryName }} Registration</td><td> <a href="{{ route('admin.registration.category.details', ['category' => $categoryName]) }}">{{ $count }}</a></td></tr>
 				@endforeach

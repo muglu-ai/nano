@@ -524,7 +524,12 @@ class DashboardController extends Controller
         $this->__construct();
         
         $analytics = EventAnalyticsHelper::getEventAnalytics();
-       
+        // Ensure total_registrations is the sum of all per-category counts
+        if (isset($analytics['total_normal_registered']) && is_array($analytics['total_normal_registered'])) {
+            $analytics['total_registrations'] = array_sum($analytics['total_normal_registered']);
+        } else {
+            $analytics['total_registrations'] = 0;
+        }
         
         return view('dashboard.admin_new1', compact('analytics'));
     }
@@ -533,8 +538,8 @@ class DashboardController extends Controller
     {
         $this->__construct();
         
-        // Get delegates for the specific category
-        $delegates = DB::table('ticket_registration_categories as trc')
+        // If 'all', fetch all active categories, else filter by category
+        $query = DB::table('ticket_registration_categories as trc')
             ->join('ticket_registrations as tr', 'trc.id', '=', 'tr.registration_category_id')
             ->leftJoin('ticket_delegates as td', 'tr.id', '=', 'td.registration_id')
             ->leftJoin('ticket_orders as to', 'tr.id', '=', 'to.registration_id')
@@ -543,9 +548,13 @@ class DashboardController extends Controller
                 $join->on('inv.id', '=', 'p.invoice_id')
                      ->where('p.status', '=', 'successful');
             })
-            ->where('trc.name', $category)
-            ->where('trc.is_active', 1)
-            ->select(
+            ->where('trc.is_active', 1);
+
+        if (strtolower($category) !== 'all') {
+            $query->where('trc.name', $category);
+        }
+
+        $delegates = $query->select(
                 'tr.id as registration_id',
                 'tr.created_at as registration_date',
                 'tr.industry_sector as sector',
