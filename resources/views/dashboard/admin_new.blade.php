@@ -32,6 +32,7 @@
                     Applicants analytics.
                 </p>
             </div>
+            @if($hide == false)
             <div class="ms-3">
                 <p class=" font-weight-bolder">
                     Users
@@ -103,8 +104,6 @@
 
                             </div>
                         </div>
-
-                        @if($hide == false)
                             <div class="col-xl-4 col-sm-6 mb-xl-0 mb-4 mt-2">
                                 <div class="card">
                                     <div class="card-header p-2 ps-3">
@@ -225,9 +224,7 @@
                         </div>
                     </div>
                 @endif
-
-
-                <hr class="dark horizontal my-0">
+            @endif
 
                 <div class="ms-3 mt-2">
                     <p class="font-weight-bolder">
@@ -243,12 +240,12 @@
                                     <table class="table table-bordered table-hover align-middle mb-0">
                                         <thead class="bg-light">
                                             <tr>
-                                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder">Type</th>
-                                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder text-center">Total Registration</th>
-                                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder text-center">Paid</th>
-                                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder text-center">Not Paid</th>
-                                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder text-center">Approved</th>
-                                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder text-center">Approval Required</th>
+                                                <th class="text-uppercase text-secondary text-sm font-weight-bolder">Type</th>
+                                                <th class="text-uppercase text-secondary text-sm font-weight-bolder text-center">Total Registration</th>
+                                                <th class="text-uppercase text-secondary text-sm font-weight-bolder text-center">Paid</th>
+                                                <th class="text-uppercase text-secondary text-sm font-weight-bolder text-center">Not Paid</th>
+                                                <th class="text-uppercase text-secondary text-sm font-weight-bolder text-center">Approved</th>
+                                                <th class="text-uppercase text-secondary text-sm font-weight-bolder text-center">Approval Required</th>
                                             </tr>
                                         </thead>
                                         <tbody>
