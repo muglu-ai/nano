@@ -127,7 +127,28 @@ class TicketPaymentController extends Controller
             }
             $subtotal = round($unitPrice * $quantity);
             
-            // Apply promocode discount FIRST (before GST calculation)
+            // Apply Group Discount FIRST (if delegate count > 3, apply 10% discount)
+            $groupDiscountApplied = false;
+            $groupDiscountRate = 0;
+            $groupDiscountAmount = 0;
+            $groupDiscountMinDelegates = config('constants.GROUP_DISCOUNT_MIN_DELEGATES', 4); // Minimum 4 delegates required for group discount
+            
+            if ($quantity >= $groupDiscountMinDelegates) {
+                $groupDiscountApplied = true;
+                $groupDiscountRate = config('constants.GROUP_DISCOUNT_RATE', 10); // Default 10%
+                $groupDiscountAmount = round(($subtotal * $groupDiscountRate) / 100);
+                Log::info('Group discount applied', [
+                    'quantity' => $quantity,
+                    'subtotal' => $subtotal,
+                    'group_discount_rate' => $groupDiscountRate,
+                    'group_discount_amount' => $groupDiscountAmount,
+                ]);
+            }
+            
+            // Subtotal after group discount
+            $subtotalAfterGroupDiscount = round($subtotal - $groupDiscountAmount);
+            
+            // Apply promocode discount SECOND (on amount after group discount)
             $discountAmount = 0;
             $promoCodeId = null;
             $promoCodeService = new TicketPromoCodeService();
@@ -142,14 +163,14 @@ class TicketPaymentController extends Controller
                         'registration_category_id' => $registrationData['registration_category_id'] ?? null,
                         'selected_event_day_id' => $selectedAllDays ? null : $selectedEventDayId,
                         'delegate_count' => $quantity,
-                        'base_amount' => $subtotal,
+                        'base_amount' => $subtotalAfterGroupDiscount, // Use amount after group discount
                     ];
                     
                     $validationResult = $promoCodeService->validatePromoCode($promoCode->code, $event->id, $validationData);
                     
                     if ($validationResult['valid']) {
-                        // Calculate discount on base amount (subtotal) only
-                        $discountAmount = $promoCodeService->calculateDiscount($promoCode, $subtotal);
+                        // Calculate discount on amount after group discount
+                        $discountAmount = $promoCodeService->calculateDiscount($promoCode, $subtotalAfterGroupDiscount);
                         $promoCodeId = $promoCode->id;
                     } else {
                         // Promocode invalid, clear from session
@@ -162,8 +183,8 @@ class TicketPaymentController extends Controller
                 }
             }
             
-            // Calculate subtotal after discount (GST will be calculated on this)
-            $subtotalAfterDiscount = round($subtotal - $discountAmount);
+            // Calculate subtotal after all discounts (GST will be calculated on this)
+            $subtotalAfterDiscount = round($subtotalAfterGroupDiscount - $discountAmount);
             
             // Determine GST type and calculate GST on discounted amount
             $gstService = new TicketGstCalculationService();
@@ -200,7 +221,7 @@ class TicketPaymentController extends Controller
             // Create or get contact (use first delegate email if contact email not provided)
             $contactEmail = $registrationData['contact_email'] ?? ($registrationData['delegates'][0]['email'] ?? null);
             $contactName = $registrationData['contact_name'] ?? ($registrationData['delegates'][0]['first_name'] . ' ' . ($registrationData['delegates'][0]['last_name'] ?? ''));
-            $contactPhone = $this->formatPhoneNumber($registrationData['contact_phone'] ?? ($registrationData['delegates'][0]['phone'] ?? null));
+            $contactPhone = $registrationData['contact_phone'] ?? ($registrationData['delegates'][0]['phone'] ?? null);
             
             if ($contactEmail) {
                 $contact = TicketContact::firstOrCreate(
@@ -266,6 +287,10 @@ class TicketPaymentController extends Controller
                 'processing_charge_total' => $processingChargeAmount,
                 'discount_amount' => $discountAmount,
                 'promo_code_id' => $promoCodeId,
+                'group_discount_applied' => $groupDiscountApplied,
+                'group_discount_rate' => $groupDiscountRate,
+                'group_discount_amount' => $groupDiscountAmount,
+                'group_discount_min_delegates' => $groupDiscountApplied ? $groupDiscountMinDelegates : null,
                 'total' => max(0, $total), // Ensure total doesn't go negative
                 'status' => $isComplimentary ? 'paid' : 'pending',
                 'payment_status' => $isComplimentary ? 'complimentary' : 'pending',

@@ -363,6 +363,24 @@
                 <span class="price-label">Ticket Price ({{ $item->quantity }} × {{ $currencySymbol }}{{ number_format($item->unit_price, $priceFormat) }}):</span>
                 <span class="price-value">{{ $currencySymbol }}{{ number_format($item->subtotal, $priceFormat) }}</span>
             </div>
+            @if($order->group_discount_applied && $order->group_discount_amount > 0)
+            <div class="price-row" style="background-color: #e7f3ff;">
+                <span class="price-label" style="color: #004085;">
+                    <i class="fas fa-users me-1"></i>
+                    Group Discount ({{ number_format($order->group_discount_rate, 0) }}%):
+                </span>
+                <span class="price-value" style="color: #004085;">-{{ $currencySymbol }}{{ number_format($order->group_discount_amount, $priceFormat) }}</span>
+            </div>
+            @endif
+            @if($order->discount_amount > 0 && $order->promoCode)
+            <div class="price-row" style="background-color: #d4edda;">
+                <span class="price-label" style="color: #155724;">
+                    <i class="fas fa-tag me-1"></i>
+                    Promocode Discount:
+                </span>
+                <span class="price-value" style="color: #155724;">-{{ $currencySymbol }}{{ number_format($order->discount_amount, $priceFormat) }}</span>
+            </div>
+            @endif
             <div class="price-row">
                 <span class="price-label">GST ({{ $item->gst_rate }}%):</span>
                 <span class="price-value">{{ $currencySymbol }}{{ number_format($item->gst_amount, $priceFormat) }}</span>
