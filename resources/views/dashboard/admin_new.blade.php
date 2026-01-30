@@ -236,150 +236,109 @@
                 </div>
 
                 <div class="row mb-3">
-                    <div class="col-xl-4 col-sm-6 mb-xl-0 mb-4 "> <!-- Updated mr-12 to me-4 -->
+                    <div class="col-12">
                         <div class="card">
-                            <div class="card-header p-2 ps-3">
-                                <div class="d-flex justify-content-between">
-                                    <div>
-                                        <p class="text-m mb-0 text-capitalize font-weight-black font-weight-bold">Total
-                                            Application</p>
-                                        <h4 class="mb-0 mt-1">{{ ($analytics['exhibitor-registration']['total'] ?? 0) + ($analytics['startupZone']['total'] ?? 0) }}</h4>
-                                        <small class="text-muted d-block mt-1">Exhibitor: {{ $analytics['exhibitor-registration']['total'] ?? 0 }} | Startup: {{ $analytics['startupZone']['total'] ?? 0 }}</small>
-                                    </div>
-                                    <div
-                                            class="icon icon-md icon-shape bg-gradient-dark shadow-dark shadow text-center border-radius-lg">
-                                        <i class="material-symbols-rounded opacity-10">weekend</i>
-                                    </div>
+                            <div class="card-body p-3">
+                                <div class="table-responsive">
+                                    <table class="table table-bordered table-hover align-middle mb-0">
+                                        <thead class="bg-light">
+                                            <tr>
+                                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder">Type</th>
+                                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder text-center">Total Registration</th>
+                                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder text-center">Paid</th>
+                                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder text-center">Not Paid</th>
+                                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder text-center">Approved</th>
+                                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder text-center">Approval Required</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td class="font-weight-bold">Exhibitor</td>
+                                                <td class="text-center">
+                                                    <a href="{{ route('application.lists', ['type' => 'exhibitor-registration']) }}" class="text-primary font-weight-bold h5 mb-0">
+                                                        {{ $analytics['exhibitor-registration']['total'] ?? 0 }}
+                                                    </a>
+                                                </td>
+                                                <td class="text-center">
+                                                    <a href="{{ route('application.list', ['status' => 'submitted', 'type' => 'exhibitor-registration', 'payment_status' => 'paid']) }}" class="text-success font-weight-bold h5 mb-0">
+                                                        {{ $analytics['exhibitor-registration']['paid'] ?? 0 }}
+                                                    </a>
+                                                </td>
+                                                <td class="text-center">
+                                                    <a href="{{ route('application.list', ['status' => 'submitted', 'type' => 'exhibitor-registration', 'payment_status' => 'unpaid']) }}" class="text-danger font-weight-bold h5 mb-0">
+                                                        {{ $analytics['exhibitor-registration']['unpaid'] ?? 0 }}
+                                                    </a>
+                                                </td>
+                                                <td class="text-center">
+                                                    <a href="{{ route('application.list', ['status' => 'approved', 'type' => 'exhibitor-registration']) }}" class="text-info font-weight-bold h5 mb-0">
+                                                        {{ $analytics['exhibitor-registration']['approved'] ?? 0 }}
+                                                    </a>
+                                                </td>
+                                                <td class="text-center">
+                                                    <a href="{{ route('application.list', ['status' => 'submitted', 'type' => 'exhibitor-registration']) }}" class="text-warning font-weight-bold h5 mb-0">
+                                                        {{ $analytics['exhibitor-registration']['submitted'] ?? 0 }}
+                                                    </a>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td class="font-weight-bold">Startup</td>
+                                                <td class="text-center">
+                                                    <a href="{{ route('application.lists', ['type' => 'startup-zone']) }}" class="text-primary font-weight-bold h5 mb-0">
+                                                        {{ $analytics['startupZone']['total'] ?? 0 }}
+                                                    </a>
+                                                </td>
+                                                <td class="text-center">
+                                                    <a href="{{ route('application.list', ['status' => 'submitted', 'type' => 'startup-zone', 'payment_status' => 'paid']) }}" class="text-success font-weight-bold h5 mb-0">
+                                                        {{ $analytics['startupZone']['paid'] ?? 0 }}
+                                                    </a>
+                                                </td>
+                                                <td class="text-center">
+                                                    <a href="{{ route('application.list', ['status' => 'submitted', 'type' => 'startup-zone', 'payment_status' => 'unpaid']) }}" class="text-danger font-weight-bold h5 mb-0">
+                                                        {{ $analytics['startupZone']['unpaid'] ?? 0 }}
+                                                    </a>
+                                                </td>
+                                                <td class="text-center">
+                                                    <a href="{{ route('application.list', ['status' => 'approved', 'type' => 'startup-zone']) }}" class="text-info font-weight-bold h5 mb-0">
+                                                        {{ $analytics['startupZone']['approved'] ?? 0 }}
+                                                    </a>
+                                                </td>
+                                                <td class="text-center">
+                                                    <a href="{{ route('application.list', ['status' => 'submitted', 'type' => 'startup-zone']) }}" class="text-warning font-weight-bold h5 mb-0">
+                                                        {{ $analytics['startupZone']['submitted'] ?? 0 }}
+                                                    </a>
+                                                </td>
+                                            </tr>
+                                            <tr class="table-light">
+                                                <td class="font-weight-bolder">Total</td>
+                                                <td class="text-center">
+                                                    <span class="text-dark font-weight-bolder h5 mb-0">
+                                                        {{ ($analytics['exhibitor-registration']['total'] ?? 0) + ($analytics['startupZone']['total'] ?? 0) }}
+                                                    </span>
+                                                </td>
+                                                <td class="text-center">
+                                                    <span class="text-success font-weight-bolder h5 mb-0">
+                                                        {{ ($analytics['exhibitor-registration']['paid'] ?? 0) + ($analytics['startupZone']['paid'] ?? 0) }}
+                                                    </span>
+                                                </td>
+                                                <td class="text-center">
+                                                    <span class="text-danger font-weight-bolder h5 mb-0">
+                                                        {{ ($analytics['exhibitor-registration']['unpaid'] ?? 0) + ($analytics['startupZone']['unpaid'] ?? 0) }}
+                                                    </span>
+                                                </td>
+                                                <td class="text-center">
+                                                    <span class="text-info font-weight-bolder h5 mb-0">
+                                                        {{ ($analytics['exhibitor-registration']['approved'] ?? 0) + ($analytics['startupZone']['approved'] ?? 0) }}
+                                                    </span>
+                                                </td>
+                                                <td class="text-center">
+                                                    <span class="text-warning font-weight-bolder h5 mb-0">
+                                                        {{ ($analytics['exhibitor-registration']['submitted'] ?? 0) + ($analytics['startupZone']['submitted'] ?? 0) }}
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
                                 </div>
-                            </div>
-                            <hr class="dark horizontal my-0">
-                            <div class="card-footer p-2 ps-3">
-                                <p class="mb-0 text-sm"><a href="{{ route('application.lists', ['type' => 'startup-zone']) }}"
-                                                           class="text-success font-weight-bolder">Click here</a> for
-                                    more info.</p>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-xl-4 col-sm-6 mb-xl-0 mb-4 ">
-                        <div class="card">
-                            <div class="card-header p-2 ps-3">
-                                <div class="d-flex justify-content-between">
-                                    <div>
-                                        <p class="text-m mb-0 text-capitalize font-weight-black font-weight-bold">
-                                            Total Initiated</p>
-                                        <h4 class="mb-0 mt-1">{{ ($analytics['exhibitor-registration']['initiated'] ?? 0) + ($analytics['startupZone']['initiated'] ?? 0) }}</h4>
-                                        <label class="text-muted d-block mt-1">Exhibitor: {{ $analytics['exhibitor-registration']['initiated'] ?? 0 }} | Startup: {{ $analytics['startupZone']['initiated'] ?? 0 }}</label>
-                                    </div>
-                                    <div
-                                            class="icon icon-md icon-shape bg-gradient-dark shadow-dark shadow text-center border-radius-lg">
-                                        <i class="material-symbols-rounded opacity-10">person</i>
-                                    </div>
-                                </div>
-                            </div>
-                            <hr class="dark horizontal my-0">
-                            <div class="card-footer p-2 ps-3">
-                                <p class="mb-0 text-sm"><a href="{{ route('application.list', ['status' => 'in-progress', 'type' => 'startup-zone']) }}"><span
-                                                    class="text-success font-weight-bolder"> Click here</span> </a>for
-                                    more info.
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-xl-4 col-sm-6 mb-xl-0 mb-4 ">
-                        <div class="card">
-                            <div class="card-header p-2 ps-3">
-                                <div class="d-flex justify-content-between">
-                                    <div>
-                                        <p class="text-m mb-0 text-capitalize font-weight-black font-weight-bold">Total
-                                            Submitted</p>
-                                        <h4 class="mb-0 mt-1">{{ ($analytics['exhibitor-registration']['submitted'] ?? 0) + ($analytics['startupZone']['submitted'] ?? 0) }}</h4>
-                                        <label class="text-muted d-block mt-1">Exhibitor: {{ $analytics['exhibitor-registration']['submitted'] ?? 0 }} | Startup: {{ $analytics['startupZone']['submitted'] ?? 0 }}</label>
-                                    </div>
-                                    <div
-                                            class="icon icon-md icon-shape bg-gradient-dark shadow-dark shadow text-center border-radius-lg">
-                                        <i class="material-symbols-rounded opacity-10">Person</i>
-                                    </div>
-                                </div>
-                            </div>
-                            <hr class="dark horizontal my-0">
-                            <div class="card-footer p-2 ps-3">
-                                <p class="mb-0 text-sm"><a href="{{ route('application.list', ['status' => 'submitted', 'type' => 'startup-zone']) }}"><span
-                                                class="text-success font-weight-bolder">Click here </span> </a>for more
-                                    info.
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-xl-4 col-sm-6 mb-xl-0 mb-4 mt-2  mb-3">
-                        <div class="card">
-                            <div class="card-header p-2 ps-3">
-                                <div class="d-flex justify-content-between">
-                                    <div>
-                                        <p class="text-m mb-0 text-capitalize font-weight-black font-weight-bold">Total
-                                            Approved Application</p>
-                                        <h4 class="mb-0 mt-1">{{ ($analytics['exhibitor-registration']['approved'] ?? 0) + ($analytics['startupZone']['approved'] ?? 0) }}</h4>
-                                        <label class="text-muted d-block mt-1">Exhibitor: {{ $analytics['exhibitor-registration']['approved'] ?? 0 }} | Startup: {{ $analytics['startupZone']['approved'] ?? 0 }}</label>
-                                    </div>
-                                    <div
-                                            class="icon icon-md icon-shape bg-gradient-dark shadow-dark shadow text-center border-radius-lg">
-                                        <i class="material-symbols-rounded opacity-10">weekend</i>
-                                    </div>
-                                </div>
-                            </div>
-                            <hr class="dark horizontal my-0">
-                            <div class="card-footer p-2 ps-3">
-                                <p class="mb-0 text-sm"><a href="{{ route('application.list', ['status' => 'approved', 'type' => 'startup-zone']) }}"
-                                                           class="text-success font-weight-bolder">Click here</a> for
-                                    more
-                                    info.</p>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-xl-4 col-sm-6 mb-xl-0 mb-4 mt-2  mb-3">
-                        <div class="card">
-                            <div class="card-header p-2 ps-3">
-                                <div class="d-flex justify-content-between">
-                                    <div>
-                                        <p class="text-m mb-0 text-capitalize font-weight-black font-weight-bold">Not Paid</p>
-                                        <h4 class="mb-0 mt-1">{{ ($analytics['exhibitor-registration']['unpaid'] ?? 0) + ($analytics['startupZone']['unpaid'] ?? 0) }}</h4>
-                                        <label class="text-muted d-block mt-1">Exhibitor: {{ $analytics['exhibitor-registration']['unpaid'] ?? 0 }} | Startup: {{ $analytics['startupZone']['unpaid'] ?? 0 }}</label>
-                                    </div>
-                                    <div
-                                            class="icon icon-md icon-shape bg-gradient-dark shadow-dark shadow text-center border-radius-lg">
-                                        <i class="material-symbols-rounded opacity-10">weekend</i>
-                                    </div>
-                                </div>
-                            </div>
-                            <hr class="dark horizontal my-0">
-                            <div class="card-footer p-2 ps-3">
-                                <p class="mb-0 text-sm"><a href="{{ route('application.list', ['status' => 'submitted', 'type' => 'startup-zone', 'payment_status' => 'unpaid']) }}"
-                                                           class="text-success font-weight-bolder">Click here</a> for
-                                    more
-                                    info.</p>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-xl-4 col-sm-6 mb-xl-0 mb-4 mt-2  mb-3">
-                        <div class="card">
-                            <div class="card-header p-2 ps-3">
-                                <div class="d-flex justify-content-between">
-                                    <div>
-                                        <p class="text-m mb-0 text-capitalize font-weight-black font-weight-bold">Paid</p>
-                                        <h4 class="mb-0 mt-1">{{ ($analytics['exhibitor-registration']['paid'] ?? 0) + ($analytics['startupZone']['paid'] ?? 0) }}</h4>
-                                        <label class="text-muted d-block mt-1">Exhibitor: {{ $analytics['exhibitor-registration']['paid'] ?? 0 }} | Startup: {{ $analytics['startupZone']['paid'] ?? 0 }}</label>
-                                    </div>
-                                    <div
-                                            class="icon icon-md icon-shape bg-gradient-dark shadow-dark shadow text-center border-radius-lg">
-                                        <i class="material-symbols-rounded opacity-10">weekend</i>
-                                    </div>
-                                </div>
-                            </div>
-                            <hr class="dark horizontal my-0">
-                            <div class="card-footer p-2 ps-3">
-                                <p class="mb-0 text-sm"><a href="{{ route('application.list', ['status' => 'submitted', 'type' => 'startup-zone', 'payment_status' => 'paid']) }}"
-                                                           class="text-success font-weight-bolder">Click here</a> for
-                                    more
-                                    info.</p>
                             </div>
                         </div>
                     </div>
@@ -387,6 +346,8 @@
                 <hr class="dark horizontal my-0">
 
                 {{-- <hr class="dark horizontal my-0"> --}}
+
+                @if($hide == false)
 
                 <div class="ms-3 mt-2">
                     <p class="font-weight-bolder">
@@ -434,6 +395,7 @@
                         </div>
                     </div>
                 </div>
+                @endif
 
                 {{--
                 <div class="ms-3 mt-2">
