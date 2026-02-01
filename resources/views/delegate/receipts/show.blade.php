@@ -358,6 +358,28 @@
                     <td class="label-cell">Subtotal:</td>
                     <td class="value-cell">{{ $currencySymbol }}{{ number_format($receipt->order->subtotal ?? 0, $priceFormat) }}</td>
                 </tr>
+                @if($receipt->order->group_discount_applied && $receipt->order->group_discount_amount > 0)
+                <tr style="background-color: #e7f3ff;">
+                    <td class="label-cell" style="color: #004085;">
+                        <i class="fas fa-users me-1"></i>
+                        Group Discount ({{ number_format($receipt->order->group_discount_rate, 0) }}%):
+                    </td>
+                    <td class="value-cell" style="color: #004085; font-weight: 600;">
+                        -{{ $currencySymbol }}{{ number_format($receipt->order->group_discount_amount, $priceFormat) }}
+                    </td>
+                </tr>
+                @endif
+                @if($receipt->order->discount_amount > 0 && $receipt->order->promoCode)
+                <tr style="background-color: #d4edda;">
+                    <td class="label-cell" style="color: #155724;">
+                        <i class="fas fa-tag me-1"></i>
+                        Promocode Discount:
+                    </td>
+                    <td class="value-cell" style="color: #155724; font-weight: 600;">
+                        -{{ $currencySymbol }}{{ number_format($receipt->order->discount_amount, $priceFormat) }}
+                    </td>
+                </tr>
+                @endif
                 <tr>
                     <td class="label-cell">GST ({{ config('constants.GST_RATE', 18) }}%):</td>
                     <td class="value-cell">{{ $currencySymbol }}{{ number_format($receipt->order->gst_total ?? 0, $priceFormat) }}</td>

@@ -127,7 +127,28 @@ class TicketPaymentController extends Controller
             }
             $subtotal = round($unitPrice * $quantity);
             
-            // Apply promocode discount FIRST (before GST calculation)
+            // Apply Group Discount FIRST (if delegate count > 3, apply 10% discount)
+            $groupDiscountApplied = false;
+            $groupDiscountRate = 0;
+            $groupDiscountAmount = 0;
+            $groupDiscountMinDelegates = config('constants.GROUP_DISCOUNT_MIN_DELEGATES', 4); // Minimum 4 delegates required for group discount
+            
+            if ($quantity >= $groupDiscountMinDelegates) {
+                $groupDiscountApplied = true;
+                $groupDiscountRate = config('constants.GROUP_DISCOUNT_RATE', 10); // Default 10%
+                $groupDiscountAmount = round(($subtotal * $groupDiscountRate) / 100);
+                Log::info('Group discount applied', [
+                    'quantity' => $quantity,
+                    'subtotal' => $subtotal,
+                    'group_discount_rate' => $groupDiscountRate,
+                    'group_discount_amount' => $groupDiscountAmount,
+                ]);
+            }
+            
+            // Subtotal after group discount
+            $subtotalAfterGroupDiscount = round($subtotal - $groupDiscountAmount);
+            
+            // Apply promocode discount SECOND (on amount after group discount)
             $discountAmount = 0;
             $promoCodeId = null;
             $promoCodeService = new TicketPromoCodeService();
@@ -142,14 +163,14 @@ class TicketPaymentController extends Controller
                         'registration_category_id' => $registrationData['registration_category_id'] ?? null,
                         'selected_event_day_id' => $selectedAllDays ? null : $selectedEventDayId,
                         'delegate_count' => $quantity,
-                        'base_amount' => $subtotal,
+                        'base_amount' => $subtotalAfterGroupDiscount, // Use amount after group discount
                     ];
                     
                     $validationResult = $promoCodeService->validatePromoCode($promoCode->code, $event->id, $validationData);
                     
                     if ($validationResult['valid']) {
-                        // Calculate discount on base amount (subtotal) only
-                        $discountAmount = $promoCodeService->calculateDiscount($promoCode, $subtotal);
+                        // Calculate discount on amount after group discount
+                        $discountAmount = $promoCodeService->calculateDiscount($promoCode, $subtotalAfterGroupDiscount);
                         $promoCodeId = $promoCode->id;
                     } else {
                         // Promocode invalid, clear from session
@@ -162,8 +183,8 @@ class TicketPaymentController extends Controller
                 }
             }
             
-            // Calculate subtotal after discount (GST will be calculated on this)
-            $subtotalAfterDiscount = round($subtotal - $discountAmount);
+            // Calculate subtotal after all discounts (GST will be calculated on this)
+            $subtotalAfterDiscount = round($subtotalAfterGroupDiscount - $discountAmount);
             
             // Determine GST type and calculate GST on discounted amount
             $gstService = new TicketGstCalculationService();
@@ -197,33 +218,36 @@ class TicketPaymentController extends Controller
             // Check if complimentary (100% discount)
             $isComplimentary = $total <= 0;
 
-            // Create or get contact (use first delegate email if contact email not provided)
-            $contactEmail = $registrationData['contact_email'] ?? ($registrationData['delegates'][0]['email'] ?? null);
-            $contactName = $registrationData['contact_name'] ?? ($registrationData['delegates'][0]['first_name'] . ' ' . ($registrationData['delegates'][0]['last_name'] ?? ''));
-            $contactPhone = $this->formatPhoneNumber($registrationData['contact_phone'] ?? ($registrationData['delegates'][0]['phone'] ?? null));
+            // Create or get contact (use first delegate if contact details not provided)
+            // Use empty() check instead of ?? to handle both null and empty strings
+            $firstDelegate = $registrationData['delegates'][0] ?? null;
+            
+            $contactEmail = !empty($registrationData['contact_email']) 
+                ? $registrationData['contact_email'] 
+                : ($firstDelegate['email'] ?? null);
+            
+            $contactName = !empty($registrationData['contact_name']) 
+                ? $registrationData['contact_name'] 
+                : (($firstDelegate['first_name'] ?? '') . ' ' . ($firstDelegate['last_name'] ?? ''));
+            
+            $contactPhone = !empty($registrationData['contact_phone']) 
+                ? $registrationData['contact_phone'] 
+                : ($firstDelegate['phone'] ?? null);
+            
+            // Format phone number consistently
+            $contactPhone = $this->formatPhoneNumber($contactPhone);
             
             if ($contactEmail) {
                 $contact = TicketContact::firstOrCreate(
                     ['email' => $contactEmail],
                     [
-                        'name' => $contactName,
+                        'name' => trim($contactName),
                         'phone' => $contactPhone,
                     ]
                 );
             } else {
-                // Fallback: use first delegate
-                $firstDelegate = $registrationData['delegates'][0] ?? null;
-                if ($firstDelegate) {
-                    $contact = TicketContact::firstOrCreate(
-                        ['email' => $firstDelegate['email']],
-                        [
-                            'name' => $firstDelegate['first_name'] . ' ' . ($firstDelegate['last_name'] ?? ''),
-                            'phone' => $this->formatPhoneNumber($firstDelegate['phone'] ?? null),
-                        ]
-                    );
-                } else {
-                    throw new \Exception('Unable to create contact: No contact email or delegate email provided.');
-                }
+                // No contact email available - this shouldn't happen since we fallback to first delegate above
+                throw new \Exception('Unable to create contact: No contact email or delegate email provided.');
             }
 
             // Create registration
@@ -266,6 +290,10 @@ class TicketPaymentController extends Controller
                 'processing_charge_total' => $processingChargeAmount,
                 'discount_amount' => $discountAmount,
                 'promo_code_id' => $promoCodeId,
+                'group_discount_applied' => $groupDiscountApplied,
+                'group_discount_rate' => $groupDiscountRate,
+                'group_discount_amount' => $groupDiscountAmount,
+                'group_discount_min_delegates' => $groupDiscountApplied ? $groupDiscountMinDelegates : null,
                 'total' => max(0, $total), // Ensure total doesn't go negative
                 'status' => $isComplimentary ? 'paid' : 'pending',
                 'payment_status' => $isComplimentary ? 'complimentary' : 'pending',
@@ -428,14 +456,38 @@ class TicketPaymentController extends Controller
             // Reload order with relationships
             $order->load(['registration.contact', 'items.ticketType', 'registration.delegates', 'registration.registrationCategory']);
 
-            // Send registration confirmation email with payment link
+            // Send registration confirmation email with payment link to contact and all delegates
             try {
                 $contactEmail = $order->registration->contact->email ?? null;
+                $sentEmails = []; // Track sent emails to avoid duplicates
+                
+                // Send to primary contact
                 if ($contactEmail) {
                     Mail::to($contactEmail)
                         ->bcc('test.interlinks@gmail.com')
                         ->send(new TicketRegistrationMail($order, $event));
+                    $sentEmails[] = strtolower($contactEmail);
                 }
+                
+                // Send individual emails to each delegate (excluding already sent)
+                $delegates = $order->registration->delegates ?? collect();
+                foreach ($delegates as $delegate) {
+                    $delegateEmail = strtolower(trim($delegate->email ?? ''));
+                    if (!empty($delegateEmail) && !in_array($delegateEmail, $sentEmails)) {
+                        try {
+                            Mail::to($delegateEmail)->send(new TicketRegistrationMail($order, $event));
+                            $sentEmails[] = $delegateEmail;
+                        } catch (\Exception $e) {
+                            Log::warning('Failed to send email to delegate', [
+                                'delegate_email' => $delegateEmail,
+                                'order_id' => $order->id,
+                                'error' => $e->getMessage(),
+                            ]);
+                        }
+                    }
+                }
+                
+                // NOTE: Admin emails for delegate registrations are sent only after payment success
             } catch (\Exception $e) {
                 Log::error('Failed to send ticket registration email', [
                     'order_id' => $order->id,
@@ -623,13 +675,51 @@ class TicketPaymentController extends Controller
                         ]);
                     }
 
-                    // Send payment acknowledgement email (payment successful)
-                    // Note: Email is sent to user only. Admin notifications should be handled separately if needed.
+                    // Send payment acknowledgement email to contact and all delegates
                     try {
                         $contactEmail = $order->registration->contact->email ?? null;
+                        $sentEmails = []; // Track sent emails to avoid duplicates
+                        
+                        // Send to primary contact
                         if ($contactEmail) {
-                            // Send email to user only (removed BCC to admin - admin notifications should be separate)
                             Mail::to($contactEmail)->send(new TicketRegistrationMail($order, $event, true));
+                            $sentEmails[] = strtolower($contactEmail);
+                        }
+                        
+                        // Send individual emails to each delegate
+                        $delegates = $order->registration->delegates ?? collect();
+                        foreach ($delegates as $delegate) {
+                            $delegateEmail = strtolower(trim($delegate->email ?? ''));
+                            if (!empty($delegateEmail) && !in_array($delegateEmail, $sentEmails)) {
+                                try {
+                                    Mail::to($delegateEmail)->send(new TicketRegistrationMail($order, $event, true));
+                                    $sentEmails[] = $delegateEmail;
+                                } catch (\Exception $e) {
+                                    Log::warning('Failed to send payment email to delegate', [
+                                        'delegate_email' => $delegateEmail,
+                                        'order_id' => $order->id,
+                                        'error' => $e->getMessage(),
+                                    ]);
+                                }
+                            }
+                        }
+                        
+                        // Send individual emails to configured admin list for delegate registrations
+                        $adminEmails = config('constants.registration_emails.delegate', []);
+                        foreach ($adminEmails as $adminEmail) {
+                            $adminEmail = strtolower(trim($adminEmail));
+                            if (!empty($adminEmail) && !in_array($adminEmail, $sentEmails)) {
+                                try {
+                                    Mail::to($adminEmail)->send(new TicketRegistrationMail($order, $event, true));
+                                    $sentEmails[] = $adminEmail;
+                                } catch (\Exception $e) {
+                                    Log::warning('Failed to send payment email to admin', [
+                                        'admin_email' => $adminEmail,
+                                        'order_id' => $order->id,
+                                        'error' => $e->getMessage(),
+                                    ]);
+                                }
+                            }
                         }
                     } catch (\Exception $e) {
                         Log::error('Failed to send ticket payment acknowledgement email', [
@@ -956,14 +1046,36 @@ class TicketPaymentController extends Controller
         // Remove all spaces
         $phone = str_replace(' ', '', trim($phone));
         
-        // If already in format +CC-NUMBER, return as-is
+        // If already in format +CC-NUMBER, validate and return
         if (preg_match('/^(\+\d{1,3})-(\d+)$/', $phone, $matches)) {
+            $countryCode = $matches[1];
+            $number = $matches[2];
+            
+            // Validate phone number has at least 7 digits (minimum for most countries)
+            if (strlen($number) < 7) {
+                Log::warning('Phone number too short', [
+                    'phone' => $phone,
+                    'number_length' => strlen($number),
+                ]);
+            }
+            
             return $phone; // Already formatted correctly
         }
         
         // If phone starts with + but no dash, add dash after country code
         if (preg_match('/^(\+\d{1,3})(\d+)$/', $phone, $matches)) {
-            return $matches[1] . '-' . $matches[2];
+            $countryCode = $matches[1];
+            $number = $matches[2];
+            
+            // Validate phone number has at least 7 digits
+            if (strlen($number) < 7) {
+                Log::warning('Phone number too short', [
+                    'phone' => $phone,
+                    'number_length' => strlen($number),
+                ]);
+            }
+            
+            return $countryCode . '-' . $number;
         }
         
         return $phone;

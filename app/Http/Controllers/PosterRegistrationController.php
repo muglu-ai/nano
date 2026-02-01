@@ -1560,14 +1560,15 @@ class PosterRegistrationController extends Controller
                         'pp_email' => $poster->pp_email,
                     ]);
                     
+                    $sentEmails = [];
+                    
                     // Send email to lead author
                     if ($poster->lead_email) {
                         Log::info('Poster Payment Callback: Sending email to lead author', [
                             'email' => $poster->lead_email,
                         ]);
-                        Mail::to($poster->lead_email)
-                            ->bcc(['test.interlinks@gmail.com'])
-                            ->send(new \App\Mail\PosterMail($poster, 'payment_thank_you', $invoice, $paymentDetails));
+                        Mail::to($poster->lead_email)->send(new \App\Mail\PosterMail($poster, 'payment_thank_you', $invoice, $paymentDetails));
+                        $sentEmails[] = strtolower($poster->lead_email);
                         Log::info('Poster Payment Callback: Email sent to lead author', [
                             'email' => $poster->lead_email,
                         ]);
@@ -1578,24 +1579,34 @@ class PosterRegistrationController extends Controller
                     }
                     
                     // Send email to poster presenter (if different from lead author)
-                    if ($poster->pp_email && $poster->pp_email !== $poster->lead_email) {
+                    if ($poster->pp_email && strtolower($poster->pp_email) !== strtolower($poster->lead_email ?? '')) {
                         Log::info('Poster Payment Callback: Sending email to poster presenter', [
                             'email' => $poster->pp_email,
                         ]);
-                        Mail::to($poster->pp_email)
-                            ->bcc(['test.interlinks@gmail.com'])
-                            ->send(new \App\Mail\PosterMail($poster, 'payment_thank_you', $invoice, $paymentDetails));
+                        Mail::to($poster->pp_email)->send(new \App\Mail\PosterMail($poster, 'payment_thank_you', $invoice, $paymentDetails));
+                        $sentEmails[] = strtolower($poster->pp_email);
                         Log::info('Poster Payment Callback: Email sent to poster presenter', [
                             'email' => $poster->pp_email,
                         ]);
-                    } elseif ($poster->pp_email && $poster->pp_email === $poster->lead_email) {
-                        Log::info('Poster Payment Callback: Skipping poster presenter email (same as lead author)', [
-                            'email' => $poster->pp_email,
-                        ]);
-                    } else {
-                        Log::warning('Poster Payment Callback: No poster presenter email found', [
-                            'poster_id' => $poster->id,
-                        ]);
+                    }
+                    
+                    // Send individual emails to configured admin list for poster registrations
+                    $posterAdminEmails = config('constants.registration_emails.poster', []);
+                    foreach ($posterAdminEmails as $adminEmail) {
+                        $adminEmail = strtolower(trim($adminEmail));
+                        if (!empty($adminEmail) && !in_array($adminEmail, $sentEmails)) {
+                            try {
+                                Mail::to($adminEmail)->send(new \App\Mail\PosterMail($poster, 'payment_thank_you', $invoice, $paymentDetails));
+                                $sentEmails[] = $adminEmail;
+                                Log::info('Poster Payment Callback: Email sent to admin', ['admin_email' => $adminEmail]);
+                            } catch (\Exception $e) {
+                                Log::warning('Poster Payment Callback: Failed to send email to admin', [
+                                    'admin_email' => $adminEmail,
+                                    'poster_id' => $poster->id,
+                                    'error' => $e->getMessage(),
+                                ]);
+                            }
+                        }
                     }
                 } catch (\Exception $e) {
                     Log::error('Failed to send poster payment thank you email (Callback)', [
@@ -1824,14 +1835,15 @@ class PosterRegistrationController extends Controller
                         'pp_email' => $poster->pp_email,
                     ]);
                     
+                    $sentEmails = [];
+                    
                     // Send email to lead author
                     if ($poster->lead_email) {
                         Log::info('Poster Payment PayPal: Sending email to lead author', [
                             'email' => $poster->lead_email,
                         ]);
-                        Mail::to($poster->lead_email)
-                            ->bcc(['test.interlinks@gmail.com'])
-                            ->send(new \App\Mail\PosterMail($poster, 'payment_thank_you', $invoice, $paymentDetails));
+                        Mail::to($poster->lead_email)->send(new \App\Mail\PosterMail($poster, 'payment_thank_you', $invoice, $paymentDetails));
+                        $sentEmails[] = strtolower($poster->lead_email);
                         Log::info('Poster Payment PayPal: Email sent to lead author', [
                             'email' => $poster->lead_email,
                         ]);
@@ -1842,24 +1854,34 @@ class PosterRegistrationController extends Controller
                     }
                     
                     // Send email to poster presenter (if different from lead author)
-                    if ($poster->pp_email && $poster->pp_email !== $poster->lead_email) {
+                    if ($poster->pp_email && strtolower($poster->pp_email) !== strtolower($poster->lead_email ?? '')) {
                         Log::info('Poster Payment PayPal: Sending email to poster presenter', [
                             'email' => $poster->pp_email,
                         ]);
-                        Mail::to($poster->pp_email)
-                            ->bcc(['test.interlinks@gmail.com'])
-                            ->send(new \App\Mail\PosterMail($poster, 'payment_thank_you', $invoice, $paymentDetails));
+                        Mail::to($poster->pp_email)->send(new \App\Mail\PosterMail($poster, 'payment_thank_you', $invoice, $paymentDetails));
+                        $sentEmails[] = strtolower($poster->pp_email);
                         Log::info('Poster Payment PayPal: Email sent to poster presenter', [
                             'email' => $poster->pp_email,
                         ]);
-                    } elseif ($poster->pp_email && $poster->pp_email === $poster->lead_email) {
-                        Log::info('Poster Payment PayPal: Skipping poster presenter email (same as lead author)', [
-                            'email' => $poster->pp_email,
-                        ]);
-                    } else {
-                        Log::warning('Poster Payment PayPal: No poster presenter email found', [
-                            'poster_id' => $poster->id,
-                        ]);
+                    }
+                    
+                    // Send individual emails to configured admin list for poster registrations
+                    $posterAdminEmails = config('constants.registration_emails.poster', []);
+                    foreach ($posterAdminEmails as $adminEmail) {
+                        $adminEmail = strtolower(trim($adminEmail));
+                        if (!empty($adminEmail) && !in_array($adminEmail, $sentEmails)) {
+                            try {
+                                Mail::to($adminEmail)->send(new \App\Mail\PosterMail($poster, 'payment_thank_you', $invoice, $paymentDetails));
+                                $sentEmails[] = $adminEmail;
+                                Log::info('Poster Payment PayPal: Email sent to admin', ['admin_email' => $adminEmail]);
+                            } catch (\Exception $e) {
+                                Log::warning('Poster Payment PayPal: Failed to send email to admin', [
+                                    'admin_email' => $adminEmail,
+                                    'poster_id' => $poster->id,
+                                    'error' => $e->getMessage(),
+                                ]);
+                            }
+                        }
                     }
                 } catch (\Exception $e) {
                     Log::error('Failed to send poster payment thank you email (PayPal)', [

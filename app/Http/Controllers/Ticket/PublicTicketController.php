@@ -354,7 +354,7 @@ class PublicTicketController extends Controller
             'company_state' => 'nullable|string|max:255',
             'company_city' => 'nullable|string|max:255',
             'postal_code' => 'nullable|string|max:20',
-            'phone' => 'required|string|min:8|max:20',
+            'phone' => 'required|string|max:20',
             'email' => 'nullable|email|max:255',
             'gst_required' => 'required|in:0,1',
             'gstin' => 'nullable|string|max:15|regex:/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/',
@@ -368,7 +368,7 @@ class PublicTicketController extends Controller
             'delegates.*.first_name' => 'required|string|max:255',
             'delegates.*.last_name' => 'required|string|max:255',
             'delegates.*.email' => 'required|email|max:255',
-            'delegates.*.phone' => 'nullable|string|min:8|max:20',
+            'delegates.*.phone' => 'required|string|max:20',
             'delegates.*.salutation' => 'nullable|string|max:10',
             'delegates.*.job_title' => 'nullable|string|max:255',
             'delegates.*.linkedin_profile' => 'nullable|url|max:500',
@@ -706,7 +706,22 @@ class PublicTicketController extends Controller
         }
         $subtotal = round($unitPrice * $quantity);
         
-        // Apply promocode discount FIRST (before GST calculation)
+        // Apply Group Discount FIRST (if delegate count > 3, apply 10% discount)
+        $groupDiscountApplied = false;
+        $groupDiscountRate = 0;
+        $groupDiscountAmount = 0;
+        $groupDiscountMinDelegates = config('constants.GROUP_DISCOUNT_MIN_DELEGATES', 4); // Minimum 4 delegates required for group discount
+        
+        if ($quantity >= $groupDiscountMinDelegates) {
+            $groupDiscountApplied = true;
+            $groupDiscountRate = config('constants.GROUP_DISCOUNT_RATE', 10); // Default 10%
+            $groupDiscountAmount = round(($subtotal * $groupDiscountRate) / 100);
+        }
+        
+        // Subtotal after group discount
+        $subtotalAfterGroupDiscount = round($subtotal - $groupDiscountAmount);
+        
+        // Apply promocode discount SECOND (on amount after group discount)
         $discountAmount = 0;
         $promocodeData = session('ticket_promocode');
         $promocodeCode = null;
@@ -722,14 +737,14 @@ class PublicTicketController extends Controller
                     'registration_category_id' => $registrationData['registration_category_id'] ?? null,
                     'selected_event_day_id' => ($selectedEventDayId === 'all' || $selectedAllDays) ? null : $selectedEventDayId,
                     'delegate_count' => $quantity,
-                    'base_amount' => $subtotal,
+                    'base_amount' => $subtotalAfterGroupDiscount, // Use amount after group discount
                 ];
                 
                 $validationResult = $promoCodeService->validatePromoCode($promoCode->code, $event->id, $validationData);
                 
                 if ($validationResult['valid']) {
-                    // Calculate discount on base amount only
-                    $discountAmount = $promoCodeService->calculateDiscount($promoCode, $subtotal);
+                    // Calculate discount on amount after group discount
+                    $discountAmount = $promoCodeService->calculateDiscount($promoCode, $subtotalAfterGroupDiscount);
                     $promocodeCode = $promoCode->code;
                     $promocodeDiscountPercentage = $promoCode->type === 'percentage' ? $promoCode->value : null;
                 } else {
@@ -739,8 +754,8 @@ class PublicTicketController extends Controller
             }
         }
         
-        // Calculate subtotal after discount (GST will be calculated on this)
-        $subtotalAfterDiscount = round($subtotal - $discountAmount);
+        // Calculate subtotal after all discounts (GST will be calculated on this)
+        $subtotalAfterDiscount = round($subtotalAfterGroupDiscount - $discountAmount);
         
         // Determine GST type and calculate GST on discounted amount
         $gstService = new TicketGstCalculationService();
@@ -798,6 +813,10 @@ class PublicTicketController extends Controller
             'quantity',
             'unitPrice',
             'subtotal',
+            'groupDiscountApplied',
+            'groupDiscountRate',
+            'groupDiscountAmount',
+            'groupDiscountMinDelegates',
             'gstType',
             'cgstRate',
             'cgstAmount',
@@ -1193,14 +1212,36 @@ class PublicTicketController extends Controller
         // Remove all spaces
         $phone = str_replace(' ', '', trim($phone));
         
-        // If already in format +CC-NUMBER, return as-is
+        // If already in format +CC-NUMBER, validate and return
         if (preg_match('/^(\+\d{1,3})-(\d+)$/', $phone, $matches)) {
+            $countryCode = $matches[1];
+            $number = $matches[2];
+            
+            // Validate phone number has at least 7 digits (minimum for most countries)
+            if (strlen($number) < 7) {
+                \Log::warning('Phone number too short', [
+                    'phone' => $phone,
+                    'number_length' => strlen($number),
+                ]);
+            }
+            
             return $phone; // Already formatted correctly
         }
         
         // If phone starts with + but no dash, add dash after country code
         if (preg_match('/^(\+\d{1,3})(\d+)$/', $phone, $matches)) {
-            return $matches[1] . '-' . $matches[2];
+            $countryCode = $matches[1];
+            $number = $matches[2];
+            
+            // Validate phone number has at least 7 digits
+            if (strlen($number) < 7) {
+                \Log::warning('Phone number too short', [
+                    'phone' => $phone,
+                    'number_length' => strlen($number),
+                ]);
+            }
+            
+            return $countryCode . '-' . $number;
         }
         
         return $phone;

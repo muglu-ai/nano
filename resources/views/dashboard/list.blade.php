@@ -123,9 +123,11 @@
                                         $status = explode(' - ', trim($slug))[0];
                                     @endphp
                                     <th class=" text-uppercase text-start text-white text-wrap">Reg Date</th>
+                                    <th class=" text-uppercase text-white text-wrap">Tin No.</th>
                                     <th class="text-start text-uppercase text-white text-wrap"
                                         style="min-width: 150px;">Company Name
                                     </th>
+                                   
 {{--                                    <th class=" text-uppercase text-white" style="min-width: 150px;">Country</th>--}}
 {{--                                    <th class="text-uppercase text-white text-wrap">Requested Booth Size <br> (in sqm)--}}
 {{--                                    </th>--}}
@@ -166,6 +168,13 @@
                                             <td class="custom-td" style="min-width: 10px; word-wrap: break-word;">
                                                 <span class="text-md text-dark">{{ $application->created_at ?? '' }}</span>
                                             </td>
+                                            <td class="custom-td">
+                                                <div class="d-flex px-2 py-1">
+                                                    <div class="d-flex flex-column">
+                                                        <p class="mb-0 text-md text-dark">{{ $application->application_id ?? 'N/A'}}</p>
+                                                    </div>
+                                                </div>
+                                            </td>
                                             <td class="custom-td" style="min-width: 80px; word-wrap: break-word;">
                                                 <div class="d-flex flex-column" style="word-break: break-word; overflow-wrap: break-word; white-space: normal; max-width: 150px;">
                                                     <p class="mb-0 text-md text-dark"><a class="text-md text-info " href="{{ route('application.view', ['application_id' => $application->application_id]) }}">
@@ -174,6 +183,7 @@
                                                     </p>
                                                 </div>
                                             </td>
+                                            
 {{--                                            <td class="custom-td text-start">--}}
 {{--                                                <div class="d-flex px-2 py-1 text-start">--}}
 {{--                                                    <div class="d-flex flex-column"--}}

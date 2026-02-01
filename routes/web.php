@@ -210,6 +210,15 @@ Route::middleware(['auth', Auth::class])->prefix('admin/tickets')->name('admin.t
     Route::get('/registration/list', [\App\Http\Controllers\Ticket\AdminTicketController::class, 'registrationList'])->name('registration.list');
 });
 
+// Admin Poster Registration Routes
+Route::middleware(['auth', Auth::class])->prefix('admin/posters')->name('admin.posters.')->group(function () {
+    Route::get('/analytics', [\App\Http\Controllers\AdminPosterController::class, 'analytics'])->name('analytics');
+    Route::get('/list', [\App\Http\Controllers\AdminPosterController::class, 'list'])->name('list');
+    Route::get('/export', [\App\Http\Controllers\AdminPosterController::class, 'export'])->name('export');
+    Route::get('/{id}', [\App\Http\Controllers\AdminPosterController::class, 'show'])->name('show');
+    Route::post('/{id}/resend-email', [\App\Http\Controllers\AdminPosterController::class, 'resendEmail'])->name('resend-email');
+});
+
 Route::get('send-exhibitor-chkdin2', [AdminController::  class, 'sendAllData'])->name('send.exhibitor.chkdin')->middleware(Auth::class);
 Route::get('get-users', [AdminController::class, 'getUsers'])->name('getUsers')->middleware(Auth::class);
 Route::get('get-users2', [AdminController::class, 'getUsers'])->name('getUsers2')->middleware(Auth::class);
@@ -1027,6 +1036,9 @@ Route::middleware(['auth', Auth::class])->group(function () {
 });
 Route::middleware(['auth', Auth::class])->group(function () {
     Route::get('/admin/dashboard', [DashboardController::class, 'exhibitorDashboard_new'])->name('dashboard.admin');
+    Route::get('/admin/event-analytics', [DashboardController::class, 'eventAnalytics'])->name('admin.event.analytics');
+    Route::get('/admin/registration-category/{category}', [DashboardController::class, 'registrationCategoryDetails'])->name('admin.registration.category.details');
+    Route::get('/admin/delegate-details/{registrationId}', [DashboardController::class, 'delegateDetails'])->name('admin.delegate.details');
     Route::get('/admin/feedback', [AdminFeedbackController::class, 'index'])->name('admin.feedback.index');
 });
 
@@ -1125,6 +1137,7 @@ Route::get('/send-invite-mail-custom', function () {
 // Admin Enquiry Management Routes
 Route::middleware(['auth', Auth::class])->prefix('admin/enquiries')->name('enquiries.')->group(function () {
     Route::get('/', [EnquiryController::class, 'index'])->name('index');
+    Route::get('/export', [EnquiryController::class, 'export'])->name('export');
     Route::get('/{id}', [EnquiryController::class, 'show'])->name('show');
     Route::put('/{id}/status', [EnquiryController::class, 'updateStatus'])->name('status');
     Route::put('/{id}/assign', [EnquiryController::class, 'assign'])->name('assign');

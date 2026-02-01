@@ -27,6 +27,10 @@ class TicketOrder extends Model
         'processing_charge_total', // Total processing charges across all items
         'discount_amount', // Promo code discount
         'promo_code_id',
+        'group_discount_applied', // Whether group discount was applied
+        'group_discount_rate', // Group discount percentage (e.g., 10 for 10%)
+        'group_discount_amount', // Calculated group discount amount
+        'group_discount_min_delegates', // Minimum delegates required for group discount
         'total', // Final total: subtotal + gst_total + processing_charge_total - discount_amount
         'status', // 'pending', 'paid', 'cancelled', 'refunded'
         'payment_status', // 'pending', 'paid', 'complimentary', 'cancelled', 'refunded'
@@ -54,6 +58,9 @@ class TicketOrder extends Model
         'igst_total' => 'decimal:2',
         'processing_charge_total' => 'decimal:2',
         'discount_amount' => 'decimal:2',
+        'group_discount_applied' => 'boolean',
+        'group_discount_rate' => 'decimal:2',
+        'group_discount_amount' => 'decimal:2',
         'total' => 'decimal:2',
     ];
 

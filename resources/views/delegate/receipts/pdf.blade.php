@@ -82,6 +82,18 @@
                 @endforeach
             </tbody>
             <tfoot>
+                @if($receipt->order->group_discount_applied && $receipt->order->group_discount_amount > 0)
+                <tr style="background-color: #e7f3ff;">
+                    <td colspan="3" style="text-align: right; color: #004085;">Group Discount ({{ number_format($receipt->order->group_discount_rate, 0) }}%):</td>
+                    <td style="color: #004085;">-{{ number_format($receipt->order->group_discount_amount, 2) }} {{ $receipt->order->registration->nationality === 'International' ? 'USD' : 'INR' }}</td>
+                </tr>
+                @endif
+                @if($receipt->order->discount_amount > 0 && $receipt->order->promoCode)
+                <tr style="background-color: #d4edda;">
+                    <td colspan="3" style="text-align: right; color: #155724;">Promocode Discount:</td>
+                    <td style="color: #155724;">-{{ number_format($receipt->order->discount_amount, 2) }} {{ $receipt->order->registration->nationality === 'International' ? 'USD' : 'INR' }}</td>
+                </tr>
+                @endif
                 <tr class="total-row">
                     <td colspan="3" style="text-align: right;">Total:</td>
                     <td>{{ number_format($receipt->order->total ?? 0, 2) }} {{ $receipt->order->registration->nationality === 'International' ? 'USD' : 'INR' }}</td>

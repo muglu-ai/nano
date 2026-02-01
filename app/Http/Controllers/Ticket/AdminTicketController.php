@@ -328,20 +328,45 @@ class AdminTicketController extends Controller
             }
 
             $event = $registration->event ?? Events::first();
+            $sentEmails = [];
+            $contactEmail = $registration->contact->email;
 
-            Mail::to($registration->contact->email)->send(
+            // Send to primary contact
+            Mail::to($contactEmail)->send(
                 new TicketRegistrationMail($registration->order, $event, $isPaymentSuccessful)
             );
+            $sentEmails[] = strtolower($contactEmail);
+            
+            // Send individual emails to each delegate
+            $registration->load('delegates');
+            $delegates = $registration->delegates ?? collect();
+            foreach ($delegates as $delegate) {
+                $delegateEmail = strtolower(trim($delegate->email ?? ''));
+                if (!empty($delegateEmail) && !in_array($delegateEmail, $sentEmails)) {
+                    try {
+                        Mail::to($delegateEmail)->send(
+                            new TicketRegistrationMail($registration->order, $event, $isPaymentSuccessful)
+                        );
+                        $sentEmails[] = $delegateEmail;
+                    } catch (\Exception $e) {
+                        Log::warning('Failed to send email to delegate', [
+                            'delegate_email' => $delegateEmail,
+                            'registration_id' => $registration->id,
+                            'error' => $e->getMessage(),
+                        ]);
+                    }
+                }
+            }
 
             Log::info('Ticket registration email resent by admin', [
                 'registration_id' => $registration->id,
                 'order_id' => $registration->order->id,
-                'email' => $registration->contact->email,
+                'emails_sent' => $sentEmails,
                 'email_type' => $emailType,
                 'admin_id' => auth()->id(),
             ]);
 
-            return back()->with('success', 'Email sent successfully to ' . $registration->contact->email);
+            return back()->with('success', 'Email sent successfully to ' . count($sentEmails) . ' recipients: ' . implode(', ', $sentEmails));
         } catch (\Exception $e) {
             Log::error('Error resending ticket registration email', [
                 'registration_id' => $registration->id,

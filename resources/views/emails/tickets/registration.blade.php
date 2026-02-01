@@ -4,301 +4,31 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Payment Confirmation - {{ config('constants.EVENT_NAME') }} {{ config('constants.EVENT_YEAR') }}</title>
-    <style>
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            line-height: 1.5;
-            color: #333333;
-            max-width: 650px;
-            margin: 0 auto;
-            padding: 10px;
-            background-color: #f5f5f5;
-            font-size: 14px;
-        }
-        .email-container {
-            background: #ffffff;
-            border-radius: 0;
-            overflow: hidden;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-        }
-        .header {
-            background: #ffffff;
-            color: #333333;
-            padding: 12px 15px;
-            border-bottom: 2px solid #e0e0e0;
-        }
-        .event-logo {
-            max-width: 100%;
-            height: auto;
-            max-height: 80px;
-        }
-        .emailer-header {
-            max-width: auto%;
-            height: auto;
-            max-height: 100px;
-        }
-        .social-links a {
-            display: inline-block;
-            margin: 0 4px;
-            text-decoration: none;
-            vertical-align: middle;
-        }
-        .social-links img {
-            width: 28px;
-            height: 28px;
-        }
-        .receipt-header {
-            width: 100%;
-            padding: 10px 15px;
-            background: #f5f5f5;
-            border-bottom: 1px solid #e0e0e0;
-        }
-        .receipt-type {
-            background: #ffffff;
-            color: #333333;
-            padding: 5px 12px;
-            display: inline-block;
-            font-weight: 700;
-            font-size: 12px;
-            border: 1px solid #d0d0d0;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-        .content {
-            padding: 15px 18px;
-        }
-        .order-info {
-            background: #f5f5f5;
-            border-left: 4px solid #0066cc;
-            padding: 12px 15px;
-            margin: 10px 0;
-        }
-        .section-title {
-            color: #333333;
-            font-size: 15px;
-            font-weight: 700;
-            margin: 15px 0 8px 0;
-            padding-bottom: 6px;
-            border-bottom: 2px solid #0066cc;
-        }
-        .info-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-bottom: 10px;
-        }
-        .info-table td {
-            padding: 8px 10px;
-            border: 1px solid #e0e0e0;
-            font-size: 13px;
-            vertical-align: top;
-        }
-        .info-table .label {
-            background: #f8f9fa;
-            font-weight: 600;
-            color: #555555;
-            width: 40%;
-        }
-        .info-table .value {
-            color: #333333;
-            width: 60%;
-        }
-        .delegates-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin: 8px 0;
-            font-size: 12px;
-        }
-        .delegates-table th {
-            background: #0066cc;
-            color: #ffffff;
-            padding: 10px 8px;
-            text-align: left;
-            font-weight: 600;
-            font-size: 12px;
-        }
-        .delegates-table td {
-            padding: 8px;
-            border: 1px solid #e0e0e0;
-            font-size: 12px;
-        }
-        .delegates-table tr:nth-child(even) {
-            background: #f8f9fa;
-        }
-
-        /* Mobile Responsiveness for Email */
-        @media only screen and (max-width: 600px) {
-            .delegates-table {
-                font-size: 11px;
-                overflow-x: auto;
-                display: block;
-                white-space: nowrap;
-            }
-
-            .delegates-table th,
-            .delegates-table td {
-                padding: 6px 4px;
-                min-width: 80px;
-                word-wrap: break-word;
-                white-space: normal;
-            }
-
-            .delegates-table th {
-                font-size: 10px;
-            }
-        }
-
-        .price-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin: 8px 0;
-        }
-        .price-table td {
-            padding: 8px 10px;
-            border: 1px solid #e0e0e0;
-            font-size: 13px;
-        }
-        .price-table .label-col {
-            background: #f8f9fa;
-            font-weight: 500;
-            width: 70%;
-        }
-        .price-table .value-col {
-            text-align: right;
-            font-weight: 600;
-            width: 30%;
-        }
-        .price-table .total-row td {
-            background: #0066cc;
-            color: #ffffff;
-            font-size: 15px;
-            font-weight: 700;
-        }
-        .btn-pay-now {
-            display: inline-block;
-            background: #28a745;
-            color: #ffffff !important;
-            padding: 14px 35px;
-            text-decoration: none;
-            border-radius: 5px;
-            font-weight: 700;
-            font-size: 14px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-        .alert {
-            background: #fff3cd;
-            border: 1px solid #ffc107;
-            border-left: 4px solid #ffc107;
-            padding: 12px 15px;
-            margin: 10px 0;
-            font-size: 13px;
-            color: #856404;
-        }
-        .success-alert {
-            background: #d4edda;
-            border: 1px solid #28a745;
-            border-left: 4px solid #28a745;
-            padding: 12px 15px;
-            margin: 10px 0;
-            font-size: 13px;
-            color: #155724;
-        }
-        .payment-badge {
-            display: inline-block;
-            padding: 4px 12px;
-            border-radius: 4px;
-            font-size: 11px;
-            font-weight: 700;
-            text-transform: uppercase;
-        }
-        .payment-badge.paid {
-            background: #28a745;
-            color: #ffffff;
-        }
-        .payment-badge.pending {
-            background: #ffc107;
-            color: #333333;
-        }
-        .footer {
-            background: #f5f5f5;
-            padding: 15px;
-            text-align: center;
-            font-size: 12px;
-            color: #666666;
-            border-top: 2px solid #e0e0e0;
-        }
-        .secretariat-table {
-                width: 100%;
-            border-collapse: collapse;
-            margin-top: 10px;
-            border-top: 1px solid #e0e0e0;
-            padding-top: 10px;
-        }
-        .secretariat-table td {
-            padding: 10px;
-            vertical-align: top;
-        }
-    </style>
 </head>
-<body>
- <!-- Price Breakdown -->
-            @php
-                $isInternational = ($order->registration->nationality === 'International' || $order->registration->nationality === 'international');
-                $currencySymbol = $isInternational ? '$' : '₹';
-                $priceFormat = $isInternational ? 2 : 0; // 2 decimals for USD, 0 for INR
-            @endphp
+<body style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.5; color: #333333; max-width: 650px; margin: 0 auto; padding: 10px; background-color: #f5f5f5; font-size: 14px;">
+    @php
+        $isInternational = ($order->registration->nationality === 'International' || $order->registration->nationality === 'international');
+        $currencySymbol = $isInternational ? '$' : '₹';
+        $priceFormat = $isInternational ? 2 : 0;
+    @endphp
 
-    <div class="email-container">
+    <div style="background: #ffffff; border-radius: 0; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
         <!-- Header -->
         <table width="100%" cellpadding="0" cellspacing="0" style="background: #ffffff; border-bottom: 2px solid #e0e0e0;">
-            {{--<tr>
-                <td style="padding: 12px 15px; width: 65%;">
-                @if(config('constants.event_logo'))
-                <img src="{{ config('constants.event_logo') }}" alt="{{ config('constants.EVENT_NAME') }}" class="event-logo">
-                @endif
-                </td>
-                <td style="padding: 12px 15px; text-align: right; width: 35%;">
-                <div class="social-links">
-                    @if(config('constants.SOCIAL_LINKS.facebook'))
-                        <a href="{{ config('constants.SOCIAL_LINKS.facebook') }}" target="_blank">
-                            <img src="https://upload.wikimedia.org/wikipedia/commons/5/51/Facebook_f_logo_%282019%29.svg" alt="Facebook">
-                    </a>
+            <tr>
+                <td style="padding: 2px 2px; width: 100%;">
+                    @if(config('constants.EMAILER_HEADER_LOGO'))
+                    <img src="{{ config('constants.EMAILER_HEADER_LOGO') }}" alt="{{ config('constants.EVENT_NAME') }}" style="max-width: 100%; height: auto; max-height: 100px;">
                     @endif
-                    @if(config('constants.SOCIAL_LINKS.twitter'))
-                        <a href="{{ config('constants.SOCIAL_LINKS.twitter') }}" target="_blank">
-                            <img src="https://upload.wikimedia.org/wikipedia/commons/6/6f/Logo_of_Twitter.svg" alt="Twitter">
-                    </a>
-                    @endif
-                    @if(config('constants.SOCIAL_LINKS.linkedin'))
-                        <a href="{{ config('constants.SOCIAL_LINKS.linkedin') }}" target="_blank">
-                            <img src="https://upload.wikimedia.org/wikipedia/commons/c/ca/LinkedIn_logo_initials.png" alt="LinkedIn">
-                    </a>
-                    @endif
-                    @if(config('constants.SOCIAL_LINKS.instagram'))
-                        <a href="{{ config('constants.SOCIAL_LINKS.instagram') }}" target="_blank">
-                            <img src="https://upload.wikimedia.org/wikipedia/commons/a/a5/Instagram_icon.png" alt="Instagram">
-                    </a>
-                    @endif
-                </div>
                 </td>
             </tr>
---}}
-
-<tr>
-    <td style="padding: 2px 2px; width: 100%;">
-    @if(config('constants.EMAILER_HEADER_LOGO'))
-    <img src="{{ config('constants.EMAILER_HEADER_LOGO') }}" alt="{{ config('constants.EVENT_NAME') }}" class="emailer-header">
-    @endif
-    </td>
-</tr>
-
         </table>
 
         <!-- Receipt Header -->
         <table width="100%" cellpadding="0" cellspacing="0" style="background: #f5f5f5; border-bottom: 1px solid #e0e0e0;">
             <tr>
                 <td style="padding: 10px 15px;">
-                    <span class="receipt-type">
+                    <span style="background: #ffffff; color: #333333; padding: 5px 12px; display: inline-block; font-weight: 700; font-size: 12px; border: 1px solid #d0d0d0; text-transform: uppercase; letter-spacing: 0.5px;">
                     @if($order->status === 'paid')
                         ✓ CONFIRMATION RECEIPT
                     @else
@@ -306,112 +36,78 @@
                     @endif
                     </span>
                 </td>
-                 <td style="padding: 10px 15px; text-align: right; font-size: 13px; color: #666666;">
+                <td style="padding: 5px 10px; text-align: right; font-size: 10px; color: #666666;">
                     @if($order->status !== 'paid')
-            <div style="text-align: center; margin: 7px 0;">
-                <a href="{{ route('tickets.payment.by-tin', ['eventSlug' => $event->slug ?? $event->id, 'tin' => $order->order_no]) }}" class="btn-pay-now">
-                    💳 Pay Now - {{ $currencySymbol }}{{ number_format($order->total, $priceFormat) }}
-                </a>
-            </div>
-            @endif
+                    <div style="text-align: center; margin: 7px 0;">
+                        <a href="{{ route('tickets.payment.lookup', ['eventSlug' => $event->slug ?? $event->id, 'tin' => $order->order_no]) }}" style="display: inline-block; background: #DAA520; color: #ffffff; padding: 10px; text-decoration: none; border-radius: 5px; font-weight: 700; font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px;">
+                            💳 Pay Now - {{ $currencySymbol }}{{ number_format($order->total, $priceFormat) }}
+                        </a>
+                    </div>
+                    @endif
                 </td>
-               
             </tr>
         </table>
 
         <!-- Content -->
-        <div class="content">
+        <div style="padding: 15px 18px;">
             <p style="font-size: 14px; margin-bottom: 10px;">Dear <strong>{{ $order->registration->contact->name ?? 'Valued Customer' }}</strong>,</p>
             
             <p style="font-size: 14px; margin-bottom: 12px;">Thank you for registering for <strong>{{ config('constants.EVENT_NAME') }} {{ config('constants.EVENT_YEAR') }}</strong>.</p>
 
-            <!-- TIN Information -->
-            {{--
-            <div class="order-info">
-                <table width="100%" cellpadding="0" cellspacing="0">
-                
-                
-                    <tr>
-                        <td style="font-size: 16px; font-weight: 700; color: #0066cc;">TIN No.: {{ $order->order_no }}</td>
-                    </tr>
-                    
-                @if($order->status === 'paid')
-                @php
-                    $pinNo = $order->pin_no ?? null;
-                    if (!$pinNo && $order->status === 'paid') {
-                        $prefix = config('constants.PIN_NO_PREFIX', 'PRN-BTS-2026-EXHP-');
-                        $randomNumber = str_pad(rand(100000, 999999), 6, '0', STR_PAD_LEFT);
-                        $pinNo = $prefix . $randomNumber;
-                    }
-                @endphp
-                @if($pinNo)
-                    <tr>
-                        <td style="font-size: 14px; padding-top: 5px;"><strong>PIN No.:</strong> {{ $pinNo }}</td>
-                    </tr>
-                @endif
-                @endif
-                    <tr>
-                        <td style="font-size: 12px; color: #666666; padding-top: 5px;">Please keep this TIN number for your records.</td>
-                    </tr>
-                </table>
-            </div>
-            --}}
-
             <!-- Alert -->
             @if($order->status !== 'paid')
-            <div class="alert">
+            <div style="background: #fff3cd; border: 1px solid #ffc107; border-left: 4px solid #ffc107; padding: 12px 15px; margin: 10px 0; font-size: 13px; color: #856404;">
                 <strong>⚠️ Action Required:</strong> Please complete the payment to confirm your registration.
             </div>
             @else
-            <div class="success-alert">
+            <div style="background: #d4edda; border: 1px solid #28a745; border-left: 4px solid #28a745; padding: 12px 15px; margin: 10px 0; font-size: 13px; color: #155724;">
                 <strong>✓ Payment Confirmed:</strong> Your registration has been confirmed. Thank you for your payment!
             </div>
             @endif
 
             <!-- Registration Information -->
-            <div class="section-title">📋 Registration Information</div>
+            <div style="color: #333333; font-size: 15px; font-weight: 700; margin: 15px 0 8px 0; padding-bottom: 6px; border-bottom: 2px solid #0066cc;">📋 Registration Information</div>
             @php
-                // Fetch PIN from invoice table
                 $invoice = \App\Models\Invoice::where('invoice_no', $order->order_no)
                     ->where('type', 'ticket_registration')
                     ->first();
                 $pinNo = $invoice->pin_no ?? null;
             @endphp
-            <table class="info-table">
-             <tr>
-              <td class="label">Date:</td>
-                    <td class="value">{{ $order->created_at->format('d-m-Y') }}</td>
-                    </tr>
-                    <tr>
-                    <td class="label">TIN NO:</td>
-                    <td class="value">{{ $order->order_no }}</td>
+            <table width="100%" cellpadding="0" cellspacing="0" style="border-collapse: collapse; margin-bottom: 10px;">
+                <tr>
+                    <td style="padding: 8px 10px; border: 1px solid #e0e0e0; font-size: 13px; vertical-align: top; background: #f8f9fa; font-weight: 600; color: #555555; width: 40%;">Date:</td>
+                    <td style="padding: 8px 10px; border: 1px solid #e0e0e0; font-size: 13px; vertical-align: top; color: #333333; width: 60%;">{{ $order->created_at->format('d-m-Y') }}</td>
+                </tr>
+                <tr>
+                    <td style="padding: 8px 10px; border: 1px solid #e0e0e0; font-size: 13px; vertical-align: top; background: #f8f9fa; font-weight: 600; color: #555555; width: 40%;">TIN NO:</td>
+                    <td style="padding: 8px 10px; border: 1px solid #e0e0e0; font-size: 13px; vertical-align: top; color: #333333; width: 60%;">{{ $order->order_no }}</td>
                 </tr>
                 @if($order->status === 'paid' && $pinNo)
                 <tr>
-                    <td class="label">PIN NO:</td>
-                    <td class="value" style="font-weight: 700; color: #0066cc;">{{ $pinNo }}</td>
+                    <td style="padding: 8px 10px; border: 1px solid #e0e0e0; font-size: 13px; vertical-align: top; background: #f8f9fa; font-weight: 600; color: #555555; width: 40%;">PIN NO:</td>
+                    <td style="padding: 8px 10px; border: 1px solid #e0e0e0; font-size: 13px; vertical-align: top; color: #333333; width: 60%; font-weight: 700; color: #0066cc;">{{ $pinNo }}</td>
                 </tr>
                 @endif
-                
                 <tr style="background: {{ $order->status === 'paid' ? '#d4edda' : '#fff3cd' }};">
-                    <td class="label" style="color: {{ $order->status === 'paid' ? '#155724' : '#856404' }};">Payment Status</td>
-                    <td class="value">
-                        <span class="payment-badge {{ $order->status === 'paid' ? 'paid' : 'pending' }}">
+                    <td style="padding: 8px 10px; border: 1px solid #e0e0e0; font-size: 13px; vertical-align: top; font-weight: 600; color: {{ $order->status === 'paid' ? '#155724' : '#856404' }}; width: 40%;">Payment Status</td>
+                    <td style="padding: 8px 10px; border: 1px solid #e0e0e0; font-size: 13px; vertical-align: top; width: 60%;">
+                        <span style="display: inline-block; padding: 4px 12px; border-radius: 4px; font-size: 11px; font-weight: 700; text-transform: uppercase; background: {{ $order->status === 'paid' ? '#28a745' : '#ffc107' }}; color: {{ $order->status === 'paid' ? '#ffffff' : '#333333' }};">
                             {{ $order->status === 'paid' ? '✓ PAID' : '⏳ PENDING' }}
                         </span>
                     </td>
                 </tr>
+
+                {{-- <tr>
+                    <td style="padding: 8px 10px; border: 1px solid #e0e0e0; font-size: 13px; vertical-align: top; background: #f8f9fa; font-weight: 600; color: #555555; width: 40%;">Registration Category</td>
+                    <td style="padding: 8px 10px; border: 1px solid #e0e0e0; font-size: 13px; vertical-align: top; color: #333333; width: 60%;">{{ $order->registration->registrationCategory->name ?? 'N/A' }}</td>
+                </tr> --}}
                 <tr>
-                    <td class="label">Registration Category</td>
-                    <td class="value">{{ $order->registration->registrationCategory->name ?? 'N/A' }}</td>
+                    <td style="padding: 8px 10px; border: 1px solid #e0e0e0; font-size: 13px; vertical-align: top; background: #f8f9fa; font-weight: 600; color: #555555; width: 40%;">Ticket Type</td>
+                    <td style="padding: 8px 10px; border: 1px solid #e0e0e0; font-size: 13px; vertical-align: top; color: #333333; width: 60%;">{{ $order->items->first()->ticketType->name ?? 'N/A' }}</td>
                 </tr>
                 <tr>
-                    <td class="label">Ticket Type</td>
-                    <td class="value">{{ $order->items->first()->ticketType->name ?? 'N/A' }}</td>
-                </tr>
-                <tr>
-                    <td class="label">Day Access</td>
-                    <td class="value">
+                    <td style="padding: 8px 10px; border: 1px solid #e0e0e0; font-size: 13px; vertical-align: top; background: #f8f9fa; font-weight: 600; color: #555555; width: 40%;">Day Access</td>
+                    <td style="padding: 8px 10px; border: 1px solid #e0e0e0; font-size: 13px; vertical-align: top; color: #333333; width: 60%;">
                         @php
                             $firstItem = $order->items->first();
                             $selectedDay = $firstItem && $firstItem->selected_event_day_id ? $firstItem->selectedDay : null;
@@ -434,86 +130,83 @@
                     </td>
                 </tr>
                 <tr>
-                    <td class="label">Number of Delegates</td>
-                    <td class="value">{{ $order->items->sum('quantity') }}</td>
+                    <td style="padding: 8px 10px; border: 1px solid #e0e0e0; font-size: 13px; vertical-align: top; background: #f8f9fa; font-weight: 600; color: #555555; width: 40%;">Number of Delegates</td>
+                    <td style="padding: 8px 10px; border: 1px solid #e0e0e0; font-size: 13px; vertical-align: top; color: #333333; width: 60%;">{{ $order->items->sum('quantity') }}</td>
                 </tr>
-                
                 <tr>
-                    <td class="label">Currency</td>
-                    <td class="value">{{ $order->registration->nationality === 'International' ? 'USD ($)' : 'INR (₹)' }}</td>
+                    <td style="padding: 8px 10px; border: 1px solid #e0e0e0; font-size: 13px; vertical-align: top; background: #f8f9fa; font-weight: 600; color: #555555; width: 40%;">Currency</td>
+                    <td style="padding: 8px 10px; border: 1px solid #e0e0e0; font-size: 13px; vertical-align: top; color: #333333; width: 60%;">{{ $order->registration->nationality === 'International' ? 'USD ($)' : 'INR (₹)' }}</td>
                 </tr>
-
-
             </table>
 
             <!-- Organisation/Individual Information -->
-            <div class="section-title">{{ ($order->registration->registration_type ?? 'Organisation') === 'Individual' ? '👤' : '🏢' }} {{ ($order->registration->registration_type ?? 'Organisation') === 'Individual' ? 'Individual' : 'Organisation' }} Information</div>
-            <table class="info-table">
+            <div style="color: #333333; font-size: 15px; font-weight: 700; margin: 15px 0 8px 0; padding-bottom: 6px; border-bottom: 2px solid #0066cc;">{{ ($order->registration->registration_type ?? 'Organisation') === 'Individual' ? '👤' : '🏢' }} {{ ($order->registration->registration_type ?? 'Organisation') === 'Individual' ? 'Individual' : 'Organisation' }} Information</div>
+            <table width="100%" cellpadding="0" cellspacing="0" style="border-collapse: collapse; margin-bottom: 10px;">
                 @if(($order->registration->registration_type ?? 'Organisation') === 'Organisation')
                 <tr>
-                    <td class="label">Organisation Name</td>
-                    <td class="value">{{ $order->registration->company_name ?? 'N/A' }}</td>
+                    <td style="padding: 8px 10px; border: 1px solid #e0e0e0; font-size: 13px; vertical-align: top; background: #f8f9fa; font-weight: 600; color: #555555; width: 40%;">Organisation Name</td>
+                    <td style="padding: 8px 10px; border: 1px solid #e0e0e0; font-size: 13px; vertical-align: top; color: #333333; width: 60%;">{{ $order->registration->company_name ?? 'N/A' }}</td>
                 </tr>
                 @endif
                 <tr>
-                    <td class="label">Industry Sector</td>
-                    <td class="value">{{ $order->registration->industry_sector ?? 'N/A' }}</td>
+                    <td style="padding: 8px 10px; border: 1px solid #e0e0e0; font-size: 13px; vertical-align: top; background: #f8f9fa; font-weight: 600; color: #555555; width: 40%;">Industry Sector</td>
+                    <td style="padding: 8px 10px; border: 1px solid #e0e0e0; font-size: 13px; vertical-align: top; color: #333333; width: 60%;">{{ $order->registration->industry_sector ?? 'N/A' }}</td>
                 </tr>
                 @if(($order->registration->registration_type ?? 'Organisation') === 'Organisation')
                 <tr>
-                    <td class="label">Organisation Type</td>
-                    <td class="value">{{ $order->registration->organisation_type ?? 'N/A' }}</td>
+                    <td style="padding: 8px 10px; border: 1px solid #e0e0e0; font-size: 13px; vertical-align: top; background: #f8f9fa; font-weight: 600; color: #555555; width: 40%;">Organisation Type</td>
+                    <td style="padding: 8px 10px; border: 1px solid #e0e0e0; font-size: 13px; vertical-align: top; color: #333333; width: 60%;">{{ $order->registration->organisation_type ?? 'N/A' }}</td>
                 </tr>
                 @endif
                 <tr>
-                    <td class="label">Country</td>
-                    <td class="value">{{ $order->registration->company_country }}</td>
+                    <td style="padding: 8px 10px; border: 1px solid #e0e0e0; font-size: 13px; vertical-align: top; background: #f8f9fa; font-weight: 600; color: #555555; width: 40%;">Country</td>
+                    <td style="padding: 8px 10px; border: 1px solid #e0e0e0; font-size: 13px; vertical-align: top; color: #333333; width: 60%;">{{ $order->registration->company_country }}</td>
                 </tr>
                 @if($order->registration->company_state)
                 <tr>
-                    <td class="label">State</td>
-                    <td class="value">{{ $order->registration->company_state }}</td>
+                    <td style="padding: 8px 10px; border: 1px solid #e0e0e0; font-size: 13px; vertical-align: top; background: #f8f9fa; font-weight: 600; color: #555555; width: 40%;">State</td>
+                    <td style="padding: 8px 10px; border: 1px solid #e0e0e0; font-size: 13px; vertical-align: top; color: #333333; width: 60%;">{{ $order->registration->company_state }}</td>
                 </tr>
                 @endif
                 @if($order->registration->company_city)
                 <tr>
-                    <td class="label">City</td>
-                    <td class="value">{{ $order->registration->company_city }}</td>
+                    <td style="padding: 8px 10px; border: 1px solid #e0e0e0; font-size: 13px; vertical-align: top; background: #f8f9fa; font-weight: 600; color: #555555; width: 40%;">City</td>
+                    <td style="padding: 8px 10px; border: 1px solid #e0e0e0; font-size: 13px; vertical-align: top; color: #333333; width: 60%;">{{ $order->registration->company_city }}</td>
                 </tr>
                 @endif
                 <tr>
-                    <td class="label">Phone</td>
-                    <td class="value">{{ $order->registration->company_phone }}</td>
+                    <td style="padding: 8px 10px; border: 1px solid #e0e0e0; font-size: 13px; vertical-align: top; background: #f8f9fa; font-weight: 600; color: #555555; width: 40%;">Phone</td>
+                    <td style="padding: 8px 10px; border: 1px solid #e0e0e0; font-size: 13px; vertical-align: top; color: #333333; width: 60%;">{{ $order->registration->company_phone }}</td>
                 </tr>
             </table>
 
             <!-- GST Information (if required) -->
             @if($order->registration->gst_required)
-            <div class="section-title">🧾 GST / Invoice Details</div>
-            <table class="info-table">
+            <div style="color: #333333; font-size: 15px; font-weight: 700; margin: 15px 0 8px 0; padding-bottom: 6px; border-bottom: 2px solid #0066cc;">🧾 GST / Invoice Details</div>
+            <table width="100%" cellpadding="0" cellspacing="0" style="border-collapse: collapse; margin-bottom: 10px;">
                 <tr>
-                    <td class="label">Legal Name (For Invoice)</td>
-                    <td class="value">{{ $order->registration->gst_legal_name ?? $order->registration->company_name }}</td>
+                    <td style="padding: 8px 10px; border: 1px solid #e0e0e0; font-size: 13px; vertical-align: top; background: #f8f9fa; font-weight: 600; color: #555555; width: 40%;">Legal Name (For Invoice)</td>
+                    <td style="padding: 8px 10px; border: 1px solid #e0e0e0; font-size: 13px; vertical-align: top; color: #333333; width: 60%;">{{ $order->registration->gst_legal_name ?? $order->registration->company_name }}</td>
                 </tr>
                 <tr>
-                    <td class="label">GSTIN</td>
-                    <td class="value">{{ $order->registration->gstin ?? '-' }}</td>
+                    <td style="padding: 8px 10px; border: 1px solid #e0e0e0; font-size: 13px; vertical-align: top; background: #f8f9fa; font-weight: 600; color: #555555; width: 40%;">GSTIN</td>
+                    <td style="padding: 8px 10px; border: 1px solid #e0e0e0; font-size: 13px; vertical-align: top; color: #333333; width: 60%;">{{ $order->registration->gstin ?? '-' }}</td>
                 </tr>
                 @php $panNo = $order->registration->gstin ? substr($order->registration->gstin, 2, 10) : null; @endphp
                 @if($panNo)
                 <tr>
-                    <td class="label">PAN No.</td>
-                    <td class="value">{{ $panNo }}</td>
+                    <td style="padding: 8px 10px; border: 1px solid #e0e0e0; font-size: 13px; vertical-align: top; background: #f8f9fa; font-weight: 600; color: #555555; width: 40%;">PAN No.</td>
+                    <td style="padding: 8px 10px; border: 1px solid #e0e0e0; font-size: 13px; vertical-align: top; color: #333333; width: 60%;">{{ $panNo }}</td>
                 </tr>
                 @endif
                 <tr>
-                    <td class="label">Invoice Address</td>
-                    <td class="value">{{ $order->registration->gst_address ?? '-' }}</td>
+                    <td style="padding: 8px 10px; border: 1px solid #e0e0e0; font-size: 13px; vertical-align: top; background: #f8f9fa; font-weight: 600; color: #555555; width: 40%;">Invoice Address</td>
+                    <td style="padding: 8px 10px; border: 1px solid #e0e0e0; font-size: 13px; vertical-align: top; color: #333333; width: 60%;">{{ $order->registration->gst_address ?? '-' }}</td>
                 </tr>
                 @if($order->registration->gst_state)
                 <tr>
-                    <td class="label">State</td>
-                    <td class="value">{{ $order->registration->gst_state }}</td>
+                    <td style="padding: 8px 10px; border: 1px solid #e0e0e0; font-size: 13px; vertical-align: top; background: #f8f9fa; font-weight: 600; color: #555555; width: 40%;">State</td>
+                    <td style="padding: 8px 10px; border: 1px solid #e0e0e0; font-size: 13px; vertical-align: top; color: #333333; width: 60%;">{{ $order->registration->gst_state }}</td>
                 </tr>
                 @endif
                 @php
@@ -522,14 +215,14 @@
                 @endphp
                 @if($contactName)
                 <tr>
-                    <td class="label">Contact Person</td>
-                    <td class="value">{{ $contactName }}</td>
+                    <td style="padding: 8px 10px; border: 1px solid #e0e0e0; font-size: 13px; vertical-align: top; background: #f8f9fa; font-weight: 600; color: #555555; width: 40%;">Contact Person</td>
+                    <td style="padding: 8px 10px; border: 1px solid #e0e0e0; font-size: 13px; vertical-align: top; color: #333333; width: 60%;">{{ $contactName }}</td>
                 </tr>
                 @endif
                 @if($contactPhone)
                 <tr>
-                    <td class="label">Contact Phone</td>
-                    <td class="value">{{ $contactPhone }}</td>
+                    <td style="padding: 8px 10px; border: 1px solid #e0e0e0; font-size: 13px; vertical-align: top; background: #f8f9fa; font-weight: 600; color: #555555; width: 40%;">Contact Phone</td>
+                    <td style="padding: 8px 10px; border: 1px solid #e0e0e0; font-size: 13px; vertical-align: top; color: #333333; width: 60%;">{{ $contactPhone }}</td>
                 </tr>
                 @endif
             </table>
@@ -543,54 +236,70 @@
                     return !empty($delegate->linkedin_profile);
                 });
             @endphp
-            <div class="section-title">👥 Delegate Details</div>
-                <table class="delegates-table">
-                    <thead>
-                        <tr>
-                        <th style="width: {{ $hasLinkedIn ? '4%' : '5%' }};">#</th>
-                        <th style="width: {{ $hasLinkedIn ? '24%' : '30%' }};">Delegate Name</th>
-                        <th style="width: {{ $hasLinkedIn ? '24%' : '30%' }};">Email</th>
-                        <th style="width: {{ $hasLinkedIn ? '12%' : '15%' }};">Phone</th>
-                        <th style="width: {{ $hasLinkedIn ? '18%' : '20%' }};">Ticket Type</th>
+            <div style="color: #333333; font-size: 15px; font-weight: 700; margin: 15px 0 8px 0; padding-bottom: 6px; border-bottom: 2px solid #0066cc;">👥 Delegate Details</div>
+            <table width="100%" cellpadding="0" cellspacing="0" style="border-collapse: collapse; font-size: 12px; margin: 8px 0;">
+                <thead>
+                    <tr>
+                        <th style="background: #0066cc; color: #ffffff; padding: 8px 6px; text-align: left; font-weight: 600; font-size: 11px; border: 1px solid #0066cc;">#</th>
+                        <th style="background: #0066cc; color: #ffffff; padding: 8px 6px; text-align: left; font-weight: 600; font-size: 11px; border: 1px solid #0066cc;">Delegate Name</th>
+                        <th style="background: #0066cc; color: #ffffff; padding: 8px 6px; text-align: left; font-weight: 600; font-size: 11px; border: 1px solid #0066cc;">Email</th>
+                        <th style="background: #0066cc; color: #ffffff; padding: 8px 6px; text-align: left; font-weight: 600; font-size: 11px; border: 1px solid #0066cc;">Phone</th>
+                        <th style="background: #0066cc; color: #ffffff; padding: 8px 6px; text-align: left; font-weight: 600; font-size: 11px; border: 1px solid #0066cc;">Ticket Type</th>
                         @if($hasLinkedIn)
-                        <th style="width: 18%;">LinkedIn Profile</th>
+                        <th style="background: #0066cc; color: #ffffff; padding: 8px 6px; text-align: left; font-weight: 600; font-size: 11px; border: 1px solid #0066cc;">LinkedIn</th>
                         @endif
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach($order->registration->delegates as $delegate)
-                        <tr>
-                            <td>{{ $loop->iteration }}</td>
-                            <td>{{ $delegate->salutation }} {{ $delegate->first_name }} {{ $delegate->last_name }}</td>
-                            <td>{{ $delegate->email }}</td>
-                            <td>{{ $delegate->phone ?? '-' }}</td>
-                        <td>{{ $ticketTypeName }}</td>
-                            @if($hasLinkedIn)
-                            <td>
-                                @if(!empty($delegate->linkedin_profile))
-                                    <a href="{{ $delegate->linkedin_profile }}" target="_blank" rel="noopener noreferrer" style="color: #0077b5; text-decoration: none;">View Profile</a>
-                                @else
-                                    <span style="color: #999;">-</span>
-                                @endif
-                            </td>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach($order->registration->delegates as $delegate)
+                    <tr style="background: {{ $loop->even ? '#f8f9fa' : '#ffffff' }};">
+                        <td style="padding: 6px; border: 1px solid #e0e0e0; font-size: 11px; vertical-align: top;">{{ $loop->iteration }}</td>
+                        <td style="padding: 6px; border: 1px solid #e0e0e0; font-size: 11px; vertical-align: top; word-wrap: break-word;">{{ $delegate->salutation }} {{ $delegate->first_name }} {{ $delegate->last_name }}</td>
+                        <td style="padding: 6px; border: 1px solid #e0e0e0; font-size: 11px; vertical-align: top; word-wrap: break-word; word-break: break-all;">{{ $delegate->email }}</td>
+                        <td style="padding: 6px; border: 1px solid #e0e0e0; font-size: 11px; vertical-align: top; word-wrap: break-word;">{{ $delegate->phone ?? '-' }}</td>
+                        <td style="padding: 6px; border: 1px solid #e0e0e0; font-size: 11px; vertical-align: top; word-wrap: break-word;">{{ $ticketTypeName }}</td>
+                        @if($hasLinkedIn)
+                        <td style="padding: 6px; border: 1px solid #e0e0e0; font-size: 11px; vertical-align: top;">
+                            @if(!empty($delegate->linkedin_profile))
+                                <a href="{{ $delegate->linkedin_profile }}" target="_blank" rel="noopener noreferrer" style="color: #0077b5; text-decoration: none;">View</a>
+                            @else
+                                <span style="color: #999;">-</span>
                             @endif
-                        </tr>
-                        @endforeach
-                    </tbody>
-                </table>
+                        </td>
+                        @endif
+                    </tr>
+                    @endforeach
+                </tbody>
+            </table>
             @endif
 
-           
-            <div class="section-title">💰 Price Breakdown</div>
-            <table class="price-table">
+            <!-- Price Breakdown -->
+            <div style="color: #333333; font-size: 15px; font-weight: 700; margin: 15px 0 8px 0; padding-bottom: 6px; border-bottom: 2px solid #0066cc;">💰 Price Breakdown</div>
+            <table width="100%" cellpadding="0" cellspacing="0" style="border-collapse: collapse; margin: 8px 0;">
                 @foreach($order->items as $item)
                 <tr>
-                    <td class="label-col">Ticket Price ({{ $item->quantity }} × {{ $currencySymbol }}{{ number_format($item->unit_price, $priceFormat) }})</td>
-                    <td class="value-col">{{ $currencySymbol }}{{ number_format($item->subtotal, $priceFormat) }}</td>
+                    <td style="padding: 8px 10px; border: 1px solid #e0e0e0; font-size: 13px; background: #f8f9fa; font-weight: 500; width: 70%;">Ticket Price ({{ $item->quantity }} × {{ $currencySymbol }}{{ number_format($item->unit_price, $priceFormat) }})</td>
+                    <td style="padding: 8px 10px; border: 1px solid #e0e0e0; font-size: 13px; text-align: right; font-weight: 600; width: 30%;">{{ $currencySymbol }}{{ number_format($item->subtotal, $priceFormat) }}</td>
                 </tr>
+                @if($order->group_discount_applied && $order->group_discount_amount > 0)
+                <tr style="background-color: #e7f3ff;">
+                    <td style="padding: 8px 10px; border: 1px solid #e0e0e0; font-size: 13px; background: #e7f3ff; font-weight: 500; width: 70%; color: #004085;">
+                        👥 Group Discount
+                        <div style="font-size: 11px; font-weight: normal; margin-top: 3px;">
+                            ({{ number_format($order->group_discount_rate, 0) }}% off for {{ $item->quantity }}+ delegates)
+                        </div>
+                    </td>
+                    <td style="padding: 8px 10px; border: 1px solid #e0e0e0; font-size: 13px; text-align: right; font-weight: 600; width: 30%; color: #004085;">
+                        -{{ $currencySymbol }}{{ number_format($order->group_discount_amount, $priceFormat) }}
+                    </td>
+                </tr>
+                @php $subtotalAfterGroupDiscount = $item->subtotal - $order->group_discount_amount; @endphp
+                @else
+                @php $subtotalAfterGroupDiscount = $item->subtotal; @endphp
+                @endif
                 @if($order->discount_amount > 0 && $order->promoCode)
                 <tr style="background-color: #d4edda;">
-                    <td class="label-col" style="color: #155724;">
+                    <td style="padding: 8px 10px; border: 1px solid #e0e0e0; font-size: 13px; background: #d4edda; font-weight: 500; width: 70%; color: #155724;">
                         🏷️ Promocode Discount
                         @if($order->promoCode->type === 'percentage')
                             <div style="font-size: 11px; font-weight: normal; margin-top: 3px;">
@@ -598,54 +307,54 @@
                             </div>
                         @endif
                     </td>
-                    <td class="value-col" style="color: #155724; font-weight: 600;">
+                    <td style="padding: 8px 10px; border: 1px solid #e0e0e0; font-size: 13px; text-align: right; font-weight: 600; width: 30%; color: #155724;">
                         -{{ $currencySymbol }}{{ number_format($order->discount_amount, $priceFormat) }}
                     </td>
                 </tr>
                 <tr>
-                    <td class="label-col">Price After Discount</td>
-                    <td class="value-col" style="font-weight: 600;">
-                        {{ $currencySymbol }}{{ number_format($item->subtotal - $order->discount_amount, $priceFormat) }}
+                    <td style="padding: 8px 10px; border: 1px solid #e0e0e0; font-size: 13px; background: #f8f9fa; font-weight: 500; width: 70%;">Price After Discounts</td>
+                    <td style="padding: 8px 10px; border: 1px solid #e0e0e0; font-size: 13px; text-align: right; font-weight: 600; width: 30%;">
+                        {{ $currencySymbol }}{{ number_format($subtotalAfterGroupDiscount - $order->discount_amount, $priceFormat) }}
+                    </td>
+                </tr>
+                @elseif($order->group_discount_applied && $order->group_discount_amount > 0)
+                <tr>
+                    <td style="padding: 8px 10px; border: 1px solid #e0e0e0; font-size: 13px; background: #f8f9fa; font-weight: 500; width: 70%;">Price After Group Discount</td>
+                    <td style="padding: 8px 10px; border: 1px solid #e0e0e0; font-size: 13px; text-align: right; font-weight: 600; width: 30%;">
+                        {{ $currencySymbol }}{{ number_format($subtotalAfterGroupDiscount, $priceFormat) }}
                     </td>
                 </tr>
                 @endif
                 @if($item->gst_type === 'cgst_sgst')
                 <tr>
-                    <td class="label-col">CGST ({{ number_format($item->cgst_rate ?? 0, 0) }}%)</td>
-                    <td class="value-col">{{ $currencySymbol }}{{ number_format($item->cgst_amount ?? 0, $priceFormat) }}</td>
+                    <td style="padding: 8px 10px; border: 1px solid #e0e0e0; font-size: 13px; background: #f8f9fa; font-weight: 500; width: 70%;">CGST ({{ number_format($item->cgst_rate ?? 0, 0) }}%)</td>
+                    <td style="padding: 8px 10px; border: 1px solid #e0e0e0; font-size: 13px; text-align: right; font-weight: 600; width: 30%;">{{ $currencySymbol }}{{ number_format($item->cgst_amount ?? 0, $priceFormat) }}</td>
                 </tr>
                 <tr>
-                    <td class="label-col">SGST ({{ number_format($item->sgst_rate ?? 0, 0) }}%)</td>
-                    <td class="value-col">{{ $currencySymbol }}{{ number_format($item->sgst_amount ?? 0, $priceFormat) }}</td>
+                    <td style="padding: 8px 10px; border: 1px solid #e0e0e0; font-size: 13px; background: #f8f9fa; font-weight: 500; width: 70%;">SGST ({{ number_format($item->sgst_rate ?? 0, 0) }}%)</td>
+                    <td style="padding: 8px 10px; border: 1px solid #e0e0e0; font-size: 13px; text-align: right; font-weight: 600; width: 30%;">{{ $currencySymbol }}{{ number_format($item->sgst_amount ?? 0, $priceFormat) }}</td>
                 </tr>
                 @else
                 <tr>
-                    <td class="label-col">IGST ({{ number_format($item->igst_rate ?? 0, 0) }}%)</td>
-                    <td class="value-col">{{ $currencySymbol }}{{ number_format($item->igst_amount ?? 0, $priceFormat) }}</td>
+                    <td style="padding: 8px 10px; border: 1px solid #e0e0e0; font-size: 13px; background: #f8f9fa; font-weight: 500; width: 70%;">IGST ({{ number_format($item->igst_rate ?? 0, 0) }}%)</td>
+                    <td style="padding: 8px 10px; border: 1px solid #e0e0e0; font-size: 13px; text-align: right; font-weight: 600; width: 30%;">{{ $currencySymbol }}{{ number_format($item->igst_amount ?? 0, $priceFormat) }}</td>
                 </tr>
                 @endif
                 <tr>
-                    <td class="label-col">Processing Charge ({{ $item->processing_charge_rate }}%)</td>
-                    <td class="value-col">{{ $currencySymbol }}{{ number_format($item->processing_charge_amount, $priceFormat) }}</td>
+                    <td style="padding: 8px 10px; border: 1px solid #e0e0e0; font-size: 13px; background: #f8f9fa; font-weight: 500; width: 70%;">Processing Charge ({{ $item->processing_charge_rate }}%)</td>
+                    <td style="padding: 8px 10px; border: 1px solid #e0e0e0; font-size: 13px; text-align: right; font-weight: 600; width: 30%;">{{ $currencySymbol }}{{ number_format($item->processing_charge_amount, $priceFormat) }}</td>
                 </tr>
                 @endforeach
-                <tr class="total-row">
-                    <td class="label-col" style="background: #0066cc; color: #ffffff;">Total Amount</td>
-                    <td class="value-col" style="background: #0066cc; color: #ffffff;">{{ $currencySymbol }}{{ number_format($order->total, $priceFormat) }}</td>
+                <tr>
+                    <td style="padding: 8px 10px; border: 1px solid #e0e0e0; font-size: 15px; font-weight: 700; background: #0066cc; color: #ffffff; width: 70%;">Total Amount</td>
+                    <td style="padding: 8px 10px; border: 1px solid #e0e0e0; font-size: 15px; font-weight: 700; text-align: right; background: #0066cc; color: #ffffff; width: 30%;">{{ $currencySymbol }}{{ number_format($order->total, $priceFormat) }}</td>
                 </tr>
-                @if($order->discount_amount > 0 && $order->promoCode)
-                {{-- <tr>
-                    <td colspan="2" style="padding: 8px; font-size: 11px; color: #666; border: none;">
-                        <em>Note: Discount applies to base amount. GST and processing charges are calculated on the discounted amount.</em>
-                    </td>
-                </tr> --}}
-                @endif
             </table>
 
             <!-- Pay Now Button -->
             @if($order->status !== 'paid')
-            <div style="text-align: center; margin: 7px 0;">
-                <a href="{{ route('tickets.payment.by-tin', ['eventSlug' => $event->slug ?? $event->id, 'tin' => $order->order_no]) }}" class="btn-pay-now">
+            <div style="text-align: center; margin: 20px 0;">
+                <a href="{{ route('tickets.payment.lookup', ['eventSlug' => $event->slug ?? $event->id, 'tin' => $order->order_no]) }}" style="display: inline-block; background: #DAA520; color: #ffffff; padding: 14px 35px; text-decoration: none; border-radius: 5px; font-weight: 700; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px;">
                     💳 Pay Now - {{ $currencySymbol }}{{ number_format($order->total, $priceFormat) }}
                 </a>
             </div>
@@ -658,34 +367,33 @@
             @else
             <!-- Payment Transaction Details (shown only when paid) -->
             @php
-                // Fetch payment details from payments table
                 $payment = \App\Models\Payment::where('order_id', $order->order_no)
                     ->where('status', 'successful')
                     ->latest()
                     ->first();
             @endphp
             @if($payment)
-            <div class="section-title" style="margin-top: 20px;">🧾 Payment Transaction Details</div>
-            <table class="info-table">
+            <div style="color: #333333; font-size: 15px; font-weight: 700; margin: 20px 0 8px 0; padding-bottom: 6px; border-bottom: 2px solid #0066cc;">🧾 Payment Transaction Details</div>
+            <table width="100%" cellpadding="0" cellspacing="0" style="border-collapse: collapse; margin-bottom: 10px;">
                 <tr>
-                    <td class="label">Payment Method</td>
-                    <td class="value">{{ $payment->payment_method ?? 'Online' }}</td>
+                    <td style="padding: 8px 10px; border: 1px solid #e0e0e0; font-size: 13px; vertical-align: top; background: #f8f9fa; font-weight: 600; color: #555555; width: 40%;">Payment Method</td>
+                    <td style="padding: 8px 10px; border: 1px solid #e0e0e0; font-size: 13px; vertical-align: top; color: #333333; width: 60%;">{{ $payment->payment_method ?? 'Online' }}</td>
                 </tr>
                 <tr>
-                    <td class="label">Transaction ID</td>
-                    <td class="value" style="font-weight: 700; color: #0066cc;">{{ $payment->transaction_id ?? $payment->track_id ?? 'N/A' }}</td>
+                    <td style="padding: 8px 10px; border: 1px solid #e0e0e0; font-size: 13px; vertical-align: top; background: #f8f9fa; font-weight: 600; color: #555555; width: 40%;">Transaction ID</td>
+                    <td style="padding: 8px 10px; border: 1px solid #e0e0e0; font-size: 13px; vertical-align: top; font-weight: 700; color: #0066cc; width: 60%;">{{ $payment->transaction_id ?? $payment->track_id ?? 'N/A' }}</td>
                 </tr>
                 <tr>
-                    <td class="label">Amount Paid</td>
-                    <td class="value" style="font-weight: 700; color: #155724;">{{ $currencySymbol }}{{ number_format($payment->amount_paid ?? $payment->amount ?? $order->total, $priceFormat) }}</td>
+                    <td style="padding: 8px 10px; border: 1px solid #e0e0e0; font-size: 13px; vertical-align: top; background: #f8f9fa; font-weight: 600; color: #555555; width: 40%;">Amount Paid</td>
+                    <td style="padding: 8px 10px; border: 1px solid #e0e0e0; font-size: 13px; vertical-align: top; font-weight: 700; color: #155724; width: 60%;">{{ $currencySymbol }}{{ number_format($payment->amount_paid ?? $payment->amount ?? $order->total, $priceFormat) }}</td>
                 </tr>
                 <tr>
-                    <td class="label">Payment Date</td>
-                    <td class="value">{{ $payment->payment_date ? \Carbon\Carbon::parse($payment->payment_date)->format('d M Y, h:i A') : 'N/A' }}</td>
+                    <td style="padding: 8px 10px; border: 1px solid #e0e0e0; font-size: 13px; vertical-align: top; background: #f8f9fa; font-weight: 600; color: #555555; width: 40%;">Payment Date</td>
+                    <td style="padding: 8px 10px; border: 1px solid #e0e0e0; font-size: 13px; vertical-align: top; color: #333333; width: 60%;">{{ $payment->payment_date ? \Carbon\Carbon::parse($payment->payment_date)->format('d M Y, h:i A') : 'N/A' }}</td>
                 </tr>
                 <tr>
-                    <td class="label">Payment Status</td>
-                    <td class="value"><span style="background: #28a745; color: #fff; padding: 3px 10px; border-radius: 3px; font-weight: 600;">✓ CONFIRMED</span></td>
+                    <td style="padding: 8px 10px; border: 1px solid #e0e0e0; font-size: 13px; vertical-align: top; background: #f8f9fa; font-weight: 600; color: #555555; width: 40%;">Payment Status</td>
+                    <td style="padding: 8px 10px; border: 1px solid #e0e0e0; font-size: 13px; vertical-align: top; width: 60%;"><span style="background: #28a745; color: #fff; padding: 3px 10px; border-radius: 3px; font-weight: 600;">✓ CONFIRMED</span></td>
                 </tr>
             </table>
             @endif
@@ -705,14 +413,14 @@
         </div>
 
         <!-- Secretariat Information -->
-        <table class="secretariat-table" style="background: #f8f9fa;">
+        <table width="100%" cellpadding="0" cellspacing="0" style="border-collapse: collapse; margin-top: 10px; border-top: 1px solid #e0e0e0; padding-top: 10px; background: #f8f9fa;">
             <tr>
-                <td style="width: 35%; text-align: center; border-right: 1px solid #e0e0e0;">
+                <td style="width: 35%; text-align: center; border-right: 1px solid #e0e0e0; padding: 10px; vertical-align: top;">
                 @if(config('constants.organizer_logo'))
                     <img src="{{ config('constants.organizer_logo') }}" alt="{{ config('constants.organizer.name') }}" style="width: 120px; height: 120px; object-fit: contain; display: block; margin: 0 auto;">
                 @endif
                 </td>
-                <td style="width: 65%; padding-left: 15px;">
+                <td style="width: 65%; padding: 10px 10px 10px 15px; vertical-align: top;">
                     <div style="font-size: 13px; font-weight: 700; color: #333333; margin-bottom: 5px;">{{ config('constants.EVENT_NAME') }} Secretariat</div>
                     <div style="font-size: 12px; color: #666666; line-height: 1.5;">
                         <p style="margin: 2px 0;"><strong>{{ config('constants.organizer.name') }}</strong></p>
@@ -720,13 +428,13 @@
                         <p style="margin: 2px 0;"><strong>Tel:</strong> {{ config('constants.organizer.phone') }}</p>
                         <p style="margin: 2px 0;"><strong>Email:</strong> <a href="mailto:{{ config('constants.organizer.email') }}" style="color: #0066cc;">{{ config('constants.organizer.email') }}</a></p>
                         <p style="margin: 2px 0;"><strong>Website:</strong> <a href="{{ config('constants.EVENT_WEBSITE') }}" style="color: #0066cc;">{{ config('constants.EVENT_WEBSITE') }}</a></p>
-            </div>
+                    </div>
                 </td>
             </tr>
         </table>
 
         <!-- Footer -->
-        <div class="footer">
+        <div style="background: #f5f5f5; padding: 15px; text-align: center; font-size: 12px; color: #666666; border-top: 2px solid #e0e0e0;">
             <p style="margin: 5px 0; font-size: 11px; color: #999999;">This is an automated email. Please do not reply to this message.</p>
             <p style="margin: 5px 0; font-size: 11px; color: #999999;">&copy; {{ date('Y') }} {{ config('constants.organizer.name') }}. All rights reserved.</p>
         </div>

@@ -2032,6 +2032,24 @@ class ExhibitorRegistrationController extends Controller
             try {
                 Mail::to($email)->send(new ExhibitorRegistrationMail($application, $invoice, $contact));
                 \Log::info('Exhibitor Registration: Confirmation email sent', ['email' => $email]);
+                
+                // Send individual emails to configured admin list for exhibitor registrations
+                $exhibitorAdminEmails = config('constants.registration_emails.exhibitor', []);
+                foreach ($exhibitorAdminEmails as $adminEmail) {
+                    $adminEmail = strtolower(trim($adminEmail));
+                    if (!empty($adminEmail) && strtolower($adminEmail) !== strtolower($email)) {
+                        try {
+                            Mail::to($adminEmail)->send(new ExhibitorRegistrationMail($application, $invoice, $contact));
+                            \Log::info('Exhibitor Registration: Email sent to admin', ['admin_email' => $adminEmail]);
+                        } catch (\Exception $e) {
+                            \Log::warning('Exhibitor Registration: Failed to send email to admin', [
+                                'admin_email' => $adminEmail,
+                                'application_id' => $application->application_id,
+                                'error' => $e->getMessage(),
+                            ]);
+                        }
+                    }
+                }
             } catch (\Exception $mailError) {
                 \Log::warning('Exhibitor Registration: Failed to send confirmation email', [
                     'email' => $email,
@@ -2046,37 +2064,33 @@ class ExhibitorRegistrationController extends Controller
                 $application->load(['country', 'state', 'eventContact']);
                 $contact = EventContact::where('application_id', $application->id)->first();
                 
-                // Get admin emails from config
-                $adminEmails = config('constants.admin_emails.to', []);
-                $bccEmails = config('constants.admin_emails.bcc', []);
+                // Send individual emails to configured exhibitor admin list
+                $exhibitorAdminEmails = config('constants.registration_emails.exhibitor', []);
                 
                 \Log::info('Attempting to send admin notification email for exhibitor registration', [
                     'application_id' => $application->application_id,
-                    'admin_emails' => $adminEmails,
-                    'bcc_emails' => $bccEmails,
+                    'admin_emails' => $exhibitorAdminEmails,
                 ]);
                 
-                if (!empty($adminEmails)) {
-                    // If adminEmails NOT empty, always send to adminEmails (with BCC if present)
-                    $mail = Mail::to($adminEmails);
-                    if (!empty($bccEmails)) {
-                        $mail->bcc($bccEmails);
+                if (!empty($exhibitorAdminEmails)) {
+                    foreach ($exhibitorAdminEmails as $adminEmail) {
+                        $adminEmail = strtolower(trim($adminEmail));
+                        if (!empty($adminEmail)) {
+                            try {
+                                Mail::to($adminEmail)->send(new ExhibitorRegistrationAdminMail($application, $contact));
+                                \Log::info('Admin notification email sent successfully', [
+                                    'application_id' => $application->application_id,
+                                    'to' => $adminEmail,
+                                ]);
+                            } catch (\Exception $e) {
+                                \Log::warning('Failed to send exhibitor admin notification', [
+                                    'admin_email' => $adminEmail,
+                                    'application_id' => $application->application_id,
+                                    'error' => $e->getMessage(),
+                                ]);
+                            }
+                        }
                     }
-                    $mail->send(new ExhibitorRegistrationAdminMail($application, $contact));
-                    
-                    \Log::info('Admin notification email sent successfully', [
-                        'application_id' => $application->application_id,
-                        'to' => $adminEmails,
-                        'bcc' => $bccEmails,
-                    ]);
-                } elseif (!empty($bccEmails)) {
-                    // If adminEmails is empty but bccEmails is not, send to bccEmails using bcc() as main recipients
-                    Mail::to([])->bcc($bccEmails)->send(new ExhibitorRegistrationAdminMail($application, $contact));
-                    
-                    \Log::info('Admin notification email sent successfully (BCC only)', [
-                        'application_id' => $application->application_id,
-                        'bcc' => $bccEmails,
-                    ]);
                 } else {
                     \Log::warning('No admin emails configured for exhibitor registration notification', [
                         'application_id' => $application->application_id,

@@ -326,7 +326,7 @@
                             <div style="background-color: #d4edda; border: 2px solid #28a745; padding: 20px; margin: 25px 0; border-radius: 4px; text-align: center;">
                                 <p style="margin: 0 0 15px; font-size: 18px; color: #155724; font-weight: bold;">Complete Your Payment</p>
                                 <p style="margin: 0 0 20px; font-size: 16px; color: #155724;">Your application has been approved. Please complete your payment to confirm your registration.</p>
-                                <a href="{{ $paymentUrl }}" style="display: inline-block; padding: 12px 30px; background-color: #1a237e; color: #ffffff; text-decoration: none; border-radius: 4px; font-weight: bold; font-size: 16px; margin-bottom: 15px;">Pay Now</a>
+                                <a href="{{ $paymentUrl }}" style="display: inline-block; padding: 12px 30px; background-color: #DAA520; color: #ffffff; text-decoration: none; border-radius: 4px; font-weight: bold; font-size: 16px; margin-bottom: 15px;">Pay Now</a>
                                 <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #28a745;">
                                     <p style="margin: 0 0 8px; font-size: 12px; color: #155724; font-weight: bold;">Or copy and paste this link:</p>
                                     <p style="margin: 0; font-size: 11px; color: #155724; word-break: break-all; background-color: #ffffff; padding: 8px; border-radius: 4px; border: 1px solid #28a745;">
