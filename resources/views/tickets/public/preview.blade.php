@@ -234,13 +234,26 @@
                     <td class="label-cell">Ticket Type</td>
                     <td class="value-cell"><strong>{{ $ticketType->name }}</strong></td>
                 </tr>
+                @if($ticketType->category)
+                <tr>
+                    <td class="label-cell">Category</td>
+                    <td class="value-cell">{{ $ticketType->category->name }}</td>
+                </tr>
+                @endif
+                @if($ticketType->subcategory)
+                <tr>
+                    <td class="label-cell">Subcategory</td>
+                    <td class="value-cell">{{ $ticketType->subcategory->name }}</td>
+                </tr>
+                @endif
                 @if(isset($registrationData['registration_type']))
                 <tr>
                     <td class="label-cell">Registration Type</td>
                     <td class="value-cell"><strong>{{ $registrationData['registration_type'] }}</strong></td>
                 </tr>
                 @endif
-                <tr>
+                {{-- Day Access row hidden as per requirement --}}
+                {{-- <tr>
                     <td class="label-cell">Day Access</td>
                     <td class="value-cell">
                         @php
@@ -268,7 +281,7 @@
                             @endif
                         @endif
                     </td>
-                </tr>
+                </tr> --}}
                 <tr>
                     <td class="label-cell">Number of Delegates</td>
                     <td class="value-cell">{{ $quantity }}</td>

@@ -546,6 +546,7 @@ class AdminTicketConfigController extends Controller
             'sort_order' => 'nullable|integer',
             'event_day_ids' => 'nullable|array',
             'event_day_ids.*' => 'exists:event_days,id',
+            'available_for' => 'required|in:national,international,both',
         ]);
 
         if ($validator->fails()) {
@@ -575,6 +576,7 @@ class AdminTicketConfigController extends Controller
                 'enable_day_selection' => $request->input('enable_day_selection', '0') == '1',
                 'all_days_access' => $request->input('all_days_access', '0') == '1',
                 'sort_order' => $request->sort_order ?? 0,
+                'available_for' => $request->available_for ?? 'both',
             ]);
 
             // Create inventory record
@@ -642,6 +644,7 @@ class AdminTicketConfigController extends Controller
             'sort_order' => 'nullable|integer',
             'event_day_ids' => 'nullable|array',
             'event_day_ids.*' => 'exists:event_days,id',
+            'available_for' => 'required|in:national,international,both',
         ]);
 
         if ($validator->fails()) {
@@ -671,6 +674,7 @@ class AdminTicketConfigController extends Controller
             'enable_day_selection' => $request->input('enable_day_selection', '0') == '1',
             'all_days_access' => $request->input('all_days_access', '0') == '1',
             'sort_order' => $request->sort_order ?? 0,
+            'available_for' => $request->available_for ?? 'both',
         ]);
 
         // Handle day access - only sync if day selection is enabled

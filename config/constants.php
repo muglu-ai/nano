@@ -354,30 +354,30 @@ return [
         // Startup Zone registration emails
         'startup' => [
             'test.interlinks@gmail.com',
-            'chandrachood.as@mmactiv.com',
+            // 'chandrachood.as@mmactiv.com',
 
             // Add more emails as needed
         ],
         // Exhibitor registration emails  
         'exhibitor' => [
             'test.interlinks@gmail.com',
-            'ambika.kiran@mmactiv.com',
-            'gurunath.angadi@mmactiv.com',
+            //'ambika.kiran@mmactiv.com',
+            //'gurunath.angadi@mmactiv.com',
             // Add more emails as needed
         ],
         // Delegate/Ticket registration emails
         'delegate' => [
             'test.interlinks@gmail.com',
-            'accounts@mmactiv.com',
-            'bhavya.n@mmactiv.com',
-            'vani.faustina@mmactiv.com',
+             // 'accounts@mmactiv.com',
+           // 'bhavya.n@mmactiv.com',
+            //'vani.faustina@mmactiv.com',
 
             // Add more emails as needed
         ],
         // Poster registration emails
         'poster' => [
             'test.interlinks@gmail.com',
-            'prabha.j@mmactiv.com',
+            //'prabha.j@mmactiv.com',
 
             // Add more emails as needed
         ],

@@ -313,69 +313,94 @@
                     Registration Information
                 </h4>
 
+                {{-- Hidden field to store the actual ticket_type_id --}}
+                <input type="hidden" name="ticket_type_id" id="hidden_ticket_type_id" value="{{ old('ticket_type_id') }}">
+                
+                {{-- Ticket Types Data for JavaScript --}}
+                @php
+                    $ticketTypesJsonData = $ticketTypes->map(function($ticketType) {
+                        return [
+                            'id' => $ticketType->id,
+                            'slug' => $ticketType->slug,
+                            'name' => $ticketType->name,
+                            'category_id' => $ticketType->category_id,
+                            'subcategory_id' => $ticketType->subcategory_id,
+                            'category_name' => $ticketType->category->name ?? '',
+                            'subcategory_name' => $ticketType->subcategory->name ?? '',
+                            'price_national' => $ticketType->getCurrentPrice('national'),
+                            'price_international' => $ticketType->getCurrentPrice('international'),
+                            'early_bird_price_national' => $ticketType->getEarlyBirdPrice('national'),
+                            'early_bird_price_international' => $ticketType->getEarlyBirdPrice('international'),
+                            'per_day_price_national' => $ticketType->getPerDayPrice('national'),
+                            'per_day_price_international' => $ticketType->getPerDayPrice('international'),
+                            'has_per_day_pricing' => $ticketType->hasPerDayPricing(),
+                            'enable_day_selection' => $ticketType->enable_day_selection,
+                            'all_days_access' => $ticketType->all_days_access,
+                            'include_all_days_option' => $ticketType->include_all_days_option ?? false,
+                            'available_for' => $ticketType->available_for ?? 'both',
+                            'available_days' => $ticketType->getAllAccessibleDays()->map(function($day) { 
+                                return ['id' => $day->id, 'label' => $day->label, 'date' => $day->date->format('M d, Y')]; 
+                            })->toArray(),
+                        ];
+                    })->toArray();
+                @endphp
+                <script id="ticketTypesData" type="application/json">{!! json_encode($ticketTypesJsonData) !!}</script>
+                
+
+                @php
+                    // Determine pre-selected values (from URL parameter or old input)
+                    $preSelectedCategoryId = old('category_id') ?? ($selectedTicketType->category_id ?? null);
+                    $preSelectedSubcategoryId = old('subcategory_id') ?? ($selectedTicketType->subcategory_id ?? null);
+                @endphp
+                
                 <div class="row g-3">
+                    {{-- Category Dropdown - Always editable --}}
                     <div class="col-md-6">
-                        <label class="form-label required-field">Ticket Type</label>
-                        @if(isset($isTicketTypeLocked) && $isTicketTypeLocked)
-                            {{-- Hidden field to submit the value (slug for form submission) --}}
-                            <input type="hidden" name="ticket_type_id" value="{{ $selectedTicketType->slug }}" id="hidden_ticket_type_id" data-ticket-type-id="{{ $selectedTicketType->id }}">
-                            {{-- Display field (readonly) with data attributes for day selection --}}
-                            @php
-                                $nationalityForPrice = $selectedNationality ?? 'national';
-                                $price = $selectedTicketType->getCurrentPrice($nationalityForPrice);
-                                $currency = ($nationalityForPrice === 'international') ? '$' : '₹';
-                                $priceFormat = ($nationalityForPrice === 'international') ? number_format($price, 2) : number_format($price, 0);
-                            @endphp
-                            <input type="text" class="form-control" 
-                                   id="locked_ticket_type"
-                                   value="{{ $selectedTicketType->name }} - {{ $currency }}{{ $priceFormat }}" 
-                                   readonly 
-                                   style="background-color: #e9ecef; cursor: not-allowed;"
-                                   data-ticket-type-id="{{ $selectedTicketType->id }}"
-                                   data-price-national="{{ $selectedTicketType->getCurrentPrice('national') }}"
-                                   data-price-international="{{ $selectedTicketType->getCurrentPrice('international') }}"
-                                   data-per-day-price-national="{{ $selectedTicketType->getPerDayPrice('national') ?? '' }}"
-                                   data-per-day-price-international="{{ $selectedTicketType->getPerDayPrice('international') ?? '' }}"
-                                   data-has-per-day-pricing="{{ $selectedTicketType->hasPerDayPricing() ? '1' : '0' }}"
-                                   data-enable-day-selection="{{ $selectedTicketType->enable_day_selection ? '1' : '0' }}"
-                                   data-all-days-access="{{ $selectedTicketType->all_days_access ? '1' : '0' }}"
-                                   data-include-all-days-option="{{ $selectedTicketType->include_all_days_option ? '1' : '0' }}"
-                                   data-available-days="{{ json_encode($selectedTicketType->getAllAccessibleDays()->map(function($day) { return ['id' => $day->id, 'label' => $day->label, 'date' => $day->date->format('M d, Y')]; })) }}">
-                        @else
-                            <select name="ticket_type_id" class="form-select" id="ticket_type_select" required>
-                                <option value="">Select Ticket Type</option>
-                                @foreach($ticketTypes as $ticketType)
-                                    @php
-                                        $nationalityForPrice = old('nationality', $selectedNationality ?? 'national');
-                                        $perDayPrice = $ticketType->getPerDayPrice($nationalityForPrice);
-                                        $price = $perDayPrice ?? $ticketType->getCurrentPrice($nationalityForPrice);
-                                        $currency = ($nationalityForPrice === 'international') ? '$' : '₹';
-                                        $priceFormat = ($nationalityForPrice === 'international') ? number_format($price, 2) : number_format($price, 0);
-                                        $priceLabel = $perDayPrice ? '/day' : '';
-                                    @endphp
-                                    <option value="{{ $ticketType->slug }}" 
-                                            data-ticket-type-id="{{ $ticketType->id }}"
-                                            data-price-national="{{ $ticketType->getCurrentPrice('national') }}"
-                                            data-price-international="{{ $ticketType->getCurrentPrice('international') }}"
-                                            data-per-day-price-national="{{ $ticketType->getPerDayPrice('national') ?? '' }}"
-                                            data-per-day-price-international="{{ $ticketType->getPerDayPrice('international') ?? '' }}"
-                                            data-has-per-day-pricing="{{ $ticketType->hasPerDayPricing() ? '1' : '0' }}"
-                                            data-enable-day-selection="{{ $ticketType->enable_day_selection ? '1' : '0' }}"
-                                            data-all-days-access="{{ $ticketType->all_days_access ? '1' : '0' }}"
-                                            data-include-all-days-option="{{ $ticketType->include_all_days_option ? '1' : '0' }}"
-                                            data-available-days="{{ json_encode($ticketType->getAllAccessibleDays()->map(function($day) { return ['id' => $day->id, 'label' => $day->label, 'date' => $day->date->format('M d, Y')]; })) }}"
-                                            {{ (old('ticket_type_id') == $ticketType->slug || (isset($selectedTicketType) && $selectedTicketType && $selectedTicketType->id == $ticketType->id)) ? 'selected' : '' }}>
-                                        {{ $ticketType->name }} - {{ $currency }}{{ $priceFormat }}{{ $priceLabel }}
-                                    </option>
-                                @endforeach
-                            </select>
-                            <div class="invalid-feedback"></div>
-                        @endif
-                        @error('ticket_type_id')
+                        <label class="form-label required-field">Category</label>
+                        <select name="category_id" class="form-select" id="category_select" required>
+                            <option value="">Select Category</option>
+                            @foreach($ticketCategories ?? [] as $category)
+                                <option value="{{ $category->id }}" 
+                                        data-subcategories="{{ json_encode($category->subcategories->map(function($sub) { return ['id' => $sub->id, 'name' => $sub->name]; })) }}"
+                                        {{ $preSelectedCategoryId == $category->id ? 'selected' : '' }}>
+                                    {{ $category->name }}
+                                </option>
+                            @endforeach
+                        </select>
+                        @error('category_id')
                             <div class="text-danger">{{ $message }}</div>
                         @enderror
                     </div>
 
+                    {{-- Subcategory Dropdown - Always editable, populated by JS --}}
+                    <div class="col-md-6">
+                        <label class="form-label required-field">Subcategory</label>
+                        <select name="subcategory_id" class="form-select" id="subcategory_select" required 
+                                data-preselected="{{ $preSelectedSubcategoryId }}">
+                            <option value="">Select Subcategory</option>
+                            {{-- Options will be populated by JavaScript based on category selection --}}
+                        </select>
+                        @error('subcategory_id')
+                            <div class="text-danger">{{ $message }}</div>
+                        @enderror
+                    </div>
+                </div>
+
+                {{-- Price Display Row --}}
+                <div class="row mt-3" id="price_display_row" style="display: none;">
+                    <div class="col-12">
+                        <div class="alert alert-info d-flex align-items-center" style="background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%); border: none;">
+                            <i class="fas fa-tag me-2" style="font-size: 1.25rem;"></i>
+                            <div>
+                                <strong>Selected Ticket:</strong> <span id="selected_ticket_name"></span>
+                                <br>
+                                <span class="text-success fw-bold" id="selected_ticket_price"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row g-3 mt-2">
                     {{-- Day Selection Dropdown - shown when ticket has per-day pricing --}}
                     <div id="day_selection_row" class="col-md-6 mb-3" style="display: none;">
                         <label class="form-label required-field">Select Event Day</label>
@@ -814,7 +839,389 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    // ==========================================
+    // Category/Subcategory Cascade Handler
+    // ==========================================
+    const categorySelect = document.getElementById('category_select');
+    const subcategorySelect = document.getElementById('subcategory_select');
+    const hiddenTicketTypeId = document.getElementById('hidden_ticket_type_id');
+    const priceDisplayRow = document.getElementById('price_display_row');
+    const selectedTicketName = document.getElementById('selected_ticket_name');
+    const selectedTicketPrice = document.getElementById('selected_ticket_price');
+    const daySelectionRow = document.getElementById('day_selection_row');
+    const selectedEventDay = document.getElementById('selected_event_day');
+    
+    // Parse ticket types data from JSON
+    let ticketTypesData = [];
+    try {
+        const ticketTypesJson = document.getElementById('ticketTypesData');
+        if (ticketTypesJson) {
+            ticketTypesData = JSON.parse(ticketTypesJson.textContent);
+        }
+    } catch (e) {
+        console.error('Error parsing ticket types data:', e);
+    }
+    
+    // Get nationality value
+    function getNationality() {
+        const nationalitySelect = document.getElementById('nationality') || document.querySelector('select[name="nationality"]');
+        const nationalityHidden = document.querySelector('input[name="nationality"]');
+        return nationalitySelect?.value || nationalityHidden?.value || 'national';
+    }
+    
+    // Normalize available_for values (database may have 'indian_only' instead of 'national')
+    function normalizeAvailableFor(availableFor) {
+        if (availableFor === 'indian_only') return 'national';
+        if (availableFor === 'international_only') return 'international';
+        return availableFor || 'both';
+    }
+    
+    // Check if ticket type is available for a nationality
+    function isTicketAvailableForNationality(ticketType, nationalityKey) {
+        const normalizedAvailableFor = normalizeAvailableFor(ticketType.available_for);
+        return normalizedAvailableFor === 'both' || normalizedAvailableFor === nationalityKey;
+    }
+    
+    // Find matching ticket type based on category and subcategory
+    function findTicketType(categoryId, subcategoryId) {
+        const nationality = getNationality();
+        const nationalityKey = nationality === 'international' ? 'international' : 'national';
+        
+        console.log('findTicketType called with:', { categoryId, subcategoryId, nationalityKey });
+        console.log('ticketTypesData count:', ticketTypesData.length);
+        
+        const result = ticketTypesData.find(tt => {
+            // Match category and subcategory
+            const categoryMatch = String(tt.category_id) === String(categoryId);
+            const subcategoryMatch = String(tt.subcategory_id) === String(subcategoryId);
+            
+            // Check availability for nationality
+            const isAvailable = isTicketAvailableForNationality(tt, nationalityKey);
+            
+            console.log('Checking ticket:', tt.name, 'cat:', tt.category_id, 'sub:', tt.subcategory_id, 
+                'catMatch:', categoryMatch, 'subMatch:', subcategoryMatch, 
+                'available_for:', tt.available_for, 'isAvailable:', isAvailable);
+            
+            return categoryMatch && subcategoryMatch && isAvailable;
+        });
+        
+        console.log('findTicketType result:', result);
+        return result;
+    }
+    
+    // Populate subcategories based on selected category
+    // Shows ALL subcategories for the category, regardless of whether a ticket type exists
+    function populateSubcategories(categoryId, autoTrigger = true) {
+        if (!subcategorySelect) return;
+        
+        // Get pre-selected subcategory ID from data attribute (set via PHP from URL param)
+        const preSelectedSubcategoryId = subcategorySelect.dataset.preselected || '';
+        
+        subcategorySelect.innerHTML = '<option value="">Select Subcategory</option>';
+        
+        if (!categoryId) {
+            updateTicketTypeSelection(null);
+            return;
+        }
+        
+        const categoryOption = categorySelect.querySelector(`option[value="${categoryId}"]`);
+        if (!categoryOption) {
+            console.log('Category option not found for ID:', categoryId);
+            return;
+        }
+        
+        try {
+            const subcategories = JSON.parse(categoryOption.dataset.subcategories || '[]');
+            const nationality = getNationality();
+            const nationalityKey = nationality === 'international' ? 'international' : 'national';
+            
+            console.log('Populating subcategories for category:', categoryId, 'subcategories:', subcategories);
+            console.log('Pre-selected subcategory ID:', preSelectedSubcategoryId);
+            console.log('Available ticket types:', ticketTypesData.length);
+            
+            let addedOptions = [];
+            subcategories.forEach(sub => {
+                // Find matching ticket type (if any)
+                const matchingTicketType = ticketTypesData.find(tt => 
+                    String(tt.category_id) === String(categoryId) && 
+                    String(tt.subcategory_id) === String(sub.id)
+                );
+                
+                // Check nationality availability if ticket type exists
+                let isAvailableForNationality = matchingTicketType 
+                    ? isTicketAvailableForNationality(matchingTicketType, nationalityKey)
+                    : false;
+                
+                console.log('Subcategory check:', sub.name, 'ID:', sub.id, 
+                    'matchingTicketType:', matchingTicketType ? matchingTicketType.name : 'None',
+                    'availableFor:', matchingTicketType ? matchingTicketType.available_for : 'N/A',
+                    'isAvailableForNationality:', isAvailableForNationality);
+                
+                // Show subcategory only if there's a matching ticket type available for this nationality
+                if (matchingTicketType && isAvailableForNationality) {
+                    const option = document.createElement('option');
+                    option.value = sub.id;
+                    option.textContent = sub.name;
+                    subcategorySelect.appendChild(option);
+                    addedOptions.push(sub);
+                }
+            });
+            
+            console.log('Added subcategory options:', addedOptions.length);
+            
+            // Priority 1: Check for pre-selected value from URL parameter
+            if (preSelectedSubcategoryId && addedOptions.some(o => String(o.id) === String(preSelectedSubcategoryId))) {
+                subcategorySelect.value = preSelectedSubcategoryId;
+                console.log('Selected pre-selected subcategory:', preSelectedSubcategoryId);
+                if (autoTrigger) {
+                    const ticketType = findTicketType(categoryId, preSelectedSubcategoryId);
+                    console.log('Found ticket type for pre-selected:', ticketType);
+                    if (ticketType) {
+                        updateTicketTypeSelection(ticketType);
+                    }
+                }
+            }
+            // Priority 2: Check for old value (from validation errors)
+            else {
+                const oldSubcategoryId = '{{ old("subcategory_id") }}';
+                if (oldSubcategoryId && addedOptions.some(o => String(o.id) === oldSubcategoryId)) {
+                    subcategorySelect.value = oldSubcategoryId;
+                    if (autoTrigger) {
+                        const ticketType = findTicketType(categoryId, oldSubcategoryId);
+                        if (ticketType) {
+                            updateTicketTypeSelection(ticketType);
+                        }
+                    }
+                }
+                // Priority 3: If only one option, auto-select it
+                else if (addedOptions.length === 1) {
+                    subcategorySelect.value = addedOptions[0].id;
+                    if (autoTrigger) {
+                        const ticketType = findTicketType(categoryId, addedOptions[0].id);
+                        if (ticketType) {
+                            updateTicketTypeSelection(ticketType);
+                        }
+                    }
+                }
+            }
+        } catch (e) {
+            console.error('Error parsing subcategories:', e);
+        }
+    }
+    
+    // Update ticket type selection and price display
+    function updateTicketTypeSelection(ticketType) {
+        console.log('updateTicketTypeSelection called with:', ticketType);
+        
+        const baseAmountValue = document.getElementById('base_amount_value');
+        const baseAmountBreakdown = document.getElementById('base_amount_breakdown');
+        const delegateCountEl = document.getElementById('delegate_count');
+        const delegateCount = parseInt(delegateCountEl?.value || 1) || 1;
+        
+        console.log('Elements found:', { 
+            baseAmountValue: !!baseAmountValue, 
+            baseAmountBreakdown: !!baseAmountBreakdown,
+            priceDisplayRow: !!priceDisplayRow,
+            hiddenTicketTypeId: !!hiddenTicketTypeId,
+            delegateCount: delegateCount
+        });
+        
+        if (!ticketType) {
+            console.log('No ticket type provided, resetting display');
+            if (hiddenTicketTypeId) hiddenTicketTypeId.value = '';
+            if (priceDisplayRow) priceDisplayRow.style.display = 'none';
+            if (daySelectionRow) daySelectionRow.style.display = 'none';
+            if (baseAmountValue) baseAmountValue.textContent = '--';
+            if (baseAmountBreakdown) baseAmountBreakdown.textContent = '';
+            return;
+        }
+        
+        // Set hidden ticket type ID
+        if (hiddenTicketTypeId) {
+            hiddenTicketTypeId.value = ticketType.slug;
+        }
+        
+        // Get nationality for price calculation
+        const nationality = getNationality();
+        const isInternational = nationality === 'international';
+        const currency = isInternational ? '$' : '₹';
+        const priceDecimals = isInternational ? 2 : 0;
+        
+        // Calculate price
+        let unitPrice = isInternational 
+            ? parseFloat(ticketType.price_international || 0)
+            : parseFloat(ticketType.price_national || 0);
+        
+        // Format unit price for display
+        const unitPriceFormat = isInternational 
+            ? unitPrice.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})
+            : unitPrice.toLocaleString('en-IN', {minimumFractionDigits: 0, maximumFractionDigits: 0});
+        
+        // Update Selected Ticket display
+        if (selectedTicketName) {
+            selectedTicketName.textContent = ticketType.name;
+        }
+        if (selectedTicketPrice) {
+            selectedTicketPrice.textContent = currency + unitPriceFormat;
+        }
+        if (priceDisplayRow) {
+            priceDisplayRow.style.display = 'block';
+        }
+        
+        // Calculate and update Base Amount
+        const baseAmount = unitPrice * delegateCount;
+        const baseAmountFormat = isInternational 
+            ? baseAmount.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})
+            : baseAmount.toLocaleString('en-IN', {minimumFractionDigits: 0, maximumFractionDigits: 0});
+        
+        if (baseAmountValue) {
+            baseAmountValue.textContent = currency + baseAmountFormat;
+        }
+        if (baseAmountBreakdown) {
+            baseAmountBreakdown.textContent = delegateCount + ' delegate' + (delegateCount > 1 ? 's' : '') + ' × ' + currency + unitPriceFormat;
+        }
+        
+        // Handle day selection
+        if (ticketType.enable_day_selection && ticketType.has_per_day_pricing) {
+            if (daySelectionRow) daySelectionRow.style.display = 'block';
+            populateDayOptions(ticketType);
+        } else {
+            if (daySelectionRow) daySelectionRow.style.display = 'none';
+        }
+        
+        console.log('Updated ticket selection:', ticketType.name, 'Price:', currency + unitPriceFormat, 'Base Amount:', currency + baseAmountFormat);
+    }
+    
+    // Populate day selection options
+    function populateDayOptions(ticketType) {
+        if (!selectedEventDay) return;
+        
+        selectedEventDay.innerHTML = '';
+        
+        const availableDays = ticketType.available_days || [];
+        const allDaysAccess = ticketType.all_days_access;
+        const includeAllDaysOption = ticketType.include_all_days_option;
+        
+        // Add "All Days" option if applicable
+        if (allDaysAccess || includeAllDaysOption) {
+            const allOption = document.createElement('option');
+            allOption.value = 'all';
+            allOption.textContent = 'All Days';
+            selectedEventDay.appendChild(allOption);
+        }
+        
+        // Add individual day options
+        availableDays.forEach(day => {
+            const option = document.createElement('option');
+            option.value = day.id;
+            option.textContent = day.label + ' (' + day.date + ')';
+            selectedEventDay.appendChild(option);
+        });
+    }
+    
+    // Category change handler
+    if (categorySelect) {
+        categorySelect.addEventListener('change', function() {
+            // populateSubcategories will handle calling updateTicketTypeSelection
+            // if a subcategory is auto-selected (pre-selected or single option)
+            populateSubcategories(this.value);
+            // Note: Don't call updateTicketTypeSelection(null) here as populateSubcategories handles it
+        });
+        
+        // Initialize on page load - populate subcategories if category is pre-selected
+        if (categorySelect.value) {
+            populateSubcategories(categorySelect.value);
+            
+            // If subcategory is also pre-selected, calculate price immediately
+            if (subcategorySelect && subcategorySelect.value) {
+                const ticketType = findTicketType(categorySelect.value, subcategorySelect.value);
+                if (ticketType) {
+                    updateTicketTypeSelection(ticketType);
+                    console.log('Initialized with ticket type:', ticketType);
+                }
+            }
+        }
+    }
+    
+    // Subcategory change handler
+    if (subcategorySelect) {
+        subcategorySelect.addEventListener('change', function() {
+            const categoryId = categorySelect?.value;
+            const subcategoryId = this.value;
+            
+            console.log('Subcategory changed:', { categoryId, subcategoryId });
+            
+            if (categoryId && subcategoryId) {
+                const ticketType = findTicketType(categoryId, subcategoryId);
+                console.log('Found ticket type:', ticketType);
+                try {
+                    updateTicketTypeSelection(ticketType);
+                    console.log('updateTicketTypeSelection completed successfully');
+                } catch (e) {
+                    console.error('Error in updateTicketTypeSelection:', e);
+                }
+            } else {
+                updateTicketTypeSelection(null);
+            }
+        });
+        
+        // If subcategory is pre-selected on page load, trigger the calculation
+        if (subcategorySelect.value && categorySelect?.value) {
+            const ticketType = findTicketType(categorySelect.value, subcategorySelect.value);
+            if (ticketType) {
+                updateTicketTypeSelection(ticketType);
+            }
+        }
+    }
+    
+    // Nationality change handler - re-filter subcategories and update price
+    const nationalitySelectForCategory = document.getElementById('nationality') || document.querySelector('select[name="nationality"]');
+    if (nationalitySelectForCategory) {
+        nationalitySelectForCategory.addEventListener('change', function() {
+            const categoryId = categorySelect?.value;
+            if (categoryId) {
+                // Re-populate subcategories for new nationality
+                populateSubcategories(categoryId);
+                
+                // If subcategory is still selected, update the ticket type
+                const subcategoryId = subcategorySelect?.value;
+                if (subcategoryId) {
+                    const ticketType = findTicketType(categoryId, subcategoryId);
+                    updateTicketTypeSelection(ticketType);
+                }
+            }
+        });
+    }
+    
+    // Debug: Log available ticket types on page load
+    console.log('Ticket Types Data loaded:', ticketTypesData.length, 'items');
+    console.log('Ticket Types:', ticketTypesData.map(tt => ({ 
+        name: tt.name, 
+        category_id: tt.category_id, 
+        subcategory_id: tt.subcategory_id,
+        price_national: tt.price_national
+    })));
+    
+    // Initialize price calculation on page load if both category and subcategory are selected
+    setTimeout(function() {
+        if (categorySelect && subcategorySelect) {
+            const catVal = categorySelect.value;
+            const subVal = subcategorySelect.value;
+            console.log('Init check - Category:', catVal, 'Subcategory:', subVal);
+            
+            if (catVal && subVal) {
+                const tt = findTicketType(catVal, subVal);
+                console.log('Init found ticket type:', tt);
+                if (tt) {
+                    updateTicketTypeSelection(tt);
+                }
+            }
+        }
+    }, 100);
+    
+    // ==========================================
     // Registration Type Handler
+    // ==========================================
     const registrationTypeSelect = document.getElementById('registration_type');
     const organisationNameRow = document.getElementById('organisation_name_row');
     const organisationNameInput = document.getElementById('organisation_name');
@@ -1009,23 +1416,73 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // Day Selection Handler
-    const ticketTypeSelect = document.getElementById('ticket_type_select');
-    const lockedTicketType = document.getElementById('locked_ticket_type');
-    const daySelectionRow = document.getElementById('day_selection_row');
-    const selectedEventDaySelect = document.getElementById('selected_event_day');
+    // Note: daySelectionRow, selectedEventDay are already declared above in the Category/Subcategory section
+    // Using aliases for backward compatibility with legacy code
+    const ticketTypeSelectLegacy = document.getElementById('ticket_type_select');
+    const lockedTicketTypeLegacy = document.getElementById('locked_ticket_type');
     const dayAccessInfo = document.getElementById('day_access_info');
     const dayAccessBadges = document.getElementById('day_access_badges');
+    // selectedEventDaySelect references the same element as selectedEventDay (declared above)
+    const selectedEventDaySelect = selectedEventDay;
     
-    // Helper function to get ticket type data (from select option or locked input)
+    // Helper function to get ticket type data (from category/subcategory selection or locked input)
     function getTicketTypeData() {
-        if (ticketTypeSelect) {
-            const selectedOption = ticketTypeSelect.options[ticketTypeSelect.selectedIndex];
+        // First, check if we have category/subcategory dropdowns
+        const categorySelect = document.getElementById('category_select');
+        const subcategorySelect = document.getElementById('subcategory_select');
+        
+        if (categorySelect && subcategorySelect && categorySelect.value && subcategorySelect.value) {
+            // Find matching ticket type from ticketTypesData
+            const categoryId = categorySelect.value;
+            const subcategoryId = subcategorySelect.value;
+            const nationality = getNationality ? getNationality() : 'national';
+            const nationalityKey = nationality === 'international' ? 'international' : 'national';
+            
+            const ticketType = ticketTypesData.find(tt => {
+                const categoryMatch = String(tt.category_id) === String(categoryId);
+                const subcategoryMatch = String(tt.subcategory_id) === String(subcategoryId);
+                const availableFor = tt.available_for || 'both';
+                const isAvailable = availableFor === 'both' || availableFor === nationalityKey;
+                return categoryMatch && subcategoryMatch && isAvailable;
+            });
+            
+            if (ticketType) {
+                // Return data in the same format as dataset attributes
+                return {
+                    ticketTypeId: ticketType.id,
+                    priceNational: ticketType.price_national,
+                    priceInternational: ticketType.price_international,
+                    perDayPriceNational: ticketType.per_day_price_national || '',
+                    perDayPriceInternational: ticketType.per_day_price_international || '',
+                    hasPerDayPricing: ticketType.has_per_day_pricing ? '1' : '0',
+                    enableDaySelection: ticketType.enable_day_selection ? '1' : '0',
+                    allDaysAccess: ticketType.all_days_access ? '1' : '0',
+                    includeAllDaysOption: ticketType.include_all_days_option ? '1' : '0',
+                    availableDays: JSON.stringify(ticketType.available_days || []),
+                    availableFor: ticketType.available_for || 'both',
+                    categoryName: ticketType.category_name || '',
+                    subcategoryName: ticketType.subcategory_name || ''
+                };
+            }
+            return null;
+        }
+        
+        // Fallback: check for old ticket type select (for backward compatibility)
+        if (ticketTypeSelectLegacy) {
+            const selectedOption = ticketTypeSelectLegacy.options[ticketTypeSelectLegacy.selectedIndex];
             if (!selectedOption || !selectedOption.value) return null;
             return selectedOption.dataset;
-        } else if (lockedTicketType) {
-            return lockedTicketType.dataset;
+        } else if (lockedTicketTypeLegacy) {
+            return lockedTicketTypeLegacy.dataset;
         }
         return null;
+    }
+    
+    // Helper function to get nationality (defined here for getTicketTypeData to use)
+    function getNationality() {
+        const nationalitySelect = document.getElementById('nationality') || document.querySelector('select[name="nationality"]');
+        const nationalityHidden = document.querySelector('input[name="nationality"]');
+        return nationalitySelect?.value || nationalityHidden?.value || 'national';
     }
     
     function updateDayAccessInfo() {
@@ -1177,8 +1634,8 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // Initialize day selection and day access info on page load
-    if (ticketTypeSelect) {
-        ticketTypeSelect.addEventListener('change', function() {
+    if (ticketTypeSelectLegacy) {
+        ticketTypeSelectLegacy.addEventListener('change', function() {
             updateDayAccessInfo();
             updateDaySelection();
             updateBaseAmount();
@@ -1186,7 +1643,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // Trigger on load in case ticket type is pre-selected
         updateDayAccessInfo();
         updateDaySelection();
-    } else if (lockedTicketType) {
+    } else if (lockedTicketTypeLegacy) {
         // If ticket type is locked (from URL params), still initialize day selection
         updateDayAccessInfo();
         updateDaySelection();
@@ -1898,28 +2355,48 @@ document.addEventListener('DOMContentLoaded', function() {
     const gstLoading = document.getElementById('gst_loading');
     
     // Update ticket type prices when nationality changes
-    const nationalitySelect = document.getElementById('nationality') || document.querySelector('select[name="nationality"]');
+    const nationalitySelectForPriceUpdate = document.getElementById('nationality') || document.querySelector('select[name="nationality"]');
     const ticketTypeSelectForPrice = document.getElementById('ticket_type_select');
     
-    if (nationalitySelect && ticketTypeSelectForPrice) {
-        nationalitySelect.addEventListener('change', function() {
+    if (nationalitySelectForPriceUpdate && ticketTypeSelectForPrice) {
+        nationalitySelectForPriceUpdate.addEventListener('change', function() {
             const nationality = this.value;
             const isInternational = nationality === 'international';
             const currency = isInternational ? '$' : '₹';
             
-            // Update all ticket type options
+            // Filter and update all ticket type options based on nationality
+            let hasSelectedOption = false;
             ticketTypeSelectForPrice.querySelectorAll('option').forEach(function(option) {
                 if (option.value && option.dataset.priceNational) {
-                    const price = isInternational 
-                        ? parseFloat(option.dataset.priceInternational || 0)
-                        : parseFloat(option.dataset.priceNational || 0);
-                    const priceFormat = isInternational 
-                        ? number_format(price, 2) 
-                        : number_format(price, 0);
+                    // Check if this ticket type is available for the selected nationality
+                    const availableFor = option.dataset.availableFor || 'both';
+                    const nationalityKey = isInternational ? 'international' : 'national';
+                    const isAvailable = availableFor === 'both' || availableFor === nationalityKey;
                     
-                    // Extract ticket name (before the dash)
-                    const ticketName = option.textContent.split(' - ')[0];
-                    option.textContent = ticketName + ' - ' + currency + priceFormat;
+                    // Show/hide option based on availability
+                    option.style.display = isAvailable ? '' : 'none';
+                    option.disabled = !isAvailable;
+                    
+                    // If currently selected option becomes unavailable, reset selection
+                    if (option.selected && !isAvailable) {
+                        option.selected = false;
+                        ticketTypeSelectForPrice.value = '';
+                    }
+                    
+                    if (isAvailable) {
+                        hasSelectedOption = true;
+                        // Update price display
+                        const price = isInternational 
+                            ? parseFloat(option.dataset.priceInternational || 0)
+                            : parseFloat(option.dataset.priceNational || 0);
+                        const priceFormat = isInternational 
+                            ? number_format(price, 2) 
+                            : number_format(price, 0);
+                        
+                        // Extract ticket name (before the dash)
+                        const ticketName = option.textContent.split(' - ')[0];
+                        option.textContent = ticketName + ' - ' + currency + priceFormat;
+                    }
                 }
             });
             // Update base amount when nationality changes
@@ -1938,28 +2415,38 @@ document.addEventListener('DOMContentLoaded', function() {
         const baseAmountDisplay = document.getElementById('base_amount_value');
         const baseAmountBreakdown = document.getElementById('base_amount_breakdown');
         
-        if (!baseAmountDisplay) return;
+        if (!baseAmountDisplay) {
+            console.log('Base amount display element not found');
+            return;
+        }
         
         // Get delegate count
         const delegateCountInput = document.getElementById('delegate_count');
         const delegateCount = parseInt(delegateCountInput?.value || 1) || 1;
         
         // Get nationality
-        const nationality = nationalitySelect?.value || '{{ old("nationality", $selectedNationality ?? "national") }}';
+        const nationalityInput = document.getElementById('nationality') || document.querySelector('select[name="nationality"]') || document.querySelector('input[name="nationality"]');
+        const nationality = nationalityInput?.value || '{{ old("nationality", $selectedNationality ?? "national") }}';
         const isInternational = nationality === 'international';
         const currency = isInternational ? '$' : '₹';
         const priceDecimals = isInternational ? 2 : 0;
         
+        console.log('updateBaseAmount called - nationality:', nationality, 'delegates:', delegateCount);
+        
         // Get ticket type data
         const ticketTypeData = getTicketTypeData();
+        console.log('ticketTypeData:', ticketTypeData);
+        
         if (!ticketTypeData) {
+            console.log('No ticket type data found, showing --');
             baseAmountDisplay.textContent = '--';
             baseAmountBreakdown.textContent = '';
             return;
         }
         
         // Get selected day if per-day pricing is enabled
-        const selectedDayId = selectedEventDaySelect?.value;
+        const eventDaySelect = document.getElementById('selected_event_day');
+        const selectedDayId = eventDaySelect?.value;
         const hasPerDayPricing = ticketTypeData.hasPerDayPricing === '1';
         const selectedAllDays = selectedDayId === 'all' || !selectedDayId;
         
@@ -2000,12 +2487,12 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    // Update base amount when ticket type changes
-    if (ticketTypeSelect) {
-        ticketTypeSelect.addEventListener('change', function() {
+    // Update base amount when ticket type changes (legacy dropdown)
+    if (ticketTypeSelectLegacy) {
+        ticketTypeSelectLegacy.addEventListener('change', function() {
             updateBaseAmount();
         });
-    } else if (lockedTicketType) {
+    } else if (lockedTicketTypeLegacy) {
         // For locked ticket type, update on load
         updateBaseAmount();
     }
@@ -2058,22 +2545,22 @@ document.addEventListener('DOMContentLoaded', function() {
         if (hiddenTicketTypeInput) {
             // Ticket type is locked - get ID from data attribute, fallback to value (slug)
             ticketTypeId = hiddenTicketTypeInput.getAttribute('data-ticket-type-id') || hiddenTicketTypeInput.value;
-        } else if (lockedTicketType) {
+        } else if (lockedTicketTypeLegacy) {
             // Fallback: get from locked display field's data attribute
-            ticketTypeId = lockedTicketType.getAttribute('data-ticket-type-id') || '';
-        } else if (ticketTypeSelect && ticketTypeSelect.value) {
+            ticketTypeId = lockedTicketTypeLegacy.getAttribute('data-ticket-type-id') || '';
+        } else if (ticketTypeSelectLegacy && ticketTypeSelectLegacy.value) {
             // Ticket type from dropdown (value is slug, but we need ID)
             // Get ID from selected option's data attribute
-            if (ticketTypeSelect.selectedIndex >= 0 && ticketTypeSelect.selectedIndex > 0) {
-                const selectedOption = ticketTypeSelect.options[ticketTypeSelect.selectedIndex];
+            if (ticketTypeSelectLegacy.selectedIndex >= 0 && ticketTypeSelectLegacy.selectedIndex > 0) {
+                const selectedOption = ticketTypeSelectLegacy.options[ticketTypeSelectLegacy.selectedIndex];
                 if (selectedOption && selectedOption.dataset && selectedOption.dataset.ticketTypeId) {
                     ticketTypeId = selectedOption.dataset.ticketTypeId;
                 } else {
                     // Fallback: use the value (slug) - backend will handle it
-                    ticketTypeId = ticketTypeSelect.value;
+                    ticketTypeId = ticketTypeSelectLegacy.value;
                 }
             } else {
-                ticketTypeId = ticketTypeSelect.value;
+                ticketTypeId = ticketTypeSelectLegacy.value;
             }
         }
         
@@ -2220,8 +2707,8 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // Re-validate promocode when form values change
-    if (ticketTypeSelect) {
-        ticketTypeSelect.addEventListener('change', function() {
+    if (ticketTypeSelectLegacy) {
+        ticketTypeSelectLegacy.addEventListener('change', function() {
             if (promocodeInput && promocodeInput.value.trim()) {
                 validatePromocode();
             }

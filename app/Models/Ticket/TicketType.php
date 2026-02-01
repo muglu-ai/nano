@@ -38,6 +38,7 @@ class TicketType extends Model
         'enable_day_selection', // When enabled, users can select which day(s) they want to attend
         'sort_order',
         'early_bird_reminder_sent', // Track if sales team has been reminded
+        'available_for', // 'national', 'international', or 'both' - controls ticket visibility by nationality
     ];
 
     protected $casts = [
@@ -296,6 +297,33 @@ class TicketType extends Model
         }
         
         return $this->eventDays()->where('event_days.id', $dayId)->exists();
+    }
+
+    /**
+     * Check if ticket type is available for a given nationality
+     * 
+     * @param string $nationality 'national' or 'international'
+     * @return bool
+     */
+    public function isAvailableFor(string $nationality): bool
+    {
+        $availableFor = $this->available_for ?? 'both';
+        
+        if ($availableFor === 'both') {
+            return true;
+        }
+        
+        // Normalize the values for comparison
+        // 'indian_only' and 'national' are equivalent
+        // 'international_only' and 'international' are equivalent
+        $normalizedAvailableFor = $availableFor;
+        if ($availableFor === 'indian_only') {
+            $normalizedAvailableFor = 'national';
+        } elseif ($availableFor === 'international_only') {
+            $normalizedAvailableFor = 'international';
+        }
+        
+        return $normalizedAvailableFor === $nationality;
     }
     
     /**

@@ -265,7 +265,23 @@
                         @endforeach
                     </td>
                 </tr>
+                @php
+                    $firstTicketType = $order->items->first()?->ticketType;
+                @endphp
+                @if($firstTicketType && $firstTicketType->category)
                 <tr>
+                    <td class="label-cell">Category</td>
+                    <td class="value-cell">{{ $firstTicketType->category->name }}</td>
+                </tr>
+                @endif
+                @if($firstTicketType && $firstTicketType->subcategory)
+                <tr>
+                    <td class="label-cell">Subcategory</td>
+                    <td class="value-cell">{{ $firstTicketType->subcategory->name }}</td>
+                </tr>
+                @endif
+                {{-- Day Access row hidden as per requirement --}}
+                {{-- <tr>
                     <td class="label-cell">Day Access</td>
                     <td class="value-cell">
                     @foreach($order->items as $item)
@@ -288,7 +304,7 @@
                             @endif
                     @endforeach
                     </td>
-                </tr>
+                </tr> --}}
                 <tr>
                     <td class="label-cell">Number of Delegates</td>
                     <td class="value-cell">{{ $order->items->sum('quantity') }}</td>

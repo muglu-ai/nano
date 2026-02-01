@@ -49,13 +49,27 @@
 </div>
 
 <div class="row">
-    <div class="col-md-12">
+    <div class="col-md-8">
         <div class="form-group mb-3">
             <label class="form-label">Ticket Name <span class="text-danger">*</span></label>
             <input type="text" name="name" class="form-control" 
                    value="{{ $isEdit ? $ticketType->name : old('name') }}" 
                    placeholder="e.g., Full Conference Pass" required>
             @error('name')
+                <div class="text-danger">{{ $message }}</div>
+            @enderror
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="form-group mb-3">
+            <label class="form-label">Available For <span class="text-danger">*</span></label>
+            <select name="available_for" class="form-select" required>
+                <option value="both" {{ ($isEdit && $ticketType->available_for == 'both') || old('available_for', 'both') == 'both' ? 'selected' : '' }}>Both (Indian & International)</option>
+                <option value="national" {{ ($isEdit && $ticketType->available_for == 'national') || old('available_for') == 'national' ? 'selected' : '' }}>Indian Only</option>
+                <option value="international" {{ ($isEdit && $ticketType->available_for == 'international') || old('available_for') == 'international' ? 'selected' : '' }}>International Only</option>
+            </select>
+            <small class="text-muted">Controls who can purchase this ticket</small>
+            @error('available_for')
                 <div class="text-danger">{{ $message }}</div>
             @enderror
         </div>

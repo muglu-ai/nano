@@ -105,7 +105,23 @@
                     <td style="padding: 8px 10px; border: 1px solid #e0e0e0; font-size: 13px; vertical-align: top; background: #f8f9fa; font-weight: 600; color: #555555; width: 40%;">Ticket Type</td>
                     <td style="padding: 8px 10px; border: 1px solid #e0e0e0; font-size: 13px; vertical-align: top; color: #333333; width: 60%;">{{ $order->items->first()->ticketType->name ?? 'N/A' }}</td>
                 </tr>
+                @php
+                    $emailTicketType = $order->items->first()?->ticketType;
+                @endphp
+                @if($emailTicketType && $emailTicketType->category)
                 <tr>
+                    <td style="padding: 8px 10px; border: 1px solid #e0e0e0; font-size: 13px; vertical-align: top; background: #f8f9fa; font-weight: 600; color: #555555; width: 40%;">Category</td>
+                    <td style="padding: 8px 10px; border: 1px solid #e0e0e0; font-size: 13px; vertical-align: top; color: #333333; width: 60%;">{{ $emailTicketType->category->name }}</td>
+                </tr>
+                @endif
+                @if($emailTicketType && $emailTicketType->subcategory)
+                <tr>
+                    <td style="padding: 8px 10px; border: 1px solid #e0e0e0; font-size: 13px; vertical-align: top; background: #f8f9fa; font-weight: 600; color: #555555; width: 40%;">Subcategory</td>
+                    <td style="padding: 8px 10px; border: 1px solid #e0e0e0; font-size: 13px; vertical-align: top; color: #333333; width: 60%;">{{ $emailTicketType->subcategory->name }}</td>
+                </tr>
+                @endif
+                {{-- Day Access row hidden as per requirement --}}
+                {{-- <tr>
                     <td style="padding: 8px 10px; border: 1px solid #e0e0e0; font-size: 13px; vertical-align: top; background: #f8f9fa; font-weight: 600; color: #555555; width: 40%;">Day Access</td>
                     <td style="padding: 8px 10px; border: 1px solid #e0e0e0; font-size: 13px; vertical-align: top; color: #333333; width: 60%;">
                         @php
@@ -128,7 +144,7 @@
                             All 3 Days
                         @endif
                     </td>
-                </tr>
+                </tr> --}}
                 <tr>
                     <td style="padding: 8px 10px; border: 1px solid #e0e0e0; font-size: 13px; vertical-align: top; background: #f8f9fa; font-weight: 600; color: #555555; width: 40%;">Number of Delegates</td>
                     <td style="padding: 8px 10px; border: 1px solid #e0e0e0; font-size: 13px; vertical-align: top; color: #333333; width: 60%;">{{ $order->items->sum('quantity') }}</td>

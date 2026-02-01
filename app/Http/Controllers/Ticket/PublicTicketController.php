@@ -174,6 +174,11 @@ class PublicTicketController extends Controller
             ->orderBy('sort_order')
             ->get();
         
+        // Note: We no longer filter ticket types by nationality here.
+        // All ticket types are loaded and passed to the view.
+        // Nationality filtering is handled in JavaScript for the dropdown,
+        // which allows real-time updates when the user changes nationality.
+        
         // Load registration categories
         $registrationCategories = TicketRegistrationCategory::where('event_id', $event->id)
             ->where('is_active', true)
@@ -253,10 +258,23 @@ class PublicTicketController extends Controller
             request()->session()->flashInput($registrationData);
         }
         
+        // Load ticket categories with subcategories for cascading dropdowns
+        $ticketCategories = TicketCategory::where('event_id', $event->id)
+            ->where(function($query) {
+                $query->where('is_exhibitor_only', false)
+                      ->orWhereNull('is_exhibitor_only');
+            })
+            ->with(['subcategories' => function($query) {
+                $query->orderBy('sort_order');
+            }])
+            ->orderBy('sort_order')
+            ->get();
+        
         return view('tickets.public.register', compact(
             'event', 
             'config', 
             'ticketTypes', 
+            'ticketCategories',
             'registrationCategories', 
             'eventDays', 
             'selectedTicketType',
@@ -285,9 +303,24 @@ class PublicTicketController extends Controller
             }
         }
         
+        // If ticket_type_id is not provided, try to find it from category_id and subcategory_id
+        if (empty($request->ticket_type_id) && $request->category_id && $request->subcategory_id) {
+            $matchingTicketType = TicketType::where('event_id', $event->id)
+                ->where('category_id', $request->category_id)
+                ->where('subcategory_id', $request->subcategory_id)
+                ->where('is_active', true)
+                ->first();
+            
+            if ($matchingTicketType) {
+                $request->merge(['ticket_type_id' => $matchingTicketType->slug]);
+            }
+        }
+        
         // Validate the request
         $validated = $request->validate([
             'registration_category_id' => 'nullable|exists:ticket_registration_categories,id',
+            'category_id' => 'nullable|exists:ticket_categories,id',
+            'subcategory_id' => 'nullable|exists:ticket_subcategories,id',
             'ticket_type_id' => [
                 'required',
                 function ($attribute, $value, $fail) use ($event) {
