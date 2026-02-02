@@ -348,9 +348,12 @@
                 
 
                 @php
-                    // Determine pre-selected values (from URL parameter or old input)
+                    // Determine pre-selected values
+                    // Category can be pre-selected from URL parameter or old input
                     $preSelectedCategoryId = old('category_id') ?? ($selectedTicketType->category_id ?? null);
-                    $preSelectedSubcategoryId = old('subcategory_id') ?? ($selectedTicketType->subcategory_id ?? null);
+                    // Subcategory should ONLY be pre-selected from old input (validation errors)
+                    // Let the user decide which subcategory to choose - don't pre-select from URL
+                    $preSelectedSubcategoryId = old('subcategory_id');
                 @endphp
                 
                 <div class="row g-3">
@@ -887,9 +890,6 @@ document.addEventListener('DOMContentLoaded', function() {
         const nationality = getNationality();
         const nationalityKey = nationality === 'international' ? 'international' : 'national';
         
-        console.log('findTicketType called with:', { categoryId, subcategoryId, nationalityKey });
-        console.log('ticketTypesData count:', ticketTypesData.length);
-        
         const result = ticketTypesData.find(tt => {
             // Match category and subcategory
             const categoryMatch = String(tt.category_id) === String(categoryId);
@@ -898,14 +898,9 @@ document.addEventListener('DOMContentLoaded', function() {
             // Check availability for nationality
             const isAvailable = isTicketAvailableForNationality(tt, nationalityKey);
             
-            console.log('Checking ticket:', tt.name, 'cat:', tt.category_id, 'sub:', tt.subcategory_id, 
-                'catMatch:', categoryMatch, 'subMatch:', subcategoryMatch, 
-                'available_for:', tt.available_for, 'isAvailable:', isAvailable);
-            
             return categoryMatch && subcategoryMatch && isAvailable;
         });
         
-        console.log('findTicketType result:', result);
         return result;
     }
     
@@ -926,7 +921,6 @@ document.addEventListener('DOMContentLoaded', function() {
         
         const categoryOption = categorySelect.querySelector(`option[value="${categoryId}"]`);
         if (!categoryOption) {
-            console.log('Category option not found for ID:', categoryId);
             return;
         }
         
@@ -934,10 +928,6 @@ document.addEventListener('DOMContentLoaded', function() {
             const subcategories = JSON.parse(categoryOption.dataset.subcategories || '[]');
             const nationality = getNationality();
             const nationalityKey = nationality === 'international' ? 'international' : 'national';
-            
-            console.log('Populating subcategories for category:', categoryId, 'subcategories:', subcategories);
-            console.log('Pre-selected subcategory ID:', preSelectedSubcategoryId);
-            console.log('Available ticket types:', ticketTypesData.length);
             
             let addedOptions = [];
             subcategories.forEach(sub => {
@@ -952,11 +942,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     ? isTicketAvailableForNationality(matchingTicketType, nationalityKey)
                     : false;
                 
-                console.log('Subcategory check:', sub.name, 'ID:', sub.id, 
-                    'matchingTicketType:', matchingTicketType ? matchingTicketType.name : 'None',
-                    'availableFor:', matchingTicketType ? matchingTicketType.available_for : 'N/A',
-                    'isAvailableForNationality:', isAvailableForNationality);
-                
                 // Show subcategory only if there's a matching ticket type available for this nationality
                 if (matchingTicketType && isAvailableForNationality) {
                     const option = document.createElement('option');
@@ -967,43 +952,19 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             });
             
-            console.log('Added subcategory options:', addedOptions.length);
-            
-            // Priority 1: Check for pre-selected value from URL parameter
-            if (preSelectedSubcategoryId && addedOptions.some(o => String(o.id) === String(preSelectedSubcategoryId))) {
-                subcategorySelect.value = preSelectedSubcategoryId;
-                console.log('Selected pre-selected subcategory:', preSelectedSubcategoryId);
+            // Only pre-select subcategory for old value (from validation errors)
+            // Let the user decide which subcategory to choose - don't auto-select
+            const oldSubcategoryId = '{{ old("subcategory_id") }}';
+            if (oldSubcategoryId && addedOptions.some(o => String(o.id) === oldSubcategoryId)) {
+                subcategorySelect.value = oldSubcategoryId;
                 if (autoTrigger) {
-                    const ticketType = findTicketType(categoryId, preSelectedSubcategoryId);
-                    console.log('Found ticket type for pre-selected:', ticketType);
+                    const ticketType = findTicketType(categoryId, oldSubcategoryId);
                     if (ticketType) {
                         updateTicketTypeSelection(ticketType);
                     }
                 }
             }
-            // Priority 2: Check for old value (from validation errors)
-            else {
-                const oldSubcategoryId = '{{ old("subcategory_id") }}';
-                if (oldSubcategoryId && addedOptions.some(o => String(o.id) === oldSubcategoryId)) {
-                    subcategorySelect.value = oldSubcategoryId;
-                    if (autoTrigger) {
-                        const ticketType = findTicketType(categoryId, oldSubcategoryId);
-                        if (ticketType) {
-                            updateTicketTypeSelection(ticketType);
-                        }
-                    }
-                }
-                // Priority 3: If only one option, auto-select it
-                else if (addedOptions.length === 1) {
-                    subcategorySelect.value = addedOptions[0].id;
-                    if (autoTrigger) {
-                        const ticketType = findTicketType(categoryId, addedOptions[0].id);
-                        if (ticketType) {
-                            updateTicketTypeSelection(ticketType);
-                        }
-                    }
-                }
-            }
+            // Don't auto-select subcategory - let user choose even if only one option exists
         } catch (e) {
             console.error('Error parsing subcategories:', e);
         }
@@ -1011,23 +972,12 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Update ticket type selection and price display
     function updateTicketTypeSelection(ticketType) {
-        console.log('updateTicketTypeSelection called with:', ticketType);
-        
         const baseAmountValue = document.getElementById('base_amount_value');
         const baseAmountBreakdown = document.getElementById('base_amount_breakdown');
         const delegateCountEl = document.getElementById('delegate_count');
         const delegateCount = parseInt(delegateCountEl?.value || 1) || 1;
         
-        console.log('Elements found:', { 
-            baseAmountValue: !!baseAmountValue, 
-            baseAmountBreakdown: !!baseAmountBreakdown,
-            priceDisplayRow: !!priceDisplayRow,
-            hiddenTicketTypeId: !!hiddenTicketTypeId,
-            delegateCount: delegateCount
-        });
-        
         if (!ticketType) {
-            console.log('No ticket type provided, resetting display');
             if (hiddenTicketTypeId) hiddenTicketTypeId.value = '';
             if (priceDisplayRow) priceDisplayRow.style.display = 'none';
             if (daySelectionRow) daySelectionRow.style.display = 'none';
@@ -1088,8 +1038,6 @@ document.addEventListener('DOMContentLoaded', function() {
         } else {
             if (daySelectionRow) daySelectionRow.style.display = 'none';
         }
-        
-        console.log('Updated ticket selection:', ticketType.name, 'Price:', currency + unitPriceFormat, 'Base Amount:', currency + baseAmountFormat);
     }
     
     // Populate day selection options
@@ -1137,7 +1085,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 const ticketType = findTicketType(categorySelect.value, subcategorySelect.value);
                 if (ticketType) {
                     updateTicketTypeSelection(ticketType);
-                    console.log('Initialized with ticket type:', ticketType);
                 }
             }
         }
@@ -1149,17 +1096,9 @@ document.addEventListener('DOMContentLoaded', function() {
             const categoryId = categorySelect?.value;
             const subcategoryId = this.value;
             
-            console.log('Subcategory changed:', { categoryId, subcategoryId });
-            
             if (categoryId && subcategoryId) {
                 const ticketType = findTicketType(categoryId, subcategoryId);
-                console.log('Found ticket type:', ticketType);
-                try {
-                    updateTicketTypeSelection(ticketType);
-                    console.log('updateTicketTypeSelection completed successfully');
-                } catch (e) {
-                    console.error('Error in updateTicketTypeSelection:', e);
-                }
+                updateTicketTypeSelection(ticketType);
             } else {
                 updateTicketTypeSelection(null);
             }
@@ -1193,25 +1132,14 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    // Debug: Log available ticket types on page load
-    console.log('Ticket Types Data loaded:', ticketTypesData.length, 'items');
-    console.log('Ticket Types:', ticketTypesData.map(tt => ({ 
-        name: tt.name, 
-        category_id: tt.category_id, 
-        subcategory_id: tt.subcategory_id,
-        price_national: tt.price_national
-    })));
-    
     // Initialize price calculation on page load if both category and subcategory are selected
     setTimeout(function() {
         if (categorySelect && subcategorySelect) {
             const catVal = categorySelect.value;
             const subVal = subcategorySelect.value;
-            console.log('Init check - Category:', catVal, 'Subcategory:', subVal);
             
             if (catVal && subVal) {
                 const tt = findTicketType(catVal, subVal);
-                console.log('Init found ticket type:', tt);
                 if (tt) {
                     updateTicketTypeSelection(tt);
                 }
@@ -2416,7 +2344,6 @@ document.addEventListener('DOMContentLoaded', function() {
         const baseAmountBreakdown = document.getElementById('base_amount_breakdown');
         
         if (!baseAmountDisplay) {
-            console.log('Base amount display element not found');
             return;
         }
         
@@ -2431,14 +2358,10 @@ document.addEventListener('DOMContentLoaded', function() {
         const currency = isInternational ? '$' : '₹';
         const priceDecimals = isInternational ? 2 : 0;
         
-        console.log('updateBaseAmount called - nationality:', nationality, 'delegates:', delegateCount);
-        
         // Get ticket type data
         const ticketTypeData = getTicketTypeData();
-        console.log('ticketTypeData:', ticketTypeData);
         
         if (!ticketTypeData) {
-            console.log('No ticket type data found, showing --');
             baseAmountDisplay.textContent = '--';
             baseAmountBreakdown.textContent = '';
             return;
@@ -3021,7 +2944,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     if (data.gst.state_name && stateSelect) {
                         // Find and select the state - case-insensitive matching with trimmed values
                         const apiStateName = String(data.gst.state_name).trim();
-                        console.log('GST Validation - Setting state:', apiStateName);
                         
                         const stateOption = Array.from(stateSelect.options).find(opt => {
                             const optText = String(opt.text).trim().toLowerCase();
@@ -3040,9 +2962,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             stateSelect.removeAttribute('readonly');
                             stateSelect.dataset.apiFetched = 'true';
                             stateSelect.title = 'Auto-filled from GST validation. You can change this if needed.';
-                            console.log('GST Validation - State set successfully:', stateOption.value);
                         } else {
-                            console.warn('GST Validation - State not found in dropdown:', apiStateName);
                             // Enable manual selection if state not found
                             stateSelect.disabled = false;
                             stateSelect.style.backgroundColor = '';
