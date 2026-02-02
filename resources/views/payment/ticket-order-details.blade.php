@@ -384,45 +384,29 @@
                         </span>
                     </td>
                 </tr>
-                {{--
+                {{-- Ticket Type row hidden - showing Category and Subcategory instead --}}
+                @php
+                    $orderTicketType = $order->items->first()?->ticketType;
+                @endphp
+                @if($orderTicketType && $orderTicketType->category)
                 <tr>
-                    <td class="label-cell">Registration Category</td>
-                    <td class="value-cell">{{ $order->registration->registrationCategory->name ?? 'N/A' }}</td>
+                    <td class="label-cell">Category</td>
+                    <td class="value-cell">{{ $orderTicketType->category->name }}</td>
                 </tr>
-                --}}
+                @endif
+                @if($orderTicketType && $orderTicketType->subcategory)
                 <tr>
-                    <td class="label-cell">Ticket Type</td>
-                    <td class="value-cell"><strong>{{ $order->items->first()->ticketType->name ?? 'N/A' }}</strong></td>
+                    <td class="label-cell">Subcategory</td>
+                    <td class="value-cell">{{ $orderTicketType->subcategory->name }}</td>
                 </tr>
+                @endif
+                @if(isset($order->registration->registration_type))
                 <tr>
-                    <td class="label-cell">Day Access</td>
-                    <td class="value-cell">
-                        @php
-                            $firstItem = $order->items->first();
-                            $selectedDay = $firstItem && $firstItem->selected_event_day_id ? $firstItem->selectedDay : null;
-                            $ticketType = $firstItem ? $firstItem->ticketType : null;
-                        @endphp
-                        @if($selectedDay)
-                            <span class="day-badge primary">{{ $selectedDay->label }}</span>
-                            <small class="text-muted">({{ \Carbon\Carbon::parse($selectedDay->date)->format('M d, Y') }})</small>
-                        @elseif($ticketType && ($ticketType->all_days_access || ($ticketType->enable_day_selection && $ticketType->include_all_days_option && !$firstItem->selected_event_day_id)))
-                            <span class="day-badge success">All 3 Days</span>
-                        @elseif($ticketType)
-                            @php
-                                $accessibleDays = $ticketType->getAllAccessibleDays();
-                            @endphp
-                            @if($accessibleDays->count() > 0)
-                                @foreach($accessibleDays as $day)
-                                    <span class="day-badge primary">{{ $day->label }}</span>
-                                @endforeach
-                            @else
-                                <span class="day-badge success">All 3 Days</span>
-                            @endif
-                        @else
-                            <span class="day-badge success">All 3 Days</span>
-                        @endif
-                    </td>
+                    <td class="label-cell">Registration Type</td>
+                    <td class="value-cell"><strong>{{ $order->registration->registration_type }}</strong></td>
                 </tr>
+                @endif
+                {{-- Day Access row hidden as per requirement --}}
                 <tr>
                     <td class="label-cell">Number of Delegates</td>
                     <td class="value-cell">{{ $order->items->sum('quantity') }}</td>
@@ -542,7 +526,7 @@
         <!-- Delegate Details -->
         @if($order->registration->delegates && $order->registration->delegates->count() > 0)
         @php
-            $ticketTypeName = $order->items->first()->ticketType->name ?? 'N/A';
+            $delegateTicketType = $order->items->first()->ticketType ?? null;
             $hasLinkedIn = $order->registration->delegates->contains(function($delegate) {
                 return !empty($delegate->linkedin_profile);
             });
@@ -556,12 +540,13 @@
                 <thead>
                     <tr>
                         <th style="width: {{ $hasLinkedIn ? '4%' : '5%' }};">#</th>
-                        <th style="width: {{ $hasLinkedIn ? '24%' : '30%' }};">Delegate Name</th>
-                        <th style="width: {{ $hasLinkedIn ? '24%' : '30%' }};">Email</th>
-                        <th style="width: {{ $hasLinkedIn ? '12%' : '15%' }};">Phone</th>
-                        <th style="width: {{ $hasLinkedIn ? '20%' : '20%' }};">Ticket Type</th>
+                        <th style="width: {{ $hasLinkedIn ? '20%' : '25%' }};">Delegate Name</th>
+                        <th style="width: {{ $hasLinkedIn ? '20%' : '25%' }};">Email</th>
+                        <th style="width: {{ $hasLinkedIn ? '10%' : '12%' }};">Phone</th>
+                        <th style="width: {{ $hasLinkedIn ? '12%' : '15%' }};">Category</th>
+                        <th style="width: {{ $hasLinkedIn ? '12%' : '15%' }};">Subcategory</th>
                         @if($hasLinkedIn)
-                        <th style="width: 16%;">LinkedIn Profile</th>
+                        <th style="width: 14%;">LinkedIn Profile</th>
                         @endif
                     </tr>
                 </thead>
@@ -572,7 +557,8 @@
                         <td><strong>{{ $delegate->salutation }} {{ $delegate->first_name }} {{ $delegate->last_name }}</strong></td>
                         <td>{{ $delegate->email }}</td>
                         <td>{{ $delegate->phone ?? '-' }}</td>
-                        <td>{{ $ticketTypeName }}</td>
+                        <td>{{ $delegateTicketType->category->name ?? '-' }}</td>
+                        <td>{{ $delegateTicketType->subcategory->name ?? '-' }}</td>
                         @if($hasLinkedIn)
                         <td>
                             @if(!empty($delegate->linkedin_profile))
