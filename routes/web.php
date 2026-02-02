@@ -623,8 +623,8 @@ Route::get('companies/{letter}', [CompanyLookupController::class, 'index']);
 Route::options('companies/{letter}', function () {
     $origin = request()->headers->get('Origin');
     $allowed = in_array($origin, [
-        'https://bengalurutechsummit.com',
-        'https://www.bengalurutechsummit.com',
+        'https://bengaluruindianano.in',
+        'https://www.bengaluruindianano.in/',
     ]) ? $origin : '';
     return response('', 200)
         ->header('Access-Control-Allow-Origin', $allowed)

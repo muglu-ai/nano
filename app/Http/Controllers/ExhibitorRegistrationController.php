@@ -42,7 +42,7 @@ class ExhibitorRegistrationController extends Controller
         // Check if currency parameter is provided
         if (!$currencyParam) {
             // No currency parameter - redirect with error message
-            return redirect()->to('https://bengalurutechsummit.com/exhibition.php#exhibition-tariff')
+            return redirect()->to('https://www.bengaluruindianano.in/Expo-Tariff.php')
                 ->with('error', 'Invalid URL. Please select a currency option.');
         }
         
@@ -55,7 +55,7 @@ class ExhibitorRegistrationController extends Controller
             $isCurrencyReadOnly = true;
         } else {
             // Invalid currency parameter value - redirect with error message
-            return redirect()->to('https://bengalurutechsummit.com/exhibition.php#exhibition-tariff')
+            return redirect()->to('https://www.bengaluruindianano.in/Expo-Tariff.php')
                 ->with('error', 'Invalid URL. Please select a valid currency option.');
         }
 

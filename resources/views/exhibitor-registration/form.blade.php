@@ -601,7 +601,7 @@
                 <h5 class="mb-3  border-bottom pb-2"><i class="fas fa-user-tie"></i> Sales Reference</h5>
                 <div class="row mb-3">
                     <div class="col-md-6">
-                        <label for="sales_executive_name" class="form-label">Sales Executive Name (From Bengaluru Tech Summit Team) <span class="text-danger">*</span></label>
+                        <label for="sales_executive_name" class="form-label">Sales Executive Name (From Bengaluru India Nano Team) <span class="text-danger">*</span></label>
                         <input type="text" class="form-control" id="sales_executive_name" name="sales_executive_name" 
                                value="{{ isset($draft->exhibitor_data['sales_executive_name']) ? $draft->exhibitor_data['sales_executive_name'] : ($draft->salesPerson ?? '') }}" required>
                         <div class="invalid-feedback"></div>
