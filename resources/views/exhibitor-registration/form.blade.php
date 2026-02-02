@@ -154,7 +154,7 @@
                         <label for="booth_space" class="form-label">Booth Space <span class="text-danger">*</span></label>
                         <select class="form-select" id="booth_space" name="booth_space" required>
                             <option value="">Select Booth Space</option>
-                            <option value="Raw" {{ ($draft->booth_space ?? '') == 'Raw' ? 'selected' : '' }}>Raw (Open space above 36sqm)</option>
+                            <option value="Raw" {{ ($draft->booth_space ?? '') == 'Raw' ? 'selected' : '' }}>Raw</option>
                             <option value="Shell" {{ ($draft->booth_space ?? '') == 'Shell' ? 'selected' : '' }}>Shell</option>
                         </select>
                         <div class="invalid-feedback"></div>
