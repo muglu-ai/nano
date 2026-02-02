@@ -97,14 +97,7 @@
                     </td>
                 </tr>
 
-                {{-- <tr>
-                    <td style="padding: 8px 10px; border: 1px solid #e0e0e0; font-size: 13px; vertical-align: top; background: #f8f9fa; font-weight: 600; color: #555555; width: 40%;">Registration Category</td>
-                    <td style="padding: 8px 10px; border: 1px solid #e0e0e0; font-size: 13px; vertical-align: top; color: #333333; width: 60%;">{{ $order->registration->registrationCategory->name ?? 'N/A' }}</td>
-                </tr> --}}
-                <tr>
-                    <td style="padding: 8px 10px; border: 1px solid #e0e0e0; font-size: 13px; vertical-align: top; background: #f8f9fa; font-weight: 600; color: #555555; width: 40%;">Ticket Type</td>
-                    <td style="padding: 8px 10px; border: 1px solid #e0e0e0; font-size: 13px; vertical-align: top; color: #333333; width: 60%;">{{ $order->items->first()->ticketType->name ?? 'N/A' }}</td>
-                </tr>
+                {{-- Registration Category and Ticket Type rows hidden - showing Category and Subcategory instead --}}
                 @php
                     $emailTicketType = $order->items->first()?->ticketType;
                 @endphp
@@ -247,7 +240,7 @@
             <!-- Delegate Details -->
             @if($order->registration->delegates && $order->registration->delegates->count() > 0)
             @php 
-                $ticketTypeName = $order->items->first()->ticketType->name ?? 'N/A';
+                $emailDelegateTicketType = $order->items->first()->ticketType ?? null;
                 $hasLinkedIn = $order->registration->delegates->contains(function($delegate) {
                     return !empty($delegate->linkedin_profile);
                 });
@@ -260,7 +253,8 @@
                         <th style="background: #0066cc; color: #ffffff; padding: 8px 6px; text-align: left; font-weight: 600; font-size: 11px; border: 1px solid #0066cc;">Delegate Name</th>
                         <th style="background: #0066cc; color: #ffffff; padding: 8px 6px; text-align: left; font-weight: 600; font-size: 11px; border: 1px solid #0066cc;">Email</th>
                         <th style="background: #0066cc; color: #ffffff; padding: 8px 6px; text-align: left; font-weight: 600; font-size: 11px; border: 1px solid #0066cc;">Phone</th>
-                        <th style="background: #0066cc; color: #ffffff; padding: 8px 6px; text-align: left; font-weight: 600; font-size: 11px; border: 1px solid #0066cc;">Ticket Type</th>
+                        <th style="background: #0066cc; color: #ffffff; padding: 8px 6px; text-align: left; font-weight: 600; font-size: 11px; border: 1px solid #0066cc;">Category</th>
+                        <th style="background: #0066cc; color: #ffffff; padding: 8px 6px; text-align: left; font-weight: 600; font-size: 11px; border: 1px solid #0066cc;">Subcategory</th>
                         @if($hasLinkedIn)
                         <th style="background: #0066cc; color: #ffffff; padding: 8px 6px; text-align: left; font-weight: 600; font-size: 11px; border: 1px solid #0066cc;">LinkedIn</th>
                         @endif
@@ -273,7 +267,8 @@
                         <td style="padding: 6px; border: 1px solid #e0e0e0; font-size: 11px; vertical-align: top; word-wrap: break-word;">{{ $delegate->salutation }} {{ $delegate->first_name }} {{ $delegate->last_name }}</td>
                         <td style="padding: 6px; border: 1px solid #e0e0e0; font-size: 11px; vertical-align: top; word-wrap: break-word; word-break: break-all;">{{ $delegate->email }}</td>
                         <td style="padding: 6px; border: 1px solid #e0e0e0; font-size: 11px; vertical-align: top; word-wrap: break-word;">{{ $delegate->phone ?? '-' }}</td>
-                        <td style="padding: 6px; border: 1px solid #e0e0e0; font-size: 11px; vertical-align: top; word-wrap: break-word;">{{ $ticketTypeName }}</td>
+                        <td style="padding: 6px; border: 1px solid #e0e0e0; font-size: 11px; vertical-align: top; word-wrap: break-word;">{{ $emailDelegateTicketType->category->name ?? '-' }}</td>
+                        <td style="padding: 6px; border: 1px solid #e0e0e0; font-size: 11px; vertical-align: top; word-wrap: break-word;">{{ $emailDelegateTicketType->subcategory->name ?? '-' }}</td>
                         @if($hasLinkedIn)
                         <td style="padding: 6px; border: 1px solid #e0e0e0; font-size: 11px; vertical-align: top;">
                             @if(!empty($delegate->linkedin_profile))

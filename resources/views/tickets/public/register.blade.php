@@ -390,6 +390,7 @@
                 </div>
 
                 {{-- Price Display Row --}}
+                {{--
                 <div class="row mt-3" id="price_display_row" style="display: none;">
                     <div class="col-12">
                         <div class="alert alert-info d-flex align-items-center" style="background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%); border: none;">
@@ -402,6 +403,7 @@
                         </div>
                     </div>
                 </div>
+                --}}
 
                 <div class="row g-3 mt-2">
                     {{-- Day Selection Dropdown - shown when ticket has per-day pricing --}}

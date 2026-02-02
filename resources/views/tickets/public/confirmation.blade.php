@@ -257,14 +257,7 @@
                     <td class="label-cell">Event</td>
                     <td class="value-cell">{{ $order->registration->event->event_name }}</td>
                 </tr>
-                <tr>
-                    <td class="label-cell">Ticket Type</td>
-                    <td class="value-cell">
-                        @foreach($order->items as $item)
-                            <strong>{{ $item->ticketType->name }}</strong> ({{ $item->quantity }}x)
-                        @endforeach
-                    </td>
-                </tr>
+                {{-- Ticket Type row hidden - showing Category and Subcategory instead --}}
                 @php
                     $firstTicketType = $order->items->first()?->ticketType;
                 @endphp
@@ -459,7 +452,7 @@
         <!-- Delegates Information -->
         @if($order->registration->delegates->count() > 0)
         @php 
-            $ticketTypeName = $order->items->first()->ticketType->name ?? 'N/A';
+            $delegateTicketType = $order->items->first()->ticketType ?? null;
             $hasLinkedIn = $order->registration->delegates->contains(function($delegate) {
                 return !empty($delegate->linkedin_profile);
             });
@@ -473,12 +466,13 @@
                 <thead>
                     <tr>
                         <th style="width: {{ $hasLinkedIn ? '4%' : '5%' }};">#</th>
-                        <th style="width: {{ $hasLinkedIn ? '24%' : '30%' }};">Delegate Name</th>
-                        <th style="width: {{ $hasLinkedIn ? '24%' : '30%' }};">Email</th>
-                        <th style="width: {{ $hasLinkedIn ? '12%' : '15%' }};">Phone</th>
-                        <th style="width: {{ $hasLinkedIn ? '20%' : '20%' }};">Ticket Type</th>
+                        <th style="width: {{ $hasLinkedIn ? '20%' : '25%' }};">Delegate Name</th>
+                        <th style="width: {{ $hasLinkedIn ? '20%' : '25%' }};">Email</th>
+                        <th style="width: {{ $hasLinkedIn ? '10%' : '12%' }};">Phone</th>
+                        <th style="width: {{ $hasLinkedIn ? '12%' : '15%' }};">Category</th>
+                        <th style="width: {{ $hasLinkedIn ? '12%' : '15%' }};">Subcategory</th>
                         @if($hasLinkedIn)
-                        <th style="width: 16%;">LinkedIn Profile</th>
+                        <th style="width: 14%;">LinkedIn Profile</th>
                         @endif
                     </tr>
                 </thead>
@@ -489,7 +483,8 @@
                         <td><strong>{{ $delegate->salutation }} {{ $delegate->first_name }} {{ $delegate->last_name }}</strong></td>
                         <td>{{ $delegate->email }}</td>
                         <td>{{ $delegate->phone ?? '-' }}</td>
-                        <td>{{ $ticketTypeName }}</td>
+                        <td>{{ $delegateTicketType->category->name ?? '-' }}</td>
+                        <td>{{ $delegateTicketType->subcategory->name ?? '-' }}</td>
                         @if($hasLinkedIn)
                         <td>
                             @if(!empty($delegate->linkedin_profile))
