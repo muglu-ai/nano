@@ -496,10 +496,10 @@ class TicketPaymentController extends Controller
                 // Don't fail the transaction if email fails
             }
 
-            // Redirect to payment page with order number in URL for easy sharing and refresh
-            return redirect()->route('tickets.payment.by-tin', [
+            // Redirect to lookup page with TIN so user can complete payment from there
+            return redirect()->route('tickets.payment.lookup', [
                 'eventSlug' => $event->slug ?? $event->id,
-                'tin' => $order->order_no
+                'tin' => $order->order_no,
             ]);
 
         } catch (\Exception $e) {
