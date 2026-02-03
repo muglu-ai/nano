@@ -92,6 +92,9 @@
         <p class="mb-4" style="color: var(--text-secondary);">
             Enter your <strong>Order Number (TIN)</strong> to find your ticket order and make payment.
         </p>
+        <p class="mb-3 small text-muted">
+            You can also search by TIN using the URL: add <code>?tin=YOUR_TIN</code> or <code>?tin_no=YOUR_TIN</code> to this page.
+        </p>
 
         <form method="POST" action="{{ route('tickets.payment.lookup.submit', $event->slug ?? $event->id) }}" id="lookupForm">
             @csrf

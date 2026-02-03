@@ -836,28 +836,22 @@ class RegistrationPaymentController extends Controller
     }
 
     /**
-     * Show ticket lookup form
-     * If tin or tin_no is provided in query string, automatically fetch and display order details
+     * Show ticket lookup form, or order details when TIN is provided.
+     * Handles both "search by TIN" via URL and manual form entry.
+     * Query params: tin or tin_no (e.g. ?tin=TIN-XXX or ?tin_no=TIN-XXX)
      */
     public function showTicketLookup($eventSlug, Request $request)
     {
         $event = Events::where('slug', $eventSlug)->orWhere('id', $eventSlug)->firstOrFail();
         
-        // Get TIN from query parameter (tin or tin_no) - query() is most reliable for query string params
-        $tin = $request->query('tin') ?? $request->query('tin_no');
-        
-        // Also check session and all() as fallback
-        if (!$tin) {
-            $tin = $request->input('tin') ?? $request->input('tin_no') ?? session('tin');
+        // Get TIN from query or input - support both tin and tin_no for "search by TIN no" case
+        $tin = $request->query('tin') ?? $request->query('tin_no')
+            ?? $request->input('tin') ?? $request->input('tin_no')
+            ?? session('tin');
+        $tin = $tin ? trim((string) $tin) : null;
+        if ($tin === '') {
+            $tin = null;
         }
-        
-        // Debug logging
-        \Log::info('Ticket Lookup Request', [
-            'tin' => $tin,
-            'eventSlug' => $eventSlug,
-            'all_query' => $request->query(),
-            'all_input' => $request->all()
-        ]);
         
         // If TIN is provided, automatically fetch and display order details
         if ($tin) {

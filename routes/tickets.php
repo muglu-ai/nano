@@ -30,9 +30,12 @@ Route::get('/manage-booking/{token}', [GuestTicketController::class, 'manage'])-
 Route::post('/manage-booking/request-link', [GuestTicketController::class, 'requestLink'])->name('tickets.request-link');
 Route::post('/manage-booking/verify-otp', [GuestTicketController::class, 'verifyOtp'])->name('tickets.verify-otp');
 
-// Ticket Payment Lookup
+// Ticket Payment Lookup / Search by TIN
+// GET with optional ?tin= or ?tin_no= shows order details or lookup form
 Route::get('/tickets/{eventSlug}/payment/lookup', [\App\Http\Controllers\RegistrationPaymentController::class, 'showTicketLookup'])->name('tickets.payment.lookup');
 Route::post('/tickets/{eventSlug}/payment/lookup', [\App\Http\Controllers\RegistrationPaymentController::class, 'lookupTicketOrder'])->name('tickets.payment.lookup.submit');
+// Search by TIN (alias: same behavior as lookup - supports ?tin= or ?tin_no= in URL)
+Route::get('/tickets/{eventSlug}/payment/search', [\App\Http\Controllers\RegistrationPaymentController::class, 'showTicketLookup'])->name('tickets.payment.search');
 
 // Payment
 // POST route for initiating payment (must come before GET route to avoid conflict)

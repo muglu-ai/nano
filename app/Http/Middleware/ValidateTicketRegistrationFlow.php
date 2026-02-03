@@ -35,6 +35,7 @@ class ValidateTicketRegistrationFlow
             'tickets.confirmation',
             'tickets.payment.lookup',
             'tickets.payment.lookup.submit',
+            'tickets.payment.search',
             'tickets.validate-gst',
             'tickets.continue',
             'tickets.manage',

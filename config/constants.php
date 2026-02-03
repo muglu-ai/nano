@@ -182,7 +182,7 @@ return [
         'production' => [
             'merchant_id' => env('CCAVENUE_MERCHANT_ID', '7700'),
             'access_code' => env('CCAVENUE_ACCESS_CODE', 'AVYK88NB00AD09KYDA'),
-            'working_key' => env('CCAVENUE_WORKING_KEY', '78A03D033490EBE4B7F1778D2E45009A'),
+            'working_key' => env('CCAVENUE_WORKING_KEY', '78A03D033490EBE4B7F1778D2E45009Alook'),
             'api_url' => 'https://api.ccavenue.com/apis/servlet/DoWebTrans',
         ],
         'webhook_url' => env('APP_URL', APP_URL) . '/ccavenue/webhook',
