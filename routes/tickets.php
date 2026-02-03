@@ -39,7 +39,7 @@ Route::post('/tickets/{eventSlug}/payment/lookup', [\App\Http\Controllers\Regist
 Route::post('/tickets/{eventSlug}/payment/initiate', [TicketPaymentController::class, 'initiate'])->name('tickets.payment.initiate');
 // New payment flow with auto gateway selection (handles Pay Now click) - GET route for order numbers
 Route::get('/tickets/{eventSlug}/payment/{orderNo}', [\App\Http\Controllers\RegistrationPaymentController::class, 'processTicketPayment'])
-    ->where('orderNo', '[A-Z0-9-]+') // Only match order numbers (alphanumeric with dashes), not "initiate"
+    ->where('orderNo', '[A-Za-z0-9-]+') // Order numbers e.g. TIN-Nano-2026-TKT-909887 (allow lowercase)
     ->name('tickets.payment.process');
 Route::get('/tickets/{eventSlug}/payment/{tin}', [TicketPaymentController::class, 'initiateByTin'])->name('tickets.payment.by-tin');
 Route::get('/ticket-payment/{token}', [TicketPaymentController::class, 'show'])->name('tickets.payment');

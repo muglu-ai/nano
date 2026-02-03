@@ -210,13 +210,31 @@
                 <span class="info-label">Order Number:</span>
                 <span class="info-value"><strong>{{ $order->order_no }}</strong></span>
             </div>
+            @if($ticketType && $ticketType->category)
             <div class="info-row">
-                <span class="info-label">Ticket Type:</span>
-                <span class="info-value">{{ $ticketType->name }}</span>
+                <span class="info-label">Category:</span>
+                <span class="info-value">{{ $ticketType->category->name }}</span>
             </div>
+            @endif
+            @if($ticketType && $ticketType->subcategory)
+            <div class="info-row">
+                <span class="info-label">Subcategory:</span>
+                <span class="info-value">{{ $ticketType->subcategory->name }}</span>
+            </div>
+            @endif
+            @if(isset($order->registration->registration_type))
+            <div class="info-row">
+                <span class="info-label">Registration Type:</span>
+                <span class="info-value"><strong>{{ $order->registration->registration_type }}</strong></span>
+            </div>
+            @endif
             <div class="info-row">
                 <span class="info-label">Number of Delegates:</span>
                 <span class="info-value">{{ $order->items->sum('quantity') }}</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Currency:</span>
+                <span class="info-value">{{ ($order->registration->nationality === 'International' || $order->registration->nationality === 'international') ? 'USD ($)' : 'INR (₹)' }}</span>
             </div>
         </div>
 
@@ -263,6 +281,7 @@
         <!-- Delegate Details -->
         @if($order->registration->delegates && $order->registration->delegates->count() > 0)
         @php
+            $paymentDelegateTicketType = $order->items->first()->ticketType ?? null;
             $hasLinkedIn = $order->registration->delegates->contains(function($delegate) {
                 return !empty($delegate->linkedin_profile);
             });
@@ -279,7 +298,8 @@
                         <th>Delegate Name</th>
                         <th>Email</th>
                         <th>Phone</th>
-                        <th>Designation</th>
+                        <th>Category</th>
+                        <th>Subcategory</th>
                         @if($hasLinkedIn)
                         <th>LinkedIn Profile</th>
                         @endif
@@ -292,7 +312,8 @@
                         <td>{{ $delegate->salutation }} {{ $delegate->first_name }} {{ $delegate->last_name }}</td>
                         <td>{{ $delegate->email }}</td>
                         <td>{{ $delegate->phone ?? '-' }}</td>
-                        <td>{{ $delegate->job_title ?? '-' }}</td>
+                        <td>{{ $paymentDelegateTicketType?->category?->name ?? '-' }}</td>
+                        <td>{{ $paymentDelegateTicketType?->subcategory?->name ?? '-' }}</td>
                         @if($hasLinkedIn)
                         <td>
                             @if(!empty($delegate->linkedin_profile))

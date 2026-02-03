@@ -940,7 +940,7 @@ class TicketPaymentController extends Controller
             ->whereHas('registration', function($q) use ($event) {
                 $q->where('event_id', $event->id);
             })
-            ->with(['registration.contact', 'items.ticketType', 'registration.delegates', 'registration.registrationCategory'])
+            ->with(['registration.contact', 'items.ticketType.category', 'items.ticketType.subcategory', 'registration.delegates', 'registration.registrationCategory'])
             ->firstOrFail();
         
         // Only allow access if order is pending
