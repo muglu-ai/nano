@@ -167,8 +167,8 @@ return [
     'INT_PROCESSING_CHARGE' => INT_PROCESSING_CHARGE, // 9% processing fee for International payments
     'EXTRA_REQUIREMENTS_ACTIVE' => EXTRA_REQUIREMENTS_ACTIVE,
     // CCAVENUE Configuration
-    'CCAVENUE_ACCESS_CODE' => "AVJS71ME17AS68SJSA",
-    'CCAVENUE_WORKING_KEY' => "7AF39D44C8DC0DE71EDD69C288C96694",
+    'CCAVENUE_ACCESS_CODE' => "AVYK88NB00AD09KYDA",
+    'CCAVENUE_WORKING_KEY' => "78A03D033490EBE4B7F1778D2E45009A",
     'CCAVENUE_MERCHANT_ID' => "7700",
     'CCAVENUE_REDIRECT_URL' => APP_URL . "/payment/ccavenue-success",
     'ccavenue' => [
@@ -181,8 +181,8 @@ return [
         ],
         'production' => [
             'merchant_id' => env('CCAVENUE_MERCHANT_ID', '7700'),
-            'access_code' => env('CCAVENUE_ACCESS_CODE', 'AVAX60MC26BE01XAEB'),
-            'working_key' => env('CCAVENUE_WORKING_KEY', 'DBBE266B02508AF7118D4A2598763D69'),
+            'access_code' => env('CCAVENUE_ACCESS_CODE', 'AVYK88NB00AD09KYDA'),
+            'working_key' => env('CCAVENUE_WORKING_KEY', '78A03D033490EBE4B7F1778D2E45009A'),
             'api_url' => 'https://api.ccavenue.com/apis/servlet/DoWebTrans',
         ],
         'webhook_url' => env('APP_URL', APP_URL) . '/ccavenue/webhook',
