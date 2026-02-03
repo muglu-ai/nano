@@ -1,17 +1,17 @@
 @extends('layouts.auth_new')
 @section('title', 'Login - ' . config('constants.EVENT_NAME') . ' ' . config('constants.EVENT_YEAR'))
 @section('content')
-<div class="container mb-4">
-    <div class="row mt-lg-n12 mt-md-n12 mt-n12 justify-content-center">
-        <div class="col-xl-4 col-lg-5 col-md-7 col-12 mx-auto">
-            <div class="card mt-8">
-                <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2 mb-4">
-                    <div class="bg-gradient-success shadow-success border-radius-lg py-3 pe-1 text-center py-4">
-                        <h4 class="font-weight-bolder text-white mt-1">Sign In</h4>
-                        <p class="mb-1 text-sm text-white">Enter your email and password to Sign In</p>
+<div class="container px-3">
+    <div class="row justify-content-center">
+        <div class="col-12">
+            <div class="card shadow-lg border-0 overflow-hidden" style="border-radius: 0.75rem;">
+                <div class="card-header p-0 border-0">
+                    <div class="bg-gradient-success text-center py-4 px-3" style="border-radius: 0.75rem 0.75rem 0 0;">
+                        <h4 class="font-weight-bolder text-white mb-1">Sign In</h4>
+                        <p class="mb-0 text-white opacity-90 small">Enter your email and password to Sign In</p>
                     </div>
                 </div>
-                <div class="card-body ">
+                <div class="card-body p-4">
                     <form method="POST" action="{{ route('login.process') }}" role="form" class="text-start">
                         @csrf
                         @if ($errors->any())
@@ -42,22 +42,19 @@
                         </div>
                     </form>
                 </div>
-                <div class="card-footer text-center pt-0 px-lg-2 px-1">
-
+                <div class="card-footer text-center bg-white pt-0 pb-4 px-4 border-0" style="border-radius: 0 0 0.75rem 0.75rem;">
                     @if (now()->lt(\Carbon\Carbon::parse(config('constants.LATE_REGISTRATION_DEADLINE'))))
-                        <p class="mb-1 text-sm mx-auto">
+                        <p class="mb-2 text-sm text-secondary">
                             Don't have an account?
-                           <a href="{{ config('constants.DEFAULT_REGISTRATION_LINK') }}" target="_blank" class="text-success text-gradient font-weight-bold">Sign up</a>
+                            <a href="{{ config('constants.DEFAULT_REGISTRATION_LINK') }}" target="_blank" class="text-success fw-bold">Sign up</a>
                         </p>
                     @endif
-                    <p class="mb-4 text-sm mx-auto">
-
-                        <a href="{{route('forgot.password')}}" class="text-success text-gradient font-weight-bold">Forgot Password?</a>
+                    <p class="mb-0 text-sm text-secondary">
+                        <a href="{{ route('forgot.password') }}" class="text-success fw-bold">Forgot Password?</a>
                     </p>
                 </div>
             </div>
         </div>
     </div>
 </div>
-
 @endsection

@@ -25,33 +25,46 @@
     <!-- CSS Files -->
     <link id="pagestyle" href="{{ asset('public/asset/css/material-dashboard.min.css?v=3.1.0') }}" rel="stylesheet"/> <!-- Anti-flicker snippet (recommended)  -->
     <link id="pagestyle" href="{{ asset('asset/css/material-dashboard.min.css?v=3.1.0') }}" rel="stylesheet"/> <!-- Anti-flicker snippet (recommended)  -->
-    <style>
-        .async-hide {
-            opacity: 0 !important
-        }
-    </style>
+<style>
+    .async-hide {
+        opacity: 0 !important
+    }
+    .auth-page-body {
+        background: linear-gradient(180deg, #e9ecef 0%, #dee2e6 100%);
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+    }
+    .auth-page-main {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 1rem 0.5rem;
+    }
+    .auth-page-content {
+        width: 100%;
+        max-width: 420px;
+        margin: 0 auto;
+    }
+</style>
     <!-- End Google Tag Manager -->
 </head>
 
-<body class="bg-gray-200"><!-- Extra details for Live View on GitHub Pages --><!-- Google Tag Manager (noscript) -->
-<!-- End Google Tag Manager (noscript) -->
+<body class="auth-page-body">
 <!-- Navbar -->
-<nav class="navbar navbar-expand-lg position-absolute top-0 z-index-3 w-100 shadow-none my-3 navbar-transparent mt-4">
+<nav class="navbar navbar-expand-lg navbar-transparent py-3">
     <div class="container">
-        <a class="navbar-brand ms-2 d-flex flex-column align-items-center" href="/">
-{{--            <img src="{{ config('constants.event_logo') }}" alt="Event Logo" class="mb-1" style="max-height: 60px;">--}}
-{{--            <span style="color: #000;">{{config('constants.EVENT_NAME')}} {{config('constants.EVENT_YEAR')}}</span>--}}
+        <a class="navbar-brand" href="/">
+            <span class="text-dark fw-bold">{{ config('constants.EVENT_NAME') }} {{ config('constants.EVENT_YEAR') }}</span>
         </a>
     </div>
 </nav>
 <!-- End Navbar -->
-<main class="main-content mt-0">
-    <div class="page-header align-items-start min-vh-50 min-vh-md-40 min-vh-lg-30 m-2 m-sm-3 border-radius-xl"
-              style="background-image: url('')">
-             <span class="mask bg-gradient-dark opacity-6"></span>
-         </div>
-    @yield('content')
-
+<main class="auth-page-main py-4">
+    <div class="auth-page-content w-100">
+        @yield('content')
+    </div>
 </main>
 
 <footer class="footer py-3 w-100 mt-3">

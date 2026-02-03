@@ -23,9 +23,11 @@ return Application::configure(basePath: dirname(__DIR__))
         // Don't append Auth middleware globally - apply it only to specific routes
         // $middleware->append(Auth::class);
         
-        // Exclude payment gateway callbacks from CSRF verification
+        // Exclude payment gateway callbacks and read-only lookup endpoints from CSRF verification
         // Payment gateways (CCAvenue, PayPal) redirect back via POST without CSRF tokens
+        // get-states is read-only (country->states) used by public registration forms
         $middleware->validateCsrfTokens(except: [
+            '/get-states',
             // CCAvenue payment callbacks
             '/payment/ccavenue-success',           // POST - CCAvenue success callback
             '/ccavenue/webhook',                   // POST - CCAvenue webhook

@@ -1677,6 +1677,10 @@ document.addEventListener('DOMContentLoaded', function() {
     const billingCountrySelect = document.getElementById('billing_country_id');
     const billingStateSelect = document.getElementById('billing_state_id');
     
+    function getCsrfToken() {
+        return document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '{{ csrf_token() }}';
+    }
+
     function loadBillingStatesForCountry(countryId, preserveSelectedStateId = null) {
         if (!countryId) {
             billingStateSelect.innerHTML = '<option value="">Select State</option>';
@@ -1689,13 +1693,20 @@ document.addEventListener('DOMContentLoaded', function() {
         
         fetch('{{ route("get.states") }}', {
             method: 'POST',
+            credentials: 'same-origin',
             headers: {
                 'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                'Accept': 'application/json',
+                'X-CSRF-TOKEN': getCsrfToken()
             },
             body: JSON.stringify({ country_id: countryId })
         })
-        .then(response => response.json())
+        .then(response => {
+            if (!response.ok && response.status === 419) {
+                throw new Error('Session expired. Please refresh the page.');
+            }
+            return response.json();
+        })
         .then(data => {
             billingStateSelect.innerHTML = '<option value="">Select State</option>';
             if (data && data.length > 0) {
@@ -1733,9 +1744,11 @@ document.addEventListener('DOMContentLoaded', function() {
         
         fetch('{{ route("get.states") }}', {
             method: 'POST',
+            credentials: 'same-origin',
             headers: {
                 'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                'Accept': 'application/json',
+                'X-CSRF-TOKEN': getCsrfToken()
             },
             body: JSON.stringify({ country_id: countryId })
         })
@@ -1792,9 +1805,11 @@ document.addEventListener('DOMContentLoaded', function() {
         
         return fetch('{{ route("get.states") }}', {
             method: 'POST',
+            credentials: 'same-origin',
             headers: {
                 'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                'Accept': 'application/json',
+                'X-CSRF-TOKEN': getCsrfToken()
             },
             body: JSON.stringify({ country_id: countryId })
         })
