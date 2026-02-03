@@ -407,9 +407,9 @@
             </div>
         </div>
 
-        <!-- Pay Now Button -->
+        <!-- Pay Now Button: redirect to lookup page with TIN so user can complete payment from there -->
         <div class="text-center mt-4">
-            <a href="{{ route('tickets.payment.process', ['eventSlug' => $event->slug ?? $event->id, 'orderNo' => $order->order_no]) }}" class="btn btn-pay-now" id="payNowBtn">
+            <a href="{{ route('tickets.payment.lookup', ['eventSlug' => $event->slug ?? $event->id]) }}?tin={{ urlencode($order->order_no) }}" class="btn btn-pay-now" id="payNowBtn">
                     <i class="fas fa-credit-card me-2"></i>
                 Pay Now {{ $currencySymbol }}{{ number_format($order->total, $priceFormat) }}
             </a>
@@ -427,7 +427,6 @@
         e.preventDefault();
         
         const btn = this;
-        const originalBtnText = btn.innerHTML;
         const paymentUrl = btn.href;
         
         // Disable button
@@ -435,15 +434,15 @@
         btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Processing...';
         
         Swal.fire({
-            title: 'Redirecting to Payment Gateway',
-            text: 'Please wait while we redirect you to the secure payment page.',
+            title: 'Redirecting to Payment',
+            text: 'Taking you to the payment page...',
             allowOutsideClick: false,
             didOpen: () => {
                 Swal.showLoading();
             }
         });
 
-        // Redirect to payment gateway
+        // Redirect to lookup page with TIN; that page will show order details and Pay Now for gateway
         window.location.href = paymentUrl;
     });
 </script>
