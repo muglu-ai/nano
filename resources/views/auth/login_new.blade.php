@@ -4,6 +4,13 @@
 <div class="container px-3">
     <div class="row justify-content-center">
         <div class="col-12">
+            @if(config('constants.event_logo'))
+                <div class="text-center mb-4">
+                    <a href="/" class="d-inline-block">
+                        <img src="{{ config('constants.event_logo') }}" alt="{{ config('constants.EVENT_NAME') }} {{ config('constants.EVENT_YEAR') }}" class="login-page-logo">
+                    </a>
+                </div>
+            @endif
             <div class="card shadow-lg border-0 overflow-hidden" style="border-radius: 0.75rem;">
                 <div class="card-header p-0 border-0">
                     <div class="bg-gradient-success text-center py-4 px-3" style="border-radius: 0.75rem 0.75rem 0 0;">

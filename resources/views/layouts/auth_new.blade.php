@@ -47,6 +47,17 @@
         max-width: 420px;
         margin: 0 auto;
     }
+    .auth-nav-logo {
+        max-height: 48px;
+        width: auto;
+        object-fit: contain;
+    }
+    .login-page-logo {
+        max-height: 80px;
+        max-width: 100%;
+        width: auto;
+        object-fit: contain;
+    }
 </style>
     <!-- End Google Tag Manager -->
 </head>
@@ -55,7 +66,10 @@
 <!-- Navbar -->
 <nav class="navbar navbar-expand-lg navbar-transparent py-3">
     <div class="container">
-        <a class="navbar-brand" href="/">
+        <a class="navbar-brand d-flex align-items-center gap-2" href="/">
+            @if(config('constants.event_logo'))
+                <img src="{{ config('constants.event_logo') }}" alt="{{ config('constants.EVENT_NAME') }}" class="auth-nav-logo">
+            @endif
             <span class="text-dark fw-bold">{{ config('constants.EVENT_NAME') }} {{ config('constants.EVENT_YEAR') }}</span>
         </a>
     </div>
