@@ -155,6 +155,12 @@
 </style>
 @endpush
 @section('content')
+<div class="form-card">
+    {{-- Form Header --}}
+    <div class="form-header">
+        <h2><i class="fas fa-building"></i> Exhibitor Registration Form</h2>
+        <p>{{ config('constants.EVENT_NAME') }} {{ config('constants.EVENT_YEAR') }}</p>
+    </div>
 <div class="container py-3">
     {{-- Step Indicator --}}
     <div class="row mb-4">
@@ -701,6 +707,7 @@
             </div>
         </div>
     </div>
+</div>
 </div>
 
 @if(!$hasApplication && ($hasDraft || $hasSubmittedData))
