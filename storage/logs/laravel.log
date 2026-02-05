@@ -504,3 +504,11 @@
 [stacktrace]
 #0 {main}
 "} 
+[2026-02-05 19:30:47] local.INFO: hasTV value: false  
+[2026-02-05 19:30:59] local.INFO: hasTV value: false  
+[2026-02-05 19:36:14] local.INFO: hasTV value: false  
+[2026-02-05 19:36:27] local.INFO: hasTV value: false  
+[2026-02-05 19:37:27] local.INFO: hasTV value: false  
+[2026-02-05 19:37:40] local.INFO: hasTV value: false  
+[2026-02-05 19:46:59] local.INFO: hasTV value: false  
+[2026-02-05 19:47:11] local.INFO: hasTV value: false  

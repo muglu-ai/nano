@@ -126,6 +126,7 @@
         font-size: 0.875rem;
         color: #dc3545;
     }
+    
 
     .invalid-feedback:not(:empty) {
         display: block;
