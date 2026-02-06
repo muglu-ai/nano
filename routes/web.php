@@ -71,6 +71,7 @@ use App\Http\Controllers\FeedbackController;
 use App\Http\Controllers\SuperAdminController;
 use App\Http\Controllers\Ticket\AdminTicketConfigController;
 use App\Http\Controllers\Enquiry\PublicEnquiryController;
+use App\Http\Controllers\Sparx\SparxApplicationController;
 use App\Http\Controllers\ElevateRegistrationController;
 use App\Http\Controllers\VisaClearanceController;
 
@@ -1167,6 +1168,23 @@ Route::get('/enquiry/thankyou', [PublicEnquiryController::class, 'thankyou'])->n
 Route::get('/enquiry', [PublicEnquiryController::class, 'showForm'])->name('enquiry.form');
 Route::get('/enquiry/{eventSlug}', [PublicEnquiryController::class, 'showForm'])->name('enquiry.form.event');
 Route::post('/enquiry', [PublicEnquiryController::class, 'submit'])->name('enquiry.submit');
+
+Route::prefix('sparx')->name('sparx.')->group(function () {
+
+    // New application
+    Route::get('/register', [SparxApplicationController::class, 'create'])
+        ->name('register');           // better name than 'create' if you prefer
+
+    // Preview / edit existing application (add protection!)
+    Route::get('/application/{uuid}', [SparxApplicationController::class, 'preview'])
+        ->name('preview');
+
+    Route::post('/register', [SparxApplicationController::class, 'store'])
+        ->name('store');
+
+    Route::get('/thank-you', [SparxApplicationController::class, 'thankYou'])
+        ->name('thank-you');
+});
 
 // ELEVATE Registration Routes (Public Access - No Authentication Required)
 Route::get('/elevate-registration/thankyou', [ElevateRegistrationController::class, 'thankyou'])->name('elevate-registration.thankyou');

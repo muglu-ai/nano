@@ -512,3 +512,37 @@
 [2026-02-05 19:37:40] local.INFO: hasTV value: false  
 [2026-02-05 19:46:59] local.INFO: hasTV value: false  
 [2026-02-05 19:47:11] local.INFO: hasTV value: false  
+[2026-02-06 18:14:44] local.WARNING: reCAPTCHA config or token missing {"siteKey":true,"projectId":true,"hasToken":false} 
+[2026-02-06 18:18:02] local.ERROR: SQLSTATE[HY000] [2002] An established connection was aborted by the software in your host machine {"exception":"[object] (PDOException(code: 2002): SQLSTATE[HY000] [2002] An established connection was aborted by the software in your host machine at E:/program file/Sci Projects/Projects/nano/nano/vendor/laravel/framework/src/Illuminate/Database/Connectors/Connector.php:66)
+[stacktrace]
+#0 E:/program file/Sci Projects/Projects/nano/nano/vendor/laravel/framework/src/Illuminate/Database/Connectors/Connector.php(66): PDO->__construct('mysql:host=95.2...', 'be332ngalur_1_b...', Object(SensitiveParameterValue), Array)
+#1 E:/program file/Sci Projects/Projects/nano/nano/vendor/laravel/framework/src/Illuminate/Database/Connectors/Connector.php(44): Illuminate/Database/Connectors/Connector->createPdoConnection('mysql:host=95.2...', 'be332ngalur_1_b...', Object(SensitiveParameterValue), Array)
+#2 E:/program file/Sci Projects/Projects/nano/nano/vendor/laravel/framework/src/Illuminate/Database/Connectors/MySqlConnector.php(24): Illuminate/Database/Connectors/Connector->createConnection('mysql:host=95.2...', Array, Array)
+#3 E:/program file/Sci Projects/Projects/nano/nano/vendor/laravel/framework/src/Illuminate/Database/Connectors/ConnectionFactory.php(185): Illuminate/Database/Connectors/MySqlConnector->connect(Array)
+#4 [internal function]: Illuminate/Database/Connectors/ConnectionFactory->Illuminate/Database/Connectors/{closure}()
+#5 E:/program file/Sci Projects/Projects/nano/nano/vendor/laravel/framework/src/Illuminate/Database/Connection.php(1231): call_user_func(Object(Closure))
+#6 E:/program file/Sci Projects/Projects/nano/nano/vendor/laravel/framework/src/Illuminate/Database/Concerns/ManagesTransactions.php(151): Illuminate/Database/Connection->getPdo()
+#7 E:/program file/Sci Projects/Projects/nano/nano/vendor/laravel/framework/src/Illuminate/Database/Concerns/ManagesTransactions.php(127): Illuminate/Database/Connection->createTransaction()
+#8 E:/program file/Sci Projects/Projects/nano/nano/vendor/laravel/framework/src/Illuminate/Database/Concerns/ManagesTransactions.php(26): Illuminate/Database/Connection->beginTransaction()
+#9 E:/program file/Sci Projects/Projects/nano/nano/vendor/laravel/framework/src/Illuminate/Queue/DatabaseQueue.php(226): Illuminate/Database/Connection->transaction(Object(Closure))
+#10 E:/program file/Sci Projects/Projects/nano/nano/vendor/laravel/framework/src/Illuminate/Queue/Worker.php(351): Illuminate/Queue/DatabaseQueue->pop('default', 0)
+#11 E:/program file/Sci Projects/Projects/nano/nano/vendor/laravel/framework/src/Illuminate/Queue/Worker.php(366): Illuminate/Queue/Worker->Illuminate/Queue/{closure}('default', 0)
+#12 E:/program file/Sci Projects/Projects/nano/nano/vendor/laravel/framework/src/Illuminate/Queue/Worker.php(327): Illuminate/Queue/Worker->getNextJob(Object(Illuminate/Queue/DatabaseQueue), 'default')
+#13 E:/program file/Sci Projects/Projects/nano/nano/vendor/laravel/framework/src/Illuminate/Queue/Console/WorkCommand.php(149): Illuminate/Queue/Worker->runNextJob('database', 'default', Object(Illuminate/Queue/WorkerOptions))
+#14 E:/program file/Sci Projects/Projects/nano/nano/vendor/laravel/framework/src/Illuminate/Queue/Console/WorkCommand.php(132): Illuminate/Queue/Console/WorkCommand->runWorker('database', 'default')
+#15 E:/program file/Sci Projects/Projects/nano/nano/vendor/laravel/framework/src/Illuminate/Container/BoundMethod.php(36): Illuminate/Queue/Console/WorkCommand->handle()
+#16 E:/program file/Sci Projects/Projects/nano/nano/vendor/laravel/framework/src/Illuminate/Container/Util.php(43): Illuminate/Container/BoundMethod::Illuminate/Container/{closure}()
+#17 E:/program file/Sci Projects/Projects/nano/nano/vendor/laravel/framework/src/Illuminate/Container/BoundMethod.php(95): Illuminate/Container/Util::unwrapIfClosure(Object(Closure))
+#18 E:/program file/Sci Projects/Projects/nano/nano/vendor/laravel/framework/src/Illuminate/Container/BoundMethod.php(35): Illuminate/Container/BoundMethod::callBoundMethod(Object(Illuminate/Foundation/Application), Array, Object(Closure))
+#19 E:/program file/Sci Projects/Projects/nano/nano/vendor/laravel/framework/src/Illuminate/Container/Container.php(696): Illuminate/Container/BoundMethod::call(Object(Illuminate/Foundation/Application), Array, Array, NULL)
+#20 E:/program file/Sci Projects/Projects/nano/nano/vendor/laravel/framework/src/Illuminate/Console/Command.php(213): Illuminate/Container/Container->call(Array)
+#21 E:/program file/Sci Projects/Projects/nano/nano/vendor/symfony/console/Command/Command.php(341): Illuminate/Console/Command->execute(Object(Symfony/Component/Console/Input/ArgvInput), Object(Illuminate/Console/OutputStyle))
+#22 E:/program file/Sci Projects/Projects/nano/nano/vendor/laravel/framework/src/Illuminate/Console/Command.php(182): Symfony/Component/Console/Command/Command->run(Object(Symfony/Component/Console/Input/ArgvInput), Object(Illuminate/Console/OutputStyle))
+#23 E:/program file/Sci Projects/Projects/nano/nano/vendor/symfony/console/Application.php(1102): Illuminate/Console/Command->run(Object(Symfony/Component/Console/Input/ArgvInput), Object(Symfony/Component/Console/Output/ConsoleOutput))
+#24 E:/program file/Sci Projects/Projects/nano/nano/vendor/symfony/console/Application.php(356): Symfony/Component/Console/Application->doRunCommand(Object(Illuminate/Queue/Console/WorkCommand), Object(Symfony/Component/Console/Input/ArgvInput), Object(Symfony/Component/Console/Output/ConsoleOutput))
+#25 E:/program file/Sci Projects/Projects/nano/nano/vendor/symfony/console/Application.php(195): Symfony/Component/Console/Application->doRun(Object(Symfony/Component/Console/Input/ArgvInput), Object(Symfony/Component/Console/Output/ConsoleOutput))
+#26 E:/program file/Sci Projects/Projects/nano/nano/vendor/laravel/framework/src/Illuminate/Foundation/Console/Kernel.php(198): Symfony/Component/Console/Application->run(Object(Symfony/Component/Console/Input/ArgvInput), Object(Symfony/Component/Console/Output/ConsoleOutput))
+#27 E:/program file/Sci Projects/Projects/nano/nano/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(1235): Illuminate/Foundation/Console/Kernel->handle(Object(Symfony/Component/Console/Input/ArgvInput), Object(Symfony/Component/Console/Output/ConsoleOutput))
+#28 E:/program file/Sci Projects/Projects/nano/nano/artisan(13): Illuminate/Foundation/Application->handleCommand(Object(Symfony/Component/Console/Input/ArgvInput))
+#29 {main}
+"} 
