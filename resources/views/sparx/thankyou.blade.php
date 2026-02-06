@@ -1,44 +1,44 @@
-@extends('sparx.layout')  <!-- or 'layouts.registration' — use the same as form -->
+@extends('sparx.layout')
 
 @section('title', 'Application Submitted: NANO SparX')
 
 @push('styles')
 <style>
     .thankyou-container {
-        max-width: 700px;
-        margin: 4rem auto;
-        background: white;
-        border-radius: 16px;
-        box-shadow: 0 10px 40px rgba(0,0,0,0.12);
-        padding: 3.5rem 2.5rem;
+        max-width: 600px;
+        margin: 0 auto;
+        background: var(--bg-secondary);
+        border-radius: 15px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        padding: 3rem;
         text-align: center;
     }
     .success-icon {
-        width: 120px;
-        height: 120px;
-        background: linear-gradient(135deg, #10b981, #059669);
+        width: 100px;
+        height: 100px;
+        background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-color-dark) 100%);
         border-radius: 50%;
         display: flex;
         align-items: center;
         justify-content: center;
         margin: 0 auto 2rem;
         color: white;
-        font-size: 3.8rem;
-        box-shadow: 0 8px 25px rgba(16,185,129,0.3);
+        font-size: 3rem;
+        box-shadow: 0 4px 12px rgba(11, 94, 215, 0.3);
     }
     .reference-box {
-        background: #f0fdf4;
-        border: 2px dashed #10b981;
+        background: #f0f9ff;
+        border: 2px dashed var(--primary-color);
         border-radius: 12px;
         padding: 1.5rem;
         margin: 2rem 0;
         font-family: monospace;
         font-size: 1.4rem;
         font-weight: 700;
-        color: #065f46;
+        color: var(--primary-color-dark);
     }
     .next-steps {
-        background: #f8fafc;
+        background: var(--progress-bg, #f0f0f0);
         border-radius: 12px;
         padding: 1.8rem;
         margin: 2rem 0;
@@ -49,14 +49,15 @@
         margin-bottom: 0;
     }
     .thankyou-container h1 {
-        font-size: 2.4rem;
-        color: #1e293b;
+        font-size: 2rem;
+        color: var(--text-primary);
         margin-bottom: 1rem;
     }
     .thankyou-container p {
-        font-size: 1.15rem;
-        color: #475569;
-        line-height: 1.7;
+        font-size: 1.1rem;
+        color: var(--text-secondary);
+        line-height: 1.6;
+        margin-bottom: 1rem;
     }
 </style>
 @endpush
@@ -95,7 +96,7 @@
     @endif
 
     <p class="mt-4 text-muted">
-        Keep an eye on your inbox (and spam folder). We’re excited to learn more about your idea!
+        Keep an eye on your inbox (and spam folder). We're excited to learn more about your idea!
     </p>
 
     <a href="/" class="btn btn-outline-primary mt-4 px-4">

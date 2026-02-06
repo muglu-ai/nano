@@ -136,7 +136,8 @@ class SparxApplicationController extends Controller
             $this->sendApplicationEmails($application);
 
             return redirect()->route('sparx.thank-you')
-                ->with('success', 'Application submitted! Your reference number: ' . $application->formatted_registration_id);
+                ->with('success', 'Application submitted successfully.')
+                ->with('reference_number', $application->formatted_registration_id);
 
         } catch (\Exception $e) {
             Log::error('Sparx application submission failed', [
@@ -153,7 +154,11 @@ class SparxApplicationController extends Controller
      */
     public function thankYou()
     {
-        return view('sparx.thank-you');
+        $event = (object) [
+            'event_name' => config('constants.EVENT_NAME', 'NanoSparX Program'),
+            'event_year' => config('constants.EVENT_YEAR', date('Y')),
+        ];
+        return view('sparx.thankyou', compact('event'));
     }
 
     // Copy & adapt your verifyRecaptcha method here
