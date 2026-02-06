@@ -41,6 +41,8 @@ use App\Http\Controllers\SponsorController;
 use App\Http\Controllers\SponsorshipController;
 use App\Http\Controllers\StartupZoneController;
 use App\Http\Middleware\Auth;
+use App\Http\Controllers\Sparx\SparxApplicationController;
+
 use App\Http\Middleware\CheckUser;
 use App\Http\Middleware\CoExhibitorMiddleware;
 use App\Http\Middleware\SharedMiddleware;
@@ -1307,3 +1309,23 @@ Route::get('/poster/register/success/{tin_no}', [PosterController::class, 'succe
 // Secure file download route
 Route::get('/poster/file/{type}/{token}', [PosterController::class, 'downloadFile'])
     ->name('poster.downloadFile');
+
+
+
+Route::prefix('sparx')->name('sparx.')->group(function () {
+
+    // New application
+    Route::get('/register', [SparxApplicationController::class, 'create'])
+        ->name('register');           // better name than 'create' if you prefer
+
+    // Preview / edit existing application (add protection!)
+    Route::get('/application/{uuid}', [SparxApplicationController::class, 'preview'])
+        ->name('preview');
+
+    Route::post('/register', [SparxApplicationController::class, 'store'])
+        ->name('store');
+
+    Route::get('/thank-you', [SparxApplicationController::class, 'thankYou'])
+        ->name('thank-you');
+});
+    
