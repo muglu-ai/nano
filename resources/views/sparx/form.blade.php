@@ -108,19 +108,29 @@
                         @error('address') <div class="error-message">{{ $message }}</div> @enderror
                     </div>
                     <div class="col-md-4">
-                        <label class="form-label">City</label>
-                        <input type="text" name="city" class="form-control" value="{{ old('city', $application?->city ?? '') }}">
-                        @error('city') <div class="error-message">{{ $message }}</div> @enderror
+                        <label class="form-label">Country <span class="required">*</span></label>
+                        <select name="country" id="country" class="form-select" required>
+                            <option value="">-- Select Country --</option>
+                            @foreach($countries ?? [] as $country)
+                                <option value="{{ $country->name }}" {{ old('country', $application?->country ?? 'India') == $country->name ? 'selected' : '' }}>{{ $country->name }}</option>
+                            @endforeach
+                        </select>
+                        @error('country') <div class="error-message">{{ $message }}</div> @enderror
                     </div>
                     <div class="col-md-4">
-                        <label class="form-label">State</label>
-                        <input type="text" name="state" class="form-control" value="{{ old('state', $application?->state ?? '') }}">
+                        <label class="form-label">State <span class="required">*</span></label>
+                        <select name="state" id="state" class="form-select" required>
+                            <option value="">-- Select State --</option>
+                            @if(isset($defaultStateId) && $defaultStateId)
+                                <option value="{{ $defaultStateId }}" {{ old('state', $application?->state ?? $defaultStateId) == $defaultStateId ? 'selected' : '' }}>{{ $defaultStateId }}</option>
+                            @endif
+                        </select>
                         @error('state') <div class="error-message">{{ $message }}</div> @enderror
                     </div>
                     <div class="col-md-4">
-                        <label class="form-label">Country <span class="required">*</span></label>
-                        <input type="text" name="country" class="form-control" value="{{ old('country', $application?->country ?? 'India') }}" required>
-                        @error('country') <div class="error-message">{{ $message }}</div> @enderror
+                        <label class="form-label">City</label>
+                        <input type="text" name="city" class="form-control" value="{{ old('city', $application?->city ?? '') }}">
+                        @error('city') <div class="error-message">{{ $message }}</div> @enderror
                     </div>
                     <div class="col-md-4">
                         <label class="form-label">Postal Code</label>
@@ -291,6 +301,58 @@
         }
         isRegistered.addEventListener('change', toggleRegDate);
         toggleRegDate();
+    }
+
+    // Country / State from database: load states when country changes (store names, not IDs)
+    const countrySelect = document.getElementById('country');
+    const stateSelect = document.getElementById('state');
+    function loadStatesForCountry(countryName) {
+        if (!stateSelect) return;
+        if (!countryName || countryName === '') {
+            stateSelect.innerHTML = '<option value="">-- Select State --</option>';
+            stateSelect.disabled = false;
+            return;
+        }
+        stateSelect.innerHTML = '<option value="">Loading states...</option>';
+        stateSelect.disabled = true;
+        var countryParam = encodeURIComponent(countryName);
+        fetch('{{ url("/api/states") }}/' + countryParam, {
+            method: 'GET',
+            headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
+        })
+        .then(function(response) {
+            if (!response.ok) throw new Error('Failed to fetch states');
+            return response.json();
+        })
+        .then(function(data) {
+            stateSelect.innerHTML = '<option value="">-- Select State --</option>';
+            if (data && Array.isArray(data) && data.length > 0) {
+                data.forEach(function(state) {
+                    var option = document.createElement('option');
+                    var stateName = state.name || state.state_name || state;
+                    option.value = stateName;
+                    option.textContent = stateName;
+                    stateSelect.appendChild(option);
+                });
+            }
+            stateSelect.disabled = false;
+            var oldState = '{{ old("state", $application?->state ?? "") }}';
+            if (oldState) stateSelect.value = oldState;
+            else if (countryName === 'India' && stateSelect.options.length > 1) {
+                var defaultState = '{{ $defaultStateId ?? "" }}';
+                if (defaultState) stateSelect.value = defaultState;
+            }
+        })
+        .catch(function(err) {
+            console.error('Error loading states:', err);
+            stateSelect.innerHTML = '<option value="">-- Select State --</option>';
+            stateSelect.disabled = false;
+        });
+    }
+    if (countrySelect && stateSelect) {
+        countrySelect.addEventListener('change', function() { loadStatesForCountry(this.value); });
+        var initialCountry = countrySelect.value;
+        if (initialCountry) loadStatesForCountry(initialCountry);
     }
 
     // Word counter for idea_description (500 words)

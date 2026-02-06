@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Sparx;
 use App\Models\Events;
+use App\Models\Country;
+use App\Models\State;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Http;
@@ -41,14 +43,23 @@ class SparxApplicationController extends Controller
 
         $sectors = ['Medicine', 'Electronics', 'Agriculture', 'Healthcare', 'Manufacturing', 'Environment/Energy', 'Others'];
 
-        // You can load countries, states, etc. like in enquiry
-        // $countries = Country::orderBy('name')->get();
+        // Load countries from database (store country/state names, not IDs)
+        $countries = Country::orderBy('name')->get(['id', 'name', 'code']);
+        $defaultStateId = null;
+        $indiaCountry = Country::where('code', 'IN')->first();
+        if ($indiaCountry) {
+            $defaultState = State::where('country_id', $indiaCountry->id)->orderBy('name')->first();
+            if ($defaultState) {
+                $defaultStateId = $defaultState->name;
+            }
+        }
 
         return view('sparx.form', compact(
             'event',
-            'application',           // for editing/pre-filling
-            'sectors'
-            // 'countries', etc.
+            'application',
+            'sectors',
+            'countries',
+            'defaultStateId'
         ));
     }
 
@@ -73,7 +84,7 @@ class SparxApplicationController extends Controller
             'phone_number'          => 'required|string|max:20',
             'address'               => 'nullable|string',
             'city'                  => 'nullable|string|max:100',
-            'state'                 => 'nullable|string|max:100',
+            'state'                 => 'required|string|max:100',
             'country'               => 'required|string|max:100',
             'postal_code'           => 'nullable|string|max:10',
             'startup_idea_name'     => 'required|string|max:120',
