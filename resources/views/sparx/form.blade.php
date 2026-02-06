@@ -9,6 +9,17 @@
     .word-counter.warning { color: #ff9800; }
     .word-counter.danger { color: #dc3545; }
     .conditional { display: none; }
+    /* Validator: red until filled, then normal */
+    .form-control.field-invalid,
+    .form-select.field-invalid {
+        border-color: #dc3545 !important;
+        box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25);
+    }
+    .form-control.field-invalid:focus,
+    .form-select.field-invalid:focus {
+        border-color: #dc3545 !important;
+        box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25);
+    }
 </style>
 @endpush
 
@@ -287,9 +298,63 @@
         });
     }
 
-    // Progress bar (match enquiry)
+    // Inline validator: red when empty (after touch/submit), normal when filled
     const form = document.getElementById('sparxForm');
     const submitBtn = document.getElementById('submitBtn');
+
+    function isFieldValid(el) {
+        if (el.type === 'checkbox' || el.type === 'radio') {
+            return el.checked;
+        }
+        if (el.tagName === 'SELECT') {
+            return el.value !== '' && el.value !== null;
+        }
+        if (el.name === 'phone_number' && typeof iti !== 'undefined' && iti) {
+            return iti.isValidNumber ? iti.isValidNumber() : el.value.trim().length > 0;
+        }
+        return el.value.trim() !== '';
+    }
+
+    function updateFieldValidity(el) {
+        if (!el.hasAttribute('required')) return;
+        if (isFieldValid(el)) {
+            el.classList.remove('field-invalid');
+        } else {
+            el.classList.add('field-invalid');
+        }
+    }
+
+    function attachValidators() {
+        if (!form) return;
+        const required = form.querySelectorAll('input[required]:not([type="hidden"]), select[required], textarea[required]');
+        required.forEach(function(el) {
+            el.addEventListener('blur', function() {
+                updateFieldValidity(el);
+            });
+            el.addEventListener('input', function() {
+                updateFieldValidity(el);
+            });
+            el.addEventListener('change', function() {
+                updateFieldValidity(el);
+            });
+            // Initial: don't mark empty as red until user blurs or submits
+        });
+    }
+    attachValidators();
+
+    // On submit attempt, mark all empty required as invalid so they turn red
+    function markInvalidFields() {
+        if (!form) return;
+        const required = form.querySelectorAll('input[required]:not([type="hidden"]), select[required], textarea[required]');
+        required.forEach(function(el) {
+            if (!isFieldValid(el)) {
+                el.classList.add('field-invalid');
+            } else {
+                el.classList.remove('field-invalid');
+            }
+        });
+    }
+
     function updateProgress() {
         if (!form) return;
         const inputs = form.querySelectorAll('input[required]:not([type="hidden"]), select[required], textarea[required]');
@@ -318,6 +383,34 @@
         form.addEventListener('submit', function(e) {
             e.preventDefault();
 
+            // Mark all empty required fields as invalid (red)
+            markInvalidFields();
+
+            // Client-side validation: collect errors
+            const required = form.querySelectorAll('input[required]:not([type="hidden"]), select[required], textarea[required]');
+            const errors = [];
+            required.forEach(function(el) {
+                if (!isFieldValid(el)) {
+                    const label = form.querySelector('label[for="' + el.id + '"]') || el.closest('.form-section')?.querySelector('.form-label');
+                    const name = label ? label.textContent.replace(/\s*\*$/, '').trim() : el.name;
+                    errors.push((name || el.name) + ' is required.');
+                }
+            });
+            if (errors.length > 0) {
+                let errorHtml = '<ul style="text-align: left; margin: 10px 0; padding-left: 20px;">';
+                errors.forEach(function(err) { errorHtml += '<li>' + err + '</li>'; });
+                errorHtml += '</ul>';
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Validation Error',
+                    html: errorHtml,
+                    confirmButtonText: 'OK',
+                    confirmButtonColor: '#20b2aa',
+                    width: '600px'
+                });
+                return;
+            }
+
             // Update phone country code before submit
             if (iti) {
                 phoneCountryCode.value = iti.getSelectedCountryData().dialCode;
@@ -326,38 +419,59 @@
             submitBtn.disabled = true;
             submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Submitting...';
 
-            @if(config('constants.RECAPTCHA_ENABLED', false))
-            if (typeof grecaptcha !== 'undefined' && grecaptcha.enterprise) {
-                grecaptcha.enterprise.ready(function() {
-                    grecaptcha.enterprise.execute('{{ config('services.recaptcha.site_key') }}', { action: 'submit' })
-                        .then(function(token) {
-                            var inp = document.getElementById('g-recaptcha-response');
-                            if (inp) inp.value = token;
-                            else {
-                                var hidden = document.createElement('input');
-                                hidden.type = 'hidden';
-                                hidden.name = 'g-recaptcha-response';
-                                hidden.value = token;
-                                form.appendChild(hidden);
-                            }
-                            form.submit();
-                        })
-                        .catch(function(err) {
-                            console.error('reCAPTCHA error:', err);
-                            Swal.fire({
-                                icon: 'error',
-                                title: 'reCAPTCHA Error',
-                                text: 'reCAPTCHA verification failed. Please try again.',
-                                confirmButtonText: 'OK',
-                                confirmButtonColor: '#20b2aa'
-                            });
-                            submitBtn.disabled = false;
-                            submitBtn.innerHTML = 'SUBMIT APPLICATION <i class="fas fa-arrow-right ms-2"></i>';
-                        });
-                });
-            } else {
-                form.submit();
+            function resetSubmitBtn() {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = 'SUBMIT APPLICATION <i class="fas fa-arrow-right ms-2"></i>';
             }
+
+            @if(config('constants.RECAPTCHA_ENABLED', false))
+            var siteKey = '{{ config('services.recaptcha.site_key') }}';
+            if (!siteKey) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Configuration',
+                    text: 'reCAPTCHA is enabled but not configured. Submitting without verification.',
+                    confirmButtonColor: '#20b2aa'
+                }).then(function() { form.submit(); });
+                return;
+            }
+            if (typeof grecaptcha === 'undefined' || !grecaptcha.enterprise) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Security check not loaded',
+                    text: 'Please refresh the page and try again. If the problem continues, check your connection.',
+                    confirmButtonColor: '#20b2aa'
+                });
+                resetSubmitBtn();
+                return;
+            }
+            grecaptcha.enterprise.ready(function() {
+                grecaptcha.enterprise.execute(siteKey, { action: 'submit' })
+                    .then(function(token) {
+                        var inp = document.getElementById('g-recaptcha-response');
+                        if (inp) {
+                            inp.value = token;
+                        } else {
+                            var hidden = document.createElement('input');
+                            hidden.type = 'hidden';
+                            hidden.name = 'g-recaptcha-response';
+                            hidden.value = token;
+                            form.appendChild(hidden);
+                        }
+                        form.submit();
+                    })
+                    .catch(function(err) {
+                        console.error('reCAPTCHA error:', err);
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Security check failed',
+                            text: 'reCAPTCHA could not complete. Please try again or refresh the page.',
+                            confirmButtonText: 'OK',
+                            confirmButtonColor: '#20b2aa'
+                        });
+                        resetSubmitBtn();
+                    });
+            });
             @else
             form.submit();
             @endif

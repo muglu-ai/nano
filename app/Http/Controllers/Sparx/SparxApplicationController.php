@@ -161,8 +161,7 @@ class SparxApplicationController extends Controller
         return view('sparx.thankyou', compact('event'));
     }
 
-    // Copy & adapt your verifyRecaptcha method here
-    private function verifyRecaptcha($response)
+    private function verifyRecaptcha($recaptchaResponse)
     {
         // If disabled via config, always pass
         if (!config('constants.RECAPTCHA_ENABLED', false)) {
@@ -174,12 +173,18 @@ class SparxApplicationController extends Controller
         $apiKey = config('services.recaptcha.api_key');
         $expectedAction = 'submit';
 
-        if (empty($siteKey) || empty($projectId) || empty($apiKey) || empty($recaptchaResponse)) {
-            Log::warning('reCAPTCHA config or token missing', [
+        // If reCAPTCHA keys are not configured, skip verification so the form still works
+        if (empty($siteKey) || empty($projectId) || empty($apiKey)) {
+            Log::warning('reCAPTCHA not fully configured; skipping verification', [
                 'siteKey' => !empty($siteKey),
                 'projectId' => !empty($projectId),
-                'hasToken' => !empty($recaptchaResponse),
+                'apiKey' => !empty($apiKey),
             ]);
+            return true;
+        }
+
+        if (empty($recaptchaResponse) || !is_string($recaptchaResponse)) {
+            Log::warning('reCAPTCHA token missing or invalid from request');
             return false;
         }
 
