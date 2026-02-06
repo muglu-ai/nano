@@ -9,16 +9,25 @@
     .word-counter.warning { color: #ff9800; }
     .word-counter.danger { color: #dc3545; }
     .conditional { display: none; }
-    /* Validator: red until filled, then normal */
+    /* Validator: red border + red circle icon on the right (match first page / ticket form) */
     .form-control.field-invalid,
     .form-select.field-invalid {
         border-color: #dc3545 !important;
-        box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25);
+        border-width: 2px !important;
+        padding-right: calc(1.5em + 0.75rem);
+        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' width='12' height='12' fill='none' stroke='%23dc3545'%3e%3ccircle cx='6' cy='6' r='4.5'/%3e%3cpath d='m5.8 3.6 .4.4.4-.4m0 4.8-.4-.4-.4.4'/%3e%3c/svg%3e");
+        background-repeat: no-repeat;
+        background-position: right calc(0.375em + 0.1875rem) center;
+        background-size: calc(0.75em + 0.375rem) calc(0.75em + 0.375rem);
     }
     .form-control.field-invalid:focus,
     .form-select.field-invalid:focus {
         border-color: #dc3545 !important;
         box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25);
+    }
+    /* intl-tel-input: ensure invalid phone input shows icon (it has extra padding-left) */
+    .iti .form-control.phone-input.field-invalid {
+        padding-right: calc(1.5em + 0.75rem);
     }
 </style>
 @endpush
@@ -337,10 +346,21 @@
             el.addEventListener('change', function() {
                 updateFieldValidity(el);
             });
-            // Initial: don't mark empty as red until user blurs or submits
         });
     }
     attachValidators();
+
+    // Mark all empty required fields as invalid on page load (match first page: red + icon from the start)
+    if (form) {
+        setTimeout(function() {
+            var required = form.querySelectorAll('input[required]:not([type="hidden"]), select[required], textarea[required]');
+            required.forEach(function(el) {
+                if (el.type === 'hidden' || el.disabled) return;
+                if (el.offsetParent === null) return;
+                updateFieldValidity(el);
+            });
+        }, 300);
+    }
 
     // On submit attempt, mark all empty required as invalid so they turn red
     function markInvalidFields() {
